@@ -1,0 +1,13 @@
+# IDE files
+.claude/
+.cursor/
+.vscode/
+.env
+node_modules
+specs
+
+# OS files
+.directory
+.DS_Store
+Icon?
+Thumbs.db
