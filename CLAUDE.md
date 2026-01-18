@@ -32,7 +32,7 @@ agentspecs/
 
 | Skill              | Purpose                                                                             |
 |--------------------|-------------------------------------------------------------------------------------|
-| `/spec new <name>` | Create feature spec (AGENTS.md, design.md, ledger.md, decisions.md, future-work.md) |
+| `/spec new <name>` | Create feature spec (AGENTS.md, design.md, ledger.md, decisions.md, future-work.md, optional examples/) |
 | `/spec status`     | Show status of all active specs                                                     |
 | `/handoff`         | Capture session context for seamless resume                                         |
 | `python`           | Python conventions (auto-loads when writing Python)                                 |
@@ -45,7 +45,8 @@ For non-trivial features, use `specs/<feature>/` to preserve context across sess
 2. Read the spec's `AGENTS.md` before starting work
 3. Update `ledger.md` as you work (Done/Next/Context)
 4. Log non-obvious decisions in `decisions.md`
-5. `/handoff` before ending a session
+5. Verify via examples: run `examples/` and update `TEST_LOG.md`
+6. `/handoff` before ending a session
 
 The goal: any new agent reading the spec's `AGENTS.md` and `ledger.md` can continue without re-discovering context.
 

@@ -14,7 +14,67 @@ This file is for coding agents. It captures language-agnostic workflow, conventi
 2) Inspect existing patterns before adding new ones.
 3) Implement with the guidelines below.
 4) Self-check: lint → types → tests (using language-appropriate tooling).
-5) Produce concise, technical notes in the PR/summary (what changed, why, risks).
+5) Verify via examples: run examples that exercise your changes.
+6) Produce concise, technical notes in the PR/summary (what changed, why, risks).
+
+## Verification via examples
+
+For features that produce executable code, "done" means "ran it successfully"—not just "wrote it."
+
+### Per-spec examples (default)
+
+Add `examples/` to the spec folder for feature-specific verification:
+
+```text
+specs/<feature>/
+├── design.md
+├── ledger.md
+├── examples/
+│   ├── basic_usage.py    # minimal working example
+│   └── TEST_LOG.md       # execution results
+```
+
+Keep these atomic and focused—one example per behavior you're verifying.
+
+### Project-wide examples (optional)
+
+For libraries or frameworks, maintain a top-level `examples/` or `cookbook/` directory:
+
+```text
+examples/              # or cookbook/
+├── getting-started/
+│   ├── README.md
+│   ├── hello_world.py
+│   └── TEST_LOG.md
+├── advanced-patterns/
+│   └── ...
+```
+
+Use for user-facing tutorials, pattern demonstrations, or integration scenarios.
+
+### TEST_LOG.md format
+
+After running an example, log the result:
+
+```markdown
+### basic_usage.py
+**Status:** PASS
+**Date:** 2025-01-15
+**Description:** Verifies the auth flow with valid credentials.
+**Result:** Token returned, expires_in=3600.
+---
+```
+
+Update this log every time you run the example. Treat example failures as spec failures—don't mark a feature done until examples pass.
+
+### Workflow integration
+
+1. Write or update examples that exercise your changes
+2. Run each example
+3. Update TEST_LOG.md with PASS/FAIL and observations
+4. Fix failures before considering the task complete
+
+> **Tip:** If an example fails, that's signal—either the code is wrong or the example's expectations are stale. Investigate before moving on.
 
 ## Feature specs (context continuity)
 
@@ -29,13 +89,16 @@ Each spec lives in its own folder: `specs/<feature>/` with the following files (
 ```text
 specs/<feature>/
 ├── AGENTS.md           # Spec-specific instructions (always read first)
-├── design.md           # Source of truth: technical approach, architecture, data flow                                                                 |
+├── design.md           # Source of truth: technical approach, architecture, data flow
 ├── ledger.md           # Current status and what's done
-├── decisions.md        # Captures the "why" (i.e., decision traces), record of why an approach was chosen over another. User also provides input here
-└── future-work.md      # What's deferred, ideas for later improvements
+├── decisions.md        # Captures the "why" (i.e., decision traces)
+├── future-work.md      # What's deferred, ideas for later improvements
+└── examples/           # Optional: runnable verification examples
+    ├── basic_usage.py
+    └── TEST_LOG.md
 ```
 
-Keep them lightweight: a one-liner is fine if there's nothing to say yet. The structure prompts thinking and helps future sessions know where to look.
+4Keep them lightweight: a one-liner is fine if there's nothing to say yet. The structure prompts thinking and helps future sessions know where to look.
 
 ### Ledger example
 

@@ -16,8 +16,9 @@ Creates a feature spec directory with standard template files.
 1. Slugify the name: lowercase, replace spaces with hyphens
 2. Check if `specs/<slug>/` already exists—if so, error
 3. Create `specs/<slug>/` directory
-4. Create the five template files below
-5. After creation, populate AGENTS.md based on the user's feature request:
+4. Create the template files below
+5. If the feature will produce executable code, create `examples/` with TEST_LOG.md
+6. After creation, populate AGENTS.md based on the user's feature request:
    - **Overview**: what the user asked for (from conversation context)
    - **Key Files**: initial guesses based on the feature scope
    - **Quick Start**: first steps for implementation
@@ -96,4 +97,30 @@ Log non-obvious technical choices here.
 Ideas and improvements deferred for later.
 
 (Nothing yet)
+```
+
+#### Optional: examples/ Directory
+
+If the feature produces executable code, create `specs/<slug>/examples/`:
+
+**examples/TEST_LOG.md**:
+```
+# <Title> - Test Log
+
+Execution results for verification examples.
+
+---
+
+(No examples run yet)
+```
+
+When examples are added later, log results in this format:
+
+```markdown
+### example_name.py
+**Status:** PASS | FAIL
+**Date:** YYYY-MM-DD
+**Description:** What this example verifies.
+**Result:** What happened when run.
+---
 ```
