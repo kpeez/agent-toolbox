@@ -45,8 +45,8 @@ if [[ -d "$CLAUDE_DIR" ]] || mkdir -p "$CLAUDE_DIR" 2>/dev/null; then
 
     # skills (can use symlink or copy - symlink for easy updates)
     rm -rf "$CLAUDE_DIR/skills"
-    ln -sf "$SCRIPT_DIR/skills" "$CLAUDE_DIR/skills"
-    log "skills/ → skills/ (symlink)"
+    cp -r "$SCRIPT_DIR/skills" "$CLAUDE_DIR/skills"
+    log "Copied skills/ → skills/"
     echo ""
 fi
 
@@ -62,7 +62,8 @@ if [[ -d "$CODEX_DIR" ]] || mkdir -p "$CODEX_DIR" 2>/dev/null; then
     # skills (must copy - Codex ignores symlinks)
     rm -rf "$CODEX_DIR/skills"
     cp -r "$SCRIPT_DIR/skills" "$CODEX_DIR/skills"
-    log "skills/ → skills/ (copy)"
+    log "Copied skills/ → skills/"
+
     echo ""
 fi
 
@@ -77,8 +78,8 @@ if [[ -d "$GEMINI_DIR" ]] || mkdir -p "$GEMINI_DIR" 2>/dev/null; then
 
     # skills (Gemini supports SKILL.md format - symlink for easy updates)
     rm -rf "$GEMINI_DIR/skills"
-    ln -sf "$SCRIPT_DIR/skills" "$GEMINI_DIR/skills"
-    log "skills/ → skills/ (symlink)"
+    cp -r "$SCRIPT_DIR/skills" "$GEMINI_DIR/skills"
+    log "Copied skills/ → skills/"
     echo ""
 fi
 
