@@ -11,25 +11,22 @@ description: Create feature specs for context continuity across agent sessions. 
 
 Creates a feature spec directory with standard template files.
 
-#### Steps
+<steps>
+<step action="slugify">lowercase name, replace spaces with hyphens → `<slug>`</step>
+<step action="check-exists">error if `specs/<slug>/` exists</step>
+<step action="mkdir">`specs/<slug>/`</step>
+<step action="create-files">write all templates below to `specs/<slug>/`</step>
+<step action="create-examples" condition="feature produces executable code">create `examples/` with TEST_LOG.md</step>
+<step action="populate">fill AGENTS.md from conversation context:
+  - Overview: what the user asked for
+  - Key Files: initial guesses based on feature scope
+  - Quick Start: first implementation steps
+  - Conventions: placeholder if unknown</step>
+</steps>
 
-1. Slugify the name: lowercase, replace spaces with hyphens
-2. Check if `specs/<slug>/` already exists—if so, error
-3. Create `specs/<slug>/` directory
-4. Create the template files below
-5. If the feature will produce executable code, create `examples/` with TEST_LOG.md
-6. After creation, populate AGENTS.md based on the user's feature request:
-   - **Overview**: what the user asked for (from conversation context)
-   - **Key Files**: initial guesses based on the feature scope
-   - **Quick Start**: first steps for implementation
-   - **Conventions**: leave as placeholder if none are known yet
+<templates dir="specs/<slug>/">
 
-#### Template Files
-
-Create these files in `specs/<slug>/`:
-
-**AGENTS.md**:
-```
+<template file="AGENTS.md">
 # <Title> - Agent Instructions
 
 Read this file first when working on this feature.
@@ -45,42 +42,46 @@ Read this file first when working on this feature.
 
 ## Quick Start
 <!-- for a new agent: what to read first, what to do first -->
-```
+</template>
 
-**design.md**:
-```
+<template file="design.md">
 # <Title> - Design
 
 ## Overview
+
 (brief technical approach - fill in during design phase)
 
 ## Key Components
+
 (to be defined)
 
 ## Data Flow
-(to be defined)
-```
 
-**ledger.md**:
-```
+(to be defined)
+</template>
+
+<template file="ledger.md">
 # <Title> - Ledger
 
 ## Status
+
 - **Phase**: design
 - **Blocked**: no
 
 ## Done
+
 (nothing yet)
 
 ## Next
+
 - [ ] Define the technical approach
 
 ## Context
-(gotchas, non-obvious things discovered)
-```
 
-**decisions.md**:
-```
+(gotchas, non-obvious things discovered)
+</template>
+
+<template file="decisions.md">
 # <Title> - Decisions
 
 Log non-obvious technical choices here.
@@ -88,23 +89,17 @@ Log non-obvious technical choices here.
 ---
 
 (No decisions recorded yet)
-```
+</template>
 
-**future-work.md**:
-```
+<template file="future-work.md">
 # <Title> - Future Work
 
 Ideas and improvements deferred for later.
 
 (Nothing yet)
-```
+</template>
 
-#### Optional: examples/ Directory
-
-If the feature produces executable code, create `specs/<slug>/examples/`:
-
-**examples/TEST_LOG.md**:
-```
+<template file="examples/TEST_LOG.md" condition="feature produces executable code">
 # <Title> - Test Log
 
 Execution results for verification examples.
@@ -112,15 +107,15 @@ Execution results for verification examples.
 ---
 
 (No examples run yet)
-```
+</template>
 
-When examples are added later, log results in this format:
+</templates>
 
-```markdown
+<example-log-format>
 ### example_name.py
 **Status:** PASS | FAIL
 **Date:** YYYY-MM-DD
 **Description:** What this example verifies.
 **Result:** What happened when run.
 ---
-```
+</example-log-format>
