@@ -44,6 +44,10 @@ Read this file first when working on this feature.
 <!-- for a new agent: what to read first, what to do first -->
 </template>
 
+<template file="CLAUDE.md">
+@AGENTS.md
+</template>
+
 <template file="design.md">
 # <Title> - Design
 

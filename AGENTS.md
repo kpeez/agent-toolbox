@@ -89,6 +89,7 @@ Each spec lives in its own folder: `specs/<feature>/` with the following files (
 ```text
 specs/<feature>/
 ├── AGENTS.md           # Spec-specific instructions (always read first)
+├── CLAUDE.md           # References AGENTS.md for Claude Code auto-discovery
 ├── design.md           # Source of truth: technical approach, architecture, data flow
 ├── ledger.md           # Current status and what's done
 ├── decisions.md        # Captures the "why" (i.e., decision traces)
