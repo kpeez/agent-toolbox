@@ -17,31 +17,16 @@ Creates a feature spec directory with standard template files.
 <step action="mkdir">`specs/<slug>/`</step>
 <step action="create-files">write all templates below to `specs/<slug>/`</step>
 <step action="create-examples" condition="feature produces executable code">create `examples/` with TEST_LOG.md</step>
-<step action="populate">fill AGENTS.md from conversation context:
-  - Overview: what the user asked for
-  - Key Files: initial guesses based on feature scope
-  - Quick Start: first implementation steps
-  - Conventions: placeholder if unknown</step>
+<step action="populate">fill AGENTS.md from conversation context (overview, key files, quick start)</step>
+<step action="update-index">append row to `specs/INDEX` (create with header `slug\tphase\tblocked\tdesc` if missing)</step>
 </steps>
 
 <templates dir="specs/<slug>/">
 
 <template file="AGENTS.md">
 # <Title> - Agent Instructions
-
+<!-- overview | key files | conventions | quick start -->
 Read this file first when working on this feature.
-
-## Overview
-<!-- 1-2 sentences: what we're building and why -->
-
-## Key Files
-<!-- update as you work. format: `path/to/file.ts` - purpose -->
-
-## Conventions
-<!-- feature-specific patterns, constraints, or gotchas -->
-
-## Quick Start
-<!-- for a new agent: what to read first, what to do first -->
 </template>
 
 <template file="CLAUDE.md">
@@ -50,76 +35,40 @@ Read this file first when working on this feature.
 
 <template file="design.md">
 # <Title> - Design
-
-## Overview
-
-(brief technical approach - fill in during design phase)
-
-## Key Components
-
-(to be defined)
-
-## Data Flow
-
-(to be defined)
+<!-- overview | key components | data flow -->
 </template>
 
-<template file="ledger.md">
-# <Title> - Ledger
+<template file="implementation.md">
+# <Title> - Implementation
 
 ## Status
-
 - **Phase**: design
 - **Blocked**: no
 
 ## Done
 
-(nothing yet)
-
 ## Next
-
 - [ ] Define the technical approach
 
 ## Context
-
-(gotchas, non-obvious things discovered)
 </template>
 
 <template file="decisions.md">
 # <Title> - Decisions
-
-Log non-obvious technical choices here.
-
----
-
-(No decisions recorded yet)
+<!-- append: ## Title / Context / Decision / Alternatives / Rationale -->
 </template>
 
 <template file="future-work.md">
 # <Title> - Future Work
-
-Ideas and improvements deferred for later.
-
-(Nothing yet)
 </template>
 
 <template file="examples/TEST_LOG.md" condition="feature produces executable code">
 # <Title> - Test Log
-
-Execution results for verification examples.
-
----
-
-(No examples run yet)
+<!-- format: ### name / Status: PASS|FAIL / Date / Description / Result -->
 </template>
 
 </templates>
 
-<example-log-format>
-### example_name.py
-**Status:** PASS | FAIL
-**Date:** YYYY-MM-DD
-**Description:** What this example verifies.
-**Result:** What happened when run.
----
-</example-log-format>
+### /spec status
+
+Read and display `specs/INDEX`. If missing, scan `specs/*/implementation.md` to rebuild it.

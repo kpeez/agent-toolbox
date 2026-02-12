@@ -11,49 +11,35 @@ Generate a handoff summary to ensure context continuity for the next session.
 
 1. **Identify the active feature**
    - If argument provided, use that feature: `/handoff <feature-name>`
-   - Otherwise, check `specs/` for the most recently modified ledger.md
+   - Otherwise, check `specs/` for the most recently modified implementation.md
    - If no specs, summarize the session work generally
 
 2. **Gather session context**
-   - What was accomplished this session
-   - What's currently in progress or blocked
-   - Files modified (check git status if available)
-   - Any gotchas or non-obvious context discovered
+   - What was accomplished, what's in progress or blocked
+   - Files modified (check git status)
+   - Gotchas or non-obvious context discovered
 
-3. **Update ledger.md**
-   - Move completed items to Done
-   - Update Next with current pending items
-   - Add any new context to the Context section
-   - Update Phase and Blocked status
+3. **Update implementation.md**
+   - Move completed items to Done, update Next with pending items
+   - Add new context, update Phase and Blocked status
 
-4. **Write handoff summary**
+4. **Update `specs/INDEX`** — sync this spec's row (phase, blocked, desc)
 
-   Append to `specs/<feature>/handoff.md`:
-
+5. **Append to `specs/<feature>/handoff.md`**:
    ```markdown
    ## Session: <date>
-
    ### Completed
    - <what was done>
-
    ### In Progress
    - <what's partially done>
-
    ### Blocked
    - <blockers if any>
-
    ### Critical Context
    - <things the next session MUST know>
-
    ### Files Touched
    - <list of modified files>
-
    ### Resume Command
    <command or instruction to pick up where we left off>
    ```
 
-5. **Confirm** the handoff is complete and ledger.md is updated
-
-## Key Principle
-
-The goal: if a new agent starts the next session and reads only the spec's `AGENTS.md` and `ledger.md`, they can continue effectively without re-discovering context.
+6. **Confirm** handoff is complete and implementation.md is updated
