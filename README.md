@@ -9,9 +9,8 @@ agentspecs/
 ├── AGENTS.md                  # Global instructions for all agents
 ├── update_agentspec.sh        # Sync to Claude/Codex/Gemini configs
 └── skills/
-    ├── spec/                  # /spec new, /spec status
-    │   ├── SKILL.md
-    │   └── scripts/
+    ├── spec/SKILL.md          # /spec new
+    ├── spec-review/SKILL.md   # /spec-review [feature-name]
     ├── handoff/SKILL.md       # /handoff
     └── python-code/SKILL.md   # Python conventions (auto-loads)
 ```
@@ -39,7 +38,7 @@ Re-run after updating agentspecs.
 | Skill              | Purpose                                             |
 | ------------------ | --------------------------------------------------- |
 | `/spec new <name>` | Create a new feature spec                           |
-| `/spec status`     | Show status of all specs (reads `specs/INDEX`)      |
+| `/spec-review [name]` | Draft logical commit plan and draft PR docs      |
 | `/handoff`         | Capture session context before ending               |
 | `python-code`      | Python conventions (auto-loads when writing Python)  |
 
@@ -88,7 +87,7 @@ user-auth	implementing	no	JWT auth flow
 api-v2	design	yes:schema pending	REST to GraphQL
 ```
 
-Managed automatically by `/spec new` (adds row) and `/handoff` (updates row). View with `/spec status`.
+Managed automatically by `/spec new` (adds row) and `/handoff` (updates row).
 
 The core of context continuity is `implementation.md`:
 

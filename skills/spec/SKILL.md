@@ -68,7 +68,3 @@ Read this file first when working on this feature.
 </template>
 
 </templates>
-
-### /spec status
-
-Read and display `specs/INDEX`. If missing, scan `specs/*/implementation.md` to rebuild it.
