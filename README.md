@@ -1,10 +1,10 @@
 # agentspecs
 
-A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, and Gemini CLI with a single source of truth.
+A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, and Gemini CLI with a single source of truth[^1].
 
 ## What's Here
 
-```
+```text
 agentspecs/
 ├── AGENTS.md                  # Global instructions for all agents
 ├── update_agentspec.sh        # Sync to Claude/Codex/Gemini configs
@@ -76,7 +76,7 @@ Not every session hits every phase. `/cleanup` and `/spec-review` are most usefu
 
 Store specs in a cloud-synced location, organized per-repo:
 
-```
+```text
 ~/Documents/specs/
 ├── my-web-app/
 │   └── user-auth/
@@ -97,7 +97,7 @@ This gives you cloud backup, per-repo isolation, and portability across machines
 
 Each spec lives in `specs/<feature>/` with these files (created by `/spec new`):
 
-```
+```text
 specs/<feature>/
 ├── AGENTS.md           # Spec-specific instructions (read first)
 ├── CLAUDE.md           # contains @AGENTS.md to point Claude to AGENTS.md
@@ -109,7 +109,7 @@ specs/<feature>/
 
 **`specs/INDEX`** (TSV) provides an at-a-glance overview of all specs:
 
-```
+```text
 slug phase blocked desc
 user-auth implementing no JWT auth flow
 api-v2 design yes:schema pending REST to GraphQL
@@ -137,3 +137,7 @@ The core of context continuity is `implementation.md`:
 
 <gotchas, key files>
 ```
+
+---
+
+[^1]: Inspired by this Tweet by Ashpreet Bedi: <https://x.com/ashpreetbedi/status/2011220028453241218>
