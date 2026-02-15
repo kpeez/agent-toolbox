@@ -1,6 +1,6 @@
 # agentspecs
 
-Agent-agnostic configuration and skills for AI coding agents.
+A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, and Gemini CLI with a single source of truth.
 
 ## What's Here
 
@@ -10,6 +10,7 @@ agentspecs/
 ├── update_agentspec.sh        # Sync to Claude/Codex/Gemini configs
 └── skills/
     ├── spec/SKILL.md          # /spec new
+    ├── cleanup/SKILL.md       # /cleanup [feature-name]
     ├── spec-review/SKILL.md   # /spec-review [feature-name]
     ├── handoff/SKILL.md       # /handoff
     └── python-code/SKILL.md   # Python conventions (auto-loads)
@@ -25,24 +26,51 @@ Run the update script to sync to all supported AI CLIs:
 
 This installs to:
 
-| CLI         | Instructions          | Skills                        |
-| ----------- | --------------------- | ----------------------------- |
-| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills/` (copy)    |
-| Codex CLI   | `~/.codex/AGENTS.md`  | `~/.codex/skills/` (copy)     |
-| Gemini CLI  | `~/.gemini/GEMINI.md` | `~/.gemini/skills/` (copy)    |
+| CLI         | Instructions          | Skills                     |
+|-------------|-----------------------|----------------------------|
+| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills/` (copy) |
+| Codex CLI   | `~/.codex/AGENTS.md`  | `~/.codex/skills/` (copy)  |
+| Gemini CLI  | `~/.gemini/GEMINI.md` | `~/.gemini/skills/` (copy) |
 
 Re-run after updating agentspecs.
 
 ## Skills
 
-| Skill              | Purpose                                             |
-| ------------------ | --------------------------------------------------- |
-| `/spec new <name>` | Create a new feature spec                           |
-| `/spec-review [name]` | Draft logical commit plan and draft PR docs      |
-| `/handoff`         | Capture session context before ending               |
-| `python-code`      | Python conventions (auto-loads when writing Python)  |
+| Skill                 | Purpose                                             |
+|-----------------------|-----------------------------------------------------|
+| `/spec new <name>`    | Create a new feature spec                           |
+| `/cleanup [name]`     | Aggressively simplify new code after implementation |
+| `/spec-review [name]` | Draft logical commit plan and draft PR docs         |
+| `/handoff`            | Capture session context before ending               |
+| `python-code`         | Python conventions (auto-loads when writing Python) |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
+
+## Workflow
+
+```mermaid
+graph LR
+  A["/spec new"] --> B["implement"]
+  B --> C["/cleanup"]
+  C --> D["/spec-review"]
+  D --> E["/handoff"]
+
+style A fill:#2d333b,stroke:#768390,color:#adbac7
+style B fill:#2d333b,stroke:#768390,color:#adbac7
+style C fill:#2d333b,stroke:#768390,color:#adbac7
+style D fill:#2d333b,stroke:#768390,color:#adbac7
+style E fill:#2d333b,stroke:#768390,color:#adbac7
+```
+
+| Phase          | What happens                                                                                      |
+|----------------|---------------------------------------------------------------------------------------------------|
+| `/spec new`    | Create the feature spec — design doc, implementation ledger, decisions log. Establishes intent.   |
+| **implement**  | Write the code. Update `implementation.md` as you go (done/next/context).                         |
+| `/cleanup`     | Review the diff and aggressively simplify. Inline, delete, rewrite anything overcomplicated.      |
+| `/spec-review` | Group clean changes into logical commits. Generate `commits.md` and `draft-pr.md`.                |
+| `/handoff`     | Capture session state — what's done, what's next, critical context for the next agent or session. |
+
+Not every session hits every phase. `/cleanup` and `/spec-review` are most useful before committing final changes. `/handoff` is for any session boundary.
 
 ## Specs Setup
 
@@ -82,9 +110,9 @@ specs/<feature>/
 **`specs/INDEX`** (TSV) provides an at-a-glance overview of all specs:
 
 ```
-slug	phase	blocked	desc
-user-auth	implementing	no	JWT auth flow
-api-v2	design	yes:schema pending	REST to GraphQL
+slug phase blocked desc
+user-auth implementing no JWT auth flow
+api-v2 design yes:schema pending REST to GraphQL
 ```
 
 Managed automatically by `/spec new` (adds row) and `/handoff` (updates row).
@@ -93,15 +121,19 @@ The core of context continuity is `implementation.md`:
 
 ```markdown
 ## Status
+
 - **Phase**: design | implementing | testing | done
 - **Blocked**: no | yes (reason)
 
 ## Done
+
 - [x] completed item
 
 ## Next
+
 - [ ] next item
 
 ## Context
+
 <gotchas, key files>
 ```
