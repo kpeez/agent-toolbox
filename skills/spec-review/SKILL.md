@@ -43,10 +43,12 @@ Review branch changes and generate commit + PR planning docs.
   - <specific behavior/code/docs change>
 - Verification:
   - <test/check/example>
-</template>
+    </template>
 
 <template file="<output-dir>/draft-pr.md">
 # `<type>(<scope>): <overall PR title>`
+
+<one-sentence description> This PR {does what? why?}<one-sentence description>
 
 ## Summary
 - <high-level outcome>
@@ -56,20 +58,11 @@ Review branch changes and generate commit + PR planning docs.
 - <problem or context>
 
 ## Changes
-- <bullet list of grouped changes aligned with `commits.md`>
 
-## Commit Plan
-- `<type>(<scope>): <subject>`
-- `<type>(<scope>): <subject>`
+- <bullet list of grouped changes aligned with `commits.md`. this should capture the changes in LOGIC as well as the changes in IMPLEMENTATION>
 
 ## Testing
 - [ ] <command/check>
 - [ ] <command/check>
 
-## Risks
-- <risk or migration note>
-
-## References
-- `<output-dir>/commits.md`
-- `specs/<feature>/implementation.md` (when spec-scoped)
 </template>
