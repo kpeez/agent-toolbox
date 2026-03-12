@@ -14,31 +14,7 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
 6. Verify: run examples exercising changes, update TEST_LOG.md, fix failures first
 7. Concise PR notes (what changed, why, risks)
 
-## Feature specs
-
-`specs/` preserves context across sessions. Created by `/spec new`, captured by `/handoff`.
-
-**Index**: `specs/INDEX` (TSV: slug, phase, blocked, desc) — overview of all specs.
-
-**Files per spec**: AGENTS.md, CLAUDE.md, design.md, implementation.md, decisions.md, future-work.md, examples/
-
-**implementation.md format**:
-
-```
-## Status
-- **Phase**: design | implementing | testing | done
-- **Blocked**: no | yes (reason)
-## Done
-- [x] completed item
-## Next
-- [ ] next item
-## Context
-<gotchas, key files>
-```
-
-**decisions.md**: append non-obvious choices with Context, Decision, Alternatives, Rationale.
-
-**Spec workflow**: read AGENTS.md + implementation.md → work → update implementation.md → `/handoff` before ending.
+> **Non-trivial features**: if the task requires design thinking, touches multiple files, or spans sessions, create a feature spec first with `/spec new <name>`. The spec skill defines the full workflow — explore → plan → write spec → implement → verify. Don't skip the spec for work that needs one.
 
 ## Verification
 
@@ -96,7 +72,7 @@ When your changes create orphans:
 Transform imperative tasks into verifiable goals:
 
 | Instead of...    | Transform to...                                       |
-|------------------|-------------------------------------------------------|
+| ---------------- | ----------------------------------------------------- |
 | "Add validation" | "Write tests for invalid inputs, then make them pass" |
 | "Fix the bug"    | "Write a test that reproduces it, then make it pass"  |
 | "Refactor X"     | "Ensure tests pass before and after"                  |
