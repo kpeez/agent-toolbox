@@ -6,94 +6,58 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
 
 ## Workflow
 
-1. Read this file, README.md, and relevant language profile
-2. Check `specs/` for feature specs (gitignored—list explicitly)
-3. If spec exists: read its AGENTS.md + implementation.md before working
-4. Inspect existing patterns before adding new ones
-5. Implement; self-check: lint → types → tests
-6. Verify: run examples exercising changes, update TEST_LOG.md, fix failures first
-7. Concise PR notes (what changed, why, risks)
+1. Read this file and README.md
+2. Check `specs/` for feature specs — read AGENTS.md + implementation.md before working
+3. Inspect existing patterns before adding new ones
+4. Implement → lint → types → tests
+5. Verify: run examples, update TEST_LOG.md, fix failures first
 
-> **Non-trivial features**: if the task requires design thinking, touches multiple files, or spans sessions, create a feature spec first with `/spec new <name>`. The spec skill defines the full workflow — explore → plan → write spec → implement → verify. Don't skip the spec for work that needs one.
+> For non-trivial features, create a spec first with `/spec new <name>`.
 
 ## Verification
 
-"Done" means "ran it"—not "wrote it." Add `examples/` to spec folder, one per behavior.
+"Done" means "ran it." Example failures = spec failures.
 
-**TEST_LOG.md entry**: `### name` / Status: PASS|FAIL / Date / Description / Result
+## Code rules
 
-Fix failures before marking done. Example failures = spec failures.
+### Think first
+- State assumptions. Ask when uncertain. Push back when simpler approaches exist.
 
-## Coding principles
-
-### 1. Think Before Coding
-
-**Don't assume. Don't hide confusion. Surface tradeoffs.**
-
-- State assumptions explicitly — if uncertain, ask rather than guess
-- Present multiple interpretations — don't pick silently when ambiguity exists
-- Push back when warranted — if a simpler approach exists, say so
-- Stop when confused — name what's unclear and ask for clarification
-
-### 2. Simplicity First
-
-**Minimum code that solves the problem. Nothing speculative.**
-
-- No features beyond what was asked
-- No abstractions for single-use code
-- No "flexibility" or "configurability" that wasn't requested
-- No error handling for impossible scenarios
+### Simplicity
+- No abstractions, flexibility, or error handling beyond what was asked
 - If 200 lines could be 50, rewrite it
+- Inline unless reused. Colocate related logic. Keep functions flat (early returns, one indent level).
 
-**The test:** Would a senior engineer say this is overcomplicated? If yes, simplify.
+### Surgical changes
+- Only touch what the request requires. Match existing style.
+- Remove orphans YOUR changes created. Don't touch pre-existing dead code.
 
-### 3. Surgical Changes
+### Types & state
+- Required over optional. Minimize arguments. Const by default.
+- Discriminated unions over loose types. Exhaustive handling; fail on unknown.
+- Assert shape on inputs — no silent defaults. Trust the type system.
 
-**Touch only what you must. Clean up only your own mess.**
+### Goal-driven development
 
-When editing existing code:
+Every task follows a red/green cycle — define a verifiable goal before writing code, then loop until verified.
 
-- Don't "improve" adjacent code or formatting
-- Don't refactor things that aren't broken
-- Match existing style, even if you'd do it differently
-- If you notice unrelated dead code, mention it — don't delete it
+**Transform vague tasks into testable goals:**
 
-When your changes create orphans:
+- "Add validation" → write tests for invalid inputs, then make them pass
+- "Fix the bug" → write a test that reproduces it, then make it pass
+- "Refactor X" → ensure tests pass before and after
 
-- Remove imports/variables/functions that YOUR changes made unused
-- Don't remove pre-existing dead code unless asked
+**The loop:** Goal → implement → verify → repeat if failing.
 
-**The test:** Every changed line should trace directly to the user's request.
-
-### 4. Goal-Driven Execution
-
-**Define success criteria. Loop until verified.**
-
-Transform imperative tasks into verifiable goals:
-
-| Instead of...    | Transform to...                                       |
-| ---------------- | ----------------------------------------------------- |
-| "Add validation" | "Write tests for invalid inputs, then make them pass" |
-| "Fix the bug"    | "Write a test that reproduces it, then make it pass"  |
-| "Refactor X"     | "Ensure tests pass before and after"                  |
-
-For multi-step tasks, state a brief plan:
+**For multi-step work, state a plan:**
 
 1. [Step] → verify: [check]
 2. [Step] → verify: [check]
-3. [Step] → verify: [check]
 
-### Style & hygiene
+### Style
 
-- Never duplicate behavior; reuse existing helpers.
-- Descriptive names with auxiliaries (`is_active`, `has_permission`, `should_retry`).
-- RORO for complex params/results. Keyword-only args for clarity.
-- Named constants over literals. Small focused modules.
-- Comments only for _why_, never _what_. No slop comments. Docstrings for non-obvious public APIs.
-- Fail fast with clear messages. No silent passes.
-- Small focused tests mirroring source layout. Test edge cases. Tests before bug fixes.
-- Minimize deps (stdlib first); justify additions. Remove dead deps.
-- Never commit secrets; use env vars. Respect `.gitignore`.
-- Small reviewable commits; imperative messages. Lint/types/tests pass before PR.
+- Descriptive names (`is_active`, `has_permission`). Comments only for _why_.
+- Reuse helpers. Named constants. Fail fast. No slop.
+- Small commits, imperative messages. Lint/types/tests pass before PR.
 
 Update this file first when conventions change.
