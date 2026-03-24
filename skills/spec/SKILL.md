@@ -75,7 +75,7 @@ specs/<feature>/
 
 ### design.md
 
-Source of truth for _what_ you're building and _how_. Write this during the planning phase, before implementation.
+Source of truth for _what_ you're building and _how_. Write this during the planning phase, before implementation. This should be done by invoking the 'grill-me' skill to arrive at a final initial design.
 
 Contents:
 
