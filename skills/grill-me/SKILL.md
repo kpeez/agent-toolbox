@@ -10,4 +10,4 @@ tree resolving dependencies between decisions one by one.
 If a question can be answered by exploring the codebase, explore
 the codebase instead.
 
-For each question, provide your recommended answer.
+For each question, provide your recommended answer and explain why you chose it.
