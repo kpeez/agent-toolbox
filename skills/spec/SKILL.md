@@ -51,7 +51,7 @@ Creates a feature spec directory with standard template files.
 <step action="check-exists">error if `specs/<slug>/` exists</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/`</step>
 <step action="create-files">write all templates below to `specs/<slug>/`</step>
-<step action="populate">fill AGENTS.md from conversation context (overview, key files, quick start); fill design.md with the planned approach including behavior and verification mapping</step>
+<step action="populate">fill AGENTS.md from conversation context (overview, key files, quick start); fill design.md with the planned approach including behavior and verification mapping; choose example script names from the behaviors being verified</step>
 <step action="update-index">append row to `specs/INDEX` (create with header `slug\tphase\tblocked\tdesc` if missing)</step>
 </steps>
 
@@ -64,7 +64,8 @@ specs/<feature>/
 ├── design.md           # What, how, behavior, decisions
 ├── implementation.md   # Current status and progress
 └── examples/           # Runnable verification scripts (REQUIRED)
-    ├── basic_usage.py  # Self-contained, exits 0 on success
+    ├── build_pipeline.py      # Prefer behavior-specific names
+    ├── basic_pipeline_run.py  # Use useful filenames, not generic placeholders
     └── RUN_LOG.md      # Execution log
 ```
 
@@ -109,11 +110,13 @@ Every spec has an `examples/` directory with runnable scripts. These are not uni
 
 Rules for example scripts:
 
-- Self-contained and runnable (e.g., `python examples/basic_usage.py`)
+- Self-contained and runnable (e.g., `python examples/build_pipeline.py`)
 - Exit 0 on success, non-zero on failure
 - Print what they're checking and the result
 - Written BEFORE implementation (they fail initially)
-- Free-form naming based on what they verify
+- Name scripts after the behavior they verify
+- Avoid generic names like `basic_usage.py`, `example.py`, or `test.py`
+- If a spec has one example, that filename should still describe the workflow or outcome it proves
 
 ### examples/RUN_LOG.md
 
@@ -160,7 +163,8 @@ Read this file first when working on this feature.
 
 ## Verification
 <!-- maps example scripts to behaviors they verify -->
-<!-- - `basic_usage.py` -> proves X works with standard inputs -->
+<!-- - `build_pipeline.py` -> proves the pipeline can be assembled -->
+<!-- - `basic_pipeline_run.py` -> proves the happy-path execution works -->
 </template>
 
 <template file="implementation.md">
