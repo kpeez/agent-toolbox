@@ -1,36 +1,48 @@
 # agentspecs
 
-A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, and Gemini CLI with a single source of truth[^1].
+A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, Gemini CLI, and GitHub Copilot CLI with a single source of truth[^1].
 
 ## What's Here
 
 ```text
 agentspecs/
-├── AGENTS.md                  # Global instructions for all agents
-├── update_agentspec.sh        # Sync to Claude/Codex/Gemini configs
-└── skills/
-    ├── spec/SKILL.md          # /spec new
-    ├── cleanup/SKILL.md       # /cleanup [feature-name]
-    ├── spec-review/SKILL.md   # /spec-review [feature-name]
-    ├── handoff/SKILL.md       # /handoff
-    └── python-code/SKILL.md   # Python conventions (auto-loads)
+├── core/
+│   ├── instructions/AGENTS.md # Shared install instructions
+│   └── skills/                # Shared skills for all providers
+├── providers/
+│   ├── codex/                 # Codex-specific addenda and skills
+│   ├── claude/                # Claude-specific addenda and skills
+│   ├── gemini/                # Gemini-specific addenda and skills
+│   └── copilot/               # Copilot-specific addenda and skills
+└── scripts/setup-agent.sh     # Install one provider or all providers
 ```
 
 ## Setup
 
-Run the update script to sync to all supported AI CLIs:
+Install one provider or all providers:
 
 ```bash
-./update_agentspec.sh
+./scripts/setup-agent.sh
+./scripts/setup-agent.sh auto
+./scripts/setup-agent.sh codex
+./scripts/setup-agent.sh claude
+./scripts/setup-agent.sh gemini
+./scripts/setup-agent.sh copilot
+./scripts/setup-agent.sh all
 ```
+
+With no argument, the script auto-detects supported providers, asks whether to
+install all detected providers, and if you answer no, asks about each detected
+provider individually.
 
 This installs to:
 
-| CLI         | Instructions          | Skills                     |
-|-------------|-----------------------|----------------------------|
-| Claude Code | `~/.claude/CLAUDE.md` | `~/.claude/skills/` (copy) |
-| Codex CLI   | `~/.codex/AGENTS.md`  | `~/.codex/skills/` (copy)  |
-| Gemini CLI  | `~/.gemini/GEMINI.md` | `~/.gemini/skills/` (copy) |
+| CLI         | Instructions                               | Skills |
+|-------------|--------------------------------------------|--------|
+| Claude Code | shared core instructions + Claude addendum | shared + Claude-only |
+| Codex CLI   | shared core instructions + Codex addendum  | shared + Codex-only |
+| Gemini CLI  | shared core instructions + Gemini addendum | shared + Gemini-only |
+| Copilot CLI | shared core instructions + Copilot addendum | shared + Copilot-only |
 
 Re-run after updating agentspecs.
 
@@ -43,6 +55,7 @@ Re-run after updating agentspecs.
 | `/spec-review [name]` | Draft logical commit plan and draft PR docs         |
 | `/handoff`            | Capture session context before ending               |
 | `python-code`         | Python conventions (auto-loads when writing Python) |
+| `subagent-orchestrator` | Provider-specific delegation and fallback skill (Codex, Claude) |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 

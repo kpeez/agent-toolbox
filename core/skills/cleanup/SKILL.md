@@ -20,10 +20,10 @@ Review new/changed code on the branch and aggressively simplify it.
 <step action="read-context">when `<feature>` resolved, read `specs/<feature>/AGENTS.md` and `specs/<feature>/implementation.md` for intent and scope</step>
 <step action="resolve-base">determine review base with `git merge-base main HEAD`; fallback to `master` only if `main` does not exist</step>
 <step action="gather-scope">review the full current branch state against the base commit:
-    - tracked files: `git diff --name-status <base>`
-    - untracked files: `git ls-files --others --exclude-standard`
+    - tracked files: !`git diff --name-status <base>`
+    - untracked files: !`git ls-files --others --exclude-standard`
 this is the complete in-scope set</step>
-<step action="review">for tracked files, inspect `git diff <base> -- <file>` so the review includes both committed branch changes and current staged/unstaged edits; for untracked files, inspect the full file contents</step>
+<step action="review">for tracked files, inspect !`git diff <base> -- <file>` so the review includes both committed branch changes and current staged/unstaged edits; for untracked files, inspect the full file contents</step>
 <step action="simplify">apply fixes directly — rewrite, inline, delete; do not just suggest changes</step>
 <step action="verify">run lint, type checks, and tests after changes to confirm nothing broke</step>
 <step action="summarize">print a short summary of what was simplified and why</step>
@@ -65,11 +65,14 @@ Work through each category against the diff. Be aggressive — the default is to
 - Do function signatures match the project's conventions (RORO, keyword args)?
 - Is the code in the right file/module, or was it dumped somewhere convenient?
 
-### 6. Error Handling
+### 6. Error Handling & State Discipline
 
-- Is there defensive code guarding against impossible states?
-- Are there try/except blocks that catch too broadly or swallow errors silently?
-- Are there redundant None-checks or type-checks that the type system already guarantees?
+- Is there defensive code guarding against impossible states? Trust the type system.
+- Are there try/except blocks that catch too broadly or swallow errors?
+- Are there default/fallback values hiding bugs? (prefer assert over silent default)
+- Can any function's argument count be reduced? Are optional params actually always provided?
+- Are there loose object types that should be discriminated unions with exhaustive handling?
+- Could any nested if/else chain be flattened with early returns?
 
 ### 7. Over-Engineering
 
