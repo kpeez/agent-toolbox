@@ -11,3 +11,4 @@ specs
 .DS_Store
 Icon?
 Thumbs.db
+__pycache__/
