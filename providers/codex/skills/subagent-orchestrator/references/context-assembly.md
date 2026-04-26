@@ -20,6 +20,7 @@ Build a prompt with these fields:
 Goal:
 Success looks like:
 Failure looks like:
+Progress reporting:
 Return format:
 Relevant skills or domain hints:
 Files to read first:
@@ -64,6 +65,18 @@ Examples:
 
 - Five bullets, each with `risk`, `why`, and `files`.
 - Markdown sections: `Summary`, `Risks`, `Open questions`.
+
+### Progress reporting
+
+Tell the subagent how you want to observe progress while it works.
+
+Examples:
+
+- Print a short stdout update after each major step so Codex can tell the work
+  is moving.
+- Append checkpoints to `/tmp/subagent-progress.log` if the CLI and environment
+  make that practical.
+- If the task is short, say that no intermediate progress updates are needed.
 
 ### Relevant skills or domain hints
 
@@ -111,6 +124,9 @@ Return the top 5 material risks, each with a file path, why it matters, and what
 Failure looks like:
 Generic repo summary, style nits, or risks without file references.
 
+Progress reporting:
+Print a brief stdout update after reading repo instructions and after finishing the ranked risk list.
+
 Return format:
 Markdown with sections: Summary, Top Risks, Follow-up Files.
 
@@ -144,6 +160,9 @@ Call out link, frontmatter, template, or base-view risks with concrete note path
 
 Failure looks like:
 Generic markdown advice that ignores Obsidian-specific behavior.
+
+Progress reporting:
+Append note-path checkpoints to `/tmp/subagent-progress.log` or print equivalent stdout updates if file logging is awkward.
 
 Return format:
 Bullet list of risks plus a short verdict.

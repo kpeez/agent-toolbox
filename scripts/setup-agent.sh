@@ -13,6 +13,53 @@ log() { echo -e "${GREEN}✓${NC} $1"; }
 header() { echo -e "${BOLD}${CYAN}$1${NC}"; }
 field() { printf "  %-13s %s\n" "$1" "$2"; }
 
+skill_count() {
+    local skill_root="$1"
+    local kind="${2:-all}"
+
+    if [[ ! -d "$skill_root" ]]; then
+        printf "0"
+        return
+    fi
+
+    case "$kind" in
+        default)
+            find "$skill_root" -mindepth 2 -maxdepth 2 -name SKILL.md \
+                ! -path "$skill_root/llm-wiki-*/SKILL.md" | wc -l | tr -d ' '
+            ;;
+        llm-wiki)
+            find "$skill_root" -mindepth 2 -maxdepth 2 -name SKILL.md \
+                -path "$skill_root/llm-wiki-*/SKILL.md" | wc -l | tr -d ' '
+            ;;
+        all)
+            find "$skill_root" -mindepth 2 -maxdepth 2 -name SKILL.md | wc -l | tr -d ' '
+            ;;
+        *)
+            echo "Error: unknown skill count kind $kind"
+            exit 1
+            ;;
+    esac
+}
+
+copy_core_skills() {
+    local skills_dir="$1"
+    local include_llm_wiki="$2"
+    local skill_dir=""
+    local skill_name=""
+
+    for skill_dir in "$ROOT_DIR"/core/skills/*; do
+        [[ -d "$skill_dir" ]] || continue
+        [[ -f "$skill_dir/SKILL.md" ]] || continue
+
+        skill_name="$(basename "$skill_dir")"
+        if [[ "$skill_name" == llm-wiki-* ]] && [[ "$include_llm_wiki" != "yes" ]]; then
+            continue
+        fi
+
+        cp -R "$skill_dir" "$skills_dir/"
+    done
+}
+
 usage() {
     cat <<'EOF'
 Usage: ./scripts/setup-agent.sh [codex|claude|gemini|copilot|all|auto]
@@ -41,6 +88,7 @@ fi
 
 install_provider() {
     local provider="$1"
+    local include_llm_wiki="$2"
     local home_dir=""
     local instruction_name=""
 
@@ -71,22 +119,30 @@ install_provider() {
     local instruction_path="$home_dir/$instruction_name"
     local skills_dir="$home_dir/skills"
     local provider_skills_dir="$provider_dir/skills"
-    local provider_skill_note="shared only"
+    local shared_skill_count=""
+    local provider_skill_count=""
+    local skill_note=""
 
     if [[ ! -f "$provider_dir/instructions.md" ]]; then
         echo "Error: missing provider instructions at $provider_dir/instructions.md"
         exit 1
     fi
 
-    if [[ -d "$provider_skills_dir" ]] && [[ -n "$(find "$provider_skills_dir" -mindepth 1 -maxdepth 1 2>/dev/null)" ]]; then
-        provider_skill_note="shared + provider-specific"
+    shared_skill_count="$(skill_count "$ROOT_DIR/core/skills" default)"
+    provider_skill_count="$(skill_count "$provider_skills_dir")"
+    skill_note="$shared_skill_count shared"
+    if [[ "$include_llm_wiki" == "yes" ]]; then
+        skill_note="$skill_note + $(skill_count "$ROOT_DIR/core/skills" llm-wiki) llm-wiki"
+    fi
+    if [[ "$provider_skill_count" != "0" ]]; then
+        skill_note="$skill_note + $provider_skill_count provider-specific"
     fi
 
     header "Agent Setup"
     field "Provider:" "$provider"
     field "Destination:" "$home_dir"
     field "Instructions:" "$instruction_name"
-    field "Skills:" "$provider_skill_note"
+    field "Skills:" "$skill_note"
     mkdir -p "$home_dir"
 
     cat \
@@ -98,12 +154,15 @@ install_provider() {
 
     rm -rf "$skills_dir"
     mkdir -p "$skills_dir"
-    cp -R "$ROOT_DIR/core/skills/." "$skills_dir/"
-    log "Copied shared skills to $skills_dir"
+    copy_core_skills "$skills_dir" "$include_llm_wiki"
+    log "Copied $shared_skill_count shared skills to $skills_dir"
+    if [[ "$include_llm_wiki" == "yes" ]]; then
+        log "Copied $(skill_count "$ROOT_DIR/core/skills" llm-wiki) llm-wiki skills to $skills_dir"
+    fi
 
-    if [[ -d "$provider_skills_dir" ]] && [[ -n "$(find "$provider_skills_dir" -mindepth 1 -maxdepth 1 2>/dev/null)" ]]; then
+    if [[ "$provider_skill_count" != "0" ]]; then
         cp -R "$provider_skills_dir/." "$skills_dir/"
-        log "Copied provider-specific skills to $skills_dir"
+        log "Copied $provider_skill_count provider-specific skills to $skills_dir"
     fi
 
     field "Ready:" "$provider"
@@ -159,8 +218,22 @@ is_yes() {
     [[ "$answer" == "y" || "$answer" == "yes" ]]
 }
 
+ask_include_llm_wiki() {
+    local answer
+
+    answer="$(read_answer "Install optional llm-wiki skills? [y/N] " "n")"
+    echo >&2
+    if is_yes "$answer"; then
+        printf "yes"
+        return
+    fi
+
+    printf "no"
+}
+
 run_auto_mode() {
     local detected=()
+    local selected=()
     local provider=""
 
     for provider in codex claude gemini copilot; do
@@ -184,8 +257,10 @@ run_auto_mode() {
     answer="$(read_answer "Install all detected providers? [Y/n] " "y")"
     echo >&2
     if is_yes "$answer"; then
+        local include_llm_wiki
+        include_llm_wiki="$(ask_include_llm_wiki)"
         for provider in "${detected[@]}"; do
-            install_provider "$provider"
+            install_provider "$provider" "$include_llm_wiki"
         done
         return
     fi
@@ -194,20 +269,32 @@ run_auto_mode() {
         answer="$(read_answer "Install $provider? [y/N] " "n")"
         echo >&2
         if is_yes "$answer"; then
-            install_provider "$provider"
+            selected+=("$provider")
         fi
+    done
+
+    if [[ ${#selected[@]} -eq 0 ]]; then
+        return
+    fi
+
+    local include_llm_wiki
+    include_llm_wiki="$(ask_include_llm_wiki)"
+    for provider in "${selected[@]}"; do
+        install_provider "$provider" "$include_llm_wiki"
     done
 }
 
 case "$TARGET" in
     codex|claude|gemini|copilot)
-        install_provider "$TARGET"
+        INCLUDE_LLM_WIKI="$(ask_include_llm_wiki)"
+        install_provider "$TARGET" "$INCLUDE_LLM_WIKI"
         ;;
     all)
-        install_provider codex
-        install_provider claude
-        install_provider gemini
-        install_provider copilot
+        INCLUDE_LLM_WIKI="$(ask_include_llm_wiki)"
+        install_provider codex "$INCLUDE_LLM_WIKI"
+        install_provider claude "$INCLUDE_LLM_WIKI"
+        install_provider gemini "$INCLUDE_LLM_WIKI"
+        install_provider copilot "$INCLUDE_LLM_WIKI"
         ;;
     auto)
         run_auto_mode

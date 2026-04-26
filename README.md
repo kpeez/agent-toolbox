@@ -35,6 +35,9 @@ With no argument, the script auto-detects supported providers, asks whether to
 install all detected providers, and if you answer no, asks about each detected
 provider individually.
 
+The installer also asks whether to install optional `llm-wiki-*` skills. These
+skills are tracked in `core/skills/`, but they are not installed by default.
+
 This installs to:
 
 | CLI         | Instructions                               | Skills |
