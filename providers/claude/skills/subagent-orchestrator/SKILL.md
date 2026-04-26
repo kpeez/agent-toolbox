@@ -71,6 +71,7 @@ into a delegation packet that states:
 - the goal of the task
 - what success looks like
 - what failure looks like
+- how the subagent should report progress while it works
 - the exact output shape you want back
 - which relevant skills the subagent should use
 - which files or directories to read first
@@ -83,6 +84,8 @@ At minimum, enrich the prompt with:
 - task goal: why Claude is delegating this
 - success criteria: what would make the answer useful
 - failure criteria: what would make the answer unusable
+- progress reporting: how the subagent should expose progress during longer work,
+  for example stdout checkpoints or a `/tmp` log file if the CLI supports it
 - domain hints: repo type, framework, vault, spec workflow, or review stance
 - relevant skills: for example, use Obsidian-related skills if the repo is an
   Obsidian vault
@@ -169,6 +172,8 @@ that materially improves the result.
 
 - Always mention the task goal explicitly.
 - Always define what success looks like and what failure looks like.
+- Always tell the subagent how to report progress during longer work. Prefer a
+  simple mechanism such as periodic stdout updates or a `/tmp` log file.
 - Name the relevant skills the subagent should use when the repo has a known
   domain. Example: use obsidian-related skills when working in an Obsidian
   vault.
@@ -198,6 +203,7 @@ Use a shape like this:
 Goal:
 Success looks like:
 Failure looks like:
+Progress reporting:
 Return format:
 Relevant skills or domain hints:
 Files to read first:
