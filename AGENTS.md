@@ -18,6 +18,32 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
 
 "Done" means "ran it." Example failures = spec failures.
 
+## Workflow Permissions
+
+- Use auto-approval execution by default for normal implementation, lint,
+  typecheck, test, and documentation work.
+- Keep filesystem access bounded to the workspace and provider-approved writable
+  roots when the provider supports it.
+- Permission-gate or deny destructive command families that can destroy
+  pre-existing work: `rm`, `rmdir`, `git clean`, `git reset --hard`, recursive
+  `chmod`/`chown`, `rsync --delete`, `sudo`, `dd`, and disk erase commands.
+- Clean up files or folders created during the current session when they are no
+  longer needed. Generated caches created by the current session, such as
+  `__pycache__/`, `.pytest_cache/`, and tool cache folders, may be removed as
+  routine cleanup.
+- Avoid verification commands that create Python bytecode caches unless the
+  cache files are the thing being tested. Prefer `PYTHONDONTWRITEBYTECODE=1`
+  for ad hoc Python checks.
+- Apply this permission model consistently across Claude Code, Codex CLI,
+  Gemini CLI, and GitHub Copilot CLI installations.
+
+## Authorship
+
+- Never add agent attribution to commits or PRs. Do not add `Co-authored-by`,
+  `Signed-off-by`, `Generated with`, AI tool signatures, agent names, or agent
+  entries in contributors lists. Commit and PR authorship belongs only to the
+  human user.
+
 ## Code rules
 
 ### Think first
