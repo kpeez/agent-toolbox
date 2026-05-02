@@ -60,6 +60,21 @@ copy_core_skills() {
     done
 }
 
+apply_auto_approval_config() {
+    local provider="$1"
+
+    if ! command -v python3 >/dev/null 2>&1; then
+        echo "Error: python3 is required to merge provider permission config"
+        exit 1
+    fi
+
+    python3 "$ROOT_DIR/scripts/apply-auto-approval-configs.py" \
+        --provider "$provider" \
+        --home-dir "$HOME" \
+        --root-dir "$ROOT_DIR" \
+        >/dev/null
+}
+
 usage() {
     cat <<'EOF'
 Usage: ./scripts/setup-agent.sh [codex|claude|gemini|copilot|all|auto]
@@ -164,6 +179,9 @@ install_provider() {
         cp -R "$provider_skills_dir/." "$skills_dir/"
         log "Copied $provider_skill_count provider-specific skills to $skills_dir"
     fi
+
+    apply_auto_approval_config "$provider"
+    log "Applied auto-approval permissions for $provider"
 
     field "Ready:" "$provider"
     echo
