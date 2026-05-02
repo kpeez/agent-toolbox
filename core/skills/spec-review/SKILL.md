@@ -11,6 +11,10 @@ description: Review branch changes and draft commit and PR plans. Use when the u
 
 Review branch changes and generate commit + PR planning docs.
 
+Never add agent attribution to generated commit or PR material. Do not include
+`Co-authored-by`, `Signed-off-by`, `Generated with`, AI tool signatures, agent
+names, or agent entries in contributors lists.
+
 <steps>
 <step action="resolve-feature">if argument provided, use it as `<feature>`; otherwise, if `specs/` exists, pick the feature whose `specs/<feature>/implementation.md` was modified most recently</step>
 <step action="resolve-output">if `<feature>` is resolved, write outputs to `specs/<feature>/`; otherwise write to repo root</step>
