@@ -19,6 +19,8 @@ agentspecs/
 
 ## Setup
 
+Requires Bash and Python 3.
+
 Install one provider or all providers:
 
 ```bash
@@ -37,17 +39,59 @@ provider individually.
 
 The installer also asks whether to install optional `llm-wiki-*` skills. These
 skills are tracked in `core/skills/`, but they are not installed by default.
+Provider permission config is merged with existing settings, and changed
+provider files are backed up with an `.agentspec-backup-*` suffix.
 
 This installs to:
 
-| CLI         | Instructions                               | Skills |
-|-------------|--------------------------------------------|--------|
-| Claude Code | shared core instructions + Claude addendum | shared + Claude-only |
-| Codex CLI   | shared core instructions + Codex addendum  | shared + Codex-only |
-| Gemini CLI  | shared core instructions + Gemini addendum | shared + Gemini-only |
-| Copilot CLI | shared core instructions + Copilot addendum | shared + Copilot-only |
+| CLI         | Instructions                                | Skills               | Auto-approval config |
+|-------------|---------------------------------------------|----------------------|------------------|
+| Claude Code | shared core instructions + Claude addendum  | shared + Claude-only | `~/.claude/settings.json` |
+| Codex CLI   | shared core instructions + Codex addendum   | shared + Codex-only  | `~/.codex/config.toml` + `~/.codex/rules/` |
+| Gemini CLI  | shared core instructions + Gemini addendum  | shared + Gemini-only | `~/.gemini/settings.json` + `~/.gemini/bin/gemini-auto` + `~/.gemini/policies/` |
+| Copilot CLI | shared core instructions + Copilot addendum | shared + Copilot-only | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto` |
 
 Re-run after updating agentspecs.
+
+## Workflow Permissions
+
+All provider installs default to each CLI's native auto-approval mode:
+
+- Run normal implementation, lint, typecheck, test, and documentation work with
+  low-friction defaults.
+- Keep filesystem access bounded when the provider exposes a native sandbox.
+- Deny destructive command families when the provider exposes native deny rules
+  that compose with auto approval: `rm`, `rmdir`, `git clean`,
+  `git reset --hard`, recursive `chmod`/`chown`, `rsync --delete`, `sudo`,
+  `dd`, and disk erase commands.
+- Never add agent attribution to commits or PRs: no `Co-authored-by`,
+  `Signed-off-by`, `Generated with`, AI tool signatures, or agent entries in
+  contributors lists.
+- Clean up files or folders created during the current session when they are no
+  longer needed. Generated caches created by the current session, such as
+  `__pycache__/`, `.pytest_cache/`, and tool cache folders, are routine cleanup.
+- Avoid verification commands that create Python bytecode caches unless the
+  cache files are the thing being tested. Prefer `PYTHONDONTWRITEBYTECODE=1`
+  for ad hoc Python checks.
+
+Provider behavior is configured during setup:
+
+- Codex uses `approval_policy = "on-request"` and
+  `sandbox_mode = "workspace-write"`, sets `commit_attribution = ""`, plus a
+  compact native `.rules` file that prompts before destructive shell prefixes.
+- Claude uses `permissions.defaultMode = "auto"`. Claude auto mode runs without
+  prompts while a classifier blocks risky actions such as force pushes,
+  production changes, and irreversible destruction of pre-existing files. Setup
+  disables Claude commit and PR attribution settings.
+- Gemini uses `general.defaultApprovalMode = "auto_edit"` for direct `gemini`
+  launches. Because yolo mode can only be enabled by command-line flag, setup
+  also installs `~/.gemini/bin/gemini-auto`, which runs
+  `gemini --approval-mode=yolo` with a native policy file prompting before
+  destructive shell prefixes.
+- Copilot installs `~/.copilot/bin/copilot-auto`, which launches Copilot with
+  native `--allow-all` plus destructive `--deny-tool` rules. GitHub documents
+  that deny rules take precedence even when `--allow-all` is set. Setup disables
+  Copilot `includeCoAuthoredBy`.
 
 ## Skills
 
