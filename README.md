@@ -104,7 +104,6 @@ Provider behavior is configured during setup:
 | `/spec-review [name]` | Draft logical commit plan and draft PR docs         |
 | `/handoff`            | Capture session context before ending               |
 | `python-code`         | Python conventions (auto-loads when writing Python) |
-| `subagent-orchestrator` | Provider-specific delegation and fallback skill (Codex, Claude) |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
