@@ -2,7 +2,8 @@
 
 - This installation targets Gemini CLI.
 - Install the shared instructions into `~/.gemini/GEMINI.md`.
-- Copy skills into `~/.gemini/skills/`.
+- Store canonical skills in `~/.agents/skills/`.
+- Mirror skills into `~/.gemini/skills/` for Gemini CLI reliability.
 - Keep Gemini-specific instructions short and layered on top of the shared
   workflow.
 - Auto-approval setup uses `auto_edit` for direct `gemini` launches and
