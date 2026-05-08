@@ -39,17 +39,19 @@ provider individually.
 
 The installer also asks whether to install optional `llm-wiki-*` skills. These
 skills are tracked in `core/skills/`, but they are not installed by default.
-Provider permission config is merged with existing settings, and changed
-provider files are backed up with an `.agentspec-backup-*` suffix.
+All installed skills are written canonically to `~/.agents/skills`. Providers
+that do not read that directory natively get copied mirrors in their own home
+directories. Provider permission config is merged with existing settings, and
+changed provider files are backed up with an `.agentspec-backup-*` suffix.
 
 This installs to:
 
-| CLI         | Instructions                                | Skills                | Auto-approval config                                                            |
-| ----------- | ------------------------------------------- | --------------------- | ------------------------------------------------------------------------------- |
-| Claude Code | shared core instructions + Claude addendum  | shared + Claude-only  | `~/.claude/settings.json`                                                       |
-| Codex CLI   | shared core instructions + Codex addendum   | shared + Codex-only   | `~/.codex/config.toml` + `~/.codex/rules/`                                      |
-| Gemini CLI  | shared core instructions + Gemini addendum  | shared + Gemini-only  | `~/.gemini/settings.json` + `~/.gemini/bin/gemini-auto` + `~/.gemini/policies/` |
-| Copilot CLI | shared core instructions + Copilot addendum | shared + Copilot-only | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto`                      |
+| CLI         | Instructions                                | Skills               | Auto-approval config |
+|-------------|---------------------------------------------|----------------------|------------------|
+| Claude Code | shared core instructions + Claude addendum  | `~/.agents/skills` + `~/.claude/skills` mirror | `~/.claude/settings.json` |
+| Codex CLI   | shared core instructions + Codex addendum   | `~/.agents/skills` + `~/.codex/skills` mirror | `~/.codex/config.toml` + `~/.codex/rules/` |
+| Gemini CLI  | shared core instructions + Gemini addendum  | `~/.agents/skills` + `~/.gemini/skills` mirror | `~/.gemini/settings.json` + `~/.gemini/bin/gemini-auto` + `~/.gemini/policies/` |
+| Copilot CLI | shared core instructions + Copilot addendum | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto` |
 
 Re-run after updating agentspecs.
 
@@ -102,7 +104,6 @@ Provider behavior is configured during setup:
 | `/finish-branch [name]` | Draft logical commit plan and PR docs                           |
 | `/handoff`              | Capture session context before ending                           |
 | `python-code`           | Python conventions (auto-loads when writing Python)             |
-| `subagent-orchestrator` | Provider-specific delegation and fallback skill (Codex, Claude) |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
