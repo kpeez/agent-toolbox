@@ -7,7 +7,7 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
 ## Workflow
 
 1. Read this file and README.md
-2. Check `specs/` for feature specs — read AGENTS.md + implementation.md before working
+2. Check `specs/` for feature specs — read AGENTS.md + STATUS.md before working
 3. Inspect existing patterns before adding new ones
 4. Implement → lint → types → tests
 5. Verify: run examples and update logs, fix failures first
