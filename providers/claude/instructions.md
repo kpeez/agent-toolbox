@@ -2,8 +2,9 @@
 
 - This installation targets Claude Code.
 - Install the shared instructions into `~/.claude/CLAUDE.md`.
-- Copy skills into `~/.claude/skills/`.
-- Provider-specific Claude skills may be installed from `providers/claude/skills/`.
+- Store canonical skills in `~/.agents/skills/`.
+- Mirror skills into `~/.claude/skills/` because Claude Code reads that
+  provider-local directory.
 - Keep Claude-specific instructions short and layered on top of the shared
   workflow.
 - Auto-approval setup uses Claude `permissions.defaultMode = "auto"`.
