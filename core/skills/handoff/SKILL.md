@@ -11,7 +11,8 @@ Generate a handoff summary to ensure context continuity for the next session.
 
 1. **Identify the active feature**
    - If argument provided, use that feature: `/handoff <feature-name>`
-   - Otherwise, check `specs/` for the most recently modified implementation.md
+   - Otherwise, check `specs/` for the most recently modified STATUS.md
+   - Fall back to legacy `implementation.md` only when no `STATUS.md` exists
    - If no specs, summarize the session work generally
 
 2. **Gather session context**
@@ -19,9 +20,10 @@ Generate a handoff summary to ensure context continuity for the next session.
    - Files modified (check git status)
    - Gotchas or non-obvious context discovered
 
-3. **Update implementation.md**
+3. **Update `STATUS.md`**
    - Move completed items to Done, update Next with pending items
    - Add new context, update Phase and Blocked status
+   - For legacy specs, update `implementation.md` instead
 
 4. **Update `specs/INDEX`** — sync this spec's row (phase, blocked, desc)
 
@@ -42,4 +44,4 @@ Generate a handoff summary to ensure context continuity for the next session.
    <command or instruction to pick up where we left off>
    ```
 
-6. **Confirm** handoff is complete and implementation.md is updated
+6. **Confirm** handoff is complete and `STATUS.md` is updated

@@ -10,7 +10,8 @@ description: Create and manage feature specs with Agent-Driven Development (ADD)
 **Agent-Driven Development: describe behavior, write examples that prove it, then implement until they pass.**
 
 When this skill is active, you MUST:
-1. Write spec docs (design.md) BEFORE writing source code
+
+1. Write spec docs (`PLAN.md` and `SPEC.md`) BEFORE writing source code
 2. Write runnable example scripts BEFORE implementation
 3. Run examples to confirm they fail (red)
 4. Implement the feature
@@ -32,13 +33,13 @@ Skip specs for trivial changes — typo fixes, single-line config changes, log l
 
 ## ADD workflow
 
-1. **Describe**: What does this feature do? What are the inputs? What do the outputs look like?
-2. **Design**: Write `design.md` — approach, behavior, decisions
+1. **Plan**: Write `PLAN.md` — human intent, scope, success criteria, review gate
+2. **Specify**: Write `SPEC.md` — agent-expanded implementation design, decisions, verification mapping
 3. **Examples**: Write executable scripts in `examples/` that verify expected behavior
 4. **Red**: Run examples — they FAIL (feature doesn't exist yet)
 5. **Implement**: Write the feature code
 6. **Green**: Run examples — they PASS
-7. **Update**: Mark `implementation.md` as done, log results in `RUN_LOG.md`
+7. **Update**: Mark `STATUS.md` as done, log results in `RUN_LOG.md`
 
 ## Commands
 
@@ -51,7 +52,7 @@ Creates a feature spec directory with standard template files.
 <step action="check-exists">error if `specs/<slug>/` exists</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/`</step>
 <step action="create-files">write all templates below to `specs/<slug>/`</step>
-<step action="populate">fill AGENTS.md from conversation context (overview, key files, quick start); fill design.md with the planned approach including behavior and verification mapping; choose example script names from the behaviors being verified</step>
+<step action="populate">fill AGENTS.md from conversation context (overview, key files, quick start); fill PLAN.md with user intent, scope, non-goals, success criteria, and execution mode; fill SPEC.md with the implementation approach, behavior, decisions, risks, and verification mapping; choose example script names from the behaviors being verified</step>
 <step action="update-index">append row to `specs/INDEX` (create with header `slug\tphase\tblocked\tdesc` if missing)</step>
 </steps>
 
@@ -61,8 +62,9 @@ Creates a feature spec directory with standard template files.
 specs/<feature>/
 ├── AGENTS.md           # Spec-specific agent instructions (read first)
 ├── CLAUDE.md           # References AGENTS.md for Claude Code auto-discovery
-├── design.md           # What, how, behavior, decisions
-├── implementation.md   # Current status and progress
+├── PLAN.md             # Human-facing goal, scope, success criteria, execution mode
+├── SPEC.md             # Agent-expanded design, behavior, decisions, verification
+├── STATUS.md           # Current status and progress
 └── examples/           # Runnable verification scripts (REQUIRED)
     ├── build_pipeline.py      # Prefer behavior-specific names
     ├── basic_pipeline_run.py  # Use useful filenames, not generic placeholders
@@ -71,27 +73,53 @@ specs/<feature>/
 
 **Index**: `specs/INDEX` (TSV: slug, phase, blocked, desc) — overview of all specs.
 
-### design.md
+### PLAN.md
 
-Source of truth for the feature. Write this during the planning phase, before examples or implementation.
+Human-facing source of truth for the feature. Write this first, either directly
+from the user or collaboratively with AI. Keep it short enough to review.
 
 Contents:
 
-- **Problem** — what problem are we solving and why
+- **Goal** — what problem are we solving and why
+- **Scope** — what is included
+- **Non-goals** — what is explicitly out of scope
+- **Success criteria** — observable outcomes that define done
+- **Execution mode** — `review-gated` or `autonomous`
+- **Stop conditions** — when the agent must stop and ask
+- **Validation** — commands/examples/tests that prove the goal
+
+Use `review-gated` for normal collaboration: the user reviews `SPEC.md` before
+implementation. Use `autonomous` for `/goal`, ralph-loop, or similar workflows:
+the agent may proceed after writing `SPEC.md`, but must keep `STATUS.md`,
+examples, and run logs current.
+
+### SPEC.md
+
+Agent-expanded implementation design. Write this after inspecting the repo and
+before examples or implementation.
+
+Contents:
+
+- **Problem** — concise restatement of the goal and constraints
 - **Approach** — architecture, key components, patterns used
-- **Behavior** — how does it work? What are the inputs? What do the outputs look like? This section directly maps to example scripts.
-- **Decisions** — non-obvious choices made. Why we chose X over Y, what alternatives were considered.
+- **Behavior** — how it works; inputs, outputs, state changes, failure modes
+- **Decision log** — non-obvious choices, rationale, alternatives considered
+- **Risks** — things that could break or need careful verification
 - **Verification** — maps each example script to the behavior it verifies
 
-### implementation.md
+Do not create ADR files by default. Add `ADR-0001-<topic>.md` only when a
+decision is durable beyond this feature, such as architecture, provider policy,
+storage model, security posture, or major framework choice.
+
+### STATUS.md
 
 Tracks progress. Updated throughout the lifecycle.
 
 ```
-# <Title> - Implementation
+# <Title> - Status
 
 ## Status
-- **Phase**: design | examples | implementing | verifying | done
+- **Phase**: plan | spec | examples | implementing | verifying | done
 - **Blocked**: no | yes (reason)
 
 ## Done
@@ -146,40 +174,79 @@ Read this file first when working on this feature.
 @AGENTS.md
 </template>
 
-<template file="design.md">
-# <Title> - Design
+<template file="PLAN.md">
+# <Title> - Plan
+
+## Goal
+
+<!-- what problem are we solving and why -->
+
+## Scope
+
+<!-- what is included -->
+
+## Non-goals
+
+<!-- what is explicitly out of scope -->
+
+## Success Criteria
+
+<!-- observable outcomes that define done -->
+
+## Execution Mode
+
+- **Mode**: review-gated
+- **Stop and ask before**: destructive commands, production/shared infrastructure changes, credentials, broad rewrites, or scope changes
+
+## Validation
+
+<!-- commands/examples/tests that prove the goal -->
+</template>
+
+<template file="SPEC.md">
+# <Title> - Spec
 
 ## Problem
+
 <!-- what problem are we solving and why -->
 
 ## Approach
+
 <!-- architecture, key components, patterns used -->
 
 ## Behavior
+
 <!-- how does it work? inputs? outputs? this maps to example scripts -->
 
 ## Decisions
+
 <!-- non-obvious choices: what we chose, why, what alternatives were considered -->
 
+## Risks
+
+<!-- what could break or needs careful verification -->
+
 ## Verification
+
 <!-- maps example scripts to behaviors they verify -->
 <!-- - `build_pipeline.py` -> proves the pipeline can be assembled -->
 <!-- - `basic_pipeline_run.py` -> proves the happy-path execution works -->
 </template>
 
-<template file="implementation.md">
-# <Title> - Implementation
+<template file="STATUS.md">
+# <Title> - Status
 
 ## Status
 
-- **Phase**: design
+- **Phase**: plan
 - **Blocked**: no
 
 ## Done
 
 ## Next
 
-- [ ] Write design.md (approach + behavior)
+- [ ] Write PLAN.md (goal, scope, success criteria, execution mode)
+- [ ] Write SPEC.md (approach, behavior, decisions, verification mapping)
 - [ ] Write example scripts
 - [ ] Run examples (red — confirm they fail)
 - [ ] Implement the feature
@@ -200,9 +267,13 @@ Read this file first when working on this feature.
 
 When picking up an existing spec:
 
-1. Read `specs/<feature>/AGENTS.md` and `implementation.md`
+1. Read `specs/<feature>/AGENTS.md` and `STATUS.md`
 2. Check the Phase and Blocked status
-3. Review `design.md` if you need architectural context
+3. Review `PLAN.md` for intent and `SPEC.md` for implementation context
 4. Run any existing examples to see current state
-5. Pick up from the Next items in `implementation.md`
-6. Update `implementation.md` as you work
+5. Pick up from the Next items in `STATUS.md`
+6. Update `STATUS.md` as you work
+
+For older specs, accept `implementation.md` as a legacy status file and
+`design.md` as a legacy design file. Do not rename old specs unless the user
+asks for a migration.

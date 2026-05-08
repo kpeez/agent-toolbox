@@ -1,6 +1,6 @@
 ---
 name: cleanup
-description: Aggressively simplify and clean up new code after implementation. Use after finishing a feature and before /spec-review to reduce verbosity, remove unnecessary complexity, and tighten the diff.
+description: Aggressively simplify and clean up new code after implementation. Use after finishing a feature and before /finish-branch to reduce verbosity, remove unnecessary complexity, and tighten the diff.
 ---
 
 # /cleanup - Post-Implementation Code Cleanup
@@ -16,8 +16,8 @@ description: Aggressively simplify and clean up new code after implementation. U
 Review new/changed code on the branch and aggressively simplify it.
 
 <steps>
-<step action="resolve-feature">if argument provided, use it as `<feature>`; otherwise, if `specs/` exists, pick the feature whose `specs/<feature>/implementation.md` was modified most recently</step>
-<step action="read-context">when `<feature>` resolved, read `specs/<feature>/AGENTS.md` and `specs/<feature>/implementation.md` for intent and scope</step>
+<step action="resolve-feature">if argument provided, use it as `<feature>`; otherwise, if `specs/` exists, pick the feature whose `specs/<feature>/STATUS.md` was modified most recently; fall back to legacy `implementation.md` only when no `STATUS.md` exists</step>
+<step action="read-context">when `<feature>` resolved, read `specs/<feature>/AGENTS.md`, `specs/<feature>/PLAN.md`, `specs/<feature>/SPEC.md`, and `specs/<feature>/STATUS.md` for intent and scope; for legacy specs, accept `design.md` and `implementation.md` instead</step>
 <step action="resolve-base">determine review base with `git merge-base main HEAD`; fallback to `master` only if `main` does not exist</step>
 <step action="gather-scope">review the full current branch state against the base commit:
     - tracked files: !`git diff --name-status <base>`
