@@ -3,6 +3,7 @@ set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ROOT_DIR="$(cd "$SCRIPT_DIR/.." && pwd)"
+CANONICAL_SKILLS_DIR="$HOME/.agents/skills"
 
 GREEN='\033[0;32m'
 CYAN='\033[0;36m'
@@ -60,6 +61,12 @@ copy_core_skills() {
     done
 }
 
+provider_uses_canonical_skills() {
+    local provider="$1"
+
+    [[ "$provider" == "copilot" ]]
+}
+
 apply_auto_approval_config() {
     local provider="$1"
 
@@ -79,8 +86,10 @@ usage() {
     cat <<'EOF'
 Usage: ./scripts/setup-agent.sh [codex|claude|gemini|copilot|all|auto]
 
-Installs shared core assets plus provider-specific overlays into the selected
-agent home directory. With no argument, auto-detect installed providers.
+Installs shared instructions and skills for the selected agent. Skills are
+installed canonically into ~/.agents/skills and mirrored only for providers that
+require provider-local skill directories. With no argument, auto-detect
+installed providers.
 EOF
 }
 
@@ -133,10 +142,9 @@ install_provider() {
     local provider_dir="$ROOT_DIR/providers/$provider"
     local instruction_path="$home_dir/$instruction_name"
     local skills_dir="$home_dir/skills"
-    local provider_skills_dir="$provider_dir/skills"
     local shared_skill_count=""
-    local provider_skill_count=""
     local skill_note=""
+    local skill_destination=""
 
     if [[ ! -f "$provider_dir/instructions.md" ]]; then
         echo "Error: missing provider instructions at $provider_dir/instructions.md"
@@ -144,13 +152,14 @@ install_provider() {
     fi
 
     shared_skill_count="$(skill_count "$ROOT_DIR/core/skills" default)"
-    provider_skill_count="$(skill_count "$provider_skills_dir")"
     skill_note="$shared_skill_count shared"
     if [[ "$include_llm_wiki" == "yes" ]]; then
         skill_note="$skill_note + $(skill_count "$ROOT_DIR/core/skills" llm-wiki) llm-wiki"
     fi
-    if [[ "$provider_skill_count" != "0" ]]; then
-        skill_note="$skill_note + $provider_skill_count provider-specific"
+    if provider_uses_canonical_skills "$provider"; then
+        skill_destination="$CANONICAL_SKILLS_DIR"
+    else
+        skill_destination="$CANONICAL_SKILLS_DIR + $skills_dir mirror"
     fi
 
     header "Agent Setup"
@@ -158,6 +167,7 @@ install_provider() {
     field "Destination:" "$home_dir"
     field "Instructions:" "$instruction_name"
     field "Skills:" "$skill_note"
+    field "Skill path:" "$skill_destination"
     mkdir -p "$home_dir"
 
     cat \
@@ -167,17 +177,24 @@ install_provider() {
         > "$instruction_path"
     log "Wrote $instruction_path"
 
-    rm -rf "$skills_dir"
-    mkdir -p "$skills_dir"
-    copy_core_skills "$skills_dir" "$include_llm_wiki"
-    log "Copied $shared_skill_count shared skills to $skills_dir"
+    rm -rf "$CANONICAL_SKILLS_DIR"
+    mkdir -p "$CANONICAL_SKILLS_DIR"
+    copy_core_skills "$CANONICAL_SKILLS_DIR" "$include_llm_wiki"
+    log "Copied $shared_skill_count shared skills to $CANONICAL_SKILLS_DIR"
     if [[ "$include_llm_wiki" == "yes" ]]; then
-        log "Copied $(skill_count "$ROOT_DIR/core/skills" llm-wiki) llm-wiki skills to $skills_dir"
+        log "Copied $(skill_count "$ROOT_DIR/core/skills" llm-wiki) llm-wiki skills to $CANONICAL_SKILLS_DIR"
     fi
 
-    if [[ "$provider_skill_count" != "0" ]]; then
-        cp -R "$provider_skills_dir/." "$skills_dir/"
-        log "Copied $provider_skill_count provider-specific skills to $skills_dir"
+    if provider_uses_canonical_skills "$provider"; then
+        if [[ -d "$skills_dir" ]]; then
+            rm -rf "$skills_dir"
+            log "Removed provider-local skills mirror at $skills_dir"
+        fi
+    else
+        rm -rf "$skills_dir"
+        mkdir -p "$skills_dir"
+        cp -R "$CANONICAL_SKILLS_DIR/." "$skills_dir/"
+        log "Mirrored skills to $skills_dir"
     fi
 
     apply_auto_approval_config "$provider"
