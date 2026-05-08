@@ -1,15 +1,18 @@
 ---
-name: spec-review
-description: Review branch changes and draft commit and PR plans. Use when the user asks to split work into logical commits, write conventional commit messages, or generate `commits.md` and `draft-pr.md` for a spec.
+name: ship
+description: Prepare finished branch work for shipping by reviewing scope, grouping logical commits, and drafting PR material. Use when the user asks to split work into commits, write conventional commit messages, create a PR draft, or close out a spec for review/merge.
 ---
 
-# /spec-review - Commit and PR Drafting
+# /ship - Branch Closeout
 
 ## Command
 
-### /spec-review [feature-name]
+### /ship [feature-name]
 
-Review branch changes and generate commit + PR planning docs.
+Prepare branch changes for shipping by generating commit + PR planning docs.
+This is not a substitute for a native agent `/review` or hosted PR review. Use
+those for bug-finding and regressions; use `/ship` for packaging, commit
+boundaries, PR narrative, and verification summary.
 
 Never add agent attribution to generated commit or PR material. Do not include
 `Co-authored-by`, `Signed-off-by`, `Generated with`, AI tool signatures, agent

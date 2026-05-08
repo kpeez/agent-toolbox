@@ -99,7 +99,7 @@ Provider behavior is configured during setup:
 |-----------------------|-----------------------------------------------------|
 | `/spec new <name>`    | Create a new feature spec                           |
 | `/cleanup [name]`     | Aggressively simplify new code after implementation |
-| `/spec-review [name]` | Draft logical commit plan and draft PR docs         |
+| `/ship [name]`        | Draft logical commit plan and PR docs               |
 | `/handoff`            | Capture session context before ending               |
 | `python-code`         | Python conventions (auto-loads when writing Python) |
 | `subagent-orchestrator` | Provider-specific delegation and fallback skill (Codex, Claude) |
@@ -112,14 +112,16 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 graph LR
   A["/spec new"] --> B["implement"]
   B --> C["/cleanup"]
-  C --> D["/spec-review"]
-  D --> E["/handoff"]
+  C --> D["/review"]
+  D --> E["/ship"]
+  E --> F["/handoff"]
 
 style A fill:#2d333b,stroke:#768390,color:#adbac7
 style B fill:#2d333b,stroke:#768390,color:#adbac7
 style C fill:#2d333b,stroke:#768390,color:#adbac7
 style D fill:#2d333b,stroke:#768390,color:#adbac7
 style E fill:#2d333b,stroke:#768390,color:#adbac7
+style F fill:#2d333b,stroke:#768390,color:#adbac7
 ```
 
 | Phase          | What happens                                                                                      |
@@ -127,10 +129,13 @@ style E fill:#2d333b,stroke:#768390,color:#adbac7
 | `/spec new`    | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent. |
 | **implement**  | Write the code. Update `STATUS.md` as you go (done/next/context).                                 |
 | `/cleanup`     | Review the diff and aggressively simplify. Inline, delete, rewrite anything overcomplicated.      |
-| `/spec-review` | Group clean changes into logical commits. Generate `commits.md` and `draft-pr.md`.                |
+| `/review`      | Use the provider's native code review flow for bugs, regressions, security, and edge cases.       |
+| `/ship`        | Group clean changes into logical commits. Generate `commits.md` and `draft-pr.md`.                |
 | `/handoff`     | Capture session state — what's done, what's next, critical context for the next agent or session. |
 
-Not every session hits every phase. `/cleanup` and `/spec-review` are most useful before committing final changes. `/handoff` is for any session boundary.
+Not every session hits every phase. `/cleanup`, native `/review`, and `/ship`
+are most useful before committing final changes. `/handoff` is for any session
+boundary.
 
 ## Specs Setup
 
