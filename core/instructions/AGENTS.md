@@ -8,7 +8,7 @@ subdirectories.
 ## Workflow
 
 1. Read this file and README.md
-2. Check `specs/` for feature specs — read AGENTS.md + implementation.md before
+2. Check `specs/` for feature specs — read AGENTS.md + STATUS.md before
    working
 3. Inspect existing patterns before adding new ones
 4. Implement → lint → types → tests
