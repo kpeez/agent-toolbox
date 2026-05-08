@@ -3,15 +3,15 @@ name: ship
 description: Prepare finished branch work for shipping by reviewing scope, grouping logical commits, and drafting PR material. Use when the user asks to split work into commits, write conventional commit messages, create a PR draft, or close out a spec for review/merge.
 ---
 
-# /ship - Branch Closeout
+# /finish-branch - Branch Closeout
 
 ## Command
 
-### /ship [feature-name]
+### /finish-branch [feature-name]
 
 Prepare branch changes for shipping by generating commit + PR planning docs.
 This is not a substitute for a native agent `/review` or hosted PR review. Use
-those for bug-finding and regressions; use `/ship` for packaging, commit
+those for bug-finding and regressions; use `/finish-branch` for packaging, commit
 boundaries, PR narrative, and verification summary.
 
 Never add agent attribution to generated commit or PR material. Do not include
