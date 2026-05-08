@@ -35,7 +35,7 @@ Auto-write sandbox for implementation work:
 
 ```bash
 codex exec \
-  "Implement the changes described in specs/feature/design.md." \
+  "Implement the changes described in specs/feature/PLAN.md and specs/feature/SPEC.md." \
   -m gpt-5.4-med \
   --full-auto
 ```

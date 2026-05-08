@@ -16,9 +16,9 @@ Never add agent attribution to generated commit or PR material. Do not include
 names, or agent entries in contributors lists.
 
 <steps>
-<step action="resolve-feature">if argument provided, use it as `<feature>`; otherwise, if `specs/` exists, pick the feature whose `specs/<feature>/implementation.md` was modified most recently</step>
+<step action="resolve-feature">if argument provided, use it as `<feature>`; otherwise, if `specs/` exists, pick the feature whose `specs/<feature>/STATUS.md` was modified most recently; fall back to legacy `implementation.md` only when no `STATUS.md` exists</step>
 <step action="resolve-output">if `<feature>` is resolved, write outputs to `specs/<feature>/`; otherwise write to repo root</step>
-<step action="validate-context">when writing to `specs/<feature>/`, error if that directory does not exist; read `AGENTS.md` plus `specs/<feature>/AGENTS.md` and `specs/<feature>/implementation.md` first</step>
+<step action="validate-context">when writing to `specs/<feature>/`, error if that directory does not exist; read `AGENTS.md` plus `specs/<feature>/AGENTS.md`, `specs/<feature>/PLAN.md`, `specs/<feature>/SPEC.md`, and `specs/<feature>/STATUS.md` first; for legacy specs, accept `design.md` and `implementation.md` instead</step>
 <step action="resolve-base">determine review base with `git merge-base main HEAD`; fallback to `master` only if `main` does not exist</step>
 <step action="review-diff">review the entire current branch state against the base commit:
 - tracked files from `git diff --name-status <base>`

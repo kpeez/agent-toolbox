@@ -97,7 +97,9 @@ Good candidates:
 - `AGENTS.md`
 - `README.md`
 - `specs/<feature>/AGENTS.md`
-- `specs/<feature>/design.md`
+- `specs/<feature>/PLAN.md`
+- `specs/<feature>/SPEC.md`
+- `specs/<feature>/STATUS.md`
 - the specific source files that define the behavior under review
 
 ### Attached context
@@ -137,7 +139,9 @@ Files to read first:
 - AGENTS.md
 - README.md
 - specs/current-feature/AGENTS.md
-- specs/current-feature/design.md
+- specs/current-feature/PLAN.md
+- specs/current-feature/SPEC.md
+- specs/current-feature/STATUS.md
 - src/auth.py
 - src/session.py
 
