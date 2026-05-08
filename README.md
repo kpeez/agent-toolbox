@@ -97,13 +97,13 @@ Provider behavior is configured during setup:
 
 ## Skills
 
-| Skill                 | Purpose                                             |
-|-----------------------|-----------------------------------------------------|
-| `/spec new <name>`    | Create a new feature spec                           |
-| `/cleanup [name]`     | Aggressively simplify new code after implementation |
-| `/spec-review [name]` | Draft logical commit plan and draft PR docs         |
-| `/handoff`            | Capture session context before ending               |
-| `python-code`         | Python conventions (auto-loads when writing Python) |
+| Skill                   | Purpose                                                         |
+| ----------------------- | --------------------------------------------------------------- |
+| `/spec new <name>`      | Create a new feature spec                                       |
+| `/cleanup [name]`       | Aggressively simplify new code after implementation             |
+| `/finish-branch [name]` | Draft logical commit plan and PR docs                           |
+| `/handoff`              | Capture session context before ending                           |
+| `python-code`           | Python conventions (auto-loads when writing Python)             |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
@@ -113,25 +113,30 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 graph LR
   A["/spec new"] --> B["implement"]
   B --> C["/cleanup"]
-  C --> D["/spec-review"]
-  D --> E["/handoff"]
+  C --> D["/review"]
+  D --> E["/finish-branch"]
+  E --> F["/handoff"]
 
 style A fill:#2d333b,stroke:#768390,color:#adbac7
 style B fill:#2d333b,stroke:#768390,color:#adbac7
 style C fill:#2d333b,stroke:#768390,color:#adbac7
 style D fill:#2d333b,stroke:#768390,color:#adbac7
 style E fill:#2d333b,stroke:#768390,color:#adbac7
+style F fill:#2d333b,stroke:#768390,color:#adbac7
 ```
 
-| Phase          | What happens                                                                                      |
-|----------------|---------------------------------------------------------------------------------------------------|
-| `/spec new`    | Create the feature spec — design doc, implementation ledger, decisions log. Establishes intent.   |
-| **implement**  | Write the code. Update `implementation.md` as you go (done/next/context).                         |
-| `/cleanup`     | Review the diff and aggressively simplify. Inline, delete, rewrite anything overcomplicated.      |
-| `/spec-review` | Group clean changes into logical commits. Generate `commits.md` and `draft-pr.md`.                |
-| `/handoff`     | Capture session state — what's done, what's next, critical context for the next agent or session. |
+| Phase            | What happens                                                                                      |
+| ---------------- | ------------------------------------------------------------------------------------------------- |
+| `/spec new`      | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent. |
+| **implement**    | Write the code. Update `STATUS.md` as you go (done/next/context).                                 |
+| `/cleanup`       | Review the diff and aggressively simplify. Inline, delete, rewrite anything overcomplicated.      |
+| `/review`        | Use the provider's native code review flow for bugs, regressions, security, and edge cases.       |
+| `/finish-branch` | Group clean changes into logical commits. Generate `commits.md` and `draft-pr.md`.                |
+| `/handoff`       | Capture session state — what's done, what's next, critical context for the next agent or session. |
 
-Not every session hits every phase. `/cleanup` and `/spec-review` are most useful before committing final changes. `/handoff` is for any session boundary.
+Not every session hits every phase. `/cleanup`, native `/review`, and `/finish-branch`
+are most useful before committing final changes. `/handoff` is for any session
+boundary.
 
 ## Specs Setup
 
@@ -162,28 +167,36 @@ Each spec lives in `specs/<feature>/` with these files (created by `/spec new`):
 specs/<feature>/
 ├── AGENTS.md           # Spec-specific instructions (read first)
 ├── CLAUDE.md           # contains @AGENTS.md to point Claude to AGENTS.md
-├── design.md           # Technical approach, architecture
-├── implementation.md   # Current status, done/next items
-├── decisions.md        # Non-obvious choices and rationale
-└── future-work.md      # Deferred ideas
+├── PLAN.md             # Human-facing goal, scope, success criteria, execution mode
+├── SPEC.md             # Agent-expanded design, behavior, decisions, verification
+├── STATUS.md           # Current status, done/next items
+└── examples/           # Runnable verification scripts and RUN_LOG.md
 ```
+
+`PLAN.md` is the user-reviewed contract for the work: goal, scope, non-goals,
+success criteria, validation, and whether implementation is review-gated or
+autonomous. `SPEC.md` is the agent-expanded implementation design after repo
+inspection. It includes the approach, behavior, decision log, risks, and
+verification mapping. Use a separate ADR file only for decisions that outlive a
+single feature, such as architecture, provider policy, storage model, security
+posture, or a major framework choice.
 
 **`specs/INDEX`** (TSV) provides an at-a-glance overview of all specs:
 
 ```text
 slug phase blocked desc
 user-auth implementing no JWT auth flow
-api-v2 design yes:schema pending REST to GraphQL
+api-v2 plan yes:schema pending REST to GraphQL
 ```
 
 Managed automatically by `/spec new` (adds row) and `/handoff` (updates row).
 
-The core of context continuity is `implementation.md`:
+The core of context continuity is `STATUS.md`:
 
 ```markdown
 ## Status
 
-- **Phase**: design | implementing | testing | done
+- **Phase**: plan | spec | examples | implementing | verifying | done
 - **Blocked**: no | yes (reason)
 
 ## Done
