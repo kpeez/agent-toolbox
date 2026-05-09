@@ -25,9 +25,7 @@ Generate a handoff summary to ensure context continuity for the next session.
    - Add new context, update Phase and Blocked status
    - For legacy specs, update `implementation.md` instead
 
-4. **Update `specs/INDEX`** — sync this spec's row (phase, blocked, desc)
-
-5. **Append to `specs/<feature>/handoff.md`**:
+4. **Append to `specs/<feature>/handoff.md`**:
    ```markdown
    ## Session: <date>
    ### Completed
@@ -44,4 +42,4 @@ Generate a handoff summary to ensure context continuity for the next session.
    <command or instruction to pick up where we left off>
    ```
 
-6. **Confirm** handoff is complete and `STATUS.md` is updated
+5. **Confirm** handoff is complete and `STATUS.md` is updated

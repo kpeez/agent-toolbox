@@ -44,6 +44,19 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
   entries in contributors lists. Commit and PR authorship belongs only to the
   human user.
 
+## GitHub Workflow
+
+- Prefer atomic PRs. A spec can produce multiple PRs; do not assume one spec
+  maps to one PR.
+- Use small, logical commits with imperative, conventional-style subjects.
+- Generate PR titles and bodies directly from PLAN.md, SPEC.md, STATUS.md,
+  linked issues, and the actual diff. Do not create `commits.md` or
+  `draft-pr.md` review artifacts.
+- Use squash merge by default. Do not create merge commits unless the user
+  explicitly asks for one.
+- After a PR merges, update the relevant STATUS.md with PR number, merge or
+  squash commit SHA, and a short note about what shipped.
+
 ## Code rules
 
 ### Think first

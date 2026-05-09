@@ -101,7 +101,6 @@ Provider behavior is configured during setup:
 | ----------------------- | --------------------------------------------------------------- |
 | `/spec new <name>`      | Create a new feature spec                                       |
 | `/cleanup [name]`       | Aggressively simplify new code after implementation             |
-| `/finish-branch [name]` | Draft logical commit plan and PR docs                           |
 | `/handoff`              | Capture session context before ending                           |
 | `python-code`           | Python conventions (auto-loads when writing Python)             |
 
@@ -114,7 +113,7 @@ graph LR
   A["/spec new"] --> B["implement"]
   B --> C["/cleanup"]
   C --> D["/review"]
-  D --> E["/finish-branch"]
+  D --> E["publish PR"]
   E --> F["/handoff"]
 
 style A fill:#2d333b,stroke:#768390,color:#adbac7
@@ -131,12 +130,26 @@ style F fill:#2d333b,stroke:#768390,color:#adbac7
 | **implement**    | Write the code. Update `STATUS.md` as you go (done/next/context).                                 |
 | `/cleanup`       | Review the diff and aggressively simplify. Inline, delete, rewrite anything overcomplicated.      |
 | `/review`        | Use the provider's native code review flow for bugs, regressions, security, and edge cases.       |
-| `/finish-branch` | Group clean changes into logical commits. Generate `commits.md` and `draft-pr.md`.                |
+| publish PR       | Create atomic PRs from the plan/spec/status, squash merge, then record traceability in STATUS.md. |
 | `/handoff`       | Capture session state — what's done, what's next, critical context for the next agent or session. |
 
-Not every session hits every phase. `/cleanup`, native `/review`, and `/finish-branch`
-are most useful before committing final changes. `/handoff` is for any session
-boundary.
+Not every session hits every phase. `/cleanup` and native `/review` are most
+useful before publishing final changes. `/handoff` is for any session boundary.
+
+## GitHub Workflow
+
+Specs are work programs, not PR containers. A single spec can produce multiple
+atomic PRs.
+
+- Prefer atomic PRs that can be reviewed independently.
+- Use small, logical commits with imperative, conventional-style subjects.
+- Generate PR titles and bodies directly from `PLAN.md`, `SPEC.md`,
+  `STATUS.md`, linked issues, and the actual diff.
+- Do not create `commits.md` or `draft-pr.md` review artifacts.
+- Use squash merge by default unless the user explicitly asks for another merge
+  method.
+- After a PR merges, update the relevant `STATUS.md` with PR number, merge or
+  squash commit SHA, and a short note about what shipped.
 
 ## Specs Setup
 
@@ -161,16 +174,18 @@ This gives you cloud backup, per-repo isolation, and portability across machines
 
 ## Feature Specs
 
-Each spec lives in `specs/<feature>/` with these files (created by `/spec new`):
+Specs live under `specs/` with these files (created by `/spec new`):
 
 ```text
-specs/<feature>/
-├── AGENTS.md           # Spec-specific instructions (read first)
-├── CLAUDE.md           # contains @AGENTS.md to point Claude to AGENTS.md
-├── PLAN.md             # Human-facing goal, scope, success criteria, execution mode
-├── SPEC.md             # Agent-expanded design, behavior, decisions, verification
-├── STATUS.md           # Current status, done/next items
-└── examples/           # Runnable verification scripts and RUN_LOG.md
+specs/
+├── AGENTS.md           # How agents navigate specs; not a manual index
+└── <feature>/
+    ├── AGENTS.md       # Spec-specific instructions (read first)
+    ├── CLAUDE.md       # contains @AGENTS.md to point Claude to AGENTS.md
+    ├── PLAN.md         # Human-facing goal, scope, success criteria, execution mode
+    ├── SPEC.md         # Agent-expanded design, behavior, decisions, verification
+    ├── STATUS.md       # Current status, done/next items, merged work
+    └── examples/       # Runnable verification scripts and RUN_LOG.md
 ```
 
 `PLAN.md` is the user-reviewed contract for the work: goal, scope, non-goals,
@@ -181,15 +196,8 @@ verification mapping. Use a separate ADR file only for decisions that outlive a
 single feature, such as architecture, provider policy, storage model, security
 posture, or a major framework choice.
 
-**`specs/INDEX`** (TSV) provides an at-a-glance overview of all specs:
-
-```text
-slug phase blocked desc
-user-auth implementing no JWT auth flow
-api-v2 plan yes:schema pending REST to GraphQL
-```
-
-Managed automatically by `/spec new` (adds row) and `/handoff` (updates row).
+Do not maintain a manual `specs/INDEX`. Each spec is self-describing through
+`STATUS.md`; derive overviews by scanning `specs/*/STATUS.md` when needed.
 
 The core of context continuity is `STATUS.md`:
 
@@ -210,6 +218,12 @@ The core of context continuity is `STATUS.md`:
 ## Context
 
 <gotchas, key files>
+
+## Merged Work
+
+- PR #12: Add example feature
+  - Commit: `abc123`
+  - Shipped: implemented the first atomic slice
 ```
 
 ---

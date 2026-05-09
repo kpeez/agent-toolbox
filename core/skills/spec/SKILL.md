@@ -51,27 +51,30 @@ Creates a feature spec directory with standard template files.
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
 <step action="check-exists">error if `specs/<slug>/` exists</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/`</step>
+<step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template below</step>
 <step action="create-files">write all templates below to `specs/<slug>/`</step>
 <step action="populate">fill AGENTS.md from conversation context (overview, key files, quick start); fill PLAN.md with user intent, scope, non-goals, success criteria, and execution mode; fill SPEC.md with the implementation approach, behavior, decisions, risks, and verification mapping; choose example script names from the behaviors being verified</step>
-<step action="update-index">append row to `specs/INDEX` (create with header `slug\tphase\tblocked\tdesc` if missing)</step>
 </steps>
 
 ## Spec structure
 
 ```
-specs/<feature>/
-├── AGENTS.md           # Spec-specific agent instructions (read first)
-├── CLAUDE.md           # References AGENTS.md for Claude Code auto-discovery
-├── PLAN.md             # Human-facing goal, scope, success criteria, execution mode
-├── SPEC.md             # Agent-expanded design, behavior, decisions, verification
-├── STATUS.md           # Current status and progress
-└── examples/           # Runnable verification scripts (REQUIRED)
-    ├── build_pipeline.py      # Prefer behavior-specific names
-    ├── basic_pipeline_run.py  # Use useful filenames, not generic placeholders
-    └── RUN_LOG.md      # Execution log
+specs/
+├── AGENTS.md           # How agents navigate specs; not a manual index
+└── <feature>/
+    ├── AGENTS.md       # Spec-specific agent instructions (read first)
+    ├── CLAUDE.md       # References AGENTS.md for Claude Code auto-discovery
+    ├── PLAN.md         # Human-facing goal, scope, success criteria, execution mode
+    ├── SPEC.md         # Agent-expanded design, behavior, decisions, verification
+    ├── STATUS.md       # Current status, progress, merged PR traceability
+    └── examples/       # Runnable verification scripts (REQUIRED)
+        ├── build_pipeline.py      # Prefer behavior-specific names
+        ├── basic_pipeline_run.py  # Use useful filenames, not generic placeholders
+        └── RUN_LOG.md  # Execution log
 ```
 
-**Index**: `specs/INDEX` (TSV: slug, phase, blocked, desc) — overview of all specs.
+Do not maintain a manual `specs/INDEX`. Each spec is self-describing through
+`STATUS.md`; derive overviews by scanning `specs/*/STATUS.md` when needed.
 
 ### PLAN.md
 
@@ -130,7 +133,31 @@ Tracks progress. Updated throughout the lifecycle.
 
 ## Context
 <gotchas, key files touched, non-obvious things>
+
+## Merged Work
+- PR #<number>: <title>
+  - Commit: `<sha>`
+  - Shipped: <short note>
 ```
+
+Specs are work programs, not PR containers. A single spec can produce multiple
+atomic PRs. After each PR merges, record the PR number, merge or squash commit
+SHA, and shipped scope in `Merged Work`.
+
+### GitHub publishing
+
+When publishing spec work:
+
+- Prefer atomic PRs; choose the smallest coherent slice that can be reviewed
+  independently.
+- Use small, logical commits with imperative, conventional-style subjects.
+- Generate PR titles and bodies directly from `PLAN.md`, `SPEC.md`, `STATUS.md`,
+  linked issues, and the actual diff.
+- Do not create `commits.md` or `draft-pr.md` artifacts.
+- Use squash merge by default unless the user explicitly asks for another merge
+  method.
+- Update `STATUS.md` after merge with the PR number, merge or squash commit SHA,
+  and a short shipped note.
 
 ### Example scripts
 
@@ -162,19 +189,36 @@ Example failures are spec failures — fix them before marking done.
 
 ## Templates
 
-<templates dir="specs/<slug>/">
+<templates>
 
-<template file="AGENTS.md">
+<template file="specs/AGENTS.md">
+# Specs
+
+Each spec lives in `specs/<feature>/`.
+
+Read order:
+
+1. `AGENTS.md`
+2. `PLAN.md`
+3. `SPEC.md`
+4. `STATUS.md`
+5. `examples/RUN_LOG.md`
+
+Do not manually maintain an index. Derive summaries by scanning
+`specs/*/STATUS.md`.
+</template>
+
+<template file="specs/<slug>/AGENTS.md">
 # <Title> - Agent Instructions
 <!-- overview | key files | conventions | quick start -->
 Read this file first when working on this feature.
 </template>
 
-<template file="CLAUDE.md">
+<template file="specs/<slug>/CLAUDE.md">
 @AGENTS.md
 </template>
 
-<template file="PLAN.md">
+<template file="specs/<slug>/PLAN.md">
 # <Title> - Plan
 
 ## Goal
@@ -203,7 +247,7 @@ Read this file first when working on this feature.
 <!-- commands/examples/tests that prove the goal -->
 </template>
 
-<template file="SPEC.md">
+<template file="specs/<slug>/SPEC.md">
 # <Title> - Spec
 
 ## Problem
@@ -233,7 +277,7 @@ Read this file first when working on this feature.
 <!-- - `basic_pipeline_run.py` -> proves the happy-path execution works -->
 </template>
 
-<template file="STATUS.md">
+<template file="specs/<slug>/STATUS.md">
 # <Title> - Status
 
 ## Status
@@ -254,9 +298,17 @@ Read this file first when working on this feature.
 
 ## Context
 
+## Merged Work
+
+<!--
+- PR #12: Add example feature
+  - Commit: `abc123`
+  - Shipped: implemented the first atomic slice
+-->
+
 </template>
 
-<template file="examples/RUN_LOG.md">
+<template file="specs/<slug>/examples/RUN_LOG.md">
 # <Title> - Run Log
 <!-- format: ### script_name / Status: PASS|FAIL / Date / Description / Result -->
 </template>
