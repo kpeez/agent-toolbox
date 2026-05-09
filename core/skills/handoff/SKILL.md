@@ -25,7 +25,11 @@ Generate a handoff summary to ensure context continuity for the next session.
    - Add new context, update Phase and Blocked status
    - For legacy specs, update `implementation.md` instead
 
-4. **Append to `specs/<feature>/handoff.md`**:
+4. **Regenerate project status**
+   - Run `python3 core/skills/spec/scripts/spec-status.py --write` from the repo root when that script exists
+   - If using an installed skill copy, run the equivalent `spec/scripts/spec-status.py --write` path
+
+5. **Append to `specs/<feature>/handoff.md`**:
    ```markdown
    ## Session: <date>
    ### Completed
@@ -42,4 +46,4 @@ Generate a handoff summary to ensure context continuity for the next session.
    <command or instruction to pick up where we left off>
    ```
 
-5. **Confirm** handoff is complete and `STATUS.md` is updated
+6. **Confirm** handoff is complete and `STATUS.md` plus generated `specs/STATUS.md` are updated

@@ -13,6 +13,8 @@ subdirectories.
 3. Inspect existing patterns before adding new ones
 4. Implement → lint → types → tests
 5. Verify: run examples and update logs, fix failures first
+6. After changing any per-spec STATUS.md, regenerate specs/STATUS.md with the
+   spec status script
 
 > For non-trivial features, create a spec first with `/spec new <name>`.
 
@@ -58,6 +60,8 @@ subdirectories.
   explicitly asks for one.
 - After a PR merges, update the relevant STATUS.md with PR number, merge or
   squash commit SHA, and a short note about what shipped.
+- Regenerate specs/STATUS.md after updating STATUS.md. Local git hooks may do
+  this as a safety net, but remote GitHub PR events do not run local hooks.
 
 ## Code Rules
 
