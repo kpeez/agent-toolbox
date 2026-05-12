@@ -318,8 +318,8 @@ Read this file first when working on this feature.
 <!-- - `basic_pipeline_run.py` -> proves the happy-path execution works -->
 </template>
 
-## <template file="specs/<slug>/STATUS.md">
-
+<template file="specs/<slug>/STATUS.md">
+---
 slug: <slug>
 title: <Title>
 phase: plan
@@ -328,7 +328,6 @@ updated: <YYYY-MM-DD>
 summary: <one-line summary for lookup>
 issues: []
 prs: []
-
 ---
 
 # <Title> - Status
