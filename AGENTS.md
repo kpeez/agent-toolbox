@@ -11,6 +11,8 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
 3. Inspect existing patterns before adding new ones
 4. Implement → lint → types → tests
 5. Verify: run examples and update logs, fix failures first
+6. After changing any per-spec STATUS.md, regenerate specs/STATUS.md with the
+   spec status script
 
 > For non-trivial features, create a spec first with `/spec new <name>`.
 
@@ -43,6 +45,21 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
   `Signed-off-by`, `Generated with`, AI tool signatures, agent names, or agent
   entries in contributors lists. Commit and PR authorship belongs only to the
   human user.
+
+## GitHub Workflow
+
+- Prefer atomic PRs. A spec can produce multiple PRs; do not assume one spec
+  maps to one PR.
+- Use small, logical commits with imperative, conventional-style subjects.
+- Generate PR titles and bodies directly from PLAN.md, SPEC.md, STATUS.md,
+  linked issues, and the actual diff. Do not create `commits.md` or
+  `draft-pr.md` review artifacts.
+- Use squash merge by default. Do not create merge commits unless the user
+  explicitly asks for one.
+- After a PR merges, update the relevant STATUS.md with PR number, merge or
+  squash commit SHA, and a short note about what shipped.
+- Regenerate specs/STATUS.md after updating STATUS.md. Local git hooks may do
+  this as a safety net, but remote GitHub PR events do not run local hooks.
 
 ## Code rules
 
