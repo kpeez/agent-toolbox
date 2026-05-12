@@ -1,6 +1,6 @@
 ---
 name: cleanup
-description: Aggressively simplify and clean up new code after implementation. Use after finishing a feature and before /finish-branch to reduce verbosity, remove unnecessary complexity, and tighten the diff.
+description: Aggressively simplify and clean up new code after implementation. Use before native review or PR publishing to reduce verbosity, remove unnecessary complexity, and tighten the diff.
 ---
 
 # /cleanup - Post-Implementation Code Cleanup
