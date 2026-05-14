@@ -1,5 +1,8 @@
 # IDE files
 .claude/
+.codex/
+.gemini/
+.copilot/
 .cursor/
 .vscode/
 .env
