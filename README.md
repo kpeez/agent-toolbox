@@ -140,6 +140,10 @@ atomic PRs.
 
 ## Specs Setup
 
+Specs are private working context and should never be committed. Keep the
+repo-local `specs` path ignored by git, and store the real files outside the
+repository.
+
 Store specs in a cloud-synced location, organized per-repo:
 
 ```text
@@ -153,11 +157,17 @@ Store specs in a cloud-synced location, organized per-repo:
 Symlink into each repo:
 
 ```bash
-mkdir -p ~/Documents/specs/my-web-app
-ln -sf ~/Documents/specs/my-web-app ./specs
+bash core/skills/spec/scripts/setup-specs-symlink.sh
 ```
 
 This gives you cloud backup, per-repo isolation, and portability across machines.
+The script creates `~/Documents/specs/<repo>/`, ensures `.gitignore` contains
+`specs`, and links `./specs` to the private directory. Pass a slug to override
+the directory name:
+
+```bash
+bash core/skills/spec/scripts/setup-specs-symlink.sh my-web-app
+```
 
 ## Feature Specs
 

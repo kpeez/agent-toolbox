@@ -1,5 +1,6 @@
 #!/usr/bin/env python3
 import importlib.util
+import os
 import subprocess
 import sys
 import tempfile
@@ -9,6 +10,7 @@ from pathlib import Path
 
 SCRIPT_PATH = Path(__file__).with_name("spec-status.py")
 HOOK_INSTALLER_PATH = Path(__file__).with_name("install-status-hooks.sh")
+SYMLINK_SETUP_PATH = Path(__file__).with_name("setup-specs-symlink.sh")
 
 
 def load_module():
@@ -205,6 +207,60 @@ prs: ["#12 `abc123`"]
         self.assertEqual("", pre_push_result.stderr)
         self.assertEqual(0, pre_push_result.returncode)
         self.assertTrue((hooks_dir / "pre-push").exists())
+
+    def test_symlink_setup_creates_private_specs_link_and_gitignore(self):
+        repo = self.root / "repo"
+        private_root = self.root / "private-specs"
+        repo.mkdir()
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+
+        result = subprocess.run(
+            ["bash", str(SYMLINK_SETUP_PATH)],
+            cwd=repo,
+            env={**os.environ, "AGENTSPEC_SPECS_ROOT": str(private_root)},
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual("", result.stderr)
+        self.assertEqual(0, result.returncode)
+        self.assertTrue((repo / "specs").is_symlink())
+        self.assertEqual((private_root / "repo").resolve(), (repo / "specs").resolve())
+        self.assertTrue((private_root / "repo").is_dir())
+        self.assertIn("specs\n", (repo / ".gitignore").read_text(encoding="utf-8"))
+
+        second_result = subprocess.run(
+            ["bash", str(SYMLINK_SETUP_PATH)],
+            cwd=repo,
+            env={**os.environ, "AGENTSPEC_SPECS_ROOT": str(private_root)},
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertEqual("", second_result.stderr)
+        self.assertEqual(0, second_result.returncode)
+        self.assertEqual(1, (repo / ".gitignore").read_text(encoding="utf-8").splitlines().count("specs"))
+
+    def test_symlink_setup_refuses_existing_real_specs_directory(self):
+        repo = self.root / "repo"
+        private_root = self.root / "private-specs"
+        repo.mkdir()
+        (repo / "specs").mkdir()
+        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+
+        result = subprocess.run(
+            ["bash", str(SYMLINK_SETUP_PATH)],
+            cwd=repo,
+            env={**os.environ, "AGENTSPEC_SPECS_ROOT": str(private_root)},
+            check=False,
+            text=True,
+            capture_output=True,
+        )
+
+        self.assertNotEqual(0, result.returncode)
+        self.assertIn("Refusing to replace existing non-symlink specs path", result.stderr)
 
 
 if __name__ == "__main__":
