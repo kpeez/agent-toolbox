@@ -100,39 +100,6 @@ def write_json_if_changed(path: Path, data: dict) -> bool:
     return write_text_if_changed(path, content)
 
 
-def set_top_level_toml_strings(path: Path, values: dict[str, str]) -> bool:
-    text = path.read_text() if path.exists() else ""
-    lines = text.splitlines()
-    first_table = next(
-        (index for index, line in enumerate(lines) if line.strip().startswith("[")),
-        len(lines),
-    )
-    prefix = lines[:first_table]
-    suffix = lines[first_table:]
-    seen = set()
-    next_prefix = []
-
-    for line in prefix:
-        replacement = None
-        for key, value in values.items():
-            stripped = line.lstrip()
-            if stripped.startswith(f"{key} ") or stripped.startswith(f"{key}="):
-                replacement = f'{key} = "{value}"'
-                seen.add(key)
-                break
-
-        next_prefix.append(replacement if replacement is not None else line)
-
-    for key, value in values.items():
-        if key not in seen:
-            next_prefix.append(f'{key} = "{value}"')
-
-    if suffix and next_prefix and next_prefix[-1].strip():
-        next_prefix.append("")
-
-    content = "\n".join(next_prefix + suffix).rstrip() + "\n"
-    return write_text_if_changed(path, content)
-
 
 def legacy_artifact_name(suffix: str) -> str:
     return f"agentspec-{'safe'}-auto{suffix}"
@@ -165,24 +132,10 @@ def codex_rules() -> str:
 
 def apply_codex(home_dir: Path, _root_dir: Path) -> list[str]:
     codex_dir = home_dir / ".codex"
-    config_path = codex_dir / "config.toml"
-    changed = []
-
-    if set_top_level_toml_strings(
-        config_path,
-        {
-            "approval_policy": "on-request",
-            "sandbox_mode": "workspace-write",
-            "commit_attribution": "",
-        },
-    ):
-        changed.append(str(config_path))
-
     rules_path = codex_dir / "rules" / "agentspec-auto-approval.rules"
     if write_text_if_changed(rules_path, codex_rules()):
-        changed.append(str(rules_path))
-
-    return changed
+        return [str(rules_path)]
+    return []
 
 
 def apply_claude(home_dir: Path, _root_dir: Path) -> list[str]:
