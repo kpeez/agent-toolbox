@@ -1,6 +1,6 @@
 name = "docs-writer"
 description = "Documentation writer. Use to create or update README files, guides, API references, and changelogs. Reads source code and existing docs, then writes only to documentation files."
-model = "gemma4:26b"
+model = "gemma4:e4b"
 model_provider = "ollama"
 model_context_window = 256000
 sandbox_mode = "workspace-write"

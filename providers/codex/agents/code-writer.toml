@@ -1,6 +1,6 @@
 name = "code-writer"
 description = "Implementation agent for writing, editing, and fixing code. Use for focused, well-scoped tasks with clear file targets. Runs with workspace write access."
-model = "gemma4:e4b"
+model = "qwen3.5-coder"
 model_provider = "ollama"
 model_context_window = 65536
 sandbox_mode = "workspace-write"
