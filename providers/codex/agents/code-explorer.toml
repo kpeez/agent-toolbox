@@ -1,6 +1,6 @@
 name = "code-explorer"
 description = "Read-only codebase exploration agent. Use to trace execution paths, find symbol definitions, summarize modules, or gather evidence before proposing changes. Never writes files."
-model = "qwen3.5-9b"
+model = "qwen3.5:9b"
 model_provider = "ollama"
 model_context_window = 128000
 sandbox_mode = "read-only"
