@@ -4,9 +4,9 @@
 # explorer settings (temperature=1.0, presence_penalty=1.5).
 set -euo pipefail
 
-if ollama list 2>/dev/null | grep -q "^qwen3.5-coder"; then
+if ollama show qwen3.5-coder >/dev/null 2>&1; then
     echo "qwen3.5-coder → already exists, skipping"
-elif ! ollama list 2>/dev/null | grep -q "^qwen3.5:9b"; then
+elif ! ollama show qwen3.5:9b >/dev/null 2>&1; then
     echo "qwen3.5-coder → skipped (qwen3.5:9b not installed)"
 else
     ollama create qwen3.5-coder -f - << 'EOF'
