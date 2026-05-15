@@ -6,6 +6,8 @@ set -euo pipefail
 
 if ollama list 2>/dev/null | grep -q "^qwen3.5-coder"; then
     echo "qwen3.5-coder → already exists, skipping"
+elif ! ollama list 2>/dev/null | grep -q "^qwen3.5:9b"; then
+    echo "qwen3.5-coder → skipped (qwen3.5:9b not installed)"
 else
     ollama create qwen3.5-coder -f - << 'EOF'
 FROM qwen3.5:9b
