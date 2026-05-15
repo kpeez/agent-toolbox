@@ -92,6 +92,11 @@ hand.
 Human-facing source of truth for the feature. Write this first, either directly
 from the user or collaboratively with AI. Keep it short enough to review.
 
+When planning happens in an external tracker or chat, reconcile the result into
+`PLAN.md`. If the tracker, chat, and `PLAN.md` disagree, update `PLAN.md` (or
+stop for review) before implementation. Agents follow `PLAN.md`, not the
+tracker body.
+
 Contents:
 
 - **Goal** — what problem are we solving and why
@@ -210,3 +215,10 @@ When picking up an existing spec:
 For older specs, accept `implementation.md` as a legacy status file and
 `design.md` as a legacy design file. Do not rename old specs unless the user
 asks for a migration.
+
+## Linear Integration
+
+When a spec is linked to Linear, Linear is the tracker and discussion surface;
+repo-local spec files remain the source of truth for implementation. Follow
+`linear-issue-tracking.md` for deterministic Linear comments, status
+transitions, and fallback behavior.

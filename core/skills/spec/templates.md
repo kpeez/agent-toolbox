@@ -123,6 +123,13 @@ prs: []
 
 ## Context
 
+## Linked Work
+
+<!--
+- Linear: ABC-123
+- PR: #12
+-->
+
 ## Merged Work
 
 <!--
