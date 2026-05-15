@@ -18,6 +18,10 @@ subdirectories.
 
 > For non-trivial features, create a spec first with `/spec new <name>`.
 
+Specs are private working context and must never be committed. Keep `specs`
+ignored in git and prefer a repo-local symlink to a private specs directory,
+for example `~/Documents/specs/<repo>`.
+
 ## Verification
 
 "Done" means "ran it." Example failures = spec failures.

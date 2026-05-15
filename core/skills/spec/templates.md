@@ -7,6 +7,10 @@ File templates for `/spec new`. Write each to its target path under `specs/`.
 <template file="specs/AGENTS.md">
 # Specs
 
+Specs are private working context and must never be committed. Keep `specs`
+ignored in git; this directory may be a symlink to a private per-repo specs
+directory.
+
 Each spec lives in `specs/<feature>/`.
 
 Read order:
