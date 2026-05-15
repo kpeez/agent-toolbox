@@ -7,51 +7,34 @@ A portable, spec-driven workflow and skill set for AI coding agents — works ac
 ```text
 agentspecs/
 ├── core/
-│   ├── instructions/AGENTS.md # Shared install instructions
+│   ├── AGENTS.md              # Shared instructions for all providers
 │   └── skills/                # Shared skills for all providers
 ├── providers/
-│   ├── codex/                 # Codex-specific addenda and skills
-│   ├── claude/                # Claude-specific addenda and skills
-│   ├── gemini/                # Gemini-specific addenda and skills
-│   └── copilot/               # Copilot-specific addenda and skills
-└── scripts/setup-agent.sh     # Install one provider or all providers
+│   └── codex/
+│       └── agents/            # Explicit Codex subagent definitions
+└── scripts/setup-agent.sh     # Install all providers
 ```
 
 ## Setup
 
 Requires Bash and Python 3.
 
-Install one provider or all providers:
-
 ```bash
 ./scripts/setup-agent.sh
-./scripts/setup-agent.sh auto
-./scripts/setup-agent.sh codex
-./scripts/setup-agent.sh claude
-./scripts/setup-agent.sh gemini
-./scripts/setup-agent.sh copilot
-./scripts/setup-agent.sh all
 ```
 
-With no argument, the script auto-detects supported providers, asks whether to
-install all detected providers, and if you answer no, asks about each detected
-provider individually.
-
-The installer also asks whether to install optional `llm-wiki-*` skills. These
-skills are tracked in `core/skills/`, but they are not installed by default.
-All installed skills are written canonically to `~/.agents/skills`. Providers
-that do not read that directory natively get copied mirrors in their own home
-directories. Provider permission config is merged with existing settings, and
-changed provider files are backed up with an `.agentspec-backup-*` suffix.
+Skills are written to `~/.agents/skills`. Provider permission config is merged
+with existing settings, and changed files are backed up with an
+`.agentspec-backup-*` suffix.
 
 This installs to:
 
-| CLI         | Instructions                                | Skills               | Auto-approval config |
-|-------------|---------------------------------------------|----------------------|------------------|
-| Claude Code | shared core instructions + Claude addendum  | `~/.agents/skills` + `~/.claude/skills` mirror | `~/.claude/settings.json` |
-| Codex CLI   | shared core instructions + Codex addendum   | `~/.agents/skills` + `~/.codex/skills` mirror | `~/.codex/config.toml` + `~/.codex/rules/` |
-| Gemini CLI  | shared core instructions + Gemini addendum  | `~/.agents/skills` + `~/.gemini/skills` mirror | `~/.gemini/settings.json` + `~/.gemini/bin/gemini-auto` + `~/.gemini/policies/` |
-| Copilot CLI | shared core instructions + Copilot addendum | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto` |
+| CLI         | Instructions              | Skills               | Auto-approval config |
+|-------------|---------------------------|----------------------|----------------------|
+| Claude Code | `~/.claude/CLAUDE.md`     | `~/.agents/skills`   | `~/.claude/settings.json` |
+| Codex CLI   | `~/.codex/AGENTS.md`      | `~/.agents/skills`   | `~/.codex/rules/` |
+| Gemini CLI  | `~/.gemini/GEMINI.md`     | `~/.agents/skills`   | `~/.gemini/settings.json` + `~/.gemini/bin/gemini-auto` + `~/.gemini/policies/` |
+| Copilot CLI | `~/.copilot/copilot-instructions.md` | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto` |
 
 Re-run after updating agentspecs.
 
