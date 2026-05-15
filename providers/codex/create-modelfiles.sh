@@ -9,7 +9,8 @@ if ollama show qwen3.5-coder >/dev/null 2>&1; then
 elif ! ollama show qwen3.5:9b >/dev/null 2>&1; then
     echo "qwen3.5-coder → skipped (qwen3.5:9b not installed)"
 else
-    ollama create qwen3.5-coder -f - << 'EOF'
+    tmpfile=$(mktemp /tmp/Modelfile.XXXXXX)
+    cat > "$tmpfile" << 'EOF'
 FROM qwen3.5:9b
 PARAMETER temperature 0.6
 PARAMETER top_p 0.95
@@ -19,5 +20,7 @@ PARAMETER presence_penalty 0.0
 PARAMETER repeat_penalty 1.0
 PARAMETER num_ctx 65536
 EOF
+    ollama create qwen3.5-coder -f "$tmpfile"
+    rm -f "$tmpfile"
     echo "qwen3.5-coder → created"
 fi
