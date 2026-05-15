@@ -1,4 +1,4 @@
-name = "gpt54_mini_patch_reviewer"
+name = "gpt-5.4-mini_patch_reviewer"
 description = "GPT-5.4-mini reviewer for checking diffs produced by local patch agents."
 model = "gpt-5.4-mini"
 model_provider = "openai"
