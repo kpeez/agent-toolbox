@@ -1,8 +1,9 @@
 name = "code-writer"
-description = "Qwen3.5:9b agent for writing, editing, and fixing code. Use for focused, well-scoped tasks with clear file targets. Runs with workspace write access."
-model = "qwen3.5-coder"
-model_provider = "ollama"
-model_context_window = 65536
+description = "gpt-5.4-mini agent for writing, editing, and fixing code. Use for focused, well-scoped tasks with clear file targets. Runs with workspace write access."
+model = "gpt-5.4-mini"
+model_provider = "openai"
+model_reasoning_effort = "high"
+model_context_window = 128000
 sandbox_mode = "workspace-write"
 
 developer_instructions = """
