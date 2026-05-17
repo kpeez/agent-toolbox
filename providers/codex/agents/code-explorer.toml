@@ -1,8 +1,9 @@
 name = "code-explorer"
 description = "Read-only codebase exploration agent. Use to trace execution paths, find symbol definitions, summarize modules, or gather evidence before proposing changes. Never writes files."
-model = "qwen3.5:9b"
-model_provider = "ollama"
-model_context_window = 128000
+model = "gpt-5.4-mini"
+model_provider = "openai"
+model_reasoning_effort = "low"
+model_context_window = 262144
 sandbox_mode = "read-only"
 
 developer_instructions = """
