@@ -8,7 +8,7 @@ SKILLS_DIR="$HOME/.agents/skills"
 rm -rf "$SKILLS_DIR"
 mkdir -p "$SKILLS_DIR"
 for skill_dir in "$ROOT_DIR"/core/skills/*/; do
-    [[ -f "$skill_dir/SKILL.md" ]] && cp -R "$skill_dir" "$SKILLS_DIR/"
+    [[ -f "$skill_dir/SKILL.md" ]] && cp -R "${skill_dir%/}" "$SKILLS_DIR/"
 done
 echo "skills → $SKILLS_DIR"
 
@@ -16,14 +16,12 @@ install_provider() {
     local provider="$1" home_dir="$2" filename="$3"
     mkdir -p "$home_dir"
     cp "$ROOT_DIR/core/AGENTS.md" "$home_dir/$filename"
-    PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/apply-auto-approval-configs.py" \
-        --provider "$provider" --home-dir "$HOME" --root-dir "$ROOT_DIR"
     echo "$provider → $home_dir/$filename"
 }
 
 install_provider codex   "$HOME/.codex"   AGENTS.md
 install_provider claude  "$HOME/.claude"  CLAUDE.md
-install_provider gemini  "$HOME/.gemini"  GEMINI.md
+install_provider antigravity "$HOME/.gemini" AGENTS.md
 install_provider copilot "$HOME/.copilot" copilot-instructions.md
 
 read -r -p "Install local-model subagents and create ollama Modelfiles? [y/N] " reply
