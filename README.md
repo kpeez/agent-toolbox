@@ -1,6 +1,6 @@
 # agentspecs
 
-A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, Gemini CLI, and GitHub Copilot CLI with a single source of truth[^1].
+A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, Antigravity CLI, and GitHub Copilot CLI with a single source of truth[^1].
 
 ## What's Here
 
@@ -17,7 +17,7 @@ agentspecs/
 
 ## Setup
 
-Requires Bash and Python 3.
+Requires Bash.
 
 ```bash
 ./scripts/setup-agent.sh
@@ -29,12 +29,12 @@ with existing settings, and changed files are backed up with an
 
 This installs to:
 
-| CLI         | Instructions              | Skills               | Auto-approval config |
-|-------------|---------------------------|----------------------|----------------------|
-| Claude Code | `~/.claude/CLAUDE.md`     | `~/.agents/skills`   | `~/.claude/settings.json` |
-| Codex CLI   | `~/.codex/AGENTS.md`      | `~/.agents/skills`   | `~/.codex/rules/` |
-| Gemini CLI  | `~/.gemini/GEMINI.md`     | `~/.agents/skills`   | `~/.gemini/settings.json` + `~/.gemini/bin/gemini-auto` + `~/.gemini/policies/` |
-| Copilot CLI | `~/.copilot/copilot-instructions.md` | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto` |
+| CLI             | Instructions                         | Skills             | Auto-approval config                                               |
+| --------------- | ------------------------------------ | ------------------ | ------------------------------------------------------------------ |
+| Claude Code     | `~/.claude/CLAUDE.md`                | `~/.agents/skills` | `~/.claude/settings.json`                                          |
+| Codex CLI       | `~/.codex/AGENTS.md`                 | `~/.agents/skills` | `~/.codex/rules/`                                                  |
+| Antigravity CLI | `~/.gemini/AGENTS.md`                | `~/.agents/skills` | none (use Antigravity's native Turbo/Auto/Off setup and deny list) |
+| Copilot CLI     | `~/.copilot/copilot-instructions.md` | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto`         |
 
 Re-run after updating agentspecs.
 
@@ -68,11 +68,10 @@ Provider behavior is configured during setup:
   prompts while a classifier blocks risky actions such as force pushes,
   production changes, and irreversible destruction of pre-existing files. Setup
   disables Claude commit and PR attribution settings.
-- Gemini uses `general.defaultApprovalMode = "auto_edit"` for direct `gemini`
-  launches. Because yolo mode can only be enabled by command-line flag, setup
-  also installs `~/.gemini/bin/gemini-auto`, which runs
-  `gemini --approval-mode=yolo` with a native policy file prompting before
-  destructive shell prefixes.
+- Antigravity CLI (`agy`) ships its own Terminal Command Auto Execution policy
+  (Turbo / Auto / Off) configured through the first-run setup wizard and the
+  in-app deny list. Agentspec only installs `~/.gemini/AGENTS.md` and shared
+  skills; configure the policy through the Antigravity CLI setup wizard.
 - Copilot installs `~/.copilot/bin/copilot-auto`, which launches Copilot with
   native `--allow-all` plus destructive `--deny-tool` rules. GitHub documents
   that deny rules take precedence even when `--allow-all` is set. Setup disables
@@ -80,13 +79,13 @@ Provider behavior is configured during setup:
 
 ## Skills
 
-| Skill                   | Purpose                                                         |
-| ----------------------- | --------------------------------------------------------------- |
-| `/spec new <name>`      | Create a new feature spec                                       |
-| `/spec status`          | Regenerate the project-level specs/STATUS.md overview           |
-| `/cleanup [name]`       | Aggressively simplify new code after implementation             |
-| `/handoff`              | Capture session context before ending                           |
-| `python-code`           | Python conventions (auto-loads when writing Python)             |
+| Skill              | Purpose                                               |
+| ------------------ | ----------------------------------------------------- |
+| `/spec new <name>` | Create a new feature spec                             |
+| `/spec status`     | Regenerate the project-level specs/STATUS.md overview |
+| `/cleanup [name]`  | Aggressively simplify new code after implementation   |
+| `/handoff`         | Capture session context before ending                 |
+| `python-code`      | Python conventions (auto-loads when writing Python)   |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
@@ -108,14 +107,14 @@ style E fill:#2d333b,stroke:#768390,color:#adbac7
 style F fill:#2d333b,stroke:#768390,color:#adbac7
 ```
 
-| Phase            | What happens                                                                                      |
-| ---------------- | ------------------------------------------------------------------------------------------------- |
-| `/spec new`      | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent. |
-| **implement**    | Write the code. Update `STATUS.md` as you go (done/next/context).                                 |
-| `/cleanup`       | Review the diff and aggressively simplify. Inline, delete, rewrite anything overcomplicated.      |
-| `/review`        | Use the provider's native code review flow for bugs, regressions, security, and edge cases.       |
-| publish PR       | Create atomic PRs from the plan/spec/status, squash merge, then record traceability in STATUS.md. |
-| `/handoff`       | Capture session state — what's done, what's next, critical context for the next agent or session. |
+| Phase         | What happens                                                                                      |
+| ------------- | ------------------------------------------------------------------------------------------------- |
+| `/spec new`   | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent. |
+| **implement** | Write the code. Update `STATUS.md` as you go (done/next/context).                                 |
+| `/cleanup`    | Review the diff and aggressively simplify. Inline, delete, rewrite anything overcomplicated.      |
+| `/review`     | Use the provider's native code review flow for bugs, regressions, security, and edge cases.       |
+| publish PR    | Create atomic PRs from the plan/spec/status, squash merge, then record traceability in STATUS.md. |
+| `/handoff`    | Capture session state — what's done, what's next, critical context for the next agent or session. |
 
 Not every session hits every phase. `/cleanup` and native `/review` are most
 useful before publishing final changes. `/handoff` is for any session boundary.

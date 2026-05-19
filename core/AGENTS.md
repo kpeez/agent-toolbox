@@ -43,7 +43,7 @@ for example `~/Documents/specs/<repo>`.
   cache files are the thing being tested. Prefer `PYTHONDONTWRITEBYTECODE=1`
   for ad hoc Python checks.
 - Apply this permission model consistently across Claude Code, Codex CLI,
-  Gemini CLI, and GitHub Copilot CLI installations.
+  Antigravity CLI, and GitHub Copilot CLI installations.
 
 ## Authorship
 
