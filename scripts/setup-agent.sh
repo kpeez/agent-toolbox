@@ -16,8 +16,6 @@ install_provider() {
     local provider="$1" home_dir="$2" filename="$3"
     mkdir -p "$home_dir"
     cp "$ROOT_DIR/core/AGENTS.md" "$home_dir/$filename"
-    # PYTHONDONTWRITEBYTECODE=1 python3 "$ROOT_DIR/scripts/apply-auto-approval-configs.py" \
-    #     --provider "$provider" --home-dir "$HOME" --root-dir "$ROOT_DIR"
     echo "$provider → $home_dir/$filename"
 }
 
