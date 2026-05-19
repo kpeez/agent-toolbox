@@ -1,6 +1,6 @@
 # agentspecs
 
-A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, Gemini CLI, and GitHub Copilot CLI with a single source of truth[^1].
+A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, Antigravity CLI, and GitHub Copilot CLI with a single source of truth[^1].
 
 ## What's Here
 
@@ -29,12 +29,12 @@ with existing settings, and changed files are backed up with an
 
 This installs to:
 
-| CLI         | Instructions              | Skills               | Auto-approval config |
-|-------------|---------------------------|----------------------|----------------------|
-| Claude Code | `~/.claude/CLAUDE.md`     | `~/.agents/skills`   | `~/.claude/settings.json` |
-| Codex CLI   | `~/.codex/AGENTS.md`      | `~/.agents/skills`   | `~/.codex/rules/` |
-| Gemini CLI  | `~/.gemini/GEMINI.md`     | `~/.agents/skills`   | `~/.gemini/settings.json` + `~/.gemini/bin/gemini-auto` + `~/.gemini/policies/` |
-| Copilot CLI | `~/.copilot/copilot-instructions.md` | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto` |
+| CLI             | Instructions                         | Skills             | Auto-approval config                                                  |
+|-----------------|--------------------------------------|--------------------|-----------------------------------------------------------------------|
+| Claude Code     | `~/.claude/CLAUDE.md`                | `~/.agents/skills` | `~/.claude/settings.json`                                             |
+| Codex CLI       | `~/.codex/AGENTS.md`                 | `~/.agents/skills` | `~/.codex/rules/`                                                     |
+| Antigravity CLI | `~/.gemini/GEMINI.md`                | `~/.agents/skills` | none (use Antigravity's native Turbo/Auto/Off setup and deny list)    |
+| Copilot CLI     | `~/.copilot/copilot-instructions.md` | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto`            |
 
 Re-run after updating agentspecs.
 
@@ -68,11 +68,14 @@ Provider behavior is configured during setup:
   prompts while a classifier blocks risky actions such as force pushes,
   production changes, and irreversible destruction of pre-existing files. Setup
   disables Claude commit and PR attribution settings.
-- Gemini uses `general.defaultApprovalMode = "auto_edit"` for direct `gemini`
-  launches. Because yolo mode can only be enabled by command-line flag, setup
-  also installs `~/.gemini/bin/gemini-auto`, which runs
-  `gemini --approval-mode=yolo` with a native policy file prompting before
-  destructive shell prefixes.
+- Antigravity CLI (`agy`) ships its own Terminal Command Auto Execution policy
+  (Turbo / Auto / Off) configured through the first-run setup wizard and the
+  in-app deny list. Agentspec only installs `~/.gemini/GEMINI.md` and shared
+  skills for this provider; configure the policy yourself per Google's
+  [migration guide](https://antigravity.google/docs/gcli-migration). Re-running
+  setup also removes any legacy `~/.gemini/bin/gemini-auto` launcher and
+  `~/.gemini/policies/agentspec-auto-approval.toml` left over from the Gemini
+  CLI install.
 - Copilot installs `~/.copilot/bin/copilot-auto`, which launches Copilot with
   native `--allow-all` plus destructive `--deny-tool` rules. GitHub documents
   that deny rules take precedence even when `--allow-all` is set. Setup disables
