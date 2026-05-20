@@ -31,7 +31,9 @@ install_provider antigravity "$HOME/.gemini" AGENTS.md
 install_provider copilot "$HOME/.copilot" copilot-instructions.md
 
 mkdir -p "$HOME/.codex/agents"
-rm -f "$HOME/.codex/agents/gemini-analyzer.toml"
+rm -f "$HOME/.codex/agents/gemini-analyzer.toml" \
+     "$HOME/.codex/agents/antigravity-analyzer.toml" \
+     "$HOME/.codex/agents/copilot-analyzer.toml"
 for agent in "$ROOT_DIR"/providers/codex/agents/*.toml; do
     \cp "$agent" "$HOME/.codex/agents/"
 done
