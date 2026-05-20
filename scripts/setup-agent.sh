@@ -27,6 +27,7 @@ install_provider copilot "$HOME/.copilot" copilot-instructions.md
 read -r -p "Install local-model subagents and create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then
     mkdir -p "$HOME/.codex/agents"
+    rm -f "$HOME/.codex/agents/gemini-analyzer.toml"
     for agent in "$ROOT_DIR"/providers/codex/agents/*.toml; do
         \cp "$agent" "$HOME/.codex/agents/"
     done
