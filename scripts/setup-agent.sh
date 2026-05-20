@@ -12,6 +12,12 @@ for skill_dir in "$ROOT_DIR"/core/skills/*/; do
 done
 echo "skills → $SKILLS_DIR"
 
+# symlink skills for antigravity-cli
+mkdir -p "$HOME/.gemini/antigravity-cli"
+rm -rf "$HOME/.gemini/antigravity-cli/skills"
+ln -s "$SKILLS_DIR" "$HOME/.gemini/antigravity-cli/skills"
+echo "antigravity skills → $HOME/.gemini/antigravity-cli/skills"
+
 install_provider() {
     local provider="$1" home_dir="$2" filename="$3"
     mkdir -p "$home_dir"
@@ -24,13 +30,14 @@ install_provider claude  "$HOME/.claude"  CLAUDE.md
 install_provider antigravity "$HOME/.gemini" AGENTS.md
 install_provider copilot "$HOME/.copilot" copilot-instructions.md
 
-read -r -p "Install local-model subagents and create ollama Modelfiles? [y/N] " reply
+mkdir -p "$HOME/.codex/agents"
+rm -f "$HOME/.codex/agents/gemini-analyzer.toml"
+for agent in "$ROOT_DIR"/providers/codex/agents/*.toml; do
+    \cp "$agent" "$HOME/.codex/agents/"
+done
+echo "codex agents → $HOME/.codex/agents/"
+
+read -r -p "Create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then
-    mkdir -p "$HOME/.codex/agents"
-    rm -f "$HOME/.codex/agents/gemini-analyzer.toml"
-    for agent in "$ROOT_DIR"/providers/codex/agents/*.toml; do
-        \cp "$agent" "$HOME/.codex/agents/"
-    done
-    echo "codex agents → $HOME/.codex/agents/"
     bash "$ROOT_DIR/providers/codex/create-modelfiles.sh"
 fi
