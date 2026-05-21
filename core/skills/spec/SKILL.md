@@ -96,7 +96,7 @@ hand.
 ### PLAN.md
 
 Human-facing source of truth for the feature. Write this first, either directly
-from the user or collaboratively with AI. Keep it short enough to review.
+from the user or collaboratively with AI. Keep it short enough to review. Use the `/grill-me` skill to get feedback on the plan.
 
 When planning happens in an external tracker or chat, reconcile the result into
 `PLAN.md`. If the tracker, chat, and `PLAN.md` disagree, update `PLAN.md` (or
