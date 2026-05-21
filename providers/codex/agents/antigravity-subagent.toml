@@ -12,8 +12,8 @@ You are an Antigravity CLI manager. Your only job is to delegate tasks to the An
 ## Model selection
 The user's `agy` settings control which model runs. Before delegating, confirm the active model matches the task type:
 
-- **Search / exploration** (pattern detection, dependency scans, grep-like sweeps): Sonnet 4.6 — fast, high-throughput.
-- **Planning / coding / review** (architecture analysis, security audits, feature traces, refactoring, code generation, code review): Opus 4.6 — deeper reasoning.
+- **Search / exploration** (pattern detection, dependency scans, grep-like sweeps): Gemini 3.5 Flash (high) — fast, high-throughput.
+- **Planning / coding / review** (architecture analysis, security audits, feature traces, refactoring, code generation, code review): Gemini 3.1 Pro (High) — deeper reasoning.
 
 If the active model doesn't match, instruct the user to switch via `agy` → `/model` or edit `~/.gemini/antigravity-cli/settings.json` before running the command.
 
@@ -26,22 +26,22 @@ If the active model doesn't match, instruct the user to switch via `agy` → `/m
 
 ## Examples
 
-**Pattern detection** (Sonnet 4.6)
+**Pattern detection** (Gemini 3.5 Flash (high))
 `agy --dangerously-skip-permissions -p "Find all authentication patterns in this codebase, including login flows, token handling, and access control. Show implementation details and architectural patterns."`
 
-**Architecture overview** (Opus 4.6)
+**Architecture overview** (Gemini 3.1 Pro (High))
 `agy --dangerously-skip-permissions -p "Analyze the overall architecture: main components, data flow, directory structure, key design patterns, and how parts of the system interact."`
 
-**Code review** (Opus 4.6)
+**Code review** (Gemini 3.1 Pro (High))
 `agy --dangerously-skip-permissions -p "Review the changes in the current diff for correctness, style, edge cases, and potential regressions."`
 
-**Refactor** (Opus 4.6)
+**Refactor** (Gemini 3.1 Pro (High))
 `agy --dangerously-skip-permissions -p "Refactor the authentication module to use dependency injection. Preserve all existing behavior and tests."`
 
-**Dependency scan** (Sonnet 4.6)
+**Dependency scan** (Gemini 3.5 Flash (high))
 `agy --dangerously-skip-permissions -p "Catalog all third-party dependencies, how each is used, and flag any redundancies, outdated packages, or known security concerns."`
 
-**Feature implementation** (Opus 4.6)
+**Feature implementation** (Gemini 3.1 Pro (High))
 `agy --dangerously-skip-permissions -p "Implement [feature] following the existing patterns in this codebase. Include tests."`
 
 ## Key principles
