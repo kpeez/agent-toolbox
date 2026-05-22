@@ -79,15 +79,15 @@ Provider behavior is configured during setup:
 
 ## Skills
 
-| Skill                         | Purpose                                                                      |
-| ----------------------------- | ---------------------------------------------------------------------------- |
-| `/spec new <name>`            | Create a new feature spec                                                    |
-| `/spec status`                | Regenerate the project-level specs/STATUS.md overview                        |
-| `/adversarial-review [name]`  | Hostile review of the branch diff — kill bloat, smells, newly obsolete code  |
-| `/pr [name]`                  | Group branch diff into atomic commits, push, open draft PR, write HTML diff  |
-| `/ship [name]`                | Chain `/adversarial-review` then `/pr` in one pass                            |
-| `/handoff`                    | Capture session context before ending                                        |
-| `python-code`                 | Python conventions (auto-loads when writing Python)                          |
+| Skill                        | Purpose                                                                         |
+| ---------------------------- | ------------------------------------------------------------------------------- |
+| `/spec new <name>`           | Create a new feature spec                                                       |
+| `/spec status`               | Regenerate the project-level specs/STATUS.md overview                           |
+| `/adversarial-review [name]` | Hostile review of the branch diff — kill bloat, smells, newly obsolete code     |
+| `/pr [name]`                 | Group branch diff into atomic commits, push, open draft PR, write markdown diff |
+| `/ship [name]`               | Chain `/adversarial-review` then `/pr` in one pass                              |
+| `/handoff`                   | Capture session context before ending                                           |
+| `python-code`                | Python conventions (auto-loads when writing Python)                             |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
@@ -109,14 +109,14 @@ style E fill:#2d333b,stroke:#768390,color:#adbac7
 style F fill:#2d333b,stroke:#768390,color:#adbac7
 ```
 
-| Phase                  | What happens                                                                                         |
-| ---------------------- | ---------------------------------------------------------------------------------------------------- |
-| `/spec new`            | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent.    |
-| **implement**          | Write the code. Update `STATUS.md` as you go (done/next/context).                                    |
-| `/adversarial-review`  | Hostile pass on the branch diff. Delete bloat, smells, and code the diff has made obsolete.          |
-| `/review`              | Use the provider's native code review flow for bugs, regressions, security, and edge cases.          |
-| `/pr`                  | Group the diff into atomic commits, push, open a draft PR if missing, write the spec HTML artifact.  |
-| `/handoff`             | Capture session state — what's done, what's next, critical context for the next agent or session.   |
+| Phase                 | What happens                                                                                            |
+| --------------------- | ------------------------------------------------------------------------------------------------------- |
+| `/spec new`           | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent.       |
+| **implement**         | Write the code. Update `STATUS.md` as you go (done/next/context).                                       |
+| `/adversarial-review` | Hostile pass on the branch diff. Delete bloat, smells, and code the diff has made obsolete.             |
+| `/review`             | Use the provider's native code review flow for bugs, regressions, security, and edge cases.             |
+| `/pr`                 | Group the diff into atomic commits, push, open a draft PR if missing, write the spec markdown artifact. |
+| `/handoff`            | Capture session state — what's done, what's next, critical context for the next agent or session.       |
 
 Not every session hits every phase. `/adversarial-review` and native `/review`
 are most useful before `/pr`. Use `/ship` to run adversarial review and `/pr`
