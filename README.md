@@ -81,6 +81,7 @@ Provider behavior is configured during setup:
 
 | Skill                        | Purpose                                                                         |
 | ---------------------------- | ------------------------------------------------------------------------------- |
+| `autoresearch`               | Autonomous experiment loops with defined metrics and private logs                |
 | `/spec new <name>`           | Create a new feature spec                                                       |
 | `/spec status`               | Regenerate the project-level specs/STATUS.md overview                           |
 | `/adversarial-review [name]` | Hostile review of the branch diff — kill bloat, smells, newly obsolete code     |
