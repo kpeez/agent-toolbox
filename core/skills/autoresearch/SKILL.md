@@ -1,6 +1,6 @@
 ---
 name: autoresearch
-description: Run an autonomous experiment loop for open-ended engineering or research work with a defined endpoint. Use when the user asks Codex to autoresearch, explore alternatives, improve toward a target metric, run repeated experiments, or compare outcomes. The skill helps define the goal and stop conditions, creates an isolated worktree, stores each experiment under specs/_experiments, records results, keeps useful changes, and discards failed directions.
+description: Run an autonomous experiment loop for open-ended engineering or research work with a defined endpoint. Use when the user asks Codex to autoresearch, explore alternatives, improve toward a target metric, run repeated experiments, or compare outcomes. The skill helps define the goal and stop conditions, creates an isolated worktree, stores each experiment under a named group in specs/_experiments/<group-name>/, records results, keeps useful changes, and discards failed directions.
 ---
 
 # Autoresearch
@@ -36,30 +36,59 @@ Run autoresearch on a dedicated worktree.
 
 1. Inspect the current branch, base branch, and working tree.
 2. Refuse to overwrite unrelated user changes.
-3. Create or ask for an experiment program name, such as `api-latency`.
-4. Create a branch named `autoresearch/<expt-name>`.
+3. Create or ask for an experiment group name, such as `api-latency`.
+4. Create a branch named `autoresearch/<group-name>`.
 5. Create a sibling worktree for that branch when the provider/workspace allows
    it. If worktrees are unavailable, stop and explain the limitation.
-6. Run all experiments from that worktree.
+6. Create the group directory `specs/_experiments/<group-name>/` if it does not
+   exist.
+7. Run all experiments from that worktree.
 
 Use the repository's normal private-spec setup if one exists. In agentspec-style
 repos, ensure `specs/` is a private symlink before writing experiment records.
 
 ## Experiment Records
 
-Store every experiment under:
+Store every experiment under a group directory named after the experiment
+program:
 
 ```text
 specs/_experiments/
-└── YYYY_MM_DD-expt-<NN>-<expt-slug>/
-    ├── README.md
-    ├── LOG.md
-    ├── logs/
-    └── scripts/
+└── <group-name>/
+    ├── README.md          ← group-level overview
+    └── YYYY_MM_DD-expt-<NN>-<expt-slug>/
+        ├── README.md
+        ├── LOG.md
+        ├── logs/
+        └── scripts/
 ```
 
-Use a monotonically increasing two-digit experiment number, such as
-`2026_05_24-expt-01-cache-key-rubric`.
+The group name matches the branch suffix from `autoresearch/<group-name>` (e.g.,
+`api-latency`). Use a monotonically increasing two-digit experiment number
+within each group, such as `2026_05_24-expt-01-cache-key-rubric`.
+
+The group-level `README.md` captures the shared context for the whole program:
+
+```markdown
+# <Group Title>
+
+## Goal
+
+## Primary Metric
+
+## Guardrail Metrics
+
+## Acceptance Threshold
+
+## Stop Conditions
+
+## Summary
+
+| #   | Experiment | Result | Decision |
+| --- | ---------- | ------ | -------- |
+```
+
+Update the summary table after each experiment completes.
 
 Each experiment `README.md` should be short and structured:
 
@@ -88,10 +117,11 @@ explicitly tracks specs; in agentspec-style repos it is private context.
 
 ## Baseline
 
-Create the first experiment folder for the baseline before changing code. Use a
-slug such as `baseline` or `current-state`.
+Create the group directory and write its `README.md` first. Then create the
+first experiment folder for the baseline before changing code. Use a slug such
+as `baseline` or `current-state`.
 
-Record:
+Record in the baseline experiment's `README.md`:
 
 - current commit and branch
 - metric definition and guardrails
@@ -145,3 +175,5 @@ Keep chat updates compact while the loop is running. Report:
 - path to the latest experiment folder
 - whether the defined endpoint was reached
 - blockers or stop-condition triggers
+
+Update the group-level `README.md` summary table after each experiment.
