@@ -5,6 +5,7 @@
 .copilot/
 .cursor/
 .vscode/
+.agent/
 .env
 node_modules
 specs
