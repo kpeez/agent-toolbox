@@ -56,8 +56,7 @@ for example `~/Documents/specs/<repo>`.
   maps to one PR.
 - Use small, logical commits with imperative, conventional-style subjects.
 - Generate PR titles and bodies directly from PLAN.md, SPEC.md, STATUS.md,
-  linked issues, and the actual diff. Do not create `commits.md` or
-  `draft-pr.md` review artifacts.
+  linked issues, and the actual diff.
 - Use squash merge by default. Do not create merge commits unless the user
   explicitly asks for one.
 - After a PR merges, update the relevant STATUS.md with PR number, merge or

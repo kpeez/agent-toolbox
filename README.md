@@ -6,20 +6,44 @@ A portable, spec-driven workflow and skill set for AI coding agents — works ac
 
 ```text
 agentspecs/
-├── core/
-│   ├── AGENTS.md              # Shared instructions for all providers
-│   └── skills/                # Shared skills for all providers
+├── .claude-plugin/
+│   └── plugin.json            # Claude Code plugin manifest
+├── .codex-plugin/
+│   └── plugin.json            # Codex plugin manifest
+├── skills/                    # Shared skills for all providers
 ├── providers/
 │   ├── claude/
 │   │   └── agents/            # Explicit Claude subagent definitions
 │   └── codex/
 │       └── agents/            # Explicit Codex subagent definitions
-└── scripts/setup-agent.sh     # Install all providers
+├── AGENTS.md                  # Global agent instructions (installed by setup-agent.sh)
+└── scripts/setup-agent.sh     # Install all providers (manual path)
 ```
 
-## Setup
+## Installation
 
-Requires Bash.
+### Claude Code (plugin)
+
+Register this repo as a marketplace and install:
+
+```bash
+/plugin marketplace add kpeez/agentspec
+/plugin install kpeez@agentspec
+```
+
+### Codex CLI (plugin)
+
+```bash
+/plugins
+```
+
+Search for `agentspec` and select Install Plugin.
+
+### Manual install (all providers)
+
+Installs skills **and** the global `AGENTS.md` + subagent definitions. Use this for your own machines.
+
+Requires Bash:
 
 ```bash
 ./scripts/setup-agent.sh
@@ -39,6 +63,15 @@ This installs to:
 | Copilot CLI     | `~/.copilot/copilot-instructions.md` | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto`         |
 
 Re-run after updating agentspecs.
+
+### Companion: Obsidian skills
+
+The Obsidian-related skills (`obsidian-cli`, `obsidian-markdown`, `obsidian-bases`, `json-canvas`, `defuddle`) are maintained upstream by kepano. Install them separately:
+
+```bash
+/plugin marketplace add kepano/obsidian-skills
+/plugin install obsidian@obsidian-skills
+```
 
 ## Workflow Permissions
 
@@ -81,16 +114,18 @@ Provider behavior is configured during setup:
 
 ## Skills
 
-| Skill                        | Purpose                                                                         |
-| ---------------------------- | ------------------------------------------------------------------------------- |
-| `autoresearch`               | Autonomous experiment loops with defined metrics and private logs                |
-| `/spec new <name>`           | Create a new feature spec                                                       |
-| `/spec status`               | Regenerate the project-level specs/STATUS.md overview                           |
-| `/adversarial-review [name]` | Hostile review of the branch diff — kill bloat, smells, newly obsolete code     |
-| `/pr [name]`                 | Group branch diff into atomic commits, push, open draft PR, write markdown diff |
-| `/ship [name]`               | Chain `/adversarial-review` then `/pr` in one pass                              |
-| `/handoff`                   | Capture session context before ending                                           |
-| `python-code`                | Python conventions (auto-loads when writing Python)                             |
+| Skill                        | Purpose                                                                                      |
+| ---------------------------- | -------------------------------------------------------------------------------------------- |
+| `add`                        | Agent-Driven Development discipline — examples before implementation, red/green verification |
+| `autoresearch`               | Autonomous experiment loops with defined metrics and private logs                            |
+| `/spec new <name>`           | Create a new feature spec                                                                    |
+| `/spec status`               | Regenerate the project-level specs/STATUS.md overview                                        |
+| `/adversarial-review [name]` | Hostile review of the branch diff — kill bloat, smells, newly obsolete code                  |
+| `/pr [name]`                 | Group branch diff into atomic commits, push, open draft PR, write markdown diff              |
+| `/ship [name]`               | Chain `/adversarial-review` then `/pr` in one pass                                           |
+| `/handoff`                   | Capture session context before ending                                                        |
+| `linear`                     | Linear issue tracking integration — status gates, comments, and source-of-truth rules        |
+| `python-code`                | Python conventions (auto-loads when writing Python)                                          |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
@@ -162,7 +197,7 @@ Store specs in a cloud-synced location, organized per-repo:
 Symlink into each repo:
 
 ```bash
-bash core/skills/spec/scripts/setup-specs-symlink.sh
+bash skills/spec/scripts/setup-specs-symlink.sh
 ```
 
 This gives you cloud backup, per-repo isolation, and portability across machines.
@@ -171,7 +206,7 @@ The script creates `~/Documents/specs/<repo>/`, ensures `.gitignore` contains
 the directory name:
 
 ```bash
-bash core/skills/spec/scripts/setup-specs-symlink.sh my-web-app
+bash skills/spec/scripts/setup-specs-symlink.sh my-web-app
 ```
 
 ## Feature Specs
@@ -246,13 +281,13 @@ prs: []
 Generate the project overview with:
 
 ```bash
-python3 core/skills/spec/scripts/spec-status.py --write
+python3 skills/spec/scripts/spec-status.py --write
 ```
 
 Optionally install local refresh hooks:
 
 ```bash
-bash core/skills/spec/scripts/install-status-hooks.sh
+bash skills/spec/scripts/install-status-hooks.sh
 ```
 
 The hook installer writes `post-commit`, `post-merge`, and `post-checkout`
