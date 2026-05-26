@@ -42,7 +42,7 @@ Creates a feature spec directory with standard template files.
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
 <step action="check-exists">error if `specs/<slug>/` exists</step>
-<step action="ensure-private">before creating files, run `bash skills/spec/scripts/setup-specs-symlink.sh` from the repo root when available; if using an installed skill copy, run the equivalent `spec/scripts/setup-specs-symlink.sh` path</step>
+<step action="ensure-private">ensure the `specs` symlink exists by running `bash ~/.agents/skills/spec/scripts/setup-specs-symlink.sh` from the repo root (skip if already linked; in worktrees this runs automatically via the global PostToolUse hook)</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/`</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
 <step action="create-files">read `templates.md` and write all templates to `specs/<slug>/`</step>
