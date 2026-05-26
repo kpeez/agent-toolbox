@@ -10,6 +10,8 @@ agentspecs/
 │   ├── AGENTS.md              # Shared instructions for all providers
 │   └── skills/                # Shared skills for all providers
 ├── providers/
+│   ├── claude/
+│   │   └── agents/            # Explicit Claude subagent definitions
 │   └── codex/
 │       └── agents/            # Explicit Codex subagent definitions
 └── scripts/setup-agent.sh     # Install all providers

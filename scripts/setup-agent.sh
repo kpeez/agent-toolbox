@@ -18,6 +18,12 @@ rm -rf "$HOME/.gemini/antigravity-cli/skills"
 ln -s "$SKILLS_DIR" "$HOME/.gemini/antigravity-cli/skills"
 echo "antigravity skills → $HOME/.gemini/antigravity-cli/skills"
 
+# symlink skills for claude
+mkdir -p "$HOME/.claude"
+rm -rf "$HOME/.claude/skills"
+ln -s "$SKILLS_DIR" "$HOME/.claude/skills"
+echo "claude skills → $HOME/.claude/skills"
+
 install_provider() {
     local provider="$1" home_dir="$2" filename="$3"
     mkdir -p "$home_dir"
@@ -38,6 +44,15 @@ for agent in "$ROOT_DIR"/providers/codex/agents/*.toml; do
     \cp "$agent" "$HOME/.codex/agents/"
 done
 echo "codex agents → $HOME/.codex/agents/"
+
+mkdir -p "$HOME/.claude/agents"
+rm -f "$HOME/.claude/agents/gemini-analyzer.md" \
+     "$HOME/.claude/agents/gemini-assistant.md" \
+     "$HOME/.claude/agents/gemini-assitant.md"
+for agent in "$ROOT_DIR"/providers/claude/agents/*.md; do
+    \cp "$agent" "$HOME/.claude/agents/"
+done
+echo "claude agents → $HOME/.claude/agents/"
 
 read -r -p "Create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then
