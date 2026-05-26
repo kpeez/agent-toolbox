@@ -4,8 +4,7 @@ set -euo pipefail
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 SKILLS_DIR="$HOME/.agents/skills"
 
-# copy all skills to the canonical location
-rm -rf "$SKILLS_DIR"
+# copy all skills to the canonical location (preserves skills not owned by this repo)
 mkdir -p "$SKILLS_DIR"
 for skill_dir in "$ROOT_DIR"/skills/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && cp -R "${skill_dir%/}" "$SKILLS_DIR/"
