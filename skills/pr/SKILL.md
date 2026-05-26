@@ -44,7 +44,7 @@ If a PR already exists, leave its state alone (do not flip draft/ready)</step>
 
 <step action="write-markdown">if a spec exists, write `specs/<feature>/pr-<branch>.md` using the Markdown Artifact format below. Overwrite on re-run. Include every logical group, its rationale, and its diff hunks</step>
 
-<step action="update-status">append the PR number and URL to `prs` in `specs/<feature>/STATUS.md` frontmatter and the body if not already present. Then run `python3 core/skills/spec/scripts/spec-status.py --write` (or `spec/scripts/spec-status.py --write` from an installed skill copy)</step>
+<step action="update-status">append the PR number and URL to `prs` in `specs/<feature>/STATUS.md` frontmatter and the body if not already present. Then run `python3 skills/spec/scripts/spec-status.py --write` (or `spec/scripts/spec-status.py --write` from an installed skill copy)</step>
 
 <step action="summarize">print the Summary in the format below</step>
 
@@ -95,5 +95,7 @@ Diff source for each group: `git diff <base>...HEAD -- <files-in-group>` after t
 - **PR**: <url> (draft) // or "existing PR left as-is: <url>"
 - **Markdown artifact**: specs/<feature>/pr-<branch>.md // or "skipped (no spec)"
 - **STATUS.md**: updated, specs/STATUS.md regenerated
+
+```
 
 ```

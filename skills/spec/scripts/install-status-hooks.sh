@@ -62,6 +62,10 @@ write_hook() {
 # agentspec spec-status hook
 set -euo pipefail
 
+if [[ "$hook_name" == "post-checkout" ]]; then
+    bash "$SCRIPT_DIR/setup-specs-symlink.sh" "\$@" || true
+fi
+
 python3 "$STATUS_SCRIPT" --specs-dir "$REPO_ROOT/specs" --write --quiet
 EOF
     chmod +x "$hook_path"

@@ -1,3 +1,8 @@
+---
+name: using-linear
+description: "Use when working on Linear-tracked issues or when Linear issue IDs (e.g., ABC-123) appear in conversation or spec files."
+---
+
 # Linear Issue Tracking
 
 Use this reference when a spec is linked to a Linear issue.
@@ -95,8 +100,9 @@ Ready for review.
 PR/diff: <link>
 Spec: `specs/<slug>/`
 Verification:
+
 - `<command>`: passed
-Review focus: <specific area>
+  Review focus: <specific area>
 ```
 
 ```md

@@ -7,17 +7,9 @@ description: Create and manage feature specs with Agent-Driven Development (ADD)
 
 ## The ADD rule
 
-**Agent-Driven Development: describe behavior, write examples that prove it, then implement until they pass.**
-
-When this skill is active, you MUST:
-
-1. Write spec docs (`PLAN.md` and `SPEC.md`) BEFORE writing source code
-2. Write runnable example scripts BEFORE implementation
-3. Run examples to confirm they fail (red)
-4. Implement the feature
-5. Run examples to confirm they pass (green)
-
-If you catch yourself implementing without examples that verify the behavior, STOP. Write the examples first.
+This skill follows the Agent-Driven Development discipline. Read the `agentic-development`
+skill before implementation. The ADD rule requires: describe behavior → write
+examples that prove it → implement until they pass.
 
 ## When to use specs
 
@@ -50,7 +42,7 @@ Creates a feature spec directory with standard template files.
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
 <step action="check-exists">error if `specs/<slug>/` exists</step>
-<step action="ensure-private">before creating files, run `bash core/skills/spec/scripts/setup-specs-symlink.sh` from the repo root when available; if using an installed skill copy, run the equivalent `spec/scripts/setup-specs-symlink.sh` path</step>
+<step action="ensure-private">before creating files, run `bash skills/spec/scripts/setup-specs-symlink.sh` from the repo root when available; if using an installed skill copy, run the equivalent `spec/scripts/setup-specs-symlink.sh` path</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/`</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
 <step action="create-files">read `templates.md` and write all templates to `specs/<slug>/`</step>
@@ -62,7 +54,7 @@ Creates a feature spec directory with standard template files.
 Regenerates the project-level status overview from per-spec `STATUS.md` files.
 
 <steps>
-<step action="run-status">run `python3 core/skills/spec/scripts/spec-status.py --write` from the repo root; if using an installed skill copy, run the equivalent `spec/scripts/spec-status.py --write` path</step>
+<step action="run-status">run `python3 skills/spec/scripts/spec-status.py --write` from the repo root; if using an installed skill copy, run the equivalent `spec/scripts/spec-status.py --write` path</step>
 <step action="inspect-output">read `specs/STATUS.md` when you need a quick scan of active, completed, or malformed specs</step>
 </steps>
 
@@ -155,57 +147,27 @@ regenerate `specs/STATUS.md`.
 
 - Source of truth: per-spec `STATUS.md`
 - Generated overview: project-level `specs/STATUS.md`
-- Script: `core/skills/spec/scripts/spec-status.py`
-- Optional hooks: `core/skills/spec/scripts/install-status-hooks.sh`
+- Script: `skills/spec/scripts/spec-status.py`
+- Optional hooks: `skills/spec/scripts/install-status-hooks.sh`
 
 The hook installer writes local git hooks for `post-commit`, `post-merge`, and
 `post-checkout`; pass `--include-pre-push` to also install `pre-push`. Hooks are
 a safety net only. They do not run for remote GitHub PR events and never stage
 or commit generated output.
 
-### GitHub publishing
+### Publishing
 
-When publishing spec work:
-
-- Prefer atomic PRs; choose the smallest coherent slice that can be reviewed
-  independently.
-- Use small, logical commits with imperative, conventional-style subjects.
-- Generate PR titles and bodies directly from `PLAN.md`, `SPEC.md`, `STATUS.md`,
-  linked issues, and the actual diff.
-- Do not create `commits.md` or `draft-pr.md` artifacts.
-- Use squash merge by default unless the user explicitly asks for another merge
-  method.
-- Update `STATUS.md` after merge with the PR number, merge or squash commit SHA,
-  and a short shipped note.
-- Regenerate `specs/STATUS.md` after updating merged PR traceability.
+Use `/pr` (or `/ship` for a hostile review pass first) to publish spec work.
+The `/pr` skill handles atomic commits, push, draft PR creation, STATUS.md
+updates, and specs/STATUS.md regeneration.
 
 ### Example scripts
 
 Every spec has an `examples/` directory with runnable scripts. These are not unit tests — they are executable demonstrations that verify the feature works.
 
-Rules for example scripts:
-
-- Self-contained and runnable (e.g., `python examples/build_pipeline.py`)
-- Exit 0 on success, non-zero on failure
-- Print what they're checking and the result
-- Written BEFORE implementation (they fail initially)
-- Name scripts after the behavior they verify
-- Avoid generic names like `basic_usage.py`, `example.py`, or `test.py`
-- If a spec has one example, that filename should still describe the workflow or outcome it proves
-
-### examples/RUN_LOG.md
-
-Log results every time you run an example:
-
-```
-### <script_name>
-**Status:** PASS | FAIL
-**Date:** <date>
-**Description:** <what this verifies>
-**Result:** <observation>
-```
-
-Example failures are spec failures — fix them before marking done.
+Rules for example scripts are defined in the `add` skill. In the spec context,
+examples live in `specs/<feature>/examples/` with results logged to
+`examples/RUN_LOG.md`.
 
 ## Resuming work on an existing spec
 
@@ -224,7 +186,5 @@ asks for a migration.
 
 ## Linear Integration
 
-When a spec is linked to Linear, Linear is the tracker and discussion surface;
-repo-local spec files remain the source of truth for implementation. Follow
-`linear-issue-tracking.md` for deterministic Linear comments, status
-transitions, and fallback behavior.
+When a spec is linked to Linear, follow the `/using-linear` skill for deterministic
+comments, status transitions, and fallback behavior.

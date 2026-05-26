@@ -7,7 +7,7 @@ SKILLS_DIR="$HOME/.agents/skills"
 # copy all skills to the canonical location
 rm -rf "$SKILLS_DIR"
 mkdir -p "$SKILLS_DIR"
-for skill_dir in "$ROOT_DIR"/core/skills/*/; do
+for skill_dir in "$ROOT_DIR"/skills/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && cp -R "${skill_dir%/}" "$SKILLS_DIR/"
 done
 echo "skills → $SKILLS_DIR"
@@ -27,7 +27,7 @@ echo "claude skills → $HOME/.claude/skills"
 install_provider() {
     local provider="$1" home_dir="$2" filename="$3"
     mkdir -p "$home_dir"
-    cp "$ROOT_DIR/core/AGENTS.md" "$home_dir/$filename"
+    cp "$ROOT_DIR/AGENTS.md" "$home_dir/$filename"
     echo "$provider → $home_dir/$filename"
 }
 

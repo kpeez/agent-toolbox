@@ -11,9 +11,9 @@ Run the full pre-publish pipeline in one pass: hostile cleanup, then atomic comm
 
 ### /ship [feature-name]
 
-1. **Read and follow** `core/skills/adversarial-review/SKILL.md` (or the installed `adversarial-review/SKILL.md` copy). Pass through the same `[feature-name]` argument. Run the full hostile review — apply fixes, verify, print its summary.
+1. **Read and follow** `skills/adversarial-review/SKILL.md` (or the installed `adversarial-review/SKILL.md` copy). Pass through the same `[feature-name]` argument. Run the full hostile review — apply fixes, verify, print its summary.
 2. **If verification fails**, stop. Do not run `/pr`.
-3. **Read and follow** `core/skills/pr/SKILL.md` (or the installed `pr/SKILL.md` copy). Pass through the same `[feature-name]` argument. Group, commit, push, ensure draft PR, write the markdown artifact, update STATUS.
+3. **Read and follow** `skills/pr/SKILL.md` (or the installed `pr/SKILL.md` copy). Pass through the same `[feature-name]` argument. Group, commit, push, ensure draft PR, write the markdown artifact, update STATUS.
 4. **Print a short combined summary**: adversarial-review outcome (files touched, key deletions) + PR outcome (commits, URL, markdown artifact path).
 
 Do not re-derive steps here. The child skills own scope, checklists, commit rules, and artifact format.

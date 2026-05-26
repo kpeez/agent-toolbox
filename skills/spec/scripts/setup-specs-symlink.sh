@@ -20,12 +20,29 @@ if [[ "${1:-}" == "-h" || "${1:-}" == "--help" ]]; then
     exit 0
 fi
 
-REPO_ROOT="$(git rev-parse --show-toplevel)"
-REPO_NAME="$(basename "$REPO_ROOT")"
-REPO_SLUG="${1:-$REPO_NAME}"
+# Determine if we're running as a git hook (e.g., post-checkout)
+# A post-checkout hook receives 3 arguments: <prev-HEAD> <new-HEAD> <flag>
+REPO_SLUG_ARG=""
+if [[ $# -eq 3 && ( "$3" == "0" || "$3" == "1" ) ]]; then
+    # For post-checkout hooks, we only care about branch checkouts (flag = 1)
+    # which includes git worktree add.
+    if [[ "$3" == "0" ]]; then
+        exit 0
+    fi
+elif [[ $# -ge 1 ]]; then
+    # Manual execution with a slug
+    REPO_SLUG_ARG="$1"
+fi
+
+# Find the main repo root, even if we are in a worktree
+MAIN_REPO_ROOT="$(dirname "$(cd "$(git rev-parse --git-common-dir)" && pwd)")"
+REPO_NAME="$(basename "$MAIN_REPO_ROOT")"
+REPO_SLUG="${REPO_SLUG_ARG:-$REPO_NAME}"
+
+WORKTREE_ROOT="$(git rev-parse --show-toplevel)"
 TARGET_DIR="$SPECS_ROOT/$REPO_SLUG"
-LINK_PATH="$REPO_ROOT/specs"
-GITIGNORE="$REPO_ROOT/.gitignore"
+LINK_PATH="$WORKTREE_ROOT/specs"
+GITIGNORE="$WORKTREE_ROOT/.gitignore"
 
 mkdir -p "$TARGET_DIR"
 
