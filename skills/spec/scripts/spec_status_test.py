@@ -77,6 +77,39 @@ prs: []
         self.assertIn("| done-spec | 2026-05-08 | Finished workflow cleanup. | #11 `02e8b75` |", overview)
         self.assertLess(overview.index("## Active"), overview.index("## Completed"))
 
+    def test_discovers_specs_in_archive_directory(self):
+        self.write_status(
+            "active",
+            """---
+slug: active
+title: Active
+phase: implementing
+blocked: false
+updated: 2026-05-10
+summary: An active spec.
+prs: []
+---
+""",
+        )
+        self.write_status(
+            "_archive/old-spec",
+            """---
+slug: old-spec
+title: Old Spec
+phase: done
+blocked: false
+updated: 2026-05-01
+summary: An archived spec.
+prs: []
+---
+""",
+        )
+
+        overview = self.module.generate_overview(self.specs)
+
+        self.assertIn("| active | implementing | no | 2026-05-10 | An active spec. |", overview)
+        self.assertIn("| old-spec | 2026-05-01 | An archived spec. |  |", overview)
+
     def test_missing_specs_noops_without_writing(self):
         missing = self.root / "missing-specs"
 
