@@ -41,12 +41,12 @@ Creates a feature spec directory with standard template files.
 
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
-<step action="check-exists">error if `specs/<slug>/` exists</step>
+<step action="check-exists">error if `specs/<slug>/` already contains a `SPEC.md` or `STATUS.md` (an established spec). A folder that exists but holds only a hand-written `PLAN.md` is allowed — that `PLAN.md` is the human-authored source of truth.</step>
 <step action="ensure-private">ensure the `specs` symlink exists by running `bash ~/.agents/skills/spec/scripts/setup-specs-symlink.sh` from the repo root (skip if already linked; in worktrees this runs automatically via the global PostToolUse hook)</step>
-<step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/`</step>
+<step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/` (no-op if already present)</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
-<step action="create-files">read `templates.md` and write all templates to `specs/<slug>/`</step>
-<step action="populate">fill AGENTS.md from conversation context (overview, key files, quick start); fill PLAN.md with user intent, scope, non-goals, success criteria, and execution mode; fill SPEC.md with the implementation approach, behavior, decisions, risks, and verification mapping; choose example script names from the behaviors being verified</step>
+<step action="create-files">read `templates.md` and write the templates to `specs/<slug>/`; never overwrite a file that already exists — a present `PLAN.md` is human-authored and authoritative</step>
+<step action="populate">if `PLAN.md` already exists, treat it as the human-authored source of truth — do not modify it — and expand it into `SPEC.md` (approach, behavior, decisions, risks, verification mapping). Otherwise fill `PLAN.md` from conversation context (intent, scope, non-goals, success criteria, execution mode); if invoked in or after plan mode, draft `PLAN.md` from the approved plan and flag it for the user to confirm. Then fill `SPEC.md` and choose example script names from the behaviors being verified.</step>
 </steps>
 
 ### /spec status
@@ -69,8 +69,6 @@ per-repo directory, such as `~/Documents/specs/<repo>`. Use
 specs/
 ├── AGENTS.md           # How agents navigate specs; not a manual index
 └── <feature>/
-    ├── AGENTS.md       # Spec-specific agent instructions (read first)
-    ├── CLAUDE.md       # References AGENTS.md for Claude Code auto-discovery
     ├── PLAN.md         # Human-facing goal, scope, success criteria, execution mode
     ├── SPEC.md         # Agent-expanded design, behavior, decisions, verification
     ├── STATUS.md       # Current status, progress, merged PR traceability
@@ -87,8 +85,16 @@ hand.
 
 ### PLAN.md
 
-Human-facing source of truth for the feature. Write this first, either directly
-from the user or collaboratively with AI. Keep it short enough to review. Use the `/grill-me` skill to get feedback on the plan.
+Human-facing source of truth for the feature. Keep it short enough to review.
+Use the `/grill-me` skill to get feedback on the plan.
+
+The default is human-first: write `PLAN.md` yourself before running `/spec new`
+(create `specs/<slug>/PLAN.md` by hand, then run the command). The skill
+preserves an existing `PLAN.md` and never overwrites it, then expands it into
+`SPEC.md`. If no `PLAN.md` exists, the agent writes one from conversation
+context — including an approved plan-mode plan — and flags it for you to
+confirm. Either way at least one of `PLAN.md`/`SPEC.md` stays human-owned, which
+is what keeps the two-file split meaningful.
 
 When planning happens in an external tracker or chat, reconcile the result into
 `PLAN.md`. If the tracker, chat, and `PLAN.md` disagree, update `PLAN.md` (or
@@ -173,7 +179,7 @@ examples live in `specs/<feature>/examples/` with results logged to
 
 When picking up an existing spec:
 
-1. Read `specs/<feature>/AGENTS.md` and `STATUS.md`
+1. Read `specs/<feature>/STATUS.md` first — it is the entry point
 2. Check the Phase and Blocked status
 3. Review `PLAN.md` for intent and `SPEC.md` for implementation context
 4. Run any existing examples to see current state
