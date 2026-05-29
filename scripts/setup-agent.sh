@@ -38,7 +38,9 @@ install_provider copilot "$HOME/.copilot" copilot-instructions.md
 mkdir -p "$HOME/.codex/agents"
 rm -f "$HOME/.codex/agents/gemini-analyzer.toml" \
      "$HOME/.codex/agents/antigravity-analyzer.toml" \
-     "$HOME/.codex/agents/copilot-analyzer.toml"
+     "$HOME/.codex/agents/copilot-analyzer.toml" \
+     "$HOME/.codex/agents/antigravity-subagent.toml" \
+     "$HOME/.codex/agents/copilot-subagent.toml"
 for agent in "$ROOT_DIR"/providers/codex/agents/*.toml; do
     \cp "$agent" "$HOME/.codex/agents/"
 done
@@ -52,6 +54,14 @@ for agent in "$ROOT_DIR"/providers/claude/agents/*.md; do
     \cp "$agent" "$HOME/.claude/agents/"
 done
 echo "claude agents → $HOME/.claude/agents/"
+
+# short PATH commands for the delegating-work skill's scripts. Symlinks point at the
+# installed skill copy (no drift); the skill also documents the full path as a fallback.
+BIN_DIR="$HOME/.agents/bin"
+mkdir -p "$BIN_DIR"
+ln -sf "$SKILLS_DIR/delegating-work/scripts/local-explore.py" "$BIN_DIR/local-explore"
+ln -sf "$SKILLS_DIR/delegating-work/scripts/ext-subagent.py" "$BIN_DIR/ext-subagent"
+echo "scripts → $BIN_DIR/{local-explore,ext-subagent} (ensure $BIN_DIR is on your PATH)"
 
 read -r -p "Create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then

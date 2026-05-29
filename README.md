@@ -124,6 +124,7 @@ Provider behavior is configured during setup:
 | `/pr [name]`                 | Group branch diff into atomic commits, push, open draft PR, write markdown diff              |
 | `/ship [name]`               | Chain `/adversarial-review` then `/pr` in one pass                                           |
 | `/handoff`                   | Capture session context before ending                                                        |
+| `delegating-work`            | Offload exploration and code generation to local or external worker CLIs                      |
 | `linear`                     | Linear issue tracking integration — status gates, comments, and source-of-truth rules        |
 | `python-code`                | Python conventions (auto-loads when writing Python)                                          |
 
