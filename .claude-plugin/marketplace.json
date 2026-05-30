@@ -1,31 +1,20 @@
 {
   "name": "agentspec",
+  "description": "Spec-driven workflow and skills for AI coding agents: ADD cycle, adversarial review, atomic PR grouping, session handoff, and more",
   "owner": {
-    "name": "kpeez",
-    "homepage": "https://github.com/kpeez/agentspec"
-  },
-  "metadata": {
-    "description": "Spec-driven workflow and skills for AI coding agents: ADD cycle, adversarial review, atomic PR grouping, session handoff, and more",
-    "version": "1.0.0"
+    "name": "Kyle Puhger",
+    "email": "krpuhger@gmail.com"
   },
   "plugins": [
     {
       "name": "agentspec",
       "description": "Spec-driven workflow and skills for AI coding agents: ADD cycle, adversarial review, atomic PR grouping, session handoff, and more",
-      "source": "./",
-      "strict": false,
-      "skills": [
-        "./skills/adversarial-review",
-        "./skills/agentic-development",
-        "./skills/autoresearch",
-        "./skills/data-viz",
-        "./skills/grill-me",
-        "./skills/handoff",
-        "./skills/pr",
-        "./skills/ship",
-        "./skills/spec",
-        "./skills/using-linear"
-      ]
+      "version": "5.1.0",
+      "source": "./plugins/agentspec",
+      "author": {
+        "name": "Kyle Puhger",
+        "email": "krpuhger@gmail.com"
+      }
     }
   ]
 }
