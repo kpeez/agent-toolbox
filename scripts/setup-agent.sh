@@ -6,7 +6,7 @@ SKILLS_DIR="$HOME/.agents/skills"
 
 # copy all skills to the canonical location (preserves skills not owned by this repo)
 mkdir -p "$SKILLS_DIR"
-for skill_dir in "$ROOT_DIR"/skills/*/; do
+for skill_dir in "$ROOT_DIR"/plugins/agentspec/skills/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && cp -R "${skill_dir%/}" "$SKILLS_DIR/"
 done
 echo "skills → $SKILLS_DIR"
@@ -17,12 +17,6 @@ rm -rf "$HOME/.gemini/antigravity-cli/skills"
 ln -s "$SKILLS_DIR" "$HOME/.gemini/antigravity-cli/skills"
 echo "antigravity skills → $HOME/.gemini/antigravity-cli/skills"
 
-# symlink skills for claude
-mkdir -p "$HOME/.claude"
-rm -rf "$HOME/.claude/skills"
-ln -s "$SKILLS_DIR" "$HOME/.claude/skills"
-echo "claude skills → $HOME/.claude/skills"
-
 install_provider() {
     local provider="$1" home_dir="$2" filename="$3"
     mkdir -p "$home_dir"
@@ -30,30 +24,16 @@ install_provider() {
     echo "$provider → $home_dir/$filename"
 }
 
-install_provider codex   "$HOME/.codex"   AGENTS.md
-install_provider claude  "$HOME/.claude"  CLAUDE.md
 install_provider antigravity "$HOME/.gemini" AGENTS.md
 install_provider copilot "$HOME/.copilot" copilot-instructions.md
 
+# Codex subagents: Codex plugins deliver skills but not agents, so the .toml
+# agents in the plugin payload must be installed into Codex's agent directory.
 mkdir -p "$HOME/.codex/agents"
-rm -f "$HOME/.codex/agents/gemini-analyzer.toml" \
-     "$HOME/.codex/agents/antigravity-analyzer.toml" \
-     "$HOME/.codex/agents/copilot-analyzer.toml" \
-     "$HOME/.codex/agents/antigravity-subagent.toml" \
-     "$HOME/.codex/agents/copilot-subagent.toml"
-for agent in "$ROOT_DIR"/providers/codex/agents/*.toml; do
-    \cp "$agent" "$HOME/.codex/agents/"
+for agent in "$ROOT_DIR"/plugins/agentspec/agents/*.toml; do
+    cp "$agent" "$HOME/.codex/agents/"
 done
 echo "codex agents → $HOME/.codex/agents/"
-
-mkdir -p "$HOME/.claude/agents"
-rm -f "$HOME/.claude/agents/gemini-analyzer.md" \
-     "$HOME/.claude/agents/gemini-assistant.md" \
-     "$HOME/.claude/agents/gemini-assitant.md"
-for agent in "$ROOT_DIR"/providers/claude/agents/*.md; do
-    \cp "$agent" "$HOME/.claude/agents/"
-done
-echo "claude agents → $HOME/.claude/agents/"
 
 # short PATH commands for the delegating-work skill's scripts. Symlinks point at the
 # installed skill copy (no drift); the skill also documents the full path as a fallback.
@@ -65,5 +45,5 @@ echo "scripts → $BIN_DIR/{local-explore,ext-subagent} (ensure $BIN_DIR is on y
 
 read -r -p "Create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then
-    bash "$ROOT_DIR/providers/codex/create-modelfiles.sh"
+    bash "$ROOT_DIR/scripts/create-modelfiles.sh"
 fi

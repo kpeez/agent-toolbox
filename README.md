@@ -7,17 +7,16 @@ A portable, spec-driven workflow and skill set for AI coding agents — works ac
 ```text
 agentspecs/
 ├── .claude-plugin/
-│   └── plugin.json            # Claude Code plugin manifest
-├── .codex-plugin/
-│   └── plugin.json            # Codex plugin manifest
-├── skills/                    # Shared skills for all providers
-├── providers/
-│   ├── claude/
-│   │   └── agents/            # Explicit Claude subagent definitions
-│   └── codex/
-│       └── agents/            # Explicit Codex subagent definitions
-├── AGENTS.md                  # Global agent instructions (installed by setup-agent.sh)
-└── scripts/setup-agent.sh     # Install all providers (manual path)
+│   └── marketplace.json       # Claude marketplace; points at plugins/agentspec
+├── .agents/plugins/
+│   └── marketplace.json       # Codex marketplace; points at plugins/agentspec
+├── plugins/agentspec/         # Plugin payload shared by both providers
+│   ├── .claude-plugin/        #   Claude plugin manifest
+│   ├── .codex-plugin/         #   Codex plugin manifest
+│   ├── agents/                #   Agent definitions: Claude .md (via plugin), Codex .toml (via setup script)
+│   └── skills/                #   Shared skills for all providers
+├── AGENTS.md                  # Shared provider-neutral instructions
+└── scripts/setup-agent.sh     # Manual path for non-plugin providers and helper scripts
 ```
 
 ## Installation
@@ -28,20 +27,27 @@ Register this repo as a marketplace and install:
 
 ```bash
 /plugin marketplace add kpeez/agentspec
-/plugin install kpeez@agentspec
+/plugin install agentspec@agentspec
 ```
 
 ### Codex CLI (plugin)
 
+Register this repo as a marketplace and install:
+
 ```bash
-/plugins
+codex plugin marketplace add kpeez/agentspec
+codex plugin add agentspec@agentspec
 ```
 
-Search for `agentspec` and select Install Plugin.
+> The Codex plugin delivers skills only. Codex plugins do not deliver agents, so
+> the Codex `.toml` subagents are installed by the manual script below.
 
-### Manual install (all providers)
+### Manual install (Codex agents, Antigravity, Copilot, and helper scripts)
 
-Installs skills **and** the global `AGENTS.md` + subagent definitions. Use this for your own machines.
+Claude Code installs entirely from its plugin. Codex CLI installs skills from its
+plugin but needs the manual script for its subagents. Use the manual script for
+Codex agents, for providers that do not have a complete plugin install path here,
+and for the shared helper commands used by skills.
 
 Requires Bash:
 
@@ -49,18 +55,19 @@ Requires Bash:
 ./scripts/setup-agent.sh
 ```
 
-Skills are written to `~/.agents/skills`. Provider permission config is merged
-with existing settings, and changed files are backed up with an
-`.agentspec-backup-*` suffix.
+Skills are written to `~/.agents/skills`. The script overwrites the
+Agentspec-owned Antigravity and Copilot instruction files and refreshes helper
+command symlinks.
 
 This installs to:
 
-| CLI             | Instructions                         | Skills             | Auto-approval config                                               |
-| --------------- | ------------------------------------ | ------------------ | ------------------------------------------------------------------ |
-| Claude Code     | `~/.claude/CLAUDE.md`                | `~/.agents/skills` | `~/.claude/settings.json`                                          |
-| Codex CLI       | `~/.codex/AGENTS.md`                 | `~/.agents/skills` | `~/.codex/rules/`                                                  |
-| Antigravity CLI | `~/.gemini/AGENTS.md`                | `~/.agents/skills` | none (use Antigravity's native Turbo/Auto/Off setup and deny list) |
-| Copilot CLI     | `~/.copilot/copilot-instructions.md` | `~/.agents/skills` | `~/.copilot/settings.json` + `~/.copilot/bin/copilot-auto`         |
+| Target          | Installed by manual script                       |
+| --------------- | ------------------------------------------------ |
+| Shared skills   | `~/.agents/skills`                               |
+| Helper commands | `~/.agents/bin/local-explore` and `ext-subagent` |
+| Codex agents    | `~/.codex/agents/*.toml`                         |
+| Antigravity CLI | `~/.gemini/AGENTS.md` + skills symlink           |
+| Copilot CLI     | `~/.copilot/copilot-instructions.md`             |
 
 Re-run after updating agentspecs.
 
@@ -94,15 +101,16 @@ All provider installs default to each CLI's native auto-approval mode:
   cache files are the thing being tested. Prefer `PYTHONDONTWRITEBYTECODE=1`
   for ad hoc Python checks.
 
-Provider behavior is configured during setup:
+Provider behavior is configured by plugin install or provider-native setup:
 
-- Codex uses `approval_policy = "on-request"` and
-  `sandbox_mode = "workspace-write"`, sets `commit_attribution = ""`, plus a
-  compact native `.rules` file that prompts before destructive shell prefixes.
-- Claude uses `permissions.defaultMode = "auto"`. Claude auto mode runs without
-  prompts while a classifier blocks risky actions such as force pushes,
-  production changes, and irreversible destruction of pre-existing files. Setup
-  disables Claude commit and PR attribution settings.
+- Claude receives agentspec instructions, skills, and agent definitions through
+  its plugin payload (root `CLAUDE.md`/`AGENTS.md`, `skills/`, and `agents/*.md`).
+- Codex receives skills through its plugin payload (`skills/`). Codex plugins do
+  not deliver agents, so the `agents/*.toml` subagents are installed by
+  `scripts/setup-agent.sh` into `~/.codex/agents`.
+- Codex project defaults live in `.codex/config.toml`, which sets
+  `approval_policy = "on-request"` and `sandbox_mode = "workspace-write"` for
+  this repository.
 - Antigravity CLI (`agy`) ships its own Terminal Command Auto Execution policy
   (Turbo / Auto / Off) configured through the first-run setup wizard and the
   in-app deny list. Agentspec only installs `~/.gemini/AGENTS.md` and shared
@@ -198,7 +206,7 @@ Store specs in a cloud-synced location, organized per-repo:
 Symlink into each repo:
 
 ```bash
-bash skills/spec/scripts/setup-specs-symlink.sh
+bash plugins/agentspec/skills/spec/scripts/setup-specs-symlink.sh
 ```
 
 This gives you cloud backup, per-repo isolation, and portability across machines.
@@ -207,7 +215,7 @@ The script creates `~/Documents/specs/<repo>/`, ensures `.gitignore` contains
 the directory name:
 
 ```bash
-bash skills/spec/scripts/setup-specs-symlink.sh my-web-app
+bash plugins/agentspec/skills/spec/scripts/setup-specs-symlink.sh my-web-app
 ```
 
 ## Feature Specs
@@ -282,13 +290,13 @@ prs: []
 Generate the project overview with:
 
 ```bash
-python3 skills/spec/scripts/spec-status.py --write
+python3 plugins/agentspec/skills/spec/scripts/spec-status.py --write
 ```
 
 Optionally install local refresh hooks:
 
 ```bash
-bash skills/spec/scripts/install-status-hooks.sh
+bash plugins/agentspec/skills/spec/scripts/install-status-hooks.sh
 ```
 
 The hook installer writes `post-commit`, `post-merge`, and `post-checkout`
