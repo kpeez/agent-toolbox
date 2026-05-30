@@ -1,0 +1,20 @@
+{
+  "name": "agentspec",
+  "interface": {
+    "displayName": "agentspec"
+  },
+  "plugins": [
+    {
+      "name": "agentspec",
+      "source": {
+        "source": "local",
+        "path": "./plugins/agentspec"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
+    }
+  ]
+}
