@@ -1,0 +1,10 @@
+{
+  "name": "knack",
+  "description": "Spec-driven workflow and skills for AI coding agents: ADD cycle, adversarial review, atomic PR grouping, session handoff, and more",
+  "version": "1.0.0",
+  "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": ["spec", "workflow", "skills", "tdd", "pr", "code-review", "handoff"]
+}

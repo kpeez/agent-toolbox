@@ -1,0 +1,21 @@
+{
+  "name": "knack",
+  "description": "Spec-driven workflow and skills for AI coding agents: ADD cycle, adversarial review, atomic PR grouping, session handoff, and more",
+  "version": "1.0.0",
+  "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": ["spec", "workflow", "skills", "tdd", "pr", "code-review", "handoff"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "knack",
+    "shortDescription": "Spec-driven workflows and skills for coding agents.",
+    "longDescription": "Portable spec-driven development workflows, shared skills, and focused agent definitions for planning, implementing, reviewing, and publishing code changes.",
+    "developerName": "kpeez",
+    "category": "Productivity",
+    "capabilities": ["Write", "Review", "Automation"],
+    "defaultPrompt": ["Create a spec for this feature.", "Run an adversarial review of this diff.", "Prepare this branch for a draft PR."],
+    "brandColor": "#2563EB"
+  }
+}

@@ -1,0 +1,10 @@
+{
+  "name": "lab",
+  "description": "AI-researcher skills: autonomous experiment loops and data visualization guidance",
+  "version": "1.0.0",
+  "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": ["research", "experiments", "autoresearch", "data-viz", "visualization"]
+}

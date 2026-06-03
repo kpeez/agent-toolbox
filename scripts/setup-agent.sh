@@ -6,7 +6,7 @@ SKILLS_DIR="$HOME/.agents/skills"
 
 # copy all skills to the canonical location (preserves skills not owned by this repo)
 mkdir -p "$SKILLS_DIR"
-for skill_dir in "$ROOT_DIR"/plugins/agentspec/skills/*/; do
+for skill_dir in "$ROOT_DIR"/plugins/*/skills/*/; do
     [[ -f "$skill_dir/SKILL.md" ]] && cp -R "${skill_dir%/}" "$SKILLS_DIR/"
 done
 echo "skills → $SKILLS_DIR"
@@ -31,7 +31,7 @@ install_provider copilot "$HOME/.copilot" copilot-instructions.md
 # Codex plugins deliver skills but not agents, so the .toml
 # agents in the plugin payload must be installed into Codex's agent directory.
 mkdir -p "$HOME/.codex/agents"
-for agent in "$ROOT_DIR"/plugins/agentspec/agents/*.toml; do
+for agent in "$ROOT_DIR"/plugins/knack/agents/*.toml; do
     cp "$agent" "$HOME/.codex/agents/"
 done
 echo "codex agents → $HOME/.codex/agents/"
