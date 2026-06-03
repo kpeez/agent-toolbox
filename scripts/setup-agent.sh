@@ -27,7 +27,8 @@ install_provider() {
 install_provider antigravity "$HOME/.gemini" AGENTS.md
 install_provider copilot "$HOME/.copilot" copilot-instructions.md
 
-# Codex subagents: Codex plugins deliver skills but not agents, so the .toml
+# Codex subagents:
+# Codex plugins deliver skills but not agents, so the .toml
 # agents in the plugin payload must be installed into Codex's agent directory.
 mkdir -p "$HOME/.codex/agents"
 for agent in "$ROOT_DIR"/plugins/agentspec/agents/*.toml; do
@@ -41,7 +42,8 @@ BIN_DIR="$HOME/.agents/bin"
 mkdir -p "$BIN_DIR"
 ln -sf "$SKILLS_DIR/delegating-work/scripts/local-explore.py" "$BIN_DIR/local-explore"
 ln -sf "$SKILLS_DIR/delegating-work/scripts/ext-subagent.py" "$BIN_DIR/ext-subagent"
-echo "scripts → $BIN_DIR/{local-explore,ext-subagent} (ensure $BIN_DIR is on your PATH)"
+ln -sf "$ROOT_DIR/scripts/cc-statusline.py" "$BIN_DIR/cc-statusline"
+echo "scripts → $BIN_DIR/{local-explore,ext-subagent,cc-statusline} (ensure $BIN_DIR is on your PATH)"
 
 read -r -p "Create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then
