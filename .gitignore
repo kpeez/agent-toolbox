@@ -6,6 +6,7 @@
 .cursor/
 .vscode/
 .agent/
+.worktrees/
 .env
 node_modules
 specs
