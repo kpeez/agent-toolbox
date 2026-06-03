@@ -1,10 +1,11 @@
 # AGENTS.md
 
-## Priority
+## Guiding principles
 
-This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectories.
+- **Do NOT end turns by offering to do more work.** No "Want me to scaffold X?" / "Should I rewrite Y?" engagement-bait offers. The user will explicitly say when they want something done. Answer what was asked, then stop.
+- "Done" means "ran it." Example failures = spec failures.
 
-## Workflow
+## Spec Workflow
 
 1. Read this file and README.md
 2. Check `specs/` for feature specs — read AGENTS.md + STATUS.md before working
@@ -19,50 +20,6 @@ This file > README.md > in-code comments. Closest AGENTS.md wins in subdirectori
 Specs are private working context and must never be committed. Keep `specs`
 ignored in git and prefer a repo-local symlink to a private specs directory,
 for example `~/Documents/specs/<repo>`.
-
-## Verification
-
-"Done" means "ran it." Example failures = spec failures.
-
-## Workflow Permissions
-
-- Use auto-approval execution by default for normal implementation, lint,
-  typecheck, test, and documentation work.
-- Keep filesystem access bounded to the workspace and provider-approved writable
-  roots when the provider supports it.
-- Permission-gate or deny destructive command families that can destroy
-  pre-existing work: `rm`, `rmdir`, `git clean`, `git reset --hard`, recursive
-  `chmod`/`chown`, `rsync --delete`, `sudo`, `dd`, and disk erase commands.
-- Clean up files or folders created during the current session when they are no
-  longer needed. Generated caches created by the current session, such as
-  `__pycache__/`, `.pytest_cache/`, and tool cache folders, may be removed as
-  routine cleanup.
-- Avoid verification commands that create Python bytecode caches unless the
-  cache files are the thing being tested. Prefer `PYTHONDONTWRITEBYTECODE=1`
-  for ad hoc Python checks.
-- Apply this permission model consistently across Claude Code, Codex CLI,
-  Antigravity CLI, and GitHub Copilot CLI installations.
-
-## Authorship
-
-- Never add agent attribution to commits or PRs. Do not add `Co-authored-by`,
-  `Signed-off-by`, `Generated with`, AI tool signatures, agent names, or agent
-  entries in contributors lists. Commit and PR authorship belongs only to the
-  human user.
-
-## GitHub Workflow
-
-- Prefer atomic PRs. A spec can produce multiple PRs; do not assume one spec
-  maps to one PR.
-- Use small, logical commits with imperative, conventional-style subjects.
-- Generate PR titles and bodies directly from PLAN.md, SPEC.md, STATUS.md,
-  linked issues, and the actual diff.
-- Use squash merge by default. Do not create merge commits unless the user
-  explicitly asks for one.
-- After a PR merges, update the relevant STATUS.md with PR number, merge or
-  squash commit SHA, and a short note about what shipped.
-- Regenerate specs/STATUS.md after updating STATUS.md. Local git hooks may do
-  this as a safety net, but remote GitHub PR events do not run local hooks.
 
 ## Code rules
 
