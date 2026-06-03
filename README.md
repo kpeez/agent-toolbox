@@ -128,7 +128,7 @@ Provider behavior is configured by plugin install or provider-native setup:
 | `autoresearch`               | Autonomous experiment loops with defined metrics and private logs                            |
 | `/spec new <name>`           | Create a new feature spec                                                                    |
 | `/spec status`               | Regenerate the project-level specs/STATUS.md overview                                        |
-| `/adversarial-review [name]` | Hostile review of the branch diff — kill bloat, smells, newly obsolete code                  |
+| `/adversarial-review [name]` | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat, smells, obsolete code (review-only) |
 | `/pr [name]`                 | Group branch diff into atomic commits, push, open draft PR, write markdown diff              |
 | `/ship [name]`               | Chain `/adversarial-review` then `/pr` in one pass                                           |
 | `/handoff`                   | Capture session context before ending                                                        |
@@ -160,7 +160,7 @@ style F fill:#2d333b,stroke:#768390,color:#adbac7
 | --------------------- | ------------------------------------------------------------------------------------------------------- |
 | `/spec new`           | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent.       |
 | **implement**         | Write the code. Update `STATUS.md` as you go (done/next/context).                                       |
-| `/adversarial-review` | Hostile pass on the branch diff. Delete bloat, smells, and code the diff has made obsolete.             |
+| `/adversarial-review` | Clean-context hostile pass in a fresh reviewer. Challenges the approach/design, then flags bloat, smells, and newly obsolete code. Review-only — returns findings; `/ship` applies them. |
 | `/review`             | Use the provider's native code review flow for bugs, regressions, security, and edge cases.             |
 | `/pr`                 | Group the diff into atomic commits, push, open a draft PR if missing, write the spec markdown artifact. |
 | `/handoff`            | Capture session state — what's done, what's next, critical context for the next agent or session.       |
