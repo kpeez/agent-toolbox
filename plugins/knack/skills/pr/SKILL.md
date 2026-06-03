@@ -1,17 +1,16 @@
 ---
 name: pr
-description: Group current branch diff into atomic commits, push, open a draft PR if missing, and write an markdown artifact rationale into the associated spec. Use when ready to publish branch work.
+description: Group current branch diff into atomic commits, push, open a draft PR if missing. Use when ready to publish branch work.
 ---
 
 # /pr - Group, Commit, Push, Draft PR
 
-Bundle the committed + uncommitted changes on the current branch (or worktree) into small atomic commits, push, and ensure a draft PR exists. Write an markdown artifact into the spec directory that explains the logical groupings.
+Bundle the committed + uncommitted changes on the current branch (or worktree) into small atomic commits, push, and ensure a draft PR exists.
 
 ## Rules
 
 - **Atomic PRs, atomic commits.** Imperative, conventional-style commit subjects (`feat: ...`, `fix: ...`, `refactor: ...`, `docs: ...`, `test: ...`, `chore: ...`).
 - **PR title and body come from PLAN.md, SPEC.md, STATUS.md, linked issues, and the diff.** Do not create `commits.md` or `draft-pr.md` artifacts in the repo.
-- **The markdown diff artifact lives only in `specs/<feature>/`**, which is gitignored. It is a private review aid, not a PR comment or repo artifact.
 - **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
 - **Draft PRs by default.** Mark ready for review only when the user asks.
 - **Squash merge by default.** Do not switch merge methods without being asked.
@@ -42,17 +41,15 @@ Inspect file diffs with !`git diff <base> -- <file>` and !`git diff -- <file>` f
 <step action="ensure-draft-pr">check for an existing PR with `gh pr view --json number,isDraft,url,title`. If none exists, create a draft: - title and body derived from PLAN.md, SPEC.md, STATUS.md, linked issues, and the diff - `gh pr create --draft --base main --title "<title>" --body "$(cat <<'EOF'\n<body>\nEOF\n)"`
 If a PR already exists, leave its state alone (do not flip draft/ready)</step>
 
-<step action="write-markdown">if a spec exists, write `specs/<feature>/pr-<branch>.md` using the Markdown Artifact format below. Overwrite on re-run. Include every logical group, its rationale, and its diff hunks</step>
-
 <step action="update-status">append the PR number and URL to `prs` in `specs/<feature>/STATUS.md` frontmatter and the body if not already present. Then run `python3 plugins/knack/skills/spec/scripts/spec_status.py --write` (or `spec/scripts/spec_status.py --write` from an installed skill copy)</step>
 
 <step action="summarize">print the Summary in the format below</step>
 
 </steps>
 
-## Markdown Artifact
+## Markdown Artifact (on request)
 
-Path: `specs/<feature>/pr-<branch>.md` (gitignored — never committed).
+Write this when the user asks (e.g. "include the artifact") or as a fallback when `gh` CLI is unavailable and a manual PR body is needed. Path: `specs/<feature>/pr-<branch>.md` (gitignored — never committed).
 
 One section per logical group with the rationale and a diff fenced code block. Use this skeleton (adapt content; keep it minimal):
 
@@ -93,7 +90,7 @@ Diff source for each group: `git diff <base>...HEAD -- <files-in-group>` after t
   - ...
 - **Pushed**: yes
 - **PR**: <url> (draft) // or "existing PR left as-is: <url>"
-- **Markdown artifact**: specs/<feature>/pr-<branch>.md // or "skipped (no spec)"
+- **Markdown artifact**: skipped (ask for `/pr --artifact` or use this if `gh` CLI is unavailable)
 - **STATUS.md**: updated, specs/STATUS.md regenerated
 
 ```
