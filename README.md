@@ -68,7 +68,7 @@ command symlinks.
 This installs to:
 
 | Target          | Installed by manual script                       |
-| --------------- | ------------------------------------------------ |
+|-----------------|--------------------------------------------------|
 | Shared skills   | `~/.agents/skills`                               |
 | Helper commands | `~/.agents/bin/local-explore` and `ext-subagent` |
 | Codex agents    | `~/.codex/agents/*.toml`                         |
@@ -80,7 +80,7 @@ Re-run after updating agent-toolbox.
 ## Skills
 
 | Skill                 | Plugin | Purpose                                                                                               |
-| --------------------- | ------ | ----------------------------------------------------------------------------------------------------- |
+|-----------------------|--------|-------------------------------------------------------------------------------------------------------|
 | `agentic-development` | knack  | Agent-Driven Development discipline — examples before implementation, red/green verification          |
 | `spec`                | knack  | Create and manage feature specs; `/spec new` scaffolds a feature, `/spec status` regenerates overview |
 | `adversarial-review`  | knack  | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat (review-only) |
@@ -113,7 +113,7 @@ style E fill:#2d333b,stroke:#768390,color:#adbac7
 ```
 
 | Phase                 | What happens                                                                                                                                                                             |
-| --------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
 | `/spec new`           | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent.                                                                                        |
 | **implement**         | Write the code. Update `STATUS.md` as you go (done/next/context).                                                                                                                        |
 | `/adversarial-review` | Clean-context hostile pass in a fresh reviewer. Challenges the approach/design, then flags bloat, smells, and newly obsolete code. Review-only — returns findings; `/ship` applies them. |
@@ -138,9 +138,9 @@ atomic PRs.
   method.
 - After a PR merges, update the relevant `STATUS.md` with PR number, merge or
   squash commit SHA, and a short note about what shipped.
-- Regenerate `specs/STATUS.md` after updating per-spec status. Local git hooks
-  can do this as a safety net, but remote GitHub PR events do not run local
-  hooks.
+- `specs/STATUS.md` is regenerated automatically by the knack plugin hook after
+  any write to a file under `specs/`. Local git hooks (post-commit, post-merge)
+  serve as a safety net for commits made outside an agent session.
 
 ## Specs Setup
 
@@ -152,6 +152,22 @@ and per-repo), add `specs` to `.gitignore`, and symlink `./specs` back in:
 mkdir -p ~/Documents/specs/<repo>
 ln -s ~/Documents/specs/<repo> ./specs
 echo specs >> .gitignore
+```
+
+If you use a worktree-based setup, you should set up the following post-checkout git hook to automatically symlink the specs directory:
+
+```bash
+#!/usr/bin/env bash
+# post-checkout: $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout
+
+# only act on branch checkouts (not file restores)
+[ "$3" = "1" ] || exit 0
+
+# only act when we're inside a linked worktree, not the main repo
+git_dir=$(git rev-parse --git-dir)
+[[ "$git_dir" == *"/worktrees/"* ]] || exit 0
+
+ln -sfn ~/Documents/specs/<repo> "$(pwd)/specs"
 ```
 
 ## Feature Specs
@@ -185,14 +201,7 @@ The core of context continuity is `STATUS.md`:
 
 ```markdown
 ---
-slug: <slug>
-title: <Title>
-phase: plan
-blocked: false
-updated: <YYYY-MM-DD>
-summary: <one-line summary for lookup>
-issues: []
-prs: []
+description: <one or two sentence description for the project overview>
 ---
 
 # <Title> - Status
