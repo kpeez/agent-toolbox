@@ -44,7 +44,7 @@ If a PR already exists, leave its state alone (do not flip draft/ready)</step>
 
 <step action="write-markdown">if a spec exists, write `specs/<feature>/pr-<branch>.md` using the Markdown Artifact format below. Overwrite on re-run. Include every logical group, its rationale, and its diff hunks</step>
 
-<step action="update-status">append the PR number and URL to `prs` in `specs/<feature>/STATUS.md` frontmatter and the body if not already present. Then run `python3 plugins/knack/skills/spec/scripts/spec-status.py --write` (or `spec/scripts/spec-status.py --write` from an installed skill copy)</step>
+<step action="update-status">append the PR number and URL to `prs` in `specs/<feature>/STATUS.md` frontmatter and the body if not already present. Then run `python3 plugins/knack/skills/spec/scripts/spec_status.py --write` (or `spec/scripts/spec_status.py --write` from an installed skill copy)</step>
 
 <step action="summarize">print the Summary in the format below</step>
 
