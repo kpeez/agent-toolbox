@@ -54,7 +54,7 @@ Creates a feature spec directory with standard template files.
 Regenerates the project-level status overview from per-spec `STATUS.md` files.
 
 <steps>
-<step action="run-status">run `python3 plugins/agentspec/skills/spec/scripts/spec-status.py --write` from the repo root; if using an installed skill copy, run the equivalent `spec/scripts/spec-status.py --write` path</step>
+<step action="run-status">run `python3 plugins/knack/skills/spec/scripts/spec-status.py --write` from the repo root; if using an installed skill copy, run the equivalent `spec/scripts/spec-status.py --write` path</step>
 <step action="inspect-output">read `specs/STATUS.md` when you need a quick scan of active, completed, or malformed specs</step>
 </steps>
 
@@ -153,8 +153,8 @@ regenerate `specs/STATUS.md`.
 
 - Source of truth: per-spec `STATUS.md`
 - Generated overview: project-level `specs/STATUS.md`
-- Script: `plugins/agentspec/skills/spec/scripts/spec-status.py`
-- Optional hooks: `plugins/agentspec/skills/spec/scripts/install-status-hooks.sh`
+- Script: `plugins/knack/skills/spec/scripts/spec-status.py`
+- Optional hooks: `plugins/knack/skills/spec/scripts/install-status-hooks.sh`
 
 The hook installer writes local git hooks for `post-commit`, `post-merge`, and
 `post-checkout`; pass `--include-pre-push` to also install `pre-push`. Hooks are
