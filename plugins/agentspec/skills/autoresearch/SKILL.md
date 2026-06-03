@@ -53,7 +53,7 @@ Store every experiment under a group directory named after the experiment
 program:
 
 ```text
-specs/_experiments/
+<experiments-root>
 └── <group-name>/
     ├── README.md          ← group-level overview
     └── YYYY_MM_DD-expt-<NN>-<expt-slug>/
