@@ -57,8 +57,6 @@ plugin but needs the manual script for its subagents. Use the manual script for
 Codex agents, for providers that do not have a complete plugin install path here,
 and for the shared helper commands used by skills.
 
-Requires Bash:
-
 ```bash
 ./scripts/setup-agent.sh
 ```
@@ -70,7 +68,7 @@ command symlinks.
 This installs to:
 
 | Target          | Installed by manual script                       |
-| --------------- | ------------------------------------------------ |
+|-----------------|--------------------------------------------------|
 | Shared skills   | `~/.agents/skills`                               |
 | Helper commands | `~/.agents/bin/local-explore` and `ext-subagent` |
 | Codex agents    | `~/.codex/agents/*.toml`                         |
@@ -79,72 +77,22 @@ This installs to:
 
 Re-run after updating agent-toolbox.
 
-### Companion: Obsidian skills
-
-The Obsidian-related skills (`obsidian-cli`, `obsidian-markdown`, `obsidian-bases`, `json-canvas`, `defuddle`) are maintained upstream by kepano. Install them separately:
-
-```bash
-/plugin marketplace add kepano/obsidian-skills
-/plugin install obsidian@obsidian-skills
-```
-
-## Workflow Permissions
-
-All provider installs default to each CLI's native auto-approval mode:
-
-- Run normal implementation, lint, typecheck, test, and documentation work with
-  low-friction defaults.
-- Keep filesystem access bounded when the provider exposes a native sandbox.
-- Deny destructive command families when the provider exposes native deny rules
-  that compose with auto approval: `rm`, `rmdir`, `git clean`,
-  `git reset --hard`, recursive `chmod`/`chown`, `rsync --delete`, `sudo`,
-  `dd`, and disk erase commands.
-- Never add agent attribution to commits or PRs: no `Co-authored-by`,
-  `Signed-off-by`, `Generated with`, AI tool signatures, or agent entries in
-  contributors lists.
-- Clean up files or folders created during the current session when they are no
-  longer needed. Generated caches created by the current session, such as
-  `__pycache__/`, `.pytest_cache/`, and tool cache folders, are routine cleanup.
-- Avoid verification commands that create Python bytecode caches unless the
-  cache files are the thing being tested. Prefer `PYTHONDONTWRITEBYTECODE=1`
-  for ad hoc Python checks.
-
-Provider behavior is configured by plugin install or provider-native setup:
-
-- Claude receives instructions, skills, and agent definitions through
-  its plugin payload (root `CLAUDE.md`/`AGENTS.md`, `plugins/knack/skills/`, and `plugins/knack/agents/*.md`).
-- Codex receives skills through its plugin payload (`plugins/knack/skills/` and `plugins/lab/skills/`). Codex plugins do
-  not deliver agents, so the `agents/*.toml` subagents are installed by
-  `scripts/setup-agent.sh` into `~/.codex/agents`.
-- Codex project defaults live in `.codex/config.toml`, which sets
-  `approval_policy = "on-request"` and `sandbox_mode = "workspace-write"` for
-  this repository.
-- Antigravity CLI (`agy`) ships its own Terminal Command Auto Execution policy
-  (Turbo / Auto / Off) configured through the first-run setup wizard and the
-  in-app deny list. agent-toolbox only installs `~/.gemini/AGENTS.md` and shared
-  skills; configure the policy through the Antigravity CLI setup wizard.
-- Copilot installs `~/.copilot/bin/copilot-auto`, which launches Copilot with
-  native `--allow-all` plus destructive `--deny-tool` rules. GitHub documents
-  that deny rules take precedence even when `--allow-all` is set. Setup disables
-  Copilot `includeCoAuthoredBy`.
-
 ## Skills
 
-Skills tagged **(lab)** ship in the `lab` plugin; everything else ships in `knack`.
-
-| Skill                        | Purpose                                                                                      |
-| ---------------------------- | -------------------------------------------------------------------------------------------- |
-| `add`                        | Agent-Driven Development discipline — examples before implementation, red/green verification |
-| `autoresearch` **(lab)**     | Autonomous experiment loops with defined metrics and private logs                            |
-| `/spec new <name>`           | Create a new feature spec                                                                    |
-| `/spec status`               | Regenerate the project-level specs/STATUS.md overview                                        |
-| `/adversarial-review [name]` | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat, smells, obsolete code (review-only) |
-| `/pr [name]`                 | Group branch diff into atomic commits, push, open draft PR, write markdown diff              |
-| `/ship [name]`               | Chain `/adversarial-review` then `/pr` in one pass                                           |
-| `/handoff`                   | Capture session context before ending                                                        |
-| `delegating-work`            | Offload exploration and code generation to local or external worker CLIs                      |
-| `linear`                     | Linear issue tracking integration — status gates, comments, and source-of-truth rules        |
-| `python-code`                | Python conventions (auto-loads when writing Python)                                          |
+| Skill                 | Plugin | Purpose                                                                                               |
+|-----------------------|--------|-------------------------------------------------------------------------------------------------------|
+| `agentic-development` | knack  | Agent-Driven Development discipline — examples before implementation, red/green verification          |
+| `spec`                | knack  | Create and manage feature specs; `/spec new` scaffolds a feature, `/spec status` regenerates overview |
+| `adversarial-review`  | knack  | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat (review-only) |
+| `pr`                  | knack  | Group branch diff into atomic commits, push, open a draft PR, write the spec markdown artifact        |
+| `ship`                | knack  | Chain `/adversarial-review` then `/pr` in one pass                                                    |
+| `handoff`             | knack  | Capture session context before ending for a clean resume                                              |
+| `delegating-work`     | knack  | Offload exploration and code generation to local or external worker CLIs                              |
+| `grill-me`            | knack  | Interview the user relentlessly to stress-test a plan or design                                       |
+| `using-linear`        | knack  | Linear issue tracking integration — status gates, comments, and source-of-truth rules                 |
+| `qmd`                 | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI               |
+| `autoresearch`        | lab    | Autonomous experiment loops with defined metrics and private logs                                     |
+| `data-viz`            | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                      |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
@@ -154,30 +102,27 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 graph LR
   A["/spec new"] --> B["implement"]
   B --> C["/adversarial-review"]
-  C --> D["/review"]
-  D --> E["/pr"]
-  E --> F["/handoff"]
+  C --> D["/pr"]
+  D --> E["/handoff"]
 
 style A fill:#2d333b,stroke:#768390,color:#adbac7
 style B fill:#2d333b,stroke:#768390,color:#adbac7
 style C fill:#2d333b,stroke:#768390,color:#adbac7
 style D fill:#2d333b,stroke:#768390,color:#adbac7
 style E fill:#2d333b,stroke:#768390,color:#adbac7
-style F fill:#2d333b,stroke:#768390,color:#adbac7
 ```
 
-| Phase                 | What happens                                                                                            |
-| --------------------- | ------------------------------------------------------------------------------------------------------- |
-| `/spec new`           | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent.       |
-| **implement**         | Write the code. Update `STATUS.md` as you go (done/next/context).                                       |
+| Phase                 | What happens                                                                                                                                                                             |
+|-----------------------|------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------|
+| `/spec new`           | Create the feature spec — PLAN.md, SPEC.md, STATUS.md, and runnable examples. Establishes intent.                                                                                        |
+| **implement**         | Write the code. Update `STATUS.md` as you go (done/next/context).                                                                                                                        |
 | `/adversarial-review` | Clean-context hostile pass in a fresh reviewer. Challenges the approach/design, then flags bloat, smells, and newly obsolete code. Review-only — returns findings; `/ship` applies them. |
-| `/review`             | Use the provider's native code review flow for bugs, regressions, security, and edge cases.             |
-| `/pr`                 | Group the diff into atomic commits, push, open a draft PR if missing, write the spec markdown artifact. |
-| `/handoff`            | Capture session state — what's done, what's next, critical context for the next agent or session.       |
+| `/pr`                 | Group the diff into atomic commits, push, open a draft PR if missing, write the spec markdown artifact.                                                                                  |
+| `/handoff`            | Capture session state — what's done, what's next, critical context for the next agent or session.                                                                                        |
 
-Not every session hits every phase. `/adversarial-review` and native `/review`
-are most useful before `/pr`. Use `/ship` to run adversarial review and `/pr`
-back-to-back. `/handoff` is for any session boundary.
+Not every session hits every phase. `/adversarial-review` is most useful before
+`/pr`. Use `/ship` to run adversarial review and `/pr` back-to-back. `/handoff`
+is for any session boundary.
 
 ## GitHub Workflow
 
@@ -193,39 +138,36 @@ atomic PRs.
   method.
 - After a PR merges, update the relevant `STATUS.md` with PR number, merge or
   squash commit SHA, and a short note about what shipped.
-- Regenerate `specs/STATUS.md` after updating per-spec status. Local git hooks
-  can do this as a safety net, but remote GitHub PR events do not run local
-  hooks.
+- `specs/STATUS.md` is regenerated automatically by the knack plugin hook after
+  any write to a file under `specs/`. Local git hooks (post-commit, post-merge)
+  serve as a safety net for commits made outside an agent session.
 
 ## Specs Setup
 
-Specs are private working context and should never be committed. Keep the
-repo-local `specs` path ignored by git, and store the real files outside the
-repository.
-
-Store specs in a cloud-synced location, organized per-repo:
-
-```text
-~/Documents/specs/
-├── my-web-app/
-│   └── user-auth/
-└── another-project/
-    └── api-v2/
-```
-
-Symlink into each repo:
+Specs are private working context and should never be committed. Store the real
+files outside the repo (for example `~/Documents/specs/<repo>/`, cloud-synced
+and per-repo), add `specs` to `.gitignore`, and symlink `./specs` back in:
 
 ```bash
-bash plugins/knack/skills/spec/scripts/setup-specs-symlink.sh
+mkdir -p ~/Documents/specs/<repo>
+ln -s ~/Documents/specs/<repo> ./specs
+echo specs >> .gitignore
 ```
 
-This gives you cloud backup, per-repo isolation, and portability across machines.
-The script creates `~/Documents/specs/<repo>/`, ensures `.gitignore` contains
-`specs`, and links `./specs` to the private directory. Pass a slug to override
-the directory name:
+If you use a worktree-based setup, you should set up the following post-checkout git hook to automatically symlink the specs directory:
 
 ```bash
-bash plugins/knack/skills/spec/scripts/setup-specs-symlink.sh my-web-app
+#!/usr/bin/env bash
+# post-checkout: $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout
+
+# only act on branch checkouts (not file restores)
+[ "$3" = "1" ] || exit 0
+
+# only act when we're inside a linked worktree, not the main repo
+git_dir=$(git rev-parse --git-dir)
+[[ "$git_dir" == *"/worktrees/"* ]] || exit 0
+
+ln -sfn ~/Documents/specs/<repo> "$(pwd)/specs"
 ```
 
 ## Feature Specs
@@ -236,8 +178,6 @@ Specs live under `specs/` with these files (created by `/spec new`):
 specs/
 ├── AGENTS.md           # How agents navigate specs; not a manual index
 └── <feature>/
-    ├── AGENTS.md       # Spec-specific instructions (read first)
-    ├── CLAUDE.md       # contains @AGENTS.md to point Claude to AGENTS.md
     ├── PLAN.md         # Human-facing goal, scope, success criteria, execution mode
     ├── SPEC.md         # Agent-expanded design, behavior, decisions, verification
     ├── STATUS.md       # Current status, done/next items, merged work
@@ -254,21 +194,14 @@ posture, or a major framework choice.
 
 Do not maintain a manual `specs/INDEX`. Each spec is self-describing through
 `STATUS.md`; derive overviews by scanning `specs/*/STATUS.md` when needed.
-The project-level `specs/STATUS.md` file is generated by `spec-status.py`; do
+The project-level `specs/STATUS.md` file is generated by `spec_status.py`; do
 not edit it by hand.
 
 The core of context continuity is `STATUS.md`:
 
 ```markdown
 ---
-slug: <slug>
-title: <Title>
-phase: plan
-blocked: false
-updated: <YYYY-MM-DD>
-summary: <one-line summary for lookup>
-issues: []
-prs: []
+description: <one or two sentence description for the project overview>
 ---
 
 # <Title> - Status
@@ -296,22 +229,6 @@ prs: []
   - Commit: `abc123`
   - Shipped: implemented the first atomic slice
 ```
-
-Generate the project overview with:
-
-```bash
-python3 plugins/knack/skills/spec/scripts/spec-status.py --write
-```
-
-Optionally install local refresh hooks:
-
-```bash
-bash plugins/knack/skills/spec/scripts/install-status-hooks.sh
-```
-
-The hook installer writes `post-commit`, `post-merge`, and `post-checkout`
-hooks. Use `--include-pre-push` if you also want a pre-push refresh. Hooks never
-stage or commit generated output.
 
 ---
 

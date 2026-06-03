@@ -1,6 +1,5 @@
 #!/usr/bin/env python3
 import importlib.util
-import os
 import subprocess
 import sys
 import tempfile
@@ -8,9 +7,8 @@ import unittest
 from pathlib import Path
 
 
-SCRIPT_PATH = Path(__file__).with_name("spec-status.py")
+SCRIPT_PATH = Path(__file__).with_name("spec_status.py")
 HOOK_INSTALLER_PATH = Path(__file__).with_name("install-status-hooks.sh")
-SYMLINK_SETUP_PATH = Path(__file__).with_name("setup-specs-symlink.sh")
 
 
 def load_module():
@@ -37,80 +35,41 @@ class SpecStatusTest(unittest.TestCase):
         status_path.write_text(text, encoding="utf-8")
         return status_path
 
-    def test_parses_frontmatter_and_renders_deterministic_overview(self):
-        self.write_status(
-            "done-spec",
-            """---
-slug: done-spec
-title: Done Spec
-phase: done
-blocked: false
-updated: 2026-05-08
-summary: Finished workflow cleanup.
-prs: ["#11 `02e8b75`"]
----
-
-# Done Spec - Status
-""",
-        )
-        self.write_status(
-            "active-spec",
-            """---
-slug: active-spec
-title: Active Spec
-phase: implementing
-blocked: true
-updated: 2026-05-09
-summary: Build deterministic status overview.
-issues: []
-prs: []
----
-
-# Active Spec - Status
-""",
-        )
+    def test_renders_active_and_archived_sections(self):
+        self.write_status("active-spec", "---\ndescription: An active feature.\n---\n")
+        self.write_status("_archive/old-spec", "---\ndescription: An archived spec.\n---\n")
 
         overview = self.module.generate_overview(self.specs)
 
-        self.assertIn("# Specs Status", overview)
-        self.assertIn("| active-spec | implementing | yes | 2026-05-09 | Build deterministic status overview. |", overview)
-        self.assertIn("| done-spec | 2026-05-08 | Finished workflow cleanup. | #11 `02e8b75` |", overview)
-        self.assertLess(overview.index("## Active"), overview.index("## Completed"))
+        self.assertIn("## Active", overview)
+        self.assertIn("## Archived", overview)
+        self.assertIn("- [active-spec](active-spec/STATUS.md) — An active feature.", overview)
+        self.assertIn("- [old-spec](_archive/old-spec/STATUS.md) — An archived spec.", overview)
+        self.assertLess(overview.index("## Active"), overview.index("## Archived"))
 
-    def test_discovers_specs_in_archive_directory(self):
-        self.write_status(
-            "active",
-            """---
-slug: active
-title: Active
-phase: implementing
-blocked: false
-updated: 2026-05-10
-summary: An active spec.
-prs: []
----
-""",
-        )
-        self.write_status(
-            "_archive/old-spec",
-            """---
-slug: old-spec
-title: Old Spec
-phase: done
-blocked: false
-updated: 2026-05-01
-summary: An archived spec.
-prs: []
----
-""",
-        )
+    def test_spec_without_description_renders_link_only(self):
+        self.write_status("no-desc", "# No frontmatter\n")
 
         overview = self.module.generate_overview(self.specs)
 
-        self.assertIn("| active | implementing | no | 2026-05-10 | An active spec. |", overview)
-        self.assertIn("| old-spec | 2026-05-01 | An archived spec. |  |", overview)
+        self.assertIn("- [no-desc](no-desc/STATUS.md)\n", overview)
 
-    def test_missing_specs_noops_without_writing(self):
+    def test_archive_dir_excluded_from_active(self):
+        self.write_status("_archive/archived", "---\ndescription: Archived.\n---\n")
+
+        overview = self.module.generate_overview(self.specs)
+
+        active_section = overview.split("## Active", 1)[1].split("## Archived", 1)[0]
+        self.assertNotIn("archived", active_section)
+
+    def test_empty_specs_dir_renders_none_placeholders(self):
+        self.specs.mkdir()
+
+        overview = self.module.generate_overview(self.specs)
+
+        self.assertIn("_None._", overview)
+
+    def test_missing_specs_dir_noops_without_writing(self):
         missing = self.root / "missing-specs"
 
         overview = self.module.generate_overview(missing)
@@ -120,81 +79,27 @@ prs: []
         self.assertFalse(result)
         self.assertFalse(missing.exists())
 
-    def test_reports_missing_and_malformed_status_files(self):
-        (self.specs / "missing-status").mkdir(parents=True)
-        self.write_status("bad-status", "# Bad Status\n\nNo frontmatter here.\n")
+    def test_spec_without_status_md_is_skipped(self):
+        (self.specs / "no-status").mkdir(parents=True)
+        self.write_status("valid", "---\ndescription: Valid spec.\n---\n")
 
         overview = self.module.generate_overview(self.specs)
 
-        self.assertIn("## Needs Attention", overview)
-        self.assertIn("| bad-status | malformed STATUS.md frontmatter:", overview)
-        self.assertIn("| missing-status | missing STATUS.md |", overview)
-
-    def test_sorts_active_before_completed_by_phase_blocked_updated_and_slug(self):
-        for slug, phase, blocked, updated in [
-            ("beta", "implementing", "false", "2026-05-09"),
-            ("alpha", "implementing", "false", "2026-05-09"),
-            ("blocked", "implementing", "true", "2026-05-10"),
-            ("planning", "plan", "false", "2026-05-11"),
-            ("done", "done", "false", "2026-05-12"),
-        ]:
-            self.write_status(
-                slug,
-                f"""---
-slug: {slug}
-title: {slug}
-phase: {phase}
-blocked: {blocked}
-updated: {updated}
-summary: {slug} summary.
-prs: []
----
-""",
-            )
-
-        overview = self.module.generate_overview(self.specs)
-
-        active = overview.split("## Active", 1)[1].split("## Completed", 1)[0]
-        self.assertLess(active.index("| planning |"), active.index("| alpha |"))
-        self.assertLess(active.index("| alpha |"), active.index("| beta |"))
-        self.assertLess(active.index("| beta |"), active.index("| blocked |"))
+        self.assertIn("valid", overview)
+        self.assertNotIn("no-status", overview)
 
     def test_symlinked_specs_directory_is_supported(self):
         real_specs = self.root / "real-specs"
-        self.write_status(
-            "linked",
-            """---
-slug: linked
-title: Linked
-phase: verifying
-blocked: false
-updated: 2026-05-09
-summary: Symlinked specs work.
-prs: []
----
-""",
-        )
+        self.write_status("linked", "---\ndescription: Symlinked specs work.\n---\n")
         self.specs.rename(real_specs)
         self.specs.symlink_to(real_specs, target_is_directory=True)
 
         overview = self.module.generate_overview(self.specs)
 
-        self.assertIn("| linked | verifying | no | 2026-05-09 | Symlinked specs work. |", overview)
+        self.assertIn("- [linked](linked/STATUS.md) — Symlinked specs work.", overview)
 
     def test_cli_writes_overview(self):
-        self.write_status(
-            "cli-spec",
-            """---
-slug: cli-spec
-title: CLI Spec
-phase: done
-blocked: false
-updated: 2026-05-09
-summary: CLI writes overview.
-prs: ["#12 `abc123`"]
----
-""",
-        )
+        self.write_status("cli-spec", "---\ndescription: CLI write test.\n---\n")
 
         result = subprocess.run(
             [sys.executable, str(SCRIPT_PATH), "--specs-dir", str(self.specs), "--write", "--quiet"],
@@ -205,7 +110,7 @@ prs: ["#12 `abc123`"]
 
         self.assertEqual("", result.stderr)
         self.assertEqual(0, result.returncode)
-        self.assertIn("CLI writes overview.", (self.specs / "STATUS.md").read_text(encoding="utf-8"))
+        self.assertIn("CLI write test.", (self.specs / "STATUS.md").read_text(encoding="utf-8"))
 
     def test_hook_installer_writes_git_hooks_that_work_without_specs(self):
         repo = self.root / "repo"
@@ -240,60 +145,6 @@ prs: ["#12 `abc123`"]
         self.assertEqual("", pre_push_result.stderr)
         self.assertEqual(0, pre_push_result.returncode)
         self.assertTrue((hooks_dir / "pre-push").exists())
-
-    def test_symlink_setup_creates_private_specs_link_and_gitignore(self):
-        repo = self.root / "repo"
-        private_root = self.root / "private-specs"
-        repo.mkdir()
-        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
-
-        result = subprocess.run(
-            ["bash", str(SYMLINK_SETUP_PATH)],
-            cwd=repo,
-            env={**os.environ, "AGENTSPEC_SPECS_ROOT": str(private_root)},
-            check=False,
-            text=True,
-            capture_output=True,
-        )
-
-        self.assertEqual("", result.stderr)
-        self.assertEqual(0, result.returncode)
-        self.assertTrue((repo / "specs").is_symlink())
-        self.assertEqual((private_root / "repo").resolve(), (repo / "specs").resolve())
-        self.assertTrue((private_root / "repo").is_dir())
-        self.assertIn("specs\n", (repo / ".gitignore").read_text(encoding="utf-8"))
-
-        second_result = subprocess.run(
-            ["bash", str(SYMLINK_SETUP_PATH)],
-            cwd=repo,
-            env={**os.environ, "AGENTSPEC_SPECS_ROOT": str(private_root)},
-            check=False,
-            text=True,
-            capture_output=True,
-        )
-
-        self.assertEqual("", second_result.stderr)
-        self.assertEqual(0, second_result.returncode)
-        self.assertEqual(1, (repo / ".gitignore").read_text(encoding="utf-8").splitlines().count("specs"))
-
-    def test_symlink_setup_refuses_existing_real_specs_directory(self):
-        repo = self.root / "repo"
-        private_root = self.root / "private-specs"
-        repo.mkdir()
-        (repo / "specs").mkdir()
-        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
-
-        result = subprocess.run(
-            ["bash", str(SYMLINK_SETUP_PATH)],
-            cwd=repo,
-            env={**os.environ, "AGENTSPEC_SPECS_ROOT": str(private_root)},
-            check=False,
-            text=True,
-            capture_output=True,
-        )
-
-        self.assertNotEqual(0, result.returncode)
-        self.assertIn("Refusing to replace existing non-symlink specs path", result.stderr)
 
 
 if __name__ == "__main__":
