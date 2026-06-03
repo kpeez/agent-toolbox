@@ -20,12 +20,14 @@ def read_description(status_path: Path) -> str:
     except StopIteration:
         return ""
     for line in lines[1:end]:
-        if line.startswith("description:"):
+        if line.startswith("summary:"):
             return line.split(":", 1)[1].strip()
     return ""
 
 
-def discover_specs(specs_dir: Path) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
+def discover_specs(
+    specs_dir: Path,
+) -> tuple[list[tuple[str, str]], list[tuple[str, str]]]:
     active: list[tuple[str, str]] = []
     archived: list[tuple[str, str]] = []
 

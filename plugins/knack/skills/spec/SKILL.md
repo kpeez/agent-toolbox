@@ -138,7 +138,7 @@ storage model, security posture, or major framework choice.
 Tracks progress on tasks. Updated throughout the lifecycle. See `templates.md`
 for the full format.
 
-The only frontmatter field is `description:` — one or two sentences used by
+The only frontmatter field is `summary:` — one or two sentences used by
 the generator to populate `specs/STATUS.md`. Keep the rest of the file as
 human-readable tracking: Phase, Blocked, Done, Next, Merged Work.
 

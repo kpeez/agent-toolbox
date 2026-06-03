@@ -6,7 +6,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 SCRIPT_PATH = Path(__file__).with_name("spec_status.py")
 HOOK_INSTALLER_PATH = Path(__file__).with_name("install-status-hooks.sh")
 
@@ -36,18 +35,22 @@ class SpecStatusTest(unittest.TestCase):
         return status_path
 
     def test_renders_active_and_archived_sections(self):
-        self.write_status("active-spec", "---\ndescription: An active feature.\n---\n")
-        self.write_status("_archive/old-spec", "---\ndescription: An archived spec.\n---\n")
+        self.write_status("active-spec", "---\nsummary: An active feature.\n---\n")
+        self.write_status("_archive/old-spec", "---\nsummary: An archived spec.\n---\n")
 
         overview = self.module.generate_overview(self.specs)
 
         self.assertIn("## Active", overview)
         self.assertIn("## Archived", overview)
-        self.assertIn("- [active-spec](active-spec/STATUS.md) — An active feature.", overview)
-        self.assertIn("- [old-spec](_archive/old-spec/STATUS.md) — An archived spec.", overview)
+        self.assertIn(
+            "- [active-spec](active-spec/STATUS.md) — An active feature.", overview
+        )
+        self.assertIn(
+            "- [old-spec](_archive/old-spec/STATUS.md) — An archived spec.", overview
+        )
         self.assertLess(overview.index("## Active"), overview.index("## Archived"))
 
-    def test_spec_without_description_renders_link_only(self):
+    def test_spec_without_summary_renders_link_only(self):
         self.write_status("no-desc", "# No frontmatter\n")
 
         overview = self.module.generate_overview(self.specs)
@@ -55,7 +58,7 @@ class SpecStatusTest(unittest.TestCase):
         self.assertIn("- [no-desc](no-desc/STATUS.md)\n", overview)
 
     def test_archive_dir_excluded_from_active(self):
-        self.write_status("_archive/archived", "---\ndescription: Archived.\n---\n")
+        self.write_status("_archive/archived", "---\nsummary: Archived.\n---\n")
 
         overview = self.module.generate_overview(self.specs)
 
@@ -81,7 +84,7 @@ class SpecStatusTest(unittest.TestCase):
 
     def test_spec_without_status_md_is_skipped(self):
         (self.specs / "no-status").mkdir(parents=True)
-        self.write_status("valid", "---\ndescription: Valid spec.\n---\n")
+        self.write_status("valid", "---\nsummary: Valid spec.\n---\n")
 
         overview = self.module.generate_overview(self.specs)
 
@@ -90,7 +93,7 @@ class SpecStatusTest(unittest.TestCase):
 
     def test_symlinked_specs_directory_is_supported(self):
         real_specs = self.root / "real-specs"
-        self.write_status("linked", "---\ndescription: Symlinked specs work.\n---\n")
+        self.write_status("linked", "---\nsummary: Symlinked specs work.\n---\n")
         self.specs.rename(real_specs)
         self.specs.symlink_to(real_specs, target_is_directory=True)
 
@@ -99,10 +102,17 @@ class SpecStatusTest(unittest.TestCase):
         self.assertIn("- [linked](linked/STATUS.md) — Symlinked specs work.", overview)
 
     def test_cli_writes_overview(self):
-        self.write_status("cli-spec", "---\ndescription: CLI write test.\n---\n")
+        self.write_status("cli-spec", "---\nsummary: CLI write test.\n---\n")
 
         result = subprocess.run(
-            [sys.executable, str(SCRIPT_PATH), "--specs-dir", str(self.specs), "--write", "--quiet"],
+            [
+                sys.executable,
+                str(SCRIPT_PATH),
+                "--specs-dir",
+                str(self.specs),
+                "--write",
+                "--quiet",
+            ],
             check=False,
             text=True,
             capture_output=True,
@@ -110,12 +120,16 @@ class SpecStatusTest(unittest.TestCase):
 
         self.assertEqual("", result.stderr)
         self.assertEqual(0, result.returncode)
-        self.assertIn("CLI write test.", (self.specs / "STATUS.md").read_text(encoding="utf-8"))
+        self.assertIn(
+            "CLI write test.", (self.specs / "STATUS.md").read_text(encoding="utf-8")
+        )
 
     def test_hook_installer_writes_git_hooks_that_work_without_specs(self):
         repo = self.root / "repo"
         repo.mkdir()
-        subprocess.run(["git", "init"], cwd=repo, check=True, capture_output=True, text=True)
+        subprocess.run(
+            ["git", "init"], cwd=repo, check=True, capture_output=True, text=True
+        )
 
         result = subprocess.run(
             ["bash", str(HOOK_INSTALLER_PATH)],
@@ -131,7 +145,9 @@ class SpecStatusTest(unittest.TestCase):
         for hook_name in ["post-commit", "post-merge", "post-checkout"]:
             hook_path = hooks_dir / hook_name
             self.assertTrue(hook_path.exists(), hook_name)
-            self.assertEqual(0, subprocess.run([str(hook_path)], cwd=repo, check=False).returncode)
+            self.assertEqual(
+                0, subprocess.run([str(hook_path)], cwd=repo, check=False).returncode
+            )
         self.assertFalse((hooks_dir / "pre-push").exists())
 
         pre_push_result = subprocess.run(
