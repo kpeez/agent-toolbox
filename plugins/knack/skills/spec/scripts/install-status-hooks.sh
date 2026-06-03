@@ -2,7 +2,7 @@
 set -euo pipefail
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-STATUS_SCRIPT="$SCRIPT_DIR/spec-status.py"
+STATUS_SCRIPT="$SCRIPT_DIR/spec_status.py"
 INCLUDE_PRE_PUSH="no"
 FORCE="no"
 
@@ -38,7 +38,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 if [[ ! -f "$STATUS_SCRIPT" ]]; then
-    echo "Error: missing spec-status.py next to this installer" >&2
+    echo "Error: missing spec_status.py next to this installer" >&2
     exit 1
 fi
 
@@ -61,10 +61,6 @@ write_hook() {
 #!/usr/bin/env bash
 # agentspec spec-status hook
 set -euo pipefail
-
-if [[ "$hook_name" == "post-checkout" ]]; then
-    bash "$SCRIPT_DIR/setup-specs-symlink.sh" "\$@" || true
-fi
 
 python3 "$STATUS_SCRIPT" --specs-dir "$REPO_ROOT/specs" --write --quiet
 EOF

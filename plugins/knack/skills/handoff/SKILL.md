@@ -25,8 +25,8 @@ Generate a handoff summary to ensure context continuity for the next session.
    - Add new context, update Phase and Blocked status
 
 4. **Regenerate project status**
-   - Run `python3 skills/spec/scripts/spec-status.py --write` from the repo root when that script exists
-   - If using an installed skill copy, run the equivalent `spec/scripts/spec-status.py --write` path
+   - Run `python3 skills/spec/scripts/spec_status.py --write` from the repo root when that script exists
+   - If using an installed skill copy, run the equivalent `spec/scripts/spec_status.py --write` path
 
 5. **Append to `specs/<feature>/handoff.md`**:
 
