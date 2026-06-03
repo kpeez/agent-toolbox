@@ -1,0 +1,21 @@
+{
+  "name": "lab",
+  "description": "AI-researcher skills: autonomous experiment loops and data visualization guidance",
+  "version": "1.0.0",
+  "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": ["research", "experiments", "autoresearch", "data-viz", "visualization"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "lab",
+    "shortDescription": "Autonomous experiment loops and data-viz guidance.",
+    "longDescription": "An AI-researcher toolkit: run defined experiment loops with metrics and private artifacts, and design honest, clear data visualizations.",
+    "developerName": "kpeez",
+    "category": "Productivity",
+    "capabilities": ["Automation", "Review"],
+    "defaultPrompt": ["Autoresearch this optimization with a defined metric.", "Critique this figure for clarity and honesty."],
+    "brandColor": "#7C3AED"
+  }
+}

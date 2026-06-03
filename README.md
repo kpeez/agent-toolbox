@@ -1,20 +1,24 @@
-# agentspecs
+# agent-toolbox
 
 A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, Antigravity CLI, and GitHub Copilot CLI with a single source of truth[^1].
 
 ## What's Here
 
 ```text
-agentspecs/
+agent-toolbox/
 ├── .claude-plugin/
-│   └── marketplace.json       # Claude marketplace; points at plugins/agentspec
+│   └── marketplace.json       # Claude marketplace; points at plugins/knack and plugins/lab
 ├── .agents/plugins/
-│   └── marketplace.json       # Codex marketplace; points at plugins/agentspec
-├── plugins/agentspec/         # Plugin payload shared by both providers
+│   └── marketplace.json       # Codex marketplace; points at plugins/knack and plugins/lab
+├── plugins/knack/             # Core plugin: spec-driven workflows, skills, and agent definitions
 │   ├── .claude-plugin/        #   Claude plugin manifest
 │   ├── .codex-plugin/         #   Codex plugin manifest
 │   ├── agents/                #   Agent definitions: Claude .md (via plugin), Codex .toml (via setup script)
-│   └── skills/                #   Shared skills for all providers
+│   └── skills/                #   Core skills for all providers
+├── plugins/lab/               # Research plugin: autonomous experiments and data-viz guidance
+│   ├── .claude-plugin/        #   Claude plugin manifest
+│   ├── .codex-plugin/         #   Codex plugin manifest
+│   └── skills/                #   Research skills (autoresearch, data-viz)
 ├── AGENTS.md                  # Shared provider-neutral instructions
 └── scripts/setup-agent.sh     # Manual path for non-plugin providers and helper scripts
 ```
@@ -26,17 +30,21 @@ agentspecs/
 Register this repo as a marketplace and install:
 
 ```bash
-/plugin marketplace add kpeez/agentspec
-/plugin install agentspec@agentspec
+/plugin marketplace add kpeez/agent-toolbox
+/plugin install knack@agent-toolbox
+/plugin install lab@agent-toolbox
 ```
+
+> `lab` is optional — install it on research machines where you use `autoresearch` and `data-viz`.
 
 ### Codex CLI (plugin)
 
 Register this repo as a marketplace and install:
 
 ```bash
-codex plugin marketplace add kpeez/agentspec
-codex plugin add agentspec@agentspec
+codex plugin marketplace add kpeez/agent-toolbox
+codex plugin add knack@agent-toolbox
+codex plugin add lab@agent-toolbox
 ```
 
 > The Codex plugin delivers skills only. Codex plugins do not deliver agents, so
@@ -56,7 +64,7 @@ Requires Bash:
 ```
 
 Skills are written to `~/.agents/skills`. The script overwrites the
-Agentspec-owned Antigravity and Copilot instruction files and refreshes helper
+agent-toolbox-owned Antigravity and Copilot instruction files and refreshes helper
 command symlinks.
 
 This installs to:
@@ -69,7 +77,7 @@ This installs to:
 | Antigravity CLI | `~/.gemini/AGENTS.md` + skills symlink           |
 | Copilot CLI     | `~/.copilot/copilot-instructions.md`             |
 
-Re-run after updating agentspecs.
+Re-run after updating agent-toolbox.
 
 ### Companion: Obsidian skills
 
@@ -103,9 +111,9 @@ All provider installs default to each CLI's native auto-approval mode:
 
 Provider behavior is configured by plugin install or provider-native setup:
 
-- Claude receives agentspec instructions, skills, and agent definitions through
-  its plugin payload (root `CLAUDE.md`/`AGENTS.md`, `skills/`, and `agents/*.md`).
-- Codex receives skills through its plugin payload (`skills/`). Codex plugins do
+- Claude receives instructions, skills, and agent definitions through
+  its plugin payload (root `CLAUDE.md`/`AGENTS.md`, `plugins/knack/skills/`, and `plugins/knack/agents/*.md`).
+- Codex receives skills through its plugin payload (`plugins/knack/skills/` and `plugins/lab/skills/`). Codex plugins do
   not deliver agents, so the `agents/*.toml` subagents are installed by
   `scripts/setup-agent.sh` into `~/.codex/agents`.
 - Codex project defaults live in `.codex/config.toml`, which sets
@@ -113,7 +121,7 @@ Provider behavior is configured by plugin install or provider-native setup:
   this repository.
 - Antigravity CLI (`agy`) ships its own Terminal Command Auto Execution policy
   (Turbo / Auto / Off) configured through the first-run setup wizard and the
-  in-app deny list. Agentspec only installs `~/.gemini/AGENTS.md` and shared
+  in-app deny list. agent-toolbox only installs `~/.gemini/AGENTS.md` and shared
   skills; configure the policy through the Antigravity CLI setup wizard.
 - Copilot installs `~/.copilot/bin/copilot-auto`, which launches Copilot with
   native `--allow-all` plus destructive `--deny-tool` rules. GitHub documents
@@ -122,10 +130,12 @@ Provider behavior is configured by plugin install or provider-native setup:
 
 ## Skills
 
+Skills tagged **(lab)** ship in the `lab` plugin; everything else ships in `knack`.
+
 | Skill                        | Purpose                                                                                      |
 | ---------------------------- | -------------------------------------------------------------------------------------------- |
 | `add`                        | Agent-Driven Development discipline — examples before implementation, red/green verification |
-| `autoresearch`               | Autonomous experiment loops with defined metrics and private logs                            |
+| `autoresearch` **(lab)**     | Autonomous experiment loops with defined metrics and private logs                            |
 | `/spec new <name>`           | Create a new feature spec                                                                    |
 | `/spec status`               | Regenerate the project-level specs/STATUS.md overview                                        |
 | `/adversarial-review [name]` | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat, smells, obsolete code (review-only) |
@@ -206,7 +216,7 @@ Store specs in a cloud-synced location, organized per-repo:
 Symlink into each repo:
 
 ```bash
-bash plugins/agentspec/skills/spec/scripts/setup-specs-symlink.sh
+bash plugins/knack/skills/spec/scripts/setup-specs-symlink.sh
 ```
 
 This gives you cloud backup, per-repo isolation, and portability across machines.
@@ -215,7 +225,7 @@ The script creates `~/Documents/specs/<repo>/`, ensures `.gitignore` contains
 the directory name:
 
 ```bash
-bash plugins/agentspec/skills/spec/scripts/setup-specs-symlink.sh my-web-app
+bash plugins/knack/skills/spec/scripts/setup-specs-symlink.sh my-web-app
 ```
 
 ## Feature Specs
@@ -290,13 +300,13 @@ prs: []
 Generate the project overview with:
 
 ```bash
-python3 plugins/agentspec/skills/spec/scripts/spec-status.py --write
+python3 plugins/knack/skills/spec/scripts/spec-status.py --write
 ```
 
 Optionally install local refresh hooks:
 
 ```bash
-bash plugins/agentspec/skills/spec/scripts/install-status-hooks.sh
+bash plugins/knack/skills/spec/scripts/install-status-hooks.sh
 ```
 
 The hook installer writes `post-commit`, `post-merge`, and `post-checkout`

@@ -1,6 +1,6 @@
 ---
 name: autoresearch
-description: Run an autonomous experiment loop for open-ended engineering or research work with a defined endpoint. Use when the user asks Codex to autoresearch, explore alternatives, improve toward a target metric, run repeated experiments, or compare outcomes. The skill helps define the goal and stop conditions, creates an isolated worktree, stores each experiment under a named group in specs/_experiments/<group-name>/, records results, keeps useful changes, and discards failed directions.
+description: Run an autonomous experiment loop for open-ended engineering or research work with a defined endpoint. Use when the user asks Codex to autoresearch, explore alternatives, improve toward a target metric, run repeated experiments, or compare outcomes. The skill helps define the goal and stop conditions, creates an isolated worktree, stores each experiment under a named group in a configurable artifacts root, records results, keeps useful changes, and discards failed directions.
 ---
 
 # Autoresearch
@@ -40,12 +40,21 @@ Run autoresearch on a dedicated worktree.
 4. Create a branch named `autoresearch/<group-name>`.
 5. Create a sibling worktree for that branch when the provider/workspace allows
    it. If worktrees are unavailable, stop and explain the limitation.
-6. Create the group directory `specs/_experiments/<group-name>/` if it does not
-   exist.
+6. Determine the artifacts root (see below), then create the group directory
+   `<artifacts-root>/<group-name>/` if it does not exist.
 7. Run all experiments from that worktree.
 
-Use the repository's normal private-spec setup if one exists. In agentspec-style
-repos, ensure `specs/` is a private symlink before writing experiment records.
+### Artifacts Root
+
+Store all runs under a single root directory.
+
+- Use the root the user specifies (an argument or a stated path).
+- Otherwise default to `.autoresearch/` at the repository root.
+- Treat the root as private working context: add it to `.gitignore` unless the
+  user explicitly wants runs committed.
+
+The skill assumes nothing about the repository layout or any spec system; it only
+needs a writable root for run artifacts.
 
 ## Experiment Records
 
@@ -53,7 +62,7 @@ Store every experiment under a group directory named after the experiment
 program:
 
 ```text
-<experiments-root>
+<artifacts-root>
 └── <group-name>/
     ├── README.md          ← group-level overview
     └── YYYY_MM_DD-expt-<NN>-<expt-slug>/
@@ -112,8 +121,8 @@ Use `LOG.md` for timestamped command history, observations, and links to files
 under `logs/` or `scripts/`.
 
 Keep one-off scripts, commands, raw outputs, screenshots, traces, or notes in
-that experiment folder. Do not commit `specs/_experiments` unless the repository
-explicitly tracks specs; in agentspec-style repos it is private context.
+that experiment folder. Do not commit the artifacts root unless the user
+explicitly wants runs tracked; by default it is private context.
 
 ## Baseline
 
