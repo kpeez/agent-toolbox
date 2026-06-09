@@ -83,3 +83,15 @@ module, what sits behind the seam, what tests survive. Side effects happen inlin
 - The user rejects a candidate for a load-bearing reason a future review would
   re-suggest? Offer an ADR (see `grill-me`'s `ADR-FORMAT.md`). Skip ephemeral
   ("not worth it right now") and self-evident reasons.
+
+When you commit to deepening a candidate, classify its dependencies and pick the
+test seam with **`DEEPENING.md`** (in-process / local-substitutable / remote-owned
+ports-&-adapters / true-external) — it decides what you mock and what you merge.
+
+### 4. Design it twice (optional)
+
+If the right interface for a chosen candidate is non-obvious, don't settle on your
+first idea. Use **`INTERFACE-DESIGN.md`**: frame the constraints, then spawn
+parallel sub-agents that each design a radically different interface (minimize /
+maximize-flexibility / optimize-common-caller / ports-&-adapters), and compare
+them on depth, locality, and seam placement before recommending one.

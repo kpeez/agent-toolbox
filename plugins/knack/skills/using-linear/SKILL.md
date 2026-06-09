@@ -8,47 +8,36 @@ description: "Use when working on Linear-tracked issues or when Linear issue IDs
 Use this reference when a spec is linked to a Linear issue. Linear is the
 default tracker (configured in repo-root `issue-tracker.md`; see `/to-issues`).
 
-Linear is a tracker, discussion surface, and handoff signal. It is not a
-replacement for repo-local specs. The `SPEC.md` goal/scope header is the
-canonical plan the agent follows; the `SPEC.md` design body expands the
-implementation; `STATUS.md` (with its run log) tracks progress and verification.
+Linear is the **task and status ledger**: issue state is the status, blocked-by
+links are the blockers, and the project rollup is the progress view. The local
+`SPEC.md` is the design draft — its goal/scope header is the canonical plan the
+agent follows, and its design body expands the implementation. There is no local
+`STATUS.md`; status lives on Linear.
 
 ## Source of Truth
 
-For non-trivial Linear-linked work, create or update `SPEC.md`, `STATUS.md`, and
-`examples/` before implementation.
+For non-trivial Linear-linked work, create or update `SPEC.md` and `examples/`
+before implementation, and keep the Linear issues current.
 
 If Linear comments, issue text, chat, or PR discussion changes the intended
-work, reconcile that change into the spec files:
+work, reconcile that change into the right place:
 
 - Update the `SPEC.md` goal/scope header for goal, scope, non-goals, success
   criteria, execution mode, stop conditions, or validation changes.
 - Update the `SPEC.md` design body for implementation approach, behavior,
   decisions, risks, or verification mapping changes.
-- Update `STATUS.md` for phase, blockers, next work, linked issues, PRs, shipped
-  traceability, and the run log when examples are run.
+- Move the Linear issue and comment progress for status, blockers, next work, and
+  shipped traceability.
 
 If the right update is unclear, stop and ask before implementing. Do not let a
 Linear issue body, comment, or status silently override the `SPEC.md` header.
 
 ## Linking
 
-Record Linear issue IDs in `STATUS.md` frontmatter:
-
-```yaml
-issues:
-  - ABC-123
-prs: []
-```
-
-Use `STATUS.md` `Linked Work` for human-readable references:
-
-```md
-## Linked Work
-
-- Linear: ABC-123
-- PR: #12
-```
+Linear holds the linkage natively — set the issue's project (the spec container),
+its blocked-by relations, and attach the PR. Reference issue IDs (e.g. `ABC-123`)
+in the `SPEC.md` Decisions/Verification prose where it aids the reader, but do not
+maintain a separate local ledger of IDs.
 
 ## Status Gates
 
@@ -109,7 +98,7 @@ Shipped.
 
 PR: <link>
 Commit: `<sha>`
-Spec status: updated `STATUS.md` (including its run log)
+Shipped scope: <what merged>
 ```
 
 ## Fallback

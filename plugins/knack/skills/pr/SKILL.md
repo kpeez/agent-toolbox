@@ -10,7 +10,7 @@ Bundle the committed + uncommitted changes on the current branch (or worktree) i
 ## Rules
 
 - **Atomic PRs, atomic commits.** Imperative, conventional-style commit subjects (`feat: ...`, `fix: ...`, `refactor: ...`, `docs: ...`, `test: ...`, `chore: ...`).
-- **PR title and body come from SPEC.md, STATUS.md, linked issues, and the diff.** Do not create `commits.md` or `draft-pr.md` artifacts in the repo.
+- **PR title and body come from SPEC.md, linked tracker issues, and the diff.** Do not create `commits.md` or `draft-pr.md` artifacts in the repo.
 - **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
 - **Draft PRs by default.** Mark ready for review only when the user asks.
 - **Squash merge by default.** Do not switch merge methods without being asked.
@@ -21,9 +21,9 @@ Bundle the committed + uncommitted changes on the current branch (or worktree) i
 
 <steps>
 
-<step action="resolve-feature">if argument provided, use it as `<feature>`; otherwise, if `specs/` exists, pick the feature whose `specs/<feature>/STATUS.md` was modified most recently; fall back to legacy `implementation.md` only when no `STATUS.md` exists; if no spec exists, continue without one and skip the markdown artifact step</step>
+<step action="resolve-feature">if argument provided, use it as `<feature>`; otherwise, if `specs/` exists, pick the feature whose `specs/<feature>/SPEC.md` was modified most recently; if no spec exists, continue without one and skip the markdown artifact step</step>
 
-<step action="read-context">when `<feature>` resolved, read `specs/<feature>/AGENTS.md`, `SPEC.md`, and `STATUS.md` for intent, scope, linked issues, and the desired PR slice (legacy specs may also have a separate `PLAN.md`)</step>
+<step action="read-context">when `<feature>` resolved, read `specs/<feature>/AGENTS.md` and `SPEC.md` for intent, scope, and the desired PR slice; check the spec's tracker container/issues for linked work (legacy specs may also have a separate `STATUS.md`/`PLAN.md`)</step>
 
 <step action="resolve-base">determine the review base with `git merge-base main HEAD`; fall back to `master` only if `main` does not exist. Record `<base>` and `<branch>` (from `git rev-parse --abbrev-ref HEAD`)</step>
 
@@ -38,10 +38,10 @@ Inspect file diffs with !`git diff <base> -- <file>` and !`git diff -- <file>` f
 
 <step action="push">push the branch with upstream tracking when missing: `git push -u origin HEAD`. If upstream is set, plain `git push`. Never force-push without explicit request</step>
 
-<step action="ensure-draft-pr">check for an existing PR with `gh pr view --json number,isDraft,url,title`. If none exists, create a draft: - title and body derived from SPEC.md, STATUS.md, linked issues, and the diff - `gh pr create --draft --base main --title "<title>" --body "$(cat <<'EOF'\n<body>\nEOF\n)"`
+<step action="ensure-draft-pr">check for an existing PR with `gh pr view --json number,isDraft,url,title`. If none exists, create a draft: - title and body derived from SPEC.md, linked tracker issues, and the diff - `gh pr create --draft --base main --title "<title>" --body "$(cat <<'EOF'\n<body>\nEOF\n)"`
 If a PR already exists, leave its state alone (do not flip draft/ready)</step>
 
-<step action="update-status">append the PR number and URL to `prs` in `specs/<feature>/STATUS.md` frontmatter and the body if not already present. Then run `python3 plugins/knack/skills/spec/scripts/spec_status.py --write` (or `spec/scripts/spec_status.py --write` from an installed skill copy)</step>
+<step action="link-pr">comment the PR number and URL on the relevant tracker issue(s) and move them toward review/done as appropriate. Status lives on the tracker, not in a local file.</step>
 
 <step action="summarize">print the Summary in the format below</step>
 
@@ -91,7 +91,7 @@ Diff source for each group: `git diff <base>...HEAD -- <files-in-group>` after t
 - **Pushed**: yes
 - **PR**: <url> (draft) // or "existing PR left as-is: <url>"
 - **Markdown artifact**: skipped (ask for `/pr --artifact` or use this if `gh` CLI is unavailable)
-- **STATUS.md**: updated, specs/STATUS.md regenerated
+- **Tracker**: linked PR to issue(s) <ids>, moved to <state>
 
 ```
 
