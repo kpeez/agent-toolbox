@@ -28,34 +28,16 @@ Generate a handoff summary to ensure context continuity for the next session.
    - Run `python3 skills/spec/scripts/spec_status.py --write` from the repo root when that script exists
    - If using an installed skill copy, run the equivalent `spec/scripts/spec_status.py --write` path
 
-5. **Append to `specs/<feature>/handoff.md`**:
+5. **Append a dated block to the `## Handoffs` section of `specs/<feature>/STATUS.md`** (newest last). Handoffs live in `STATUS.md`, not a separate file — for legacy specs that already have a `handoff.md`, keep appending there:
 
    ```markdown
-   ## Session: <date>
+   ### Session: <date>
 
-   ### Completed
-
-   - <what was done>
-
-   ### In Progress
-
-   - <what's partially done>
-
-   ### Blocked
-
-   - <blockers if any>
-
-   ### Critical Context
-
-   - <things the next session MUST know>
-
-   ### Files Touched
-
-   - <list of modified files>
-
-   ### Resume Command
-
-   <command or instruction to pick up where we left off>
+   - **Completed:** <what was done>
+   - **In progress / blocked:** <what's partial or stuck>
+   - **Critical context:** <things the next session MUST know>
+   - **Files touched:** <list of modified files>
+   - **Resume:** <command or instruction to pick up where we left off>
    ```
 
 6. **Confirm** handoff is complete and `STATUS.md` plus generated `specs/STATUS.md` are updated

@@ -5,31 +5,31 @@ description: "Use when working on Linear-tracked issues or when Linear issue IDs
 
 # Linear Issue Tracking
 
-Use this reference when a spec is linked to a Linear issue.
+Use this reference when a spec is linked to a Linear issue. Linear is the
+default tracker (configured in repo-root `issue-tracker.md`; see `/to-issues`).
 
 Linear is a tracker, discussion surface, and handoff signal. It is not a
-replacement for repo-local specs. `PLAN.md` is the canonical plan the agent
-follows; `SPEC.md` expands the implementation design; `STATUS.md` and
-`examples/RUN_LOG.md` track progress and verification.
+replacement for repo-local specs. The `SPEC.md` goal/scope header is the
+canonical plan the agent follows; the `SPEC.md` design body expands the
+implementation; `STATUS.md` (with its run log) tracks progress and verification.
 
 ## Source of Truth
 
-For non-trivial Linear-linked work, create or update `PLAN.md`, `SPEC.md`,
-`STATUS.md`, `examples/`, and `examples/RUN_LOG.md` before implementation.
+For non-trivial Linear-linked work, create or update `SPEC.md`, `STATUS.md`, and
+`examples/` before implementation.
 
 If Linear comments, issue text, chat, or PR discussion changes the intended
 work, reconcile that change into the spec files:
 
-- Update `PLAN.md` for goal, scope, non-goals, success criteria, execution
-  mode, stop conditions, or validation changes.
-- Update `SPEC.md` for implementation approach, behavior, decisions, risks, or
-  verification mapping changes.
-- Update `STATUS.md` for phase, blockers, next work, linked issues, PRs, and
-  shipped traceability.
-- Update `examples/RUN_LOG.md` when examples are run.
+- Update the `SPEC.md` goal/scope header for goal, scope, non-goals, success
+  criteria, execution mode, stop conditions, or validation changes.
+- Update the `SPEC.md` design body for implementation approach, behavior,
+  decisions, risks, or verification mapping changes.
+- Update `STATUS.md` for phase, blockers, next work, linked issues, PRs, shipped
+  traceability, and the run log when examples are run.
 
 If the right update is unclear, stop and ask before implementing. Do not let a
-Linear issue body, comment, or status silently override `PLAN.md`.
+Linear issue body, comment, or status silently override the `SPEC.md` header.
 
 ## Linking
 
@@ -54,7 +54,7 @@ Use `STATUS.md` `Linked Work` for human-readable references:
 
 When Linear tools are available, update the issue at these gates:
 
-- After drafting `PLAN.md` and `SPEC.md`: comment with the spec path and move
+- After drafting `SPEC.md`: comment with the spec path and move
   `Ready for Spec` -> `Spec Review`
 - When implementation begins: comment with the spec path, branch/worktree, and
   next verification step; move `Ready for Codex` -> `In Progress`
@@ -73,8 +73,7 @@ states and keep the same gate semantics.
 ```md
 Spec ready for review.
 
-Spec: `specs/<slug>/`
-Plan: `specs/<slug>/PLAN.md`
+Spec: `specs/<slug>/SPEC.md`
 Review focus: <specific decision or scope area>
 ```
 
@@ -110,7 +109,7 @@ Shipped.
 
 PR: <link>
 Commit: `<sha>`
-Spec status: updated `STATUS.md` and `examples/RUN_LOG.md`
+Spec status: updated `STATUS.md` (including its run log)
 ```
 
 ## Fallback

@@ -25,28 +25,28 @@ Skip specs for trivial changes — typo fixes, single-line config changes, log l
 
 ## ADD workflow
 
-1. **Plan**: Write `PLAN.md` — human intent, scope, success criteria, review gate
-2. **Specify**: Write `SPEC.md` — agent-expanded implementation design, decisions, verification mapping
+1. **Goal**: Write the `SPEC.md` goal/scope header — human intent, scope, success criteria, review gate
+2. **Design**: Expand the `SPEC.md` design body — approach, behavior, decisions, verification mapping
 3. **Examples**: Write executable scripts in `examples/` that verify expected behavior
 4. **Red**: Run examples — they FAIL (feature doesn't exist yet)
 5. **Implement**: Write the feature code
 6. **Green**: Run examples — they PASS
-7. **Update**: Mark `STATUS.md` as done, log results in `RUN_LOG.md`
+7. **Update**: Mark `STATUS.md` Done, log results in its `## Run Log`
 
 ## Commands
 
 ### /spec new <name>
 
-Creates a feature spec directory with standard template files.
+Creates a feature spec directory with the two template files plus `examples/`.
 
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
-<step action="check-exists">error if `specs/<slug>/` already contains a `SPEC.md` or `STATUS.md` (an established spec). A folder that exists but holds only a hand-written `PLAN.md` is allowed — that `PLAN.md` is the human-authored source of truth.</step>
+<step action="check-exists">error if `specs/<slug>/` already contains a `STATUS.md` (an established spec). A folder holding only a hand-written `SPEC.md` is allowed — its goal/scope header is the human-authored source of truth.</step>
 <step action="ensure-private">ensure a repo-local `specs` symlink exists that points at the private per-repo directory (skip if already linked); never create `specs` as a real committed directory</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/` (no-op if already present)</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
-<step action="create-files">read `templates.md` and write the templates to `specs/<slug>/`; never overwrite a file that already exists — a present `PLAN.md` is human-authored and authoritative</step>
-<step action="populate">if `PLAN.md` already exists, treat it as the human-authored source of truth — do not modify it — and expand it into `SPEC.md` (approach, behavior, decisions, risks, verification mapping). Otherwise fill `PLAN.md` from conversation context (intent, scope, non-goals, success criteria, execution mode); if invoked in or after plan mode, draft `PLAN.md` from the approved plan and flag it for the user to confirm. Then fill `SPEC.md` and choose example script names from the behaviors being verified.</step>
+<step action="create-files">read `templates.md` and write `SPEC.md` and `STATUS.md` to `specs/<slug>/`; never overwrite a file that already exists — a present `SPEC.md` goal/scope header is human-authored and authoritative</step>
+<step action="populate">if `SPEC.md` already exists, treat its goal/scope header as the human-authored source of truth — do not modify it — and expand the design body (approach, behavior, decisions, risks, verification mapping) below the `---` divider. Otherwise fill the goal/scope header from conversation context (intent, scope, non-goals, success criteria, execution mode); if invoked in or after plan mode, draft it from the approved plan and flag it for the user to confirm. Then expand the design body and choose example script names from the behaviors being verified.</step>
 </steps>
 
 ### /spec status
@@ -60,103 +60,107 @@ Regenerates the project-level status overview from per-spec `STATUS.md` files.
 
 ## Spec structure
 
-Specs are private working context and must never be committed. Keep `specs`
-ignored in git. Prefer a repo-local `specs` symlink that points to a private
-per-repo directory, such as `~/Documents/specs/<repo>`.
+A spec is **two files plus `examples/`** — nothing more. Specs are private
+working context and must never be committed. Keep `specs` ignored in git. Prefer
+a repo-local `specs` symlink that points to a private per-repo directory, such as
+`~/Documents/specs/<repo>`.
 
 ```
 specs/
 ├── AGENTS.md           # How agents navigate specs; not a manual index
 └── <feature>/
-    ├── PLAN.md         # Human-facing goal, scope, success criteria, execution mode
-    ├── SPEC.md         # Agent-expanded design, behavior, decisions, verification
-    ├── STATUS.md       # Current status, progress, merged PR traceability
+    ├── SPEC.md         # Human goal/scope header + agent-expanded design
+    ├── STATUS.md       # Status, tasks, run log, handoffs, PR traceability
     └── examples/       # Runnable verification scripts (REQUIRED)
         ├── build_pipeline.py      # Prefer behavior-specific names
-        ├── basic_pipeline_run.py  # Use useful filenames, not generic placeholders
-        └── RUN_LOG.md  # Execution log
+        └── basic_pipeline_run.py  # Use useful filenames, not generic placeholders
 ```
 
+Durable design decisions do NOT live in the spec — record them in committed
+`docs/adr/` (see `grill-me`'s `ADR-FORMAT.md`). The optional domain glossary
+lives in committed `CONTEXT.md` at the repo root.
+
 Do not maintain a manual `specs/INDEX`. Each spec is self-describing through
-`STATUS.md`; derive overviews by scanning `specs/*/STATUS.md` when needed.
-`specs/STATUS.md` is generated by `spec_status.py` and must not be edited by
-hand.
+`STATUS.md`; `specs/STATUS.md` is generated by `spec_status.py` and must not be
+edited by hand.
 
-### PLAN.md
+### SPEC.md
 
-Human-facing source of truth for the feature. Keep it short enough to review.
-Use the `/grill-me` skill to get feedback on the plan.
+One file, two ownership zones split by a `---` divider.
 
-The default is human-first: write `PLAN.md` yourself before running `/spec new`
-(create `specs/<slug>/PLAN.md` by hand, then run the command). The skill
-preserves an existing `PLAN.md` and never overwrites it, then expands it into
-`SPEC.md`. If no `PLAN.md` exists, the agent writes one from conversation
-context — including an approved plan-mode plan — and flags it for you to
-confirm. Either way at least one of `PLAN.md`/`SPEC.md` stays human-owned, which
-is what keeps the two-file split meaningful.
-
-When planning happens in an external tracker or chat, reconcile the result into
-`PLAN.md`. If the tracker, chat, and `PLAN.md` disagree, update `PLAN.md` (or
-stop for review) before implementation. Agents follow `PLAN.md`, not the
-tracker body.
-
-Contents:
+**Goal/scope header (human-owned source of truth).** Keep it short enough to
+review. Use `/grill-me` to stress-test it before expanding the design.
 
 - **Goal** — what problem are we solving and why
 - **Scope** — what is included
 - **Non-goals** — what is explicitly out of scope
 - **Success criteria** — observable outcomes that define done
-- **Execution mode** — `review-gated` or `autonomous`
-- **Stop conditions** — when the agent must stop and ask
+- **Execution mode** — `review-gated` or `autonomous`, plus stop conditions
 - **Validation** — commands/examples/tests that prove the goal
 
-Use `review-gated` for normal collaboration: the user reviews `SPEC.md` before
-implementation. Use `autonomous` for `/goal`, ralph-loop, or similar workflows:
-the agent may proceed after writing `SPEC.md`, but must keep `STATUS.md`,
-examples, and run logs current.
+**Design body (agent-expanded).** Write this after inspecting the repo and before
+examples or implementation.
 
-### SPEC.md
-
-Agent-expanded implementation design. Write this after inspecting the repo and
-before examples or implementation.
-
-Contents:
-
-- **Problem** — concise restatement of the goal and constraints
-- **Approach** — architecture, key components, patterns used
+- **Design** — architecture, key components, patterns used
 - **Behavior** — how it works; inputs, outputs, state changes, failure modes
-- **Decision log** — non-obvious choices, rationale, alternatives considered
+- **Decisions** — non-obvious choices, rationale, alternatives considered
 - **Risks** — things that could break or need careful verification
 - **Verification** — maps each example script to the behavior it verifies
 
-Do not create ADR files by default. Add `ADR-0001-<topic>.md` only when a
-decision is durable beyond this feature, such as architecture, provider policy,
-storage model, security posture, or major framework choice.
+The default is human-first: write the goal/scope header yourself before running
+`/spec new` (create `specs/<slug>/SPEC.md` by hand, then run the command). The
+skill preserves an existing header and never overwrites it, then expands the
+design body. If no `SPEC.md` exists, the agent writes the header from
+conversation context — including an approved plan-mode plan — and flags it for
+you to confirm.
+
+Use `review-gated` for normal collaboration: the user reviews the design body
+before implementation. Use `autonomous` for `/goal`, ralph-loop, or similar
+workflows: the agent may proceed after writing the design, but must keep
+`STATUS.md` and its run log current.
+
+When planning happens in an external tracker or chat, reconcile the result into
+the `SPEC.md` header. If the tracker, chat, and header disagree, update the
+header (or stop for review) before implementation. Agents follow the `SPEC.md`
+header, not the tracker body.
+
+**Durable decisions:** if a decision is durable beyond this feature
+(architecture, provider policy, storage model, security posture, major framework
+choice), record it in committed `docs/adr/` and link it from the Decisions
+section — do not bury it in the spec.
 
 ### STATUS.md
 
-Tracks progress on tasks. Updated throughout the lifecycle. See `templates.md`
-for the full format.
+The entry point and the durable task ledger. Updated throughout the lifecycle.
+See `templates.md` for the full format.
 
-The only frontmatter field is `summary:` — one or two sentences used by
-the generator to populate `specs/STATUS.md`. Keep the rest of the file as
-human-readable tracking: Phase, Blocked, Done, Next, Merged Work.
+The only frontmatter field is `summary:` — one or two sentences used by the
+generator to populate `specs/STATUS.md`. Keep the rest human-readable: Phase,
+Blocked, Done, Next, Context, Merged Work, Run Log, Handoffs.
+
+- **`## Next`** is the durable task list. Claude Code's native todo list is
+  ephemeral session state and cannot be redirected to a file — do not create a
+  parallel `tasks.json`. Sync the session's final todo state into `## Next`.
+- **`## Run Log`** records each example run (folds in what used to be
+  `RUN_LOG.md`).
+- **`## Handoffs`** holds dated session blocks (folds in what used to be
+  `handoff.md`).
 
 Specs are work programs, not PR containers. A single spec can produce multiple
-atomic PRs. After each PR merges, record the PR number, merge or squash commit
-SHA, and shipped scope in `Merged Work`.
+atomic PRs. After each PR merges, record the PR number, merge/squash SHA, and
+shipped scope in `## Merged Work`.
 
 After changing a per-spec `STATUS.md`, run `spec_status.py --write` to
 regenerate `specs/STATUS.md`.
 
 ### Project status overview
 
-`specs/STATUS.md` has two sections — **Active** and **Archived** — each a
-bullet list linking to the spec's `STATUS.md` with its `description:`. Active
-specs live in `specs/*/`; moving a spec into `specs/_archive/` automatically
-places it in the Archived section on the next regeneration.
+`specs/STATUS.md` has two sections — **Active** and **Archived** — each a bullet
+list linking to the spec's `STATUS.md` with its `summary:`. Active specs live in
+`specs/*/`; moving a spec into `specs/_archive/` automatically places it in the
+Archived section on the next regeneration.
 
-- Source of truth: `description:` frontmatter in each per-spec `STATUS.md`
+- Source of truth: `summary:` frontmatter in each per-spec `STATUS.md`
 - Generated overview: project-level `specs/STATUS.md`
 - Script: `plugins/knack/skills/spec/scripts/spec_status.py`
 - Optional hooks: `plugins/knack/skills/spec/scripts/install-status-hooks.sh`
@@ -170,32 +174,38 @@ or commit generated output.
 
 Use `/pr` (or `/ship` for a hostile review pass first) to publish spec work.
 The `/pr` skill handles atomic commits, push, draft PR creation, STATUS.md
-updates, and specs/STATUS.md regeneration.
+updates, and specs/STATUS.md regeneration. Use `/to-issues` to break a spec into
+independently-grabbable tracker issues.
 
 ### Example scripts
 
-Every spec has an `examples/` directory with runnable scripts. These are not unit tests — they are executable demonstrations that verify the feature works.
+Every spec has an `examples/` directory with runnable scripts. These are not unit
+tests — they are executable demonstrations that verify the feature works.
 
-Rules for example scripts are defined in the `add` skill. In the spec context,
-examples live in `specs/<feature>/examples/` with results logged to
-`examples/RUN_LOG.md`.
+Rules for example scripts are defined in the `agentic-development` skill. In the
+spec context, examples live in `specs/<feature>/examples/` with results logged to
+the `## Run Log` section of `STATUS.md`.
 
 ## Resuming work on an existing spec
 
 When picking up an existing spec:
 
-1. Read `specs/<feature>/STATUS.md` first — it is the entry point
+1. Read `specs/<feature>/STATUS.md` first — it is the entry point (phase, next,
+   run log, latest handoff)
 2. Check the Phase and Blocked status
-3. Review `PLAN.md` for intent and `SPEC.md` for implementation context
+3. Review `SPEC.md` for intent and design context
 4. Run any existing examples to see current state
 5. Pick up from the Next items in `STATUS.md`
 6. Update `STATUS.md` as you work
 
-For older specs, accept `implementation.md` as a legacy status file and
-`design.md` as a legacy design file. Do not rename old specs unless the user
-asks for a migration.
+For older specs, accept legacy layouts: a separate `PLAN.md` (treat as the
+human-owned header), `implementation.md` as a status file, `design.md` as a
+design file, and `examples/RUN_LOG.md`/`handoff.md` as the prior locations of the
+run log and handoffs. Do not rename old specs unless the user asks for a
+migration.
 
 ## Linear Integration
 
-When a spec is linked to Linear, follow the `/using-linear` skill for deterministic
-comments, status transitions, and fallback behavior.
+When a spec is linked to Linear, follow the `/using-linear` skill for
+deterministic comments, status transitions, and fallback behavior. The default
+tracker is configured in repo-root `issue-tracker.md`.
