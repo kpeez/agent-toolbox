@@ -5,17 +5,11 @@
   "plugins": [
     {
       "name": "knack",
-      "description": "Spec-driven workflow and skills for AI coding agents: ADD cycle, adversarial review, atomic PR grouping, session handoff, and more",
-      "version": "1.0.0",
-      "source": "./plugins/knack",
-      "author": { "name": "Kyle Puhger", "email": "krpuhger@gmail.com" }
+      "source": "./plugins/knack"
     },
     {
       "name": "lab",
-      "description": "AI-researcher skills: autonomous experiment loops and data visualization guidance",
-      "version": "1.0.0",
-      "source": "./plugins/lab",
-      "author": { "name": "Kyle Puhger", "email": "krpuhger@gmail.com" }
+      "source": "./plugins/lab"
     }
   ]
 }

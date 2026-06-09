@@ -77,14 +77,27 @@ This installs to:
 
 Re-run after updating agent-toolbox.
 
+### Versioning
+
+Each plugin's version lives in exactly two files, kept identical: its
+`.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. The marketplace
+files (`.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`)
+carry no versions or metadata — they only point at the plugin directories.
+Bump both manifests at once:
+
+```bash
+scripts/bump-plugin-version.sh knack 1.0.2
+```
+
 ## Skills
 
 | Skill                 | Plugin | Purpose                                                                                               |
 |-----------------------|--------|-------------------------------------------------------------------------------------------------------|
-| `agentic-development`            | knack  | Agent-Driven Development discipline — examples before implementation, red/green, test-quality rules   |
-| `spec`                           | knack  | Create and manage feature specs; `/spec new` scaffolds a feature, `/spec status` regenerates overview |
+| `write-spec`                     | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it |
+| `writing-code`                   | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation       |
+| `tdd`                            | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop          |
+| `blueprint`                      | knack  | Examples-based development — verify a planned implementation against the real repo, then promote the slice or discard |
 | `grill-me`                       | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs             |
-| `prototype`                      | knack  | Build throwaway code to answer a design question, capture the verdict, then delete it                 |
 | `to-issues`                      | knack  | Break a spec/plan into independently-grabbable tracker issues using vertical slices                   |
 | `diagnose`                       | knack  | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix           |
 | `improve-codebase-architecture`  | knack  | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)      |
@@ -92,7 +105,6 @@ Re-run after updating agent-toolbox.
 | `adversarial-review`             | knack  | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat (review-only) |
 | `pr`                             | knack  | Group branch diff into atomic commits, push, open a draft PR, write the spec markdown artifact        |
 | `ship`                           | knack  | Chain `/adversarial-review` then `/pr` in one pass                                                    |
-| `handoff`                        | knack  | Capture session context before ending for a clean resume                                              |
 | `delegating-work`                | knack  | Offload exploration and code generation to local or external worker CLIs                              |
 | `using-linear`                   | knack  | Linear issue tracking integration — status gates, comments, and source-of-truth rules                 |
 | `qmd`                            | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI               |
@@ -103,52 +115,58 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 
 ## Workflow
 
-The spine is **grill → spec → implement (ADD) → review → ship**. Three on-demand
-skills branch off it: `/prototype` resolves a design question with throwaway code
-before you commit to it, `/diagnose` is the debugging loop when something breaks,
-and `/improve-codebase-architecture` finds refactors when friction builds up.
-Durable decisions get recorded as ADRs in `docs/adr/` along the way.
+The spine is **grill → spec → issues → implement → review → ship**. Work enters at
+one of three points: `/grill-me` for a new feature whose design isn't settled,
+`/diagnose` for a known bug, or `/improve-codebase-architecture` when you're
+hunting for refactors. For non-trivial work these converge on `/write-spec`; a
+small fix can skip straight to implement.
+
+Once the spec is settled, `/to-issues` publishes it (parent issue + sub-issues)
+and **the tracker takes over** — each issue is then picked up independently, in a
+fresh chat or a subagent, and runs its own implement → review → ship loop.
+Implementation uses two disciplines: `/tdd` (one failing test → minimal code) and
+`/blueprint` (verify a planned implementation against the real repo, then promote
+the slice). `/blueprint` also stands alone as a design spike before you commit to
+an approach. Durable decisions get recorded as ADRs in `docs/adr/` along the way.
 
 ```mermaid
 graph LR
-  G["/grill-me"] --> A["/spec new"]
-  A --> B["implement (ADD)"]
-  B --> I["/to-issues"]
+  G["/grill-me"] --> A["/write-spec"]
+  X["/diagnose"] -.-> A
+  Y["/improve-codebase-architecture"] -.-> A
+  A --> I["/to-issues"]
+  I -->|"fresh chat / subagent per issue"| B["implement (/tdd + /blueprint)"]
   B --> C["/adversarial-review"]
   C --> D["/pr"]
-  D --> E["/handoff"]
-  P["/prototype"] -.-> A
-  X["/diagnose"] -.-> B
-  Y["/improve-codebase-architecture"] -.-> B
+  X -.->|"small fix"| B
+  P["/blueprint (design spike)"] -.-> A
 
 style G fill:#2d333b,stroke:#768390,color:#adbac7
 style A fill:#2d333b,stroke:#768390,color:#adbac7
+style I fill:#2d333b,stroke:#768390,color:#adbac7
 style B fill:#2d333b,stroke:#768390,color:#adbac7
 style C fill:#2d333b,stroke:#768390,color:#adbac7
 style D fill:#2d333b,stroke:#768390,color:#adbac7
-style E fill:#2d333b,stroke:#768390,color:#adbac7
-style I fill:#22272e,stroke:#768390,color:#768390
-style P fill:#22272e,stroke:#768390,color:#768390
 style X fill:#22272e,stroke:#768390,color:#768390
 style Y fill:#22272e,stroke:#768390,color:#768390
+style P fill:#22272e,stroke:#768390,color:#768390
 ```
 
-| Phase                            | What happens                                                                                                                                                                             |
+| Phase                            | When / what happens                                                                                                                                                                     |
 |----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/grill-me`                      | Stress-test the plan. Cross-checks claims against code, sharpens terminology (into `CONTEXT.md`), and records durable decisions as ADRs in `docs/adr/`.                                  |
-| `/prototype` *(optional)*        | Throwaway code to answer a design question. Capture the verdict (ADR or spec note), then delete it. For long autonomous explorations use `lab:autoresearch` instead.                     |
-| `/spec new`                      | Create the feature spec — `SPEC.md` (human goal/scope header + agent design body), `STATUS.md`, and runnable examples. Establishes intent.                                              |
-| **implement (ADD)**              | Examples first → red → implement → green. Tests verify behavior through public interfaces — no mock-slop. Update `STATUS.md` (done/next/run log) as you go.                              |
-| `/to-issues` *(optional)*        | Break the spec into independently-grabbable tracker issues (vertical slices). Default tracker is Linear via `issue-tracker.md`.                                                          |
-| `/diagnose` *(on bugs)*          | Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test.                                                                                  |
-| `/improve-codebase-architecture` | When friction builds up: find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                                  |
+| `/grill-me`                      | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.              |
+| `/diagnose`                      | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec. |
+| `/improve-codebase-architecture` | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                             |
+| `/write-spec`                    | Capture the settled plan — `SPEC.md` (human goal/scope header + agent design body) plus runnable examples. In plan mode, dump the approved plan straight in. Establishes intent.        |
+| `/to-issues`                     | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.   |
+| **implement (`/tdd` + `/blueprint`)** | Per issue, in a fresh chat or subagent: vertical slices, one test → one implementation (never horizontal batches). Blueprint examples import the real repo to prove behavior, then graft in. No mock-slop. `/blueprint` also stands alone as a design spike. |
 | `/adversarial-review`            | Clean-context hostile pass in a fresh reviewer. Challenges the approach/design, then flags bloat, smells, and newly obsolete code. Review-only — returns findings; `/ship` applies them. |
-| `/pr`                            | Group the diff into atomic commits, push, open a draft PR if missing, write the spec markdown artifact.                                                                                  |
-| `/handoff`                       | Capture session state — what's done, what's next, critical context — into the `STATUS.md` `## Handoffs` section.                                                                        |
+| `/pr`                            | Group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                   |
 
-Not every session hits every phase. The dashed skills are pulled in only when
-needed. `/adversarial-review` is most useful before `/pr`; use `/ship` to run it
-and `/pr` back-to-back. `/handoff` is for any session boundary.
+Not every session hits every phase. The dashed skills are alternate entry points
+or on-demand spikes. `/adversarial-review` is most useful before `/pr`; use
+`/ship` to run it and `/pr` back-to-back. To resume across a session boundary, drop
+a progress comment on the active tracker issue and pick it up from there.
 
 ## Durable decision memory
 
@@ -156,7 +174,7 @@ Two committed files hold knowledge that must outlive a single feature and surviv
 a fresh clone — distinct from the private, ephemeral `specs/` tree:
 
 - **`docs/adr/`** — Architecture Decision Records. Created lazily by `/grill-me`,
-  `/prototype`, or `/improve-codebase-architecture` when a decision is hard to
+  `/blueprint`, or `/improve-codebase-architecture` when a decision is hard to
   reverse, surprising without context, and the result of a real trade-off. They
   stop the agent from re-litigating settled choices.
 - **`CONTEXT.md`** *(optional, repo root)* — a domain glossary, nothing else.
@@ -173,16 +191,14 @@ atomic PRs.
 
 - Prefer atomic PRs that can be reviewed independently.
 - Use small, logical commits with imperative, conventional-style subjects.
-- Generate PR titles and bodies directly from `SPEC.md`,
-  `STATUS.md`, linked issues, and the actual diff.
+- Generate PR titles and bodies directly from `SPEC.md`, the linked tracker
+  issues, and the actual diff.
 - Do not create `commits.md` or `draft-pr.md` review artifacts.
 - Use squash merge by default unless the user explicitly asks for another merge
   method.
-- After a PR merges, update the relevant `STATUS.md` with PR number, merge or
-  squash commit SHA, and a short note about what shipped.
-- `specs/STATUS.md` is regenerated automatically by the knack plugin hook after
-  any write to a file under `specs/`. Local git hooks (post-commit, post-merge)
-  serve as a safety net for commits made outside an agent session.
+- After a PR merges, comment the PR number, merge or squash commit SHA, and a
+  short note about what shipped on the relevant tracker issue, and move it to
+  Done. Status lives on the tracker, not in a local file.
 
 ## Specs Setup
 
@@ -214,14 +230,13 @@ ln -sfn ~/Documents/specs/<repo> "$(pwd)/specs"
 
 ## Feature Specs
 
-A spec is **two files plus `examples/`** — nothing more (created by `/spec new`):
+A spec is **`SPEC.md` plus `examples/`** — nothing more (created by `/write-spec new`):
 
 ```text
 specs/
 ├── AGENTS.md           # How agents navigate specs; not a manual index
 └── <feature>/
     ├── SPEC.md         # Human goal/scope header + agent-expanded design body
-    ├── STATUS.md       # Status, tasks, run log, handoffs, merged work
     └── examples/       # Runnable verification scripts (REQUIRED)
 ```
 
@@ -233,62 +248,23 @@ decision log, risks, and verification mapping. Durable decisions (architecture,
 provider policy, storage model, framework choice) go in committed `docs/adr/`,
 not the spec.
 
-`STATUS.md` is the entry point and the durable task ledger. Its `## Next` list is
-the task list — Claude Code's native todo list is ephemeral and cannot be
-redirected to a file, so don't create a parallel `tasks.json`; sync the final
-todo state into `## Next`. The run log and session handoffs fold into `STATUS.md`
-too (`## Run Log`, `## Handoffs`) rather than separate files.
+The spec is a **local, transient design draft** — it forces design thinking and
+gives a review gate, then `/to-issues` hands the work to the tracker. There is no
+local `STATUS.md`: the **issue tracker is the task and status ledger**, because
+it's the one ledger every agent and your phone can read with no local convention.
 
-Do not maintain a manual `specs/INDEX`. Each spec is self-describing through
-`STATUS.md`; derive overviews by scanning `specs/*/STATUS.md` when needed.
-The project-level `specs/STATUS.md` file is generated by `spec_status.py`; do
-not edit it by hand.
+- `/to-issues` publishes the spec's goal/scope as a **parent issue** plus
+  **sub-issues** (the vertical slices) — the portable default on Linear and
+  GitHub; escalate to a Linear **project** only for large, multi-milestone specs.
+- Status is the issue state, blockers are the blocked-by links, and progress is
+  the container rollup (e.g. 3/7 done) — reviewable remotely, maintained for free.
+- **Resume across agents or context limits:** read the tracker container, grab the
+  next unblocked issue, and before you run out of context drop a short progress
+  comment on the active issue (done / next / the one gotcha). That comment is the
+  handoff, living where the next agent already looks.
 
-The core of context continuity is `STATUS.md`:
-
-```markdown
----
-summary: <one or two sentence description for the project overview>
----
-
-# <Title> - Status
-
-## Status
-
-- **Phase**: plan | spec | examples | implementing | verifying | done
-- **Blocked**: no | yes (reason)
-
-## Done
-
-- [x] completed item
-
-## Next
-
-- [ ] next item
-
-## Context
-
-<gotchas, key files>
-
-## Merged Work
-
-- PR #12: Add example feature
-  - Commit: `abc123`
-  - Shipped: implemented the first atomic slice
-
-## Run Log
-
-### basic_pipeline_run.py
-**Status:** PASS · **Date:** 2026-06-08
-**Verifies:** happy-path execution · **Result:** exit 0, output matched
-
-## Handoffs
-
-### Session: 2026-06-08
-- **Completed:** <what was done>
-- **Critical context:** <what the next session must know>
-- **Resume:** <command to pick up>
-```
+The examples are the verification record — rerun them to confirm behavior. Don't
+keep a separate run log.
 
 ---
 
