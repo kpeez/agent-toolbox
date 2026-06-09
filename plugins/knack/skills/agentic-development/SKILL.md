@@ -9,7 +9,7 @@ description: "Agent-Driven Development discipline. Use when implementing any fea
 
 When this skill is active, you MUST:
 
-1. Write spec docs (`PLAN.md` and `SPEC.md`) BEFORE writing source code
+1. Write the spec (`SPEC.md`: human goal/scope header + agent design body) BEFORE writing source code
 2. Write runnable example scripts BEFORE implementation
 3. Run examples to confirm they fail (red)
 4. Implement the feature
@@ -29,16 +29,15 @@ STOP. Write the examples first.
 - If a spec has one example, that filename should still describe the workflow or
   outcome it proves
 
-## RUN_LOG.md
+## Run log
 
-Log results every time you run an example:
+Log results every time you run an example. In the spec context this lives in the
+`## Run Log` section of `specs/<feature>/STATUS.md`:
 
 ```
 ### <script_name>
-**Status:** PASS | FAIL
-**Date:** <date>
-**Description:** <what this verifies>
-**Result:** <observation>
+**Status:** PASS | FAIL · **Date:** <date>
+**Verifies:** <what this verifies> · **Result:** <observation>
 ```
 
 ## Running tests and lint
@@ -55,6 +54,41 @@ Each wrapper prints structured JSON and writes a full log to `.agent/pytest-last
 ## Verification
 
 Example failures are spec failures -- fix them before marking done.
+
+## Test quality
+
+Examples prove end-to-end behavior; unit/integration tests prove finer-grained
+behavior in the same red→green loop. Both obey one rule: **test behavior through
+public interfaces, not implementation details.** Code can change entirely; tests
+shouldn't.
+
+**Good tests** read like a specification — "user can checkout with valid cart"
+tells you what capability exists. They exercise real code paths through public
+APIs and survive internal refactors.
+
+**Bad tests ("mock-slop")** couple to internal structure. Delete or rewrite them
+on sight. Red flags:
+
+- Mocking your own classes/modules or internal collaborators
+- Testing private methods, or asserting on call counts/order
+- Verifying through a side channel (querying the DB directly) instead of the
+  interface
+- The test breaks when you refactor but behavior didn't change
+- The test name describes HOW, not WHAT
+
+**Mock only at system boundaries** — external APIs, time/randomness, sometimes
+the database or filesystem. Never mock anything you control. If a boundary is
+hard to mock, that's a design signal: inject the dependency and prefer specific
+SDK-style functions (`getUser(id)`) over one generic fetcher.
+
+**Vertical, never horizontal.** One test → one implementation → repeat. Do NOT
+write all tests first then all code — bulk-written tests verify *imagined*
+behavior and assert on shape (data structures, signatures) rather than what
+callers care about. Each test should respond to what the previous cycle taught
+you. Never refactor while red; get to green first.
+
+You can't test everything. Confirm with the user which behaviors matter most and
+concentrate effort on critical paths and complex logic, not every edge case.
 
 ## Subagent Execution
 
@@ -88,7 +122,7 @@ fail (red), implement, confirm they pass (green).
 
 Context:
 - Project: <one-line description>
-- Spec: <paste relevant PLAN.md / SPEC.md sections>
+- Spec: <paste relevant SPEC.md sections>
 - Key files: <paths>
 - Scene: <where this task fits in the overall plan>
 
@@ -118,7 +152,7 @@ Review whether the implementation matches the spec. Read-only — do not flag st
 or quality issues here.
 
 Spec:
-<paste relevant PLAN.md / SPEC.md sections>
+<paste relevant SPEC.md sections>
 
 Diff or files:
 <paste diff or list paths to inspect>
