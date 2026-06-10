@@ -106,7 +106,6 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `pr`                             | knack  | Group branch diff into atomic commits, push, open a draft PR, write the spec markdown artifact        |
 | `ship`                           | knack  | Chain `/adversarial-review` then `/pr` in one pass                                                    |
 | `delegating-work`                | knack  | Offload exploration and code generation to local or external worker CLIs                              |
-| `using-linear`                   | knack  | Linear issue tracking integration — status gates, comments, and source-of-truth rules                 |
 | `qmd`                            | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI               |
 | `autoresearch`                   | lab    | Autonomous experiment loops with defined metrics and private logs                                     |
 | `data-viz`                       | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                      |
@@ -181,8 +180,12 @@ a fresh clone — distinct from the private, ephemeral `specs/` tree:
   Pins down overloaded terminology (especially useful for ML/research repos). Read
   by `grill-me`, `diagnose`, and `improve-codebase-architecture`.
 
-The issue tracker is pluggable via a repo-root **`issue-tracker.md`** (default
-Linear). `/to-issues` and `/using-linear` read it.
+The issue tracker is selected at runtime by `/to-issues` — an optional
+`Issue tracker: <name>` line in the repo's `AGENTS.md` wins; otherwise Linear
+when its MCP tools are available, GitHub when the repo has a GitHub remote and
+`gh` works, local markdown under `specs/<feature>/issues/` as the fallback.
+Conventions for each live in the `to-issues` skill's `references/`; there is no
+per-repo config file.
 
 ## GitHub Workflow
 
