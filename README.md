@@ -54,26 +54,21 @@ codex plugin add lab@agent-toolbox
 
 Claude Code installs entirely from its plugin. Codex CLI installs skills from its
 plugin but needs the manual script for its subagents. Use the manual script for
-Codex agents, for providers that do not have a complete plugin install path here,
-and for the shared helper commands used by skills.
+Codex agents and for providers that do not have a complete plugin install path
+here. Skill scripts need no install — skills run them in place with `uv run`.
 
 ```bash
 ./scripts/setup-agent.sh
 ```
 
-Skills are written to `~/.agents/skills`. The script overwrites the
-agent-toolbox-owned Antigravity and Copilot instruction files and refreshes helper
-command symlinks.
-
 This installs to:
 
-| Target          | Installed by manual script                       |
-|-----------------|--------------------------------------------------|
-| Shared skills   | `~/.agents/skills`                               |
-| Helper commands | `~/.agents/bin/local-explore` and `ext-subagent` |
-| Codex agents    | `~/.codex/agents/*.toml`                         |
-| Antigravity CLI | `~/.gemini/AGENTS.md` + skills symlink           |
-| Copilot CLI     | `~/.copilot/copilot-instructions.md`             |
+| Target          | Installed by manual script                            |
+|-----------------|-------------------------------------------------------|
+| Codex agents    | `~/.codex/agents/*.toml`                              |
+| Antigravity CLI | `~/.gemini/AGENTS.md` + skills symlinked from the repo |
+| Copilot CLI     | `~/.copilot/copilot-instructions.md`                  |
+| Statusline      | `~/.agents/bin/cc-statusline`                         |
 
 Re-run after updating agent-toolbox.
 
