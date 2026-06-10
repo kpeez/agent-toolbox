@@ -18,7 +18,7 @@ surfaced by the grill go to committed `docs/adr/`, not the spec.
 
 ## The verification rule
 
-This skill follows the `writing-code` discipline. Read it before implementation:
+This skill follows the `/implement` discipline. Read it before implementation:
 describe behavior → prove it (a failing test via `/tdd` or a red example via
 `/blueprint`) → implement until it passes.
 

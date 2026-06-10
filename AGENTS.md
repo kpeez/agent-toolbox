@@ -3,24 +3,32 @@
 ## Guiding principles
 
 - **Do NOT end turns by offering to do more work.** No "Want me to scaffold X?" / "Should I rewrite Y?" engagement-bait offers. The user will explicitly say when they want something done. Answer what was asked, then stop.
-- "Done" means "ran it." Example failures = spec failures.
+- "Done" means "ran it." Example and test failures = spec failures.
 
-## Spec Workflow
+## Workflow
+
+The spine is **grill → spec → issues → implement → PR**.
 
 1. Read this file and README.md
-2. Check `specs/` for feature specs — read the spec's `SPEC.md` and its tracker
-   container/issues before working
-3. Inspect existing patterns before adding new ones
-4. Implement → lint → types → tests
-5. Verify: run examples, fix failures first
-6. Status and tasks live on the issue tracker, not in a local file — use
-   `/to-issues` to slice a spec into issues; resume by reading the issue
-
-> For non-trivial features, create a spec first with `/write-spec new <name>`.
+2. For non-trivial features, stress-test the plan with `/grill-me`, then
+   `/write-spec new <name>` — the spec (`SPEC.md` + runnable `examples/`) is
+   distilled from the grilled plan, never written from scratch
+3. Slice the spec into tracker issues with `/to-issues`. Status and tasks live
+   on the tracker, never in local files
+4. Implement per `/implement`: prove behavior first (failing test via `/tdd`
+   or red example via `/blueprint`), then code to green → lint → types → tests
+5. Verify: run the examples; fix failures before marking done
+6. Publish with `/pr` — atomic commits, push, draft PR
+7. Resume from the tracker: take the next unblocked `ready-for-agent` issue;
+   comment progress on the active issue before running out of context
 
 Specs are private working context and must never be committed. Keep `specs`
 ignored in git and prefer a repo-local symlink to a private specs directory,
 for example `~/Documents/specs/<repo>`.
+
+Durable decisions live in committed `docs/adr/`; the optional domain glossary
+is repo-root `CONTEXT.md`. An optional `Issue tracker: <name>` line in this
+file pins the tracker; otherwise `/to-issues` auto-detects.
 
 ## Code rules
 
@@ -47,20 +55,14 @@ for example `~/Documents/specs/<repo>`.
 
 ### Goal-driven development
 
-Every task follows a red/green cycle — define a verifiable goal before writing code, then loop until verified.
-
-**Transform vague tasks into testable goals:**
+Every task follows a red/green cycle — define a verifiable check before writing
+code, watch it fail, implement until it passes.
 
 - "Add validation" → write tests for invalid inputs, then make them pass
 - "Fix the bug" → write a test that reproduces it, then make it pass
 - "Refactor X" → ensure tests pass before and after
 
-**The loop:** Goal → implement → verify → repeat if failing.
-
-**For multi-step work, state a plan:**
-
-1. [Step] → verify: [check]
-2. [Step] → verify: [check]
+For multi-step work, state a plan: `[step] → verify: [check]`, one line each.
 
 ### Style
 

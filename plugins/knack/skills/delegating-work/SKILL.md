@@ -8,10 +8,12 @@ description: Offload token-heavy work to cheaper workers to preserve the orchest
 Keep your own (expensive) context lean by handing token-heavy work to cheaper workers,
 then reviewing what comes back. Two tools, opposite jobs.
 
-Both are CLIs you run via Bash from the repo root. The worker does the file reading and
-generation itself, so that bulk never enters your context — you act on its returned answer
-(and review it). Commands assume `~/.agents/bin` is on PATH; if a command is "not found",
-use the guaranteed path `python3 ~/.agents/skills/delegating-work/scripts/<script>.py`.
+Both live in this skill's `scripts/` directory and are run via Bash from the repo
+root — no separate install. In Claude Code, `${CLAUDE_SKILL_DIR}` below is already
+substituted with this skill's absolute path; if you are reading this in another
+provider and see the literal placeholder, replace it with the directory containing
+this SKILL.md. The worker does the file reading and generation itself, so that bulk
+never enters your context — you act on its returned answer (and review it).
 
 ## local-explore — codebase exploration (local, free, read-only)
 
@@ -20,8 +22,8 @@ load the raw files into your own context. Reach for it to answer "how does X wor
 is Y / summarize this area" across more than a couple of files.
 
 ```
-local-explore "How does auth work?" src/ lib/auth.py
-local-explore --dry-run "..." src/            # preview files + token count, no model call
+uv run ${CLAUDE_SKILL_DIR}/scripts/local-explore.py "How does auth work?" src/ lib/auth.py
+uv run ${CLAUDE_SKILL_DIR}/scripts/local-explore.py --dry-run "..." src/   # preview files + token count, no model call
 ```
 
 - Compressive and low-stakes — a slightly imperfect summary is fine because you review it.
@@ -38,9 +40,9 @@ Delegates a coding task to an external agentic CLI that is near-Opus smart and b
 separately from your tokens. Prefer this over a local coder for real code generation.
 
 ```
-ext-subagent codex   "Implement X following existing patterns. Run the tests." --model gpt-5.4-mini
-ext-subagent copilot --prompt-file task.md --model claude-sonnet-4.6
-echo "Refactor the auth module to use DI; preserve tests." | ext-subagent antigravity -
+uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "Implement X following existing patterns. Run the tests." --model gpt-5.4-mini
+uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py copilot --prompt-file task.md --model claude-sonnet-4.6
+echo "Refactor the auth module to use DI; preserve tests." | uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py antigravity -
 ```
 
 - Provider → engine: `codex` → GPT-5.x, `antigravity` → Gemini, `copilot` → Sonnet.

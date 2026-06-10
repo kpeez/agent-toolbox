@@ -2,20 +2,15 @@
 set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-SKILLS_DIR="$HOME/.agents/skills"
 
-# copy all skills to the canonical location (preserves skills not owned by this repo)
-mkdir -p "$SKILLS_DIR"
+# antigravity skills: symlink each skill straight from the repo (single source, no copies)
+AGY_SKILLS="$HOME/.gemini/antigravity-cli/skills"
+rm -rf "$AGY_SKILLS"
+mkdir -p "$AGY_SKILLS"
 for skill_dir in "$ROOT_DIR"/plugins/*/skills/*/; do
-    [[ -f "$skill_dir/SKILL.md" ]] && cp -R "${skill_dir%/}" "$SKILLS_DIR/"
+    [[ -f "$skill_dir/SKILL.md" ]] && ln -s "${skill_dir%/}" "$AGY_SKILLS/"
 done
-echo "skills → $SKILLS_DIR"
-
-# symlink skills for antigravity-cli
-mkdir -p "$HOME/.gemini/antigravity-cli"
-rm -rf "$HOME/.gemini/antigravity-cli/skills"
-ln -s "$SKILLS_DIR" "$HOME/.gemini/antigravity-cli/skills"
-echo "antigravity skills → $HOME/.gemini/antigravity-cli/skills"
+echo "antigravity skills → $AGY_SKILLS"
 
 install_provider() {
     local provider="$1" home_dir="$2" filename="$3"
@@ -36,14 +31,11 @@ for agent in "$ROOT_DIR"/plugins/knack/agents/*.toml; do
 done
 echo "codex agents → $HOME/.codex/agents/"
 
-# short PATH commands for the delegating-work skill's scripts. Symlinks point at the
-# installed skill copy (no drift); the skill also documents the full path as a fallback.
+# statusline helper (delegating-work scripts need no install — the skill runs them via uv)
 BIN_DIR="$HOME/.agents/bin"
 mkdir -p "$BIN_DIR"
-ln -sf "$SKILLS_DIR/delegating-work/scripts/local-explore.py" "$BIN_DIR/local-explore"
-ln -sf "$SKILLS_DIR/delegating-work/scripts/ext-subagent.py" "$BIN_DIR/ext-subagent"
 ln -sf "$ROOT_DIR/scripts/cc-statusline.py" "$BIN_DIR/cc-statusline"
-echo "scripts → $BIN_DIR/{local-explore,ext-subagent,cc-statusline} (ensure $BIN_DIR is on your PATH)"
+echo "cc-statusline → $BIN_DIR/cc-statusline (ensure $BIN_DIR is on your PATH)"
 
 read -r -p "Create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then
