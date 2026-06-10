@@ -23,19 +23,18 @@ Read order:
 2. `SPEC.md` (goal + design)
 3. `examples/` (runnable verification scripts)
 
-There is no `STATUS.md` — status and tasks live on the issue tracker (see
-`/to-issues`). Durable design decisions do NOT live here — they go in committed
-`docs/adr/`. The optional domain glossary lives in committed `CONTEXT.md` at the
-repo root.
+Status and tasks live on the issue tracker (see `/to-issues`). Durable design
+decisions do NOT live here — they go in committed `docs/adr/`. The optional
+domain glossary lives in committed `CONTEXT.md` at the repo root.
 </template>
 
 <template file="specs/<slug>/SPEC.md">
 # <Title>
 
 <!--
-Two ownership zones in one file:
-- Goal/Scope/Non-goals/Success/Validation = human-owned source of truth.
-  Preserve it; never overwrite a human-authored header.
+Two zones in one file:
+- Goal/Scope/Non-goals/Success/Validation = the settled plan from the grill-me
+  session, confirmed by the user. Preserve it; never overwrite an existing header.
 - Design and below = agent-expanded after inspecting the repo.
 -->
 
