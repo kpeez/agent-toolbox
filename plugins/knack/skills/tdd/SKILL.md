@@ -1,6 +1,6 @@
 ---
 name: tdd
-description: "Test-Driven Development discipline — write one failing test, make it pass, repeat across vertical slices. Use when implementing or changing behavior that warrants unit/integration tests. Pairs with /blueprint (examples-based verification); both are coordinated by /writing-code."
+description: "Test-Driven Development discipline — write one failing test, make it pass, repeat across vertical slices. Use when implementing or changing behavior that warrants unit/integration tests. Pairs with /blueprint (examples-based verification); both are coordinated by /implement."
 ---
 
 # Test-Driven Development

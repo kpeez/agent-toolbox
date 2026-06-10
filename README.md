@@ -89,7 +89,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | Skill                           | Plugin | Purpose                                                                                                               |
 | ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
 | `write-spec`                    | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it                   |
-| `writing-code`                  | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation          |
+| `implement`                     | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation          |
 | `tdd`                           | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop             |
 | `blueprint`                     | knack  | Examples-based development — verify a planned implementation against the real repo, then promote the slice or discard |
 | `grill-me`                      | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs                             |

@@ -15,7 +15,7 @@ The spine is **grill → spec → issues → implement → PR**.
    distilled from the grilled plan, never written from scratch
 3. Slice the spec into tracker issues with `/to-issues`. Status and tasks live
    on the tracker, never in local files
-4. Implement per `writing-code`: prove behavior first (failing test via `/tdd`
+4. Implement per `/implement`: prove behavior first (failing test via `/tdd`
    or red example via `/blueprint`), then code to green → lint → types → tests
 5. Verify: run the examples; fix failures before marking done
 6. Publish with `/pr` — atomic commits, push, draft PR
