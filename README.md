@@ -63,12 +63,12 @@ here. Skill scripts need no install — skills run them in place with `uv run`.
 
 This installs to:
 
-| Target          | Installed by manual script                            |
-|-----------------|-------------------------------------------------------|
-| Codex agents    | `~/.codex/agents/*.toml`                              |
+| Target          | Installed by manual script                             |
+| --------------- | ------------------------------------------------------ |
+| Codex agents    | `~/.codex/agents/*.toml`                               |
 | Antigravity CLI | `~/.gemini/AGENTS.md` + skills symlinked from the repo |
-| Copilot CLI     | `~/.copilot/copilot-instructions.md`                  |
-| Statusline      | `~/.agents/bin/cc-statusline`                         |
+| Copilot CLI     | `~/.copilot/copilot-instructions.md`                   |
+| Statusline      | `~/.agents/bin/cc-statusline`                          |
 
 Re-run after updating agent-toolbox.
 
@@ -86,24 +86,24 @@ scripts/bump-plugin-version.sh knack 1.0.2
 
 ## Skills
 
-| Skill                 | Plugin | Purpose                                                                                               |
-|-----------------------|--------|-------------------------------------------------------------------------------------------------------|
-| `write-spec`                     | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it |
-| `writing-code`                   | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation       |
-| `tdd`                            | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop          |
-| `blueprint`                      | knack  | Examples-based development — verify a planned implementation against the real repo, then promote the slice or discard |
-| `grill-me`                       | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs             |
-| `to-issues`                      | knack  | Break a spec/plan into independently-grabbable tracker issues using vertical slices                   |
-| `diagnose`                       | knack  | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix           |
-| `improve-codebase-architecture`  | knack  | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)      |
-| `zoom-out`                       | knack  | Go up a layer of abstraction and map an unfamiliar area of code (user-invoked)                        |
-| `adversarial-review`             | knack  | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat (review-only) |
-| `pr`                             | knack  | Group branch diff into atomic commits, push, open a draft PR, write the spec markdown artifact        |
-| `ship`                           | knack  | Chain `/adversarial-review` then `/pr` in one pass                                                    |
-| `delegating-work`                | knack  | Offload exploration and code generation to local or external worker CLIs                              |
-| `qmd`                            | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI               |
-| `autoresearch`                   | lab    | Autonomous experiment loops with defined metrics and private logs                                     |
-| `data-viz`                       | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                      |
+| Skill                           | Plugin | Purpose                                                                                                               |
+| ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
+| `write-spec`                    | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it                   |
+| `writing-code`                  | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation          |
+| `tdd`                           | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop             |
+| `blueprint`                     | knack  | Examples-based development — verify a planned implementation against the real repo, then promote the slice or discard |
+| `grill-me`                      | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs                             |
+| `to-issues`                     | knack  | Break a spec/plan into independently-grabbable tracker issues using vertical slices                                   |
+| `diagnose`                      | knack  | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
+| `improve-codebase-architecture` | knack  | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
+| `zoom-out`                      | knack  | Go up a layer of abstraction and map an unfamiliar area of code (user-invoked)                                        |
+| `adversarial-review`            | knack  | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat (review-only)                 |
+| `pr`                            | knack  | Group branch diff into atomic commits, push, open a draft PR, write the spec markdown artifact                        |
+| `ship`                          | knack  | Chain `/adversarial-review` then `/pr` in one pass                                                                    |
+| `delegating-work`               | knack  | Offload exploration and code generation to local or external worker CLIs                                              |
+| `qmd`                           | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
+| `autoresearch`                  | lab    | Autonomous experiment loops with defined metrics and private logs                                                     |
+| `data-viz`                      | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
 
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
@@ -146,16 +146,16 @@ style Y fill:#22272e,stroke:#768390,color:#768390
 style P fill:#22272e,stroke:#768390,color:#768390
 ```
 
-| Phase                            | When / what happens                                                                                                                                                                     |
-|----------------------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `/grill-me`                      | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.              |
-| `/diagnose`                      | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec. |
-| `/improve-codebase-architecture` | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                             |
-| `/write-spec`                    | Capture the settled plan — `SPEC.md` (human goal/scope header + agent design body) plus runnable examples. In plan mode, dump the approved plan straight in. Establishes intent.        |
-| `/to-issues`                     | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.   |
+| Phase                                 | When / what happens                                                                                                                                                                                                                                          |
+| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `/grill-me`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.                                                                                   |
+| `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
+| `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                                                                                                  |
+| `/write-spec`                         | Capture the settled plan — `SPEC.md` (human goal/scope header + agent design body) plus runnable examples. In plan mode, dump the approved plan straight in. Establishes intent.                                                                             |
+| `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
 | **implement (`/tdd` + `/blueprint`)** | Per issue, in a fresh chat or subagent: vertical slices, one test → one implementation (never horizontal batches). Blueprint examples import the real repo to prove behavior, then graft in. No mock-slop. `/blueprint` also stands alone as a design spike. |
-| `/adversarial-review`            | Clean-context hostile pass in a fresh reviewer. Challenges the approach/design, then flags bloat, smells, and newly obsolete code. Review-only — returns findings; `/ship` applies them. |
-| `/pr`                            | Group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                   |
+| `/adversarial-review`                 | Clean-context hostile pass in a fresh reviewer. Challenges the approach/design, then flags bloat, smells, and newly obsolete code. Review-only — returns findings; `/ship` applies them.                                                                     |
+| `/pr`                                 | Group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                                                       |
 
 Not every session hits every phase. The dashed skills are alternate entry points
 or on-demand spikes. `/adversarial-review` is most useful before `/pr`; use
@@ -171,7 +171,7 @@ a fresh clone — distinct from the private, ephemeral `specs/` tree:
   `/blueprint`, or `/improve-codebase-architecture` when a decision is hard to
   reverse, surprising without context, and the result of a real trade-off. They
   stop the agent from re-litigating settled choices.
-- **`CONTEXT.md`** *(optional, repo root)* — a domain glossary, nothing else.
+- **`CONTEXT.md`** _(optional, repo root)_ — a domain glossary, nothing else.
   Pins down overloaded terminology (especially useful for ML/research repos). Read
   by `grill-me`, `diagnose`, and `improve-codebase-architecture`.
 
@@ -266,4 +266,4 @@ keep a separate run log.
 
 ---
 
-[^1]: Inspired by this Tweet by Ashpreet Bedi: <https://x.com/ashpreetbedi/status/2011220028453241218>
+[^1]: Inspired by Matt Pocock's [skills repo](https://github.com/mattpocock/skills)
