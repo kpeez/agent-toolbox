@@ -88,6 +88,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 
 | Skill                           | Plugin | Purpose                                                                                                               |
 | ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
+| `setup-repo`                    | knack  | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs directory   |
 | `write-spec`                    | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it                   |
 | `implement`                     | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation          |
 | `tdd`                           | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop             |
@@ -197,6 +198,20 @@ atomic PRs.
 - After a PR merges, comment the PR number, merge or squash commit SHA, and a
   short note about what shipped on the relevant tracker issue, and move it to
   Done. Status lives on the tracker, not in a local file.
+
+## Repo Setup
+
+`/setup-repo` sets up a repo for the knack workflow: an injected facts block
+reads the repo state (stack, lockfile, remote, existing files), the skill asks
+which issue tracker to use and drafts a short Structure section, then writes
+the thin repo-root `AGENTS.md` — stack commands (`uv run ruff format` /
+`uv run ruff check` / `uv run ty check` for Python, the repo's real `typecheck`
+script for JS/TS), changesets rules when `.changeset/` exists, and the Agent
+skills block (`Issue tracker:` line, triage labels, domain docs layout) —
+symlinks `CLAUDE.md → AGENTS.md`, and performs the specs setup below. The repo
+file carries only repo conventions; the workflow spine and code rules live in
+the user-level instructions, and tracker mechanics stay in `/to-issues`. The repo file carries only repo conventions — the workflow spine
+and code rules already live in the user-level instructions.
 
 ## Specs Setup
 
