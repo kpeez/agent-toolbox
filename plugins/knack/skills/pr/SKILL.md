@@ -1,6 +1,7 @@
 ---
 name: pr
 description: Group current branch diff into atomic commits, push, and open a draft PR if missing. Use when ready to publish branch work.
+model: haiku
 ---
 
 # /pr — Group, Commit, Push, Draft PR
@@ -10,8 +11,7 @@ commits, push, and ensure a draft PR exists.
 
 ## Rules
 
-- **Atomic commits.** Imperative, conventional subjects (`feat:`, `fix:`,
-  `refactor:`, `docs:`, `test:`, `chore:`). One coherent intent per commit —
+- **Atomic commits.** Imperative, informative subjects. One coherent intent per commit —
   never mixed — ordered so each commit leaves the tree buildable.
 - **PR title and body come from SPEC.md, linked tracker issues, and the diff.**
 - **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
@@ -19,7 +19,7 @@ commits, push, and ensure a draft PR exists.
   ready only when the user asks.
 - **Never force-push.** Squash merge by default.
 
-## /pr [feature-name]
+## Workflow
 
 1. **Context** — resolve `<feature>`: the argument if given, else the most
    recently modified `specs/<feature>/SPEC.md`, else proceed without one. Read
@@ -40,6 +40,6 @@ commits, push, and ensure a draft PR exists.
 ## Markdown artifact (on request only)
 
 When the user asks, or as a fallback when `gh` is unavailable: write
-`specs/<feature>/pr-<branch>.md` (gitignored — never committed) with one
+`specs/<feature>/pr-<issue-slug>.md` (gitignored — never committed) with one
 section per commit: subject, one-line rationale, file list, and the
 `git diff <base>...HEAD -- <files>` output for that group.
