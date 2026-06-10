@@ -8,14 +8,15 @@
 ## Spec Workflow
 
 1. Read this file and README.md
-2. Check `specs/` for feature specs — read AGENTS.md + STATUS.md before working
+2. Check `specs/` for feature specs — read the spec's `SPEC.md` and its tracker
+   container/issues before working
 3. Inspect existing patterns before adding new ones
 4. Implement → lint → types → tests
-5. Verify: run examples and update logs, fix failures first
-6. After changing any per-spec STATUS.md, regenerate specs/STATUS.md with the
-   spec status script
+5. Verify: run examples, fix failures first
+6. Status and tasks live on the issue tracker, not in a local file — use
+   `/to-issues` to slice a spec into issues; resume by reading the issue
 
-> For non-trivial features, create a spec first with `/spec new <name>`.
+> For non-trivial features, create a spec first with `/write-spec new <name>`.
 
 Specs are private working context and must never be committed. Keep `specs`
 ignored in git and prefer a repo-local symlink to a private specs directory,
