@@ -11,6 +11,11 @@ status ledger: task and status truth live on the issue tracker (see `/to-issues`
 Once the design is settled and sliced into issues, the tracker is authoritative —
 the local spec is authoring residue.
 
+Specs are not user-written. A spec is the product of a `/grill-me` session (or an
+approved plan-mode plan): the agent distills the grilled plan into the `SPEC.md`
+goal/scope header and the user confirms it at the review gate. Durable decisions
+surfaced by the grill go to committed `docs/adr/`, not the spec.
+
 ## The verification rule
 
 This skill follows the `writing-code` discipline. Read it before implementation:
@@ -27,27 +32,29 @@ Use a spec when any of these are true:
 - You're unfamiliar with the area of the codebase being modified
 - The user explicitly asks for a plan or spec
 
-Skip specs for trivial changes — typo fixes, single-line config changes, log line additions, renames.
+Skip specs for trivial changes — typo fixes, single-line config changes, log line
+additions, renames.
 
 ## If you're already in plan mode
 
-Don't double-dip. Your approved plan **is** the spec. Write it straight to
-`specs/<slug>/SPEC.md` as the goal/scope header, expand the design body below the
-`---` divider, and flag the header for the user to confirm. Do not re-derive a
-second plan you already made.
+Don't double-dip. Your approved plan **is** the grilled input. Write it straight
+to `specs/<slug>/SPEC.md` as the goal/scope header, expand the design body below
+the `---` divider, and flag the header for the user to confirm.
 
 ## Workflow
 
-1. **Goal**: Write the `SPEC.md` goal/scope header — human intent, scope, success criteria, review gate
-2. **Design**: Expand the `SPEC.md` design body — approach, behavior, decisions, verification mapping
-3. **Fork — hand off or implement solo.** Once the design is settled:
-   - **Hand off (default when work will fan out):** run `/to-issues` to publish the
-     spec as a parent issue + sub-issues. Separate agents (fresh chats or
-     subagents) then pick up each issue and run its own examples → red → implement
-     → green → review → PR loop. The tracker owns status from here.
-   - **Solo (single-slice spec, one sitting):** continue here — write executable
-     scripts in `examples/`, run them red (they FAIL), implement, run them green
-     (they PASS), then `/pr`.
+1. **Grill**: stress-test the plan with `/grill-me`; record durable decisions as ADRs
+2. **Goal**: distill the grilled plan into the `SPEC.md` goal/scope header; the
+   user confirms it
+3. **Design**: expand the `SPEC.md` design body after inspecting the repo
+4. **Fork** — hand off or implement solo:
+   - **Hand off (default when work will fan out):** run `/to-issues` to publish
+     the spec as a parent issue + labeled sub-issues. Separate agents pick up
+     each issue and run its own red → green → review → PR loop. The tracker owns
+     status from here.
+   - **Solo (single-slice spec, one sitting):** write executable scripts in
+     `examples/`, run them red (they FAIL), implement, run them green (they
+     PASS), then `/pr` (or `/ship` for a hostile review pass first).
 
 ## /write-spec new <name>
 
@@ -58,118 +65,63 @@ Creates a feature spec directory with `SPEC.md` plus `examples/`.
 <step action="ensure-private">ensure a repo-local `specs` symlink exists that points at the private per-repo directory (skip if already linked); never create `specs` as a real committed directory</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/` (no-op if already present)</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
-<step action="create-files">read `templates.md` and write `SPEC.md` to `specs/<slug>/`; never overwrite a `SPEC.md` that already exists — a present goal/scope header is human-authored and authoritative</step>
-<step action="populate">if `SPEC.md` already exists, treat its goal/scope header as the human-authored source of truth — do not modify it — and expand the design body (approach, behavior, decisions, risks, verification mapping) below the `---` divider. Otherwise fill the goal/scope header from conversation context (intent, scope, non-goals, success criteria, execution mode); if invoked in or after plan mode, draft it from the approved plan and flag it for the user to confirm. Then expand the design body and choose example script names from the behaviors being verified.</step>
+<step action="create-files">read `templates.md` and write `SPEC.md` to `specs/<slug>/`; never overwrite an existing `SPEC.md` — a present goal/scope header is settled and authoritative</step>
+<step action="populate">fill the goal/scope header from the grilled plan (or approved plan-mode plan) and flag it for the user to confirm; if `SPEC.md` already exists, leave its header alone. Then expand the design body below the `---` divider and choose example script names from the behaviors being verified</step>
 </steps>
 
 ## Spec structure
 
 A spec is **`SPEC.md` plus `examples/`** — nothing more. Specs are private working
-context and must never be committed. Keep `specs` ignored in git. Prefer a
-repo-local `specs` symlink that points to a private per-repo directory, such as
+context and must never be committed. Keep `specs` ignored in git; prefer a
+repo-local `specs` symlink to a private per-repo directory such as
 `~/Documents/specs/<repo>`.
 
-```md
+```
 specs/
 ├── AGENTS.md # How agents navigate specs; not a manual index
 └── <feature>/
-    ├── SPEC.md # Human goal/scope header + agent-expanded design
+    ├── SPEC.md # Goal/scope header + agent-expanded design
     └── examples/ # Runnable verification scripts (REQUIRED)
         ├── build_pipeline.py # Prefer behavior-specific names
         └── basic_pipeline_run.py # Use useful filenames, not generic placeholders
 ```
 
-Durable design decisions do NOT live in the spec — record them in committed
-`docs/adr/` (see `grill-me`'s `ADR-FORMAT.md`). The optional domain glossary lives
-in committed `CONTEXT.md` at the repo root.
+`SPEC.md` is one file, two zones split by a `---` divider: a short goal/scope
+header (settled by the grill, confirmed by the user — preserve it, never
+overwrite) and the agent-expanded design body. The sections and their meanings
+are defined once, in `templates.md` — follow the template, don't improvise
+structure.
 
-### SPEC.md
+Two semantics worth knowing beyond the template:
 
-One file, two ownership zones split by a `---` divider.
+- **Execution mode**: `review-gated` (user reviews the design body before
+  implementation — the default) or `autonomous` (`/goal`, ralph-loop: the agent
+  proceeds after writing the design), plus stop conditions.
+- **Durable decisions** (architecture, provider policy, storage model, security
+  posture) go in committed `docs/adr/` (see `grill-me`'s `ADR-FORMAT.md`) and are
+  linked from the Decisions section. The optional domain glossary is committed
+  `CONTEXT.md` at the repo root.
 
-**Goal/scope header (human-owned source of truth).** Keep it short enough to
-review. Use `/grill-me` to stress-test it before expanding the design.
+## Status lives on the tracker
 
-- **Goal** — what problem are we solving and why
-- **Scope** — what is included
-- **Non-goals** — what is explicitly out of scope
-- **Success criteria** — observable outcomes that define done
-- **Execution mode** — `review-gated` or `autonomous`, plus stop conditions
-- **Validation** — commands/examples/tests that prove the goal
+`/to-issues` selects the tracker (Linear MCP → GitHub → local markdown) and
+publishes the header as a parent issue with labeled sub-issues. Status is the
+issue state, blockers are the blocked-by links, the rollup is the parent view.
+Before running out of context, drop a short progress comment on the active
+issue — what's done, what's next, the one gotcha. That comment is the handoff.
 
-**Design body (agent-expanded).** Write this after inspecting the repo and before
-examples or implementation.
-
-- **Design** — architecture, key components, patterns used
-- **Behavior** — how it works; inputs, outputs, state changes, failure modes
-- **Decisions** — non-obvious choices, rationale, alternatives considered
-- **Risks** — things that could break or need careful verification
-- **Verification** — maps each example script to the behavior it verifies
-
-The default is human-first: write the goal/scope header yourself before running
-`/write-spec new`. The skill preserves an existing header and never overwrites it,
-then expands the design body. If no `SPEC.md` exists, the agent writes the header
-from conversation context — including an approved plan-mode plan — and flags it for
-you to confirm.
-
-Use `review-gated` for normal collaboration: the user reviews the design body
-before implementation. Use `autonomous` for `/goal`, ralph-loop, or similar
-workflows: the agent may proceed after writing the design.
-
-**Durable decisions:** if a decision is durable beyond this feature (architecture,
-provider policy, storage model, security posture, major framework choice), record
-it in committed `docs/adr/` and link it from the Decisions section — do not bury it
-in the spec.
-
-### Status and tasks live on the tracker, not in the spec
-
-There is no `STATUS.md`. The issue tracker is the task ledger and the status
-source, because it is the one ledger every agent and your phone can read with no
-local convention to learn:
-
-- **`/to-issues`** publishes the goal/scope header as a **parent issue** and the
-  vertical slices as **sub-issues** under it — the portable default on Linear and
-  GitHub. Escalate to a Linear **project** only for large, multi-milestone specs.
-- **Status** is the issue state (Todo / In Progress / Done); **what's blocked** is
-  the blocked-by links; **the rollup** (e.g. 3/7 done) is the parent/project view,
-  reviewable remotely with zero maintenance.
-- **Resume across agents or context limits:** read the tracker container and grab
-  the next unblocked issue. Before you run out of context, drop a short progress
-  comment on the **active issue** — what's done, what's next, the one gotcha the
-  next agent needs. That comment is the handoff, and it lives where the next agent
-  (any agent) is already looking.
-
-### Publishing
-
-Use `/to-issues` to break a spec into independently-grabbable tracker issues, then
-`/pr` (or `/ship` for a hostile review pass first) to publish branch work. `/pr`
-handles atomic commits, push, and draft PR creation.
-
-### Example scripts
+## Example scripts
 
 Every spec has an `examples/` directory with runnable scripts. These are not unit
-tests — they are executable demonstrations that verify the feature works. Rules for
-example scripts are defined in the `blueprint` skill. The examples ARE the record:
-rerun them to verify current state. For tracker-linked work, paste the run result
-into the issue comment.
+tests — they are executable demonstrations that verify the feature works. Rules
+live in the `blueprint` skill. The examples ARE the record: rerun them to verify
+current state, and paste the run result into the issue comment for tracker-linked
+work.
 
 ## Resuming work on an existing spec
 
-When picking up an existing spec:
-
-1. Read the tracker container/issue first — phase is the issue states, blocked is
-   the blocked-by links, the latest progress comment is the handoff
+1. Read the tracker first — issue states, blocked-by links, latest progress comment
 2. Read `SPEC.md` for intent and design context
 3. Run any existing examples to see current state
-4. Pick up the next unblocked issue
+4. Pick up the next unblocked `ready-for-agent` issue
 5. Comment progress on the active issue before you hit a context limit
-
-For older specs, accept legacy layouts: a separate `STATUS.md`/`PLAN.md`/
-`implementation.md` and `examples/RUN_LOG.md`/`handoff.md`. Treat them as read-only
-history; do not rename or migrate old specs unless the user asks.
-
-## Issue tracker
-
-Spec work is handed to the tracker via `/to-issues`. The tracker is configured in
-repo-root `issue-tracker.md` (default Linear). For Linear-linked work, follow
-`/using-linear` for deterministic comments and status transitions.

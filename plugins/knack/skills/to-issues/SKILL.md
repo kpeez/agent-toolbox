@@ -10,22 +10,35 @@ Break a plan into independently-grabbable issues using **vertical slices**
 
 ## Tracker
 
-Read repo-root `issue-tracker.md` for where issues live and how to write them.
-If it's absent, **default to Linear** (follow `/using-linear`, which uses the
-Linear MCP tools). If neither Linear nor the configured tracker is reachable,
-fall back to `gh issue create`. Mention which tracker you used.
+Pick the tracker at runtime — no per-repo config beyond an optional one-liner:
 
-A repo can pin its choice by creating `issue-tracker.md` (committed, not secret):
+1. **Repo override** — if the repo's `AGENTS.md`/`CLAUDE.md` names a tracker
+   (e.g. `Issue tracker: linear (team ETHO)` or `Issue tracker: github`), use it
+   and pass along any extras on that line (team, labels, project).
+2. **Linear** — else, if Linear MCP tools are available:
+   [references/issue-tracker-linear.md](references/issue-tracker-linear.md)
+3. **GitHub** — else, if the repo has a GitHub remote and `gh` works:
+   [references/issue-tracker-github.md](references/issue-tracker-github.md)
+4. **Local markdown** — otherwise, files under `specs/<feature>/issues/`:
+   [references/issue-tracker-local.md](references/issue-tracker-local.md)
 
-```md
-# Issue Tracker
+Read the matching reference before publishing; mention which tracker you used.
+Other skills that say "the tracker" mean whatever this selection resolves to.
 
-Tracker: Linear
-Team: <team-id-or-name>
-Notes: <anything skills should know — labels, project, conventions>
-```
+## Triage labels
 
-Offer to create it the first time you run here, but don't block on it.
+Issues carry one of five canonical labels (in the local tracker, a `Status:` line):
+
+| Label             | Meaning                                            |
+| ----------------- | -------------------------------------------------- |
+| `needs-triage`    | Needs evaluation before it can be worked           |
+| `needs-info`      | Waiting on the reporter/user for more information  |
+| `ready-for-agent` | Fully specified — an AFK agent can pick it up cold |
+| `ready-for-human` | Requires human implementation or a human decision  |
+| `wontfix`         | Will not be actioned                               |
+
+Issues published by this skill are born triaged: label AFK slices
+`ready-for-agent` and HITL slices `ready-for-human`.
 
 ## Process
 
@@ -77,7 +90,8 @@ parent issue (or project) is the remote-reviewable home for the "why," and from
 here the tracker — not the local spec — is the task and status ledger.
 
 Publish each approved slice to the tracker in dependency order (blockers first)
-so you can reference real issue identifiers in "Blocked by".
+so you can reference real issue identifiers in "Blocked by". Apply the triage
+label (`ready-for-agent` / `ready-for-human`) at publish time.
 
 An **AFK** issue must be a durable **agent brief** — a future agent will pick it
 up cold, with only the issue body for context. Write it so that's enough:

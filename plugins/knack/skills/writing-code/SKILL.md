@@ -24,6 +24,14 @@ On a spec, both live in the spec: tests in the project's suite, blueprint exampl
 under `specs/<feature>/examples/`. Rerun them to verify; the examples are the
 record. Test and example failures are spec failures — fix them before marking done.
 
+## Working from the tracker
+
+When the work comes from the tracker, take the next unblocked issue labeled
+`ready-for-agent` (the triage vocabulary and tracker selection live in
+`/to-issues`). The issue body is the brief; the latest comment is the handoff —
+read both before acting. If mid-task you hit a decision only a human can make,
+comment exactly what's needed and relabel the issue `ready-for-human`.
+
 ## Orchestrate; don't do it all yourself
 
 Unless the change is highly trivial, **don't explore the codebase or write the
@@ -63,8 +71,9 @@ context and re-dispatch, or diagnose a block before retrying.
 
 ### After each task
 
-Update the tracker issue: move it to Done or comment progress. Status and tasks
-live on the tracker, not in a local file.
+Update the tracker issue: move it to Done, or comment progress (what's done,
+what's next, the one gotcha). Status and tasks live on the tracker, not in a
+local file.
 
 ## Cross-references
 
