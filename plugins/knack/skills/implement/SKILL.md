@@ -1,9 +1,9 @@
 ---
-name: writing-code
+name: implement
 description: "How to implement a spec or feature: prove behavior before committing to it, and orchestrate the work rather than doing it all yourself. Use whenever implementing a feature, bugfix, or behavior change."
 ---
 
-# Writing code
+# Implement
 
 Two verification disciplines and one stance.
 
