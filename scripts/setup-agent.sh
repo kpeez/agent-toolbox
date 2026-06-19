@@ -7,6 +7,7 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ################################################################################
 # Claude
 ################################################################################
+mkdir -p "$HOME/.claude"
 cp "$ROOT_DIR/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 
 # statusline helper (delegating-work scripts need no install — the skill runs them via uv)
