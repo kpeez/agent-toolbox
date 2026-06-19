@@ -3,6 +3,35 @@ set -euo pipefail
 
 ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
+
+################################################################################
+# Claude
+################################################################################
+
+mkdir -p "$HOME/.claude"
+cp "$ROOT_DIR/AGENTS.md" "$HOME/.claude/CLAUDE.md"
+
+# statusline helper (delegating-work scripts need no install — the skill runs them via uv)
+cp "$ROOT_DIR/scripts/cc_statusline.py" "$HOME/.claude/"
+echo "claude instructions + statusline → $HOME/.claude/"
+
+
+################################################################################
+# Codex
+################################################################################
+# Subagents:
+# Codex plugins deliver skills but not agents, so the .toml
+# agents in the plugin payload must be installed into Codex's agent directory.
+mkdir -p "$HOME/.codex/agents"
+for agent in "$ROOT_DIR"/plugins/knack/agents/*.toml; do
+    cp "$agent" "$HOME/.codex/agents/"
+done
+echo "codex agents → $HOME/.codex/agents/"
+
+
+################################################################################
+# Antigravity
+################################################################################
 # antigravity skills: symlink each skill straight from the repo (single source, no copies)
 AGY_SKILLS="$HOME/.gemini/antigravity-cli/skills"
 rm -rf "$AGY_SKILLS"
@@ -22,21 +51,9 @@ install_provider() {
 install_provider antigravity "$HOME/.gemini" AGENTS.md
 install_provider copilot "$HOME/.copilot" copilot-instructions.md
 
-# Codex subagents:
-# Codex plugins deliver skills but not agents, so the .toml
-# agents in the plugin payload must be installed into Codex's agent directory.
-mkdir -p "$HOME/.codex/agents"
-for agent in "$ROOT_DIR"/plugins/knack/agents/*.toml; do
-    cp "$agent" "$HOME/.codex/agents/"
-done
-echo "codex agents → $HOME/.codex/agents/"
-
-# statusline helper (delegating-work scripts need no install — the skill runs them via uv)
-BIN_DIR="$HOME/.agents/bin"
-mkdir -p "$BIN_DIR"
-ln -sf "$ROOT_DIR/scripts/cc-statusline.py" "$BIN_DIR/cc-statusline"
-echo "cc-statusline → $BIN_DIR/cc-statusline (ensure $BIN_DIR is on your PATH)"
-
+################################################################################
+# Ollama model install
+################################################################################
 read -r -p "Create ollama Modelfiles? [y/N] " reply
 if [[ "${reply}" =~ ^[Yy]$ ]]; then
     bash "$ROOT_DIR/scripts/create-modelfiles.sh"
