@@ -1,5 +1,3 @@
-# AGENTS.md
-
 ## Guiding principles
 
 - **Do NOT end turns by offering to do more work.** No "Want me to scaffold X?" / "Should I rewrite Y?" engagement-bait offers. The user will explicitly say when they want something done. Answer what was asked, then stop.
