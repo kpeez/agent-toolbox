@@ -103,7 +103,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `ship`                          | knack  | Chain `/adversarial-review` then `/pr` in one pass                                                                    |
 | `delegating-work`               | knack  | Offload exploration and code generation to local or external worker CLIs                                              |
 | `qmd`                           | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
-| `rich-docs`                     | knack  | Write compact, reviewable technical docs with Markdown-first semantic blocks and applied-ML evidence patterns         |
+| `documentation`                 | knack  | Write clear, reviewable Markdown specs, issues, PRs, ADRs, reports, guides, and handoffs                              |
 | `autoresearch`                  | lab    | Autonomous experiment loops with defined metrics and private logs                                                     |
 | `data-viz`                      | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
 

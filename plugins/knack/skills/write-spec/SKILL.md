@@ -102,16 +102,12 @@ Two semantics worth knowing beyond the template:
   linked from the Decisions section. The optional domain glossary is committed
   `CONTEXT.md` at the repo root.
 
-## Rich review surfaces
+## Documentation quality
 
-When a spec would benefit from side-by-side comparisons, diffs, annotated code,
-diagrams, experiment evidence, model or dataset cards, or structured review
-questions, use the `rich-docs` skill to choose the smallest semantic block that
-answers the reviewer's question.
-
-Keep `SPEC.md` as valid Markdown until the repository has a configured rich-docs
-renderer. Use each block's plain-Markdown projection instead of placing
-unsupported custom tags in the file.
+Use the `documentation` skill when drafting or revising `SPEC.md`. Specs should
+be plain Markdown that is easy to review in an editor, GitHub, or a tracker:
+clear decision up front, explicit scope, nearby evidence, concrete validation,
+and unresolved questions called out plainly.
 
 ## Status lives on the tracker
 

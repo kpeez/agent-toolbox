@@ -10,6 +10,10 @@ tree resolving dependencies between decisions one by one. Ask the questions one 
 If a question can be answered by exploring the codebase, explore
 the codebase instead.
 
+When recording glossary entries or ADRs, use the `documentation` skill's Markdown
+guidance: lead with the decision or term, keep evidence close, and make
+consequences explicit.
+
 ## During the session
 
 **Cross-check against the code.** When I state how something works, verify the
