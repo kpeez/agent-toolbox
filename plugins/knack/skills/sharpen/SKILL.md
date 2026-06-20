@@ -1,6 +1,6 @@
 ---
-name: grill-me
-description: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree. Cross-checks claims against the code, sharpens terminology, and records durable decisions as ADRs. Use when user wants to stress-test a plan or get grilled on their design, or mentions "grill me" or /grill-me.
+name: sharpen
+description: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree. Cross-checks claims against the code, sharpens terminology, and records durable decisions as ADRs. Use when the user wants to stress-test, pressure-test, or harden a plan or design, or mentions "sharpen", /sharpen, or "grill me".
 ---
 
 Interview me relentlessly about every aspect of this plan until
@@ -33,13 +33,12 @@ edge-case scenarios that force precision about the boundaries between concepts.
 
 ## Recording decisions as ADRs
 
-Offer to record an ADR only when **all three** are true:
+Record an ADR only when **all three** are true:
 
 1. **Hard to reverse** — the cost of changing your mind later is meaningful
 2. **Surprising without context** — a future reader will wonder "why did they do it this way?"
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
-If any of the three is missing, skip it. When all three hold, offer it as: "Want
-me to record this as an ADR so it isn't re-litigated later?" Write to committed
-`docs/adr/` using [ADR-FORMAT.md](./ADR-FORMAT.md). Create the directory lazily,
-only when the first ADR is needed.
+If any of the three is missing, skip it. When all three hold, record it to
+committed `docs/adr/` using [ADR-FORMAT.md](./ADR-FORMAT.md), then tell me you did
+and why. Create the directory lazily, only when the first ADR is needed.
