@@ -11,10 +11,10 @@ status ledger: task and status truth live on the issue tracker (see `/to-issues`
 Once the design is settled and sliced into issues, the tracker is authoritative —
 the local spec is authoring residue.
 
-Specs are not user-written. A spec is the product of a `/grill-me` session (or an
-approved plan-mode plan): the agent distills the grilled plan into the `SPEC.md`
+Specs are not user-written. A spec is the product of a `/sharpen` session (or an
+approved plan-mode plan): the agent distills the sharpened plan into the `SPEC.md`
 goal/scope header and the user confirms it at the review gate. Durable decisions
-surfaced by the grill go to committed `docs/adr/`, not the spec.
+surfaced by the sharpen go to committed `docs/adr/`, not the spec.
 
 ## The verification rule
 
@@ -37,14 +37,14 @@ additions, renames.
 
 ## If you're already in plan mode
 
-Don't double-dip. Your approved plan **is** the grilled input. Write it straight
+Don't double-dip. Your approved plan **is** the sharpened input. Write it straight
 to `specs/<slug>/SPEC.md` as the goal/scope header, expand the design body below
 the `---` divider, and flag the header for the user to confirm.
 
 ## Workflow
 
-1. **Grill**: stress-test the plan with `/grill-me`; record durable decisions as ADRs
-2. **Goal**: distill the grilled plan into the `SPEC.md` goal/scope header; the
+1. **Sharpen**: stress-test the plan with `/sharpen`; record durable decisions as ADRs
+2. **Goal**: distill the sharpened plan into the `SPEC.md` goal/scope header; the
    user confirms it
 3. **Design**: expand the `SPEC.md` design body after inspecting the repo
 4. **Fork** — hand off or implement solo:
@@ -54,7 +54,7 @@ the `---` divider, and flag the header for the user to confirm.
      status from here.
    - **Solo (single-slice spec, one sitting):** write executable scripts in
      `examples/`, run them red (they FAIL), implement, run them green (they
-     PASS), then `/pr` (or `/ship` for a hostile review pass first).
+     PASS), then a host-native review pass, then `/pr`.
 
 ## /write-spec new <name>
 
@@ -66,7 +66,7 @@ Creates a feature spec directory with `SPEC.md` plus `examples/`.
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/` (no-op if already present)</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
 <step action="create-files">read `templates.md` and write `SPEC.md` to `specs/<slug>/`; never overwrite an existing `SPEC.md` — a present goal/scope header is settled and authoritative</step>
-<step action="populate">fill the goal/scope header from the grilled plan (or approved plan-mode plan) and flag it for the user to confirm; if `SPEC.md` already exists, leave its header alone. Then expand the design body below the `---` divider and choose example script names from the behaviors being verified</step>
+<step action="populate">fill the goal/scope header from the sharpened plan (or approved plan-mode plan) and flag it for the user to confirm; if `SPEC.md` already exists, leave its header alone. Then expand the design body below the `---` divider and choose example script names from the behaviors being verified</step>
 </steps>
 
 ## Spec structure
@@ -87,7 +87,7 @@ specs/
 ```
 
 `SPEC.md` is one file, two zones split by a `---` divider: a short goal/scope
-header (settled by the grill, confirmed by the user — preserve it, never
+header (settled by the sharpen, confirmed by the user — preserve it, never
 overwrite) and the agent-expanded design body. The sections and their meanings
 are defined once, in `templates.md` — follow the template, don't improvise
 structure.
@@ -95,10 +95,10 @@ structure.
 Two semantics worth knowing beyond the template:
 
 - **Execution mode**: `review-gated` (user reviews the design body before
-  implementation — the default) or `autonomous` (`/goal`, ralph-loop: the agent
-  proceeds after writing the design), plus stop conditions.
+  implementation — the default) or `autonomous` (the agent proceeds after writing
+  the design, e.g. driven by `/goal`), plus stop conditions.
 - **Durable decisions** (architecture, provider policy, storage model, security
-  posture) go in committed `docs/adr/` (see `grill-me`'s `ADR-FORMAT.md`) and are
+  posture) go in committed `docs/adr/` (see `sharpen`'s `ADR-FORMAT.md`) and are
   linked from the Decisions section. The optional domain glossary is committed
   `CONTEXT.md` at the repo root.
 

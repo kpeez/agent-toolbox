@@ -33,7 +33,7 @@ domain glossary lives in committed `CONTEXT.md` at the repo root.
 
 <!--
 Two zones in one file:
-- Goal/Scope/Non-goals/Success/Validation = the settled plan from the grill-me
+- Goal/Scope/Non-goals/Success/Validation = the settled plan from the sharpen
   session, confirmed by the user. Preserve it; never overwrite an existing header.
 - Design and below = agent-expanded after inspecting the repo.
 -->

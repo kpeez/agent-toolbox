@@ -20,23 +20,31 @@ commits, push, and ensure a draft PR exists.
 - **Never force-push.** Squash merge by default.
 - **Reviewable Markdown.** Use the `documentation` skill when drafting PR bodies
   or optional PR markdown artifacts.
+- **Verify before you commit.** Lint, types, tests, and spec examples must pass
+  first; a failing check is a stop, not a warning.
 
 ## Workflow
 
 1. **Context** — resolve `<feature>`: the argument if given, else the most
    recently modified `specs/<feature>/SPEC.md`, else proceed without one. Read
    the spec and its linked tracker issues for intent and the desired PR slice.
-2. **Group** — collect the diff against `git merge-base main HEAD` plus
+   Resolve the base branch from the remote default — never assume `main`:
+   `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else
+   `git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@'`,
+   else `main`.
+2. **Verify** — run the repo's lint, type-check, tests, and spec examples. If any
+   fail, stop and report; do not commit on red.
+3. **Group** — collect the diff against `git merge-base <base> HEAD` plus
    uncommitted and untracked work; cluster files (within-file hunks if needed)
    into single-intent groups.
-3. **Commit** — stage exactly one group at a time and commit it; check
+4. **Commit** — stage exactly one group at a time and commit it; check
    `git status` between commits so nothing leaks across groups.
-4. **Push** — `git push -u origin HEAD` (plain `git push` if upstream is set).
-5. **Draft PR** — if none exists, `gh pr create --draft --base main`; if one
+5. **Push** — `git push -u origin HEAD` (plain `git push` if upstream is set).
+6. **Draft PR** — if none exists, `gh pr create --draft --base <base>`; if one
    exists, leave its state alone.
-6. **Link** — comment the PR URL on the tracker issue(s) and move them toward
+7. **Link** — comment the PR URL on the tracker issue(s) and move them toward
    review. Status lives on the tracker, not in local files.
-7. **Summarize** — branch, base, commit list (sha + subject), PR URL, tracker
+8. **Summarize** — branch, base, commit list (sha + subject), PR URL, tracker
    issues touched.
 
 ## Markdown artifact (on request only)

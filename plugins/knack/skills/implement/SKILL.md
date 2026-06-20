@@ -23,6 +23,7 @@ verifies it, STOP and write the check first.
 On a spec, both live in the spec: tests in the project's suite, blueprint examples
 under `specs/<feature>/examples/`. Rerun them to verify; the examples are the
 record. Test and example failures are spec failures — fix them before marking done.
+"Done" also means lint and type-check pass, not just tests.
 
 ## Working from the tracker
 
@@ -38,9 +39,9 @@ Unless the change is highly trivial, **don't explore the codebase or write the
 code yourself — delegate.** Spend your context coordinating, not reading files
 and typing implementation.
 
-- **Explore** with a cheap worker (`/delegating-work`'s `local-explore`, or the
-  `Explore` subagent) instead of loading many files into your own context.
-- **Generate** with subagents or an external worker (`/delegating-work`'s
+- **Explore** with a fast-tier worker (`/delegate`'s `ext-subagent` on a fast
+  model, or the `Explore` subagent) instead of loading many files into your own context.
+- **Generate** with subagents or an external worker (`/delegate`'s
   `ext-subagent`). Give each worker exactly the context it needs — the relevant
   `SPEC.md` sections, key paths, and where the task fits — no more.
 - **Review** what comes back before trusting it.
@@ -77,6 +78,6 @@ local file.
 
 ## Cross-references
 
-- `/grill-me` — stress-test a plan before writing tests or blueprints.
+- `/sharpen` — stress-test a plan before writing tests or blueprints.
 - `/write-spec new <name>` — scaffold a spec with an examples directory.
-- `/delegating-work` — the mechanics of exploring and generating via workers.
+- `/delegate` — the mechanics of exploring and generating via workers.

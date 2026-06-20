@@ -89,21 +89,22 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | Skill                           | Plugin | Purpose                                                                                                               |
 | ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
 | `setup-repo`                    | knack  | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs directory   |
+| `orchestrate`                   | knack  | Run/resume the whole spine as one gated command (sharpen → spec → issues → implement); restates the goal, resumes from artifacts (user-invoked) |
 | `write-spec`                    | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it                   |
 | `implement`                     | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation          |
 | `tdd`                           | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop             |
 | `blueprint`                     | knack  | Examples-based development — verify a planned implementation against the real repo, then promote the slice or discard |
-| `grill-me`                      | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs                             |
+| `sharpen`                       | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs |
+| `deliberate`                    | knack  | Resolve a two-way decision — two independent cases (for/against), one capped rebuttal, evidence-weighted synthesis (model/user-invoked) |
 | `to-issues`                     | knack  | Break a spec/plan into independently-grabbable tracker issues using vertical slices                                   |
 | `diagnose`                      | knack  | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
 | `improve-codebase-architecture` | knack  | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
 | `zoom-out`                      | knack  | Go up a layer of abstraction and map an unfamiliar area of code (user-invoked)                                        |
-| `adversarial-review`            | knack  | Clean-context hostile review of the branch diff — challenge approach/design, flag bloat (review-only)                 |
-| `pr`                            | knack  | Group branch diff into atomic commits, push, open a draft PR, write the spec markdown artifact                        |
-| `ship`                          | knack  | Chain `/adversarial-review` then `/pr` in one pass                                                                    |
-| `delegating-work`               | knack  | Offload exploration and code generation to local or external worker CLIs                                              |
+| `pr`                            | knack  | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests/examples first               |
+| `delegate`                      | knack  | Delegate to cheaper workers — route reads to a fast model, writes to a medium model, review what comes back; never write yourself (model-invoked) |
 | `qmd`                           | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
 | `documentation`                 | knack  | Write clear, reviewable Markdown specs, issues, PRs, ADRs, reports, guides, and handoffs                              |
+| `validate-skills`               | knack  | Drift guard — check name/dir match, README inventory parity, manifest version parity, and dead skill references        |
 | `autoresearch`                  | lab    | Autonomous experiment loops with defined metrics and private logs                                                     |
 | `data-viz`                      | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
 
@@ -111,11 +112,15 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 
 ## Workflow
 
-The spine is **grill → spec → issues → implement → review → ship**. Work enters at
-one of three points: `/grill-me` for a new feature whose design isn't settled,
-`/diagnose` for a known bug, or `/improve-codebase-architecture` when you're
-hunting for refactors. For non-trivial work these converge on `/write-spec`; a
-small fix can skip straight to implement.
+The spine is **sharpen → spec → issues → implement → review → pr**. For a new
+feature, `/orchestrate <idea>` runs that spine as one resumable command with a
+human gate between phases — it restates the goal up front, recomputes state from
+artifacts so it can resume mid-flight, and gives every worker its own goal. Work
+also enters at one of three points directly: `/sharpen` for a new feature whose
+design isn't settled, `/diagnose` for a known bug, or
+`/improve-codebase-architecture` when you're hunting for refactors. For
+non-trivial work these converge on `/write-spec`; a small fix can skip straight to
+implement.
 
 Once the spec is settled, `/to-issues` publishes it (parent issue + sub-issues)
 and **the tracker takes over** — each issue is then picked up independently, in a
@@ -127,12 +132,12 @@ an approach. Durable decisions get recorded as ADRs in `docs/adr/` along the way
 
 ```mermaid
 graph LR
-  G["/grill-me"] --> A["/write-spec"]
+  G["/sharpen"] --> A["/write-spec"]
   X["/diagnose"] -.-> A
   Y["/improve-codebase-architecture"] -.-> A
   A --> I["/to-issues"]
   I -->|"fresh chat / subagent per issue"| B["implement (/tdd + /blueprint)"]
-  B --> C["/adversarial-review"]
+  B --> C["review (host-native)"]
   C --> D["/pr"]
   X -.->|"small fix"| B
   P["/blueprint (design spike)"] -.-> A
@@ -150,32 +155,32 @@ style P fill:#22272e,stroke:#768390,color:#768390
 
 | Phase                                 | When / what happens                                                                                                                                                                                                                                          |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/grill-me`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.                                                                                   |
+| `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.                                                                                   |
 | `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
 | `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                                                                                                  |
 | `/write-spec`                         | Capture the settled plan — `SPEC.md` (human goal/scope header + agent design body) plus runnable examples. In plan mode, dump the approved plan straight in. Establishes intent.                                                                             |
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
 | **implement (`/tdd` + `/blueprint`)** | Per issue, in a fresh chat or subagent: vertical slices, one test → one implementation (never horizontal batches). Blueprint examples import the real repo to prove behavior, then graft in. No mock-slop. `/blueprint` also stands alone as a design spike. |
-| `/adversarial-review`                 | Clean-context hostile pass in a fresh reviewer. Challenges the approach/design, then flags bloat, smells, and newly obsolete code. Review-only — returns findings; `/ship` applies them.                                                                     |
-| `/pr`                                 | Group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                                                       |
+| review (host-native)                  | Clean-context review using your harness's built-in reviewer (e.g. Claude `/code-review`, Codex review). Challenge the approach, then flag bugs, bloat, and newly obsolete code before publishing.                                                            |
+| `/pr`                                 | Verify lint/types/tests/examples, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                     |
 
 Not every session hits every phase. The dashed skills are alternate entry points
-or on-demand spikes. `/adversarial-review` is most useful before `/pr`; use
-`/ship` to run it and `/pr` back-to-back. To resume across a session boundary, drop
-a progress comment on the active tracker issue and pick it up from there.
+or on-demand spikes. Run a host-native review pass before `/pr`. To resume across
+a session boundary, drop a progress comment on the active tracker issue and pick
+it up from there.
 
 ## Durable decision memory
 
 Two committed files hold knowledge that must outlive a single feature and survive
 a fresh clone — distinct from the private, ephemeral `specs/` tree:
 
-- **`docs/adr/`** — Architecture Decision Records. Created lazily by `/grill-me`,
+- **`docs/adr/`** — Architecture Decision Records. Created lazily by `/sharpen`,
   `/blueprint`, or `/improve-codebase-architecture` when a decision is hard to
   reverse, surprising without context, and the result of a real trade-off. They
   stop the agent from re-litigating settled choices.
 - **`CONTEXT.md`** _(optional, repo root)_ — a domain glossary, nothing else.
   Pins down overloaded terminology (especially useful for ML/research repos). Read
-  by `grill-me`, `diagnose`, and `improve-codebase-architecture`.
+  by `sharpen`, `diagnose`, and `improve-codebase-architecture`.
 
 The issue tracker is selected at runtime by `/to-issues` — an optional
 `Issue tracker: <name>` line in the repo's `AGENTS.md` wins; otherwise Linear

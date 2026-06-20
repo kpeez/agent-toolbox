@@ -76,16 +76,16 @@ user which to explore. Do NOT propose interfaces yet.
 > a self-contained HTML file in the OS temp dir (Tailwind + Mermaid via CDN) and
 > open it — but markdown is the default; don't reach for HTML unless asked.
 
-### 3. Grilling loop
+### 3. Sharpening loop
 
-Once the user picks a candidate, drop into a grilling conversation (`/grill-me`).
+Once the user picks a candidate, drop into a sharpening conversation (`/sharpen`).
 Walk the design tree — constraints, dependencies, the shape of the deepened
 module, what sits behind the seam, what tests survive. Side effects happen inline:
 
 - Naming a deepened module after a concept not in `CONTEXT.md`? Add the term
-  (see `grill-me`'s `CONTEXT-FORMAT.md`).
+  (see `sharpen`'s `CONTEXT-FORMAT.md`).
 - The user rejects a candidate for a load-bearing reason a future review would
-  re-suggest? Offer an ADR (see `grill-me`'s `ADR-FORMAT.md`). Skip ephemeral
+  re-suggest? Offer an ADR (see `sharpen`'s `ADR-FORMAT.md`). Skip ephemeral
   ("not worth it right now") and self-evident reasons.
 
 When you commit to deepening a candidate, classify its dependencies and pick the
@@ -99,3 +99,7 @@ first idea. Use **`INTERFACE-DESIGN.md`**: frame the constraints, then spawn
 parallel sub-agents that each design a radically different interface (minimize /
 maximize-flexibility / optimize-common-caller / ports-&-adapters), and compare
 them on depth, locality, and seam placement before recommending one.
+
+> Delegate the heavy exploration here per **`/delegate`** — map unfamiliar
+> code with a fast-model worker rather than loading it into your own context, and
+> review what comes back.

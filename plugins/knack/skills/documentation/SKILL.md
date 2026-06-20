@@ -25,7 +25,3 @@ Do not invent presentation systems or custom markup.
 Read [references/markdown-patterns.md](references/markdown-patterns.md) before
 writing specs, issues, PR bodies, ADRs, README sections, architecture reports,
 handoffs, or other durable Markdown.
-
-For applied ML, experiments, evaluations, model changes, dataset changes, or
-research summaries, also read
-[references/applied-ml.md](references/applied-ml.md).

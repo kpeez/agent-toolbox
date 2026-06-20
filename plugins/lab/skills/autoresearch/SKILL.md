@@ -18,7 +18,7 @@ Before making changes, help the user define the target metric. A metric can be a
 number, a test command, a benchmark, a rubric, a qualitative bar, or a concrete
 observable outcome.
 
-Use `/grill-me` when the goal is vague, high-stakes, or underspecified. Clarify:
+Use `/sharpen` when the goal is vague, high-stakes, or underspecified. Clarify:
 
 - primary metric: what improves and in which direction
 - guardrail metrics: what must not regress
