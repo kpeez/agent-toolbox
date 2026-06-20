@@ -107,3 +107,7 @@ original (un-minimised) scenario.
 (no good test seam, tangled callers, hidden coupling), hand off to
 `/improve-codebase-architecture` with the specifics. Make that recommendation
 **after** the fix is in — you know more now than when you started.
+
+> Delegate substantial reads and writes per **`/delegate`** — explore with a
+> fast model, draft code with a medium one, and review the diff. Don't burn your
+> own context.

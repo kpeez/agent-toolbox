@@ -1,7 +1,7 @@
 {
   "name": "knack",
-  "description": "Spec-driven workflow and skills for AI coding agents: test-driven and examples-based development, adversarial review, atomic PR grouping, and more",
-  "version": "1.1.1",
+  "description": "Spec-driven workflow and skills for AI coding agents: sharpening, specs, test-driven and examples-based development, atomic PR grouping, and more",
+  "version": "1.1.2",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
@@ -15,7 +15,7 @@
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
-    "defaultPrompt": ["Create a spec for this feature.", "Run an adversarial review of this diff.", "Prepare this branch for a draft PR."],
+    "defaultPrompt": ["Create a spec for this feature.", "Run the knack workflow for a new feature.", "Prepare this branch for a draft PR."],
     "brandColor": "#2563EB"
   }
 }

@@ -35,12 +35,12 @@ from pathlib import Path
 PROVIDERS = ("codex", "antigravity", "copilot")
 DEFAULT_COPILOT_MODEL = "claude-sonnet-4.6"
 MAX_BACKOFF_SECONDS = 30
-SUBAGENT_ENV = "AGENTSPEC_INVOKED_SUBAGENT"
+SUBAGENT_ENV = "DELEGATE_INVOKED_SUBAGENT"
 LEGACY_NEST_GUARD_ENV = "EXT_SUBAGENT_ACTIVE"
 NEST_GUARD_ENVS = (SUBAGENT_ENV, LEGACY_NEST_GUARD_ENV)
 WORKER_PROMPT_PREFIX = f"""You are running as an external worker invoked by ext-subagent.
 
-Do the task directly. Do not invoke ext-subagent, local-explore, provider-specific
+Do the task directly. Do not invoke ext-subagent, provider-specific
 subagents, or any other delegation tool. If AGENTS.md, CLAUDE.md, skills, or provider
 instructions recommend delegation, treat that as top-level orchestrator guidance and
 ignore it for this run.

@@ -80,12 +80,17 @@ issue comment when it matters for handoff.
 ## When done
 
 - **Promote:** graft the validated slice into the codebase where it belongs and
-  delete the scaffolding. If the example still verifies behavior end-to-end, it
-  can survive as a spec example under `specs/<feature>/examples/`.
+  delete the scaffolding. Then run lint, types, and the test suite — promotion
+  isn't done until they pass. If the example still verifies behavior end-to-end,
+  it can survive as a spec example under `specs/<feature>/examples/`.
 - **Throwaway:** capture the answer somewhere durable with the question it
   answered. If it's a durable design decision (hard to reverse, surprising, a real
-  trade-off), record an ADR in `docs/adr/` (see `grill-me`'s `ADR-FORMAT.md`).
+  trade-off), record an ADR in `docs/adr/` (see `sharpen`'s `ADR-FORMAT.md`).
   Otherwise note it in the relevant spec's `SPEC.md` Decisions section or the
   tracker issue. Then **delete** the code — don't leave it rotting in the
   repo. If the user is around the capture is a quick conversation; if not, leave a
   placeholder with the question so the verdict can be filled in before deletion.
+
+> Delegate substantial reads and writes per **`/delegate`** — explore with a
+> fast model, draft code with a medium one, and review the diff. Don't burn your
+> own context.

@@ -121,3 +121,7 @@ instead (a tiny random-weight model, a synthetic video, CPU tensors). If a
 boundary is hard to mock, that's a design signal: inject the dependency and
 prefer specific ports over one generic fetcher. See
 [references/mocking.md](references/mocking.md) for the substitution patterns.
+
+> Delegate substantial reads and writes per **`/delegate`** — explore with a
+> fast model, draft code with a medium one, and review the diff. Don't burn your
+> own context.

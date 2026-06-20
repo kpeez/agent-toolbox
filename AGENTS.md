@@ -5,17 +5,18 @@
 
 ## Workflow
 
-The spine is **grill → spec → issues → implement → PR**.
+The spine is **sharpen → spec → issues → implement → review → PR**. `/orchestrate <idea>`
+runs it end to end as one gated command.
 
 1. Read this file and README.md
-2. For non-trivial features, stress-test the plan with `/grill-me`, then
+2. For non-trivial features, stress-test the plan with `/sharpen`, then
    `/write-spec new <name>` — the spec (`SPEC.md` + runnable `examples/`) is
-   distilled from the grilled plan, never written from scratch
+   distilled from the sharpened plan, never written from scratch
 3. Slice the spec into tracker issues with `/to-issues`. Status and tasks live
    on the tracker, never in local files
 4. Implement per `/implement`: prove behavior first (failing test via `/tdd`
    or red example via `/blueprint`), then code to green → lint → types → tests
-5. Verify: run the examples; fix failures before marking done
+5. Verify: run the examples and a host-native review pass; fix failures before marking done
 6. Publish with `/pr` — atomic commits, push, draft PR
 7. Resume from the tracker: take the next unblocked `ready-for-agent` issue;
    comment progress on the active issue before running out of context
