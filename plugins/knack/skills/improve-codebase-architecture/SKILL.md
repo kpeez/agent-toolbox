@@ -52,6 +52,10 @@ Apply the **deletion test** to anything you suspect is shallow.
 Default output is a **markdown report** (concise, in the chat or a scratch file —
 not committed to the repo). For each candidate:
 
+Use the `documentation` skill for the report structure. The report should be easy
+to review as plain Markdown: conclusion first, evidence close to claims, and a
+clear top recommendation.
+
 - **Files** — which modules are involved
 - **Problem** — why the current architecture causes friction
 - **Solution** — plain-English description of what would change

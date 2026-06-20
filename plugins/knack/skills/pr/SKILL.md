@@ -18,6 +18,8 @@ commits, push, and ensure a draft PR exists.
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only when the user asks.
 - **Never force-push.** Squash merge by default.
+- **Reviewable Markdown.** Use the `documentation` skill when drafting PR bodies
+  or optional PR markdown artifacts.
 
 ## Workflow
 

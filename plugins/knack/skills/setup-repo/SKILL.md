@@ -12,6 +12,10 @@ rules): repo commands, structure, and the Agent skills block. The block below
 resolves the stack-dependent header programmatically; you ask about the rest,
 confirm, then write — never clobber existing content.
 
+Use the `documentation` skill when drafting repo instructions. `AGENTS.md` should
+be compact, scannable Markdown with commands and conventions a future agent can
+act on directly.
+
 ## Repo facts and resolved header
 
 ```!

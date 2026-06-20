@@ -20,6 +20,10 @@ Two endgames:
 - **Throwaway** — the blueprint only answered a design question ("does this state
   model feel right?"). Capture the verdict, delete the code.
 
+When capturing a verdict in a spec, tracker issue, ADR, or scratch report, use
+the `documentation` skill. The capture should state the question, result,
+evidence, and next action in plain Markdown.
+
 For a _long-running, autonomous_ exploration with a metric target and many
 experiments, use `lab:autoresearch` instead — it manages worktrees, named
 experiment groups, and result logging. Use `blueprint` for a question you resolve
