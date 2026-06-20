@@ -112,6 +112,11 @@ up cold, with only the issue body for context. Write it so that's enough:
 A **HITL** issue can be terser — a human fills the gaps — but note *why* it needs
 a human (architectural call, design review, ambiguous trade-off).
 
+Before publishing parent and child issue bodies, use the `documentation` skill's
+Markdown guidance. Issue bodies are durable documentation: they need a clear
+reader action, enough context to resume cold, and acceptance criteria that can be
+checked without asking the original author.
+
 Use this body:
 
 ```md

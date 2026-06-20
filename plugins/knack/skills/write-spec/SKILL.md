@@ -102,6 +102,13 @@ Two semantics worth knowing beyond the template:
   linked from the Decisions section. The optional domain glossary is committed
   `CONTEXT.md` at the repo root.
 
+## Documentation quality
+
+Use the `documentation` skill when drafting or revising `SPEC.md`. Specs should
+be plain Markdown that is easy to review in an editor, GitHub, or a tracker:
+clear decision up front, explicit scope, nearby evidence, concrete validation,
+and unresolved questions called out plainly.
+
 ## Status lives on the tracker
 
 `/to-issues` selects the tracker (Linear MCP → GitHub → local markdown) and
