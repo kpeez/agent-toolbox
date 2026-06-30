@@ -29,6 +29,23 @@ echo "codex agents → $HOME/.codex/agents/"
 
 
 ################################################################################
+# Unpackaged skills (skills/ — not part of any plugin)
+################################################################################
+# symlink each skill straight from the repo into Claude's and Codex's personal
+# skills directories (single source, no copies)
+for skill_dir in "$ROOT_DIR"/skills/*/; do
+    [[ -f "$skill_dir/SKILL.md" ]] || continue
+    name="$(basename "$skill_dir")"
+    for target in "$HOME/.claude/skills" "$HOME/.codex/skills"; do
+        mkdir -p "$target"
+        rm -rf "${target:?}/$name"
+        ln -s "${skill_dir%/}" "$target/$name"
+    done
+done
+echo "unpackaged skills → $HOME/.claude/skills/, $HOME/.codex/skills/"
+
+
+################################################################################
 # Antigravity
 ################################################################################
 # antigravity skills: symlink each skill straight from the repo (single source, no copies)
