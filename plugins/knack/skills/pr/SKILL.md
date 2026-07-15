@@ -1,7 +1,7 @@
 ---
 name: pr
 description: Group current branch diff into atomic commits, push, and open a draft PR if missing. Use when ready to publish branch work.
-model: haiku
+model: sonnet
 ---
 
 # /pr — Group, Commit, Push, Draft PR

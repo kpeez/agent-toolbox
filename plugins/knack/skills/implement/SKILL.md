@@ -48,7 +48,7 @@ and typing implementation.
 
 **The fan-out loop:** take the next unblocked `ready-for-agent` issue → spawn a
 **doer** (per `/delegate`) with the issue, a pointer to the spec, and its own
-`/goal` → review the diff → update the tracker → repeat.
+`/goal` → review the returned diff with the `patch-reviewer` agent → update the tracker → repeat.
 
 ### Sequential or parallel?
 
