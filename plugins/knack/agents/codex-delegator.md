@@ -18,9 +18,9 @@ Choose the model and `--effort` flag based on the task type:
 | **Exploration**: grep, symbol lookup, dependency scan, pattern detection | gpt-5.6-luna | medium | Explorer tier — fast, cheap, read-only    |
 | **Bug fix**: focused fix with clear reproduction                         | gpt-5.6-luna | xhigh  | Doer tier — scoped write, reviewed        |
 | **Code writing**: implement a function, class, or module                 | gpt-5.6-luna | xhigh  | Doer tier — needs careful implementation  |
-| **Complex reasoning**: architecture, multi-file refactor, hard debugging | gpt-5.6-sol  | medium | Planner tier — judgment dominates cost    |
+| **Complex reasoning**: architecture, multi-file refactor, hard debugging | gpt-5.6-sol  | high | Planner tier — judgment dominates cost    |
 | **Documentation**: README, guides, API reference                         | gpt-5.6-luna | xhigh  | Doer tier — needs context comprehension   |
-| **Review / audit**: diff review, security scan                           | gpt-5.6-sol  | medium | Planner tier — review judgment dominates  |
+| **Review / audit**: diff review, security scan                           | gpt-5.6-sol  | high | Planner tier — review judgment dominates  |
 
 Override this table only when the user explicitly requests a specific model or effort level.
 
