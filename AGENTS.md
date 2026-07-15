@@ -25,9 +25,9 @@ never burn the lead context on bulk reads or typing implementation.
 7. Resume from the tracker: take the next unblocked `ready-for-agent` issue;
    comment progress on the active issue before running out of context
 
-Specs are private working context and must never be committed. Keep `specs`
-ignored in git and prefer a repo-local symlink to a private specs directory,
-for example `~/Documents/specs/<repo>`.
+Specs must never be committed to the source repository. Store their canonical
+shared copy in `$LLMOS_ROOT/projects/<repo>/specs`, keep `specs` ignored here,
+and use a repo-local symlink into llmOS.
 
 Durable decisions live in committed `docs/adr/`; the optional domain glossary
 is repo-root `CONTEXT.md`. An optional `Issue tracker: <name>` line in this

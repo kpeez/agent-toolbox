@@ -62,7 +62,7 @@ Creates a feature spec directory with `SPEC.md` plus `examples/`.
 
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
-<step action="ensure-private">ensure a repo-local `specs` symlink exists that points at the private per-repo directory (skip if already linked); never create `specs` as a real committed directory</step>
+<step action="ensure-shared">ensure a repo-local `specs` symlink points at `$LLMOS_ROOT/projects/<repo>/specs` (skip if already linked); never create `specs` as a real committed directory in the source repo</step>
 <step action="mkdir">`specs/<slug>/` and `specs/<slug>/examples/` (no-op if already present)</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
 <step action="create-files">read `templates.md` and write `SPEC.md` to `specs/<slug>/`; never overwrite an existing `SPEC.md` — a present goal/scope header is settled and authoritative</step>
@@ -71,10 +71,9 @@ Creates a feature spec directory with `SPEC.md` plus `examples/`.
 
 ## Spec structure
 
-A spec is **`SPEC.md` plus `examples/`** — nothing more. Specs are private working
-context and must never be committed. Keep `specs` ignored in git; prefer a
-repo-local `specs` symlink to a private per-repo directory such as
-`~/Documents/specs/<repo>`.
+A spec is **`SPEC.md` plus `examples/`** — nothing more. Specs must never be
+committed to the source repository. Keep `specs` ignored there and point its
+repo-local symlink at the shared `$LLMOS_ROOT/projects/<repo>/specs` directory.
 
 ```
 specs/
