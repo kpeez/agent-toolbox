@@ -5,8 +5,9 @@
 
 ## Workflow
 
-The spine is **sharpen → spec → issues → implement → review → PR**. `/orchestrate <idea>`
-runs it end to end as one gated command.
+The spine is **sharpen → spec → issues → implement → review → PR**. `/start-loop <idea>`
+runs it end to end as one resumable command; spec approval is the last user
+prompt — after it the loop runs to completion, escalating only real blockers.
 
 The main agent is the orchestrator: route exploration to explorers, plan
 drafting to planners, and well-specified writes to doers per `/delegate` —
@@ -14,7 +15,7 @@ never burn the lead context on bulk reads or typing implementation.
 
 1. Read this file and README.md
 2. For non-trivial features, stress-test the plan with `/sharpen`, then
-   `/write-spec new <name>` — the spec (`SPEC.md` + runnable `examples/`) is
+   `/write-spec new <name>` — the spec (`SPEC-<slug>.md` + runnable `examples/`) is
    distilled from the sharpened plan, never written from scratch
 3. Slice the spec into tracker issues with `/to-issues`. Status and tasks live
    on the tracker, never in local files
@@ -22,8 +23,9 @@ never burn the lead context on bulk reads or typing implementation.
    or red example via `/blueprint`), then code to green → lint → types → tests
 5. Verify: run the examples and a host-native review pass; fix failures before marking done
 6. Publish with `/pr` — atomic commits, push, draft PR
-7. Resume from the tracker: take the next unblocked `ready-for-agent` issue;
-   comment progress on the active issue before running out of context
+7. Resume from the tracker: take the next unblocked workable issue (spec-born
+   slices are ready by construction; skip only `ready-for-human`); comment
+   progress on the active issue before running out of context
 
 Specs must never be committed to the source repository. Store their canonical
 shared copy in `$LLMOS_ROOT/projects/<repo>/specs`, keep `specs` ignored here,

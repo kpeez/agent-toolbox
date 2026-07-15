@@ -86,7 +86,7 @@ issue comment when it matters for handoff.
 - **Throwaway:** capture the answer somewhere durable with the question it
   answered. If it's a durable design decision (hard to reverse, surprising, a real
   trade-off), record an ADR in `docs/adr/` (see `sharpen`'s `ADR-FORMAT.md`).
-  Otherwise note it in the relevant spec's `SPEC.md` Decisions section or the
+  Otherwise note it in the relevant spec's `SPEC-<slug>.md` Decisions section or the
   tracker issue. Then **delete** the code — don't leave it rotting in the
   repo. If the user is around the capture is a quick conversation; if not, leave a
   placeholder with the question so the verdict can be filled in before deletion.

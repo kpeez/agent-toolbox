@@ -2,7 +2,7 @@
 
 File templates for `/write-spec new`. Write each to its target path under `specs/`.
 
-A spec is **`SPEC.md` plus an `examples/` directory**: `SPEC.md` (human goal +
+A spec is **`SPEC-<slug>.md` plus an `examples/` directory**: `SPEC-<slug>.md` (human goal +
 agent design) and runnable verification scripts. Task and status truth live on the
 issue tracker, not in a local file.
 
@@ -15,12 +15,12 @@ Specs are private working context and must never be committed. Keep `specs`
 ignored in git; this directory may be a symlink to a private per-repo specs
 directory.
 
-Each spec lives in `specs/<feature>/` as `SPEC.md` plus `examples/`.
+Each spec lives in `specs/<slug>/` as `SPEC-<slug>.md` plus `examples/`.
 
 Read order:
 
 1. The tracker container/issue (entry point — status, blocked, latest progress)
-2. `SPEC.md` (goal + design)
+2. `SPEC-<slug>.md` (goal + design)
 3. `examples/` (runnable verification scripts)
 
 Status and tasks live on the issue tracker (see `/to-issues`). Durable design
@@ -28,7 +28,7 @@ decisions do NOT live here — they go in committed `docs/adr/`. The optional
 domain glossary lives in committed `CONTEXT.md` at the repo root.
 </template>
 
-<template file="specs/<slug>/SPEC.md">
+<template file="specs/<slug>/SPEC-<slug>.md">
 # <Title>
 
 <!--
