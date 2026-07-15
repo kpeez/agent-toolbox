@@ -38,7 +38,12 @@ Issues carry one of five canonical labels (in the local tracker, a `Status:` lin
 | `wontfix`         | Will not be actioned                               |
 
 Issues published by this skill are born triaged: label AFK slices
-`ready-for-agent` and HITL slices `ready-for-human`.
+`ready-for-agent` and HITL slices `ready-for-human`. The labels are for the
+benefit of issues arriving from *other* sources (humans filing bugs, external
+reports) that must be triaged before work. **Slices published from an approved
+spec are ready by construction** — the implementation loop treats any unblocked
+child of the spec's parent as workable and never interrogates labels; only
+`ready-for-human` stops it.
 
 ## Process
 
@@ -66,20 +71,24 @@ Mark each slice **AFK** (an agent can implement and merge it with no human
 interaction) or **HITL** (needs a human — architectural call, design review).
 Prefer AFK where possible.
 
-### 4. Quiz the user
+### 4. Review the breakdown
 
 Present the breakdown as a numbered list. Per slice show: **Title**, **Type**
-(AFK/HITL), **Blocked by** (which slices must finish first). Ask the user:
+(AFK/HITL), **Blocked by** (which slices must finish first). Check:
 
 - Does the granularity feel right (too coarse / too fine)?
 - Are the dependency relationships correct?
 - Should any slices be merged or split?
 
-Iterate until the user approves.
+**Who reviews depends on how you were invoked.** Slicing a spec that carries the
+`<!-- knack:spec-approved -->` marker (e.g. under `/start-loop`): the approval
+already authorized publication — return the breakdown to the invoking
+orchestrator for review and publish; do **not** prompt the user. Standalone use
+on an unapproved plan: quiz the user and iterate until they approve.
 
 ### 5. Publish to tracker
 
-If the work came from a spec (`specs/<feature>/SPEC.md`), publish the spec's
+If the work came from a spec (`specs/<feature>/SPEC-<feature>.md`), publish the spec's
 goal/scope header as a **parent issue**, then publish the slices as **child issues
 / sub-issues** that reference it. This is the portable default — it works
 identically on Linear and GitHub. Do NOT close or modify the parent issue.

@@ -13,7 +13,7 @@ commits, push, and ensure a draft PR exists.
 
 - **Atomic commits.** Imperative, informative subjects. One coherent intent per commit —
   never mixed — ordered so each commit leaves the tree buildable.
-- **PR title and body come from SPEC.md, linked tracker issues, and the diff.**
+- **PR title and body come from SPEC-<slug>.md, linked tracker issues, and the diff.**
 - **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only when the user asks.
@@ -26,7 +26,7 @@ commits, push, and ensure a draft PR exists.
 ## Workflow
 
 1. **Context** — resolve `<feature>`: the argument if given, else the most
-   recently modified `specs/<feature>/SPEC.md`, else proceed without one. Read
+   recently modified `specs/<feature>/SPEC-<feature>.md`, else proceed without one. Read
    the spec and its linked tracker issues for intent and the desired PR slice.
    Resolve the base branch from the remote default — never assume `main`:
    `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else

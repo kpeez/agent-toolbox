@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to an explorer, plan/design drafting to a planner, and well-specified codegen to a doer, then review what comes back. Use whenever you are about to read many files to answer a question, draft a plan or spec, or write a substantial, well-specified chunk of code — including from within /orchestrate, /implement, /tdd, /blueprint, /diagnose, and /improve-codebase-architecture.
+description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to an explorer, plan/design drafting to a planner, and well-specified codegen to a doer, then review what comes back. Use whenever you are about to read many files to answer a question, draft a plan or spec, or write a substantial, well-specified chunk of code — including from within /start-loop, /implement, /tdd, /blueprint, /diagnose, and /improve-codebase-architecture.
 user-invocable: false
 ---
 
@@ -30,6 +30,10 @@ Route by kind of work: exploration → **explorer**, plan/design drafting →
 **planner**, well-specified codegen → **doer**. Planners return proposals for
 the lead agent to review with the user — subagents never converse with the
 user directly.
+
+Give every **planner** and **doer** its own `/goal` — a one-line verifiable end
+state for its task. **Explorers are exempt**: a read has a question, not an end
+state; skip the goal ceremony for lookups.
 
 ## Two ways to delegate
 

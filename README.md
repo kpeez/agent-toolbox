@@ -89,7 +89,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | Skill                           | Plugin | Purpose                                                                                                               |
 | ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
 | `setup-repo`                    | knack  | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs directory   |
-| `orchestrate`                   | knack  | Run/resume the whole spine as one gated command (sharpen → spec → issues → implement); restates the goal, resumes from artifacts (user-invoked) |
+| `start-loop`                    | knack  | Run/resume the whole spine as one command (sharpen → spec → issues → implement); spec approval is the last prompt, then the loop runs to done (user-invoked) |
 | `write-spec`                    | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it                   |
 | `implement`                     | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation          |
 | `tdd`                           | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop             |
@@ -115,9 +115,14 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 ## Workflow
 
 The spine is **sharpen → spec → issues → implement → review → pr**. For a new
-feature, `/orchestrate <idea>` runs that spine as one resumable command with a
-human gate between phases — it restates the goal up front, recomputes state from
-artifacts so it can resume mid-flight, and gives every worker its own goal. Work
+feature, `/start-loop <idea>` runs that spine as one resumable command — it
+restates the goal up front, recomputes state from artifacts so it can resume
+mid-flight, and gives every task worker its own goal. It prompts the user
+exactly twice, both during design (sharpen → spec, and spec approval); an
+approved spec authorizes slicing, publishing, and the implementation loop to
+run to completion with no further prompts. The intended shape: sharpen through
+spec approval in one session, `/clear`, then bare `/start-loop` — it
+reconstructs state from the spec and tracker, no explanation needed. Work
 also enters at one of three points directly: `/sharpen` for a new feature whose
 design isn't settled, `/diagnose` for a known bug, or
 `/improve-codebase-architecture` when you're hunting for refactors. For
@@ -160,7 +165,7 @@ style P fill:#22272e,stroke:#768390,color:#768390
 | `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.                                                                                   |
 | `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
 | `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                                                                                                  |
-| `/write-spec`                         | Capture the settled plan — `SPEC.md` (human goal/scope header + agent design body) plus runnable examples. In plan mode, dump the approved plan straight in. Establishes intent.                                                                             |
+| `/write-spec`                         | Capture the settled plan — `SPEC-<slug>.md` (human goal/scope header + agent design body) plus runnable examples. In plan mode, dump the approved plan straight in. Establishes intent.                                                                             |
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
 | **implement (`/tdd` + `/blueprint`)** | Per issue, in a fresh chat or subagent: vertical slices, one test → one implementation (never horizontal batches). Blueprint examples import the real repo to prove behavior, then graft in. No mock-slop. `/blueprint` also stands alone as a design spike. |
 | review (host-native)                  | Clean-context review using your harness's built-in reviewer (e.g. Claude `/code-review`, Codex review). Challenge the approach, then flag bugs, bloat, and newly obsolete code before publishing.                                                            |
@@ -183,22 +188,28 @@ implementation. All heavy work is routed to workers by role, per `/delegate`:
 | **planner**  | plan drafting, design review, spec critique — judgment over cost  | fable / opus (high) / `gpt-5.6-sol`        |
 | **doer**     | implementing a well-specified chunk, reviewed via the diff        | sonnet / `gpt-5.6-luna` (xhigh)            |
 
-Each `/orchestrate` phase maps onto these roles: `sharpen` stays in the main
+Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
 session (the interview is HITL) but can commission planners for alternatives;
 spec *drafting* can go to a planner while the main session holds the approval
-gate; `to-issues` slicing goes to a doer; review + `/pr` run in a fresh context.
+gate; `to-issues` goes to a **planner** that reviews the approved spec cold,
+slices, publishes, and returns the issue list; review + `/pr` run in a fresh
+context.
 
 Implementation is the **fan-out loop**:
 
-> take the next unblocked `ready-for-agent` issue → spawn a **doer** with the
-> issue, a pointer to the spec, and its own `/goal` → review the diff → update
-> the tracker → repeat until `COMPLETE`.
+> take the next unblocked issue → spawn a **doer** with the issue, a pointer to
+> the spec, and its own `/goal` → review the diff → update the tracker → repeat
+> until `COMPLETE`.
 
 Independent issues fan out in parallel; issues that share files run
 sequentially. Every handoff crosses a context boundary carrying only
 identifiers and artifact pointers (spec path, slug, tracker ids) — never the
-conversation. Planners return proposals for the orchestrator to review with the
-user; workers never converse with the user directly.
+conversation. Blocked workers escalate to the orchestrator, which resolves what
+the spec/ADRs answer, logs the decision as an issue comment, and relaunches —
+the user is interrupted only for scope changes, spec contradictions, blocking
+`ready-for-human` slices, or destructive actions. Planners return proposals for
+the orchestrator to review with the user; workers never converse with the user
+directly.
 
 ## Durable decision memory
 
@@ -227,7 +238,7 @@ atomic PRs.
 
 - Prefer atomic PRs that can be reviewed independently.
 - Use small, logical commits with imperative, conventional-style subjects.
-- Generate PR titles and bodies directly from `SPEC.md`, the linked tracker
+- Generate PR titles and bodies directly from `SPEC-<slug>.md`, the linked tracker
   issues, and the actual diff.
 - Do not create `commits.md` or `draft-pr.md` review artifacts.
 - Use squash merge by default unless the user explicitly asks for another merge
@@ -281,17 +292,17 @@ ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" "$(pwd)/specs"
 
 ## Feature Specs
 
-A spec is **`SPEC.md` plus `examples/`** — nothing more (created by `/write-spec new`):
+A spec is **`SPEC-<slug>.md` plus `examples/`** — nothing more (created by `/write-spec new`):
 
 ```text
 specs/
 ├── AGENTS.md           # How agents navigate specs; not a manual index
 └── <feature>/
-    ├── SPEC.md         # Human goal/scope header + agent-expanded design body
+    ├── SPEC-<slug>.md         # Human goal/scope header + agent-expanded design body
     └── examples/       # Runnable verification scripts (REQUIRED)
 ```
 
-`SPEC.md` has two ownership zones split by a `---` divider. The **goal/scope
+`SPEC-<slug>.md` has two ownership zones split by a `---` divider. The **goal/scope
 header** is the user-reviewed contract: goal, scope, non-goals, success criteria,
 validation, and whether implementation is review-gated or autonomous. The
 **design body** is agent-expanded after repo inspection: approach, behavior,
