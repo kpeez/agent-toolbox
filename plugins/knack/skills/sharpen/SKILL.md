@@ -31,6 +31,10 @@ Create the file lazily, only when the first term is resolved.
 **Discuss concrete scenarios.** Stress-test domain relationships with specific
 edge-case scenarios that force precision about the boundaries between concepts.
 
+**Escalate close calls to `/deliberate`.** When a decision reduces to two named
+options or a yes/no, don't argue it inline — invoke `/deliberate` to commission
+the two cases, then fold the synthesis back into the interview.
+
 ## Recording decisions as ADRs
 
 Record an ADR only when **all three** are true:

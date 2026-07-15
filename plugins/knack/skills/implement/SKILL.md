@@ -39,12 +39,16 @@ Unless the change is highly trivial, **don't explore the codebase or write the
 code yourself — delegate.** Spend your context coordinating, not reading files
 and typing implementation.
 
-- **Explore** with a fast-tier worker (`/delegate`'s `ext-subagent` on a fast
-  model, or the `Explore` subagent) instead of loading many files into your own context.
+- **Explore** with an explorer-tier worker (`/delegate`'s `ext-subagent`, or the
+  `Explore` subagent) instead of loading many files into your own context.
 - **Generate** with subagents or an external worker (`/delegate`'s
   `ext-subagent`). Give each worker exactly the context it needs — the relevant
   `SPEC.md` sections, key paths, and where the task fits — no more.
 - **Review** what comes back before trusting it.
+
+**The fan-out loop:** take the next unblocked `ready-for-agent` issue → spawn a
+**doer** (per `/delegate`) with the issue, a pointer to the spec, and its own
+`/goal` → review the diff → update the tracker → repeat.
 
 ### Sequential or parallel?
 
@@ -56,13 +60,13 @@ sequential slowness.
 
 ### Model selection
 
-Use the least powerful model sufficient for the task:
+Use the least powerful model sufficient for the task (tiers per `/delegate`):
 
-| Complexity | Signals                                                     | Claude       | Codex          |
-| ---------- | ----------------------------------------------------------- | ------------ | -------------- |
-| Low        | 1–2 files, mechanical change, complete spec                 | haiku        | gpt-5.4-mini   |
-| Medium     | Multi-file, integration concerns, pattern matching          | sonnet       | gpt-5.5        |
-| High       | Architecture, design judgment, broad codebase understanding | most capable | gpt-5.5 (high) |
+| Complexity | Signals                                                     | Role     | Claude                | Codex                 |
+| ---------- | ----------------------------------------------------------- | -------- | --------------------- | --------------------- |
+| Low        | 1–2 files, mechanical change, complete spec                 | explorer | haiku                 | gpt-5.6-luna (medium) |
+| Medium     | Multi-file, integration concerns, pattern matching          | doer     | sonnet (or opus, low) | gpt-5.6-luna (xhigh)  |
+| High       | Architecture, design judgment, broad codebase understanding | planner  | fable / opus (high)   | gpt-5.6-sol           |
 
 Always tell the worker to follow the verification discipline — write the test or
 blueprint first, confirm red, implement, confirm green — and to report status

@@ -116,6 +116,25 @@ identifiers forward: resolved slug, repo identity, tracker parent id, active chi
 4. **`implement`** — take the next unblocked `ready-for-agent` child, give the
    worker its own `/goal`, implement, update the tracker. Repeat until `COMPLETE`.
 
+## Who runs each phase
+
+Roles are the `/delegate` tiers — explorer, planner, doer:
+
+- **`sharpen`** — main session. The interview and all gates are HITL and cannot
+  be delegated; may commission **planner** subagents to draft plan alternatives
+  and `/deliberate` advocate cases.
+- **`write-spec`** — spec *drafting* may go to a **planner** given the sharpened
+  decisions as input; the main session reviews and holds the approval gate.
+- **`to-issues`** — mechanical slicing of an approved spec; delegate to a **doer**.
+- **`implement`** — fan out: one unblocked child issue = one **doer** subagent,
+  each launched with its own `/goal` and the handoff payload (spec path, slug,
+  tracker parent id, issue id). Design-heavy slices go to a **planner** first.
+- **review + `pr`** — run in a fresh context (fresh subagent or new session):
+  review the diff against the spec via the `patch-reviewer` agent, then `/pr`.
+
+Every phase handoff crosses a context boundary with only the handoff
+identifiers and artifact pointers — never the conversation.
+
 ## Gates
 
 One explicit question at each transition; only an unambiguous approval advances.

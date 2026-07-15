@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to a fast model and code generation to a medium model, then review what comes back. Use whenever you are about to read many files to answer a question, or write a substantial, well-specified chunk of code — including from within /orchestrate, /implement, /tdd, /blueprint, /diagnose, and /improve-codebase-architecture.
+description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to an explorer, plan/design drafting to a planner, and well-specified codegen to a doer, then review what comes back. Use whenever you are about to read many files to answer a question, draft a plan or spec, or write a substantial, well-specified chunk of code — including from within /orchestrate, /implement, /tdd, /blueprint, /diagnose, and /improve-codebase-architecture.
 user-invocable: false
 ---
 
@@ -16,29 +16,36 @@ You decide; you never write the bulk yourself.
 
 Pick the least powerful model that fits, by role:
 
-| Role       | Use for                                                              | Codex                | Claude |
-| ---------- | ------------------------------------------------------------------- | -------------------- | ------ |
-| **fast**   | reads / explore / summarize across many files — low-stakes, reviewed | `gpt-5.4-mini`       | haiku  |
-| **medium** | write / implement a well-specified chunk — reviewed via the diff     | `gpt-5.5` (low/med)  | sonnet |
+| Role         | Use for                                                                        | Codex                    | Claude                 | Gemini       |
+| ------------ | ------------------------------------------------------------------------------- | ------------------------- | ----------------------- | ------------ |
+| **explorer** | reads / exploration / summarize across many files — low-stakes, reviewed        | `gpt-5.6-luna` (medium)  | haiku                   | `gemini-3.5` |
+| **doer**     | write / implement a well-specified chunk — reviewed via the diff                | `gpt-5.6-luna` (xhigh)   | sonnet (or opus, low)   | —            |
+| **planner**  | plan drafting, design review, spec critique — judgment quality dominates cost   | `gpt-5.6-sol`            | fable / opus (high)     | —            |
 
 A slightly imperfect read is fine because you review it. Don't delegate a
 single-file lookup you'd read faster yourself, or a read where a wrong summary
 would mislead you.
 
+Route by kind of work: exploration → **explorer**, plan/design drafting →
+**planner**, well-specified codegen → **doer**. Planners return proposals for
+the lead agent to review with the user — subagents never converse with the
+user directly.
+
 ## Two ways to delegate
 
 **1. Host-native subagents (preferred when available).** In Claude Code, spawn a
-`Task` subagent with a model override — haiku for reads, sonnet for writes. In
-Codex, use its native subagents. The worker does the reading and generation, so
-that bulk never enters your context.
+`Task` subagent with a model override — haiku for explorer reads, sonnet for doer
+writes, fable/opus for planner drafts. In Codex, use its native subagents. The
+worker does the reading, drafting, and generation, so that bulk never enters your
+context.
 
 **2. Cross-CLI worker — `ext-subagent`.** Delegate a coding task to an external
 agentic CLI billed separately from your tokens. Run it via Bash from the repo
 root:
 
 ```
-uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "Implement X following existing patterns. Run the tests." --model gpt-5.5
-uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "How does auth work?" --model gpt-5.4-mini --retries 2
+uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "Implement X following existing patterns. Run the tests." --role doer
+uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "How does auth work?" --role explorer --retries 2
 echo "Refactor auth to use DI; preserve tests." | uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py antigravity -
 ```
 
@@ -46,8 +53,12 @@ In Claude Code, `${CLAUDE_SKILL_DIR}` is already this skill's absolute path; und
 another provider, replace the literal placeholder with the directory containing
 this SKILL.md.
 
-- Reads → fast tier (`--model gpt-5.4-mini`); writes → medium tier (`--model gpt-5.5`).
+- `--role explorer|doer|planner` (codex) expands to the tier's model + reasoning
+  effort — prefer it over hand-picking `--model`/`--reasoning-effort`.
 - Provider → engine: `codex` → GPT-5.x, `antigravity` → Gemini, `copilot` → Sonnet.
+- Workers are killed after `--timeout` seconds (default 1800). Raise it — or pass
+  `--timeout 0` to disable — for tasks expected to run long. An exit-0 run with an
+  empty answer is reported as a failure (and retried under `--retries`).
 - For long or code-heavy prompts, write the prompt to a file and pass `--prompt-file`
   (or pipe stdin) so you never have to shell-escape it.
 - `--retries N` retries with backoff — only for read/answer tasks, **never** for

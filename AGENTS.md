@@ -8,6 +8,10 @@
 The spine is **sharpen → spec → issues → implement → review → PR**. `/orchestrate <idea>`
 runs it end to end as one gated command.
 
+The main agent is the orchestrator: route exploration to explorers, plan
+drafting to planners, and well-specified writes to doers per `/delegate` —
+never burn the lead context on bulk reads or typing implementation.
+
 1. Read this file and README.md
 2. For non-trivial features, stress-test the plan with `/sharpen`, then
    `/write-spec new <name>` — the spec (`SPEC.md` + runnable `examples/`) is

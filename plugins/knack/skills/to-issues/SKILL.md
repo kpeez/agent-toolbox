@@ -69,7 +69,7 @@ Prefer AFK where possible.
 ### 4. Quiz the user
 
 Present the breakdown as a numbered list. Per slice show: **Title**, **Type**
-(AFK/HITL), **Blocked by** (which slices must finish first). Ask:
+(AFK/HITL), **Blocked by** (which slices must finish first). Ask the user:
 
 - Does the granularity feel right (too coarse / too fine)?
 - Are the dependency relationships correct?
@@ -77,14 +77,14 @@ Present the breakdown as a numbered list. Per slice show: **Title**, **Type**
 
 Iterate until the user approves.
 
-### 5. Publish
+### 5. Publish to tracker
 
 If the work came from a spec (`specs/<feature>/SPEC.md`), publish the spec's
 goal/scope header as a **parent issue**, then publish the slices as **child issues
 / sub-issues** that reference it. This is the portable default — it works
 identically on Linear and GitHub. Do NOT close or modify the parent issue.
 
-Escalate to a **Linear project** only when the spec is large enough to span
+Escalate to **GitHub/Linear** only when the spec is large enough to span
 milestones; then the slices are issues in the project rather than sub-issues. The
 parent issue (or project) is the remote-reviewable home for the "why," and from
 here the tracker — not the local spec — is the task and status ledger.
@@ -109,7 +109,7 @@ up cold, with only the issue body for context. Write it so that's enough:
 - **Self-contained.** Resolve references ("the auth refactor") to the linked
   issue. Use the project's own vocabulary (`CONTEXT.md`) and respect `docs/adr/`.
 
-A **HITL** issue can be terser — a human fills the gaps — but note *why* it needs
+A **HITL** issue can be terser — a human fills the gaps — but note _why_ it needs
 a human (architectural call, design review, ambiguous trade-off).
 
 Before publishing parent and child issue bodies, use the `documentation` skill's
