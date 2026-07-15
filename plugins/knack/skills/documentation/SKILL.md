@@ -1,6 +1,7 @@
 ---
 name: documentation
 description: Write clear, reviewable Markdown documentation for specs, issues, PRs, ADRs, READMEs, guides, experiment reports, model and dataset notes, architecture reports, and handoffs. Use when any skill or agent creates durable documentation, issue bodies, spec text, PR descriptions, decision records, or research summaries.
+user-invocable: false
 ---
 
 # Documentation

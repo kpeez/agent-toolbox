@@ -101,8 +101,10 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `improve-codebase-architecture` | knack  | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
 | `zoom-out`                      | knack  | Go up a layer of abstraction and map an unfamiliar area of code (user-invoked)                                        |
 | `pr`                            | knack  | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests/examples first               |
-| `delegate`                      | knack  | Delegate to cheaper workers — route reads to a fast model, writes to a medium model, review what comes back; never write yourself (model-invoked) |
+| `delegate`                      | knack  | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself (model-invoked) |
+| `merge-conflicts`               | knack  | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
 | `qmd`                           | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
+| `research`                      | knack  | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
 | `documentation`                 | knack  | Write clear, reviewable Markdown specs, issues, PRs, ADRs, reports, guides, and handoffs                              |
 | `validate-skills`               | knack  | Drift guard — check name/dir match, README inventory parity, manifest version parity, and dead skill references        |
 | `autoresearch`                  | lab    | Autonomous experiment loops with defined metrics and private logs                                                     |
@@ -168,6 +170,35 @@ Not every session hits every phase. The dashed skills are alternate entry points
 or on-demand spikes. Run a host-native review pass before `/pr`. To resume across
 a session boundary, drop a progress comment on the active tracker issue and pick
 it up from there.
+
+### Roles and the fan-out loop
+
+The main agent is the **orchestrator**: it coordinates, reviews, and holds the
+human gates — it never burns its own context on bulk reads or typing
+implementation. All heavy work is routed to workers by role, per `/delegate`:
+
+| Role         | Does                                                              | Typical worker                             |
+| ------------ | ----------------------------------------------------------------- | ------------------------------------------ |
+| **explorer** | reads, exploration, summarizing across many files                 | haiku / `gpt-5.6-luna` (medium) / `gemini-3.5` |
+| **planner**  | plan drafting, design review, spec critique — judgment over cost  | fable / opus (high) / `gpt-5.6-sol`        |
+| **doer**     | implementing a well-specified chunk, reviewed via the diff        | sonnet / `gpt-5.6-luna` (xhigh)            |
+
+Each `/orchestrate` phase maps onto these roles: `sharpen` stays in the main
+session (the interview is HITL) but can commission planners for alternatives;
+spec *drafting* can go to a planner while the main session holds the approval
+gate; `to-issues` slicing goes to a doer; review + `/pr` run in a fresh context.
+
+Implementation is the **fan-out loop**:
+
+> take the next unblocked `ready-for-agent` issue → spawn a **doer** with the
+> issue, a pointer to the spec, and its own `/goal` → review the diff → update
+> the tracker → repeat until `COMPLETE`.
+
+Independent issues fan out in parallel; issues that share files run
+sequentially. Every handoff crosses a context boundary carrying only
+identifiers and artifact pointers (spec path, slug, tracker ids) — never the
+conversation. Planners return proposals for the orchestrator to review with the
+user; workers never converse with the user directly.
 
 ## Durable decision memory
 
