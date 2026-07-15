@@ -252,13 +252,14 @@ and code rules already live in the user-level instructions.
 
 ## Specs Setup
 
-Specs are private working context and should never be committed. Store the real
-files outside the repo (for example `~/Documents/specs/<repo>/`, cloud-synced
-and per-repo), add `specs` to `.gitignore`, and symlink `./specs` back in:
+Specs should never be committed to the source repository. Store the canonical
+shared files in the llmOS vault, add `specs` to `.gitignore`, and symlink
+`./specs` back in. Set `LLMOS_ROOT` to the llmOS checkout:
 
 ```bash
-mkdir -p ~/Documents/specs/<repo>
-ln -s ~/Documents/specs/<repo> ./specs
+: "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
+mkdir -p "$LLMOS_ROOT/projects/<repo>/specs"
+ln -s "$LLMOS_ROOT/projects/<repo>/specs" ./specs
 echo specs >> .gitignore
 ```
 
@@ -275,7 +276,7 @@ If you use a worktree-based setup, you should set up the following post-checkout
 git_dir=$(git rev-parse --git-dir)
 [[ "$git_dir" == *"/worktrees/"* ]] || exit 0
 
-ln -sfn ~/Documents/specs/<repo> "$(pwd)/specs"
+ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" "$(pwd)/specs"
 ```
 
 ## Feature Specs

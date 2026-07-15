@@ -76,8 +76,9 @@ exit 0
 
    ```bash
    ln -sfn AGENTS.md CLAUDE.md
-   mkdir -p ~/Documents/specs/<repo>
-   ln -sfn ~/Documents/specs/<repo> specs
+   : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
+   mkdir -p "$LLMOS_ROOT/projects/<repo>/specs"
+   ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" specs
    grep -qx specs .gitignore 2>/dev/null || echo specs >> .gitignore
    ```
 
