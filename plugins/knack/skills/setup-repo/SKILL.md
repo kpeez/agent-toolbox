@@ -22,7 +22,7 @@ act on directly.
 cd "$(git rev-parse --show-toplevel)" 2>/dev/null
 echo "repo: $(basename "$PWD")"
 echo "origin: $(git remote get-url origin 2>/dev/null || echo none)"
-for f in AGENTS.md CLAUDE.md CONTEXT.md CONTEXT-MAP.md docs/adr specs; do
+for f in AGENTS.md CLAUDE.md CONTEXT.md CONTEXT-MAP.md docs/specs docs/adrs specs adrs docs/adr; do
     [ -e "$f" ] && echo "present: $f"
 done
 [ -L CLAUDE.md ] && echo "CLAUDE.md is a symlink -> $(readlink CLAUDE.md)"
@@ -64,38 +64,43 @@ exit 0
    (capture a one-line description). The answer becomes the `Issue tracker:`
    line that `/to-issues` reads — tracker mechanics stay in `/to-issues`'s
    references, never copied into the repo.
-3. **Draft the Structure section**: 3–8 bullets mapping the top-level dirs to
+3. **Confirm the llmOS project mapping.** Propose the repository basename, but
+   require the user to confirm the project name before any llmOS-backed path is
+   created or changed. No confirmed mapping means skip project-docs setup.
+4. **Draft the Structure section**: 3–8 bullets mapping the top-level dirs to
    what lives in them. Inspect enough to annotate honestly; show the draft
    and let the user correct it.
-4. **Confirm and write `AGENTS.md`**: the resolved header from the block
+5. **Confirm and write `AGENTS.md`**: the resolved header from the block
    above, verbatim, followed by the template below with Structure and Agent
    skills filled in. If `AGENTS.md` already exists, update the
    `## Agent skills` block in place and append missing sections — never
    overwrite or reorder what's there.
-5. **Link, specs, and ADRs** — run as one block (idempotent):
+6. **Link, specs, and ADRs.** Resolve `<setup-repo-skill-dir>` to the directory
+   containing this `SKILL.md`, then run the reusable operation. It preflights
+   every collision before mutation, migrates legacy content losslessly, repairs
+   incorrect symlinks, and is idempotent:
 
    ```bash
-   ln -sfn AGENTS.md CLAUDE.md
    : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
-   mkdir -p "$LLMOS_ROOT/projects/<repo>/specs" "$LLMOS_ROOT/projects/<repo>/adr"
-   ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" specs
-   # a real (non-symlink) docs/adr holds committed ADRs from the old convention —
-   # migrate them into the vault first, else `ln` nests a symlink inside the dir
-   if [ -d docs/adr ] && [ ! -L docs/adr ]; then
-     find docs/adr -mindepth 1 -maxdepth 1 -exec mv -n {} "$LLMOS_ROOT/projects/<repo>/adr/" \;
-     rmdir docs/adr || { echo "docs/adr not empty after migration (name clash with vault) — reconcile, then re-run"; exit 1; }
-   fi
-   mkdir -p docs && ln -sfn "$LLMOS_ROOT/projects/<repo>/adr" docs/adr
-   grep -qx specs .gitignore 2>/dev/null || echo specs >> .gitignore
-   grep -qx docs/adr .gitignore 2>/dev/null || echo docs/adr >> .gitignore
+   python3 "<setup-repo-skill-dir>/scripts/setup_project_docs.py" \
+     --repo-root "$(git rev-parse --show-toplevel)" \
+     --llmos-root "$LLMOS_ROOT" \
+     --project "<confirmed-project>"
+   ln -sfn AGENTS.md CLAUDE.md
    ```
 
    If the facts show a real (non-symlink) `CLAUDE.md`, ask before replacing it.
-   The block migrates a pre-existing committed `docs/adr/` into the vault before
-   linking; it stops if an ADR name clashes with one already in the vault so you
-   can reconcile by hand.
+   On collision, report the complete preflight output and do not improvise a
+   partial migration.
 
-6. **Report** what was written, skipped, and decided.
+7. **Linked worktrees.** When the repository uses linked worktrees, install or
+   update its `post-checkout` hook to invoke the same script with `--worktree`
+   after confirming this is a branch checkout in a linked worktree. Embed the
+   resolved absolute script path, llmOS root, and confirmed project name in the
+   hook. Worktree mode repairs safe symlinks but refuses real directories or
+   files that require migration and directs the operator back to `/setup-repo`.
+
+8. **Report** what was written, skipped, and decided.
 
 ## Template (appended after the resolved header)
 
@@ -116,7 +121,7 @@ Canonical: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `
 
 ### Domain docs
 
-<Single-context layout: committed `CONTEXT.md` at the repo root plus ADRs under `docs/adr/` (a symlink into the shared llmOS vault). — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
+<Single-context layout: committed `CONTEXT.md` at the repo root plus specs under `docs/specs/` and ADRs under `docs/adrs/` (direct symlinks into the shared llmOS vault; root aliases are `specs` and `adrs`). — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
 
 Before working in an area, read the ADRs that touch it. If your output contradicts one, flag it explicitly (_"contradicts ADR-0007 — but worth reopening because…"_) rather than silently overriding.
 ```

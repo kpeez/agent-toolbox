@@ -30,11 +30,12 @@ never burn the lead context on bulk reads or typing implementation.
    progress on the active issue before running out of context
 
 Specs and ADRs must never be committed to the source repository. Store their
-canonical shared copies in `$LLMOS_ROOT/projects/<repo>/specs` and
-`$LLMOS_ROOT/projects/<repo>/adr`, keep `specs` and `docs/adr` ignored here, and
-reach both through repo-local symlinks into llmOS.
+canonical shared copies in `$LLMOS_ROOT/projects/<repo>/docs/specs` and
+`$LLMOS_ROOT/projects/<repo>/docs/adrs`, keep `specs`, `adrs`, `docs/specs`, and
+`docs/adrs` ignored here, and reach them through direct `docs/` links plus exact
+relative root aliases.
 
-Durable decisions live as ADRs in the shared vault, reached via the `docs/adr/`
+Durable decisions live as ADRs in the shared vault, reached via the `docs/adrs/`
 symlink; the optional domain glossary is the still-committed repo-root
 `CONTEXT.md`. An optional `Issue tracker: <name>` line in this file pins the
 tracker; otherwise `/to-issues` auto-detects.

@@ -115,7 +115,7 @@ Resolve state from durable artifacts — **never** a `STATUS.md` ledger:
 
 | State | Durable evidence |
 | --- | --- |
-| `UNSETTLED` | Conversation, `docs/adr/`, `CONTEXT.md`; no approved spec |
+| `UNSETTLED` | Conversation, `docs/adrs/`, `CONTEXT.md`; no approved spec |
 | `SPEC_APPROVED` | `specs/<slug>/SPEC-<slug>.md` contains an exact `<!-- knack:spec-approved -->` line |
 | `ISSUES_PUBLISHED` | Tracker parent carries `<!-- knack-spec: <repo>/<slug> -->` and has children |
 | `IMPLEMENTING` | Child issue state + latest progress comment show active work |

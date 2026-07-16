@@ -27,7 +27,7 @@ Read order:
 
 Status and tasks live on the issue tracker (see `/to-issues`). Durable design
 decisions do NOT live here — they go in the shared vault as ADRs via the
-`docs/adr/` symlink. The optional domain glossary lives in committed
+`docs/adrs/` symlink. The optional domain glossary lives in committed
 `CONTEXT.md` at the repo root.
 </template>
 
@@ -80,7 +80,7 @@ Two zones in one file:
 
 <!-- non-obvious choices: what we chose, why, alternatives considered.
      If a decision is durable beyond this feature (architecture, storage model,
-     provider policy, framework choice), record it in docs/adr/ instead and
+     provider policy, framework choice), record it in docs/adrs/ instead and
      link it here. -->
 
 ## Risks
