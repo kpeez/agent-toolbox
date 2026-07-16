@@ -1,3 +1,10 @@
+These are the global instructions for every project. They come from
+`agent-toolbox/CLAUDE.md` (`AGENTS.md` is a symlink to it); `scripts/setup-agent.sh`
+copies that one file to `~/.claude/CLAUDE.md`, `~/.gemini/AGENTS.md`, and
+`~/.copilot/copilot-instructions.md`. Edit it there and re-run the script — edits
+are provider-neutral and apply everywhere, so keep repo-specific commands and
+structure out of it and in the repo's own `AGENTS.md`.
+
 ## Guiding principles
 
 - **Do NOT end turns by offering to do more work.** No "Want me to scaffold X?" / "Should I rewrite Y?" engagement-bait offers. The user will explicitly say when they want something done. Answer what was asked, then stop.
@@ -24,7 +31,8 @@ never burn the lead context on bulk reads or typing implementation.
    for the stated goals, sketched as `tests/temp/` scratch scripts when the
    design is uncertain — then lint → types → tests
 5. Verify: run the spec's tests and a host-native review pass; fix failures before marking done
-6. Publish with `/ship-pr` — atomic commits, push, draft PR
+6. Publish with `/ship-pr` — atomic commits, push, draft PR; `/ship-pr finalize`
+   marks it ready
 7. Resume from the tracker: take the next unblocked workable issue (spec-born
    slices are ready by construction; skip only `ready-for-human`); comment
    progress on the active issue before running out of context
