@@ -1,12 +1,19 @@
 ---
-name: pr
-description: Group current branch diff into atomic commits, push, and open a draft PR if missing. Use when ready to publish branch work.
+name: ship-pr
+description: Publish branch work. Default — group the current branch diff into atomic commits, push, and open a draft PR if missing. `/ship-pr finalize` — re-verify and flip the draft PR to ready for review.
 ---
 
-# /pr — Group, Commit, Push, Draft PR
+# /ship-pr — Group, Commit, Push, Draft PR
 
 Bundle the committed + uncommitted changes on the current branch into atomic
 commits, push, and ensure a draft PR exists.
+
+Two modes:
+
+- **Default** (`/ship-pr [spec]`) — the workflow below: verify, group, commit,
+  push, draft PR.
+- **Finalize** (`/ship-pr finalize`) — closing step, see
+  [Finalize](#finalize-ship-pr-finalize). Merging stays a human action.
 
 ## Rules
 
@@ -15,7 +22,7 @@ commits, push, and ensure a draft PR exists.
 - **PR title and body come from NNNN-<slug>.md, linked tracker issues, and the diff.**
 - **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
-  ready only when the user asks.
+  ready only in finalize mode or when the user asks.
 - **Never force-push.** Squash merge by default.
 - **Reviewable Markdown.** PR bodies and optional PR markdown artifacts must be
   easy to review as plain Markdown.
@@ -46,6 +53,22 @@ commits, push, and ensure a draft PR exists.
    review. Status lives on the tracker, not in local files.
 8. **Summarize** — branch, base, commit list (sha + subject), PR URL, tracker
    issues touched.
+
+## Finalize (`/ship-pr finalize`)
+
+Flip the branch's draft PR to ready for review. Merging is not part of this
+skill — it stays a human action.
+
+1. **Locate** — `gh pr view` for the current branch; stop and report if no PR
+   exists (run the default mode first).
+2. **Sync** — ensure the local branch is pushed; commit and push any pending
+   work via the default workflow first.
+3. **Verify** — re-run lint, types, and tests (including the spec's
+   Verification tests). Any failure is a stop, not a warning.
+4. **Ready** — `gh pr ready <number>`.
+5. **Link** — comment on the tracker issue(s) and move them to review/done per
+   the tracker's states.
+6. **Summarize** — PR URL, verification results, tracker issues touched.
 
 ## Markdown artifact (on request only)
 

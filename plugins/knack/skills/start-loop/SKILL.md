@@ -158,7 +158,7 @@ Roles are the `/delegate` tiers.
 | `write-spec` | main session; drafting may go to a **planner** | Write `specs/NNNN-<slug>.md`. On approval, add `<!-- knack:spec-approved -->`. **Last user prompt.** |
 | `to-issues` | one **planner** subagent | Read the approved spec cold; flag gaps to you *before* publishing; slice, publish parent (stamped `<!-- knack-spec: <repo>/<slug> -->`) + children; return the issue list. It slices itself — the spec is its only input; sub-delegating adds cold-start cost for nothing. No gate. |
 | `implement` | fan-out: one unblocked child = one **doer** subagent | Each doer gets its own `/goal` + handoff payload (spec path, slug, parent id, issue id). Design-heavy slices go to a **planner** first. Repeat until `COMPLETE`. No gate. |
-| review + `pr` | fresh context | Review the diff against the spec via `patch-reviewer`, then `/pr`. |
+| review + `ship-pr` | fresh context | Review the diff against the spec via `patch-reviewer`, then `/ship-pr`. |
 
 Every handoff crosses a context boundary carrying only identifiers and
 artifact pointers — never the conversation.

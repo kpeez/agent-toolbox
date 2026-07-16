@@ -24,7 +24,7 @@ never burn the lead context on bulk reads or typing implementation.
    for the stated goals, sketched as `tests/temp/` scratch scripts when the
    design is uncertain — then lint → types → tests
 5. Verify: run the spec's tests and a host-native review pass; fix failures before marking done
-6. Publish with `/pr` — atomic commits, push, draft PR
+6. Publish with `/ship-pr` — atomic commits, push, draft PR
 7. Resume from the tracker: take the next unblocked workable issue (spec-born
    slices are ready by construction; skip only `ready-for-human`); comment
    progress on the active issue before running out of context
