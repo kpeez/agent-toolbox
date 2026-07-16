@@ -17,7 +17,7 @@ On approval, run `write-spec` and draft the goal/scope header.
 
 ## 2. Spec approval — the last prompt
 
-> Approve `specs/<slug>/SPEC-<slug>.md` (Goal, Scope, Non-goals, Success Criteria,
+> Approve `specs/NNNN-<slug>.md` (Goal, Scope, Non-goals, Success Criteria,
 > Execution Mode, Validation)? On `approve` I'll slice it into issues, publish
 > them, and run the implementation loop to completion — no further prompts.
 > Reply `approve`, or list the changes.
