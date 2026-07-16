@@ -15,7 +15,7 @@ never burn the lead context on bulk reads or typing implementation.
 
 1. Read this file and README.md
 2. For non-trivial features, stress-test the plan with `/sharpen`, then
-   `/write-spec new <name>` — the spec (pure-markdown `SPEC-<slug>.md`; its
+   `/write-spec new <name>` — the spec (pure-markdown `NNNN-<slug>.md`; its
    behaviors are proven by committed tests) is distilled from the sharpened
    plan, never written from scratch
 3. Slice the spec into tracker issues with `/to-issues`. Status and tasks live

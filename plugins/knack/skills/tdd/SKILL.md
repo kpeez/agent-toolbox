@@ -77,7 +77,7 @@ By PR time:
   - **Verdict** — it only answered a design question. Capture the question,
     result, evidence, and next action in plain Markdown: an ADR in `docs/adrs/`
     (see `sharpen`'s `ADR-FORMAT.md`) for durable decisions, otherwise the
-    spec's `SPEC-<slug>.md` Decisions section or the tracker issue. Then
+    spec's `NNNN-<slug>.md` Decisions section or the tracker issue. Then
     delete the script.
   - **Can't run in CI** (real weights, GPU, paid API, human judgment) — first
     substitute small real things per

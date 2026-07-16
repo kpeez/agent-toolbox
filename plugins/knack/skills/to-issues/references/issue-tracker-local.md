@@ -5,10 +5,9 @@ never committed).
 
 ## Conventions
 
-- One feature per directory: `specs/<feature>/` (the same directory that holds
-  `SPEC-<slug>.md`)
-- Implementation issues are `specs/<feature>/issues/<NN>-<slug>.md`, numbered from `01`
-- The parent issue is the spec itself — `SPEC-<slug>.md`'s goal/scope header; do not
+- Implementation issues for spec `specs/NNNN-<slug>.md` are
+  `specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md`, numbered from `01`
+- The parent issue is the spec itself — `NNNN-<slug>.md`'s goal/scope header; do not
   duplicate it as an issue file
 - Triage state is a `Status:` line near the top of each issue file, using the
   triage label strings from `SKILL.md`; done is `Status: done`
@@ -18,7 +17,7 @@ never committed).
 
 ## When a skill says "publish to the issue tracker"
 
-Create a new file under `specs/<feature>/issues/` (creating the directory if needed).
+Create a new file `specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md` next to the spec.
 
 ## When a skill says "fetch the relevant ticket"
 

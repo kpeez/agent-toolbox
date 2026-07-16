@@ -2,7 +2,7 @@
 
 File templates for `/write-spec new`. Write each to its target path under `specs/`.
 
-A spec is **`SPEC-<slug>.md`** (human goal + agent design) — pure markdown, no
+A spec is **`NNNN-<slug>.md`** (human goal + agent design) — pure markdown, no
 code files. Verification lives in the project's committed test suite. Task and
 status truth live on the issue tracker, not in a local file.
 
@@ -15,14 +15,14 @@ Specs are private working context and must never be committed. Keep `specs`
 ignored in git; this directory may be a symlink to a private per-repo specs
 directory.
 
-Each spec lives in `specs/<slug>/` as `SPEC-<slug>.md` — pure markdown, no code
+Each spec lives in `specs/` as `NNNN-<slug>.md` — pure markdown, no code
 files. Verification lives in the source repo's committed test suite; the spec's
 Verification section names the tests.
 
 Read order:
 
 1. The tracker container/issue (entry point — status, blocked, latest progress)
-2. `SPEC-<slug>.md` (goal + design)
+2. `NNNN-<slug>.md` (goal + design)
 3. The tests named in the Verification section (run them for current state)
 
 Status and tasks live on the issue tracker (see `/to-issues`). Durable design
@@ -31,7 +31,7 @@ decisions do NOT live here — they go in the shared vault as ADRs via the
 `CONTEXT.md` at the repo root.
 </template>
 
-<template file="specs/<slug>/SPEC-<slug>.md">
+<template file="specs/NNNN-<slug>.md">
 # <Title>
 
 <!--

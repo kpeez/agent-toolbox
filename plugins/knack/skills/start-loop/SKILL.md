@@ -12,8 +12,9 @@ owns its own behavior — activate it by name; never inline its logic.
 
 ## Argument resolution
 
-- `/start-loop <slug>` where `specs/<slug>/SPEC-<slug>.md` exists → that spec
-  is the target. Run the state block below with `START_LOOP_SLUG=<slug>`.
+- `/start-loop <slug>` where `specs/NNNN-<slug>.md` (or the legacy
+  `specs/<slug>/SPEC-<slug>.md`) exists → that spec is the target. Run the
+  state block below with `START_LOOP_SLUG=<slug>`.
 - `/start-loop <issue id or url>` → fetch it, find its parent, resume from
   tracker state.
 - `/start-loop <free-form idea>` → new run; start at `sharpen`.
@@ -53,22 +54,40 @@ echo "status (short):"
 git status --short 2>/dev/null || true
 
 spec_file_for() {
-    if [ -f "specs/$1/SPEC-$1.md" ]; then
+    local match
+    match=$(ls -1 specs/[0-9][0-9][0-9][0-9]-"$1".md 2>/dev/null | head -n1)
+    if [ -n "$match" ]; then
+        echo "$match"
+    elif [ -f "specs/$1/SPEC-$1.md" ]; then
         echo "specs/$1/SPEC-$1.md"
     elif [ -f "specs/$1/SPEC.md" ]; then
         echo "specs/$1/SPEC.md"
     fi
 }
 
+slug_from_path() {
+    local base
+    base=$(basename "$1")
+    case "$base" in
+        [0-9][0-9][0-9][0-9]-*.md)
+            base=${base#????-}
+            echo "${base%.md}"
+            ;;
+        *)
+            basename "$(dirname "$1")"
+            ;;
+    esac
+}
+
 spec_paths=()
 while IFS= read -r spec_path; do
     spec_paths+=("$spec_path")
-done < <(find -H specs -mindepth 2 -maxdepth 2 \( -name 'SPEC-*.md' -o -name SPEC.md \) -print 2>/dev/null)
+done < <(find -H specs -maxdepth 1 -name '[0-9][0-9][0-9][0-9]-*.md' -print 2>/dev/null; find -H specs -mindepth 2 -maxdepth 2 \( -name 'SPEC-*.md' -o -name SPEC.md \) -print 2>/dev/null)
 
 candidate_slugs=()
 if [ "${#spec_paths[@]}" -gt 0 ]; then
     while IFS= read -r spec_path; do
-        candidate_slugs+=("$(basename "$(dirname "$spec_path")")")
+        candidate_slugs+=("$(slug_from_path "$spec_path")")
     done < <(ls -1td "${spec_paths[@]}" 2>/dev/null)
 fi
 
@@ -94,7 +113,7 @@ if [ -n "$spec_file" ]; then
         echo "spec approved marker: absent"
     fi
 else
-    echo "spec: specs/<slug>/SPEC-<slug>.md absent"
+    echo "spec: specs/NNNN-<slug>.md absent"
     echo "spec approved marker: absent"
 fi
 
@@ -116,14 +135,15 @@ Resolve state from durable artifacts — **never** a `STATUS.md` ledger:
 | State | Durable evidence |
 | --- | --- |
 | `UNSETTLED` | Conversation, `docs/adrs/`, `CONTEXT.md`; no approved spec |
-| `SPEC_APPROVED` | `specs/<slug>/SPEC-<slug>.md` contains an exact `<!-- knack:spec-approved -->` line |
+| `SPEC_APPROVED` | `specs/NNNN-<slug>.md` (legacy: `specs/<slug>/SPEC-<slug>.md`) contains an exact `<!-- knack:spec-approved -->` line |
 | `ISSUES_PUBLISHED` | Tracker parent carries `<!-- knack-spec: <repo>/<slug> -->` and has children |
 | `IMPLEMENTING` | Child issue state + latest progress comment show active work |
 | `COMPLETE` | All required children are Done |
 
-`SPEC-<slug>.md` is authoritative before publication; the tracker parent and
-children are authoritative after. (The state block also detects legacy bare
-`SPEC.md` specs; new specs always use `SPEC-<slug>.md`.)
+`NNNN-<slug>.md` is authoritative before publication; the tracker parent and
+children are authoritative after. (The state block also detects legacy
+`specs/<slug>/SPEC-<slug>.md` and bare `SPEC.md` specs; new specs always use
+`specs/NNNN-<slug>.md`.)
 
 ## Phases
 
@@ -135,7 +155,7 @@ Roles are the `/delegate` tiers.
 | Phase | Who | What |
 | --- | --- | --- |
 | `sharpen` | main session (HITL) | Settle the design. May commission **planner** subagents for alternatives and `/deliberate` cases. Gate → spec. |
-| `write-spec` | main session; drafting may go to a **planner** | Write `specs/<slug>/SPEC-<slug>.md`. On approval, add `<!-- knack:spec-approved -->`. **Last user prompt.** |
+| `write-spec` | main session; drafting may go to a **planner** | Write `specs/NNNN-<slug>.md`. On approval, add `<!-- knack:spec-approved -->`. **Last user prompt.** |
 | `to-issues` | one **planner** subagent | Read the approved spec cold; flag gaps to you *before* publishing; slice, publish parent (stamped `<!-- knack-spec: <repo>/<slug> -->`) + children; return the issue list. It slices itself — the spec is its only input; sub-delegating adds cold-start cost for nothing. No gate. |
 | `implement` | fan-out: one unblocked child = one **doer** subagent | Each doer gets its own `/goal` + handoff payload (spec path, slug, parent id, issue id). Design-heavy slices go to a **planner** first. Repeat until `COMPLETE`. No gate. |
 | review + `pr` | fresh context | Review the diff against the spec via `patch-reviewer`, then `/pr`. |
