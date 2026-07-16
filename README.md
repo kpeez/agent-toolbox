@@ -101,6 +101,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                                                      |
 | `pr`                            | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests first                        |
 | `delegate`                      | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself |
+| `handoff`                       | Hand the session across a model boundary — write the residue (ruled out, gotchas, resume) to the tracker; write it yourself, never via a subagent          |
 | `merge-conflicts`               | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
 | `qmd`                           | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
 | `research`                      | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
