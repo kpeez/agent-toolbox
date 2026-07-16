@@ -99,8 +99,9 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `diagnose`                      | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
 | `improve-codebase-architecture` | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
 | `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                                                      |
-| `pr`                            | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests first                        |
+| `ship-pr`                       | Publish branch work — group diff into atomic commits, push, open a draft PR (verifies lint/types/tests first); `finalize` mode flips the draft to ready |
 | `delegate`                      | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself |
+| `handoff`                       | Hand the session across a model boundary — write the residue (ruled out, gotchas, resume) to the tracker; write it yourself, never via a subagent          |
 | `merge-conflicts`               | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
 | `qmd`                           | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
 | `research`                      | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
@@ -146,7 +147,7 @@ graph LR
   A --> I["/to-issues"]
   I -->|"fresh chat / subagent per issue"| B["implement (/tdd)"]
   B --> C["review (host-native)"]
-  C --> D["/pr"]
+  C --> D["/ship-pr"]
   X -.->|"small fix"| B
   P["/tdd (design sketch)"] -.-> A
 
@@ -166,14 +167,14 @@ style P fill:#22272e,stroke:#768390,color:#768390
 | `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adrs/`.                                                                                  |
 | `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
 | `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adrs/`.                                                                                                 |
-| `/write-spec`                         | Capture the settled plan — pure-markdown `SPEC-<slug>.md` (human goal/scope header + agent design body); its Verification section names the committed tests that prove each behavior. In plan mode, dump the approved plan straight in. Establishes intent.         |
+| `/write-spec`                         | Capture the settled plan — pure-markdown `NNNN-<slug>.md` (human goal/scope header + agent design body); its Verification section names the committed tests that prove each behavior. In plan mode, dump the approved plan straight in. Establishes intent.         |
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
 | **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: one goal at a time (never horizontal batches). Scratch scripts in `tests/temp/` import the real repo to prove behavior, then are refactored into committed tests; the rest are deleted. No mock-slop. `/tdd` also stands alone as a design sketch. |
 | review (host-native)                  | Clean-context review using your harness's built-in reviewer (e.g. Claude `/code-review`, Codex review). Challenge the approach, then flag bugs, bloat, and newly obsolete code before publishing.                                                            |
-| `/pr`                                 | Verify lint/types/tests, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                              |
+| `/ship-pr`                                 | Verify lint/types/tests, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                              |
 
 Not every session hits every phase. The dashed skills are alternate entry points
-or on-demand sketches. Run a host-native review pass before `/pr`. To resume across
+or on-demand sketches. Run a host-native review pass before `/ship-pr`. To resume across
 a session boundary, drop a progress comment on the active tracker issue and pick
 it up from there.
 
@@ -193,7 +194,7 @@ Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
 session (the interview is HITL) but can commission planners for alternatives;
 spec *drafting* can go to a planner while the main session holds the approval
 gate; `to-issues` goes to a **planner** that reviews the approved spec cold,
-slices, publishes, and returns the issue list; review + `/pr` run in a fresh
+slices, publishes, and returns the issue list; review + `/ship-pr` run in a fresh
 context.
 
 Implementation is the **fan-out loop**:
@@ -233,7 +234,7 @@ lives:
 The issue tracker is selected at runtime by `/to-issues` — an optional
 `Issue tracker: <name>` line in the repo's `AGENTS.md` wins; otherwise Linear
 when its MCP tools are available, GitHub when the repo has a GitHub remote and
-`gh` works, local markdown under `specs/<feature>/issues/` as the fallback.
+`gh` works, local markdown named `specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md` as the fallback.
 Conventions for each live in the `to-issues` skill's `references/`; there is no
 per-repo config file.
 
@@ -244,7 +245,7 @@ atomic PRs.
 
 - Prefer atomic PRs that can be reviewed independently.
 - Use small, logical commits with imperative, conventional-style subjects.
-- Generate PR titles and bodies directly from `SPEC-<slug>.md`, the linked tracker
+- Generate PR titles and bodies directly from `NNNN-<slug>.md`, the linked tracker
   issues, and the actual diff.
 - Do not create `commits.md` or `draft-pr.md` review artifacts.
 - Use squash merge by default unless the user explicitly asks for another merge
@@ -313,18 +314,20 @@ python3 "<resolved-setup-repo-skill-dir>/scripts/setup_project_docs.py" \
 
 ## Feature Specs
 
-A spec is **`SPEC-<slug>.md`** — nothing more, and pure markdown (created by
+A spec is **`NNNN-<slug>.md`** — nothing more, and pure markdown (created by
 `/write-spec new`). Verification lives in the repo's committed test suite; the
 spec's Verification section names the tests that pin its behaviors.
 
 ```text
 specs/
-├── AGENTS.md           # How agents navigate specs; not a manual index
-└── <feature>/
-    └── SPEC-<slug>.md         # Human goal/scope header + agent-expanded design body
+├── 0001-<slug>.md      # Human goal/scope header + agent-expanded design body
+└── 0002-<slug>.md
 ```
 
-`SPEC-<slug>.md` has two ownership zones split by a `---` divider. The **goal/scope
+Numbered flat, like `docs/adrs/`. The number is the index — `ls` sorts it and
+the highest is the newest, so specs carry no navigation or index file.
+
+`NNNN-<slug>.md` has two ownership zones split by a `---` divider. The **goal/scope
 header** is the user-reviewed contract: goal, scope, non-goals, success criteria,
 validation, and whether implementation is review-gated or autonomous. The
 **design body** is agent-expanded after repo inspection: approach, behavior,

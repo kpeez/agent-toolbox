@@ -48,7 +48,7 @@ and typing implementation.
   `Explore` subagent) instead of loading many files into your own context.
 - **Generate** with subagents or an external worker (`/delegate`'s
   `ext-subagent`). Give each worker exactly the context it needs — the relevant
-  `SPEC-<slug>.md` sections, key paths, and where the task fits — no more.
+  `NNNN-<slug>.md` sections, key paths, and where the task fits — no more.
 - **Review** what comes back before trusting it.
 
 **The fan-out loop:** take the next unblocked issue → spawn a **doer** (per

@@ -15,7 +15,7 @@ never burn the lead context on bulk reads or typing implementation.
 
 1. Read this file and README.md
 2. For non-trivial features, stress-test the plan with `/sharpen`, then
-   `/write-spec new <name>` — the spec (pure-markdown `SPEC-<slug>.md`; its
+   `/write-spec new <name>` — the spec (pure-markdown `NNNN-<slug>.md`; its
    behaviors are proven by committed tests) is distilled from the sharpened
    plan, never written from scratch
 3. Slice the spec into tracker issues with `/to-issues`. Status and tasks live
@@ -24,7 +24,7 @@ never burn the lead context on bulk reads or typing implementation.
    for the stated goals, sketched as `tests/temp/` scratch scripts when the
    design is uncertain — then lint → types → tests
 5. Verify: run the spec's tests and a host-native review pass; fix failures before marking done
-6. Publish with `/pr` — atomic commits, push, draft PR
+6. Publish with `/ship-pr` — atomic commits, push, draft PR
 7. Resume from the tracker: take the next unblocked workable issue (spec-born
    slices are ready by construction; skip only `ready-for-human`); comment
    progress on the active issue before running out of context

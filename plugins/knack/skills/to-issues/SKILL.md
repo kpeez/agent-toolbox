@@ -19,7 +19,7 @@ Pick the tracker at runtime — no per-repo config beyond an optional one-liner:
    [references/issue-tracker-linear.md](references/issue-tracker-linear.md)
 3. **GitHub** — else, if the repo has a GitHub remote and `gh` works:
    [references/issue-tracker-github.md](references/issue-tracker-github.md)
-4. **Local markdown** — otherwise, files under `specs/<feature>/issues/`:
+4. **Local markdown** — otherwise, files named `specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md`:
    [references/issue-tracker-local.md](references/issue-tracker-local.md)
 
 Read the matching reference before publishing; mention which tracker you used.
@@ -88,7 +88,7 @@ on an unapproved plan: quiz the user and iterate until they approve.
 
 ### 5. Publish to tracker
 
-If the work came from a spec (`specs/<feature>/SPEC-<feature>.md`), publish the spec's
+If the work came from a spec (`specs/NNNN-<slug>.md`), publish the spec's
 goal/scope header as a **parent issue**, then publish the slices as **child issues
 / sub-issues** that reference it. This is the portable default — it works
 identically on Linear and GitHub. Do NOT close or modify the parent issue.
