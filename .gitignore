@@ -9,10 +9,7 @@
 .worktrees/
 .env
 node_modules
-specs
-adrs
-docs/specs
-docs/adrs
+docs/agents
 
 # OS files
 .directory

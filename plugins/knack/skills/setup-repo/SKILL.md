@@ -1,6 +1,6 @@
 ---
 name: setup-repo
-description: Set up a repo for the knack workflow — interview the user about the issue tracker and repo structure, then write the repo-root AGENTS.md, symlink CLAUDE.md to it, and set up the private specs and ADR directories. Use when setting up a new repo, or when the user asks to add AGENTS.md or CLAUDE.md to a project.
+description: Set up a repo for the knack workflow — interview the user about the issue tracker and repo structure, then write the repo-root AGENTS.md, symlink CLAUDE.md to it, and set up the private docs/agents directory. Use when setting up a new repo, or when the user asks to add AGENTS.md or CLAUDE.md to a project.
 disable-model-invocation: true
 ---
 
@@ -22,7 +22,7 @@ act on directly.
 cd "$(git rev-parse --show-toplevel)" 2>/dev/null
 echo "repo: $(basename "$PWD")"
 echo "origin: $(git remote get-url origin 2>/dev/null || echo none)"
-for f in AGENTS.md CLAUDE.md CONTEXT.md CONTEXT-MAP.md docs/specs docs/adrs specs adrs docs/adr; do
+for f in AGENTS.md CLAUDE.md CONTEXT.md CONTEXT-MAP.md docs/agents docs/specs docs/adrs specs adrs docs/adr; do
     [ -e "$f" ] && echo "present: $f"
 done
 [ -L CLAUDE.md ] && echo "CLAUDE.md is a symlink -> $(readlink CLAUDE.md)"
@@ -75,10 +75,11 @@ exit 0
    skills filled in. If `AGENTS.md` already exists, update the
    `## Agent skills` block in place and append missing sections — never
    overwrite or reorder what's there.
-6. **Link, specs, and ADRs.** Resolve `<setup-repo-skill-dir>` to the directory
-   containing this `SKILL.md`, then run the reusable operation. It preflights
-   every collision before mutation, migrates legacy content losslessly, repairs
-   incorrect symlinks, and is idempotent:
+6. **Link and agent docs.** Resolve `<setup-repo-skill-dir>` to the directory
+   containing this `SKILL.md`, then run the reusable operation. It points
+   `docs/agents` at the project's vault docs tree, preflights every collision
+   before mutation, migrates legacy content losslessly, retires the superseded
+   `docs/specs`/`docs/adrs`/`specs`/`adrs` links, and is idempotent:
 
    ```bash
    : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
@@ -121,7 +122,7 @@ Canonical: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `
 
 ### Domain docs
 
-<Single-context layout: committed `CONTEXT.md` at the repo root plus specs under `docs/specs/` and ADRs under `docs/adrs/` (direct symlinks into the shared llmOS vault; root aliases are `specs` and `adrs`). — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
+<Single-context layout: committed `CONTEXT.md` at the repo root, plus all agent-facing docs under `docs/agents/` — one gitignored symlink into the shared llmOS vault holding `specs/`, `adrs/`, and anything else agents write. — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
 
 Before working in an area, read the ADRs that touch it. If your output contradicts one, flag it explicitly (_"contradicts ADR-0007 — but worth reopening because…"_) rather than silently overriding.
 ```

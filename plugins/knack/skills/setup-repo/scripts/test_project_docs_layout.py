@@ -9,12 +9,7 @@ import pytest
 
 
 SCRIPT = Path(__file__).with_name("setup_project_docs.py")
-EXPECTED_LINKS = {
-    "docs/specs": "docs/specs",
-    "docs/adrs": "docs/adrs",
-    "specs": "docs/specs",
-    "adrs": "docs/adrs",
-}
+RETIRED_LINKS = ("docs/specs", "docs/adrs", "specs", "adrs")
 
 
 def run_setup(
@@ -63,12 +58,12 @@ def assert_topology(repo: Path, llmos: Path, project: str = "sample") -> None:
     assert (canonical / "specs").is_dir()
     assert (canonical / "adrs").is_dir()
 
-    assert os.readlink(repo / "docs/specs") == str(canonical / "specs")
-    assert os.readlink(repo / "docs/adrs") == str(canonical / "adrs")
-    assert os.readlink(repo / "specs") == "docs/specs"
-    assert os.readlink(repo / "adrs") == "docs/adrs"
-    for path in EXPECTED_LINKS:
-        assert (repo / path).resolve(strict=True).is_dir()
+    assert os.readlink(repo / "docs/agents") == str(canonical)
+    assert (repo / "docs/agents").resolve(strict=True).is_dir()
+    assert (repo / "docs/agents/specs").is_dir()
+    assert (repo / "docs/agents/adrs").is_dir()
+    for retired in (*RETIRED_LINKS, "docs/adr"):
+        assert not (repo / retired).is_symlink()
 
 
 def test_clean_setup_creates_exact_topology_and_is_idempotent(tmp_path: Path) -> None:
@@ -81,13 +76,7 @@ def test_clean_setup_creates_exact_topology_and_is_idempotent(tmp_path: Path) ->
 
     assert first.returncode == 0, first.stderr
     assert_topology(repo, llmos)
-    assert (repo / ".gitignore").read_text().splitlines() == [
-        "build/",
-        "specs",
-        "adrs",
-        "docs/specs",
-        "docs/adrs",
-    ]
+    assert (repo / ".gitignore").read_text().splitlines() == ["build/", "docs/agents"]
     before = snapshot(tmp_path)
 
     second = run_setup(repo, llmos)
@@ -96,7 +85,33 @@ def test_clean_setup_creates_exact_topology_and_is_idempotent(tmp_path: Path) ->
     assert snapshot(tmp_path) == before
 
 
-def test_wrong_symlinks_are_repaired_without_touching_unrelated_content(
+def test_retired_layout_links_are_replaced_by_the_single_agents_link(
+    tmp_path: Path,
+) -> None:
+    repo = tmp_path / "repo"
+    llmos = tmp_path / "llmos"
+    canonical = llmos / "projects/sample/docs"
+    (canonical / "specs").mkdir(parents=True)
+    (canonical / "adrs").mkdir()
+    repo.mkdir()
+    (repo / "docs").mkdir()
+    (repo / ".gitignore").write_text("build/\nspecs\nadrs\ndocs/specs\ndocs/adrs\n")
+    (repo / "docs/specs").symlink_to(canonical / "specs", target_is_directory=True)
+    (repo / "docs/adrs").symlink_to(canonical / "adrs", target_is_directory=True)
+    (repo / "specs").symlink_to("docs/specs")
+    (repo / "adrs").symlink_to("docs/adrs")
+    spec = canonical / "specs/0001-example.md"
+    spec.write_bytes(b"canonical spec\n")
+
+    result = run_setup(repo, llmos)
+
+    assert result.returncode == 0, result.stderr
+    assert_topology(repo, llmos)
+    assert (repo / ".gitignore").read_text().splitlines() == ["build/", "docs/agents"]
+    assert spec.read_bytes() == b"canonical spec\n"
+
+
+def test_wrong_agents_symlink_is_repaired_without_touching_unrelated_content(
     tmp_path: Path,
 ) -> None:
     repo = tmp_path / "repo"
@@ -105,10 +120,7 @@ def test_wrong_symlinks_are_repaired_without_touching_unrelated_content(
     (repo / "docs").mkdir()
     unrelated = repo / "README.md"
     unrelated.write_bytes(b"keep these exact bytes\n")
-    for path in EXPECTED_LINKS:
-        link = repo / path
-        link.parent.mkdir(parents=True, exist_ok=True)
-        link.symlink_to("wrong-target")
+    (repo / "docs/agents").symlink_to("wrong-target")
 
     result = run_setup(repo, llmos)
 
@@ -117,22 +129,15 @@ def test_wrong_symlinks_are_repaired_without_touching_unrelated_content(
     assert unrelated.read_bytes() == b"keep these exact bytes\n"
 
 
-@pytest.mark.parametrize(
-    ("managed_path", "other_target"),
-    [
-        ("docs/specs", "docs/specs"),
-        ("docs/adr", "docs/adrs"),
-    ],
-)
+@pytest.mark.parametrize("managed_path", ["docs/agents", "docs/specs", "docs/adr"])
 def test_cross_project_symlinks_abort_before_any_mutation(
-    tmp_path: Path, managed_path: str, other_target: str
+    tmp_path: Path, managed_path: str
 ) -> None:
     repo = tmp_path / "repo"
     llmos = tmp_path / "llmos"
-    other_project = llmos / "projects/other"
     repo.mkdir()
     (repo / ".gitignore").write_text("keep-this-exactly\n")
-    target = other_project / other_target
+    target = llmos / "projects/other/docs"
     target.mkdir(parents=True)
     link = repo / managed_path
     link.parent.mkdir(parents=True, exist_ok=True)
@@ -220,9 +225,33 @@ def test_invalid_gitignore_aborts_before_any_migration(
     assert snapshot(tmp_path) == before
 
 
-@pytest.mark.parametrize("occupied", EXPECTED_LINKS)
 @pytest.mark.parametrize("occupant_kind", ["file", "directory"])
-def test_occupied_expected_link_aborts_before_mutation(
+def test_occupied_agents_path_aborts_before_mutation(
+    tmp_path: Path, occupant_kind: str
+) -> None:
+    repo = tmp_path / "repo"
+    llmos = tmp_path / "llmos"
+    repo.mkdir()
+    path = repo / "docs/agents"
+    path.parent.mkdir(parents=True, exist_ok=True)
+    if occupant_kind == "file":
+        path.write_text("occupied\n")
+    else:
+        path.mkdir()
+        (path / "keep.txt").write_text("occupied\n")
+    before = snapshot(tmp_path)
+
+    result = run_setup(repo, llmos)
+
+    assert result.returncode == 2
+    assert "collisions detected before mutation" in result.stderr
+    assert str(path) in result.stderr
+    assert snapshot(tmp_path) == before
+
+
+@pytest.mark.parametrize("occupied", RETIRED_LINKS)
+@pytest.mark.parametrize("occupant_kind", ["file", "directory"])
+def test_occupied_retired_path_aborts_before_mutation(
     tmp_path: Path, occupied: str, occupant_kind: str
 ) -> None:
     repo = tmp_path / "repo"
@@ -240,7 +269,7 @@ def test_occupied_expected_link_aborts_before_mutation(
     result = run_setup(repo, llmos)
 
     assert result.returncode == 2
-    assert "collisions detected before mutation" in result.stderr
+    assert "retired layout path must be a symlink or absent" in result.stderr
     assert str(path) in result.stderr
     assert snapshot(tmp_path) == before
 
@@ -268,6 +297,7 @@ def test_legacy_content_migrates_losslessly_exactly_once(tmp_path: Path) -> None
     assert not (project / "specs").exists()
     assert not (project / "adr").exists()
     assert not (repo / "docs/adr").exists()
+    assert (repo / "docs/agents/adrs/deep/0002-repo.md").read_bytes() == b"repo adr\xff"
     assert unrelated.read_bytes() == b"unrelated\x00\xff"
     before = snapshot(tmp_path)
 
