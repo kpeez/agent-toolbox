@@ -8,7 +8,7 @@ description: Disciplined diagnosis loop for hard bugs and performance regression
 A discipline for hard bugs. Skip phases only when explicitly justified.
 
 When exploring, use the project's own vocabulary (the `CONTEXT.md` glossary if
-present) to build a clear mental model, and check `docs/adrs/` for decisions in
+present) to build a clear mental model, and check `docs/agents/adrs/` for decisions in
 the area you're touching.
 
 ## Phase 1 — Build a feedback loop

@@ -33,7 +33,7 @@ Two modes:
 ## Workflow
 
 1. **Context** — resolve the spec: the argument if given, else the most
-   recently modified `specs/NNNN-*.md`, else proceed without one. Read
+   recently modified `docs/agents/specs/NNNN-*.md`, else proceed without one. Read
    the spec and its linked tracker issues for intent and the desired PR slice.
    Resolve the base branch from the remote default — never assume `main`:
    `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else
@@ -73,6 +73,6 @@ skill — it stays a human action.
 ## Markdown artifact (on request only)
 
 When the user asks, or as a fallback when `gh` is unavailable: write
-`specs/NNNN-<slug>-pr.md` (gitignored — never committed) with one
+`docs/agents/specs/NNNN-<slug>-pr.md` (gitignored — never committed) with one
 section per commit: subject, one-line rationale, file list, and the
 `git diff <base>...HEAD -- <files>` output for that group.

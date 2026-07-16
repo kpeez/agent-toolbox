@@ -28,14 +28,14 @@ Key principles:
 - **One adapter = hypothetical seam. Two adapters = real seam.**
 
 This skill is *informed* by the project's domain model: the `CONTEXT.md` glossary
-(if present) gives names to good seams; `docs/adrs/` records decisions the skill
+(if present) gives names to good seams; `docs/agents/adrs/` records decisions the skill
 should not re-litigate.
 
 ## Process
 
 ### 1. Explore
 
-Read `CONTEXT.md` and any `docs/adrs/` in the area first. Then walk the codebase
+Read `CONTEXT.md` and any `docs/agents/adrs/` in the area first. Then walk the codebase
 (use the `Explore` subagent for breadth). Don't follow rigid heuristics — note
 where you experience friction:
 

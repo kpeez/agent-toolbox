@@ -14,8 +14,8 @@ the local spec is authoring residue.
 Specs are not user-written. A spec is the product of a `/sharpen` session (or an
 approved plan-mode plan): the agent distills the sharpened plan into the `NNNN-<slug>.md`
 goal/scope header and the user confirms it at the review gate. Durable decisions
-surfaced by the sharpen go to the shared vault as ADRs via the `docs/adrs/`
-symlink, not the spec.
+surfaced by the sharpen go to the shared vault as ADRs under `docs/agents/adrs/`,
+not the spec.
 
 ## The verification rule
 
@@ -40,7 +40,7 @@ additions, renames.
 ## If you're already in plan mode
 
 Don't double-dip. Your approved plan **is** the sharpened input. Write it straight
-to `specs/NNNN-<slug>.md` as the goal/scope header, expand the design body below
+to `docs/agents/specs/NNNN-<slug>.md` as the goal/scope header, expand the design body below
 the `---` divider, and flag the header for the user to confirm.
 
 ## Workflow
@@ -60,29 +60,29 @@ the `---` divider, and flag the header for the user to confirm.
 
 ## /write-spec new <name>
 
-Creates a feature spec file `specs/NNNN-<slug>.md`.
+Creates a feature spec file `docs/agents/specs/NNNN-<slug>.md`.
 
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
-<step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/specs` must point directly at `$LLMOS_ROOT/projects/<repo>/docs/specs` and `specs` must be the exact relative alias `docs/specs`; never create either as a real committed directory in the source repo</step>
-<step action="allocate-number">if an existing `specs/NNNN-<slug>.md` already matches this slug, reuse its number. Otherwise scan `specs/` for files matching `^[0-9]{4}-`, take the highest number, add 1, and zero-pad to 4 digits (start at `0001` if none exist) -> `<NNNN>`. Do this immediately before writing the file</step>
-<step action="create-files">read `templates.md` and write `NNNN-<slug>.md` to `specs/`; never overwrite an existing spec file for this slug — a present goal/scope header is settled and authoritative</step>
+<step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/agents` must be a symlink pointing directly at `$LLMOS_ROOT/projects/<repo>/docs`; never create `docs/agents` as a real committed directory in the source repo</step>
+<step action="allocate-number">if an existing `docs/agents/specs/NNNN-<slug>.md` already matches this slug, reuse its number. Otherwise scan `docs/agents/specs/` for files matching `^[0-9]{4}-`, take the highest number, add 1, and zero-pad to 4 digits (start at `0001` if none exist) -> `<NNNN>`. Do this immediately before writing the file</step>
+<step action="create-files">read `templates.md` and write `NNNN-<slug>.md` to `docs/agents/specs/`; never overwrite an existing spec file for this slug — a present goal/scope header is settled and authoritative</step>
 <step action="populate">fill the goal/scope header from the sharpened plan (or approved plan-mode plan) and flag it for the user to confirm; if `NNNN-<slug>.md` already exists, leave its header alone. Then expand the design body below the `---` divider and name in the Verification section the behavior-level tests that will prove each behavior</step>
 </steps>
 
 ## Spec structure
 
 A spec is **`NNNN-<slug>.md`** — pure markdown with no code files
-live under `specs/` (the shared specs directory may be an Obsidian vault). `/to-issues`
+live under `docs/agents/specs/` (the shared specs directory may be an Obsidian vault). `/to-issues`
 may create sibling local issue files named `NNNN-<slug>-issue-<NN>-<issue-slug>.md`.
 Verification code lives in the repo — committed tests in the project's suite,
 plus transient scratch scripts (per `/tdd`) in gitignored `tests/temp/`. Specs
-must never be committed to the source repository. Keep `specs` ignored there
-and point its repo-local symlink at the shared
-`$LLMOS_ROOT/projects/<repo>/docs/specs` directory.
+must never be committed to the source repository: they are reached through the
+gitignored `docs/agents/` symlink, which points at the shared
+`$LLMOS_ROOT/projects/<repo>/docs` directory.
 
 ```
-specs/
+docs/agents/specs/
 ├── 0001-<slug>.md # Goal/scope header + agent-expanded design
 └── 0002-<slug>.md
 ```
@@ -102,7 +102,7 @@ Two semantics worth knowing beyond the template:
   implementation — the default) or `autonomous` (the agent proceeds after writing
   the design, e.g. driven by `/goal`), plus stop conditions.
 - **Durable decisions** (architecture, provider policy, storage model, security
-  posture) go in the shared vault as ADRs via the `docs/adrs/` symlink (see
+  posture) go in the shared vault as ADRs under `docs/agents/adrs/` (see
   `sharpen`'s `ADR-FORMAT.md`) and are linked from the Decisions section. The
   optional domain glossary is the still-committed `CONTEXT.md` at the repo root.
 

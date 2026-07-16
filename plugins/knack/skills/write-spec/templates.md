@@ -1,6 +1,6 @@
 # Spec Templates
 
-File templates for `/write-spec new`. Write each to its target path under `specs/`.
+File templates for `/write-spec new`. Write each to its target path under `docs/agents/specs/`.
 
 A spec is **`NNNN-<slug>.md`** (human goal + agent design) — pure markdown, no
 code files. Verification lives in the project's committed test suite. Task and
@@ -8,7 +8,7 @@ status truth live on the issue tracker, not in a local file.
 
 <templates>
 
-<template file="specs/NNNN-<slug>.md">
+<template file="docs/agents/specs/NNNN-<slug>.md">
 # <Title>
 
 <!--
@@ -57,7 +57,7 @@ Two zones in one file:
 
 <!-- non-obvious choices: what we chose, why, alternatives considered.
      If a decision is durable beyond this feature (architecture, storage model,
-     provider policy, framework choice), record it in docs/adrs/ instead and
+     provider policy, framework choice), record it in docs/agents/adrs/ instead and
      link it here. -->
 
 ## Risks
