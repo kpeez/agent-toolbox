@@ -88,7 +88,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 
 | Skill                           | Purpose                                                                                                               |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `setup-repo`                    | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs + ADR directories |
+| `setup-repo`                    | Interview-driven repo setup: thin repo-level `AGENTS.md`, `CLAUDE.md` symlink, and collision-safe llmOS-backed project docs topology |
 | `start-loop`                    | Run/resume the whole spine as one command (sharpen → spec → issues → implement); spec approval is the last prompt, then the loop runs to done |
 | `write-spec`                    | Create a feature spec — a pure-markdown design draft verified by committed tests; `/write-spec new` scaffolds it      |
 | `implement`                     | How to implement a spec — prove behavior with `/tdd`, and orchestrate the work via delegation                         |
@@ -136,7 +136,7 @@ when the behavior is known, or sketch first — scratch scripts in gitignored
 `tests/temp/` that verify the planned implementation against the real repo,
 refactored into committed tests as the code stabilizes. `/tdd` also stands
 alone as a design sketch before you commit to an approach. Durable decisions
-get recorded as ADRs in `docs/adr/` along the way.
+get recorded as ADRs in `docs/adrs/` along the way.
 
 ```mermaid
 graph LR
@@ -163,9 +163,9 @@ style P fill:#22272e,stroke:#768390,color:#768390
 
 | Phase                                 | When / what happens                                                                                                                                                                                                                                          |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.                                                                                   |
+| `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adrs/`.                                                                                  |
 | `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
-| `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                                                                                                  |
+| `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adrs/`.                                                                                                 |
 | `/write-spec`                         | Capture the settled plan — pure-markdown `SPEC-<slug>.md` (human goal/scope header + agent design body); its Verification section names the committed tests that prove each behavior. In plan mode, dump the approved plan straight in. Establishes intent.         |
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
 | **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: one goal at a time (never horizontal batches). Scratch scripts in `tests/temp/` import the real repo to prove behavior, then are refactored into committed tests; the rest are deleted. No mock-slop. `/tdd` also stands alone as a design sketch. |
@@ -217,10 +217,10 @@ directly.
 Knowledge that must outlive a single feature, split by durability and where it
 lives:
 
-- **`docs/adr/`** — Architecture Decision Records. Durable, but like specs they
+- **`docs/adrs/`** — Architecture Decision Records. Durable, but like specs they
   are **not committed to the source repo**: they live in the shared llmOS vault
-  at `$LLMOS_ROOT/projects/<repo>/adr`, reached through a gitignored repo-local
-  `docs/adr/` symlink. Created lazily by `/sharpen`, `/tdd`, or
+  at `$LLMOS_ROOT/projects/<repo>/docs/adrs`, reached through a gitignored
+  repo-local `docs/adrs/` symlink. Created lazily by `/sharpen`, `/tdd`, or
   `/improve-codebase-architecture` when a decision is hard to reverse, surprising
   without context, and the result of a real trade-off. They stop the agent from
   re-litigating settled choices. Unlike the transient `specs/` tree, ADRs persist
@@ -269,27 +269,28 @@ and code rules already live in the user-level instructions.
 
 ## Specs & ADR Setup
 
-Specs and ADRs should never be committed to the source repository. Store the
-canonical shared files in the llmOS vault, add `specs` and `docs/adr` to
-`.gitignore`, and symlink both back in. If the repo already has committed ADRs
-under `docs/adr/`, the block moves them into the vault before linking (so `ln`
-replaces the directory instead of nesting a symlink inside it). Set `LLMOS_ROOT`
-to the llmOS checkout:
+Specs and ADRs should never be committed to the source repository. Their
+canonical directories are `$LLMOS_ROOT/projects/<project>/docs/specs` and
+`$LLMOS_ROOT/projects/<project>/docs/adrs`. Source repositories expose direct
+links at `docs/specs` and `docs/adrs`, plus exact relative aliases
+`specs -> docs/specs` and `adrs -> docs/adrs`; all four paths are ignored.
+
+`/setup-repo` confirms the project mapping, then runs the reusable operation
+from the installed setup-repo skill. It preflights all collisions before the
+first mutation, migrates legacy project `specs` and `adr` trees plus repository
+`docs/adr` content without overwrite or byte loss, and repairs only symlinks:
 
 ```bash
 : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
-mkdir -p "$LLMOS_ROOT/projects/<repo>/specs" "$LLMOS_ROOT/projects/<repo>/adr"
-ln -s "$LLMOS_ROOT/projects/<repo>/specs" ./specs
-# migrate a pre-existing committed docs/adr into the vault before linking
-if [ -d docs/adr ] && [ ! -L docs/adr ]; then
-  find docs/adr -mindepth 1 -maxdepth 1 -exec mv -n {} "$LLMOS_ROOT/projects/<repo>/adr/" \;
-  rmdir docs/adr
-fi
-mkdir -p docs && ln -s "$LLMOS_ROOT/projects/<repo>/adr" ./docs/adr
-printf 'specs\ndocs/adr\n' >> .gitignore
+python3 "<setup-repo-skill-dir>/scripts/setup_project_docs.py" \
+  --repo-root "$(git rev-parse --show-toplevel)" \
+  --llmos-root "$LLMOS_ROOT" \
+  --project "<confirmed-project>"
 ```
 
-If you use a worktree-based setup, you should set up the following post-checkout git hook to automatically symlink the specs and ADR directories:
+For linked worktrees, point `post-checkout` at that same resolved script. The
+hook recreates missing or incorrect symlinks, never migrates real directories,
+and tells the operator to run `/setup-repo` when migration is required:
 
 ```bash
 #!/usr/bin/env bash
@@ -302,13 +303,12 @@ If you use a worktree-based setup, you should set up the following post-checkout
 git_dir=$(git rev-parse --git-dir)
 [[ "$git_dir" == *"/worktrees/"* ]] || exit 0
 
-ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" "$(pwd)/specs"
-# link ADRs only when docs/adr is absent or already a symlink; a real dir still
-# holds committed ADRs — run /setup-repo to migrate rather than nesting a link
-if [ ! -e "$(pwd)/docs/adr" ] || [ -L "$(pwd)/docs/adr" ]; then
-  mkdir -p "$(pwd)/docs"
-  ln -sfn "$LLMOS_ROOT/projects/<repo>/adr" "$(pwd)/docs/adr"
-fi
+: "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
+python3 "<resolved-setup-repo-skill-dir>/scripts/setup_project_docs.py" \
+  --repo-root "$(pwd)" \
+  --llmos-root "$LLMOS_ROOT" \
+  --project "<confirmed-project>" \
+  --worktree
 ```
 
 ## Feature Specs
@@ -330,7 +330,7 @@ validation, and whether implementation is review-gated or autonomous. The
 **design body** is agent-expanded after repo inspection: approach, behavior,
 decision log, risks, and verification mapping. Durable decisions (architecture,
 provider policy, storage model, framework choice) go in the shared vault as ADRs
-via the `docs/adr/` symlink, not the spec.
+via the `docs/adrs/` symlink, not the spec.
 
 The spec is a **local, transient design draft** — it forces design thinking and
 gives a review gate, then `/to-issues` hands the work to the tracker. There is no

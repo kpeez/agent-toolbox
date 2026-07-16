@@ -44,7 +44,7 @@ Record an ADR only when **all three** are true:
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
 If any of the three is missing, skip it. When all three hold, record it via the
-`docs/adr/` symlink using [ADR-FORMAT.md](./ADR-FORMAT.md), then tell me you did
-and why. ADRs live in the shared llmOS vault, not the repo; if the `docs/adr/`
-symlink is missing, create it into `$LLMOS_ROOT/projects/<repo>/adr` first (see
-`ADR-FORMAT.md`).
+`docs/adrs/` symlink using [ADR-FORMAT.md](./ADR-FORMAT.md), then tell me you did
+and why. ADRs live in the shared llmOS vault, not the repo; if the `docs/adrs/`
+symlink is missing, run `/setup-repo` to establish the approved project-docs
+topology first.
