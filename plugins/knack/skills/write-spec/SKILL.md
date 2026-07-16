@@ -14,7 +14,7 @@ the local spec is authoring residue.
 Specs are not user-written. A spec is the product of a `/sharpen` session (or an
 approved plan-mode plan): the agent distills the sharpened plan into the `SPEC-<slug>.md`
 goal/scope header and the user confirms it at the review gate. Durable decisions
-surfaced by the sharpen go to the shared vault as ADRs via the `docs/adr/`
+surfaced by the sharpen go to the shared vault as ADRs via the `docs/adrs/`
 symlink, not the spec.
 
 ## The verification rule
@@ -64,7 +64,7 @@ Creates a feature spec directory with `SPEC-<slug>.md`.
 
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
-<step action="ensure-shared">ensure a repo-local `specs` symlink points at `$LLMOS_ROOT/projects/<repo>/specs` (skip if already linked); never create `specs` as a real committed directory in the source repo</step>
+<step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/specs` must point directly at `$LLMOS_ROOT/projects/<repo>/docs/specs` and `specs` must be the exact relative alias `docs/specs`; never create either as a real committed directory in the source repo</step>
 <step action="mkdir">`specs/<slug>/` (no-op if already present)</step>
 <step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
 <step action="create-files">read `templates.md` and write `SPEC-<slug>.md` to `specs/<slug>/`; never overwrite an existing `SPEC-<slug>.md` — a present goal/scope header is settled and authoritative</step>
@@ -79,7 +79,7 @@ Verification code lives in the repo — committed tests in the project's suite,
 plus transient scratch scripts (per `/tdd`) in gitignored `tests/temp/`. Specs
 must never be committed to the source repository. Keep `specs` ignored there
 and point its repo-local symlink at the shared
-`$LLMOS_ROOT/projects/<repo>/specs` directory.
+`$LLMOS_ROOT/projects/<repo>/docs/specs` directory.
 
 ```
 specs/
@@ -100,7 +100,7 @@ Two semantics worth knowing beyond the template:
   implementation — the default) or `autonomous` (the agent proceeds after writing
   the design, e.g. driven by `/goal`), plus stop conditions.
 - **Durable decisions** (architecture, provider policy, storage model, security
-  posture) go in the shared vault as ADRs via the `docs/adr/` symlink (see
+  posture) go in the shared vault as ADRs via the `docs/adrs/` symlink (see
   `sharpen`'s `ADR-FORMAT.md`) and are linked from the Decisions section. The
   optional domain glossary is the still-committed `CONTEXT.md` at the repo root.
 
