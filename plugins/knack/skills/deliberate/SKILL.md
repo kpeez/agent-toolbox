@@ -90,5 +90,5 @@ would otherwise re-raise, record it as an ADR using `sharpen`'s
 bespoke decision-record format. Skip recording for ephemeral or self-evident
 reasons.
 
-Use the `documentation` skill's Markdown guidance for any written output: lead
-with the recommendation, keep evidence close to the claim it supports.
+For any written output, lead with the recommendation and keep evidence close to
+the claim it supports.

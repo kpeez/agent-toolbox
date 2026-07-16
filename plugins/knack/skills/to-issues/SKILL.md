@@ -108,9 +108,9 @@ up cold, with only the issue body for context. Write it so that's enough:
 - **Behavioral, not procedural.** Describe the capability and its observable
   outcome, not a step-by-step recipe. Let the implementing agent choose the how.
 - **No file paths or line numbers.** They go stale the moment someone refactors.
-  Exception: a blueprint-produced snippet that encodes a decision more precisely
-  than prose (state machine, reducer, schema, type shape) — inline just the
-  decision-rich part and note it came from a blueprint.
+  Exception: a spike-produced snippet (per `/tdd`) that encodes a decision more
+  precisely than prose (state machine, reducer, schema, type shape) — inline
+  just the decision-rich part and note it came from a spike.
 - **Complete acceptance criteria.** An agent must be able to tell, unaided, when
   the work is done. Every criterion is checkable.
 - **Explicit scope boundaries.** Say what's out of scope, so the agent doesn't
@@ -121,8 +121,7 @@ up cold, with only the issue body for context. Write it so that's enough:
 A **HITL** issue can be terser — a human fills the gaps — but note _why_ it needs
 a human (architectural call, design review, ambiguous trade-off).
 
-Before publishing parent and child issue bodies, use the `documentation` skill's
-Markdown guidance. Issue bodies are durable documentation: they need a clear
+Issue bodies are durable documentation: they need a clear
 reader action, enough context to resume cold, and acceptance criteria that can be
 checked without asking the original author.
 

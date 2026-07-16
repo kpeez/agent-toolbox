@@ -90,22 +90,20 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
 | `setup-repo`                    | knack  | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs directory   |
 | `start-loop`                    | knack  | Run/resume the whole spine as one command (sharpen → spec → issues → implement); spec approval is the last prompt, then the loop runs to done (user-invoked) |
-| `write-spec`                    | knack  | Create a feature spec — a local design draft plus runnable examples; `/write-spec new` scaffolds it                   |
-| `implement`                     | knack  | How to implement a spec — prove behavior with `/tdd` + `/blueprint`, and orchestrate the work via delegation          |
-| `tdd`                           | knack  | Test-driven development — one failing test → minimal code, vertical (not horizontal) slices, no mock-slop             |
-| `blueprint`                     | knack  | Examples-based development — verify a planned implementation against the real repo, then promote the slice or discard |
+| `write-spec`                    | knack  | Create a feature spec — a pure-markdown design draft verified by committed tests; `/write-spec new` scaffolds it      |
+| `implement`                     | knack  | How to implement a spec — prove behavior with `/tdd`, and orchestrate the work via delegation                         |
+| `tdd`                           | knack  | Test-driven development — spike uncertain designs against the real repo, then one failing test → minimal code, vertical (not horizontal) slices, no mock-slop |
 | `sharpen`                       | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs |
 | `deliberate`                    | knack  | Resolve a two-way decision — two independent cases (for/against), one capped rebuttal, evidence-weighted synthesis (model/user-invoked) |
 | `to-issues`                     | knack  | Break a spec/plan into independently-grabbable tracker issues using vertical slices                                   |
 | `diagnose`                      | knack  | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
 | `improve-codebase-architecture` | knack  | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
 | `zoom-out`                      | knack  | Go up a layer of abstraction and map an unfamiliar area of code (user-invoked)                                        |
-| `pr`                            | knack  | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests/examples first               |
+| `pr`                            | knack  | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests first                        |
 | `delegate`                      | knack  | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself (model-invoked) |
 | `merge-conflicts`               | knack  | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
 | `qmd`                           | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
 | `research`                      | knack  | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
-| `documentation`                 | knack  | Write clear, reviewable Markdown specs, issues, PRs, ADRs, reports, guides, and handoffs                              |
 | `validate-skills`               | knack  | Drift guard — check name/dir match, README inventory parity, manifest version parity, and dead skill references        |
 | `autoresearch`                  | lab    | Autonomous experiment loops with defined metrics and private logs                                                     |
 | `data-viz`                      | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
@@ -132,10 +130,11 @@ implement.
 Once the spec is settled, `/to-issues` publishes it (parent issue + sub-issues)
 and **the tracker takes over** — each issue is then picked up independently, in a
 fresh chat or a subagent, and runs its own implement → review → ship loop.
-Implementation uses two disciplines: `/tdd` (one failing test → minimal code) and
-`/blueprint` (verify a planned implementation against the real repo, then promote
-the slice). `/blueprint` also stands alone as a design spike before you commit to
-an approach. Durable decisions get recorded as ADRs in `docs/adr/` along the way.
+Implementation uses one discipline, `/tdd`, with two entries: one failing test →
+minimal code when the behavior is known, or a spike first — verify a planned
+implementation against the real repo, then graduate the slice into a committed
+test. `/tdd` also stands alone as a design spike before you commit to an
+approach. Durable decisions get recorded as ADRs in `docs/adr/` along the way.
 
 ```mermaid
 graph LR
@@ -143,11 +142,11 @@ graph LR
   X["/diagnose"] -.-> A
   Y["/improve-codebase-architecture"] -.-> A
   A --> I["/to-issues"]
-  I -->|"fresh chat / subagent per issue"| B["implement (/tdd + /blueprint)"]
+  I -->|"fresh chat / subagent per issue"| B["implement (/tdd)"]
   B --> C["review (host-native)"]
   C --> D["/pr"]
   X -.->|"small fix"| B
-  P["/blueprint (design spike)"] -.-> A
+  P["/tdd (design spike)"] -.-> A
 
 style G fill:#2d333b,stroke:#768390,color:#adbac7
 style A fill:#2d333b,stroke:#768390,color:#adbac7
@@ -165,11 +164,11 @@ style P fill:#22272e,stroke:#768390,color:#768390
 | `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adr/`.                                                                                   |
 | `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
 | `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                                                                                                  |
-| `/write-spec`                         | Capture the settled plan — `SPEC-<slug>.md` (human goal/scope header + agent design body) plus runnable examples. In plan mode, dump the approved plan straight in. Establishes intent.                                                                             |
+| `/write-spec`                         | Capture the settled plan — pure-markdown `SPEC-<slug>.md` (human goal/scope header + agent design body); its Verification section names the committed tests that prove each behavior. In plan mode, dump the approved plan straight in. Establishes intent.         |
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
-| **implement (`/tdd` + `/blueprint`)** | Per issue, in a fresh chat or subagent: vertical slices, one test → one implementation (never horizontal batches). Blueprint examples import the real repo to prove behavior, then graft in. No mock-slop. `/blueprint` also stands alone as a design spike. |
+| **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: vertical slices, one test → one implementation (never horizontal batches). Spikes import the real repo to prove behavior, then graft in and graduate into committed tests. No mock-slop. `/tdd` also stands alone as a design spike. |
 | review (host-native)                  | Clean-context review using your harness's built-in reviewer (e.g. Claude `/code-review`, Codex review). Challenge the approach, then flag bugs, bloat, and newly obsolete code before publishing.                                                            |
-| `/pr`                                 | Verify lint/types/tests/examples, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                     |
+| `/pr`                                 | Verify lint/types/tests, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                              |
 
 Not every session hits every phase. The dashed skills are alternate entry points
 or on-demand spikes. Run a host-native review pass before `/pr`. To resume across
@@ -217,7 +216,7 @@ Two committed files hold knowledge that must outlive a single feature and surviv
 a fresh clone — distinct from the private, ephemeral `specs/` tree:
 
 - **`docs/adr/`** — Architecture Decision Records. Created lazily by `/sharpen`,
-  `/blueprint`, or `/improve-codebase-architecture` when a decision is hard to
+  `/tdd`, or `/improve-codebase-architecture` when a decision is hard to
   reverse, surprising without context, and the result of a real trade-off. They
   stop the agent from re-litigating settled choices.
 - **`CONTEXT.md`** _(optional, repo root)_ — a domain glossary, nothing else.
@@ -292,14 +291,15 @@ ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" "$(pwd)/specs"
 
 ## Feature Specs
 
-A spec is **`SPEC-<slug>.md` plus `examples/`** — nothing more (created by `/write-spec new`):
+A spec is **`SPEC-<slug>.md`** — nothing more, and pure markdown (created by
+`/write-spec new`). Verification lives in the repo's committed test suite; the
+spec's Verification section names the tests that pin its behaviors.
 
 ```text
 specs/
 ├── AGENTS.md           # How agents navigate specs; not a manual index
 └── <feature>/
-    ├── SPEC-<slug>.md         # Human goal/scope header + agent-expanded design body
-    └── examples/       # Runnable verification scripts (REQUIRED)
+    └── SPEC-<slug>.md         # Human goal/scope header + agent-expanded design body
 ```
 
 `SPEC-<slug>.md` has two ownership zones split by a `---` divider. The **goal/scope

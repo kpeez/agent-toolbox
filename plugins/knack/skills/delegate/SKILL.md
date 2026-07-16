@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to an explorer, plan/design drafting to a planner, and well-specified codegen to a doer, then review what comes back. Use whenever you are about to read many files to answer a question, draft a plan or spec, or write a substantial, well-specified chunk of code — including from within /start-loop, /implement, /tdd, /blueprint, /diagnose, and /improve-codebase-architecture.
+description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to an explorer, plan/design drafting to a planner, and well-specified codegen to a doer, then review what comes back. Use whenever you are about to read many files to answer a question, draft a plan or spec, or write a substantial, well-specified chunk of code — including from within /start-loop, /implement, /tdd, /diagnose, and /improve-codebase-architecture.
 user-invocable: false
 ---
 

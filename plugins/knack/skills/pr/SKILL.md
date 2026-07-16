@@ -1,7 +1,6 @@
 ---
 name: pr
 description: Group current branch diff into atomic commits, push, and open a draft PR if missing. Use when ready to publish branch work.
-model: sonnet
 ---
 
 # /pr — Group, Commit, Push, Draft PR
@@ -18,10 +17,11 @@ commits, push, and ensure a draft PR exists.
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only when the user asks.
 - **Never force-push.** Squash merge by default.
-- **Reviewable Markdown.** Use the `documentation` skill when drafting PR bodies
-  or optional PR markdown artifacts.
-- **Verify before you commit.** Lint, types, tests, and spec examples must pass
-  first; a failing check is a stop, not a warning.
+- **Reviewable Markdown.** PR bodies and optional PR markdown artifacts must be
+  easy to review as plain Markdown.
+- **Verify before you commit.** Lint, types, and tests (including the tests
+  named in the spec's Verification section) must pass first; a failing check is
+  a stop, not a warning.
 
 ## Workflow
 
@@ -32,8 +32,8 @@ commits, push, and ensure a draft PR exists.
    `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else
    `git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@'`,
    else `main`.
-2. **Verify** — run the repo's lint, type-check, tests, and spec examples. If any
-   fail, stop and report; do not commit on red.
+2. **Verify** — run the repo's lint, type-check, and tests. If any fail, stop
+   and report; do not commit on red.
 3. **Group** — collect the diff against `git merge-base <base> HEAD` plus
    uncommitted and untracked work; cluster files (within-file hunks if needed)
    into single-intent groups.
