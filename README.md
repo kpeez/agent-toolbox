@@ -137,7 +137,7 @@ when the behavior is known, or sketch first — scratch scripts in gitignored
 `tests/temp/` that verify the planned implementation against the real repo,
 refactored into committed tests as the code stabilizes. `/tdd` also stands
 alone as a design sketch before you commit to an approach. Durable decisions
-get recorded as ADRs in `docs/adrs/` along the way.
+get recorded as ADRs in `docs/agents/adrs/` along the way.
 
 ```mermaid
 graph LR
@@ -164,9 +164,9 @@ style P fill:#22272e,stroke:#768390,color:#768390
 
 | Phase                                 | When / what happens                                                                                                                                                                                                                                          |
 | ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/adrs/`.                                                                                  |
+| `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/agents/adrs/`.                                                                                  |
 | `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
-| `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adrs/`.                                                                                                 |
+| `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/agents/adrs/`.                                                                                                 |
 | `/write-spec`                         | Capture the settled plan — pure-markdown `NNNN-<slug>.md` (human goal/scope header + agent design body); its Verification section names the committed tests that prove each behavior. In plan mode, dump the approved plan straight in. Establishes intent.         |
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
 | **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: one goal at a time (never horizontal batches). Scratch scripts in `tests/temp/` import the real repo to prove behavior, then are refactored into committed tests; the rest are deleted. No mock-slop. `/tdd` also stands alone as a design sketch. |
@@ -218,14 +218,14 @@ directly.
 Knowledge that must outlive a single feature, split by durability and where it
 lives:
 
-- **`docs/adrs/`** — Architecture Decision Records. Durable, but like specs they
-  are **not committed to the source repo**: they live in the shared llmOS vault
-  at `$LLMOS_ROOT/projects/<repo>/docs/adrs`, reached through a gitignored
-  repo-local `docs/adrs/` symlink. Created lazily by `/sharpen`, `/tdd`, or
+- **`docs/agents/adrs/`** — Architecture Decision Records. Durable, but like
+  specs they are **not committed to the source repo**: they live in the shared
+  llmOS vault at `$LLMOS_ROOT/projects/<repo>/docs/adrs`, reached through the
+  gitignored `docs/agents/` symlink. Created lazily by `/sharpen`, `/tdd`, or
   `/improve-codebase-architecture` when a decision is hard to reverse, surprising
   without context, and the result of a real trade-off. They stop the agent from
-  re-litigating settled choices. Unlike the transient `specs/` tree, ADRs persist
-  across features.
+  re-litigating settled choices. Unlike the transient `docs/agents/specs/` tree,
+  ADRs persist across features.
 - **`CONTEXT.md`** _(optional, repo root, committed)_ — a domain glossary,
   nothing else. Pins down overloaded terminology (especially useful for
   ML/research repos). Read by `sharpen`, `diagnose`, and
@@ -234,7 +234,8 @@ lives:
 The issue tracker is selected at runtime by `/to-issues` — an optional
 `Issue tracker: <name>` line in the repo's `AGENTS.md` wins; otherwise Linear
 when its MCP tools are available, GitHub when the repo has a GitHub remote and
-`gh` works, local markdown named `specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md` as the fallback.
+`gh` works, local markdown named
+`docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md` as the fallback.
 Conventions for each live in the `to-issues` skill's `references/`; there is no
 per-repo config file.
 
@@ -263,23 +264,33 @@ the thin repo-root `AGENTS.md` — stack commands (`uv run ruff format` /
 `uv run ruff check` / `uv run ty check` for Python, the repo's real `typecheck`
 script for JS/TS), changesets rules when `.changeset/` exists, and the Agent
 skills block (`Issue tracker:` line, triage labels, domain docs layout) —
-symlinks `CLAUDE.md → AGENTS.md`, and performs the specs setup below. The repo
+symlinks `CLAUDE.md → AGENTS.md`, and performs the agent docs setup below. The repo
 file carries only repo conventions; the workflow spine and code rules live in
 the user-level instructions, and tracker mechanics stay in `/to-issues`. The repo file carries only repo conventions — the workflow spine
 and code rules already live in the user-level instructions.
 
-## Specs & ADR Setup
+## Agent Docs Setup
 
-Specs and ADRs should never be committed to the source repository. Their
-canonical directories are `$LLMOS_ROOT/projects/<project>/docs/specs` and
-`$LLMOS_ROOT/projects/<project>/docs/adrs`. Source repositories expose direct
-links at `docs/specs` and `docs/adrs`, plus exact relative aliases
-`specs -> docs/specs` and `adrs -> docs/adrs`; all four paths are ignored.
+Agent-facing documentation is never committed to the source repository. It all
+lives under one directory — **`docs/agents/`** — which is a gitignored symlink
+to the project's docs tree in the shared llmOS vault:
+
+```text
+docs/agents -> $LLMOS_ROOT/projects/<project>/docs
+├── specs/     # feature specs, and local-tracker issue files
+├── adrs/      # architecture decision records
+└── research/  # anything else agent-facing lives here too
+```
+
+The link is the whole contract: whatever the project's vault docs tree
+contains shows up under `docs/agents/`, so new categories need no setup step.
+`docs/agents` is the single ignore entry.
 
 `/setup-repo` confirms the project mapping, then runs the reusable operation
 from the installed setup-repo skill. It preflights all collisions before the
 first mutation, migrates legacy project `specs` and `adr` trees plus repository
-`docs/adr` content without overwrite or byte loss, and repairs only symlinks:
+`docs/adr` content without overwrite or byte loss, retires the superseded
+`docs/specs`, `docs/adrs`, `specs`, and `adrs` links, and repairs only symlinks:
 
 ```bash
 : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
@@ -319,12 +330,12 @@ A spec is **`NNNN-<slug>.md`** — nothing more, and pure markdown (created by
 spec's Verification section names the tests that pin its behaviors.
 
 ```text
-specs/
+docs/agents/specs/
 ├── 0001-<slug>.md      # Human goal/scope header + agent-expanded design body
 └── 0002-<slug>.md
 ```
 
-Numbered flat, like `docs/adrs/`. The number is the index — `ls` sorts it and
+Numbered flat, like `docs/agents/adrs/`. The number is the index — `ls` sorts it and
 the highest is the newest, so specs carry no navigation or index file.
 
 `NNNN-<slug>.md` has two ownership zones split by a `---` divider. The **goal/scope
@@ -333,7 +344,7 @@ validation, and whether implementation is review-gated or autonomous. The
 **design body** is agent-expanded after repo inspection: approach, behavior,
 decision log, risks, and verification mapping. Durable decisions (architecture,
 provider policy, storage model, framework choice) go in the shared vault as ADRs
-via the `docs/adrs/` symlink, not the spec.
+under `docs/agents/adrs/`, not the spec.
 
 The spec is a **local, transient design draft** — it forces design thinking and
 gives a review gate, then `/to-issues` hands the work to the tracker. There is no

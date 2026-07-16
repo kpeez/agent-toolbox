@@ -60,8 +60,8 @@ fine section.
 
 Never a local file. `STATUS.md` and other hand-rolled handoff files are the
 ledger this workflow deliberately removed — status lives on the tracker, and a
-handoff file drifts from it immediately. You may find `specs/NNNN-<slug>-handoff.md`
-files already in `specs/` — those are legacy archives of the old status ledger
+handoff file drifts from it immediately. You may find `docs/agents/specs/NNNN-<slug>-handoff.md`
+files already in `docs/agents/specs/` — those are legacy archives of the old status ledger
 from before this workflow moved status to the tracker; read them for history,
 but never create a new one.
 

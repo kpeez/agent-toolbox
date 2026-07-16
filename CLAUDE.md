@@ -29,16 +29,14 @@ never burn the lead context on bulk reads or typing implementation.
    slices are ready by construction; skip only `ready-for-human`); comment
    progress on the active issue before running out of context
 
-Specs and ADRs must never be committed to the source repository. Store their
-canonical shared copies in `$LLMOS_ROOT/projects/<repo>/docs/specs` and
-`$LLMOS_ROOT/projects/<repo>/docs/adrs`, keep `specs`, `adrs`, `docs/specs`, and
-`docs/adrs` ignored here, and reach them through direct `docs/` links plus exact
-relative root aliases.
+Agent-facing docs are never committed. They all live under `docs/agents/` — one
+gitignored symlink to `$LLMOS_ROOT/projects/<repo>/docs` — holding `specs/`,
+`adrs/`, `research/`, and anything else agents write. If it's missing, run
+`/setup-repo`; never create it as a real directory.
 
-Durable decisions live as ADRs in the shared vault, reached via the `docs/adrs/`
-symlink; the optional domain glossary is the still-committed repo-root
-`CONTEXT.md`. An optional `Issue tracker: <name>` line in this file pins the
-tracker; otherwise `/to-issues` auto-detects.
+Durable decisions are ADRs in `docs/agents/adrs/`; the optional domain glossary is
+the still-committed repo-root `CONTEXT.md`. An optional `Issue tracker: <name>`
+line in the repo's `AGENTS.md` pins the tracker; otherwise `/to-issues` auto-detects.
 
 ## Code rules
 

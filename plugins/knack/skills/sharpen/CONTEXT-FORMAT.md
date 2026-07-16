@@ -2,7 +2,7 @@
 
 `CONTEXT.md` is a **committed**, repo-root domain glossary — and nothing else.
 Not a spec, not a scratch pad, not a place for implementation decisions (those go
-in `docs/adrs/`). It pins down the project's vocabulary so terminology doesn't
+in `docs/agents/adrs/`). It pins down the project's vocabulary so terminology doesn't
 drift across sessions. Create it lazily, only when the first term needs resolving.
 
 It is optional. Most small changes never touch it. It earns its place when a

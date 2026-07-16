@@ -9,14 +9,14 @@ chat, or a different machine.
 Apply in order. An approved spec establishes the slug but does **not** bypass the
 tracker-parent search.
 
-1. **Explicit spec slug** in the argument — `specs/NNNN-<arg>.md` exists (or the
-   legacy `specs/<arg>/SPEC-<arg>.md`) → bind the slug; it overrides branch-name
+1. **Explicit spec slug** in the argument — `docs/agents/specs/NNNN-<arg>.md` exists (or the
+   legacy `docs/agents/specs/<arg>/SPEC-<arg>.md`) → bind the slug; it overrides branch-name
    and mtime candidates. Continue detection from step 3 with that slug.
 2. **Explicit tracker target** named in the argument (issue id/url) → fetch it. If
    it's a child, find its parent. Skip sharpen, spec, and publication; resume from
    tracker state.
-3. **Approved spec** — `specs/NNNN-<slug>.md` (or the legacy
-   `specs/<slug>/SPEC-<slug>.md`) contains `<!-- knack:spec-approved -->`
+3. **Approved spec** — `docs/agents/specs/NNNN-<slug>.md` (or the legacy
+   `docs/agents/specs/<slug>/SPEC-<slug>.md`) contains `<!-- knack:spec-approved -->`
    → skip `sharpen` and `write-spec`.
    - Complete header but no marker → ask: *"This spec has no recorded approval
      marker. Treat its current header as authoritative? Reply `approve` or
