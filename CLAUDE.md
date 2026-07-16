@@ -29,13 +29,15 @@ never burn the lead context on bulk reads or typing implementation.
    slices are ready by construction; skip only `ready-for-human`); comment
    progress on the active issue before running out of context
 
-Specs must never be committed to the source repository. Store their canonical
-shared copy in `$LLMOS_ROOT/projects/<repo>/specs`, keep `specs` ignored here,
-and use a repo-local symlink into llmOS.
+Specs and ADRs must never be committed to the source repository. Store their
+canonical shared copies in `$LLMOS_ROOT/projects/<repo>/specs` and
+`$LLMOS_ROOT/projects/<repo>/adr`, keep `specs` and `docs/adr` ignored here, and
+reach both through repo-local symlinks into llmOS.
 
-Durable decisions live in committed `docs/adr/`; the optional domain glossary
-is repo-root `CONTEXT.md`. An optional `Issue tracker: <name>` line in this
-file pins the tracker; otherwise `/to-issues` auto-detects.
+Durable decisions live as ADRs in the shared vault, reached via the `docs/adr/`
+symlink; the optional domain glossary is the still-committed repo-root
+`CONTEXT.md`. An optional `Issue tracker: <name>` line in this file pins the
+tracker; otherwise `/to-issues` auto-detects.
 
 ## Code rules
 
