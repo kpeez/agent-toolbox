@@ -9,21 +9,22 @@ One verification discipline and one stance.
 
 ## Prove behavior before you commit to it
 
-**`/tdd`** is the discipline, with two entries: when the behavior is known, go
-straight to a failing test — one failing test → minimal code → repeat, across
-vertical (never horizontal) slices, testing through public interfaces, not
-internals. When the design is uncertain, spike first — runnable scratch code
-that imports the real repo and proves the planned implementation — then
-graduate it into a test or end with a captured verdict.
+**`/tdd`** is the discipline: every stated goal ends up proven by a committed
+functional test that exercises the real code path. When the behavior is known,
+write the test directly. When the design is uncertain, sketch first — scratch
+scripts in gitignored `tests/temp/` that import the real repo and prove the
+planned implementation — then refactor the exact scripts that hold up into
+proper tests, one goal at a time (vertical, never horizontal), testing through
+public interfaces, not internals. If you catch yourself calling a goal done
+with nothing that verifies it, STOP and write the check.
 
-Describe the behavior → prove it (a failing test, or a red spike that will
-graduate into one) → implement until green. If you catch yourself writing
-implementation with nothing that verifies it, STOP and write the check first.
-
-Both entries end in the project's test suite: a direct test is written red-first,
-and a graduated spike becomes one. The spec stays pure
-markdown — its Verification section names the tests, and the committed tests
-are the record. Test failures are spec failures — fix them before marking done.
+Implementation-bearing paths end in the project's test suite: a direct test,
+or a graduated scratch script. A verdict-only script ends in a recorded
+decision — an ADR, spec decision, or tracker entry — rather than tests, and
+`tests/temp/` is empty by PR time: every script graduates or is deleted. The
+spec stays pure markdown — its Verification section names the tests, and the
+committed tests or recorded decision are the record. Test failures are
+spec failures — fix them before marking done.
 "Done" also means lint and type-check pass, not just tests.
 
 ## Working from the tracker
@@ -79,8 +80,8 @@ Use the least powerful model sufficient for the task (tiers per `/delegate`):
 | Medium     | Multi-file, integration concerns, pattern matching          | doer     | sonnet (or opus, low) | gpt-5.6-luna (xhigh)  |
 | High       | Architecture, design judgment, broad codebase understanding | planner  | fable / opus (high)   | gpt-5.6-sol           |
 
-Always tell the worker to follow the verification discipline — write the test or
-spike first, confirm red, implement, confirm green — and to report status
+Always tell the worker to follow the verification discipline — prove each
+stated goal with a functional test per `/tdd`, run and passing — and to report status
 (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED). Handle each status before
 proceeding: address concerns that touch correctness or scope, provide missing
 context and re-dispatch, or diagnose a block before retrying.
@@ -93,6 +94,6 @@ local file.
 
 ## Cross-references
 
-- `/sharpen` — stress-test a plan before writing tests or spikes.
+- `/sharpen` — stress-test a plan before writing tests or scratch scripts.
 - `/write-spec new <name>` — scaffold a pure-markdown spec whose Verification section names the tests.
 - `/delegate` — the mechanics of exploring and generating via workers.

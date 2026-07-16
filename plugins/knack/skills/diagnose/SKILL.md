@@ -22,7 +22,7 @@ Spend disproportionate effort here. **Be aggressive. Be creative. Refuse to give
 
 Ways to construct one — try them in roughly this order:
 
-1. **Failing test / example** at whatever seam reaches the bug — unit, integration, e2e, or a `/tdd` spike scaffold.
+1. **Failing test / example** at whatever seam reaches the bug — unit, integration, e2e, or a `/tdd` scratch script.
 2. **Curl / HTTP script** against a running dev server.
 3. **CLI invocation** with a fixture input, diffing stdout against a known-good snapshot.
 4. **Headless browser script** (Playwright / Puppeteer) — drives the UI, asserts on DOM/console/network.

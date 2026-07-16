@@ -86,28 +86,29 @@ scripts/bump-plugin-version.sh knack 1.0.2
 
 ## Skills
 
-| Skill                           | Plugin | Purpose                                                                                                               |
-| ------------------------------- | ------ | --------------------------------------------------------------------------------------------------------------------- |
-| `setup-repo`                    | knack  | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs directory   |
-| `start-loop`                    | knack  | Run/resume the whole spine as one command (sharpen → spec → issues → implement); spec approval is the last prompt, then the loop runs to done (user-invoked) |
-| `write-spec`                    | knack  | Create a feature spec — a pure-markdown design draft verified by committed tests; `/write-spec new` scaffolds it      |
-| `implement`                     | knack  | How to implement a spec — prove behavior with `/tdd`, and orchestrate the work via delegation                         |
-| `tdd`                           | knack  | Test-driven development — spike uncertain designs against the real repo, then one failing test → minimal code, vertical (not horizontal) slices, no mock-slop |
-| `sharpen`                       | knack  | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs |
-| `deliberate`                    | knack  | Resolve a two-way decision — two independent cases (for/against), one capped rebuttal, evidence-weighted synthesis (model/user-invoked) |
-| `to-issues`                     | knack  | Break a spec/plan into independently-grabbable tracker issues using vertical slices                                   |
-| `diagnose`                      | knack  | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
-| `improve-codebase-architecture` | knack  | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
-| `zoom-out`                      | knack  | Go up a layer of abstraction and map an unfamiliar area of code (user-invoked)                                        |
-| `pr`                            | knack  | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests first                        |
-| `delegate`                      | knack  | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself (model-invoked) |
-| `merge-conflicts`               | knack  | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
-| `qmd`                           | knack  | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
-| `research`                      | knack  | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
-| `validate-skills`               | knack  | Drift guard — check name/dir match, README inventory parity, manifest version parity, and dead skill references        |
-| `autoresearch`                  | lab    | Autonomous experiment loops with defined metrics and private logs                                                     |
-| `data-viz`                      | lab    | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
+| Skill                           | Purpose                                                                                                               |
+| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `setup-repo`                    | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs directory   |
+| `start-loop`                    | Run/resume the whole spine as one command (sharpen → spec → issues → implement); spec approval is the last prompt, then the loop runs to done |
+| `write-spec`                    | Create a feature spec — a pure-markdown design draft verified by committed tests; `/write-spec new` scaffolds it      |
+| `implement`                     | How to implement a spec — prove behavior with `/tdd`, and orchestrate the work via delegation                         |
+| `tdd`                           | Functional-test discipline — sketch scratch scripts in `tests/temp/` against the real repo, then refactor the survivors into committed tests proving the stated goals; no mock-slop |
+| `sharpen`                       | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs                             |
+| `deliberate`                    | Resolve a two-way decision — two independent cases (for/against), one capped rebuttal, evidence-weighted synthesis   |
+| `to-issues`                     | Break a spec/plan into independently-grabbable tracker issues using vertical slices                                 |
+| `diagnose`                      | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
+| `improve-codebase-architecture` | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
+| `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                                                      |
+| `pr`                            | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests first                        |
+| `delegate`                      | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself |
+| `merge-conflicts`               | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
+| `qmd`                           | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
+| `research`                      | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
+| `validate-skills`               | Drift guard — check name/dir match, README inventory parity, manifest version parity, and dead skill references        |
+| `autoresearch`                  | Autonomous experiment loops with defined metrics and private logs                                                     |
+| `data-viz`                      | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
 
+Each skill's frontmatter declares whether it is user-invocable.
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
 ## Workflow
@@ -130,11 +131,12 @@ implement.
 Once the spec is settled, `/to-issues` publishes it (parent issue + sub-issues)
 and **the tracker takes over** — each issue is then picked up independently, in a
 fresh chat or a subagent, and runs its own implement → review → ship loop.
-Implementation uses one discipline, `/tdd`, with two entries: one failing test →
-minimal code when the behavior is known, or a spike first — verify a planned
-implementation against the real repo, then graduate the slice into a committed
-test. `/tdd` also stands alone as a design spike before you commit to an
-approach. Durable decisions get recorded as ADRs in `docs/adr/` along the way.
+Implementation uses one discipline, `/tdd`: write the functional test directly
+when the behavior is known, or sketch first — scratch scripts in gitignored
+`tests/temp/` that verify the planned implementation against the real repo,
+refactored into committed tests as the code stabilizes. `/tdd` also stands
+alone as a design sketch before you commit to an approach. Durable decisions
+get recorded as ADRs in `docs/adr/` along the way.
 
 ```mermaid
 graph LR
@@ -146,7 +148,7 @@ graph LR
   B --> C["review (host-native)"]
   C --> D["/pr"]
   X -.->|"small fix"| B
-  P["/tdd (design spike)"] -.-> A
+  P["/tdd (design sketch)"] -.-> A
 
 style G fill:#2d333b,stroke:#768390,color:#adbac7
 style A fill:#2d333b,stroke:#768390,color:#adbac7
@@ -166,12 +168,12 @@ style P fill:#22272e,stroke:#768390,color:#768390
 | `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/adr/`.                                                                                                  |
 | `/write-spec`                         | Capture the settled plan — pure-markdown `SPEC-<slug>.md` (human goal/scope header + agent design body); its Verification section names the committed tests that prove each behavior. In plan mode, dump the approved plan straight in. Establishes intent.         |
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
-| **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: vertical slices, one test → one implementation (never horizontal batches). Spikes import the real repo to prove behavior, then graft in and graduate into committed tests. No mock-slop. `/tdd` also stands alone as a design spike. |
+| **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: one goal at a time (never horizontal batches). Scratch scripts in `tests/temp/` import the real repo to prove behavior, then are refactored into committed tests; the rest are deleted. No mock-slop. `/tdd` also stands alone as a design sketch. |
 | review (host-native)                  | Clean-context review using your harness's built-in reviewer (e.g. Claude `/code-review`, Codex review). Challenge the approach, then flag bugs, bloat, and newly obsolete code before publishing.                                                            |
 | `/pr`                                 | Verify lint/types/tests, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                              |
 
 Not every session hits every phase. The dashed skills are alternate entry points
-or on-demand spikes. Run a host-native review pass before `/pr`. To resume across
+or on-demand sketches. Run a host-native review pass before `/pr`. To resume across
 a session boundary, drop a progress comment on the active tracker issue and pick
 it up from there.
 
@@ -325,8 +327,8 @@ it's the one ledger every agent and your phone can read with no local convention
   comment on the active issue (done / next / the one gotcha). That comment is the
   handoff, living where the next agent already looks.
 
-The examples are the verification record — rerun them to confirm behavior. Don't
-keep a separate run log.
+Rerun the tests named in the spec's Verification section to confirm behavior.
+Don't keep a separate run log.
 
 ---
 

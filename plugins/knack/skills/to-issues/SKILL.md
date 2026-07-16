@@ -108,9 +108,9 @@ up cold, with only the issue body for context. Write it so that's enough:
 - **Behavioral, not procedural.** Describe the capability and its observable
   outcome, not a step-by-step recipe. Let the implementing agent choose the how.
 - **No file paths or line numbers.** They go stale the moment someone refactors.
-  Exception: a spike-produced snippet (per `/tdd`) that encodes a decision more
-  precisely than prose (state machine, reducer, schema, type shape) — inline
-  just the decision-rich part and note it came from a spike.
+  Exception: a snippet from a scratch script (per `/tdd`) that encodes a
+  decision more precisely than prose (state machine, reducer, schema, type
+  shape) — inline just the decision-rich part and note where it came from.
 - **Complete acceptance criteria.** An agent must be able to tell, unaided, when
   the work is done. Every criterion is checkable.
 - **Explicit scope boundaries.** Say what's out of scope, so the agent doesn't
