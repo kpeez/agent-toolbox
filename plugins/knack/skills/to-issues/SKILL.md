@@ -56,7 +56,7 @@ Work from what's already in context. If the user passes an issue reference
 
 If you haven't already, explore so issue titles/descriptions use the project's
 own vocabulary (the `CONTEXT.md` glossary if present) and respect ADRs in
-`docs/adr/` for the area you're touching.
+`docs/adrs/` for the area you're touching.
 
 ### 3. Draft vertical slices
 
@@ -116,7 +116,7 @@ up cold, with only the issue body for context. Write it so that's enough:
 - **Explicit scope boundaries.** Say what's out of scope, so the agent doesn't
   wander into the next slice or gold-plate this one.
 - **Self-contained.** Resolve references ("the auth refactor") to the linked
-  issue. Use the project's own vocabulary (`CONTEXT.md`) and respect `docs/adr/`.
+  issue. Use the project's own vocabulary (`CONTEXT.md`) and respect `docs/adrs/`.
 
 A **HITL** issue can be terser — a human fills the gaps — but note _why_ it needs
 a human (architectural call, design review, ambiguous trade-off).

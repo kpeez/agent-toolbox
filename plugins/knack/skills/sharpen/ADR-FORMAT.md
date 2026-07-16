@@ -1,15 +1,16 @@
 # ADR Format
 
 ADRs are **not committed to the source repo** — like specs, they live in the
-shared llmOS vault at `$LLMOS_ROOT/projects/<repo>/adr`, reached through a
-gitignored repo-local `docs/adr/` symlink that `/setup-repo` creates.
+shared llmOS vault at `$LLMOS_ROOT/projects/<repo>/docs/adrs`, reached through a
+gitignored repo-local `docs/adrs/` symlink that `/setup-repo` creates.
 
-Within `docs/adr/`, ADRs use sequential numbering: `0001-slug.md`,
+Within `docs/adrs/`, ADRs use sequential numbering: `0001-slug.md`,
 `0002-slug.md`, etc.
 
-If the `docs/adr/` symlink is missing (setup-repo hasn't run), create it into
-`$LLMOS_ROOT/projects/<repo>/adr` before writing the first ADR — never create
-`docs/adr/` as a real committed directory in the source repo.
+If the `docs/adrs/` symlink is missing (setup-repo hasn't run), run
+`/setup-repo` to establish the full project-docs topology before writing the
+first ADR — never create `docs/adrs/` as a real committed directory in the
+source repo.
 
 ## Template
 
@@ -31,7 +32,7 @@ Only include these when they add genuine value. Most ADRs won't need them.
 
 ## Numbering
 
-Scan `docs/adr/` for the highest existing number and increment by one.
+Scan `docs/adrs/` for the highest existing number and increment by one.
 
 ## When to offer an ADR
 

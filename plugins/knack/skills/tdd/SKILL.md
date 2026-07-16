@@ -75,7 +75,7 @@ By PR time:
 - `tests/temp/` is empty. Each script either **graduated** into the suite or
   reached one of these ends:
   - **Verdict** — it only answered a design question. Capture the question,
-    result, evidence, and next action in plain Markdown: an ADR in `docs/adr/`
+    result, evidence, and next action in plain Markdown: an ADR in `docs/adrs/`
     (see `sharpen`'s `ADR-FORMAT.md`) for durable decisions, otherwise the
     spec's `SPEC-<slug>.md` Decisions section or the tracker issue. Then
     delete the script.
