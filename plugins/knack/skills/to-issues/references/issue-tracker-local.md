@@ -6,7 +6,7 @@ never committed).
 ## Conventions
 
 - One feature per directory: `specs/<feature>/` (the same directory that holds
-  `SPEC-<slug>.md` and `examples/`)
+  `SPEC-<slug>.md`)
 - Implementation issues are `specs/<feature>/issues/<NN>-<slug>.md`, numbered from `01`
 - The parent issue is the spec itself — `SPEC-<slug>.md`'s goal/scope header; do not
   duplicate it as an issue file

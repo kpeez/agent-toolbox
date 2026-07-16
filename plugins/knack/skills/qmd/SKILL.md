@@ -1,6 +1,7 @@
 ---
 name: qmd
 description: Search local markdown knowledge bases — Obsidian vaults, notes, docs, wikis, transcripts — with the qmd CLI. Use when the user asks to find notes, retrieve documents, answer from indexed markdown, hunt for semantically related files, or inspect what a vault contains.
+user-invocable: false
 ---
 
 # qmd — query markdown documents

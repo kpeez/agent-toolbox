@@ -5,24 +5,25 @@ description: "How to implement a spec or feature: prove behavior before committi
 
 # Implement
 
-Two verification disciplines and one stance.
+One verification discipline and one stance.
 
 ## Prove behavior before you commit to it
 
-- **`/tdd`** — for behavior that warrants tests. One failing test → minimal code →
-  repeat, across vertical (never horizontal) slices. Test through public
-  interfaces, not internals.
-- **`/blueprint`** — to de-risk an approach: a runnable example that imports the
-  real repo, proves a planned implementation, then gets grafted in (or thrown away
-  if it only answered a design question).
+**`/tdd`** is the discipline, with two entries: when the behavior is known, go
+straight to a failing test — one failing test → minimal code → repeat, across
+vertical (never horizontal) slices, testing through public interfaces, not
+internals. When the design is uncertain, spike first — runnable scratch code
+that imports the real repo and proves the planned implementation — then
+graduate it into a test or end with a captured verdict.
 
-Describe the behavior → prove it (a failing test or a red blueprint) → implement
-until green. If you catch yourself writing implementation with nothing that
-verifies it, STOP and write the check first.
+Describe the behavior → prove it (a failing test, or a red spike that will
+graduate into one) → implement until green. If you catch yourself writing
+implementation with nothing that verifies it, STOP and write the check first.
 
-On a spec, both live in the spec: tests in the project's suite, blueprint examples
-under `specs/<feature>/examples/`. Rerun them to verify; the examples are the
-record. Test and example failures are spec failures — fix them before marking done.
+Both entries end in the project's test suite: a direct test is written red-first,
+and a graduated spike becomes one. The spec stays pure
+markdown — its Verification section names the tests, and the committed tests
+are the record. Test failures are spec failures — fix them before marking done.
 "Done" also means lint and type-check pass, not just tests.
 
 ## Working from the tracker
@@ -79,7 +80,7 @@ Use the least powerful model sufficient for the task (tiers per `/delegate`):
 | High       | Architecture, design judgment, broad codebase understanding | planner  | fable / opus (high)   | gpt-5.6-sol           |
 
 Always tell the worker to follow the verification discipline — write the test or
-blueprint first, confirm red, implement, confirm green — and to report status
+spike first, confirm red, implement, confirm green — and to report status
 (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED). Handle each status before
 proceeding: address concerns that touch correctness or scope, provide missing
 context and re-dispatch, or diagnose a block before retrying.
@@ -92,6 +93,6 @@ local file.
 
 ## Cross-references
 
-- `/sharpen` — stress-test a plan before writing tests or blueprints.
-- `/write-spec new <name>` — scaffold a spec with an examples directory.
+- `/sharpen` — stress-test a plan before writing tests or spikes.
+- `/write-spec new <name>` — scaffold a pure-markdown spec whose Verification section names the tests.
 - `/delegate` — the mechanics of exploring and generating via workers.

@@ -1,6 +1,7 @@
 ---
 name: merge-conflicts
 description: Resolve an in-progress git merge, rebase, or cherry-pick conflict by tracing each side's intent, preserving both where possible, and verifying with the project's checks. Use when git reports conflicts or the user asks to resolve a merge/rebase.
+user-invocable: false
 ---
 
 # Merge Conflicts
