@@ -99,7 +99,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `diagnose`                      | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
 | `improve-codebase-architecture` | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
 | `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                                                      |
-| `pr`                            | Group branch diff into atomic commits, push, open a draft PR; verifies lint/types/tests first                        |
+| `ship-pr`                       | Publish branch work — group diff into atomic commits, push, open a draft PR (verifies lint/types/tests first); `finalize` mode flips the draft to ready |
 | `delegate`                      | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself |
 | `handoff`                       | Hand the session across a model boundary — write the residue (ruled out, gotchas, resume) to the tracker; write it yourself, never via a subagent          |
 | `merge-conflicts`               | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
@@ -147,7 +147,7 @@ graph LR
   A --> I["/to-issues"]
   I -->|"fresh chat / subagent per issue"| B["implement (/tdd)"]
   B --> C["review (host-native)"]
-  C --> D["/pr"]
+  C --> D["/ship-pr"]
   X -.->|"small fix"| B
   P["/tdd (design sketch)"] -.-> A
 
@@ -171,10 +171,10 @@ style P fill:#22272e,stroke:#768390,color:#768390
 | `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
 | **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: one goal at a time (never horizontal batches). Scratch scripts in `tests/temp/` import the real repo to prove behavior, then are refactored into committed tests; the rest are deleted. No mock-slop. `/tdd` also stands alone as a design sketch. |
 | review (host-native)                  | Clean-context review using your harness's built-in reviewer (e.g. Claude `/code-review`, Codex review). Challenge the approach, then flag bugs, bloat, and newly obsolete code before publishing.                                                            |
-| `/pr`                                 | Verify lint/types/tests, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                              |
+| `/ship-pr`                                 | Verify lint/types/tests, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                              |
 
 Not every session hits every phase. The dashed skills are alternate entry points
-or on-demand sketches. Run a host-native review pass before `/pr`. To resume across
+or on-demand sketches. Run a host-native review pass before `/ship-pr`. To resume across
 a session boundary, drop a progress comment on the active tracker issue and pick
 it up from there.
 
@@ -194,7 +194,7 @@ Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
 session (the interview is HITL) but can commission planners for alternatives;
 spec *drafting* can go to a planner while the main session holds the approval
 gate; `to-issues` goes to a **planner** that reviews the approved spec cold,
-slices, publishes, and returns the issue list; review + `/pr` run in a fresh
+slices, publishes, and returns the issue list; review + `/ship-pr` run in a fresh
 context.
 
 Implementation is the **fan-out loop**:
@@ -320,9 +320,12 @@ spec's Verification section names the tests that pin its behaviors.
 
 ```text
 specs/
-├── AGENTS.md           # How agents navigate specs; not a manual index
-└── NNNN-<slug>.md      # Human goal/scope header + agent-expanded design body
+├── 0001-<slug>.md      # Human goal/scope header + agent-expanded design body
+└── 0002-<slug>.md
 ```
+
+Numbered flat, like `docs/adrs/`. The number is the index — `ls` sorts it and
+the highest is the newest, so specs carry no navigation or index file.
 
 `NNNN-<slug>.md` has two ownership zones split by a `---` divider. The **goal/scope
 header** is the user-reviewed contract: goal, scope, non-goals, success criteria,

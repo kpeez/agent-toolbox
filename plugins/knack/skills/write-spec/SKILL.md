@@ -56,7 +56,7 @@ the `---` divider, and flag the header for the user to confirm.
      tracker owns status from here.
    - **Solo (single-slice spec, one sitting):** prove each behavior per
      `/tdd` — a functional test, sketched as a scratch script when the design
-     is uncertain — then a host-native review pass, then `/pr`.
+     is uncertain — then a host-native review pass, then `/ship-pr`.
 
 ## /write-spec new <name>
 
@@ -66,7 +66,6 @@ Creates a feature spec file `specs/NNNN-<slug>.md`.
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
 <step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/specs` must point directly at `$LLMOS_ROOT/projects/<repo>/docs/specs` and `specs` must be the exact relative alias `docs/specs`; never create either as a real committed directory in the source repo</step>
 <step action="allocate-number">if an existing `specs/NNNN-<slug>.md` already matches this slug, reuse its number. Otherwise scan `specs/` for files matching `^[0-9]{4}-`, take the highest number, add 1, and zero-pad to 4 digits (start at `0001` if none exist) -> `<NNNN>`. Do this immediately before writing the file</step>
-<step action="create-root-agents">if `specs/AGENTS.md` is missing, create it from the template in `templates.md`</step>
 <step action="create-files">read `templates.md` and write `NNNN-<slug>.md` to `specs/`; never overwrite an existing spec file for this slug — a present goal/scope header is settled and authoritative</step>
 <step action="populate">fill the goal/scope header from the sharpened plan (or approved plan-mode plan) and flag it for the user to confirm; if `NNNN-<slug>.md` already exists, leave its header alone. Then expand the design body below the `---` divider and name in the Verification section the behavior-level tests that will prove each behavior</step>
 </steps>
@@ -84,9 +83,12 @@ and point its repo-local symlink at the shared
 
 ```
 specs/
-├── AGENTS.md # How agents navigate specs; not a manual index
-└── NNNN-<slug>.md # Goal/scope header + agent-expanded design
+├── 0001-<slug>.md # Goal/scope header + agent-expanded design
+└── 0002-<slug>.md
 ```
+
+The numbering is the index — `ls` sorts it, the highest number is the newest.
+Do not add a navigation or index file; it only drifts from the directory.
 
 `NNNN-<slug>.md` is one file, two zones split by a `---` divider: a short goal/scope
 header (settled by the sharpen, confirmed by the user — preserve it, never
