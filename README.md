@@ -271,12 +271,20 @@ and code rules already live in the user-level instructions.
 
 Specs and ADRs should never be committed to the source repository. Store the
 canonical shared files in the llmOS vault, add `specs` and `docs/adr` to
-`.gitignore`, and symlink both back in. Set `LLMOS_ROOT` to the llmOS checkout:
+`.gitignore`, and symlink both back in. If the repo already has committed ADRs
+under `docs/adr/`, the block moves them into the vault before linking (so `ln`
+replaces the directory instead of nesting a symlink inside it). Set `LLMOS_ROOT`
+to the llmOS checkout:
 
 ```bash
 : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
 mkdir -p "$LLMOS_ROOT/projects/<repo>/specs" "$LLMOS_ROOT/projects/<repo>/adr"
 ln -s "$LLMOS_ROOT/projects/<repo>/specs" ./specs
+# migrate a pre-existing committed docs/adr into the vault before linking
+if [ -d docs/adr ] && [ ! -L docs/adr ]; then
+  find docs/adr -mindepth 1 -maxdepth 1 -exec mv -n {} "$LLMOS_ROOT/projects/<repo>/adr/" \;
+  rmdir docs/adr
+fi
 mkdir -p docs && ln -s "$LLMOS_ROOT/projects/<repo>/adr" ./docs/adr
 printf 'specs\ndocs/adr\n' >> .gitignore
 ```
@@ -295,8 +303,12 @@ git_dir=$(git rev-parse --git-dir)
 [[ "$git_dir" == *"/worktrees/"* ]] || exit 0
 
 ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" "$(pwd)/specs"
-mkdir -p "$(pwd)/docs"
-ln -sfn "$LLMOS_ROOT/projects/<repo>/adr" "$(pwd)/docs/adr"
+# link ADRs only when docs/adr is absent or already a symlink; a real dir still
+# holds committed ADRs — run /setup-repo to migrate rather than nesting a link
+if [ ! -e "$(pwd)/docs/adr" ] || [ -L "$(pwd)/docs/adr" ]; then
+  mkdir -p "$(pwd)/docs"
+  ln -sfn "$LLMOS_ROOT/projects/<repo>/adr" "$(pwd)/docs/adr"
+fi
 ```
 
 ## Feature Specs

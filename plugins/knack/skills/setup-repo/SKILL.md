@@ -79,12 +79,21 @@ exit 0
    : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
    mkdir -p "$LLMOS_ROOT/projects/<repo>/specs" "$LLMOS_ROOT/projects/<repo>/adr"
    ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" specs
+   # a real (non-symlink) docs/adr holds committed ADRs from the old convention —
+   # migrate them into the vault first, else `ln` nests a symlink inside the dir
+   if [ -d docs/adr ] && [ ! -L docs/adr ]; then
+     find docs/adr -mindepth 1 -maxdepth 1 -exec mv -n {} "$LLMOS_ROOT/projects/<repo>/adr/" \;
+     rmdir docs/adr || { echo "docs/adr not empty after migration (name clash with vault) — reconcile, then re-run"; exit 1; }
+   fi
    mkdir -p docs && ln -sfn "$LLMOS_ROOT/projects/<repo>/adr" docs/adr
    grep -qx specs .gitignore 2>/dev/null || echo specs >> .gitignore
    grep -qx docs/adr .gitignore 2>/dev/null || echo docs/adr >> .gitignore
    ```
 
    If the facts show a real (non-symlink) `CLAUDE.md`, ask before replacing it.
+   The block migrates a pre-existing committed `docs/adr/` into the vault before
+   linking; it stops if an ADR name clashes with one already in the vault so you
+   can reconcile by hand.
 
 6. **Report** what was written, skipped, and decided.
 
