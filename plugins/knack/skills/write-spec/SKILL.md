@@ -19,8 +19,9 @@ surfaced by the sharpen go to committed `docs/adr/`, not the spec.
 ## The verification rule
 
 This skill follows the `/implement` discipline. Read it before implementation:
-describe behavior → prove it per `/tdd` (a failing test, or a red spike that
-graduates into one) → implement until it passes.
+describe behavior → prove it per `/tdd` (a functional test, sketched first as
+a `tests/temp/` scratch script when the design is uncertain) → implement until
+it passes.
 
 ## When to use a spec
 
@@ -50,11 +51,11 @@ the `---` divider, and flag the header for the user to confirm.
 4. **Fork** — hand off or implement solo:
    - **Hand off (default when work will fan out):** run `/to-issues` to publish
      the spec as a parent issue + labeled sub-issues. Separate agents pick up
-     each issue and run its own red → green → review → PR loop. The tracker owns
-     status from here.
-   - **Solo (single-slice spec, one sitting):** prove each behavior red-first
-     per `/tdd` — a failing test, or a red spike that graduates into one —
-     implement to green, then a host-native review pass, then `/pr`.
+     each issue and run its own test → implement → review → PR loop. The
+     tracker owns status from here.
+   - **Solo (single-slice spec, one sitting):** prove each behavior per
+     `/tdd` — a functional test, sketched as a scratch script when the design
+     is uncertain — then a host-native review pass, then `/pr`.
 
 ## /write-spec new <name>
 
@@ -71,10 +72,10 @@ Creates a feature spec directory with `SPEC-<slug>.md`.
 
 ## Spec structure
 
-A spec is **`SPEC-<slug>.md`** — nothing more, and pure markdown: no code files
-live under `specs/` (the shared specs directory may be an Obsidian vault).
+A spec is **`SPEC-<slug>.md`** — pure markdown with no code files
+live under `specs/` (the shared specs directory may be an Obsidian vault). The feature directory may also contain an optional local `issues/` subtree created by `/to-issues`.
 Verification code lives in the repo — committed tests in the project's suite,
-plus transient spike scaffolds (per `/tdd`) next to the module they exercise. Specs
+plus transient scratch scripts (per `/tdd`) in gitignored `tests/temp/`. Specs
 must never be committed to the source repository. Keep `specs` ignored there
 and point its repo-local symlink at the shared
 `$LLMOS_ROOT/projects/<repo>/specs` directory.
@@ -119,9 +120,9 @@ issue — what's done, what's next, the one gotcha. That comment is the handoff.
 
 ## Verification lives in the test suite
 
-Every spec behavior is proven by a runnable check that fails first: a test via
-`/tdd`, or a spike that graduates into a behavior-level test (rules live in
-`/tdd`'s spike section). These are executable
+Every spec behavior is proven by a committed functional test per `/tdd` —
+written directly, or refactored from a `tests/temp/` scratch script that held
+up (rules live in `/tdd`). These are executable
 demonstrations at caller altitude — real imports, real call paths — not
 unit-test theater. The spec's Verification section names them; the committed
 tests ARE the durable record. Rerun them to verify current state, and paste the

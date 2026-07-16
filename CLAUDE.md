@@ -20,9 +20,9 @@ never burn the lead context on bulk reads or typing implementation.
    plan, never written from scratch
 3. Slice the spec into tracker issues with `/to-issues`. Status and tasks live
    on the tracker, never in local files
-4. Implement per `/implement`: prove behavior first per `/tdd` (failing test,
-   or a spike that graduates into one), then code to
-   green → lint → types → tests
+4. Implement per `/implement`: prove behavior per `/tdd` — functional tests
+   for the stated goals, sketched as `tests/temp/` scratch scripts when the
+   design is uncertain — then lint → types → tests
 5. Verify: run the spec's tests and a host-native review pass; fix failures before marking done
 6. Publish with `/pr` — atomic commits, push, draft PR
 7. Resume from the tracker: take the next unblocked workable issue (spec-born
@@ -62,11 +62,13 @@ file pins the tracker; otherwise `/to-issues` auto-detects.
 
 ### Goal-driven development
 
-Every task follows a red/green cycle — define a verifiable check before writing
-code, watch it fail, implement until it passes.
+Every task ends with a verifiable check — a functional test proving the stated
+goal, run and passing. When the design is uncertain, sketch the check as a
+scratch script in `tests/temp/`, then refactor that exact script into a real
+test as the code stabilizes.
 
-- "Add validation" → write tests for invalid inputs, then make them pass
-- "Fix the bug" → write a test that reproduces it, then make it pass
+- "Add validation" → tests proving invalid inputs are rejected
+- "Fix the bug" → a test that reproduces it, then make it pass
 - "Refactor X" → ensure tests pass before and after
 
 For multi-step work, state a plan: `[step] → verify: [check]`, one line each.
@@ -78,4 +80,3 @@ For multi-step work, state a plan: `[step] → verify: [check]`, one line each.
 - Small commits, imperative messages. Lint/types/tests pass before PR.
 
 Update this file first when conventions change.
-

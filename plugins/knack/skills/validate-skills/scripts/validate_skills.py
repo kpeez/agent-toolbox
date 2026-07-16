@@ -26,7 +26,7 @@ EXTERNAL_COMMANDS = {
 }
 
 SKILL_REF = re.compile(r"`/([a-z][a-z0-9-]+)`")
-README_ROW = re.compile(r"^\|\s*`([a-z0-9-]+)`\s*\|\s*(knack|lab)\s*\|")
+README_ROW = re.compile(r"^\|\s*`([a-z0-9-]+)`\s*\|")
 
 failures: list[str] = []
 

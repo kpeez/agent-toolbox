@@ -76,9 +76,8 @@ The group name matches the branch suffix from `autoresearch/<group-name>` (e.g.,
 `api-latency`). Use a monotonically increasing two-digit experiment number
 within each group, such as `2026_05_24-expt-01-cache-key-rubric`.
 
-The group-level `README.md` captures the shared context for the whole program:
-when the `documentation` skill is available, use it for clear, reviewable
-Markdown experiment records.
+The group-level `README.md` captures the shared context for the whole program.
+Lead with the recommendation, keep evidence close to the claim it supports.
 
 ```markdown
 # <Group Title>
