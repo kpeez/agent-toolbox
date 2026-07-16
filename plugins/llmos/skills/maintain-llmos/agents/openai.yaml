@@ -1,0 +1,4 @@
+interface:
+  display_name: "Maintain llmOS"
+  short_description: "Maintain the shared llmOS Obsidian vault"
+  default_prompt: "Use $maintain-llmos to file and link durable agent knowledge."
