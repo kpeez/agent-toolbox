@@ -14,7 +14,8 @@ the local spec is authoring residue.
 Specs are not user-written. A spec is the product of a `/sharpen` session (or an
 approved plan-mode plan): the agent distills the sharpened plan into the `SPEC-<slug>.md`
 goal/scope header and the user confirms it at the review gate. Durable decisions
-surfaced by the sharpen go to committed `docs/adr/`, not the spec.
+surfaced by the sharpen go to the shared vault as ADRs via the `docs/adr/`
+symlink, not the spec.
 
 ## The verification rule
 
@@ -99,9 +100,9 @@ Two semantics worth knowing beyond the template:
   implementation — the default) or `autonomous` (the agent proceeds after writing
   the design, e.g. driven by `/goal`), plus stop conditions.
 - **Durable decisions** (architecture, provider policy, storage model, security
-  posture) go in committed `docs/adr/` (see `sharpen`'s `ADR-FORMAT.md`) and are
-  linked from the Decisions section. The optional domain glossary is committed
-  `CONTEXT.md` at the repo root.
+  posture) go in the shared vault as ADRs via the `docs/adr/` symlink (see
+  `sharpen`'s `ADR-FORMAT.md`) and are linked from the Decisions section. The
+  optional domain glossary is the still-committed `CONTEXT.md` at the repo root.
 
 ## Documentation quality
 

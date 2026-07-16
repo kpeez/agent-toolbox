@@ -88,7 +88,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 
 | Skill                           | Purpose                                                                                                               |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `setup-repo`                    | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs directory   |
+| `setup-repo`                    | Interview-driven repo setup: thin repo-level `AGENTS.md` (tracker, structure), `CLAUDE.md` symlink, specs + ADR directories |
 | `start-loop`                    | Run/resume the whole spine as one command (sharpen → spec → issues → implement); spec approval is the last prompt, then the loop runs to done |
 | `write-spec`                    | Create a feature spec — a pure-markdown design draft verified by committed tests; `/write-spec new` scaffolds it      |
 | `implement`                     | How to implement a spec — prove behavior with `/tdd`, and orchestrate the work via delegation                         |
@@ -214,16 +214,21 @@ directly.
 
 ## Durable decision memory
 
-Two committed files hold knowledge that must outlive a single feature and survive
-a fresh clone — distinct from the private, ephemeral `specs/` tree:
+Knowledge that must outlive a single feature, split by durability and where it
+lives:
 
-- **`docs/adr/`** — Architecture Decision Records. Created lazily by `/sharpen`,
-  `/tdd`, or `/improve-codebase-architecture` when a decision is hard to
-  reverse, surprising without context, and the result of a real trade-off. They
-  stop the agent from re-litigating settled choices.
-- **`CONTEXT.md`** _(optional, repo root)_ — a domain glossary, nothing else.
-  Pins down overloaded terminology (especially useful for ML/research repos). Read
-  by `sharpen`, `diagnose`, and `improve-codebase-architecture`.
+- **`docs/adr/`** — Architecture Decision Records. Durable, but like specs they
+  are **not committed to the source repo**: they live in the shared llmOS vault
+  at `$LLMOS_ROOT/projects/<repo>/adr`, reached through a gitignored repo-local
+  `docs/adr/` symlink. Created lazily by `/sharpen`, `/tdd`, or
+  `/improve-codebase-architecture` when a decision is hard to reverse, surprising
+  without context, and the result of a real trade-off. They stop the agent from
+  re-litigating settled choices. Unlike the transient `specs/` tree, ADRs persist
+  across features.
+- **`CONTEXT.md`** _(optional, repo root, committed)_ — a domain glossary,
+  nothing else. Pins down overloaded terminology (especially useful for
+  ML/research repos). Read by `sharpen`, `diagnose`, and
+  `improve-codebase-architecture`.
 
 The issue tracker is selected at runtime by `/to-issues` — an optional
 `Issue tracker: <name>` line in the repo's `AGENTS.md` wins; otherwise Linear
@@ -262,20 +267,21 @@ file carries only repo conventions; the workflow spine and code rules live in
 the user-level instructions, and tracker mechanics stay in `/to-issues`. The repo file carries only repo conventions — the workflow spine
 and code rules already live in the user-level instructions.
 
-## Specs Setup
+## Specs & ADR Setup
 
-Specs should never be committed to the source repository. Store the canonical
-shared files in the llmOS vault, add `specs` to `.gitignore`, and symlink
-`./specs` back in. Set `LLMOS_ROOT` to the llmOS checkout:
+Specs and ADRs should never be committed to the source repository. Store the
+canonical shared files in the llmOS vault, add `specs` and `docs/adr` to
+`.gitignore`, and symlink both back in. Set `LLMOS_ROOT` to the llmOS checkout:
 
 ```bash
 : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
-mkdir -p "$LLMOS_ROOT/projects/<repo>/specs"
+mkdir -p "$LLMOS_ROOT/projects/<repo>/specs" "$LLMOS_ROOT/projects/<repo>/adr"
 ln -s "$LLMOS_ROOT/projects/<repo>/specs" ./specs
-echo specs >> .gitignore
+mkdir -p docs && ln -s "$LLMOS_ROOT/projects/<repo>/adr" ./docs/adr
+printf 'specs\ndocs/adr\n' >> .gitignore
 ```
 
-If you use a worktree-based setup, you should set up the following post-checkout git hook to automatically symlink the specs directory:
+If you use a worktree-based setup, you should set up the following post-checkout git hook to automatically symlink the specs and ADR directories:
 
 ```bash
 #!/usr/bin/env bash
@@ -289,6 +295,8 @@ git_dir=$(git rev-parse --git-dir)
 [[ "$git_dir" == *"/worktrees/"* ]] || exit 0
 
 ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" "$(pwd)/specs"
+mkdir -p "$(pwd)/docs"
+ln -sfn "$LLMOS_ROOT/projects/<repo>/adr" "$(pwd)/docs/adr"
 ```
 
 ## Feature Specs
@@ -309,8 +317,8 @@ header** is the user-reviewed contract: goal, scope, non-goals, success criteria
 validation, and whether implementation is review-gated or autonomous. The
 **design body** is agent-expanded after repo inspection: approach, behavior,
 decision log, risks, and verification mapping. Durable decisions (architecture,
-provider policy, storage model, framework choice) go in committed `docs/adr/`,
-not the spec.
+provider policy, storage model, framework choice) go in the shared vault as ADRs
+via the `docs/adr/` symlink, not the spec.
 
 The spec is a **local, transient design draft** — it forces design thinking and
 gives a review gate, then `/to-issues` hands the work to the tracker. There is no

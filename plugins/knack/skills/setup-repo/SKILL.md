@@ -1,6 +1,6 @@
 ---
 name: setup-repo
-description: Set up a repo for the knack workflow — interview the user about the issue tracker and repo structure, then write the repo-root AGENTS.md, symlink CLAUDE.md to it, and set up the private specs directory. Use when setting up a new repo, or when the user asks to add AGENTS.md or CLAUDE.md to a project.
+description: Set up a repo for the knack workflow — interview the user about the issue tracker and repo structure, then write the repo-root AGENTS.md, symlink CLAUDE.md to it, and set up the private specs and ADR directories. Use when setting up a new repo, or when the user asks to add AGENTS.md or CLAUDE.md to a project.
 disable-model-invocation: true
 ---
 
@@ -72,14 +72,16 @@ exit 0
    skills filled in. If `AGENTS.md` already exists, update the
    `## Agent skills` block in place and append missing sections — never
    overwrite or reorder what's there.
-5. **Link and specs** — run as one block (idempotent):
+5. **Link, specs, and ADRs** — run as one block (idempotent):
 
    ```bash
    ln -sfn AGENTS.md CLAUDE.md
    : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
-   mkdir -p "$LLMOS_ROOT/projects/<repo>/specs"
+   mkdir -p "$LLMOS_ROOT/projects/<repo>/specs" "$LLMOS_ROOT/projects/<repo>/adr"
    ln -sfn "$LLMOS_ROOT/projects/<repo>/specs" specs
+   mkdir -p docs && ln -sfn "$LLMOS_ROOT/projects/<repo>/adr" docs/adr
    grep -qx specs .gitignore 2>/dev/null || echo specs >> .gitignore
+   grep -qx docs/adr .gitignore 2>/dev/null || echo docs/adr >> .gitignore
    ```
 
    If the facts show a real (non-symlink) `CLAUDE.md`, ask before replacing it.
@@ -105,7 +107,7 @@ Canonical: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `
 
 ### Domain docs
 
-<Single-context layout: `CONTEXT.md` + `docs/adr/` at the repo root. — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
+<Single-context layout: committed `CONTEXT.md` at the repo root plus ADRs under `docs/adr/` (a symlink into the shared llmOS vault). — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
 
 Before working in an area, read the ADRs that touch it. If your output contradicts one, flag it explicitly (_"contradicts ADR-0007 — but worth reopening because…"_) rather than silently overriding.
 ```

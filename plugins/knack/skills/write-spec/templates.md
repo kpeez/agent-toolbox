@@ -26,8 +26,9 @@ Read order:
 3. The tests named in the Verification section (run them for current state)
 
 Status and tasks live on the issue tracker (see `/to-issues`). Durable design
-decisions do NOT live here — they go in committed `docs/adr/`. The optional
-domain glossary lives in committed `CONTEXT.md` at the repo root.
+decisions do NOT live here — they go in the shared vault as ADRs via the
+`docs/adr/` symlink. The optional domain glossary lives in committed
+`CONTEXT.md` at the repo root.
 </template>
 
 <template file="specs/<slug>/SPEC-<slug>.md">
