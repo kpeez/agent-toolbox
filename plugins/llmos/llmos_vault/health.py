@@ -15,8 +15,8 @@ from datetime import date
 from pathlib import Path
 from typing import Literal
 
-from llmos_vault.graph import _backlinks, _linked_targets, _outgoing
-from llmos_vault.links import VaultIndex, build_index, read_frontmatter
+from llmos_vault.graph import _linked_targets
+from llmos_vault.links import VaultIndex, build_index, read_frontmatter, resolve_link
 from llmos_vault.schema import collect_errors
 
 Profile = Literal["llmos", "core"]
@@ -95,12 +95,12 @@ def vault_health(
         today: Date to measure inbox staleness against; defaults to today.
     """
     index = build_index(vault_root)
-    orphans, dead_ends = _orphans_and_dead_ends(index)
+    orphans, dead_ends, unresolved_links = _link_findings(index)
     qmd_gaps, qmd_notice = _qmd_gaps(vault_root, index, qmd_collection)
     return VaultHealth(
         orphans=orphans,
         dead_ends=dead_ends,
-        unresolved_links=_unresolved_links(index),
+        unresolved_links=unresolved_links,
         schema_violations=_schema_violations(vault_root, profile),
         stale_inbox=_stale_inbox(vault_root, index, stale_after_days, today or date.today()),
         qmd_gaps=qmd_gaps,
@@ -108,19 +108,25 @@ def vault_health(
     )
 
 
-def _orphans_and_dead_ends(index: VaultIndex) -> tuple[list[str], list[str]]:
-    orphans = [path.stem for path in index.paths if not _backlinks(index, path)]
-    dead_ends = [path.stem for path in index.paths if not _linked_targets(path)]
-    return sorted(orphans), sorted(dead_ends)
-
-
-def _unresolved_links(index: VaultIndex) -> list[UnresolvedLink]:
-    links = [
-        UnresolvedLink(referrer=path.stem, target=target)
-        for path in index.paths
-        for target in _outgoing(index, path)[1]
-    ]
-    return sorted(links, key=lambda link: (link.referrer, link.target))
+def _link_findings(
+    index: VaultIndex,
+) -> tuple[list[str], list[str], list[UnresolvedLink]]:
+    """Orphans, dead-ends, and unresolved links in one pass: every note's
+    outgoing targets are read once, instead of once per backlink probe --
+    the whole-vault walk stays O(notes) file reads, not O(notes^2)."""
+    targets_by_path = {path: _linked_targets(path) for path in index.paths}
+    linked_to: set[Path] = set()
+    unresolved: list[UnresolvedLink] = []
+    for path, targets in targets_by_path.items():
+        for target in targets:
+            hit = resolve_link(index, target)
+            if hit is None:
+                unresolved.append(UnresolvedLink(referrer=path.stem, target=target))
+            elif hit != path:
+                linked_to.add(hit)
+    orphans = sorted(path.stem for path in index.paths if path not in linked_to)
+    dead_ends = sorted(path.stem for path in index.paths if not targets_by_path[path])
+    return orphans, dead_ends, sorted(unresolved, key=lambda link: (link.referrer, link.target))
 
 
 def _schema_violations(vault_root: Path, profile: Profile) -> list[SchemaViolation]:
