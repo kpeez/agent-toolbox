@@ -40,12 +40,18 @@ def iter_commands(app: cyclopts.App) -> list[Command]:
         app: A cyclopts App -- the top-level app or a command group within it.
     """
     commands: list[Command] = []
-    for name, sub in app._registered_commands.items():
-        if sub._registered_commands:
+    for name, sub in _subcommands(app).items():
+        if _subcommands(sub):
             commands.extend((f"{name} {child}", func) for child, func in iter_commands(sub))
         elif sub.default_command is not None:
             commands.append((name, sub.default_command))
     return sorted(commands)
+
+
+def _subcommands(app: cyclopts.App) -> dict[str, cyclopts.App]:
+    """`app`'s real subcommands via the public `resolved_commands` API, minus
+    the `--help`/`--version` meta-entries every App carries."""
+    return {name: sub for name, sub in app.resolved_commands().items() if not name.startswith("-")}
 
 
 def render_verb_table(commands: list[Command]) -> str:
