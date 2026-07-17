@@ -104,6 +104,42 @@ def append_note(vault_root: Path, note: str, content: str) -> str:
     return run(vault_root, "append", file=note, content=content)
 
 
+def overwrite_note(vault_root: Path, name: str, content: str) -> str:
+    """Replace an existing note's full content via obsidian-cli
+    `create ... overwrite`.
+
+    Use when a verb has computed a note's entire new body itself (a headless
+    read plus a Python-side edit) and needs to write it back in one shot --
+    e.g. `daily.append_thought` inserting a paragraph under a heading while
+    leaving the rest of the file, including any machine-owned block,
+    byte-identical.
+    Do NOT use when you only need to add text to the end of a note without
+    recomputing the rest of it -- use `append_note` instead.
+
+    Example output:
+        'Created: reviews/daily/2026-07-17.md\\n'
+
+    Example invocation:
+        overwrite_note(vault_root, "reviews/daily/2026-07-17.md", full_text)
+
+    Args:
+        vault_root: Root directory of the vault the note lives in.
+        name: Note name (wikilink-style resolution) or vault-relative path.
+        content: Full replacement content for the note.
+
+    Raises:
+        ObsidianNotRunning: obsidian-cli could not reach a running app.
+    """
+    target_path = name if name.endswith(".md") else f"{name}.md"
+    return run(
+        vault_root,
+        "create",
+        path=target_path,
+        params={"overwrite": "true"},
+        content=content,
+    )
+
+
 def _assert_mutable_property(key: str) -> None:
     """Reuse `frontmatter.set_scalar`'s immutable-`created` guard without
     touching a real properties dict -- the throwaway dict is discarded."""
