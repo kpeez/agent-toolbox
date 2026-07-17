@@ -15,10 +15,16 @@ tells you everything else.
 <!-- BEGIN GENERATED VERB TABLE -->
 | verb | summary |
 | --- | --- |
+| `append` | Append content to an existing note via obsidian-cli. |
+| `create` | Create a new note, optionally from a vault template, via obsidian-cli. |
 | `docs` | Regenerate the router skill's command reference from this CLI's tree. |
+| `health` | Report vault hygiene: orphans, dead-ends, unresolved wikilinks, schema |
 | `list` | Print every note in the vault with its frontmatter and body as JSON. |
+| `move` | Move or rename a note via obsidian-cli, rewriting every backlink. |
 | `neighbors` | Print one note's outgoing links, backlinks, and shared-topic siblings. |
 | `read` | Print one note's frontmatter and body as JSON. |
+| `remove-property` | Remove a property from a note via obsidian-cli. |
+| `set-property` | Set a property on a note via obsidian-cli. |
 | `subgraph` | Print the transitive neighborhood of a note out to `depth` hops as JSON. |
 <!-- END GENERATED VERB TABLE -->
 
