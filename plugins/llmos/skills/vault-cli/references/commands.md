@@ -25,7 +25,7 @@ Append content to an existing note via obsidian-cli.
 Use when an agent needs to add content to the end of a note without
 reading and rewriting the whole file -- e.g. logging a quick note.
 Requires Obsidian to be running.
-Do NOT use for frontmatter changes -- use `set-property`.
+Do NOT use when changing frontmatter -- use `set-property`.
 
 Example output:
     Appended to: notes/alpha.md
@@ -45,8 +45,9 @@ Create a new note, optionally from a vault template, via obsidian-cli.
 Use when an agent needs a brand-new note on disk with the app's own
 creation semantics (template expansion, conflict handling) -- e.g. filing
 a new project note. Requires Obsidian to be running.
-Do NOT use to overwrite an existing note's content -- obsidian-cli
-`create` refuses to clobber an existing file; edit it directly instead.
+Do NOT use when you want to overwrite an existing note's content --
+obsidian-cli `create` refuses to clobber an existing file; edit it
+directly instead.
 
 Example output:
     Created: projects/agent-toolbox.md
@@ -87,8 +88,8 @@ Args:
 Report vault hygiene: orphans, dead-ends, unresolved wikilinks, schema
 violations, stale inbox items, and qmd index gaps.
 
-Use as the opening move of a vault-maintenance pass -- e.g. the nightly
-cron -- to see every hygiene defect in one headless call. Each section
+Use when starting a vault-maintenance pass -- e.g. the nightly cron --
+to see every hygiene defect in one headless call. Each section
 degrades independently: a missing qmd binary reports a notice instead of
 failing the whole command. Works with Obsidian closed. Exits 1 if any
 section has findings, 0 on a clean vault, so cron can branch on it.
@@ -138,8 +139,8 @@ Use when an agent needs to relocate or rename a note -- the sanctioned
 alternative to raw `mv`/`git mv` (ADR-0004; the PreToolUse Bash guard
 denies those inside a vault and points here). Requires Obsidian to be
 running.
-Do NOT use raw `mv`/`rm` on a vault note -- see the guard hook's message
-for why.
+Do NOT use when you'd reach for raw `mv`/`rm` on a vault note -- see the
+guard hook's message for why.
 
 Example output:
     Moved: notes/alpha.md -> archive/alpha.md
@@ -199,8 +200,8 @@ Remove a property from a note via obsidian-cli.
 
 Use when an agent needs to delete a frontmatter property entirely --
 e.g. clearing a stale `status` flag. Requires Obsidian to be running.
-Do NOT use on `created` -- it is immutable and this call exits with an
-error.
+Do NOT use when targeting `created` -- it is immutable and this call
+exits with an error.
 
 Example output:
     Removed: status
@@ -222,8 +223,8 @@ without hand-editing YAML -- e.g. flipping a status flag. Requires
 Obsidian to be running.
 `authors` is append-only: setting it merges `value` into the existing
 list instead of overwriting it.
-Do NOT use to rewrite `created` -- it is immutable and this call exits
-with an error.
+Do NOT use when rewriting `created` -- it is immutable and this call
+exits with an error.
 
 Example output:
     Set: status = active
