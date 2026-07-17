@@ -12,7 +12,7 @@ from pathlib import Path
 
 import pytest
 
-from llmos_vault.root import registered_vaults, vault_root
+from llmos_vault.root import registered_vaults, resolve_vault_root, vault_root
 
 
 def make_vault(root: Path) -> Path:
@@ -99,6 +99,39 @@ def test_registered_vaults_fails_loudly_when_registry_missing(tmp_path):
         registered_vaults(registry_path=tmp_path / "missing-obsidian.json")
 
     assert "obsidian" in str(exc_info.value).lower()
+
+
+def test_resolve_vault_root_llmos_goes_through_vault_root(tmp_path):
+    llmos_vault = make_vault(tmp_path / "llmos")
+    config_path = tmp_path / "config.json"
+    config_path.write_text(json.dumps({"vault_root": str(llmos_vault)}))
+
+    resolved = resolve_vault_root("llmos", config_path=config_path)
+
+    assert resolved == llmos_vault
+
+
+def test_resolve_vault_root_matches_other_names_via_registry(tmp_path):
+    xbrain = tmp_path / "xbrain"
+    xbrain.mkdir()
+    registry_path = tmp_path / "obsidian.json"
+    registry_path.write_text(
+        json.dumps({"vaults": {"abc123": {"path": str(xbrain), "ts": 1}}})
+    )
+
+    resolved = resolve_vault_root("xbrain", registry_path=registry_path)
+
+    assert resolved == xbrain
+
+
+def test_resolve_vault_root_fails_loudly_for_unknown_name(tmp_path):
+    registry_path = tmp_path / "obsidian.json"
+    registry_path.write_text(json.dumps({"vaults": {}}))
+
+    with pytest.raises(SystemExit) as exc_info:
+        resolve_vault_root("nonexistent", registry_path=registry_path)
+
+    assert "nonexistent" in str(exc_info.value)
 
 
 def test_no_location_derived_fallback():
