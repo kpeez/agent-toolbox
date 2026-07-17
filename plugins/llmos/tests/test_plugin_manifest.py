@@ -32,8 +32,9 @@ def test_codex_manifest_omits_hooks_key() -> None:
 
 def test_hooks_declare_session_start_and_pre_tool_use() -> None:
     hooks = json.loads((PLUGIN_ROOT / "hooks" / "hooks.json").read_text())["hooks"]
-    assert set(hooks) == {"SessionStart", "PreToolUse"}
+    assert set(hooks) == {"SessionStart", "PreToolUse", "PostToolUse", "Stop"}
     assert hooks["PreToolUse"][0]["matcher"] == "Write|Edit"
+    assert hooks["PostToolUse"][0]["matcher"] == "Write|Edit"
 
 
 def test_hook_commands_use_the_plugin_root_variable() -> None:
