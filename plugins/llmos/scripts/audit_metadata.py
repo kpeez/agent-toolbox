@@ -6,8 +6,9 @@ from __future__ import annotations
 import argparse
 from pathlib import Path
 
+from llmos_vault import frontmatter
 from llmos_vault.root import vault_root
-from llmos_vault.schema import SPEC_NAME, collect_errors, frontmatter, project_alias
+from llmos_vault.schema import SPEC_NAME, collect_errors, project_alias
 
 
 def parse_args() -> argparse.Namespace:
@@ -31,27 +32,30 @@ def stamp(path: Path, root: Path, relative: Path) -> bool:
     """Add the vault properties this spec's own path already implies.
 
     Only ever adds an absent key -- a present-but-wrong value is a judgment call
-    the audit reports rather than something this silently overwrites.
+    the audit reports rather than something this silently overwrites. Routes
+    through the canonical `llmos_vault.frontmatter` parse/serialize (ADR-0004
+    "one frontmatter owner") rather than hand-splicing raw text, so a stamped
+    note comes out in the vault's one normalized shape.
     """
-    properties = frontmatter(path) or {}
+    text = path.read_text(encoding="utf-8")
+    try:
+        properties, body = frontmatter.parse(text)
+    except ValueError:
+        properties, body = {}, text.lstrip()
+
     slug = relative.parts[1]
-    additions: list[str] = []
+    added = False
     if "categories" not in properties:
-        additions.append('categories:\n  - "[[Specifications]]"')
+        properties["categories"] = ["[[Specifications]]"]
+        added = True
     if "project" not in properties:
         alias = project_alias(root, slug)
-        additions.append(f'project:\n  - "[[projects/{slug}/{slug}|{alias}]]"')
-    if not additions:
+        properties["project"] = [f"[[projects/{slug}/{slug}|{alias}]]"]
+        added = True
+    if not added:
         return False
 
-    text = path.read_text(encoding="utf-8")
-    block = "\n".join(additions)
-    end = text.find("\n---\n", 4) if text.startswith("---\n") else -1
-    if end == -1:
-        text = f"---\n{block}\n---\n\n{text.lstrip()}"
-    else:
-        text = f"{text[:end]}\n{block}{text[end:]}"
-    path.write_text(text, encoding="utf-8")
+    path.write_text(frontmatter.serialize(properties, body), encoding="utf-8")
     return True
 
 
