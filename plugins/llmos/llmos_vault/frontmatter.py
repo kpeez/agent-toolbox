@@ -10,6 +10,14 @@ quoting style.
 Properties serialize in sorted key order, with exactly one blank line after
 the closing `---`, no trailing whitespace on any line, and exactly one
 trailing newline at end of file. Body content is never touched beyond that.
+
+Both flow-style (`tags: [alpha, beta]`) and block-style (`tags:\n  - alpha`)
+lists parse to the same `list[str]`; block style is the one canonical
+serialized form, so normalizing a flow-style list rewrites it to block style.
+A key with a truly blank value (`note:`, no following `  - ` item line) parses
+as an empty scalar `""` and round-trips as `note:`; only the literal `[]`
+parses as an empty list -- conflating the two would silently change a
+property's type on every normalize.
 """
 
 from __future__ import annotations
@@ -57,7 +65,8 @@ def parse(text: str) -> tuple[dict[str, Property], str]:
 
     properties: dict[str, Property] = {}
     current: str | None = None
-    for line in text[4:end].splitlines():
+    lines = text[4:end].splitlines()
+    for i, line in enumerate(lines):
         if line.startswith("  - ") and current is not None:
             existing = properties[current]
             assert isinstance(existing, list)
@@ -66,8 +75,14 @@ def parse(text: str) -> tuple[dict[str, Property], str]:
         key, _, value = line.partition(":")
         current = key.strip()
         value = value.strip()
-        if value == "" or value == "[]":
-            properties[current] = []
+        if value.startswith("[") and value.endswith("]"):
+            inner = value[1:-1].strip()
+            properties[current] = (
+                [] if not inner else [_unquote(item.strip()) for item in inner.split(",")]
+            )
+        elif value == "":
+            is_block_list = i + 1 < len(lines) and lines[i + 1].startswith("  - ")
+            properties[current] = [] if is_block_list else ""
         else:
             properties[current] = _unquote(value)
     return properties, body
@@ -105,6 +120,8 @@ def serialize(properties: dict[str, Property], body: str) -> str:
             for item in value:
                 rendered = f'"{item}"' if _is_wikilink(item) else item
                 lines.append(f"  - {rendered}")
+        elif value == "":
+            lines.append(f"{key}:")
         else:
             rendered = f'"{value}"' if _is_wikilink(value) else value
             lines.append(f"{key}: {rendered}")
