@@ -24,6 +24,26 @@ SPEC_NAME = re.compile(r"^\d{4}-[A-Za-z0-9][A-Za-z0-9_-]*\.md$")
 
 
 def frontmatter(path: Path) -> dict[str, str | list[str]] | None:
+    """Parse a note's leading YAML frontmatter block by hand -- scalars,
+    quoted strings, inline `[a, b]` lists, and block `  - ` lists -- without
+    pulling in a full YAML parser.
+
+    Use when `collect_errors` needs a note's properties to check against the
+    llmOS schema contract; this is the property-shape half of that contract.
+    Do NOT use when you need the note body too or full YAML fidelity (nested
+    maps, anchors) -- this is a schema-checking shortcut, not a general
+    frontmatter parser.
+
+    Example output:
+        {'status': 'active', 'categories': ['[[Specifications]]']}
+
+    Example invocation:
+        from llmos_vault.schema import frontmatter
+        properties = frontmatter(Path("/path/to/vault/notes/alpha.md"))
+
+    Args:
+        path: Path to the note to parse.
+    """
     text = path.read_text(encoding="utf-8")
     if not text.startswith("---\n"):
         return None
@@ -58,6 +78,26 @@ def frontmatter(path: Path) -> dict[str, str | list[str]] | None:
 
 
 def untracked_markdown(root: Path) -> set[Path]:
+    """List markdown files under `root` that git sees as untracked (new,
+    never `git add`ed), via `git ls-files --others --exclude-standard`.
+
+    Use when `collect_errors` needs to tell a brand-new note from an existing
+    one -- new notes get a stricter `created`-date check than notes already
+    checked in.
+    Do NOT use when `root` isn't a git repo -- a non-zero git exit is
+    swallowed and an empty set is returned, silently skipping the check
+    rather than raising.
+
+    Example output:
+        {PosixPath('inbox/new-capture.md')}
+
+    Example invocation:
+        from llmos_vault.schema import untracked_markdown
+        new_notes = untracked_markdown(Path("/path/to/vault"))
+
+    Args:
+        root: Vault root to check untracked files under.
+    """
     result = subprocess.run(
         ["git", "-C", str(root), "ls-files", "--others", "--exclude-standard"],
         check=False,
@@ -75,7 +115,7 @@ def collect_errors(root: Path) -> tuple[list[str], int]:
     Use when policing the llmOS property contract -- both the standalone
     `audit_metadata.py` CLI and `vault_health`'s schema-violations section
     call this so the rules live in exactly one place.
-    Do NOT use against a vault with no llmOS schema layer (e.g. xbrain) --
+    Do NOT use when the vault has no llmOS schema layer (e.g. xbrain) --
     every message assumes the llmOS property contract.
 
     Example output:

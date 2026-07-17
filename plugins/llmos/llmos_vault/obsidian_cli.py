@@ -81,8 +81,8 @@ def run(
     out to obsidian-cli -- it is the only function in the library allowed to
     call `subprocess`, so vault targeting, `file=`/`path=` enforcement, and
     multi-line content staging happen in exactly one place.
-    Do NOT use for reads -- `notes.read_note`/`graph.get_neighbors` parse the
-    vault directly and stay headless-safe; shelling out for a read would
+    Do NOT use when reading -- `notes.read_note`/`graph.get_neighbors` parse
+    the vault directly and stay headless-safe; shelling out for a read would
     needlessly require the app to be open.
 
     Example output:
