@@ -67,8 +67,8 @@ def vault_health(
     """Aggregate vault hygiene into one report: orphans, dead-ends, unresolved
     wikilinks, schema violations, stale inbox items, and qmd index gaps.
 
-    Use as the opening move of a vault-maintenance pass -- e.g. the nightly
-    cron -- to see every hygiene defect in one headless call. Each section
+    Use when starting a vault-maintenance pass -- e.g. the nightly cron --
+    to see every hygiene defect in one headless call. Each section
     degrades independently: a missing qmd binary reports a notice and an
     empty qmd-gap list, it never fails the whole report. Works with Obsidian
     closed; everything is read straight off disk.
@@ -193,8 +193,9 @@ def summary(report: VaultHealth) -> str:
     """Render a `VaultHealth` report as a readable text summary with
     per-section counts.
 
-    Use for the CLI's default (non-`--json`) output -- a human skimming a
-    cron log wants counts and a short list, not a raw dataclass repr.
+    Use when rendering the CLI's default (non-`--json`) output -- a human
+    skimming a cron log wants counts and a short list, not a raw dataclass
+    repr.
     Do NOT use when the caller needs to parse the result -- use `--json` /
     `dataclasses.asdict` instead.
 
