@@ -9,10 +9,9 @@ from __future__ import annotations
 
 import dataclasses
 import json
-import os
 import sys
 from pathlib import Path
-from typing import Literal
+from typing import Annotated, Literal
 
 import cyclopts
 
@@ -35,6 +34,7 @@ from llmos_vault.mutations import (
 )
 from llmos_vault.notes import list_notes, read_note
 from llmos_vault.obsidian_cli import EXIT_OBSIDIAN_NOT_RUNNING, ObsidianNotRunning
+from llmos_vault.provider import detect_provider
 from llmos_vault.root import resolve_vault_root
 
 Vault = Literal["llmos", "xbrain"]
@@ -62,24 +62,6 @@ def _llmos_only(vault: Vault) -> Path:
             "daily-note contract"
         )
     return resolve_vault_root(vault)
-
-
-_PROVIDER_ENV_MARKERS = (
-    ("claude", "CLAUDECODE"),
-    ("codex", "CODEX_SANDBOX_NETWORK_DISABLED"),
-    ("gemini", "GEMINI_CLI"),
-)
-
-
-def _detect_provider() -> str | None:
-    """Best-effort invoking-provider name from harness-set env vars, mirroring
-    the PostToolUse stamp hook's own detection (ADR-0003: Claude and Codex are
-    indistinguishable via `CLAUDE_PLUGIN_ROOT`, so harness-specific markers are
-    used instead)."""
-    for name, marker in _PROVIDER_ENV_MARKERS:
-        if os.environ.get(marker):
-            return name
-    return None
 
 
 @app.command
@@ -211,7 +193,7 @@ def subgraph(note: str, *, vault: Vault = "llmos", depth: int = 1) -> None:
 def health(
     *,
     vault: Vault = "llmos",
-    json: bool = False,
+    json_output: Annotated[bool, cyclopts.Parameter(name="--json")] = False,
     qmd_collection: str = "llmos",
     stale_after_days: int = 14,
 ) -> None:
@@ -238,20 +220,18 @@ def health(
     Args:
         vault: Which registered vault to check. llmOS schema-violation
             checks run only when this is "llmos"; any other vault skips them.
-        json: Emit machine-parseable JSON instead of a readable summary.
+        json_output: Emit machine-parseable JSON instead of a readable summary.
         qmd_collection: qmd collection name to check for index gaps.
         stale_after_days: Age in days after which an inbox item counts as stale.
     """
-    import json as json_module
-
     report = vault_health(
         resolve_vault_root(vault),
         profile="llmos" if vault == "llmos" else "core",
         qmd_collection=qmd_collection,
         stale_after_days=stale_after_days,
     )
-    if json:
-        print(json_module.dumps(dataclasses.asdict(report), indent=2))
+    if json_output:
+        print(json.dumps(dataclasses.asdict(report), indent=2))
     else:
         print(summary(report))
     raise SystemExit(0 if report.is_clean else 1)
@@ -409,7 +389,7 @@ def file_inbox(note: str, destination: str, *, vault: Vault = "llmos") -> None:
         vault: Must be "llmos" -- inbox filing is an llmOS-profile feature.
     """
     root = _llmos_only(vault)
-    print(file_inbox_item(root, note, destination, provider=_detect_provider()))
+    print(file_inbox_item(root, note, destination, provider=detect_provider()))
 
 
 @daily_app.command(name="get-or-create")
