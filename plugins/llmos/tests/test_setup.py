@@ -60,6 +60,39 @@ def test_setup_removes_stale_vault_symlinks(tmp_path):
         assert not path.is_symlink(), f"{path} should have been removed"
 
 
+def test_setup_removes_dead_hook_symlinks(tmp_path):
+    """Both hook symlinks are dead and must go (issue #16).
+
+    ~/.codex/hooks.json pointed at the vault's agents/codex/hooks.json, which the
+    vault deleted -- so it dangles and Codex ran with zero hooks. A dangling link
+    is removed on the strength of `-L`, without its target ever resolving.
+    ~/.claude/hooks/llmos_hook.py still resolves, but nothing invokes it once the
+    settings.json SessionStart block naming it is gone; the plugin serves that
+    hook from ${CLAUDE_PLUGIN_ROOT} instead.
+    """
+    fake_home = tmp_path / "home"
+    fake_home.mkdir()
+    live_target = tmp_path / "llmos_hook.py"
+    live_target.write_text("# stands in for the plugin's hook\n")
+
+    dangling = fake_home / ".codex" / "hooks.json"
+    dangling.parent.mkdir(parents=True, exist_ok=True)
+    dangling.symlink_to(tmp_path / "deleted-by-the-vault" / "hooks.json")
+
+    resolving = fake_home / ".claude" / "hooks" / "llmos_hook.py"
+    resolving.parent.mkdir(parents=True, exist_ok=True)
+    resolving.symlink_to(live_target)
+
+    assert not dangling.exists(), "precondition: this link must dangle"
+    assert resolving.exists(), "precondition: this link must resolve"
+
+    run_setup_agent(fake_home)
+
+    assert not dangling.is_symlink(), "the dangling Codex hook link should be gone"
+    assert not resolving.is_symlink(), "the inert Claude hook link should be gone"
+    assert live_target.exists(), "only the link is removed, never its target"
+
+
 def test_no_rule_files_live_in_agent_toolbox():
     tracked = subprocess.run(
         ["git", "ls-files"],
