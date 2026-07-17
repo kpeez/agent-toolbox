@@ -9,13 +9,22 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 ################################################################################
 # maintain-llmos is dissolved and setup-llmos now ships in plugins/llmos,
 # installed via the plugin marketplace -- left in place these symlinks would
-# double-list the skill or resurrect deleted vault code. NEVER remove
-# ~/.codex/hooks.json here: that symlink is the current working Codex hook
-# path and only retires once Codex plugin hooks are verified (issue #16).
+# double-list the skill or resurrect deleted vault code.
+#
+# Both hook symlinks are now dead and are removed here (issue #16). An earlier
+# note here said ~/.codex/hooks.json must never be removed because it was "the
+# current working Codex hook path" -- that is no longer true, and had not been
+# for a while: its target (the vault's agents/codex/hooks.json) was deleted
+# when the vault's agents/ tree went away, so the link dangles and Codex has
+# been running with zero hooks. ~/.claude/hooks/llmos_hook.py resolves, but
+# nothing invokes it since the settings.json SessionStart block that named it
+# was removed; the llmos plugin now provides that hook via ${CLAUDE_PLUGIN_ROOT}.
 for stale in \
     "$HOME/.claude/skills/maintain-llmos" \
     "$HOME/.claude/skills/setup-llmos" \
-    "$HOME/.codex/skills/setup-llmos"; do
+    "$HOME/.codex/skills/setup-llmos" \
+    "$HOME/.codex/hooks.json" \
+    "$HOME/.claude/hooks/llmos_hook.py"; do
     [[ -L "$stale" ]] && rm "$stale"
 done
 echo "removed stale llmOS symlinks (if present)"
