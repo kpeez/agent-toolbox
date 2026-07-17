@@ -15,7 +15,7 @@ import json
 import shutil
 import subprocess
 import sys
-from collections.abc import Iterable
+from collections.abc import Iterable, Iterator
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
@@ -108,11 +108,18 @@ def parse_claude(blob: dict, now: datetime) -> Probe:
     return min(windows, key=lambda window: window.remaining_pct)
 
 
-def select(probes: Iterable[tuple[str, Probe]]) -> str | None:
+def select(
+    probes: Iterable[tuple[str, Probe]], *, allow_unknown: bool = True
+) -> str | None:
     """Return the first provider with headroom, reporting skips on stderr.
 
     Takes an iterable rather than a sequence so callers can pass a generator and
     have the chain short-circuit: providers after the winner are never probed.
+
+    `allow_unknown` is the policy axis. True presumes an unmeasurable provider is
+    available -- right when a human reads the output, since the CLI fails at call
+    time and the caller learns then. False skips it, which is what an unattended
+    caller wants: a skipped run is cheap, an unreviewed bad one is not.
     """
     for name, probe in probes:
         match probe:
@@ -124,11 +131,27 @@ def select(probes: Iterable[tuple[str, Probe]]) -> str | None:
                 print(f"{name}: {remaining}% remaining ({window})", file=sys.stderr)
             case Known():
                 return name
+            case Unknown(reason=reason) if not allow_unknown:
+                print(f"{name}: unmeasurable ({reason})", file=sys.stderr)
             case Unknown():
                 return name
             case _:
                 raise ValueError(f"unhandled probe type for {name}: {probe!r}")
     return None
+
+
+def probe_chain(now: datetime) -> Iterator[tuple[str, Probe]]:
+    """Probe every provider in chain order.
+
+    A generator, not a tuple: `select` short-circuits, so a provider after the
+    winner is never probed and never pays for its `gh api` call or file read.
+    Chain order lives here alone -- a second copy in the runner would be one more
+    normative fact that cannot notice the two have drifted apart.
+    """
+    yield "copilot", probe_copilot()
+    yield "agy", probe_agy()
+    yield "codex", probe_codex(now)
+    yield "claude", probe_claude(now)
 
 
 def probe_copilot() -> Probe:
@@ -223,14 +246,7 @@ def probe_claude(now: datetime) -> Probe:
 
 
 def main() -> int:
-    now = datetime.now(timezone.utc)
-    chain = (
-        ("copilot", probe_copilot),
-        ("agy", probe_agy),
-        ("codex", lambda: probe_codex(now)),
-        ("claude", lambda: probe_claude(now)),
-    )
-    winner = select((name, probe()) for name, probe in chain)
+    winner = select(probe_chain(datetime.now(timezone.utc)))
     if winner is None:
         print("no agent CLI has quota remaining", file=sys.stderr)
         return 1
