@@ -33,6 +33,8 @@ python3 "<llmos-plugin-root>/scripts/daily_branch.py" spec --agent codex --name 
 
 No script stamps frontmatter. These use only the Python standard library and write plain files — no Obsidian CLI dependency.
 
+The scheduled runs that drive this cascade — what the nightly and weekly audit, why a missing catch-all is a valid state rather than a failure, and what neither may ever do — are specified in `references/automation.md`. Read it before acting as either one.
+
 Use `<llmos-plugin-root>/scripts/audit_metadata.py` for a schema audit; it is read-only unless you pass `--fix`.
 
 Every canonical spec (`projects/<project>/specs/NNNN-<slug>.md`) carries the minimal `Specifications` category and project ownership. Both are implied by the file's own path, so `--fix` stamps them rather than any agent hand-typing them — run it after `/write-spec` creates a spec, since that command is vault-agnostic and writes only the workflow properties (`status`, `desc`, `blocked`). Legacy supporting notes may remain unclassified until materially edited.
