@@ -15,6 +15,7 @@ after the winner must never run.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
 import tempfile
@@ -330,6 +331,135 @@ class UnreadableSourceTests(unittest.TestCase):
             (sessions / "rollout.jsonl").write_text(
                 '{"other": true}\n', encoding="utf-8"
             )
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_codex(NOW)
+        self.assertIsInstance(probe, Unknown)
+
+    def test_a_fresh_empty_session_does_not_hide_the_reading_beneath_it(
+        self,
+    ) -> None:
+        # Codex writes a rollout the instant a session opens, before any
+        # response has attached rate_limits. Keying off the newest file alone
+        # reported Unknown -- which the optimistic policy reads as "available"
+        # -- while codex sat at 100% used. Observed live on 2026-07-16.
+        with tempfile.TemporaryDirectory() as home:
+            sessions = Path(home) / ".codex/sessions"
+            sessions.mkdir(parents=True)
+            older = sessions / "rollout-older.jsonl"
+            older.write_text(
+                json.dumps({"payload": CODEX_WEEKLY_BLOWN}) + "\n", encoding="utf-8"
+            )
+            newer = sessions / "rollout-newer.jsonl"
+            newer.write_text('{"payload": {"other": true}}\n', encoding="utf-8")
+            os.utime(older, (1_000_000, 1_000_000))
+            os.utime(newer, (2_000_000, 2_000_000))
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_codex(NOW)
+        self.assertEqual(probe, Known(1.0, "weekly"))
+
+    def test_an_exhausted_premium_record_does_not_hide_the_reading_beneath_it(
+        self,
+    ) -> None:
+        # Verbatim capture, 2026-07-16 23:40. On hitting the usage limit codex
+        # writes a "premium"-bucket record whose windows are both null: the line
+        # exists and parses, it just carries no reading. It sat directly on top
+        # of a "codex"-bucket record reading 100% used, so keying off the newest
+        # rate_limits *line* reported Unknown -- i.e. "available" -- for a
+        # provider with nothing left.
+        with tempfile.TemporaryDirectory() as home:
+            sessions = Path(home) / ".codex/sessions"
+            sessions.mkdir(parents=True)
+            real = sessions / "rollout-real.jsonl"
+            real.write_text(
+                json.dumps({"payload": CODEX_WEEKLY_BLOWN}) + "\n", encoding="utf-8"
+            )
+            spent = sessions / "rollout-premium.jsonl"
+            spent.write_text(
+                json.dumps(
+                    {
+                        "payload": {
+                            "rate_limits": {
+                                "limit_id": "premium",
+                                "limit_name": None,
+                                "primary": None,
+                                "secondary": None,
+                                "credits": {
+                                    "has_credits": False,
+                                    "unlimited": False,
+                                    "balance": "0",
+                                },
+                                "plan_type": None,
+                            }
+                        }
+                    }
+                )
+                + "\n",
+                encoding="utf-8",
+            )
+            os.utime(real, (1_000_000, 1_000_000))
+            os.utime(spent, (2_000_000, 2_000_000))
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_codex(NOW)
+        self.assertEqual(probe, Known(1.0, "weekly"))
+
+    def test_an_unparseable_line_does_not_poison_the_scan(self) -> None:
+        with tempfile.TemporaryDirectory() as home:
+            sessions = Path(home) / ".codex/sessions"
+            sessions.mkdir(parents=True)
+            real = sessions / "rollout-real.jsonl"
+            real.write_text(
+                json.dumps({"payload": CODEX_WEEKLY_BLOWN}) + "\n", encoding="utf-8"
+            )
+            junk = sessions / "rollout-junk.jsonl"
+            junk.write_text('{"rate_limits": TRUNCATED\n', encoding="utf-8")
+            os.utime(real, (1_000_000, 1_000_000))
+            os.utime(junk, (2_000_000, 2_000_000))
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_codex(NOW)
+        self.assertEqual(probe, Known(1.0, "weekly"))
+
+    def test_no_recent_session_carries_a_reading_yields_unknown(self) -> None:
+        with tempfile.TemporaryDirectory() as home:
+            sessions = Path(home) / ".codex/sessions"
+            sessions.mkdir(parents=True)
+            for index in range(3):
+                (sessions / f"rollout-{index}.jsonl").write_text(
+                    '{"other": true}\n', encoding="utf-8"
+                )
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_codex(NOW)
+        self.assertIsInstance(probe, Unknown)
+
+    def test_the_scan_is_bounded_so_a_stale_reading_cannot_resurface(self) -> None:
+        # A machine accumulates hundreds of sessions; an unbounded walk would
+        # read them all to surface a reading its own resets_at would void.
+        with tempfile.TemporaryDirectory() as home:
+            sessions = Path(home) / ".codex/sessions"
+            sessions.mkdir(parents=True)
+            buried = sessions / "rollout-buried.jsonl"
+            buried.write_text(
+                json.dumps({"payload": CODEX_WEEKLY_BLOWN}) + "\n", encoding="utf-8"
+            )
+            os.utime(buried, (1_000_000, 1_000_000))
+            for index in range(pick_agent.CODEX_SESSIONS_SCANNED):
+                empty = sessions / f"rollout-empty-{index}.jsonl"
+                empty.write_text('{"other": true}\n', encoding="utf-8")
+                os.utime(empty, (2_000_000 + index, 2_000_000 + index))
             with (
                 patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
                 patch("pick_agent.Path.home", return_value=Path(home)),
