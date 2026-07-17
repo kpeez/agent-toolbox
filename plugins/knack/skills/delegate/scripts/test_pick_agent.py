@@ -3,10 +3,9 @@
 The payloads below are verbatim captures from a real machine, trimmed of account
 identifiers. They are the point of these tests: every provider reports usage in
 its own shape, with its own polarity, and the traps are all in the data --
-copilot reports percent *remaining* alongside a negative credit balance, codex
-puts its weekly window in the positionally-named "primary" slot, and claude
-writes a null reset instant for an idle window. A parser written against a
-guessed shape passes a hand-written fixture and fails at 8am.
+copilot reports percent *remaining* alongside a negative credit balance, and
+codex puts its weekly window in the positionally-named "primary" slot. A parser
+written against a guessed shape passes a hand-written fixture and fails at 8am.
 
 Selection short-circuits, so the chain is checked lazily: a probe for a provider
 after the winner must never run.
@@ -24,8 +23,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from unittest.mock import patch
 
-REPO_ROOT = Path(__file__).resolve().parents[1]
-PICK_AGENT = REPO_ROOT / "scripts/pick_agent.py"
+PICK_AGENT = Path(__file__).resolve().parent / "pick_agent.py"
 
 sys.path.insert(0, str(PICK_AGENT.parent))
 
@@ -76,20 +74,6 @@ CODEX_WEEKLY_BLOWN = {
     }
 }
 
-# ~/.claude.json -- five_hour is idle, so its reset instant is null.
-CLAUDE_HEALTHY = {
-    "cachedUsageUtilization": {
-        "fetchedAtMs": 1784070720898,
-        "utilization": {
-            "five_hour": {"utilization": 0, "resets_at": None},
-            "seven_day": {
-                "utilization": 3,
-                "resets_at": "2026-07-19T14:59:59.624543+00:00",
-            },
-        },
-    }
-}
-
 NOW = datetime(2026, 7, 17, 4, 0, tzinfo=timezone.utc)
 AFTER_CODEX_RESET = datetime(2026, 7, 24, tzinfo=timezone.utc)
 
@@ -116,28 +100,26 @@ class TodaysStateTests(unittest.TestCase):
             ("copilot", lambda: record("copilot", parse_copilot_today())),
             ("agy", lambda: record("agy", Unknown("no quota interface"))),
             ("codex", explode),
-            ("claude", explode),
         ]
         self.assertEqual(pick_agent.select(lazy_chain(chain)), "agy")
         self.assertEqual(probed, ["copilot", "agy"])
 
-    def test_without_agy_installed_codex_is_under_threshold_and_claude_wins(
-        self,
-    ) -> None:
+    def test_without_agy_installed_the_spent_chain_selects_nothing(self) -> None:
+        # agy is the only fallback once copilot is spent: claude is deliberately
+        # not in the chain, so an uninstalled agy leaves codex, and codex is
+        # under the threshold.
         chain = [
             ("copilot", lambda: parse_copilot_today()),
             ("agy", lambda: Absent()),
             ("codex", lambda: pick_agent.parse_codex(CODEX_WEEKLY_BLOWN, NOW)),
-            ("claude", lambda: pick_agent.parse_claude(CLAUDE_HEALTHY, NOW)),
         ]
-        self.assertEqual(pick_agent.select(lazy_chain(chain)), "claude")
+        self.assertIsNone(pick_agent.select(lazy_chain(chain)))
 
     def test_every_provider_exhausted_selects_nothing(self) -> None:
         chain = [
             ("copilot", lambda: parse_copilot_today()),
             ("agy", lambda: Absent()),
-            ("codex", lambda: pick_agent.parse_codex(CODEX_WEEKLY_BLOWN, NOW)),
-            ("claude", lambda: Known(1.0, "7d")),
+            ("codex", lambda: Known(1.0, "weekly")),
         ]
         self.assertIsNone(pick_agent.select(lazy_chain(chain)))
 
@@ -204,60 +186,6 @@ class CodexParserTests(unittest.TestCase):
 
     def test_unexpected_record_is_unknown(self) -> None:
         self.assertIsInstance(pick_agent.parse_codex({}, NOW), Unknown)
-
-
-class ClaudeParserTests(unittest.TestCase):
-    def test_null_reset_instant_reads_available_instead_of_crashing(self) -> None:
-        # Inferred, not captured: the real capture pairs a null resets_at with
-        # utilization: 0 (CLAUDE_HEALTHY's five_hour). This shape -- a null
-        # resets_at alongside a nonzero utilization -- exercises the same idle
-        # branch with a number that would matter if the null check were dropped.
-        blob = {
-            "cachedUsageUtilization": {
-                "utilization": {
-                    "five_hour": {"utilization": 0, "resets_at": None},
-                    "seven_day": {"utilization": 90, "resets_at": None},
-                }
-            }
-        }
-        self.assertEqual(pick_agent.parse_claude(blob, NOW), Known(100.0, "5h"))
-
-    def test_seven_day_utilization_governs_over_an_idle_five_hour_window(self) -> None:
-        self.assertEqual(
-            pick_agent.parse_claude(CLAUDE_HEALTHY, NOW), Known(97.0, "7d")
-        )
-
-    def test_a_rolled_over_window_voids_a_stale_reading(self) -> None:
-        blob = {
-            "cachedUsageUtilization": {
-                "utilization": {
-                    "five_hour": {"utilization": 99, "resets_at": None},
-                    "seven_day": {
-                        "utilization": 99,
-                        "resets_at": "2026-07-19T14:59:59.624543+00:00",
-                    },
-                }
-            }
-        }
-        after = datetime(2026, 7, 20, tzinfo=timezone.utc)
-        self.assertEqual(pick_agent.parse_claude(blob, after), Known(100.0, "5h"))
-
-    def test_missing_cache_key_is_unknown(self) -> None:
-        self.assertIsInstance(pick_agent.parse_claude({}, NOW), Unknown)
-
-    def test_a_naive_reset_instant_is_unknown_rather_than_a_crash(self) -> None:
-        blob = {
-            "cachedUsageUtilization": {
-                "utilization": {
-                    "five_hour": {
-                        "utilization": 50,
-                        "resets_at": "2026-07-19T14:59:59",
-                    },
-                    "seven_day": {"utilization": 3, "resets_at": None},
-                }
-            }
-        }
-        self.assertIsInstance(pick_agent.parse_claude(blob, NOW), Unknown)
 
 
 class UnreadableSourceTests(unittest.TestCase):
@@ -480,37 +408,14 @@ class UnreadableSourceTests(unittest.TestCase):
                 probe = pick_agent.probe_codex(NOW)
         self.assertEqual(probe, Known(1.0, "weekly"))
 
-    def test_missing_claude_json_yields_unknown(self) -> None:
-        with (
-            patch("pick_agent.shutil.which", return_value="/usr/local/bin/claude"),
-            patch("pick_agent.Path.home", return_value=Path("/nonexistent-home")),
-        ):
-            probe = pick_agent.probe_claude(NOW)
-        self.assertIsInstance(probe, Unknown)
-
-    def test_claude_json_delegates_to_parse_claude(self) -> None:
-        with tempfile.TemporaryDirectory() as home:
-            (Path(home) / ".claude.json").write_text(
-                json.dumps(CLAUDE_HEALTHY), encoding="utf-8"
-            )
-            with (
-                patch("pick_agent.shutil.which", return_value="/usr/local/bin/claude"),
-                patch("pick_agent.Path.home", return_value=Path(home)),
-            ):
-                probe = pick_agent.probe_claude(NOW)
-        self.assertEqual(probe, Known(97.0, "7d"))
-
-
-class MainLazinessTests(unittest.TestCase):
-    def test_main_selects_agy_and_never_probes_codex_or_claude(self) -> None:
+    def test_main_selects_agy_and_never_probes_codex(self) -> None:
         def explode_probe(now: datetime) -> pick_agent.Probe:
-            raise AssertionError("main probed codex or claude after agy won")
+            raise AssertionError("main probed codex after agy won")
 
         with (
             patch("pick_agent.probe_copilot", return_value=parse_copilot_today()),
             patch("pick_agent.probe_agy", return_value=Unknown("no quota interface")),
             patch("pick_agent.probe_codex", side_effect=explode_probe),
-            patch("pick_agent.probe_claude", side_effect=explode_probe),
             patch("builtins.print") as mock_print,
         ):
             exit_code = pick_agent.main()
@@ -525,7 +430,7 @@ class CommandLineTests(unittest.TestCase):
         )
         self.assertEqual(result.returncode, 0, result.stderr)
         self.assertNotIn("Traceback", result.stderr)
-        self.assertIn(result.stdout.strip(), {"copilot", "agy", "codex", "claude"})
+        self.assertIn(result.stdout.strip(), {"copilot", "agy", "codex"})
         self.assertEqual(len(result.stdout.split()), 1)
 
     def test_exhausted_chain_exits_one_with_empty_stdout(self) -> None:
@@ -535,7 +440,6 @@ class CommandLineTests(unittest.TestCase):
             "pick_agent.probe_copilot = lambda: pick_agent.Known(0.0, 'monthly');"
             "pick_agent.probe_agy = lambda: pick_agent.Absent();"
             "pick_agent.probe_codex = lambda now: pick_agent.Known(1.0, 'weekly');"
-            "pick_agent.probe_claude = lambda now: pick_agent.Known(0.0, '7d');"
             "sys.exit(pick_agent.main())"
         )
         result = subprocess.run(

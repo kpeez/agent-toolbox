@@ -1,12 +1,15 @@
 #!/usr/bin/env python3
 """Print the first agent CLI that still has quota to spend.
 
-Walks copilot -> agy -> codex -> claude and prints the command to run. Every
-provider reports usage differently -- and copilot reports percent *remaining*
-while codex and claude report percent *used* -- so each probe normalizes to
-remaining. A provider we cannot measure is presumed available: its CLI fails at
-call time and the caller learns then, which beats a selector that crashes
-because a JSON file moved.
+Walks copilot -> agy -> codex and prints the command to run. Every provider
+reports usage differently -- and copilot reports percent *remaining* while codex
+reports percent *used* -- so each probe normalizes to remaining. A provider we
+cannot measure is presumed available: its CLI fails at call time and the caller
+learns then, which beats a selector that crashes because a JSON file moved.
+
+Claude is deliberately not in the chain. A Claude session that wants Claude work
+has its own in-process subagent tools; routing it back out through this script
+would spawn a second session to do what the caller can already do directly.
 """
 
 from __future__ import annotations
@@ -24,7 +27,6 @@ MIN_REMAINING_PCT = 5.0
 GH_TIMEOUT_SECONDS = 10
 CODEX_SESSIONS_SCANNED = 10
 CODEX_WINDOWS = {300: "5h", 10080: "weekly"}
-CLAUDE_WINDOWS = {"five_hour": "5h", "seven_day": "7d"}
 
 
 @dataclass(frozen=True)
@@ -80,34 +82,6 @@ def parse_codex(record: dict, now: datetime) -> Probe:
     return min(windows, key=lambda window: window.remaining_pct)
 
 
-def parse_claude(blob: dict, now: datetime) -> Probe:
-    try:
-        utilization = blob["cachedUsageUtilization"]["utilization"]
-    except (KeyError, TypeError):
-        return Unknown("no cached claude utilization")
-    windows: list[Known] = []
-    for key, name in CLAUDE_WINDOWS.items():
-        try:
-            slot = utilization[key]
-            used = float(slot["utilization"])
-            resets_at = slot["resets_at"]
-        except (KeyError, TypeError, ValueError):
-            return Unknown("unexpected claude window")
-        # A null reset instant is an idle window with no live limit.
-        if resets_at is None:
-            windows.append(Known(100.0, name))
-            continue
-        try:
-            # The comparison is inside the try: a naive instant parses fine and
-            # only fails when compared against an aware one.
-            rolled_over = now > datetime.fromisoformat(resets_at)
-        except (TypeError, ValueError):
-            return Unknown("unexpected claude reset instant")
-        remaining = 100.0 if rolled_over else max(100.0 - used, 0.0)
-        windows.append(Known(remaining, name))
-    return min(windows, key=lambda window: window.remaining_pct)
-
-
 def select(
     probes: Iterable[tuple[str, Probe]], *, allow_unknown: bool = True
 ) -> str | None:
@@ -151,7 +125,6 @@ def probe_chain(now: datetime) -> Iterator[tuple[str, Probe]]:
     yield "copilot", probe_copilot()
     yield "agy", probe_agy()
     yield "codex", probe_codex(now)
-    yield "claude", probe_claude(now)
 
 
 def probe_copilot() -> Probe:
@@ -233,16 +206,6 @@ def probe_codex(now: datetime) -> Probe:
         if isinstance(probe, Known):
             return probe
     return Unknown("no usable rate limits in recent codex sessions")
-
-
-def probe_claude(now: datetime) -> Probe:
-    if shutil.which("claude") is None:
-        return Absent()
-    try:
-        blob = json.loads((Path.home() / ".claude.json").read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError):
-        return Unknown("~/.claude.json unreadable")
-    return parse_claude(blob, now)
 
 
 def main() -> int:
