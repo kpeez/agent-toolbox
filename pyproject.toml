@@ -1,0 +1,18 @@
+[project]
+name = "agent-toolbox"
+version = "0.0.0"
+description = "Workspace root for agent-toolbox's Python packages"
+requires-python = ">=3.11"
+dependencies = ["llmos-vault"]
+
+[tool.uv]
+package = false
+
+[tool.uv.sources]
+llmos-vault = { workspace = true }
+
+[tool.uv.workspace]
+members = ["plugins/llmos"]
+
+[dependency-groups]
+dev = ["pytest>=8", "ruff>=0.6", "ty>=0.0.1a1"]
