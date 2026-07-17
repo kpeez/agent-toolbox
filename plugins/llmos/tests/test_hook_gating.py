@@ -318,6 +318,46 @@ def test_pre_write_injects_for_codex_relative_patch_path(tmp_path):
     assert result.returncode == 0
 
 
+def test_pre_write_injects_on_the_only_channel_the_model_reads(tmp_path):
+    """PreToolUse must inject via JSON; its plain stdout never reaches a model.
+
+    Both harnesses drop a PreToolUse hook's bare stdout into the transcript and
+    hand the model nothing. `hookSpecificOutput.additionalContext` is the sole
+    supported injection point. Every other test here asserts the schema merely
+    *appears in stdout*, which stayed true for months while the contract in fact
+    reached no one -- so this is the assertion that has to pin the envelope.
+    """
+    vault = make_vault(tmp_path / "vault")
+    spec = make_spec(vault, "foo.md")
+
+    result = run_hook(
+        "pre-tool-use",
+        {"tool_input": {"file_path": str(spec)}},
+        tmp_path,
+        vault,
+    )
+
+    specific = json.loads(result.stdout)["hookSpecificOutput"]
+    assert specific["hookEventName"] == "PreToolUse"
+    assert SCHEMA_SENTINEL in specific["additionalContext"]
+    assert result.returncode == 0
+
+
+def test_session_start_injects_as_bare_stdout(tmp_path):
+    """SessionStart is the one event whose bare stdout is added to context.
+
+    Wrapping it in the PreToolUse envelope would show the model the JSON rather
+    than the message, so the two events must not converge on one shape.
+    """
+    vault = make_vault(tmp_path / "vault")
+
+    result = run_hook("session-start", {"cwd": str(vault)}, tmp_path, vault)
+
+    assert "hookSpecificOutput" not in result.stdout
+    assert str(vault) in result.stdout
+    assert result.returncode == 0
+
+
 def test_pre_write_non_blocking_when_vault_unconfigured(tmp_path):
     # No LLMOS_ROOT and no ~/.config/llmos/config.json (HOME is redirected
     # into tmp_path): vault_root() sys.exits internally. The hook must
