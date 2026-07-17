@@ -5,15 +5,15 @@ description: Maintain the shared llmOS Obsidian vault. Use when an agent files o
 
 # Maintain llmOS
 
-Treat llmOS as the canonical shared store. Keep only provider-native memory and routing under `agents/<provider>/`; keep reusable knowledge shared. Canonical project specifications and ADRs live under `projects/<project>/docs/specs/` and `projects/<project>/docs/adrs/`.
+Treat llmOS as the canonical shared store; keep reusable knowledge shared. No provider writes memory into the vault (ADR-0003) — `agents/` holds only `references/`. Canonical project specifications and ADRs live under `projects/<project>/specs/` and `projects/<project>/adrs/`.
 
 ## Workflow
 
-1. Resolve the vault from `LLMOS_ROOT`, or use the current Git root when it contains `.obsidian/` and `AGENTS.md`.
+1. Resolve the vault with `<llmos-plugin-root>/scripts/vault_root.py`. Never derive it from the working directory or a file's location (ADR-0001).
 2. Read `[[llmOS]]`, `AGENTS.md`, and the nearest area or canonical project note/landing page with `obsidian-cli vault="llmOS" read path="..."`.
 3. Delegate broad exploration to a bounded subagent. Keep synthesis and cross-cutting decisions with the primary agent.
 4. Use `qmd search -c llmos` for exact retrieval or `qmd query -c llmos` for semantic and cross-note retrieval. Fetch full hits with `qmd get` before using them.
-5. Classify linked `categories`, linked `topics`, and linked `project` (omitting empty properties), then file the result with the matching template using [the schema and directory map](references/schema.md).
+5. Classify linked `categories`, linked `topics`, and linked `project` (omitting empty properties), then file the result with the matching template using the schema and directory map at `$LLMOS_ROOT/agents/references/schema.md`, which the vault single-sources (ADR-0002).
 6. Add the current provider to `authors` without removing prior authors, and bump `updated`. This is manual — no hook stamps frontmatter.
 7. Write a receipt only when a spec is completed — all its required child issues in a published implementation cycle are implemented. Spec drafting, issue publication, and intermediate issue completion do not warrant a receipt. Call `<llmos-plugin-root>/scripts/write_daily_receipt.py` with a stable `--receipt-id` (the spec slug) and exactly two fields:
 
@@ -51,4 +51,4 @@ Receipts always land in `projects/<project>/logs/YYYY-MM-DD-<project>.md`; there
 
 Use `<llmos-plugin-root>/scripts/audit_metadata.py` for a schema audit; it is read-only unless you pass `--fix`.
 
-Every canonical spec (`projects/<project>/docs/specs/NNNN-<slug>.md`) carries the minimal `Specifications` category and project ownership. Both are implied by the file's own path, so `--fix` stamps them rather than any agent hand-typing them — run it after `/write-spec` creates a spec, since that command is vault-agnostic and writes only the workflow properties (`status`, `desc`, `blocked`). Legacy supporting notes may remain unclassified until materially edited.
+Every canonical spec (`projects/<project>/specs/NNNN-<slug>.md`) carries the minimal `Specifications` category and project ownership. Both are implied by the file's own path, so `--fix` stamps them rather than any agent hand-typing them — run it after `/write-spec` creates a spec, since that command is vault-agnostic and writes only the workflow properties (`status`, `desc`, `blocked`). Legacy supporting notes may remain unclassified until materially edited.
