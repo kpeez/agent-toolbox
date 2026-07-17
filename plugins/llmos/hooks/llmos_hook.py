@@ -82,17 +82,37 @@ def _is_note(path: Path) -> bool:
     return path.suffix == ".md"
 
 
+PATCH_VERBS = ("*** Update File:", "*** Add File:", "*** Delete File:")
+
+
+def _target_paths(tool_input: dict) -> list[str]:
+    """Every file the tool call names, in either harness's shape.
+
+    Claude's Write/Edit names exactly one `file_path`. Codex's native
+    `apply_patch` names none: its targets live inside the patch envelope on
+    `command`, and one patch may touch several files.
+    """
+    file_path = tool_input.get("file_path")
+    if file_path:
+        return [file_path]
+    command = tool_input.get("command")
+    if not command:
+        return []
+    return [
+        line.split(":", 1)[1].strip()
+        for line in command.splitlines()
+        if line.startswith(PATCH_VERBS)
+    ]
+
+
 def pre_tool_use(data: dict) -> str | None:
     root = _resolved_root()
     if root is None:
         return None
-    file_path = (data.get("tool_input") or {}).get("file_path")
-    if not file_path:
-        return None
-    target = Path(file_path).resolve()  # resolve symlinks first (ADR-0002)
-    if not _is_under(target, root):
-        return None
-    if not _is_note(target):
+    # resolve symlinks first (ADR-0002); this also anchors Codex's
+    # working-directory-relative patch paths against cwd
+    targets = [Path(p).resolve() for p in _target_paths(data.get("tool_input") or {})]
+    if not any(_is_under(t, root) and _is_note(t) for t in targets):
         return None
     schema = root / "agents" / "references" / "schema.md"
     if not schema.is_file():

@@ -34,7 +34,11 @@ def make_vault(root: Path) -> Path:
 
 
 def run_hook(
-    event: str, payload: dict, tmp_path: Path, llmos_root: Path | None
+    event: str,
+    payload: dict,
+    tmp_path: Path,
+    llmos_root: Path | None,
+    cwd: Path | None = None,
 ) -> subprocess.CompletedProcess[str]:
     home = tmp_path / "home"
     home.mkdir(exist_ok=True)
@@ -45,10 +49,17 @@ def run_hook(
         [sys.executable, str(HOOK_PATH), event],
         input=json.dumps(payload),
         env=env,
+        cwd=cwd,
         text=True,
         capture_output=True,
         timeout=10,
     )
+
+
+def apply_patch_payload(*envelope_lines: str) -> dict:
+    """A real Codex `apply_patch` call: targets live only inside the envelope."""
+    body = "\n".join(("*** Begin Patch", *envelope_lines, "*** End Patch"))
+    return {"tool_name": "apply_patch", "tool_input": {"command": body}}
 
 
 def test_session_start_silent_outside_vault(tmp_path):
@@ -132,7 +143,7 @@ def test_session_start_injects_no_memory(tmp_path, monkeypatch):
 
 def test_pre_write_injects_for_symlinked_spec(tmp_path):
     vault = make_vault(tmp_path / "vault")
-    project_docs = vault / "projects" / "testproj" / "docs"
+    project_docs = vault / "projects" / "testproj"
     (project_docs / "specs").mkdir(parents=True)
     spec = project_docs / "specs" / "foo.md"
     spec.write_text("# spec\n")
@@ -187,6 +198,106 @@ def test_pre_write_silent_for_non_note_inside_vault(tmp_path):
     )
 
     assert result.stdout == ""
+    assert result.returncode == 0
+
+
+def make_spec(vault: Path, name: str) -> Path:
+    spec = vault / "projects" / "testproj" / "specs" / name
+    spec.parent.mkdir(parents=True, exist_ok=True)
+    spec.write_text("# spec\n")
+    return spec
+
+
+def test_pre_write_injects_for_codex_apply_patch(tmp_path):
+    vault = make_vault(tmp_path / "vault")
+    spec = make_spec(vault, "foo.md")
+
+    result = run_hook(
+        "pre-tool-use",
+        apply_patch_payload(f"*** Update File: {spec}", "@@", "-a", "+b"),
+        tmp_path,
+        vault,
+    )
+
+    assert SCHEMA_SENTINEL in result.stdout
+    assert result.returncode == 0
+
+
+def test_pre_write_silent_for_codex_apply_patch_outside_vault(tmp_path):
+    vault = make_vault(tmp_path / "vault")
+    other_repo_file = tmp_path / "other-repo" / "README.md"
+    other_repo_file.parent.mkdir(parents=True)
+    other_repo_file.write_text("# hi\n")
+
+    result = run_hook(
+        "pre-tool-use",
+        apply_patch_payload(f"*** Update File: {other_repo_file}", "@@", "-a", "+b"),
+        tmp_path,
+        vault,
+    )
+
+    assert result.stdout == ""
+    assert result.returncode == 0
+
+
+def test_pre_write_injects_once_when_codex_patch_touches_many_files(tmp_path):
+    vault = make_vault(tmp_path / "vault")
+    spec = make_spec(vault, "foo.md")
+    outside = tmp_path / "other-repo" / "src" / "main.py"
+    outside.parent.mkdir(parents=True)
+    outside.write_text("print('hi')\n")
+
+    result = run_hook(
+        "pre-tool-use",
+        apply_patch_payload(
+            f"*** Update File: {outside}",
+            "@@",
+            "-a",
+            "+b",
+            f"*** Update File: {spec}",
+            "@@",
+            "-c",
+            "+d",
+        ),
+        tmp_path,
+        vault,
+    )
+
+    assert result.stdout.count(SCHEMA_SENTINEL) == 1
+    assert result.returncode == 0
+
+
+def test_pre_write_injects_for_codex_add_file(tmp_path):
+    vault = make_vault(tmp_path / "vault")
+    new_spec = vault / "projects" / "testproj" / "specs" / "0001-new.md"
+    new_spec.parent.mkdir(parents=True)
+
+    result = run_hook(
+        "pre-tool-use",
+        apply_patch_payload(f"*** Add File: {new_spec}", "+# new spec"),
+        tmp_path,
+        vault,
+    )
+
+    assert SCHEMA_SENTINEL in result.stdout
+    assert result.returncode == 0
+
+
+def test_pre_write_injects_for_codex_relative_patch_path(tmp_path):
+    # Codex names patch targets relative to the session's working directory.
+    vault = make_vault(tmp_path / "vault")
+    make_spec(vault, "foo.md")
+    cwd = vault / "projects" / "testproj"
+
+    result = run_hook(
+        "pre-tool-use",
+        apply_patch_payload("*** Update File: specs/foo.md", "@@", "-a", "+b"),
+        tmp_path,
+        vault,
+        cwd=cwd,
+    )
+
+    assert SCHEMA_SENTINEL in result.stdout
     assert result.returncode == 0
 
 
