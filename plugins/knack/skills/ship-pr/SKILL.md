@@ -50,8 +50,11 @@ Two modes:
 6. **Draft PR** — if none exists, `gh pr create --draft --base <base>`; if one
    exists, leave its state alone.
 7. **Link** — comment the PR URL on the tracker issue(s) and move them toward
-   review. Status lives on the tracker, not in local files.
-8. **Summarize** — branch, base, commit list (sha + subject), PR URL, tracker
+   review. Task state lives on the tracker, not in local files.
+8. **Mark the spec** — if a spec was resolved in step 1, set its `status: review`;
+   the code now exists and is being proven. Set `blocked: true` with a
+   `blocked_reason` instead if verification is stuck on something external.
+9. **Summarize** — branch, base, commit list (sha + subject), PR URL, tracker
    issues touched.
 
 ## Finalize (`/ship-pr finalize`)
