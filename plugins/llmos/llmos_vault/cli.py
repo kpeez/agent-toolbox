@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import os
 import sys
 from pathlib import Path
 from typing import Literal
@@ -24,6 +25,7 @@ from llmos_vault.daily import (
 from llmos_vault.docs import write_reference
 from llmos_vault.graph import get_neighbors, get_subgraph
 from llmos_vault.health import summary, vault_health
+from llmos_vault.inbox import file_inbox_item
 from llmos_vault.mutations import (
     append_note,
     create_note,
@@ -60,6 +62,24 @@ def _llmos_only(vault: Vault) -> Path:
             "daily-note contract"
         )
     return resolve_vault_root(vault)
+
+
+_PROVIDER_ENV_MARKERS = (
+    ("claude", "CLAUDECODE"),
+    ("codex", "CODEX_SANDBOX_NETWORK_DISABLED"),
+    ("gemini", "GEMINI_CLI"),
+)
+
+
+def _detect_provider() -> str | None:
+    """Best-effort invoking-provider name from harness-set env vars, mirroring
+    the PostToolUse stamp hook's own detection (ADR-0003: Claude and Codex are
+    indistinguishable via `CLAUDE_PLUGIN_ROOT`, so harness-specific markers are
+    used instead)."""
+    for name, marker in _PROVIDER_ENV_MARKERS:
+        if os.environ.get(marker):
+            return name
+    return None
 
 
 @app.command
@@ -361,6 +381,35 @@ def property_remove(note: str, key: str, *, vault: Vault = "llmos") -> None:
         vault: Which registered vault the note lives in.
     """
     print(remove_property(resolve_vault_root(vault), note, key))
+
+
+@app.command(name="file-inbox")
+def file_inbox(note: str, destination: str, *, vault: Vault = "llmos") -> None:
+    """File an inbox note to its destination: move it via obsidian-cli, stamp
+    destination-derived `categories`/`project`, append the acting provider to
+    `authors`, and record the filing in today's daily note.
+
+    Use when an inbox capture has a real home -- the sanctioned ritual so an
+    agent never files a note half-way. Requires Obsidian to be running.
+    Do NOT use when `destination`'s top-level folder is not `knowledge`,
+    `projects`, `sources`, or `archive` -- this exits with an error before
+    any move is attempted.
+
+    Example output:
+        Filed: capture-1 -> knowledge/some-note.md
+
+    Example invocation:
+        llmos-vault file-inbox capture-1 knowledge/some-note.md
+
+    Args:
+        note: Note name (wikilink-style resolution) or vault-relative path
+            of the inbox item to file.
+        destination: Vault-relative destination path (".md" appended if
+            missing).
+        vault: Must be "llmos" -- inbox filing is an llmOS-profile feature.
+    """
+    root = _llmos_only(vault)
+    print(file_inbox_item(root, note, destination, provider=_detect_provider()))
 
 
 @daily_app.command(name="get-or-create")
