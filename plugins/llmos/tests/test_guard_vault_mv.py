@@ -214,6 +214,59 @@ def test_ordinary_mv_and_rm_calls_unaffected(tmp_path):
     assert result.stderr == ""
 
 
+def test_redirect_into_vault_md_allowed(tmp_path):
+    """A shell redirection operand is not an mv/rm target -- only mv/rm's own
+    positional args are (spec 0014 Risks: guard false positives)."""
+    home = tmp_path / "home"
+    home.mkdir()
+    vault = make_vault(tmp_path / "vault")
+    old = tmp_path / "old.txt"
+    old.write_text("data\n")
+
+    result = run_guard(
+        f"mv {old} {tmp_path / 'new.txt'} > {vault / 'notes' / 'log.md'}",
+        tmp_path,
+        home,
+        llmos_root=vault,
+    )
+
+    assert result.returncode == 0
+    assert result.stderr == ""
+
+
+def test_real_mv_target_denied_even_with_trailing_redirect(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    vault = make_vault(tmp_path / "vault")
+    note = vault / "note.md"
+    note.write_text("# note\n")
+
+    result = run_guard(
+        f"mv {note} /tmp/dest.md > {tmp_path / 'log.txt'}",
+        tmp_path,
+        home,
+        llmos_root=vault,
+    )
+
+    assert result.returncode == 2
+    assert str(note) in result.stderr
+
+
+def test_glued_double_ampersand_catches_offending_rm(tmp_path):
+    """shlex glues `hi&&rm` into one token without whitespace around `&&`;
+    the guard must still split it and catch the `rm` (spec 0014 Risks)."""
+    home = tmp_path / "home"
+    home.mkdir()
+    vault = make_vault(tmp_path / "vault")
+    note = vault / "note.md"
+    note.write_text("# note\n")
+
+    result = run_guard(f"echo hi&&rm {note}", tmp_path, home, llmos_root=vault)
+
+    assert result.returncode == 2
+    assert str(note) in result.stderr
+
+
 def test_no_vault_filesystem_access_on_fast_path(tmp_path, monkeypatch):
     """Ordinary commands must never touch vault_root/registered_vaults at all."""
     import importlib.util
