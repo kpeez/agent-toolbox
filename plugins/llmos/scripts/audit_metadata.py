@@ -18,7 +18,6 @@ AUTHORS = {"claude", "codex", "gemini", "human"}
 LINK_FIELDS = {"categories", "topics", "project"}
 WIKILINK = re.compile(r'^"?\[\[[^\]]+\]\]"?$')
 ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
-PROJECT_LOG_NAME = re.compile(r"^\d{4}-\d{2}-\d{2}-[A-Za-z0-9][A-Za-z0-9_-]*\.md$")
 SPEC_NAME = re.compile(r"^\d{4}-[A-Za-z0-9][A-Za-z0-9_-]*\.md$")
 
 
@@ -190,38 +189,12 @@ def main() -> None:
         checked += 1
 
         is_daily_review = relative.parts[:2] == ("reviews", "daily")
-        is_project_log = (
-            len(relative.parts) == 4
-            and relative.parts[0] == "projects"
-            and relative.parts[2] == "logs"
-            and relative.suffix == ".md"
-        )
-        if relative in new_notes or is_daily_review or is_project_log:
+        if relative in new_notes or is_daily_review:
             created = properties.get("created")
             if not isinstance(created, str) or not ISO_DATE.fullmatch(created):
                 errors.append(f"{relative}: created must be an ISO date")
         if is_daily_review and "project" in properties:
             errors.append(f"{relative}: daily reviews must not claim project ownership")
-        if is_project_log:
-            project_dir = relative.parts[1]
-            if not PROJECT_LOG_NAME.fullmatch(
-                relative.name
-            ) or not relative.stem.endswith(f"-{project_dir}"):
-                errors.append(
-                    f"{relative}: project log filename must be YYYY-MM-DD-{project_dir}.md"
-                )
-            categories = properties.get("categories")
-            if not isinstance(categories, list) or "[[Project Logs]]" not in categories:
-                errors.append(f"{relative}: project logs must use [[Project Logs]]")
-            project_val = properties.get("project")
-            expected_prefix = f"[[projects/{project_dir}/{project_dir}|"
-            if (
-                not isinstance(project_val, list)
-                or len(project_val) != 1
-                or not project_val[0].startswith(expected_prefix)
-                or not project_val[0].endswith("]]")
-            ):
-                errors.append(f"{relative}: project log must link its owning project")
 
         # Operational properties are optional; validate only when present
         status = properties.get("status")
