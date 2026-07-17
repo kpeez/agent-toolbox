@@ -14,6 +14,7 @@ from typing import Literal
 import cyclopts
 
 from llmos_vault.graph import get_neighbors, get_subgraph
+from llmos_vault.health import summary, vault_health
 from llmos_vault.notes import list_notes, read_note
 from llmos_vault.root import resolve_vault_root
 
@@ -148,6 +149,56 @@ def subgraph(note: str, *, vault: Vault = "llmos", depth: int = 1) -> None:
             indent=2,
         )
     )
+
+
+@app.command
+def health(
+    *,
+    vault: Vault = "llmos",
+    json: bool = False,
+    qmd_collection: str = "llmos",
+    stale_after_days: int = 14,
+) -> None:
+    """Report vault hygiene: orphans, dead-ends, unresolved wikilinks, schema
+    violations, stale inbox items, and qmd index gaps.
+
+    Use as the opening move of a vault-maintenance pass -- e.g. the nightly
+    cron -- to see every hygiene defect in one headless call. Each section
+    degrades independently: a missing qmd binary reports a notice instead of
+    failing the whole command. Works with Obsidian closed. Exits 1 if any
+    section has findings, 0 on a clean vault, so cron can branch on it.
+    Do NOT use when you only need one relation on one note -- `neighbors` is
+    cheaper and does not walk the whole vault.
+
+    Example output:
+        {"orphans": ["gamma"], "dead_ends": ["beta"],
+         "unresolved_links": [{"referrer": "alpha", "target": "ghost"}],
+         "schema_violations": [], "stale_inbox": [], "qmd_gaps": [],
+         "qmd_notice": null}
+
+    Example invocation:
+        llmos-vault health --vault llmos --json
+
+    Args:
+        vault: Which registered vault to check. llmOS schema-violation
+            checks run only when this is "llmos"; any other vault skips them.
+        json: Emit machine-parseable JSON instead of a readable summary.
+        qmd_collection: qmd collection name to check for index gaps.
+        stale_after_days: Age in days after which an inbox item counts as stale.
+    """
+    import json as json_module
+
+    report = vault_health(
+        resolve_vault_root(vault),
+        profile="llmos" if vault == "llmos" else "core",
+        qmd_collection=qmd_collection,
+        stale_after_days=stale_after_days,
+    )
+    if json:
+        print(json_module.dumps(dataclasses.asdict(report), indent=2))
+    else:
+        print(summary(report))
+    raise SystemExit(0 if report.is_clean else 1)
 
 
 def main() -> None:
