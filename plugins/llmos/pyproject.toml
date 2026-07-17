@@ -3,7 +3,12 @@ name = "llmos-vault"
 version = "0.1.0"
 description = "Vault-root resolution and canonical frontmatter for the llmOS Obsidian vault"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+    "cyclopts>=4.21.1",
+]
+
+[project.scripts]
+llmos-vault = "llmos_vault.cli:main"
 
 [build-system]
 requires = ["hatchling"]
