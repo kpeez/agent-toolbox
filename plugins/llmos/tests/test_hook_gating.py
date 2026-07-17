@@ -358,6 +358,22 @@ def test_session_start_injects_as_bare_stdout(tmp_path):
     assert result.returncode == 0
 
 
+def test_session_start_claims_no_unbuilt_automation(tmp_path):
+    """The injection may not assert a system that does not run.
+
+    This text reaches every session unconditionally and is never asked for,
+    which makes an untrue sentence here the most-trusted wrong statement in
+    the vault. The evening digest is `draft`; nothing writes the activity
+    block, so a session told otherwise trusts a hand-written one as derived.
+    """
+    vault = make_vault(tmp_path / "vault")
+
+    result = run_hook("session-start", {"cwd": str(vault)}, tmp_path, vault)
+
+    assert "digest" not in result.stdout.lower()
+    assert result.returncode == 0
+
+
 def test_pre_write_non_blocking_when_vault_unconfigured(tmp_path):
     # No LLMOS_ROOT and no ~/.config/llmos/config.json (HOME is redirected
     # into tmp_path): vault_root() sys.exits internally. The hook must
