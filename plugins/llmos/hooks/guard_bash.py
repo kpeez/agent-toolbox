@@ -23,7 +23,7 @@ neither transcript nor model:
    `active` flag (`aliases`, `properties`, `tags`, `tasks`) list vault-wide by
    default and are deliberately excluded -- omitting file/path there does not
    touch the active file, so denying would be a false positive.
-2. Raw `mv`, `git mv`, or `rm` acting on a `.md` file resolved under any known
+2. Raw `mv`, `git mv`, `rm`, or `git rm` acting on a `.md` file resolved under any known
    vault root (llmOS root + Obsidian's registry, `llmos_vault.root`) orphans
    any wikilinks pointing at it; `obsidian-cli move`/`rename` rewrites them.
 
@@ -172,7 +172,7 @@ def _mv_rm_args(tokens: list[str]) -> list[str] | None:
     name = _basename(tokens[0])
     if name in ("mv", "rm"):
         rest = tokens[1:]
-    elif name == "git" and len(tokens) > 1 and tokens[1] == "mv":
+    elif name == "git" and len(tokens) > 1 and tokens[1] in ("mv", "rm"):
         rest = tokens[2:]
     else:
         return None
@@ -210,7 +210,7 @@ def _check_vault_mv_rm(
     vault_roots: list[Path],
     raw_command: str,
 ) -> str | None:
-    prog = "git mv" if _basename(tokens[0]) == "git" else _basename(tokens[0])
+    prog = f"git {tokens[1]}" if _basename(tokens[0]) == "git" else _basename(tokens[0])
     for arg in args:
         path = Path(arg)
         if not path.is_absolute():
