@@ -114,8 +114,8 @@ def test_session_start_injects_no_memory(tmp_path, monkeypatch):
     # 2. Behavioral spy check: prove no MEMORY.md file is read by monkeypatching
     # Path.read_text, Path.open, and builtins.open to verify they are never
     # invoked on any file ending in MEMORY.md during session_start execution.
-    import importlib.util
     import builtins
+    import importlib.util
 
     spec = importlib.util.spec_from_file_location("llmos_hook", HOOK_PATH)
     llmos_hook = importlib.util.module_from_spec(spec)
