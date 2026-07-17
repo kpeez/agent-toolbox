@@ -9,7 +9,7 @@ import re
 import subprocess
 from pathlib import Path
 
-from vault_root import vault_root
+from llmos_vault.root import vault_root
 
 # Specs advance draft -> active -> review -> done; ADRs use proposed/accepted/superseded.
 SPEC_STATUSES = {"draft", "active", "review", "done", "archived"}
