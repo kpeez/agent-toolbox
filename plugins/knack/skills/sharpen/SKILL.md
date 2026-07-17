@@ -1,7 +1,6 @@
 ---
 name: sharpen
 description: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree. Cross-checks claims against the code, sharpens terminology, and records durable decisions as ADRs. Use when the user wants to stress-test, pressure-test, or harden a plan or design, or mentions "sharpen", /sharpen, or "grill me".
-disable-model-invocation: true
 ---
 
 Interview me relentlessly about every aspect of this plan until
