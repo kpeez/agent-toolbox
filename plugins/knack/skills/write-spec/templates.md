@@ -12,8 +12,9 @@ Every spec opens with frontmatter. Keep it to these fields — they are the ones
 this plugin's own commands read and write:
 
 - `status` — `draft` on creation. `/to-issues` advances it to `active`,
-  `/ship-pr` to `review`, and completion to `done`. Use `archived` for abandoned
-  or superseded specs. This is the spec's lifecycle, not its task list.
+  `/ship-pr` to `review`, and `/ship-pr finalize` closes it at `done`. Use
+  `archived` for abandoned or superseded specs. This is the spec's lifecycle,
+  not its task list.
 - `desc` — one or two sentences on what the spec does. Written at creation so a
   reader can triage a directory of specs without opening them.
 - `blocked` / `blocked_reason` — omit unless actually blocked. Blocking is
