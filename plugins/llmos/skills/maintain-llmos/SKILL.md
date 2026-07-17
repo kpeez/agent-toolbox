@@ -11,7 +11,7 @@ Treat llmOS as the canonical shared store; keep reusable knowledge shared. No pr
 
 1. Resolve the vault with `<llmos-plugin-root>/scripts/vault_root.py`. Never derive it from the working directory or a file's location (ADR-0001).
 2. Read `[[llmOS]]`, `AGENTS.md`, and the nearest area or canonical project note/landing page with `obsidian-cli vault="llmOS" read path="..."`.
-3. Delegate broad exploration to a bounded subagent. Keep synthesis and cross-cutting decisions with the primary agent.
+3. Delegate broad vault exploration (multi-note reads, wide `qmd` sweeps) to a bounded subagent; keep synthesis and cross-cutting decisions with the primary agent.
 4. Use `qmd search -c llmos` for exact retrieval or `qmd query -c llmos` for semantic and cross-note retrieval. Fetch full hits with `qmd get` before using them.
 5. Classify linked `categories`, linked `topics`, and linked `project` (omitting empty properties), then file the result with the matching template using the schema and directory map at `$LLMOS_ROOT/agents/references/schema.md`, which the vault single-sources (ADR-0002).
 6. The PostToolUse format+stamp hook appends the current provider to `authors` and bumps `updated` on every vault edit — no manual stamping needed. `authors` means "touched the file," not meaningful contribution. Codex only gets this for free once its hook-trust is configured for the llmos plugin; until then, stamp by hand on Codex.

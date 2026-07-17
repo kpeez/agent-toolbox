@@ -49,12 +49,9 @@ Apply the **deletion test** to anything you suspect is shallow.
 
 ### 2. Present candidates
 
-Default output is a **markdown report** (concise, in the chat or a scratch file —
-not committed to the repo). For each candidate:
-
-The report should be easy
-to review as plain Markdown: conclusion first, evidence close to claims, and a
-clear top recommendation.
+Default output is a **markdown report** — concise, conclusion first, evidence
+close to claims, in the chat or a scratch file, not committed to the repo. For
+each candidate:
 
 - **Files** — which modules are involved
 - **Problem** — why the current architecture causes friction

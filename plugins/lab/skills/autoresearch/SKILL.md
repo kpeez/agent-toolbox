@@ -127,9 +127,8 @@ explicitly wants runs tracked; by default it is private context.
 
 ## Baseline
 
-Create the group directory and write its `README.md` first. Then create the
-first experiment folder for the baseline before changing code. Use a slug such
-as `baseline` or `current-state`.
+Write the group `README.md`, then create the first experiment folder for the
+baseline before changing code. Use a slug such as `baseline` or `current-state`.
 
 Record in the baseline experiment's `README.md`:
 

@@ -9,23 +9,13 @@ One verification discipline and one stance.
 
 ## Prove behavior before you commit to it
 
-**`/tdd`** is the discipline: every stated goal ends up proven by a committed
-functional test that exercises the real code path. When the behavior is known,
-write the test directly. When the design is uncertain, sketch first — scratch
-scripts in gitignored `tests/temp/` that import the real repo and prove the
-planned implementation — then refactor the exact scripts that hold up into
-proper tests, one goal at a time (vertical, never horizontal), testing through
-public interfaces, not internals. If you catch yourself calling a goal done
-with nothing that verifies it, STOP and write the check.
-
-Implementation-bearing paths end in the project's test suite: a direct test,
-or a graduated scratch script. A verdict-only script ends in a recorded
-decision — an ADR, spec decision, or tracker entry — rather than tests, and
-`tests/temp/` is empty by PR time: every script graduates or is deleted. The
-spec stays pure markdown — its Verification section names the tests, and the
-committed tests or recorded decision are the record. Test failures are
-spec failures — fix them before marking done.
-"Done" also means lint and type-check pass, not just tests.
+**`/tdd`** is the discipline (the sketch→graduate→settle loop lives there):
+every stated goal ends proven by a committed functional test at caller altitude,
+written directly when the behavior is known or graduated from a `tests/temp/`
+scratch script when it isn't. A verdict-only script ends in a recorded decision —
+an ADR, spec decision, or tracker entry — rather than a test. If you catch
+yourself calling a goal done with nothing that verifies it, STOP and write the
+check; a red test, type error, or lint failure is a stop, not a warning.
 
 ## Working from the tracker
 
@@ -55,12 +45,11 @@ and typing implementation.
 `/delegate`) with the issue, a pointer to the spec, and its own `/goal` →
 review the diff → update the tracker → repeat.
 
-**Escalation ladder.** A blocked worker reports up, never out: it returns
-BLOCKED/NEEDS_CONTEXT to you with specifics and never prompts the user. You
-resolve anything answerable from the spec, ADRs, or the codebase, log the
-decision as a comment on the issue, and relaunch. Interrupt the user only for a
-scope change, a spec contradiction, a blocking `ready-for-human` slice, or a
-destructive/irreversible action. Decide, log, move forward.
+**Escalation ladder.** A blocked worker reports up, never out — BLOCKED/
+NEEDS_CONTEXT to you, never a prompt to the user. Resolve what the spec, ADRs, or
+codebase answer; log the decision on the issue; relaunch. Interrupt the user only
+for a scope change, a spec contradiction, a blocking `ready-for-human` slice, or
+a destructive/irreversible action.
 
 ### Sequential or parallel?
 
