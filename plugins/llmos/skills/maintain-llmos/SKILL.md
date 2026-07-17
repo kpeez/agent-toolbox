@@ -14,7 +14,7 @@ Treat llmOS as the canonical shared store; keep reusable knowledge shared. No pr
 3. Delegate broad exploration to a bounded subagent. Keep synthesis and cross-cutting decisions with the primary agent.
 4. Use `qmd search -c llmos` for exact retrieval or `qmd query -c llmos` for semantic and cross-note retrieval. Fetch full hits with `qmd get` before using them.
 5. Classify linked `categories`, linked `topics`, and linked `project` (omitting empty properties), then file the result with the matching template using the schema and directory map at `$LLMOS_ROOT/agents/references/schema.md`, which the vault single-sources (ADR-0002).
-6. Add the current provider to `authors` without removing prior authors, and bump `updated`. This is manual — no hook stamps frontmatter.
+6. The PostToolUse format+stamp hook appends the current provider to `authors` and bumps `updated` on every vault edit — no manual stamping needed. `authors` means "touched the file," not meaningful contribution. Codex only gets this for free once its hook-trust is configured for the llmos plugin; until then, stamp by hand on Codex.
 7. Record insight, not activity. GitHub already holds what happened, and the evening digest writes it into each daily note's `## Projects` block. When a day produces a lesson, an open question, or a decision with no ADR yet, write it under `## Thoughts` in `reviews/daily/YYYY-MM-DD.md` — prose, in your own words. Never restate commits, issues, or PRs there. The `## Projects` block is machine-owned — the digest regenerates it wholesale, so never hand-write the day's activity into it.
 8. Verify changed notes through Obsidian CLI. Query changed Base views, confirm project backlinks, run `<llmos-plugin-root>/scripts/audit_metadata.py`, check unresolved links, update qmd, retrieve a representative full note, and review Git status.
 
@@ -28,7 +28,7 @@ Commit routine work straight to `main`. Cut a branch only when a diff is worth r
 
 ## Scripts
 
-No script stamps frontmatter. Use `<llmos-plugin-root>/scripts/audit_metadata.py` for a schema audit; it is read-only unless you pass `--fix`.
+`audit_metadata.py` does not stamp `authors`/`updated` — the PostToolUse hook owns those. Use `<llmos-plugin-root>/scripts/audit_metadata.py` for a schema audit; it is read-only unless you pass `--fix`.
 
 What the nightly and weekly runs audit, and what neither may ever do, is specified in `references/automation.md`. Read it before acting as either one.
 
