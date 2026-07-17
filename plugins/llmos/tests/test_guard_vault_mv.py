@@ -86,6 +86,20 @@ def test_git_mv_inside_vault_denied(tmp_path):
     assert "obsidian-cli move" in result.stderr or "obsidian-cli rename" in result.stderr
 
 
+def test_git_rm_vault_note_denied(tmp_path):
+    home = tmp_path / "home"
+    home.mkdir()
+    vault = make_vault(tmp_path / "vault")
+    note = vault / "note.md"
+    note.write_text("# note\n")
+
+    result = run_guard(f"git rm {note}", tmp_path, home, llmos_root=vault)
+
+    assert result.returncode == 2
+    assert "git rm" in result.stderr
+    assert str(note) in result.stderr
+
+
 def test_rm_vault_note_denied(tmp_path):
     home = tmp_path / "home"
     home.mkdir()
