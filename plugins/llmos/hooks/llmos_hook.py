@@ -122,6 +122,27 @@ def pre_tool_use(data: dict) -> str | None:
 EVENTS = {"session-start": session_start, "pre-tool-use": pre_tool_use}
 
 
+def _emit(event: str, output: str) -> str:
+    """Render `output` on the one channel that reaches the model for `event`.
+
+    Both harnesses add SessionStart stdout to the model's context, so that
+    event prints as-is. PreToolUse does not: plain stdout there is written to
+    the transcript only, and the model never sees a byte of it. The sole
+    supported injection point is `hookSpecificOutput.additionalContext`, which
+    Claude and Codex parse identically (ADR-0003).
+    """
+    if event == "session-start":
+        return output
+    return json.dumps(
+        {
+            "hookSpecificOutput": {
+                "hookEventName": "PreToolUse",
+                "additionalContext": output,
+            }
+        }
+    )
+
+
 def main() -> None:
     if len(sys.argv) < 2 or sys.argv[1] not in EVENTS:
         return  # unrecognized invocation: stay silent, never block
@@ -131,7 +152,7 @@ def main() -> None:
     except Exception:
         return  # hook failure must never block the tool call
     if output:
-        print(output)
+        print(_emit(sys.argv[1], output))
 
 
 if __name__ == "__main__":
