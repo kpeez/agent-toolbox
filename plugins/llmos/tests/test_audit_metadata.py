@@ -16,6 +16,8 @@ import textwrap
 import unittest
 from pathlib import Path
 
+from llmos_vault.frontmatter import parse as parse_frontmatter
+
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 AUDIT = PLUGIN_ROOT / "scripts/audit_metadata.py"
 
@@ -156,6 +158,60 @@ class RetainedPropertyRulesTests(unittest.TestCase):
             result = run_audit(root)
             self.assertIn("invalid status", result.stdout)
             self.assertNotEqual(result.returncode, 0)
+
+
+class FixStampsThroughCanonicalSerializerTests(unittest.TestCase):
+    """`--fix` must route through `llmos_vault.frontmatter` (spec 0014 Risks:
+    "make audit_metadata import them in the same slice") rather than
+    hand-splicing raw text -- so a stamped note comes out normalized: sorted
+    keys, wikilinks quoted, single frontmatter block."""
+
+    def test_fix_stamps_categories_and_project_via_canonical_serializer(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_vault(root)
+            note = write_note(
+                root,
+                "projects/demo/specs/0001-demo.md",
+                """
+                created: 2026-07-16
+                """,
+            )
+            result = subprocess.run(
+                [sys.executable, str(AUDIT), "--root", str(root), "--fix"],
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(result.returncode, 0, result.stdout + result.stderr)
+
+            text = note.read_text(encoding="utf-8")
+            properties, _ = parse_frontmatter(text)
+            self.assertEqual(properties["categories"], ["[[Specifications]]"])
+            self.assertEqual(
+                properties["project"], ["[[projects/demo/demo|demo]]"]
+            )
+            self.assertEqual(text.count("---\n"), 2)
+            self.assertEqual(list(properties.keys()), sorted(properties.keys()))
+            self.assertIn('  - "[[Specifications]]"', text)
+
+    def test_fix_is_a_no_op_once_stamped(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            make_vault(root)
+            note = write_note(
+                root,
+                "projects/demo/specs/0001-demo.md",
+                """
+                created: 2026-07-16
+                """,
+            )
+            fix_args = [sys.executable, str(AUDIT), "--root", str(root), "--fix"]
+            subprocess.run(fix_args, capture_output=True, text=True)
+            once = note.read_text(encoding="utf-8")
+            subprocess.run(fix_args, capture_output=True, text=True)
+            twice = note.read_text(encoding="utf-8")
+
+            self.assertEqual(once, twice)
 
 
 if __name__ == "__main__":
