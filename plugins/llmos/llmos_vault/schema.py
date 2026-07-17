@@ -4,6 +4,12 @@ the standalone audit CLI share one check, never two (issue #31: "reusing the
 existing audit logic rather than duplicating it"). This module is llmOS-
 profile-specific (specs, dailies, the canonical property set); a plain vault
 like xbrain has no schema layer and never calls it.
+
+Frontmatter parsing itself is never hand-rolled here -- `_properties_or_none`
+routes through `llmos_vault.frontmatter.parse`, the one canonical
+reader/writer (ADR-0004: "one frontmatter owner"), so schema checks see
+exactly the same inline-list/empty-scalar/wikilink-quoting semantics as every
+other verb in the library.
 """
 
 from __future__ import annotations
@@ -12,6 +18,9 @@ import os
 import re
 import subprocess
 from pathlib import Path
+
+from llmos_vault.frontmatter import Property
+from llmos_vault.frontmatter import parse as parse_frontmatter
 
 # Specs advance draft -> active -> review -> done; ADRs use proposed/accepted/superseded.
 SPEC_STATUSES = {"draft", "active", "review", "done", "archived"}
@@ -23,58 +32,16 @@ ISO_DATE = re.compile(r"^\d{4}-\d{2}-\d{2}$")
 SPEC_NAME = re.compile(r"^\d{4}-[A-Za-z0-9][A-Za-z0-9_-]*\.md$")
 
 
-def frontmatter(path: Path) -> dict[str, str | list[str]] | None:
-    """Parse a note's leading YAML frontmatter block by hand -- scalars,
-    quoted strings, inline `[a, b]` lists, and block `  - ` lists -- without
-    pulling in a full YAML parser.
-
-    Use when `collect_errors` needs a note's properties to check against the
-    llmOS schema contract; this is the property-shape half of that contract.
-    Do NOT use when you need the note body too or full YAML fidelity (nested
-    maps, anchors) -- this is a schema-checking shortcut, not a general
-    frontmatter parser.
-
-    Example output:
-        {'status': 'active', 'categories': ['[[Specifications]]']}
-
-    Example invocation:
-        from llmos_vault.schema import frontmatter
-        properties = frontmatter(Path("/path/to/vault/notes/alpha.md"))
-
-    Args:
-        path: Path to the note to parse.
-    """
+def _properties_or_none(path: Path) -> dict[str, Property] | None:
+    """A note's frontmatter properties via the canonical parser, or None if
+    the note has no frontmatter block at all -- `collect_errors` treats a
+    missing block as its own violation rather than a parse error."""
     text = path.read_text(encoding="utf-8")
-    if not text.startswith("---\n"):
+    try:
+        properties, _ = parse_frontmatter(text)
+    except ValueError:
         return None
-    end = text.find("\n---\n", 4)
-    if end == -1:
-        return None
-    result: dict[str, str | list[str]] = {}
-    current: str | None = None
-    for line in text[4:end].splitlines():
-        if line.startswith("  - ") and current:
-            value = line[4:].strip().strip('"').strip("'")
-            existing = result.setdefault(current, [])
-            if isinstance(existing, list):
-                existing.append(value)
-            continue
-        if ":" not in line or line.startswith(" "):
-            continue
-        key, value = line.split(":", 1)
-        current = key.strip()
-        scalar = value.strip()
-        if scalar == "[]":
-            result[current] = []
-        elif scalar.startswith("[") and scalar.endswith("]"):
-            result[current] = [
-                part.strip() for part in scalar[1:-1].split(",") if part.strip()
-            ]
-        elif scalar:
-            result[current] = scalar.strip('"')
-        else:
-            result[current] = []
-    return result
+    return properties
 
 
 def project_alias(root: Path, slug: str) -> str:
@@ -170,7 +137,7 @@ def collect_errors(root: Path) -> tuple[list[str], int]:
             # A broken symlink is a vault defect, not a schema one; report and move on.
             errors.append(f"{relative}: broken symlink -> {os.readlink(path)}")
             continue
-        properties = frontmatter(path)
+        properties = _properties_or_none(path)
         if relative.name == "SKILL.md" and "skills" in relative.parts:
             if (
                 properties is None
