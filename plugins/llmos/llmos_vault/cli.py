@@ -9,12 +9,21 @@ from __future__ import annotations
 
 import dataclasses
 import json
+import sys
 from typing import Literal
 
 import cyclopts
 
 from llmos_vault.graph import get_neighbors, get_subgraph
+from llmos_vault.mutations import (
+    append_note,
+    create_note,
+    move_note,
+    remove_property,
+    set_property,
+)
 from llmos_vault.notes import list_notes, read_note
+from llmos_vault.obsidian_cli import EXIT_OBSIDIAN_NOT_RUNNING, ObsidianNotRunning
 from llmos_vault.root import resolve_vault_root
 
 Vault = Literal["llmos", "xbrain"]
@@ -150,8 +159,137 @@ def subgraph(note: str, *, vault: Vault = "llmos", depth: int = 1) -> None:
     )
 
 
+@app.command
+def create(
+    name: str, *, vault: Vault = "llmos", content: str | None = None, template: str | None = None
+) -> None:
+    """Create a new note, optionally from a vault template, via obsidian-cli.
+
+    Use when an agent needs a brand-new note on disk with the app's own
+    creation semantics (template expansion, conflict handling) -- e.g. filing
+    a new project note. Requires Obsidian to be running.
+    Do NOT use to overwrite an existing note's content -- obsidian-cli
+    `create` refuses to clobber an existing file; edit it directly instead.
+
+    Example output:
+        Created: projects/agent-toolbox.md
+
+    Example invocation:
+        llmos-vault create projects/agent-toolbox --template project --vault llmos
+
+    Args:
+        name: Vault-relative note path (".md" appended if missing).
+        vault: Which registered vault to create the note in.
+        content: Initial body content.
+        template: Name of a vault template to apply.
+    """
+    print(create_note(resolve_vault_root(vault), name, content=content, template=template))
+
+
+@app.command
+def move(note: str, to: str, *, vault: Vault = "llmos") -> None:
+    """Move or rename a note via obsidian-cli, rewriting every backlink.
+
+    Use when an agent needs to relocate or rename a note -- the sanctioned
+    alternative to raw `mv`/`git mv` (ADR-0004; the PreToolUse Bash guard
+    denies those inside a vault and points here). Requires Obsidian to be
+    running.
+    Do NOT use raw `mv`/`rm` on a vault note -- see the guard hook's message
+    for why.
+
+    Example output:
+        Moved: notes/alpha.md -> archive/alpha.md
+
+    Example invocation:
+        llmos-vault move alpha archive/alpha.md --vault llmos
+
+    Args:
+        note: Note name (wikilink-style resolution) or vault-relative path.
+        to: Destination folder or path.
+        vault: Which registered vault the note lives in.
+    """
+    print(move_note(resolve_vault_root(vault), note, to))
+
+
+@app.command
+def append(note: str, content: str, *, vault: Vault = "llmos") -> None:
+    """Append content to an existing note via obsidian-cli.
+
+    Use when an agent needs to add content to the end of a note without
+    reading and rewriting the whole file -- e.g. logging a quick note.
+    Requires Obsidian to be running.
+    Do NOT use for frontmatter changes -- use `set-property`.
+
+    Example output:
+        Appended to: notes/alpha.md
+
+    Example invocation:
+        llmos-vault append alpha "One more thought." --vault llmos
+
+    Args:
+        note: Note name (wikilink-style resolution) or vault-relative path.
+        content: Content to append.
+        vault: Which registered vault the note lives in.
+    """
+    print(append_note(resolve_vault_root(vault), note, content))
+
+
+@app.command(name="set-property")
+def property_set(note: str, key: str, value: str, *, vault: Vault = "llmos") -> None:
+    """Set a property on a note via obsidian-cli.
+
+    Use when an agent needs to set or update a single frontmatter property
+    without hand-editing YAML -- e.g. flipping a status flag. Requires
+    Obsidian to be running.
+    `authors` is append-only: setting it merges `value` into the existing
+    list instead of overwriting it.
+    Do NOT use to rewrite `created` -- it is immutable and this call exits
+    with an error.
+
+    Example output:
+        Set: status = active
+
+    Example invocation:
+        llmos-vault set-property alpha status active --vault llmos
+
+    Args:
+        note: Note name (wikilink-style resolution) or vault-relative path.
+        key: Property name.
+        value: Property value to set (or merge into `authors`).
+        vault: Which registered vault the note lives in.
+    """
+    print(set_property(resolve_vault_root(vault), note, key, value))
+
+
+@app.command(name="remove-property")
+def property_remove(note: str, key: str, *, vault: Vault = "llmos") -> None:
+    """Remove a property from a note via obsidian-cli.
+
+    Use when an agent needs to delete a frontmatter property entirely --
+    e.g. clearing a stale `status` flag. Requires Obsidian to be running.
+    Do NOT use on `created` -- it is immutable and this call exits with an
+    error.
+
+    Example output:
+        Removed: status
+
+    Example invocation:
+        llmos-vault remove-property alpha status --vault llmos
+
+    Args:
+        note: Note name (wikilink-style resolution) or vault-relative path.
+        key: Property name to remove.
+        vault: Which registered vault the note lives in.
+    """
+    print(remove_property(resolve_vault_root(vault), note, key))
+
+
 def main() -> None:
-    app()
+    try:
+        app()
+    except ObsidianNotRunning as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(EXIT_OBSIDIAN_NOT_RUNNING)
 
 
 if __name__ == "__main__":
