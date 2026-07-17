@@ -80,7 +80,7 @@ def test_session_start_injects_inside_vault(tmp_path):
 
     assert str(vault) in result.stdout
     assert "branch" in result.stdout.lower()
-    assert "receipt" in result.stdout.lower()
+    assert "thoughts" in result.stdout.lower()
     assert result.returncode == 0
 
 
