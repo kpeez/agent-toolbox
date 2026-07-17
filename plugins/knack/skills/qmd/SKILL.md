@@ -198,18 +198,3 @@ qmd update [--pull]                        # re-index (optionally git pull first
 qmd embed [-f] [-c <name>]                 # (re)generate vector embeddings
 qmd cleanup                                # clear caches, vacuum DB
 ```
-
-## Pitfalls
-
-- **Don't stop at snippets.** Fetch documents with `get`/`multi-get` before
-  making claims.
-- **Don't slice with `sed`/`head`/`tail`.** Use `path:from:count` or
-  `--from`/`-l`; output is already line-numbered.
-- **Don't overuse semantic search.** If you know exact titles or terms, `search`
-  (BM25) is faster and often better than `query`/`vsearch`.
-- **Don't lean blindly on query expansion.** When you know the domain, author
-  `intent:`/`lex:`/`vec:`/`hyde:` yourself — you expand, the model ranks.
-- **Don't mutate indexes casually.** `collection add`, `update`, and `embed`
-  change state and can be expensive — gate them on an explicit request.
-- **Model-backed commands are environment-sensitive.** If `query`/`vsearch` fail
-  (no local model/GPU), fall back to `search` with stronger lexical terms.

@@ -43,7 +43,7 @@ Record an ADR only when **all three** are true:
 2. **Surprising without context** — a future reader will wonder "why did they do it this way?"
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
-If any of the three is missing, skip it. When all three hold, record it via the
+If any of the three is missing, skip it. When all three hold, record it
 under `docs/agents/adrs/` using [ADR-FORMAT.md](./ADR-FORMAT.md), then tell me you did
 and why. ADRs live in the shared llmOS vault, not the repo; if the `docs/agents/`
 symlink is missing, run `/setup-repo` to establish the approved project-docs

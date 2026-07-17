@@ -23,19 +23,13 @@ Use this file when you need the theory behind plotting choices.
 
 ## Perceptual ranking for quantitative comparison
 
-Default order:
-
-1. Position on a common scale
-2. Length
-3. Angle and slope
-4. Area and volume
-5. Color hue for exact numeric comparison
-
-Practical consequences:
-
-- Prefer dots and bars over pies and bubbles for precise comparisons.
-- Use aligned scales whenever comparison across groups matters.
-- Do not expect readers to decode many numeric differences from area or hue alone.
+The ranking in SKILL.md (position on a common scale > length > angle/slope >
+area/volume > hue) is Cleveland & McGill's result on graphical perception:
+readers decode position on a common scale with the lowest error and area/hue with
+the highest. That is the *why* behind the body's rules — prefer dots and bars over
+pies and bubbles, aligned scales over stacked ones, and never lean on area or hue
+alone for exact numeric differences: each step down the ranking widens the
+reader's decoding error.
 
 ## Honesty rules
 

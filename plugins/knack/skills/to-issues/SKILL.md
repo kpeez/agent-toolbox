@@ -151,5 +151,3 @@ layer-by-layer implementation.
 
 - <reference to blocking issue>, or "None — can start immediately"
 ```
-
-Do NOT close or modify any parent issue.

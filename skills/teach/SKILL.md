@@ -17,6 +17,7 @@ Treat the current directory as a teaching workspace. The state of their learning
 - `./learning-records/*.md`: A directory of learning records, which capture what the user has learned. These are loosely equivalent to architectural decision records in software development - they capture non-obvious lessons and key insights that may need to be revised later, or drive future sessions. These should be used to calculate the zone of proximal development. They are titled `0001-<dash-case-name>.md`, where the number increments each time. Use the format in [LEARNING-RECORD-FORMAT.md](./LEARNING-RECORD-FORMAT.md).
 - `./lessons/*.html`: A directory of lessons. A **lesson** is a single, self-contained HTML output that teaches one tightly-scoped thing tied to the mission. This is the primary unit of teaching in this workspace.
 - `./assets/*`: Reusable **components** shared across lessons. See [Assets](#assets).
+- `GLOSSARY.md`: The canonical glossary for topics with their own nomenclature — the agreed term/definition set that every lesson must adhere to once it exists. Use the format in [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md).
 - `NOTES.md`: A scratchpad for you to jot down user preferences, or working notes.
 
 ## Philosophy
@@ -133,7 +134,7 @@ Some learning topics lend themselves to reference:
 - Exercises and routines for fitness
 - Glossaries for any topic with its own nomenclature
 
-Glossaries, in particular, are an essential reference. Once one is created, it should be adhered to in every lesson.
+Glossaries, in particular, are an essential reference. Capture one as `GLOSSARY.md` using [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md); once created, it should be adhered to in every lesson.
 
 ## `NOTES.md`
 
