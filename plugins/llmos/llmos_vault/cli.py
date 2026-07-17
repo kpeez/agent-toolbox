@@ -9,15 +9,21 @@ from __future__ import annotations
 
 import dataclasses
 import json
+from pathlib import Path
 from typing import Literal
 
 import cyclopts
 
+from llmos_vault.docs import write_reference
 from llmos_vault.graph import get_neighbors, get_subgraph
 from llmos_vault.notes import list_notes, read_note
 from llmos_vault.root import resolve_vault_root
 
 Vault = Literal["llmos", "xbrain"]
+
+PLUGIN_ROOT = Path(__file__).resolve().parents[1]
+DEFAULT_REFERENCE_PATH = PLUGIN_ROOT / "skills" / "vault-cli" / "references" / "commands.md"
+DEFAULT_SKILL_PATH = PLUGIN_ROOT / "skills" / "vault-cli" / "SKILL.md"
 
 app = cyclopts.App(
     name="llmos-vault",
@@ -148,6 +154,36 @@ def subgraph(note: str, *, vault: Vault = "llmos", depth: int = 1) -> None:
             indent=2,
         )
     )
+
+
+@app.command
+def docs(
+    *,
+    reference: Path = DEFAULT_REFERENCE_PATH,
+    skill: Path = DEFAULT_SKILL_PATH,
+) -> None:
+    """Regenerate the router skill's command reference from this CLI's tree.
+
+    Use when a command's docstring changes or a new verb is registered --
+    run this so `references/commands.md` and the skill's verb table match
+    the live command tree before committing; the staleness test regenerates
+    to a temp file and diffs to enforce this automatically.
+    Do NOT use when you only want to preview the output without writing it
+    -- call `llmos_vault.docs.render_reference(app)` directly.
+
+    Example output:
+        wrote plugins/llmos/skills/vault-cli/references/commands.md
+
+    Example invocation:
+        llmos-vault docs
+
+    Args:
+        reference: Path to write the full command reference to.
+        skill: Path to the router skill's SKILL.md, whose verb table gets
+            replaced in place.
+    """
+    write_reference(app, reference, skill)
+    print(f"wrote {reference}")
 
 
 def main() -> None:
