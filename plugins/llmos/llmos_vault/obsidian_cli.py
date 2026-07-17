@@ -35,6 +35,10 @@ from pathlib import Path
 EXIT_OBSIDIAN_NOT_RUNNING = 3
 
 _NOT_RUNNING_SIGNALS = (
+    # The message a real closed app produces, confirmed by live smoke test
+    # (2026-07-17): "The CLI is unable to find Obsidian. Please make sure
+    # Obsidian is running and try again."
+    "unable to find obsidian",
     "not running",
     "connection refused",
     "econnrefused",
