@@ -35,9 +35,18 @@ import sys
 import tempfile
 import time
 from dataclasses import dataclass
+from datetime import datetime, timezone
 from pathlib import Path
 
-PROVIDERS = ("codex", "antigravity", "copilot")
+sys.path.insert(0, str(Path(__file__).resolve().parent))
+
+import pick_agent  # noqa: E402  -- colocated, so this resolves installed too
+
+PROVIDERS = ("auto", "codex", "antigravity", "copilot")
+
+# pick_agent prints the command to run; this table speaks provider names. Only
+# antigravity diverges (its command is `agy`).
+SELECTOR_TO_PROVIDER = {"copilot": "copilot", "agy": "antigravity", "codex": "codex"}
 DEFAULT_COPILOT_MODEL = "claude-sonnet-4.6"
 MAX_BACKOFF_SECONDS = 30
 DEFAULT_TIMEOUT_SECONDS = 1800  # 0 disables; raise it for tasks expected to run long
@@ -105,6 +114,10 @@ def run_process(cmd: list[str], timeout: int) -> subprocess.CompletedProcess:
     """
     proc = subprocess.Popen(
         cmd,
+        # `codex exec` blocks reading stdin even when handed a prompt argument, so
+        # an inherited idle stdin hangs it until --timeout kills it 30 minutes
+        # later. Nothing here needs a worker's stdin: the prompt goes in on argv.
+        stdin=subprocess.DEVNULL,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         text=True,
@@ -226,6 +239,19 @@ def resolve_prompt(prompt: str | None, prompt_file: str | None) -> str:
     return text
 
 
+def resolve_auto(policy: str) -> str | None:
+    """Pick the provider with quota left, or None when none has any.
+
+    Delegating to a spent provider is the failure this exists to prevent; the
+    quota probes live in pick_agent, which stays a pure selector printing a name.
+    """
+    winner = pick_agent.select(
+        pick_agent.probe_chain(datetime.now(timezone.utc)),
+        allow_unknown=policy == "optimistic",
+    )
+    return None if winner is None else SELECTOR_TO_PROVIDER[winner]
+
+
 def main() -> int:
     p = argparse.ArgumentParser(
         prog="ext-subagent",
@@ -236,6 +262,8 @@ def main() -> int:
         "prompt", nargs="?", help="task prompt; omit or pass '-' to read stdin"
     )
     p.add_argument("--prompt-file", metavar="PATH", help="read the prompt from a file")
+    p.add_argument("--policy", choices=("optimistic", "strict"), default="optimistic",
+                   help="auto only: strict skips providers whose quota cannot be measured")  # fmt: skip
     p.add_argument("--role", choices=sorted(CODEX_ROLES),
                    help="delegate tier; expands to a model + reasoning effort (codex only)")  # fmt: skip
     p.add_argument("--model", metavar="MODEL", help="model for codex/copilot")
@@ -251,18 +279,43 @@ def main() -> int:
                    help="truncate the returned answer to N chars (0 = no limit)")  # fmt: skip
     args = p.parse_args()
 
+    auto_selected = args.provider == "auto"
+    if auto_selected:
+        # model/effort are provider-specific literals -- gpt-5.6-luna means
+        # nothing to agy -- and under auto the provider is unknown until runtime,
+        # so there is no provider for them to be valid against.
+        if args.model or args.reasoning_effort:
+            p.error("--model/--reasoning-effort need an explicit provider, not auto")
+        selected = resolve_auto(args.policy)
+        if selected is None:
+            sys.exit("ext-subagent: no provider has quota left")
+        args.provider = selected
+        print(f"ext-subagent: auto selected {args.provider}", file=sys.stderr)
+    elif args.policy != "optimistic":
+        p.error("--policy applies to auto only; an explicit provider is not selected")
+
     if args.provider == "antigravity" and args.model:
         p.error("antigravity has no per-call model flag; set it in "
                 "~/.gemini/antigravity-cli/settings.json or via 'agy /model'")  # fmt: skip
     if args.reasoning_effort and args.provider != "codex":
         p.error("--reasoning-effort is codex-only")
     if args.role:
-        if args.provider != "codex":
-            p.error("--role is codex-only; pick the model directly for other providers")
         if args.model or args.reasoning_effort:
             p.error("--role already sets the model and effort; don't combine it "
                     "with --model/--reasoning-effort")  # fmt: skip
-        args.model, args.reasoning_effort = CODEX_ROLES[args.role]
+        if args.provider == "codex":
+            args.model, args.reasoning_effort = CODEX_ROLES[args.role]
+        elif auto_selected:
+            # --role is intent, so it survives selection -- but codex is the only
+            # provider with model and effort knobs to express it on. Drop it and
+            # say so rather than failing a run the caller could not have steered.
+            print(
+                f"ext-subagent: --role {args.role} ignored; auto selected "
+                f"{args.provider}, which has no model/effort flags",
+                file=sys.stderr,
+            )
+        else:
+            p.error("--role is codex-only; pick the model directly for other providers")
     if args.timeout < 0:
         p.error("--timeout must be >= 0 (0 disables)")
 

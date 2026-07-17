@@ -48,8 +48,8 @@ agentic CLI billed separately from your tokens. Run it via Bash from the repo
 root:
 
 ```
+uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py auto    "How does auth work?" --retries 2
 uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "Implement X following existing patterns. Run the tests." --role doer
-uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "How does auth work?" --role explorer --retries 2
 echo "Refactor auth to use DI; preserve tests." | uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py antigravity -
 ```
 
@@ -57,9 +57,23 @@ In Claude Code, `${CLAUDE_SKILL_DIR}` is already this skill's absolute path; und
 another provider, replace the literal placeholder with the directory containing
 this SKILL.md.
 
+- `auto` picks the first provider with quota left, walking `copilot → antigravity
+  → codex`. Prefer it unless you need a specific engine — a named provider that
+  is out of quota fails at call time, and `auto` is the only way to notice.
+  `--policy strict` additionally skips providers whose quota cannot be *measured*
+  (today: `antigravity`, which has no quota interface at all); use it when nothing
+  will review the output, since a skipped run is cheaper than an unreviewed bad
+  one. `--policy` applies to `auto` only.
+- `--model`/`--reasoning-effort` need an explicit provider: they are literals for
+  one engine, and under `auto` the provider is unknown until runtime. `--role` is
+  intent rather than a literal, so it survives selection — it is applied when
+  `auto` lands on codex and reported as ignored otherwise.
 - `--role explorer|doer|planner` (codex) expands to the tier's model + reasoning
   effort — prefer it over hand-picking `--model`/`--reasoning-effort`.
 - Provider → engine: `codex` → GPT-5.x, `antigravity` → Gemini, `copilot` → Sonnet.
+  Claude is deliberately absent: a Claude session already has host-native
+  subagents (option 1), so routing back out would spawn a second session to do
+  what the caller can do directly.
 - Workers are killed after `--timeout` seconds (default 1800). Raise it — or pass
   `--timeout 0` to disable — for tasks expected to run long. An exit-0 run with an
   empty answer is reported as a failure (and retried under `--retries`).
