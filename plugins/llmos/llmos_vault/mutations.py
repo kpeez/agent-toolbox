@@ -146,6 +146,19 @@ def _assert_mutable_property(key: str) -> None:
     frontmatter.set_scalar({}, key, "")
 
 
+def _assert_no_commas(values: list[str]) -> None:
+    """obsidian-cli's `property:set type=list` has no documented escape for a
+    comma inside a value (checked against a live `obsidian-cli property:set
+    --help`, read-only) -- joining with `,` would silently mis-split such a
+    value on the next read, so this raises instead of corrupting it."""
+    for value in values:
+        if "," in value:
+            raise ValueError(
+                "obsidian-cli property:set has no escape mechanism for commas in "
+                f"list values; got {value!r}"
+            )
+
+
 def set_property(vault_root: Path, note: str, key: str, value: str) -> str:
     """Set a property on a note via obsidian-cli.
 
@@ -155,6 +168,9 @@ def set_property(vault_root: Path, note: str, key: str, value: str) -> str:
     list (reusing `frontmatter.append_unique`) instead of overwriting it.
     Do NOT use when rewriting `created` -- it is immutable (reuses
     `frontmatter.set_scalar`'s guard) and this call raises `ValueError`.
+    Do NOT use with an `authors` value containing a literal comma --
+    obsidian-cli's `type=list` has no escape mechanism for one, so this
+    raises `ValueError` rather than silently mis-splitting the list.
 
     Example output:
         'Set: status = active\\n'
@@ -169,7 +185,8 @@ def set_property(vault_root: Path, note: str, key: str, value: str) -> str:
         value: Property value to set (or merge into `authors`).
 
     Raises:
-        ValueError: `key` is "created" (immutable).
+        ValueError: `key` is "created" (immutable), or `key` is "authors"
+            and `value` contains a comma.
         ObsidianNotRunning: obsidian-cli could not reach a running app.
     """
     _assert_mutable_property(key)
@@ -178,6 +195,7 @@ def set_property(vault_root: Path, note: str, key: str, value: str) -> str:
         merged = frontmatter.append_unique(dict(current), key, value)
         values = merged[key]
         assert isinstance(values, list)
+        _assert_no_commas(values)
         return run(
             vault_root,
             "property:set",
@@ -198,6 +216,9 @@ def set_property_list(vault_root: Path, note: str, key: str, values: list[str]) 
     Do NOT use when the property is `authors` -- `set_property` merges into
     the existing list instead of replacing it, which is what append-only
     authorship needs.
+    Do NOT use with a value containing a literal comma -- obsidian-cli's
+    `type=list` has no escape mechanism for one, so this raises `ValueError`
+    rather than silently mis-splitting the list.
 
     Example output:
         'Set: categories = [[Knowledge]]\\n'
@@ -212,10 +233,12 @@ def set_property_list(vault_root: Path, note: str, key: str, values: list[str]) 
         values: Full list of values to set (replaces any existing value).
 
     Raises:
-        ValueError: `key` is "created" (immutable).
+        ValueError: `key` is "created" (immutable), or any value in `values`
+            contains a comma.
         ObsidianNotRunning: obsidian-cli could not reach a running app.
     """
     _assert_mutable_property(key)
+    _assert_no_commas(values)
     return run(
         vault_root,
         "property:set",

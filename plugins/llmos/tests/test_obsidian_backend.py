@@ -265,6 +265,39 @@ def test_set_property_authors_is_idempotent(monkeypatch):
     assert captured["kwargs"]["params"]["value"] == "claude"
 
 
+def test_set_property_authors_rejects_comma_in_value(monkeypatch):
+    """obsidian-cli property:set has no escape mechanism for commas in list
+    values (checked against a live `obsidian-cli property:set --help`,
+    read-only) -- ",".join would otherwise silently mis-split on write
+    (SHOULD-FIX 7)."""
+    monkeypatch.setattr(mutations, "run", lambda *a, **kw: pytest.fail("run must not be called"))
+    monkeypatch.setattr(mutations, "read_note", lambda root, note: note_with_authors(["claude"]))
+
+    with pytest.raises(ValueError, match="comma"):
+        mutations.set_property(VAULT, "alpha", "authors", "co,dex")
+
+
+def test_set_property_list_rejects_comma_in_value(monkeypatch):
+    monkeypatch.setattr(mutations, "run", lambda *a, **kw: pytest.fail("run must not be called"))
+
+    with pytest.raises(ValueError, match="comma"):
+        mutations.set_property_list(VAULT, "alpha", "categories", ["[[Knowledge, Inc]]"])
+
+
+def test_set_property_list_targets_file_name_and_joined_values(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(mutations, "run", capture_call(captured))
+
+    mutations.set_property_list(VAULT, "alpha", "categories", ["[[Knowledge]]", "[[Gardening]]"])
+
+    assert captured["kwargs"]["file"] == "alpha"
+    assert captured["kwargs"]["params"] == {
+        "name": "categories",
+        "value": "[[Knowledge]],[[Gardening]]",
+        "type": "list",
+    }
+
+
 def test_remove_property_targets_file_and_name(monkeypatch):
     captured = {}
     monkeypatch.setattr(mutations, "run", capture_call(captured))
