@@ -63,7 +63,9 @@ Flip the branch's draft PR to ready for review. Merging is not part of this
 skill — it stays a human action.
 
 1. **Locate** — `gh pr view` for the current branch; stop and report if no PR
-   exists (run the default mode first).
+   exists (run the default mode first). Resolve the spec as in default step 1,
+   else from the `<!-- knack-spec: <repo>/<slug> -->` marker on the tracker
+   parent of the PR's linked issue(s); proceed without one if nothing resolves.
 2. **Sync** — ensure the local branch is pushed; commit and push any pending
    work via the default workflow first.
 3. **Verify** — re-run lint, types, and tests (including the spec's
@@ -71,7 +73,14 @@ skill — it stays a human action.
 4. **Ready** — `gh pr ready <number>`.
 5. **Link** — comment on the tracker issue(s) and move them to review/done per
    the tracker's states.
-6. **Summarize** — PR URL, verification results, tracker issues touched.
+6. **Close the spec** — if a spec was resolved in step 1 and its parent's
+   remaining children are closed, set `status: done`: bump `updated`, preserve
+   `created`, and append yourself to `authors` if the spec carries them — never
+   remove a prior author. This is the step nothing else can do for you: a merged
+   PR does not know which spec it completed. No spec, or slices still open —
+   leave the status alone and say so in the summary.
+7. **Summarize** — PR URL, verification results, tracker issues touched, spec
+   status.
 
 ## Markdown artifact (on request only)
 
