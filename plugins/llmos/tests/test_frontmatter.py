@@ -146,3 +146,67 @@ def test_append_unique_creates_the_list_when_key_absent():
     append_unique(properties, "authors", "claude")
 
     assert properties["authors"] == ["claude"]
+
+
+def test_empty_scalar_parses_as_empty_string_not_list():
+    text = "---\ncreated: 2026-07-01\nnote:\n---\n\n# body\n"
+
+    properties, _ = parse(text)
+
+    assert properties["note"] == ""
+
+
+def test_explicit_empty_list_still_parses_as_list():
+    text = "---\ncreated: 2026-07-01\ntags: []\n---\n\n# body\n"
+
+    properties, _ = parse(text)
+
+    assert properties["tags"] == []
+
+
+def test_empty_scalar_round_trips_byte_identically():
+    text = "---\ncreated: 2026-07-01\nnote:\n---\n\n# body\n"
+
+    assert normalize(text) == text
+
+
+def test_normalize_empty_scalar_twice_equals_once():
+    text = "---\nnote:\ncreated: 2026-07-01\n---\n\n# body\n"
+
+    once = normalize(text)
+    twice = normalize(once)
+
+    assert twice == once
+
+
+def test_parse_inline_flow_list():
+    text = "---\ntags: [alpha, beta]\n---\n\n# body\n"
+
+    properties, _ = parse(text)
+
+    assert properties["tags"] == ["alpha", "beta"]
+
+
+def test_parse_inline_flow_list_with_single_item():
+    text = "---\ntags: [alpha]\n---\n\n# body\n"
+
+    properties, _ = parse(text)
+
+    assert properties["tags"] == ["alpha"]
+
+
+def test_normalize_converts_inline_list_to_canonical_block_style():
+    text = "---\ntags: [alpha, beta]\n---\n\n# body\n"
+
+    normalized = normalize(text)
+
+    assert "tags:\n  - alpha\n  - beta\n" in normalized
+
+
+def test_normalize_inline_list_is_idempotent():
+    text = "---\ntags: [alpha, beta]\n---\n\n# body\n"
+
+    once = normalize(text)
+    twice = normalize(once)
+
+    assert twice == once
