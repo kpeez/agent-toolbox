@@ -1,9 +1,10 @@
 #!/usr/bin/env python3
-"""Behavioral checks for ext-subagent: timeout kill-tree, empty-answer guard, role expansion, arg validation."""
+"""Behavioral checks for ext-subagent: timeout kill-tree, empty-answer guard, role expansion, auto selection, arg validation."""
 import importlib.util
 import subprocess
 import sys
 import time
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Load the module via importlib (filename has a hyphen)
@@ -144,6 +145,116 @@ def test_negative_timeout_error():
     passed.append("negative_timeout_error")
 
 
+def _with_probes(copilot, agy, codex, fn):
+    """Stub the quota probes for one call, then put them back.
+
+    pick_agent is a module, so a stub assigned here outlives the test and leaks
+    into test_pick_agent when both run in one process.
+    """
+    pa = mod.pick_agent
+    saved = (pa.probe_copilot, pa.probe_agy, pa.probe_codex)
+    pa.probe_copilot, pa.probe_agy, pa.probe_codex = copilot, agy, codex
+    try:
+        return fn()
+    finally:
+        pa.probe_copilot, pa.probe_agy, pa.probe_codex = saved
+
+
+def _run(*argv):
+    return subprocess.run(
+        [sys.executable, str(Path(__file__).parent / "ext-subagent.py"), *argv],
+        capture_output=True,
+        text=True,
+    )
+
+
+def test_auto_name_map_covers_the_whole_chain():
+    """pick_agent prints commands; this table speaks provider names.
+
+    Two names for one thing is a drift seam, so pin it: every provider the chain
+    can yield must map, and every mapping must land on a real runner. Add a
+    provider to the chain without touching the table and this fires.
+    """
+    pa = mod.pick_agent
+    chain_names = _with_probes(
+        lambda: pa.Absent(),
+        lambda: pa.Absent(),
+        lambda now: pa.Absent(),
+        lambda: {n for n, _ in pa.probe_chain(datetime.now(timezone.utc))},
+    )
+    assert chain_names == set(mod.SELECTOR_TO_PROVIDER), \
+        f"name map {set(mod.SELECTOR_TO_PROVIDER)} drifted from chain {chain_names}"
+    assert set(mod.SELECTOR_TO_PROVIDER.values()) <= set(mod.RUNNERS), \
+        "auto could select a provider with no runner"
+    assert mod.SELECTOR_TO_PROVIDER["agy"] == "antigravity"
+    print("✓ auto name map covers the chain OK")
+    passed.append("auto_name_map")
+
+
+def test_auto_optimistic_picks_the_unmeasurable_provider():
+    """agy has no quota interface; optimistic presumes it available."""
+    pa = mod.pick_agent
+    winner = _with_probes(
+        lambda: pa.Known(0.0, "monthly"),
+        lambda: pa.Unknown("no quota interface"),
+        lambda now: pa.Known(0.0, "weekly"),
+        lambda: mod.resolve_auto("optimistic"),
+    )
+    assert winner == "antigravity", winner
+    print("✓ auto optimistic -> antigravity OK")
+    passed.append("auto_optimistic")
+
+
+def test_auto_strict_skips_the_unmeasurable_provider():
+    """strict wants a measured provider; today that leaves nothing."""
+    pa = mod.pick_agent
+    spent = _with_probes(
+        lambda: pa.Known(0.0, "monthly"),
+        lambda: pa.Unknown("no quota interface"),
+        lambda now: pa.Known(0.0, "weekly"),
+        lambda: mod.resolve_auto("strict"),
+    )
+    assert spent is None, spent
+    healthy = _with_probes(
+        lambda: pa.Known(0.0, "monthly"),
+        lambda: pa.Unknown("no quota interface"),
+        lambda now: pa.Known(80.0, "weekly"),
+        lambda: mod.resolve_auto("strict"),
+    )
+    assert healthy == "codex", healthy
+    print("✓ auto strict OK")
+    passed.append("auto_strict")
+
+
+def test_policy_without_auto_errors():
+    """--policy is meaningless when the caller already named the provider."""
+    result = _run("codex", "test", "--policy", "strict")
+    assert result.returncode != 0, "Expected non-zero exit"
+    assert "--policy applies to auto only" in result.stderr, result.stderr
+    print("✓ --policy without auto error OK")
+    passed.append("policy_without_auto_error")
+
+
+def test_model_with_auto_errors():
+    """A model literal cannot survive a provider chosen at runtime."""
+    result = _run("auto", "test", "--model", "gpt-5.6-luna")
+    assert result.returncode != 0, "Expected non-zero exit"
+    assert "need an explicit provider" in result.stderr, result.stderr
+    print("✓ --model with auto error OK")
+    passed.append("model_with_auto_error")
+
+
+def test_workers_stdin_is_closed():
+    """`codex exec` blocks on an inherited idle stdin even with a prompt argument.
+
+    Reading stdin here at all means a background caller hangs until --timeout.
+    """
+    proc = mod.run_process([sys.executable, "-c", "import sys; sys.stdin.read()"], timeout=10)
+    assert proc.returncode == 0, f"worker blocked on stdin: rc={proc.returncode}"
+    print("✓ worker stdin closed OK")
+    passed.append("worker_stdin_closed")
+
+
 def main():
     """Run all tests."""
     print("Running ext-subagent tests...\n")
@@ -158,6 +269,12 @@ def main():
     test_role_on_non_codex_error()
     test_reasoning_effort_on_non_codex_error()
     test_negative_timeout_error()
+    test_auto_name_map_covers_the_whole_chain()
+    test_auto_optimistic_picks_the_unmeasurable_provider()
+    test_auto_strict_skips_the_unmeasurable_provider()
+    test_policy_without_auto_errors()
+    test_model_with_auto_errors()
+    test_workers_stdin_is_closed()
 
     # Print summary
     print(f"\n{'=' * 50}")
