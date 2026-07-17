@@ -17,6 +17,9 @@ tells you everything else.
 | --- | --- |
 | `append` | Append content to an existing note via obsidian-cli. |
 | `create` | Create a new note, optionally from a vault template, via obsidian-cli. |
+| `daily append-thought` | Append `text` under today's daily note's `## Thoughts` heading via obsidian-cli. |
+| `daily get-or-create` | Print today's daily note's frontmatter and body as JSON, creating it |
+| `daily recent` | Print the last `n` daily notes' frontmatter and body as JSON, most recent first. |
 | `docs` | Regenerate the router skill's command reference from this CLI's tree. |
 | `health` | Report vault hygiene: orphans, dead-ends, unresolved wikilinks, schema |
 | `list` | Print every note in the vault with its frontmatter and body as JSON. |

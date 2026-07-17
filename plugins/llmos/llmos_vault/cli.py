@@ -15,6 +15,12 @@ from typing import Literal
 
 import cyclopts
 
+from llmos_vault.daily import (
+    MachineOwnedBlock,
+    append_thought,
+    get_or_create_daily,
+    read_recent_dailies,
+)
 from llmos_vault.docs import write_reference
 from llmos_vault.graph import get_neighbors, get_subgraph
 from llmos_vault.health import summary, vault_health
@@ -39,6 +45,21 @@ app = cyclopts.App(
     name="llmos-vault",
     help="Headless read and link-graph verbs for the llmOS and xbrain vaults.",
 )
+
+daily_app = cyclopts.App(
+    name="daily",
+    help="llmOS-profile daily-note helpers (Reviews/no-project contract); llmos vault only.",
+)
+app.command(daily_app)
+
+
+def _llmos_only(vault: Vault) -> Path:
+    if vault != "llmos":
+        sys.exit(
+            f"daily helpers are an llmOS-profile feature; vault '{vault}' has no "
+            "daily-note contract"
+        )
+    return resolve_vault_root(vault)
 
 
 @app.command
@@ -342,6 +363,103 @@ def property_remove(note: str, key: str, *, vault: Vault = "llmos") -> None:
     print(remove_property(resolve_vault_root(vault), note, key))
 
 
+@daily_app.command(name="get-or-create")
+def daily_get_or_create(*, vault: Vault = "llmos") -> None:
+    """Print today's daily note's frontmatter and body as JSON, creating it
+    from the daily template if it does not exist yet.
+
+    Use when an agent needs today's daily note before appending a thought --
+    idempotent, so calling this repeatedly in one day never recreates it.
+    Requires Obsidian to be running only when the note is missing.
+    Do NOT use when you want the last several days' notes -- use `recent`.
+
+    Example output:
+        {"name": "2026-07-17", "path": "/vault/reviews/daily/2026-07-17.md",
+         "properties": {"categories": ["[[Reviews]]"]}, "body": "# 2026-07-17\\n..."}
+
+    Example invocation:
+        llmos-vault daily get-or-create
+
+    Args:
+        vault: Must be "llmos" -- daily helpers are an llmOS-profile feature.
+    """
+    root = _llmos_only(vault)
+    note = get_or_create_daily(root)
+    print(
+        json.dumps(
+            {
+                "name": note.name,
+                "path": str(note.path),
+                "properties": note.properties,
+                "body": note.body,
+            },
+            indent=2,
+        )
+    )
+
+
+@daily_app.command(name="append-thought")
+def daily_append_thought(text: str, *, vault: Vault = "llmos") -> None:
+    """Append `text` under today's daily note's `## Thoughts` heading via obsidian-cli.
+
+    Use when an agent has a lesson, an open question, or a decision to record
+    for the day. Requires Obsidian to be running.
+    Do NOT use when writing the `## Projects` block -- that section is
+    machine-owned; this command refuses (non-zero exit) rather than touch it,
+    whether `text` contains marker syntax or the note has no marker pair.
+
+    Example output:
+        Created: reviews/daily/2026-07-17.md
+
+    Example invocation:
+        llmos-vault daily append-thought "TIL obsidian-cli has no heading-targeted append."
+
+    Args:
+        text: Thought prose to append under `## Thoughts`.
+        vault: Must be "llmos" -- daily helpers are an llmOS-profile feature.
+    """
+    root = _llmos_only(vault)
+    print(append_thought(root, text))
+
+
+@daily_app.command(name="recent")
+def daily_recent(*, n: int = 7, vault: Vault = "llmos") -> None:
+    """Print the last `n` daily notes' frontmatter and body as JSON, most recent first.
+
+    Use when starting a weekly-synthesis pass and needing the last N days'
+    content and properties in one headless call. Works with Obsidian closed.
+    Do NOT use when you need today's note created if it is absent -- use
+    `get-or-create`; this command only reads what already exists.
+
+    Example output:
+        [{"name": "2026-07-17", "path": "/vault/reviews/daily/2026-07-17.md",
+          "properties": {"categories": ["[[Reviews]]"]}, "body": "# 2026-07-17\\n..."}]
+
+    Example invocation:
+        llmos-vault daily recent --n 7
+
+    Args:
+        n: Number of most recent daily notes to read.
+        vault: Must be "llmos" -- daily helpers are an llmOS-profile feature.
+    """
+    root = _llmos_only(vault)
+    notes = read_recent_dailies(root, n)
+    print(
+        json.dumps(
+            [
+                {
+                    "name": note.name,
+                    "path": str(note.path),
+                    "properties": note.properties,
+                    "body": note.body,
+                }
+                for note in notes
+            ],
+            indent=2,
+        )
+    )
+
+
 @app.command
 def docs(
     *,
@@ -378,6 +496,9 @@ def main() -> None:
     except ObsidianNotRunning as exc:
         print(str(exc), file=sys.stderr)
         sys.exit(EXIT_OBSIDIAN_NOT_RUNNING)
+    except MachineOwnedBlock as exc:
+        print(str(exc), file=sys.stderr)
+        sys.exit(1)
 
 
 if __name__ == "__main__":
