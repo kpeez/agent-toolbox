@@ -1,7 +1,6 @@
 ---
 name: start-loop
 description: Run or resume the knack feature workflow (sharpen → write-spec → to-issues → implement) as one resumable command. Use only when the user explicitly invokes /start-loop.
-disable-model-invocation: true
 ---
 
 # /start-loop — feature pipeline runner
