@@ -97,7 +97,7 @@ def resolve_note(index: VaultIndex, target: str) -> Path:
     direct = _direct_path(index, target)
     if direct is not None:
         return direct
-    matches = index.by_stem.get(target.lower(), [])
+    matches = index.by_stem.get(_stem(target), [])
     if not matches:
         sys.exit(f"no note named '{target}' found in vault '{index.root}'")
     if len(matches) > 1:
@@ -130,7 +130,7 @@ def resolve_link(index: VaultIndex, target: str) -> Path | None:
     direct = _direct_path(index, target)
     if direct is not None:
         return direct
-    matches = index.by_stem.get(target.lower(), [])
+    matches = index.by_stem.get(_stem(target), [])
     return matches[0] if len(matches) == 1 else None
 
 
@@ -159,6 +159,13 @@ def read_frontmatter(path: Path) -> tuple[dict[str, Property], str]:
         return parse(text)
     except ValueError:
         return {}, text
+
+
+def _stem(target: str) -> str:
+    """The by_stem lookup key for a name argument: `.md` stripped (so a bare
+    basename typed with its extension, `note.md`, still resolves) and
+    lowercased to match the index."""
+    return (target[:-3] if target.endswith(".md") else target).lower()
 
 
 def _direct_path(index: VaultIndex, target: str) -> Path | None:
