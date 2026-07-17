@@ -57,6 +57,22 @@ def vault_root(config_path: Path = DEFAULT_CONFIG_PATH) -> Path:
     sys.exit(REPAIR_MESSAGE)
 
 
+def resolve_vault_root(
+    vault: str,
+    config_path: Path = DEFAULT_CONFIG_PATH,
+    registry_path: Path = DEFAULT_REGISTRY_PATH,
+) -> Path:
+    """Resolve `--vault llmos|xbrain` to a root path: "llmos" goes through
+    `vault_root`, anything else is matched by directory name against
+    `registered_vaults` -- the same registry, no llmOS-specific lookup."""
+    if vault == "llmos":
+        return vault_root(config_path=config_path)
+    for path in registered_vaults(registry_path=registry_path):
+        if path.name == vault:
+            return path
+    sys.exit(f"no registered vault named '{vault}'. Open it in Obsidian at least once.")
+
+
 def registered_vaults(registry_path: Path = DEFAULT_REGISTRY_PATH) -> list[Path]:
     """Every vault root Obsidian's own registry knows about (llmOS + xbrain).
 
