@@ -21,6 +21,7 @@ tells you everything else.
 | `daily get-or-create` | Print today's daily note's frontmatter and body as JSON, creating it |
 | `daily recent` | Print the last `n` daily notes' frontmatter and body as JSON, most recent first. |
 | `docs` | Regenerate the router skill's command reference from this CLI's tree. |
+| `file-inbox` | File an inbox note to its destination: move it via obsidian-cli, stamp |
 | `health` | Report vault hygiene: orphans, dead-ends, unresolved wikilinks, schema |
 | `list` | Print every note in the vault with its frontmatter and body as JSON. |
 | `move` | Move or rename a note via obsidian-cli, rewriting every backlink. |
