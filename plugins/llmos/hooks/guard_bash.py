@@ -2,10 +2,16 @@
 """PreToolUse guard for Bash: obsidian-cli targeting + vault-unsafe mv/rm.
 
 Runs on every Bash call, so the fast path must stay fast and silent (spec
-0014, Risks: guard latency/false positives): a cheap substring pre-filter
-runs before any `shlex` parsing, and vault roots are only read from disk once
-an actual `mv`/`git mv`/`rm` invocation is found -- never for the common case
-of an unrelated command.
+0014, Risks: guard latency/false positives): a cheap word-boundary-aware
+pre-filter runs before any `shlex` parsing, and vault roots are only read
+from disk once an actual `mv`/`git mv`/`rm` invocation is found -- never for
+the common case of an unrelated command. Tokenizing uses `shlex.shlex(...,
+punctuation_chars=True)` rather than `shlex.split` so shell operators
+(`&&`, `;`, `|`, redirections) come out as their own tokens even when glued
+to an adjacent word with no whitespace (`hi&&rm`), while quotes are still
+respected. Redirection operators and their operand (`> file`, `2>&1`) are
+stripped before mv/rm/obsidian-cli argument extraction -- a redirect target
+is never one of their arguments.
 
 Two independently-triggered rules, both denying via exit code 2 with the
 message on stderr (the PreToolUse block contract) -- plain stdout here reaches
@@ -31,6 +37,7 @@ and approves.
 from __future__ import annotations
 
 import json
+import re
 import shlex
 import sys
 from pathlib import Path
@@ -40,8 +47,9 @@ sys.path.insert(0, str(PLUGIN_ROOT))
 
 from llmos_vault.root import registered_vaults, vault_root  # noqa: E402
 
-FAST_REJECT_NEEDLES = ("obsidian-cli", "mv", "rm")
+FAST_REJECT_RE = re.compile(r"\b(?:obsidian-cli|mv|rm)\b")
 OPERATOR_TOKENS = frozenset({"&&", "||", ";", "|"})
+REDIRECT_OPERATORS = frozenset({">", ">>", "<", "<<", "&>", "&>>", ">&", "<&"})
 
 # obsidian-cli verbs where an omitted file=/path= silently falls back to the
 # active file in the app (per `obsidian-cli help`). Verbs with an explicit
@@ -88,6 +96,19 @@ def _basename(token: str) -> str:
     return token.rsplit("/", 1)[-1]
 
 
+def _tokenize(command: str) -> list[str] | None:
+    """Tokenize `command` with shell separators (`&&`, `;`, `|`, ...) and
+    redirection operators (`>`, `2>`, ...) as their own tokens -- even when
+    glued to an adjacent word with no whitespace (`hi&&rm`) -- while still
+    respecting quotes, unlike a plain string-level split."""
+    try:
+        lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+        lexer.whitespace_split = True
+        return list(lexer)
+    except ValueError:
+        return None
+
+
 def _split_subcommands(tokens: list[str]) -> list[list[str]]:
     subcommands: list[list[str]] = []
     current: list[str] = []
@@ -101,6 +122,23 @@ def _split_subcommands(tokens: list[str]) -> list[list[str]]:
     if current:
         subcommands.append(current)
     return subcommands
+
+
+def _strip_redirections(tokens: list[str]) -> list[str]:
+    """Drop every redirection operator and its operand (`> file`, `2>&1`)
+    from `tokens` -- a redirection target is never an mv/rm/obsidian-cli
+    argument, just where the shell sends output."""
+    stripped: list[str] = []
+    skip_next = False
+    for token in tokens:
+        if skip_next:
+            skip_next = False
+            continue
+        if token in REDIRECT_OPERATORS:
+            skip_next = True
+            continue
+        stripped.append(token)
+    return stripped
 
 
 def _obsidian_cli_verb(tokens: list[str]) -> str | None:
@@ -192,14 +230,13 @@ def _check_vault_mv_rm(
 
 def check_command(command: str, cwd: str) -> str | None:
     """The stderr deny message for `command`, or None to approve."""
-    if not any(needle in command for needle in FAST_REJECT_NEEDLES):
+    if not FAST_REJECT_RE.search(command):
         return None
-    try:
-        tokens = shlex.split(command)
-    except ValueError:
+    tokens = _tokenize(command)
+    if tokens is None:
         return None
 
-    subcommands = _split_subcommands(tokens)
+    subcommands = [_strip_redirections(sub) for sub in _split_subcommands(tokens)]
 
     for sub in subcommands:
         message = _check_obsidian_cli(sub)
