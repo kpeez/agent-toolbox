@@ -31,7 +31,25 @@ REPAIR_MESSAGE = (
 
 
 def validated(path: Path) -> Path:
-    """Assert `path` is a real llmOS vault; exit loudly (never fall back) if not."""
+    """Assert `path` is a real llmOS vault; exit loudly (never fall back) if not.
+
+    Use when a resolved candidate root needs a final sanity check before any
+    caller trusts it -- `vault_root` runs every candidate through this rather
+    than returning an unverified path.
+    Do NOT use when you have not yet resolved a candidate path -- call
+    `vault_root` or `resolve_vault_root`, which call this for you.
+
+    Example output:
+        PosixPath('/Users/kyle/llmOS')
+
+    Example invocation:
+        from pathlib import Path
+        from llmos_vault.root import validated
+        validated(Path("/Users/kyle/llmOS"))
+
+    Args:
+        path: Candidate vault root to validate.
+    """
     is_vault = (
         path.exists()
         and (path / ".obsidian").is_dir()
@@ -46,7 +64,24 @@ def validated(path: Path) -> Path:
 
 
 def vault_root(config_path: Path = DEFAULT_CONFIG_PATH) -> Path:
-    """Resolve the llmOS vault root: $LLMOS_ROOT -> config file -> fail loud."""
+    """Resolve the llmOS vault root: $LLMOS_ROOT -> config file -> fail loud.
+
+    Use when a hook or verb needs the llmOS vault specifically (never derive
+    it from a file's own location or the working directory, per ADR-0001).
+    Do NOT use when the vault might be xbrain or another registered vault --
+    use `resolve_vault_root`, which dispatches on `--vault`.
+
+    Example output:
+        PosixPath('/Users/kyle/llmOS')
+
+    Example invocation:
+        from llmos_vault.root import vault_root
+        vault_root()
+
+    Args:
+        config_path: Path to the llmos config file (real-machine default;
+            tests inject a tmp_path).
+    """
     env = os.environ.get("LLMOS_ROOT")
     if env:
         return validated(Path(env).expanduser())
@@ -64,7 +99,28 @@ def resolve_vault_root(
 ) -> Path:
     """Resolve `--vault llmos|xbrain` to a root path: "llmos" goes through
     `vault_root`, anything else is matched by directory name against
-    `registered_vaults` -- the same registry, no llmOS-specific lookup."""
+    `registered_vaults` -- the same registry, no llmOS-specific lookup.
+
+    Use when a CLI verb needs to turn its `--vault` argument into a root path
+    -- every read/graph verb calls this once per invocation.
+    Do NOT use when you specifically need the llmOS vault and want the
+    ADR-0001 env-var/config resolution without the registry lookup -- call
+    `vault_root` directly.
+
+    Example output:
+        PosixPath('/Users/kyle/xbrain')
+
+    Example invocation:
+        from llmos_vault.root import resolve_vault_root
+        resolve_vault_root("xbrain")
+
+    Args:
+        vault: Vault name, e.g. "llmos" or "xbrain".
+        config_path: Path to the llmos config file (real-machine default;
+            tests inject a tmp_path).
+        registry_path: Path to Obsidian's vault registry (real-machine
+            default; tests inject a tmp_path).
+    """
     if vault == "llmos":
         return vault_root(config_path=config_path)
     for path in registered_vaults(registry_path=registry_path):
@@ -78,6 +134,22 @@ def registered_vaults(registry_path: Path = DEFAULT_REGISTRY_PATH) -> list[Path]
 
     Missing registry fails loudly -- the same never-guess stance as
     `vault_root`: open Obsidian at least once so it records its known vaults.
+
+    Use when a hook or verb needs every known vault, not just llmOS -- e.g.
+    the Bash guard checks a target against all of them.
+    Do NOT use when you already know you want the llmOS vault specifically --
+    `vault_root` is the direct, config-driven path.
+
+    Example output:
+        [PosixPath('/Users/kyle/llmOS'), PosixPath('/Users/kyle/xbrain')]
+
+    Example invocation:
+        from llmos_vault.root import registered_vaults
+        registered_vaults()
+
+    Args:
+        registry_path: Path to Obsidian's vault registry (real-machine
+            default; tests inject a tmp_path).
     """
     if not registry_path.exists():
         sys.exit(
