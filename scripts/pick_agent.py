@@ -22,6 +22,7 @@ from pathlib import Path
 
 MIN_REMAINING_PCT = 5.0
 GH_TIMEOUT_SECONDS = 10
+CODEX_SESSIONS_SCANNED = 10
 CODEX_WINDOWS = {300: "5h", 10080: "weekly"}
 CLAUDE_WINDOWS = {"five_hour": "5h", "seven_day": "7d"}
 
@@ -157,31 +158,58 @@ def probe_agy() -> Probe:
     return Unknown("no quota interface")
 
 
-def probe_codex(now: datetime) -> Probe:
-    if shutil.which("codex") is None:
-        return Absent()
+def last_rate_limit_line(path: Path) -> str | None:
     try:
-        newest = max(
-            (Path.home() / ".codex/sessions").glob("**/*.jsonl"),
-            key=lambda path: path.stat().st_mtime,
-        )
-    except (ValueError, OSError):
-        return Unknown("no codex session file")
-    try:
-        with newest.open(encoding="utf-8") as handle:
+        with path.open(encoding="utf-8") as handle:
             last = None
             for line in handle:
                 if '"rate_limits"' in line:
                     last = line
-    except OSError as error:
-        return Unknown(f"codex session unreadable: {error}")
-    if last is None:
-        return Unknown("no rate_limits in codex session")
+            return last
+    except OSError:
+        return None
+
+
+def probe_codex(now: datetime) -> Probe:
+    if shutil.which("codex") is None:
+        return Absent()
     try:
-        record = json.loads(last)["payload"]
-    except (json.JSONDecodeError, KeyError, TypeError):
-        return Unknown("unparseable codex session line")
-    return parse_codex(record, now)
+        sessions = sorted(
+            (Path.home() / ".codex/sessions").glob("**/*.jsonl"),
+            key=lambda path: path.stat().st_mtime,
+            reverse=True,
+        )
+    except OSError:
+        return Unknown("codex session directory unreadable")
+    if not sessions:
+        return Unknown("no codex session file")
+    # Newest session that yields an actual *reading*, not the newest file and not
+    # the newest rate_limits line. Two distinct things sit on top of a real
+    # reading and each reports Unknown -- which the optimistic policy takes as
+    # "available" -- exactly while codex is in use:
+    #
+    #   1. Codex writes a rollout the instant a session opens, before any
+    #      response has attached rate_limits, so the newest file is often empty.
+    #   2. On hitting the usage limit codex writes a "premium"-bucket record
+    #      whose primary and secondary windows are both null. The line exists and
+    #      parses; it simply carries no reading. Observed 2026-07-16, sitting
+    #      directly on top of a "codex"-bucket record reading 100% used.
+    #
+    # So keep walking until a record parses to Known. Bounded: a machine
+    # accumulates hundreds of sessions, and a reading older than the newest few
+    # is voided by its own resets_at anyway.
+    for path in sessions[:CODEX_SESSIONS_SCANNED]:
+        line = last_rate_limit_line(path)
+        if line is None:
+            continue
+        try:
+            record = json.loads(line)["payload"]
+        except (json.JSONDecodeError, KeyError, TypeError):
+            continue
+        probe = parse_codex(record, now)
+        if isinstance(probe, Known):
+            return probe
+    return Unknown("no usable rate limits in recent codex sessions")
 
 
 def probe_claude(now: datetime) -> Probe:
