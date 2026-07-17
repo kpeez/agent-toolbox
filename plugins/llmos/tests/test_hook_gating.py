@@ -12,6 +12,7 @@ from __future__ import annotations
 import json
 import subprocess
 import sys
+from datetime import date
 from pathlib import Path
 
 HOOK_PATH = Path(__file__).parent.parent / "hooks" / "llmos_hook.py"
@@ -81,6 +82,22 @@ def test_session_start_injects_inside_vault(tmp_path):
     assert str(vault) in result.stdout
     assert "branch" in result.stdout.lower()
     assert "thoughts" in result.stdout.lower()
+    assert result.returncode == 0
+
+
+def test_session_start_names_daily_note_by_absolute_path(tmp_path):
+    """The daily note must arrive as a full path, not a vault-relative one.
+
+    A relative `reviews/daily/<today>.md` reads against the session's cwd, and
+    a model handed one paraphrases it into a path that does not exist. Pin the
+    whole absolute path so only a resolvable pointer passes.
+    """
+    vault = make_vault(tmp_path / "vault")
+    daily_note = vault / "reviews" / "daily" / f"{date.today().isoformat()}.md"
+
+    result = run_hook("session-start", {"cwd": str(vault)}, tmp_path, vault)
+
+    assert str(daily_note) in result.stdout
     assert result.returncode == 0
 
 
