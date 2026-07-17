@@ -197,7 +197,7 @@ Example invocation:
 Args:
     vault: Which registered vault to check. llmOS schema-violation
         checks run only when this is "llmos"; any other vault skips them.
-    json: Emit machine-parseable JSON instead of a readable summary.
+    json_output: Emit machine-parseable JSON instead of a readable summary.
     qmd_collection: qmd collection name to check for index gaps.
     stale_after_days: Age in days after which an inbox item counts as stale.
 

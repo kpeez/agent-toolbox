@@ -12,7 +12,6 @@ block the tool call (same fail-silent contract as `llmos_hook.py`).
 
 from __future__ import annotations
 
-import os
 import sys
 from datetime import date
 from pathlib import Path
@@ -30,27 +29,9 @@ from llmos_hook import (  # noqa: E402
 )
 
 from llmos_vault import frontmatter  # noqa: E402
+from llmos_vault.provider import detect_provider  # noqa: E402
 
 COLLECTION = "llmos"
-
-PROVIDER_ENV_MARKERS = (
-    ("claude", "CLAUDECODE"),
-    ("codex", "CODEX_SANDBOX_NETWORK_DISABLED"),
-    ("gemini", "GEMINI_CLI"),
-)
-
-
-def _provider() -> str | None:
-    """Best-effort invoking-provider name from harness-set env vars.
-
-    ADR-0003 found Claude and Codex indistinguishable via `CLAUDE_PLUGIN_ROOT`
-    (both set it); these markers are harness-specific instead. Returns None
-    rather than guess when nothing matches, so `authors` is left alone.
-    """
-    for name, marker in PROVIDER_ENV_MARKERS:
-        if os.environ.get(marker):
-            return name
-    return None
 
 
 def stamp_vault_note(path: Path, provider: str | None) -> None:
@@ -70,7 +51,7 @@ def post_tool_use(data: dict) -> None:
     vault_targets = [t for t in targets if _is_under(t, root) and _is_note(t) and t.is_file()]
     if not vault_targets:
         return
-    provider = _provider()
+    provider = detect_provider()
     stamped = False
     for target in vault_targets:
         try:
