@@ -1,7 +1,7 @@
 {
   "name": "lab",
   "description": "AI-researcher skills: autonomous experiment loops and data visualization guidance",
-  "version": "1.1.0",
+  "version": "1.1.1",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
