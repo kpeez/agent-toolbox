@@ -6,11 +6,10 @@ user-invocable: false
 
 # Delegate work to cheaper workers
 
-**You are the lead agent — delegate; don't do it all yourself.** Plan, delegate,
-and review; don't burn your own context reading bulk files or typing
-implementation. Keep your context lean: hand token-heavy work to a cheaper
-worker, act on the answer it returns, and review every write with `git diff`.
-You decide; you never write the bulk yourself.
+**You are the lead agent — plan, delegate, and review; don't burn your own
+context reading bulk files or typing implementation.** Hand token-heavy work to a
+cheaper worker, act on the answer it returns, and review every write with
+`git diff`.
 
 ## Role tiers
 
@@ -26,10 +25,8 @@ A slightly imperfect read is fine because you review it. Don't delegate a
 single-file lookup you'd read faster yourself, or a read where a wrong summary
 would mislead you.
 
-Route by kind of work: exploration → **explorer**, plan/design drafting →
-**planner**, well-specified codegen → **doer**. Planners return proposals for
-the lead agent to review with the user — subagents never converse with the
-user directly.
+Planners return proposals for the lead agent to review with the user — subagents
+never converse with the user directly.
 
 Give every **planner** and **doer** its own `/goal` — a one-line verifiable end
 state for its task. **Explorers are exempt**: a read has a question, not an end

@@ -28,12 +28,6 @@ the fan-out loop to `COMPLETE` need no further questions.
 
 ## After approval: escalate, don't ask
 
-There are no publish or implement gates. Mid-loop, interrupt the user only for:
-
-- a **scope change** — the work no longer fits the approved spec
-- a **spec contradiction** — the spec is wrong or self-conflicting
-- a blocking **`ready-for-human`** slice
-- a **destructive or irreversible** action outside normal implementation
-
-Everything else is a judgment call: resolve it from the spec/ADRs/codebase, log
-the decision as a comment on the issue, and keep the loop moving.
+There are no publish or implement gates. The escalation ladder — what to resolve
+yourself versus when to interrupt the user — is in `start-loop`'s "Escalation,
+not gates" section. Follow it.

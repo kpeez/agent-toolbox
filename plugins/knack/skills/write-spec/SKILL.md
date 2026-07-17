@@ -19,10 +19,8 @@ not the spec.
 
 ## The verification rule
 
-This skill follows the `/implement` discipline. Read it before implementation:
-describe behavior → prove it per `/tdd` (a functional test, sketched first as
-a `tests/temp/` scratch script when the design is uncertain) → implement until
-it passes.
+Behavior is proven per `/implement` and `/tdd` — read them before writing code.
+The spec's Verification section (below) names the tests that hold you to it.
 
 ## When to use a spec
 
@@ -55,8 +53,7 @@ the `---` divider, and flag the header for the user to confirm.
      each issue and run its own test → implement → review → PR loop. The
      tracker owns status from here.
    - **Solo (single-slice spec, one sitting):** prove each behavior per
-     `/tdd` — a functional test, sketched as a scratch script when the design
-     is uncertain — then a host-native review pass, then `/ship-pr`.
+     `/tdd`, then a host-native review pass, then `/ship-pr`.
 
 ## /write-spec new <name>
 
@@ -77,9 +74,8 @@ live under `docs/agents/specs/` (the shared specs directory may be an Obsidian v
 may create sibling local issue files named `NNNN-<slug>-issue-<NN>-<issue-slug>.md`.
 Verification code lives in the repo — committed tests in the project's suite,
 plus transient scratch scripts (per `/tdd`) in gitignored `tests/temp/`. Specs
-must never be committed to the source repository: they are reached through the
-gitignored `docs/agents/` symlink, which points at the shared
-`$LLMOS_ROOT/projects/<repo>` directory.
+are never committed to the source repo; they live behind the gitignored
+`docs/agents/` symlink (topology per the `ensure-shared` step above).
 
 ```
 docs/agents/specs/
