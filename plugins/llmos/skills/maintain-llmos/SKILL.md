@@ -15,12 +15,7 @@ Treat llmOS as the canonical shared store; keep reusable knowledge shared. No pr
 4. Use `qmd search -c llmos` for exact retrieval or `qmd query -c llmos` for semantic and cross-note retrieval. Fetch full hits with `qmd get` before using them.
 5. Classify linked `categories`, linked `topics`, and linked `project` (omitting empty properties), then file the result with the matching template using the schema and directory map at `$LLMOS_ROOT/agents/references/schema.md`, which the vault single-sources (ADR-0002).
 6. Add the current provider to `authors` without removing prior authors, and bump `updated`. This is manual — no hook stamps frontmatter.
-7. Write a receipt only when a spec is completed — all its required child issues in a published implementation cycle are implemented. Spec drafting, issue publication, and intermediate issue completion do not warrant a receipt. Call `<llmos-plugin-root>/scripts/write_daily_receipt.py` with a stable `--receipt-id` (the spec slug) and exactly two fields:
-
-   - `--desc`: what the implemented spec does.
-   - `--info`: backlinks to the spec, plans, local issues, and PRs (repeatable).
-
-   The writer always routes to `projects/<slug>/logs/YYYY-MM-DD-<slug>.md`, taking `--project <slug>` or inferring it from the working repo's basename. Re-running with the same `--receipt-id` is idempotent. Do not copy the transcript.
+7. Record insight, not activity. GitHub already holds what happened, and the evening digest writes it into each daily note's `## Projects` block. When a day produces a lesson, an open question, or a decision with no ADR yet, write it under `## Thoughts` in `reviews/daily/YYYY-MM-DD.md` — prose, in your own words. Never restate commits, issues, or PRs there, and never hand-edit inside the `llmos-activity` markers.
 8. Verify changed notes through Obsidian CLI. Query changed Base views, confirm project backlinks, run `<llmos-plugin-root>/scripts/audit_metadata.py`, check unresolved links, update qmd, retrieve a representative full note, and review Git status.
 
 ## Promote recurring patterns
@@ -29,17 +24,6 @@ When a workflow or hard-won lesson will recur across projects or providers, crea
 
 ## Scripts
 
-Record a spec completion:
-
-```sh
-python3 "<llmos-plugin-root>/scripts/write_daily_receipt.py" \
-  --agent codex \
-  --receipt-id llmos-project-daily-logs \
-  --desc "Route spec-completion receipts to per-project dated logs" \
-  --info "[[spec-llmos-project-daily-logs]], #1 #2 #3, PR #7" \
-  --project llmos
-```
-
 Manage the cascading branch model — `main` <- `YYYY-MM-DD` (catch-all) <- `<agent>/YYYY-MM-DD/<spec>`:
 
 ```sh
@@ -47,7 +31,7 @@ python3 "<llmos-plugin-root>/scripts/daily_branch.py" start                     
 python3 "<llmos-plugin-root>/scripts/daily_branch.py" spec --agent codex --name my-spec  # per-spec branch, off the catch-all
 ```
 
-Receipts always land in `projects/<project>/logs/YYYY-MM-DD-<project>.md`; there is no projectless route and no frontmatter-stamping hook. The scripts use only the Python standard library and write plain files — no Obsidian CLI dependency.
+No script stamps frontmatter. These use only the Python standard library and write plain files — no Obsidian CLI dependency.
 
 Use `<llmos-plugin-root>/scripts/audit_metadata.py` for a schema audit; it is read-only unless you pass `--fix`.
 
