@@ -1,0 +1,420 @@
+"""Prove pick_agent.py picks the first agent CLI with quota left.
+
+The payloads below are verbatim captures from a real machine, trimmed of account
+identifiers. They are the point of these tests: every provider reports usage in
+its own shape, with its own polarity, and the traps are all in the data --
+copilot reports percent *remaining* alongside a negative credit balance, codex
+puts its weekly window in the positionally-named "primary" slot, and claude
+writes a null reset instant for an idle window. A parser written against a
+guessed shape passes a hand-written fixture and fails at 8am.
+
+Selection short-circuits, so the chain is checked lazily: a probe for a provider
+after the winner must never run.
+"""
+
+from __future__ import annotations
+
+import json
+import subprocess
+import sys
+import tempfile
+import unittest
+from datetime import datetime, timezone
+from pathlib import Path
+from unittest.mock import patch
+
+REPO_ROOT = Path(__file__).resolve().parents[1]
+PICK_AGENT = REPO_ROOT / "scripts/pick_agent.py"
+
+sys.path.insert(0, str(PICK_AGENT.parent))
+
+import pick_agent  # noqa: E402
+
+Absent = pick_agent.Absent
+Known = pick_agent.Known
+Unknown = pick_agent.Unknown
+
+# gh api /copilot_internal/user -- 1507 of 1500 premium interactions used.
+COPILOT_EXHAUSTED = {
+    "quota_reset_date": "2026-08-01",
+    "quota_snapshots": {
+        "premium_interactions": {
+            "percent_remaining": 0.0,
+            "quota_remaining": -7.9,
+            "unlimited": False,
+            "has_quota": False,
+            "credits_used": 1507,
+            "remaining": -8,
+            "entitlement": 1500,
+            "timestamp_utc": "2026-07-17T03:48:48.099Z",
+        },
+        "chat": {
+            "percent_remaining": 100.0,
+            "unlimited": True,
+            "has_quota": True,
+            "entitlement": 0,
+        },
+    },
+}
+
+# Newest ~/.codex/sessions/**/*.jsonl -- weekly window sits in "primary".
+CODEX_WEEKLY_BLOWN = {
+    "rate_limits": {
+        "limit_id": "codex",
+        "limit_name": None,
+        "primary": {
+            "used_percent": 99.0,
+            "window_minutes": 10080,
+            "resets_at": 1784784224,
+        },
+        "secondary": None,
+        "credits": {"has_credits": False, "unlimited": False, "balance": "0"},
+        "individual_limit": None,
+        "plan_type": "plus",
+        "rate_limit_reached_type": None,
+    }
+}
+
+# ~/.claude.json -- five_hour is idle, so its reset instant is null.
+CLAUDE_HEALTHY = {
+    "cachedUsageUtilization": {
+        "fetchedAtMs": 1784070720898,
+        "utilization": {
+            "five_hour": {"utilization": 0, "resets_at": None},
+            "seven_day": {
+                "utilization": 3,
+                "resets_at": "2026-07-19T14:59:59.624543+00:00",
+            },
+        },
+    }
+}
+
+NOW = datetime(2026, 7, 17, 4, 0, tzinfo=timezone.utc)
+AFTER_CODEX_RESET = datetime(2026, 7, 24, tzinfo=timezone.utc)
+
+
+def explode() -> pick_agent.Probe:
+    raise AssertionError("probed a provider after the winner")
+
+
+def lazy_chain(chain: list[tuple[str, object]]) -> object:
+    return ((name, probe()) for name, probe in chain)
+
+
+class TodaysStateTests(unittest.TestCase):
+    def test_exhausted_copilot_falls_through_to_agy_without_probing_the_rest(
+        self,
+    ) -> None:
+        probed: list[str] = []
+
+        def record(name: str, probe: pick_agent.Probe) -> pick_agent.Probe:
+            probed.append(name)
+            return probe
+
+        chain = [
+            ("copilot", lambda: record("copilot", parse_copilot_today())),
+            ("agy", lambda: record("agy", Unknown("no quota interface"))),
+            ("codex", explode),
+            ("claude", explode),
+        ]
+        self.assertEqual(pick_agent.select(lazy_chain(chain)), "agy")
+        self.assertEqual(probed, ["copilot", "agy"])
+
+    def test_without_agy_installed_codex_is_under_threshold_and_claude_wins(
+        self,
+    ) -> None:
+        chain = [
+            ("copilot", lambda: parse_copilot_today()),
+            ("agy", lambda: Absent()),
+            ("codex", lambda: pick_agent.parse_codex(CODEX_WEEKLY_BLOWN, NOW)),
+            ("claude", lambda: pick_agent.parse_claude(CLAUDE_HEALTHY, NOW)),
+        ]
+        self.assertEqual(pick_agent.select(lazy_chain(chain)), "claude")
+
+    def test_every_provider_exhausted_selects_nothing(self) -> None:
+        chain = [
+            ("copilot", lambda: parse_copilot_today()),
+            ("agy", lambda: Absent()),
+            ("codex", lambda: pick_agent.parse_codex(CODEX_WEEKLY_BLOWN, NOW)),
+            ("claude", lambda: Known(1.0, "7d")),
+        ]
+        self.assertIsNone(pick_agent.select(lazy_chain(chain)))
+
+
+def parse_copilot_today() -> pick_agent.Probe:
+    return pick_agent.parse_copilot(COPILOT_EXHAUSTED)
+
+
+class CopilotParserTests(unittest.TestCase):
+    def test_zero_percent_remaining_survives_a_negative_credit_balance(self) -> None:
+        self.assertEqual(parse_copilot_today(), Known(0.0, "monthly"))
+
+    def test_unlimited_snapshot_reads_fully_available(self) -> None:
+        payload = {
+            "quota_snapshots": {
+                "premium_interactions": {
+                    "percent_remaining": 0.0,
+                    "unlimited": True,
+                    "has_quota": True,
+                    "entitlement": 0,
+                }
+            }
+        }
+        self.assertEqual(pick_agent.parse_copilot(payload), Known(100.0, "monthly"))
+
+    def test_missing_snapshot_is_unknown(self) -> None:
+        self.assertIsInstance(
+            pick_agent.parse_copilot({"quota_snapshots": {}}), Unknown
+        )
+
+
+class CodexParserTests(unittest.TestCase):
+    def test_weekly_window_is_keyed_off_window_minutes_not_position(self) -> None:
+        self.assertEqual(
+            pick_agent.parse_codex(CODEX_WEEKLY_BLOWN, NOW), Known(1.0, "weekly")
+        )
+
+    def test_a_rolled_over_window_voids_a_stale_ninety_nine_percent_reading(
+        self,
+    ) -> None:
+        self.assertEqual(
+            pick_agent.parse_codex(CODEX_WEEKLY_BLOWN, AFTER_CODEX_RESET),
+            Known(100.0, "weekly"),
+        )
+
+    def test_the_blown_window_governs_when_another_window_is_healthy(self) -> None:
+        record = {
+            "rate_limits": {
+                "primary": {
+                    "used_percent": 99.0,
+                    "window_minutes": 10080,
+                    "resets_at": 1784784224,
+                },
+                "secondary": {
+                    "used_percent": 2.0,
+                    "window_minutes": 300,
+                    "resets_at": 1784784224,
+                },
+            }
+        }
+        probe = pick_agent.parse_codex(record, NOW)
+        self.assertEqual(probe, Known(1.0, "weekly"))
+        self.assertIsNone(pick_agent.select(lazy_chain([("codex", lambda: probe)])))
+
+    def test_unexpected_record_is_unknown(self) -> None:
+        self.assertIsInstance(pick_agent.parse_codex({}, NOW), Unknown)
+
+
+class ClaudeParserTests(unittest.TestCase):
+    def test_null_reset_instant_reads_available_instead_of_crashing(self) -> None:
+        # Inferred, not captured: the real capture pairs a null resets_at with
+        # utilization: 0 (CLAUDE_HEALTHY's five_hour). This shape -- a null
+        # resets_at alongside a nonzero utilization -- exercises the same idle
+        # branch with a number that would matter if the null check were dropped.
+        blob = {
+            "cachedUsageUtilization": {
+                "utilization": {
+                    "five_hour": {"utilization": 0, "resets_at": None},
+                    "seven_day": {"utilization": 90, "resets_at": None},
+                }
+            }
+        }
+        self.assertEqual(pick_agent.parse_claude(blob, NOW), Known(100.0, "5h"))
+
+    def test_seven_day_utilization_governs_over_an_idle_five_hour_window(self) -> None:
+        self.assertEqual(
+            pick_agent.parse_claude(CLAUDE_HEALTHY, NOW), Known(97.0, "7d")
+        )
+
+    def test_a_rolled_over_window_voids_a_stale_reading(self) -> None:
+        blob = {
+            "cachedUsageUtilization": {
+                "utilization": {
+                    "five_hour": {"utilization": 99, "resets_at": None},
+                    "seven_day": {
+                        "utilization": 99,
+                        "resets_at": "2026-07-19T14:59:59.624543+00:00",
+                    },
+                }
+            }
+        }
+        after = datetime(2026, 7, 20, tzinfo=timezone.utc)
+        self.assertEqual(pick_agent.parse_claude(blob, after), Known(100.0, "5h"))
+
+    def test_missing_cache_key_is_unknown(self) -> None:
+        self.assertIsInstance(pick_agent.parse_claude({}, NOW), Unknown)
+
+    def test_a_naive_reset_instant_is_unknown_rather_than_a_crash(self) -> None:
+        blob = {
+            "cachedUsageUtilization": {
+                "utilization": {
+                    "five_hour": {
+                        "utilization": 50,
+                        "resets_at": "2026-07-19T14:59:59",
+                    },
+                    "seven_day": {"utilization": 3, "resets_at": None},
+                }
+            }
+        }
+        self.assertIsInstance(pick_agent.parse_claude(blob, NOW), Unknown)
+
+
+class UnreadableSourceTests(unittest.TestCase):
+    """Unknown means available: a missing file must never refuse a provider.
+
+    Each `shutil.which` guard is stubbed to a fake path so the guard clears and
+    the IO body underneath actually runs -- otherwise these assertions would be
+    satisfied by `Absent()` without ever touching subprocess or the filesystem.
+    Unknown is asserted exactly, never as `(Unknown, Absent)`, so an IO body
+    that never executes cannot pass by accident.
+    """
+
+    def test_unknown_providers_are_selected(self) -> None:
+        chain = [
+            ("copilot", lambda: Unknown("gh api exited nonzero")),
+            ("agy", explode),
+        ]
+        self.assertEqual(pick_agent.select(lazy_chain(chain)), "copilot")
+
+    def test_gh_failure_yields_unknown_rather_than_a_traceback(self) -> None:
+        with (
+            patch("pick_agent.shutil.which", return_value="/usr/local/bin/copilot"),
+            patch("pick_agent.subprocess.run", side_effect=OSError("gh not found")),
+        ):
+            probe = pick_agent.probe_copilot()
+        self.assertIsInstance(probe, Unknown)
+
+    def test_gh_nonzero_exit_yields_unknown(self) -> None:
+        completed = subprocess.CompletedProcess(args=[], returncode=1, stdout="")
+        with (
+            patch("pick_agent.shutil.which", return_value="/usr/local/bin/copilot"),
+            patch("pick_agent.subprocess.run", return_value=completed),
+        ):
+            probe = pick_agent.probe_copilot()
+        self.assertIsInstance(probe, Unknown)
+
+    def test_gh_non_json_stdout_yields_unknown(self) -> None:
+        completed = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout="not json"
+        )
+        with (
+            patch("pick_agent.shutil.which", return_value="/usr/local/bin/copilot"),
+            patch("pick_agent.subprocess.run", return_value=completed),
+        ):
+            probe = pick_agent.probe_copilot()
+        self.assertIsInstance(probe, Unknown)
+
+    def test_gh_success_delegates_to_parse_copilot(self) -> None:
+        completed = subprocess.CompletedProcess(
+            args=[], returncode=0, stdout=json.dumps(COPILOT_EXHAUSTED)
+        )
+        with (
+            patch("pick_agent.shutil.which", return_value="/usr/local/bin/copilot"),
+            patch("pick_agent.subprocess.run", return_value=completed),
+        ):
+            probe = pick_agent.probe_copilot()
+        self.assertEqual(probe, Known(0.0, "monthly"))
+
+    def test_no_codex_session_directory_yields_unknown(self) -> None:
+        with (
+            patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+            patch("pick_agent.Path.home", return_value=Path("/nonexistent-home")),
+        ):
+            probe = pick_agent.probe_codex(NOW)
+        self.assertIsInstance(probe, Unknown)
+
+    def test_codex_session_without_rate_limits_line_yields_unknown(self) -> None:
+        with tempfile.TemporaryDirectory() as home:
+            sessions = Path(home) / ".codex/sessions"
+            sessions.mkdir(parents=True)
+            (sessions / "rollout.jsonl").write_text(
+                '{"other": true}\n', encoding="utf-8"
+            )
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_codex(NOW)
+        self.assertIsInstance(probe, Unknown)
+
+    def test_codex_session_with_rate_limits_delegates_to_parse_codex(self) -> None:
+        with tempfile.TemporaryDirectory() as home:
+            sessions = Path(home) / ".codex/sessions"
+            sessions.mkdir(parents=True)
+            line = json.dumps({"payload": CODEX_WEEKLY_BLOWN})
+            (sessions / "rollout.jsonl").write_text(line + "\n", encoding="utf-8")
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/codex"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_codex(NOW)
+        self.assertEqual(probe, Known(1.0, "weekly"))
+
+    def test_missing_claude_json_yields_unknown(self) -> None:
+        with (
+            patch("pick_agent.shutil.which", return_value="/usr/local/bin/claude"),
+            patch("pick_agent.Path.home", return_value=Path("/nonexistent-home")),
+        ):
+            probe = pick_agent.probe_claude(NOW)
+        self.assertIsInstance(probe, Unknown)
+
+    def test_claude_json_delegates_to_parse_claude(self) -> None:
+        with tempfile.TemporaryDirectory() as home:
+            (Path(home) / ".claude.json").write_text(
+                json.dumps(CLAUDE_HEALTHY), encoding="utf-8"
+            )
+            with (
+                patch("pick_agent.shutil.which", return_value="/usr/local/bin/claude"),
+                patch("pick_agent.Path.home", return_value=Path(home)),
+            ):
+                probe = pick_agent.probe_claude(NOW)
+        self.assertEqual(probe, Known(97.0, "7d"))
+
+
+class MainLazinessTests(unittest.TestCase):
+    def test_main_selects_agy_and_never_probes_codex_or_claude(self) -> None:
+        def explode_probe(now: datetime) -> pick_agent.Probe:
+            raise AssertionError("main probed codex or claude after agy won")
+
+        with (
+            patch("pick_agent.probe_copilot", return_value=parse_copilot_today()),
+            patch("pick_agent.probe_agy", return_value=Unknown("no quota interface")),
+            patch("pick_agent.probe_codex", side_effect=explode_probe),
+            patch("pick_agent.probe_claude", side_effect=explode_probe),
+            patch("builtins.print") as mock_print,
+        ):
+            exit_code = pick_agent.main()
+        self.assertEqual(exit_code, 0)
+        mock_print.assert_any_call("agy")
+
+
+class CommandLineTests(unittest.TestCase):
+    def test_the_script_prints_one_bare_word_to_stdout(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(PICK_AGENT)], capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertNotIn("Traceback", result.stderr)
+        self.assertIn(result.stdout.strip(), {"copilot", "agy", "codex", "claude"})
+        self.assertEqual(len(result.stdout.split()), 1)
+
+    def test_exhausted_chain_exits_one_with_empty_stdout(self) -> None:
+        script = (
+            f"import sys; sys.path.insert(0, {str(PICK_AGENT.parent)!r});"
+            "import pick_agent;"
+            "pick_agent.probe_copilot = lambda: pick_agent.Known(0.0, 'monthly');"
+            "pick_agent.probe_agy = lambda: pick_agent.Absent();"
+            "pick_agent.probe_codex = lambda now: pick_agent.Known(1.0, 'weekly');"
+            "pick_agent.probe_claude = lambda now: pick_agent.Known(0.0, '7d');"
+            "sys.exit(pick_agent.main())"
+        )
+        result = subprocess.run(
+            [sys.executable, "-c", script], capture_output=True, text=True
+        )
+        self.assertEqual(result.returncode, 1)
+        self.assertEqual(result.stdout, "")
+        self.assertIn("copilot: 0.0% remaining (monthly)", result.stderr)
+
+
+if __name__ == "__main__":
+    unittest.main()
