@@ -7,7 +7,7 @@ import argparse
 from pathlib import Path
 
 from llmos_vault.root import vault_root
-from llmos_vault.schema import SPEC_NAME, collect_errors, frontmatter
+from llmos_vault.schema import SPEC_NAME, collect_errors, frontmatter, project_alias
 
 
 def parse_args() -> argparse.Namespace:
@@ -25,16 +25,6 @@ def parse_args() -> argparse.Namespace:
         "that lack them, then audit. Writes only what the path already implies.",
     )
     return parser.parse_args()
-
-
-def project_alias(root: Path, slug: str) -> str:
-    """Display alias for a project link: the landing page's H1, else the slug."""
-    landing = root / "projects" / slug / f"{slug}.md"
-    if landing.is_file():
-        for line in landing.read_text(encoding="utf-8").splitlines():
-            if line.startswith("# "):
-                return line[2:].strip()
-    return slug
 
 
 def stamp(path: Path, root: Path, relative: Path) -> bool:

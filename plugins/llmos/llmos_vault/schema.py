@@ -77,6 +77,35 @@ def frontmatter(path: Path) -> dict[str, str | list[str]] | None:
     return result
 
 
+def project_alias(root: Path, slug: str) -> str:
+    """Display alias for a project link: the landing page's H1, else the slug.
+
+    Use when stamping a `project` wikilink property -- the vault convention is
+    `[[projects/<slug>/<slug>|Alias]]`, and the alias is the landing page's
+    own H1 heading so the link reads naturally rather than as a raw slug.
+    Do NOT use when the note being stamped *is* the project's own landing
+    page -- schema.md says to omit the self-link on a canonical project
+    note/landing page rather than call this at all.
+
+    Example output:
+        'Agent Toolbox'
+
+    Example invocation:
+        from llmos_vault.schema import project_alias
+        project_alias(Path("/path/to/vault"), "agent-toolbox")
+
+    Args:
+        root: Vault root the project lives in.
+        slug: Project directory name under `projects/`.
+    """
+    landing = root / "projects" / slug / f"{slug}.md"
+    if landing.is_file():
+        for line in landing.read_text(encoding="utf-8").splitlines():
+            if line.startswith("# "):
+                return line[2:].strip()
+    return slug
+
+
 def untracked_markdown(root: Path) -> set[Path]:
     """List markdown files under `root` that git sees as untracked (new,
     never `git add`ed), via `git ls-files --others --exclude-standard`.
