@@ -72,8 +72,8 @@ def session_start(data: dict) -> str | None:
         f"Today's catch-all branch: {today} (cut off main; per-spec branches live at "
         f"<agent>/{today}/<spec> and merge back into the catch-all, never straight to main).\n"
         f"Insight worth keeping goes under ## Thoughts in "
-        f"{root / 'reviews' / 'daily' / f'{today}.md'}. The day's GitHub activity is written "
-        "there by the evening digest -- never restate it by hand."
+        f"{root / 'reviews' / 'daily' / f'{today}.md'} -- prose only, and never a "
+        "restatement of commits, issues, or PRs, which GitHub already records."
     )
 
 
