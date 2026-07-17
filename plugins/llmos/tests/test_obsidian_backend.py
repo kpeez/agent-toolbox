@@ -156,6 +156,9 @@ def test_missing_binary_raises_obsidian_not_running(monkeypatch):
         "Error: connection refused",
         "Error: Obsidian is not running",
         "Error: could not connect to Obsidian",
+        # The message a real closed app produces, confirmed by live smoke test
+        # (2026-07-17, issue #25 checklist).
+        "The CLI is unable to find Obsidian. Please make sure Obsidian is running and try again.",
     ],
 )
 def test_connection_failure_raises_obsidian_not_running(monkeypatch, stderr):
