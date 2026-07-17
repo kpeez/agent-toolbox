@@ -1,0 +1,20 @@
+[project]
+name = "llmos-vault"
+version = "0.1.0"
+description = "Vault-root resolution and canonical frontmatter for the llmOS Obsidian vault"
+requires-python = ">=3.11"
+dependencies = []
+
+[build-system]
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[tool.hatch.build.targets.wheel]
+packages = ["llmos_vault"]
+
+[tool.ruff]
+target-version = "py311"
+line-length = 100
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP"]
