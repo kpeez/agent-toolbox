@@ -9,7 +9,6 @@ import tempfile
 import unittest
 from pathlib import Path
 
-
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 DOCTOR = PLUGIN_ROOT / "scripts/doctor.sh"
 ROOT_REPAIR = (
@@ -247,7 +246,9 @@ class DoctorTests(unittest.TestCase):
         self.assert_failed(
             result,
             "obsidian-cli",
-            'brew install --cask obsidian && ln -sfh "/Applications/Obsidian.app/Contents/MacOS/obsidian-cli" "$(brew --prefix)/bin/obsidian-cli"',
+            'brew install --cask obsidian && ln -sfh '
+            '"/Applications/Obsidian.app/Contents/MacOS/obsidian-cli" '
+            '"$(brew --prefix)/bin/obsidian-cli"',
         )
 
     def test_missing_obsidian_cli_fails_linux(self) -> None:
