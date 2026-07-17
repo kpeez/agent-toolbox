@@ -59,3 +59,35 @@ Advanced → Command line interface).
   the doctor from within the desktop session so `DISPLAY`/`WAYLAND_DISPLAY`
   and the session D-Bus address are set; otherwise the CLI cannot reach the
   running app.
+
+## Codex needs the hook trusted once
+
+On Codex, installing the plugin is not enough to make its hooks run. Codex
+records each hook in `~/.codex/config.toml` under `[hooks.state]` with a
+`trusted_hash` before it will execute it, and **an untrusted hook is skipped
+silently** — no error, no warning. `codex plugin list` still reports
+`llmos@agent-toolbox  installed, enabled`, and the session receives nothing.
+
+Check whether this machine has trusted it:
+
+```sh
+grep -q 'llmos@agent-toolbox:hooks' ~/.codex/config.toml && echo trusted || echo NOT-trusted
+```
+
+If it is not trusted, the repair is a human one: open Codex interactively and
+approve the llmOS hook when prompted. It persists, and only that machine's
+`config.toml` records it — so every new machine needs it again.
+
+Do not "fix" this with `bypass_hook_trust = true` (or
+`--dangerously-bypass-hook-trust`). Those are global: they disable trust review
+for every hook from every installed marketplace, including remote ones, to solve
+one local hook. Codex's own text calls the flag DANGEROUS and scopes it to
+automation that already vets its hook sources.
+
+Verify by what a session receives, never by what the config says:
+
+```sh
+codex exec --sandbox read-only "Do not use any tools. Did you receive a startup message mentioning 'llmOS root'? yes/no." </dev/null
+```
+
+`no` means the hook did not fire, whatever `plugin list` claims.
