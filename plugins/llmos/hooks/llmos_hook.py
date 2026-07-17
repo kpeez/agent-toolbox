@@ -67,14 +67,12 @@ def session_start(data: dict) -> str | None:
     if not _is_under(cwd, root):
         return None
     today = date.today().isoformat()
-    receipt_script = HOOKS_DIR.parent / "scripts" / "write_daily_receipt.py"
     return (
         f"llmOS root: {root}. Read {root / 'AGENTS.md'} before durable knowledge work.\n"
         f"Today's catch-all branch: {today} (cut off main; per-spec branches live at "
         f"<agent>/{today}/<spec> and merge back into the catch-all, never straight to main).\n"
-        "Write a receipt only when a spec is completed: "
-        f"python3 {receipt_script} --agent <agent> --receipt-id <spec-slug> "
-        "--desc '<what the spec does>' --info '<[[spec]], plans, #issues, PR>' --project <slug>."
+        f"Insight worth keeping goes under ## Thoughts in reviews/daily/{today}.md. The day's "
+        "GitHub activity is written there by the evening digest -- never restate it by hand."
     )
 
 
