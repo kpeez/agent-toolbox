@@ -84,6 +84,12 @@ def test_read_note_returns_content_and_properties():
     assert note.body.startswith("# Alpha")
 
 
+def test_read_note_resolves_basename_typed_with_md_extension():
+    note = read_note(VAULT, "alpha.md")
+
+    assert note.name == "alpha"
+
+
 def test_list_notes_enumerates_every_note_including_those_without_frontmatter():
     notes = list_notes(VAULT)
 
