@@ -71,8 +71,9 @@ def session_start(data: dict) -> str | None:
         f"llmOS root: {root}. Read {root / 'AGENTS.md'} before durable knowledge work.\n"
         f"Today's catch-all branch: {today} (cut off main; per-spec branches live at "
         f"<agent>/{today}/<spec> and merge back into the catch-all, never straight to main).\n"
-        f"Insight worth keeping goes under ## Thoughts in reviews/daily/{today}.md. The day's "
-        "GitHub activity is written there by the evening digest -- never restate it by hand."
+        f"Insight worth keeping goes under ## Thoughts in "
+        f"{root / 'reviews' / 'daily' / f'{today}.md'}. The day's GitHub activity is written "
+        "there by the evening digest -- never restate it by hand."
     )
 
 
