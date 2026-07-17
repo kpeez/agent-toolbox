@@ -187,6 +187,43 @@ def set_property(vault_root: Path, note: str, key: str, value: str) -> str:
     return run(vault_root, "property:set", file=note, params={"name": key, "value": value})
 
 
+def set_property_list(vault_root: Path, note: str, key: str, values: list[str]) -> str:
+    """Set a list-typed property on a note via obsidian-cli, replacing any
+    existing value outright (no merge).
+
+    Use when a verb needs to stamp a genuinely list-valued graph property
+    from scratch -- e.g. `file_inbox_item` stamping the destination-derived
+    `categories`/`project` wikilinks, which are never a partial merge like
+    `authors`.
+    Do NOT use when the property is `authors` -- `set_property` merges into
+    the existing list instead of replacing it, which is what append-only
+    authorship needs.
+
+    Example output:
+        'Set: categories = [[Knowledge]]\\n'
+
+    Example invocation:
+        set_property_list(vault_root, "alpha", "categories", ["[[Knowledge]]"])
+
+    Args:
+        vault_root: Root directory of the vault the note lives in.
+        note: Note name (wikilink-style resolution) or vault-relative path.
+        key: Property name.
+        values: Full list of values to set (replaces any existing value).
+
+    Raises:
+        ValueError: `key` is "created" (immutable).
+        ObsidianNotRunning: obsidian-cli could not reach a running app.
+    """
+    _assert_mutable_property(key)
+    return run(
+        vault_root,
+        "property:set",
+        file=note,
+        params={"name": key, "value": ",".join(values), "type": "list"},
+    )
+
+
 def remove_property(vault_root: Path, note: str, key: str) -> str:
     """Remove a property from a note via obsidian-cli.
 
