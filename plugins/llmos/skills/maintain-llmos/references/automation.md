@@ -23,4 +23,4 @@ The weekly run starts only after Sunday's daily closeout. It creates `weekly/YYY
 
 Both runs skip pushing when `origin` is absent. Neither may force-push, discard work, or merge after a failed check.
 
-See also: [[projects/llmos/docs/adrs/0002-use-daily-branches-and-nightly-squash-merges|Cascading branches and nightly squash merges]]
+See also: [[projects/llmos/adrs/0002-use-daily-branches-and-nightly-squash-merges|Cascading branches and nightly squash merges]]
