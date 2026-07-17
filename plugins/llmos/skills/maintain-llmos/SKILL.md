@@ -22,19 +22,14 @@ Treat llmOS as the canonical shared store; keep reusable knowledge shared. No pr
 
 When a workflow or hard-won lesson will recur across projects or providers, create or update a focused sibling skill in this plugin during the same task. Skills live in the agent-toolbox plugins, never in the vault — the vault holds notes. Use the skill creator, keep instructions concise, put deterministic behavior in scripts, and run `quick_validate.py`.
 
+## Git
+
+Commit routine work straight to `main`. Cut a branch only when a diff is worth reading before it lands — a multi-session spec, or a change worth a pull request — and name it `<agent>/<slug>`, with no date. There is no daily branch and no squash-merge closeout; see the vault's ADR 0008.
+
 ## Scripts
 
-Manage the cascading branch model — `main` <- `YYYY-MM-DD` (catch-all) <- `<agent>/YYYY-MM-DD/<spec>`:
+No script stamps frontmatter. Use `<llmos-plugin-root>/scripts/audit_metadata.py` for a schema audit; it is read-only unless you pass `--fix`.
 
-```sh
-python3 "<llmos-plugin-root>/scripts/daily_branch.py" start                              # today's catch-all, off main
-python3 "<llmos-plugin-root>/scripts/daily_branch.py" spec --agent codex --name my-spec  # per-spec branch, off the catch-all
-```
-
-No script stamps frontmatter. These use only the Python standard library and write plain files — no Obsidian CLI dependency.
-
-The scheduled runs that drive this cascade — what the nightly and weekly audit, why a missing catch-all is a valid state rather than a failure, and what neither may ever do — are specified in `references/automation.md`. Read it before acting as either one.
-
-Use `<llmos-plugin-root>/scripts/audit_metadata.py` for a schema audit; it is read-only unless you pass `--fix`.
+What the nightly and weekly runs audit, and what neither may ever do, is specified in `references/automation.md`. Read it before acting as either one.
 
 Every canonical spec (`projects/<project>/specs/NNNN-<slug>.md`) carries the minimal `Specifications` category and project ownership. Both are implied by the file's own path, so `--fix` stamps them rather than any agent hand-typing them — run it after `/write-spec` creates a spec, since that command is vault-agnostic and writes only the workflow properties (`status`, `desc`, `blocked`). Legacy supporting notes may remain unclassified until materially edited.

@@ -69,8 +69,6 @@ def session_start(data: dict) -> str | None:
     today = date.today().isoformat()
     return (
         f"llmOS root: {root}. Read {root / 'AGENTS.md'} before durable knowledge work.\n"
-        f"Today's catch-all branch: {today} (cut off main; per-spec branches live at "
-        f"<agent>/{today}/<spec> and merge back into the catch-all, never straight to main).\n"
         f"Insight worth keeping goes under ## Thoughts in "
         f"{root / 'reviews' / 'daily' / f'{today}.md'} -- prose only, and never a "
         "restatement of commits, issues, or PRs, which GitHub already records."

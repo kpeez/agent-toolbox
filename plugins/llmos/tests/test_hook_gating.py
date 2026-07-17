@@ -80,7 +80,6 @@ def test_session_start_injects_inside_vault(tmp_path):
     result = run_hook("session-start", {"cwd": str(vault)}, tmp_path, vault)
 
     assert str(vault) in result.stdout
-    assert "branch" in result.stdout.lower()
     assert "thoughts" in result.stdout.lower()
     assert result.returncode == 0
 
