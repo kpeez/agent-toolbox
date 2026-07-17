@@ -62,6 +62,8 @@ line in the repo's `AGENTS.md` pins the tracker; otherwise `/to-issues` auto-det
 
 - Only touch what the request requires. Match existing style.
 - Remove orphans YOUR changes created. Don't touch pre-existing dead code.
+- Delete with `trash` (recoverable), never `rm`/`rmdir` — both are denied. It
+  takes directories with no flags, so `trash dist` replaces `rm -rf dist`.
 
 ### Types & state
 
