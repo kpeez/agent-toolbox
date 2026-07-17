@@ -93,6 +93,13 @@ goal/scope header as a **parent issue**, then publish the slices as **child issu
 / sub-issues** that reference it. This is the portable default — it works
 identically on Linear and GitHub. Do NOT close or modify the parent issue.
 
+Before creating the parent, search the tracker for the immutable
+`<!-- knack-spec: <repo>/<slug> -->` marker — bind the search to repository
+identity **and** slug, since title-only searches collide on renamed or similar
+features. If a marker-bearing parent already exists, reuse it and create only the
+missing children; never create a second parent. When creating a new parent, stamp
+its body with that marker so later runs and `/start-loop` can find it.
+
 Escalate to **GitHub/Linear** only when the spec is large enough to span
 milestones; then the slices are issues in the project rather than sub-issues. The
 parent issue (or project) is the remote-reviewable home for the "why," and from
