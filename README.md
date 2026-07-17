@@ -220,7 +220,7 @@ lives:
 
 - **`docs/agents/adrs/`** — Architecture Decision Records. Durable, but like
   specs they are **not committed to the source repo**: they live in the shared
-  llmOS vault at `$LLMOS_ROOT/projects/<repo>/docs/adrs`, reached through the
+  llmOS vault at `$LLMOS_ROOT/projects/<repo>/adrs`, reached through the
   gitignored `docs/agents/` symlink. Created lazily by `/sharpen`, `/tdd`, or
   `/improve-codebase-architecture` when a decision is hard to reverse, surprising
   without context, and the result of a real trade-off. They stop the agent from
@@ -276,7 +276,7 @@ lives under one directory — **`docs/agents/`** — which is a gitignored symli
 to the project's docs tree in the shared llmOS vault:
 
 ```text
-docs/agents -> $LLMOS_ROOT/projects/<project>/docs
+docs/agents -> $LLMOS_ROOT/projects/<project>
 ├── specs/     # feature specs, and local-tracker issue files
 ├── adrs/      # architecture decision records
 └── research/  # anything else agent-facing lives here too

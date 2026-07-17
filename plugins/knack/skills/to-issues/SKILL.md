@@ -102,6 +102,10 @@ Publish each approved slice to the tracker in dependency order (blockers first)
 so you can reference real issue identifiers in "Blocked by". Apply the triage
 label (`ready-for-agent` / `ready-for-human`) at publish time.
 
+Then set the spec's `status: active` — publication is the moment a draft becomes
+real work. That property is the spec's own lifecycle, not a task ledger; the
+tracker still owns every task and its state.
+
 An **AFK** issue must be a durable **agent brief** — a future agent will pick it
 up cold, with only the issue body for context. Write it so that's enough:
 

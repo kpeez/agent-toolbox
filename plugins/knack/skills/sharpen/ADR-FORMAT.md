@@ -1,7 +1,7 @@
 # ADR Format
 
 ADRs are **not committed to the source repo** — like specs, they live in the
-shared llmOS vault at `$LLMOS_ROOT/projects/<repo>/docs/adrs`, reached through the
+shared llmOS vault at `$LLMOS_ROOT/projects/<repo>/adrs`, reached through the
 gitignored `docs/agents/` symlink that `/setup-repo` creates.
 
 Within `docs/agents/adrs/`, ADRs use sequential numbering: `0001-slug.md`,

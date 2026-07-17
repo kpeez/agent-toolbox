@@ -1,0 +1,4 @@
+interface:
+  display_name: "Setup llmOS"
+  short_description: "Diagnose and configure llmOS vault access"
+  default_prompt: "Use $setup-llmos to verify this machine can access llmOS."

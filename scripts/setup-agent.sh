@@ -5,6 +5,23 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 
 ################################################################################
+# Retire stale llmOS symlinks (superseded by the llmos plugin)
+################################################################################
+# maintain-llmos is dissolved and setup-llmos now ships in plugins/llmos,
+# installed via the plugin marketplace -- left in place these symlinks would
+# double-list the skill or resurrect deleted vault code. NEVER remove
+# ~/.codex/hooks.json here: that symlink is the current working Codex hook
+# path and only retires once Codex plugin hooks are verified (issue #16).
+for stale in \
+    "$HOME/.claude/skills/maintain-llmos" \
+    "$HOME/.claude/skills/setup-llmos" \
+    "$HOME/.codex/skills/setup-llmos"; do
+    [[ -L "$stale" ]] && rm "$stale"
+done
+echo "removed stale llmOS symlinks (if present)"
+
+
+################################################################################
 # Claude
 ################################################################################
 mkdir -p "$HOME/.claude"

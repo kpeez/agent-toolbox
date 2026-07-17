@@ -1,0 +1,21 @@
+{
+  "name": "llmos",
+  "description": "Vault-root resolution and automation for the shared llmOS Obsidian vault used across agent sessions",
+  "version": "1.0.0",
+  "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": ["llmos", "obsidian", "vault", "config", "automation"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "llmos",
+    "shortDescription": "Vault-root resolution and automation for the llmOS vault.",
+    "longDescription": "Resolves the shared llmOS Obsidian vault root, delivers vault conventions via a path-gated hook, and diagnoses/configures machine setup through the setup-llmos skill.",
+    "developerName": "kpeez",
+    "category": "Productivity",
+    "capabilities": ["Automation"],
+    "defaultPrompt": ["Use setup-llmos to verify this machine can access llmOS."],
+    "brandColor": "#0EA5A6"
+  }
+}

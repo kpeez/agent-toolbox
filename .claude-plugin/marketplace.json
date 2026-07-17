@@ -10,6 +10,10 @@
     {
       "name": "lab",
       "source": "./plugins/lab"
+    },
+    {
+      "name": "llmos",
+      "source": "./plugins/llmos"
     }
   ]
 }

@@ -94,10 +94,9 @@ def preflight(
     worktree: bool,
 ) -> tuple[Path, list[Migration]]:
     collisions: list[str] = []
-    project_root = llmos / "projects" / project
-    canonical_docs = project_root / "docs"
-    canonical_specs = canonical_docs / "specs"
-    canonical_adrs = canonical_docs / "adrs"
+    canonical_root = llmos / "projects" / project
+    canonical_specs = canonical_root / "specs"
+    canonical_adrs = canonical_root / "adrs"
 
     if not repo.is_dir() or repo.is_symlink():
         collisions.append(f"{repo}: repository root must be a real directory")
@@ -105,8 +104,7 @@ def preflight(
     for path in (
         llmos,
         llmos / "projects",
-        project_root,
-        canonical_docs,
+        canonical_root,
         canonical_specs,
         canonical_adrs,
     ):
@@ -159,8 +157,7 @@ def preflight(
             )
 
     migrations = [
-        Migration(project_root / "specs", canonical_specs),
-        Migration(project_root / "adr", canonical_adrs),
+        Migration(canonical_root / "adr", canonical_adrs),
         Migration(legacy_repo_adr, canonical_adrs),
     ]
 
@@ -206,7 +203,7 @@ def preflight(
 
     if collisions:
         raise CollisionError(collisions, worktree=worktree)
-    return canonical_docs, migrations
+    return canonical_root, migrations
 
 
 def migrate(source: Path, destination: Path) -> None:
@@ -256,9 +253,9 @@ def establish_topology(
     *,
     worktree: bool,
 ) -> None:
-    canonical_docs, migrations = preflight(repo, llmos, project, worktree=worktree)
-    (canonical_docs / "specs").mkdir(parents=True, exist_ok=True)
-    (canonical_docs / "adrs").mkdir(parents=True, exist_ok=True)
+    canonical_root, migrations = preflight(repo, llmos, project, worktree=worktree)
+    (canonical_root / "specs").mkdir(parents=True, exist_ok=True)
+    (canonical_root / "adrs").mkdir(parents=True, exist_ok=True)
 
     if not worktree:
         for migration in migrations:
@@ -271,7 +268,7 @@ def establish_topology(
             path.unlink()
 
     (repo / "docs").mkdir(parents=True, exist_ok=True)
-    ensure_link(repo / AGENTS_LINK, str(canonical_docs))
+    ensure_link(repo / AGENTS_LINK, str(canonical_root))
     if not worktree:
         update_gitignore(repo)
 

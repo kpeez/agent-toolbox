@@ -64,7 +64,7 @@ Creates a feature spec file `docs/agents/specs/NNNN-<slug>.md`.
 
 <steps>
 <step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
-<step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/agents` must be a symlink pointing directly at `$LLMOS_ROOT/projects/<repo>/docs`; never create `docs/agents` as a real committed directory in the source repo</step>
+<step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/agents` must be a symlink pointing directly at `$LLMOS_ROOT/projects/<repo>`; never create `docs/agents` as a real committed directory in the source repo</step>
 <step action="allocate-number">if an existing `docs/agents/specs/NNNN-<slug>.md` already matches this slug, reuse its number. Otherwise scan `docs/agents/specs/` for files matching `^[0-9]{4}-`, take the highest number, add 1, and zero-pad to 4 digits (start at `0001` if none exist) -> `<NNNN>`. Do this immediately before writing the file</step>
 <step action="create-files">read `templates.md` and write `NNNN-<slug>.md` to `docs/agents/specs/`; never overwrite an existing spec file for this slug — a present goal/scope header is settled and authoritative</step>
 <step action="populate">fill the goal/scope header from the sharpened plan (or approved plan-mode plan) and flag it for the user to confirm; if `NNNN-<slug>.md` already exists, leave its header alone. Then expand the design body below the `---` divider and name in the Verification section the behavior-level tests that will prove each behavior</step>
@@ -79,7 +79,7 @@ Verification code lives in the repo — committed tests in the project's suite,
 plus transient scratch scripts (per `/tdd`) in gitignored `tests/temp/`. Specs
 must never be committed to the source repository: they are reached through the
 gitignored `docs/agents/` symlink, which points at the shared
-`$LLMOS_ROOT/projects/<repo>/docs` directory.
+`$LLMOS_ROOT/projects/<repo>` directory.
 
 ```
 docs/agents/specs/
