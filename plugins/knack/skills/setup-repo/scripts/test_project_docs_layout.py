@@ -54,7 +54,7 @@ def snapshot(root: Path) -> dict[str, tuple[str, object, int, int]]:
 
 
 def assert_topology(repo: Path, llmos: Path, project: str = "sample") -> None:
-    canonical = llmos / "projects" / project / "docs"
+    canonical = llmos / "projects" / project
     assert (canonical / "specs").is_dir()
     assert (canonical / "adrs").is_dir()
 
@@ -90,7 +90,7 @@ def test_retired_layout_links_are_replaced_by_the_single_agents_link(
 ) -> None:
     repo = tmp_path / "repo"
     llmos = tmp_path / "llmos"
-    canonical = llmos / "projects/sample/docs"
+    canonical = llmos / "projects/sample"
     (canonical / "specs").mkdir(parents=True)
     (canonical / "adrs").mkdir()
     repo.mkdir()
@@ -191,7 +191,10 @@ def test_project_legacy_symlinks_remain_collisions(
     result = run_setup(repo, llmos)
 
     assert result.returncode == 2
-    assert "legacy source must be a real directory, found symlink" in result.stderr
+    if legacy_name == "specs":
+        assert "canonical path must be a real directory" in result.stderr
+    else:
+        assert "legacy source must be a real directory, found symlink" in result.stderr
     assert snapshot(tmp_path) == before
 
 
@@ -279,9 +282,7 @@ def test_legacy_content_migrates_losslessly_exactly_once(tmp_path: Path) -> None
     llmos = tmp_path / "llmos"
     project = llmos / "projects/sample"
     repo.mkdir()
-    (project / "specs/nested").mkdir(parents=True)
-    (project / "specs/nested/spec.md").write_bytes(b"spec\x00bytes")
-    (project / "adr").mkdir()
+    (project / "adr").mkdir(parents=True)
     (project / "adr/0001-project.md").write_bytes(b"project adr\n")
     (repo / "docs/adr/deep").mkdir(parents=True)
     (repo / "docs/adr/deep/0002-repo.md").write_bytes(b"repo adr\xff")
@@ -291,10 +292,8 @@ def test_legacy_content_migrates_losslessly_exactly_once(tmp_path: Path) -> None
     first = run_setup(repo, llmos)
 
     assert first.returncode == 0, first.stderr
-    assert (project / "docs/specs/nested/spec.md").read_bytes() == b"spec\x00bytes"
-    assert (project / "docs/adrs/0001-project.md").read_bytes() == b"project adr\n"
-    assert (project / "docs/adrs/deep/0002-repo.md").read_bytes() == b"repo adr\xff"
-    assert not (project / "specs").exists()
+    assert (project / "adrs/0001-project.md").read_bytes() == b"project adr\n"
+    assert (project / "adrs/deep/0002-repo.md").read_bytes() == b"repo adr\xff"
     assert not (project / "adr").exists()
     assert not (repo / "docs/adr").exists()
     assert (repo / "docs/agents/adrs/deep/0002-repo.md").read_bytes() == b"repo adr\xff"
@@ -305,6 +304,29 @@ def test_legacy_content_migrates_losslessly_exactly_once(tmp_path: Path) -> None
 
     assert second.returncode == 0, second.stderr
     assert snapshot(tmp_path) == before
+
+
+def test_existing_specs_directory_is_left_exactly_where_it_is(tmp_path: Path) -> None:
+    repo = tmp_path / "repo"
+    llmos = tmp_path / "llmos"
+    project = llmos / "projects/sample"
+    repo.mkdir()
+    (project / "specs/nested").mkdir(parents=True)
+    (project / "specs/nested/spec.md").write_bytes(b"my spec content\n")
+
+    # Also add some adrs to migrate
+    (project / "adr").mkdir()
+    (project / "adr/0001-project.md").write_bytes(b"project adr\n")
+
+    first = run_setup(repo, llmos)
+
+    assert first.returncode == 0, first.stderr
+    assert_topology(repo, llmos)
+    # Check that specs is EXACTLY where it was, not moved or nested inside docs or deleted
+    assert (project / "specs/nested/spec.md").read_bytes() == b"my spec content\n"
+    # Check that the adr migrated to adrs
+    assert (project / "adrs/0001-project.md").read_bytes() == b"project adr\n"
+    assert not (project / "adr").exists()
 
 
 def test_nonidentical_legacy_collision_aborts_without_mutation(tmp_path: Path) -> None:
@@ -330,10 +352,10 @@ def test_existing_canonical_collision_aborts_without_mutation(tmp_path: Path) ->
     llmos = tmp_path / "llmos"
     project = llmos / "projects/sample"
     repo.mkdir()
-    (project / "specs").mkdir(parents=True)
-    (project / "specs/SPEC.md").write_bytes(b"legacy\n")
-    (project / "docs/specs").mkdir(parents=True)
-    (project / "docs/specs/SPEC.md").write_bytes(b"canonical\n")
+    (project / "adr").mkdir(parents=True)
+    (project / "adr/ADR.md").write_bytes(b"legacy\n")
+    (project / "adrs").mkdir(parents=True)
+    (project / "adrs/ADR.md").write_bytes(b"canonical\n")
     before = snapshot(tmp_path)
 
     result = run_setup(repo, llmos)
@@ -348,10 +370,10 @@ def test_identical_canonical_content_is_not_overwritten(tmp_path: Path) -> None:
     llmos = tmp_path / "llmos"
     project = llmos / "projects/sample"
     repo.mkdir()
-    (project / "specs").mkdir(parents=True)
-    (project / "specs/SPEC.md").write_bytes(b"same bytes\n")
-    (project / "docs/specs").mkdir(parents=True)
-    canonical = project / "docs/specs/SPEC.md"
+    (project / "adr").mkdir(parents=True)
+    (project / "adr/ADR.md").write_bytes(b"same bytes\n")
+    (project / "adrs").mkdir(parents=True)
+    canonical = project / "adrs/ADR.md"
     canonical.write_bytes(b"same bytes\n")
     canonical_inode = canonical.stat().st_ino
 
@@ -360,14 +382,14 @@ def test_identical_canonical_content_is_not_overwritten(tmp_path: Path) -> None:
     assert result.returncode == 0, result.stderr
     assert canonical.read_bytes() == b"same bytes\n"
     assert canonical.stat().st_ino == canonical_inode
-    assert not (project / "specs").exists()
+    assert not (project / "adr").exists()
 
 
 def test_worktree_mode_recreates_safe_links_but_refuses_migration(
     tmp_path: Path,
 ) -> None:
     llmos = tmp_path / "llmos"
-    canonical = llmos / "projects/sample/docs"
+    canonical = llmos / "projects/sample"
     (canonical / "specs").mkdir(parents=True)
     (canonical / "adrs").mkdir()
     safe_repo = tmp_path / "safe-repo"

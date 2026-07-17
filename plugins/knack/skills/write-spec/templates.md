@@ -6,9 +6,34 @@ A spec is **`NNNN-<slug>.md`** (human goal + agent design) — pure markdown, no
 code files. Verification lives in the project's committed test suite. Task and
 status truth live on the issue tracker, not in a local file.
 
+## Frontmatter
+
+Every spec opens with frontmatter. Keep it to these fields — they are the ones
+this plugin's own commands read and write:
+
+- `status` — `draft` on creation. `/to-issues` advances it to `active`,
+  `/ship-pr` to `review`, and completion to `done`. Use `archived` for abandoned
+  or superseded specs. This is the spec's lifecycle, not its task list.
+- `desc` — one or two sentences on what the spec does. Written at creation so a
+  reader can triage a directory of specs without opening them.
+- `blocked` / `blocked_reason` — omit unless actually blocked. Blocking is
+  orthogonal to `status`: a spec is blocked *at* a phase, so record both.
+- `created` / `updated` — ISO dates. Preserve `created`; bump `updated` on
+  meaningful edits.
+
+Do not add fields for a note system here. A vault that indexes these specs owns
+its own properties and stamps them itself.
+
 <templates>
 
 <template file="docs/agents/specs/NNNN-<slug>.md">
+---
+status: draft
+desc: <one or two sentences on what this spec does>
+created: <YYYY-MM-DD>
+updated: <YYYY-MM-DD>
+---
+
 # <Title>
 
 <!--
@@ -30,11 +55,11 @@ Two zones in one file:
 
 <!-- what is explicitly out of scope -->
 
-## Success Criteria
+## Success criteria
 
 <!-- observable outcomes that define done -->
 
-## Execution Mode
+## Execution mode
 
 - **Mode**: review-gated
 - **Stop and ask before**: destructive commands, production/shared infrastructure changes, credentials, broad rewrites, or scope changes

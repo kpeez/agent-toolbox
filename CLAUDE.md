@@ -38,7 +38,7 @@ never burn the lead context on bulk reads or typing implementation.
    progress on the active issue before running out of context
 
 Agent-facing docs are never committed. They all live under `docs/agents/` — one
-gitignored symlink to `$LLMOS_ROOT/projects/<repo>/docs` — holding `specs/`,
+gitignored symlink to `$LLMOS_ROOT/projects/<repo>` — holding `specs/`,
 `adrs/`, `research/`, and anything else agents write. If it's missing, run
 `/setup-repo`; never create it as a real directory.
 
