@@ -1,7 +1,10 @@
 {
   "name": "agent-toolbox",
   "description": "Portable skills, agents, and spec-driven workflow for AI coding agents, split into installable plugins",
-  "owner": { "name": "Kyle Puhger", "email": "krpuhger@gmail.com" },
+  "owner": {
+    "name": "Kyle Puhger",
+    "email": "krpuhger@gmail.com"
+  },
   "plugins": [
     {
       "name": "knack",
