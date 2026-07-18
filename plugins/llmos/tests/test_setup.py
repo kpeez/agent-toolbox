@@ -1,4 +1,4 @@
-"""Prove setup-agent.sh retires the stale llmOS symlinks the plugin replaces,
+"""Prove install.sh retires the stale llmOS symlinks the plugin replaces,
 and that no rule file or user-level rules directory is ever created in
 agent-toolbox (rules live in the vault only -- ADR-0002).
 
@@ -14,21 +14,20 @@ from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
 REPO_ROOT = PLUGIN_ROOT.parents[1]
-SETUP_SCRIPT = REPO_ROOT / "scripts" / "setup-agent.sh"
+INSTALL_SCRIPT = REPO_ROOT / "scripts" / "install.sh"
 
 
-def run_setup_agent(fake_home: Path) -> subprocess.CompletedProcess[str]:
-    """Run the real setup-agent.sh with HOME redirected into a temp dir.
+def run_install(fake_home: Path) -> subprocess.CompletedProcess[str]:
+    """Run the real install.sh with HOME redirected into a temp dir.
 
-    Feeds "n" to the ollama-Modelfiles prompt so the script never blocks on
-    stdin or touches anything outside `fake_home`.
+    The script is non-interactive, so it never blocks on stdin or touches
+    anything outside `fake_home`.
     """
     env = os.environ.copy()
     env["HOME"] = str(fake_home)
     result = subprocess.run(
-        ["bash", str(SETUP_SCRIPT)],
+        ["bash", str(INSTALL_SCRIPT)],
         cwd=REPO_ROOT,
-        input="n\n",
         capture_output=True,
         text=True,
         env=env,
@@ -54,7 +53,7 @@ def test_setup_removes_stale_vault_symlinks(tmp_path):
         path.parent.mkdir(parents=True, exist_ok=True)
         path.symlink_to(fake_vault_skill)
 
-    run_setup_agent(fake_home)
+    run_install(fake_home)
 
     for path in stale_paths:
         assert not path.is_symlink(), f"{path} should have been removed"
@@ -86,7 +85,7 @@ def test_setup_removes_dead_hook_symlinks(tmp_path):
     assert not dangling.exists(), "precondition: this link must dangle"
     assert resolving.exists(), "precondition: this link must resolve"
 
-    run_setup_agent(fake_home)
+    run_install(fake_home)
 
     assert not dangling.is_symlink(), "the dangling Codex hook link should be gone"
     assert not resolving.is_symlink(), "the inert Claude hook link should be gone"
@@ -113,6 +112,6 @@ def test_setup_creates_no_user_level_rules_dir(tmp_path):
     fake_home = tmp_path / "home"
     fake_home.mkdir()
 
-    run_setup_agent(fake_home)
+    run_install(fake_home)
 
     assert not (fake_home / ".claude" / "rules").exists()

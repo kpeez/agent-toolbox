@@ -20,7 +20,7 @@ agent-toolbox/
 │   ├── .codex-plugin/         #   Codex plugin manifest
 │   └── skills/                #   Research skills (autoresearch, data-viz)
 ├── AGENTS.md                  # Shared provider-neutral instructions
-└── scripts/setup-agent.sh     # Manual path for non-plugin providers and helper scripts
+└── scripts/install.sh         # Manual path for non-plugin providers
 ```
 
 ## Installation
@@ -50,7 +50,7 @@ codex plugin add lab@agent-toolbox
 > The Codex plugin delivers skills only. Codex plugins do not deliver agents, so
 > the Codex `.toml` subagents are installed by the manual script below.
 
-### Manual install (Codex agents, Antigravity, Copilot, and helper scripts)
+### Manual install (Codex agents, Antigravity, Copilot)
 
 Claude Code installs entirely from its plugin. Codex CLI installs skills from its
 plugin but needs the manual script for its subagents. Use the manual script for
@@ -58,7 +58,7 @@ Codex agents and for providers that do not have a complete plugin install path
 here. Skill scripts need no install — skills run them in place with `uv run`.
 
 ```bash
-./scripts/setup-agent.sh
+./scripts/install.sh
 ```
 
 This installs to:

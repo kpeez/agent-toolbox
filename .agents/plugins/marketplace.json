@@ -1,23 +1,43 @@
 {
   "name": "agent-toolbox",
-  "interface": { "displayName": "agent-toolbox" },
+  "interface": {
+    "displayName": "agent-toolbox"
+  },
   "plugins": [
     {
       "name": "knack",
-      "source": { "source": "local", "path": "./plugins/knack" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "source": {
+        "source": "local",
+        "path": "./plugins/knack"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
       "category": "Productivity"
     },
     {
       "name": "lab",
-      "source": { "source": "local", "path": "./plugins/lab" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "source": {
+        "source": "local",
+        "path": "./plugins/lab"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
       "category": "Productivity"
     },
     {
       "name": "llmos",
-      "source": { "source": "local", "path": "./plugins/llmos" },
-      "policy": { "installation": "AVAILABLE", "authentication": "ON_USE" },
+      "source": {
+        "source": "local",
+        "path": "./plugins/llmos"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
       "category": "Productivity"
     }
   ]
