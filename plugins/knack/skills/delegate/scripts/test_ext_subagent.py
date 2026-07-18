@@ -22,13 +22,18 @@ failed = []
 
 def test_timeout_kill_tree():
     """Timeout kills the whole process group, returns 124, and doesn't hang."""
+    # A distinctive sleep duration is the marker: it lands in each child's own
+    # argv, so the orphan check matches only this test's processes. A bare
+    # `pgrep -f "sleep 30"` also matches unrelated sleeps on the machine (e.g. an
+    # agent session gate that loops `sleep 30`), which produces false failures.
+    probe = "31.41593"
     start = time.monotonic()
-    proc = mod.run_process(["bash", "-c", "sleep 30 & sleep 30"], timeout=1)
+    proc = mod.run_process(["bash", "-c", f"sleep {probe} & sleep {probe}"], timeout=1)
     elapsed = time.monotonic() - start
     assert proc.returncode == mod.TIMEOUT_RETURNCODE, f"Expected 124, got {proc.returncode}"
     assert elapsed < 5, f"took {elapsed:.1f}s, expected < 5s"
     assert "killed after --timeout 1s" in proc.stderr
-    leftover = subprocess.run(["pgrep", "-f", "sleep 30"], capture_output=True, text=True)
+    leftover = subprocess.run(["pgrep", "-f", f"sleep {probe}"], capture_output=True, text=True)
     assert leftover.stdout.strip() == "", f"orphaned children: {leftover.stdout}"
     print("✓ timeout kill-tree OK")
     passed.append("timeout_kill_tree")
