@@ -92,11 +92,3 @@ install_provider() {
 
 install_provider antigravity "$HOME/.gemini" AGENTS.md
 install_provider copilot "$HOME/.copilot" copilot-instructions.md
-
-################################################################################
-# Ollama model install
-################################################################################
-read -r -p "Create ollama Modelfiles? [y/N] " reply
-if [[ "${reply}" =~ ^[Yy]$ ]]; then
-    bash "$ROOT_DIR/scripts/create-modelfiles.sh"
-fi

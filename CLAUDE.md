@@ -1,5 +1,5 @@
 These are the global instructions for every project. They come from
-`agent-toolbox/CLAUDE.md` (`AGENTS.md` is a symlink to it); `scripts/setup-agent.sh`
+`agent-toolbox/CLAUDE.md` (`AGENTS.md` is a symlink to it); `scripts/install.sh`
 copies that one file to `~/.claude/CLAUDE.md`, `~/.gemini/AGENTS.md`, and
 `~/.copilot/copilot-instructions.md`. Edit it there and re-run the script — edits
 are provider-neutral and apply everywhere, so keep repo-specific commands and
@@ -9,6 +9,7 @@ structure out of it and in the repo's own `AGENTS.md`.
 
 - **Do NOT end turns by offering to do more work.** No "Want me to scaffold X?" / "Should I rewrite Y?" engagement-bait offers. The user will explicitly say when they want something done. Answer what was asked, then stop.
 - "Done" means "ran it." Test failures = spec failures.
+- **Retire a goal; never idle-hold it.** When nothing is left to do on an active `/goal`, mark it met, clear it, or escalate as BLOCKED — never end turn after turn while it stays unmet. The goal gate re-vetoes every stop, so idling just burns turns until the harness force-ends ("blocked the turn from ending N times — overriding"). A goal you can't satisfy is a decision to surface, not a loop to sit in.
 
 ## Workflow
 
