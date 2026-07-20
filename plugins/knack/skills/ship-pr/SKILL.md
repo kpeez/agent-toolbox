@@ -20,6 +20,15 @@ Two modes:
 - **Atomic commits.** Imperative, informative subjects. One coherent intent per commit —
   never mixed — ordered so each commit leaves the tree buildable.
 - **PR title and body come from NNNN-<slug>.md, linked tracker issues, and the diff.**
+- **No tracker leakage.** PR bodies, titles, and commit messages are
+  self-contained technical text — never include tracker URLs, issue quotes, or
+  workflow/process chatter. The PR link lives on the tracker side (private may
+  reference public, never the reverse). A bare issue id in the branch name is
+  the only tracker trace GitHub sees.
+- **Tracker-linking branch names.** When the tracker is Linear, the branch (at
+  creation, before first push) is named `<user>/<issue-id>-<slug>` (e.g.
+  `kyle/kp-123-fix-auth`) so Linear's GitHub integration links the PR and
+  automates the In Review/Done transitions.
 - **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only in finalize mode or when the user asks.
@@ -50,7 +59,9 @@ Two modes:
 6. **Draft PR** — if none exists, `gh pr create --draft --base <base>`; if one
    exists, leave its state alone.
 7. **Link** — comment the PR URL on the tracker issue(s) and move them toward
-   review. Task state lives on the tracker, not in local files.
+   review. Task state lives on the tracker, not in local files. If Linear's
+   GitHub integration already attached the PR and moved the issue (via the
+   branch name), verify instead of duplicating.
 8. **Mark the spec** — if a spec was resolved in step 1, set its `status: review`;
    the code now exists and is being proven. Set `blocked: true` with a
    `blocked_reason` instead if verification is stuck on something external.
@@ -65,7 +76,8 @@ skill — it stays a human action.
 1. **Locate** — `gh pr view` for the current branch; stop and report if no PR
    exists (run the default mode first). Resolve the spec as in default step 1,
    else from the `<!-- knack-spec: <repo>/<slug> -->` marker on the tracker
-   parent of the PR's linked issue(s); proceed without one if nothing resolves.
+   container (parent issue or Linear project) of the PR's linked issue(s);
+   proceed without one if nothing resolves.
 2. **Sync** — ensure the local branch is pushed; commit and push any pending
    work via the default workflow first.
 3. **Verify** — re-run lint, types, and tests (including the spec's
@@ -73,8 +85,8 @@ skill — it stays a human action.
 4. **Ready** — `gh pr ready <number>`.
 5. **Link** — comment on the tracker issue(s) and move them to review/done per
    the tracker's states.
-6. **Close the spec** — if a spec was resolved in step 1 and its parent's
-   remaining children are closed, set `status: done`: bump `updated`, preserve
+6. **Close the spec** — if a spec was resolved in step 1 and its container's
+   remaining slices are closed, set `status: done`: bump `updated`, preserve
    `created`, and append yourself to `authors` if the spec carries them — never
    remove a prior author. This is the step nothing else can do for you: a merged
    PR does not know which spec it completed. No spec, or slices still open —

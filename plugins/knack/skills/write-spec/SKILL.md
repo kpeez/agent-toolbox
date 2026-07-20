@@ -49,7 +49,8 @@ the `---` divider, and flag the header for the user to confirm.
 3. **Design**: expand the `NNNN-<slug>.md` design body after inspecting the repo
 4. **Fork** — hand off or implement solo:
    - **Hand off (default when work will fan out):** run `/to-issues` to publish
-     the spec as a parent issue + labeled sub-issues. Separate agents pick up
+     the spec into its tracker container (parent issue, or Linear project) with
+     labeled slice issues. Separate agents pick up
      each issue and run its own test → implement → review → PR loop. The
      tracker owns status from here.
    - **Solo (single-slice spec, one sitting):** prove each behavior per
@@ -112,8 +113,9 @@ and unresolved questions called out plainly.
 ## Status lives on the tracker
 
 `/to-issues` selects the tracker (Linear MCP → GitHub → local markdown) and
-publishes the header as a parent issue with labeled sub-issues. Status is the
-issue state, blockers are the blocked-by links, the rollup is the parent view.
+publishes the spec into its container — a Linear project, or a parent issue
+with labeled sub-issues. Status is the issue state, blockers are the blocked-by
+links, the rollup is the container view.
 Before running out of context, drop a short progress comment on the active
 issue — what's done, what's next, the one gotcha. That comment is the handoff.
 

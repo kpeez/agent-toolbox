@@ -44,7 +44,7 @@ grep -Fxq '<!-- knack:spec-approved -->' "$spec" 2>/dev/null && echo "APPROVED: 
 - **APPROVED** → the design gates are already passed. Hand straight to
   `implement`; it resumes from the tracker. Before publishing anything, search
   the tracker for the `<!-- knack-spec: <repo>/<slug> -->` marker so you never
-  create a duplicate parent.
+  create a duplicate spec container (parent issue, or Linear project).
 - **IN DESIGN** (no approved spec) → resume design: reopen `write-spec` at the
   review gate if the spec exists, or `sharpen` if it doesn't.
 
@@ -52,15 +52,16 @@ grep -Fxq '<!-- knack:spec-approved -->' "$spec" 2>/dev/null && echo "APPROVED: 
 
 Activate each phase skill by name (host-native activation → ask the agent to
 activate it → read the installed `SKILL.md` and follow it). Pass the handoff
-identifiers forward: slug, repo identity, tracker parent id, active child.
+identifiers forward: slug, repo identity, tracker container id (parent issue or
+Linear project), active issue.
 Roles are the `/delegate` tiers.
 
 | Phase | Who | What |
 | --- | --- | --- |
 | `sharpen` | main session (HITL) | Settle the design. May commission **planner** subagents for alternatives and `/deliberate` cases. Gate → spec. |
 | `write-spec` | main session; drafting may go to a **planner** | Write `docs/agents/specs/NNNN-<slug>.md`. On approval, add `<!-- knack:spec-approved -->`. **Last user prompt.** |
-| `to-issues` | one **planner** subagent | Read the approved spec cold; flag gaps to you *before* publishing; slice, publish parent (stamped `<!-- knack-spec: <repo>/<slug> -->`) + children; return the issue list. It slices itself — the spec is its only input; sub-delegating adds cold-start cost for nothing. No gate. |
-| `implement` | fan-out: one unblocked child = one **doer** subagent | Each doer gets its own `/goal` + handoff payload (spec path, slug, parent id, issue id). Design-heavy slices go to a **planner** first. Repeat until every required child is done. No gate. |
+| `to-issues` | one **planner** subagent | Read the approved spec cold; flag gaps to you *before* publishing; slice, publish the spec container (parent issue or Linear project, stamped `<!-- knack-spec: <repo>/<slug> -->`) + slice issues; return the issue list. It slices itself — the spec is its only input; sub-delegating adds cold-start cost for nothing. No gate. |
+| `implement` | fan-out: one unblocked slice = one **doer** subagent | Each doer gets its own `/goal` + handoff payload (spec path, slug, container id, issue id). Design-heavy slices go to a **planner** first. Repeat until every required slice is done. No gate. |
 | review + `ship-pr` | fresh context | Review the diff against the spec via `patch-reviewer`, then `/ship-pr`. |
 
 Every handoff crosses a context boundary carrying only identifiers and artifact

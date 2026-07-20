@@ -1,7 +1,7 @@
 {
   "name": "knack",
   "description": "Spec-driven workflow and skills for AI coding agents: sharpening, specs, test-driven and examples-based development, atomic PR grouping, and more",
-  "version": "1.8.0",
+  "version": "1.8.1",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
