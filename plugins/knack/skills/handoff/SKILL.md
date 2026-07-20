@@ -70,15 +70,16 @@ GitHub → local markdown):
 
 - **Scoped to one slice** → comment on that child issue. `/implement` already
   reads the latest comment as the handoff before acting.
-- **Spans slices, or no issue is active** → comment on the parent issue (stamped
-  `<!-- knack-spec: <repo>/<slug> -->`). Every child reaches it from the rollup.
+- **Spans slices, or no issue is active** → comment on the spec container — the
+  Linear project or parent issue stamped `<!-- knack-spec: <repo>/<slug> -->`.
+  Every slice reaches it from the rollup.
 - **No tracker at all** (single-slice spec, one sitting) → say it in chat and
   tell the user it isn't durable. Do not invent a file to hold it.
 
 ## Workflow
 
 <steps>
-<step action="resolve">identify the active issue and its parent; if the work isn't on a tracker, say so and skip to `report`</step>
+<step action="resolve">identify the active issue and its spec container; if the work isn't on a tracker, say so and skip to `report`</step>
 <step action="filter">list what you know, then delete everything covered by the durable table above — what remains is the handoff</step>
 <step action="verify">run the tests named in the spec's Verification section; paste the actual result, pass or fail. A claim about state that you did not just observe is a guess — mark it as one</step>
 <step action="write">comment on the issue resolved above, one short section per non-empty category from "What only you have"; lead with Resume</step>
@@ -89,7 +90,7 @@ GitHub → local markdown):
 ## Handing off to a cheaper model
 
 The receiving model does not need this session. It needs four identifiers and a
-pointer — spec path, slug, parent id, active issue id — exactly the payload
+pointer — spec path, slug, container id, active issue id — exactly the payload
 `/start-loop` passes to a doer. Give it those plus `/implement`, and it will
 read the issue body as the brief and your comment as the handoff.
 

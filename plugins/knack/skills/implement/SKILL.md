@@ -20,7 +20,7 @@ check; a red test, type error, or lint failure is a stop, not a warning.
 ## Working from the tracker
 
 When the work comes from the tracker, take the next unblocked workable issue.
-Children of an approved spec's parent are **ready by construction** — work any
+Slices in an approved spec's container are **ready by construction** — work any
 unblocked one without interrogating labels; skip only `ready-for-human`. The
 `ready-for-agent` label matters when picking up issues from other sources (the
 triage vocabulary and tracker selection live in `/to-issues`). The issue body
