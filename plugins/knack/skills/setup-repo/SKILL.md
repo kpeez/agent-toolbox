@@ -59,11 +59,16 @@ exit 0
    and the defaults you propose.
 2. **Ask: issue tracker.** One question, default inferred from the facts —
    Linear if Linear MCP tools are available in the session, GitHub if
-   `origin` points at github.com, local markdown otherwise. Options: GitHub /
-   Linear (capture team or extras for the line) / local markdown / other
+   `origin` points at github.com **and the repo is private**, local markdown
+   otherwise. For public repos, steer away from GitHub issues: agent process
+   noise (slices, progress comments) would land on the public issue list.
+   Options: GitHub / Linear (capture team and optionally initiative, e.g.
+   `linear (team Personal, initiative <name>)`) / local markdown / other
    (capture a one-line description). The answer becomes the `Issue tracker:`
    line that `/to-issues` reads — tracker mechanics stay in `/to-issues`'s
-   references, never copied into the repo.
+   references, never copied into the repo. If Linear is chosen, remind the
+   user to enable Linear's GitHub integration for this repo so branch names
+   auto-link PRs and drive status transitions.
 3. **Confirm the llmOS project mapping.** Propose the repository basename, but
    require the user to confirm the project name before any llmOS-backed path is
    created or changed. No confirmed mapping means skip project-docs setup.
@@ -114,7 +119,7 @@ exit 0
 
 ### Issue tracker
 
-Issue tracker: <answer + extras, e.g. github — issues live in `owner/repo`, or linear>. Conventions: `/to-issues`.
+Issue tracker: <answer + extras, e.g. github — issues live in `owner/repo`, or linear (team Personal, initiative <name>)>. Conventions: `/to-issues`.
 
 ### Triage labels
 

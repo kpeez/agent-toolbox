@@ -13,12 +13,18 @@ Break a plan into independently-grabbable issues using **vertical slices**
 Pick the tracker at runtime — no per-repo config beyond an optional one-liner:
 
 1. **Repo override** — if the repo's `AGENTS.md`/`CLAUDE.md` names a tracker
-   (e.g. `Issue tracker: linear (team ETHO)` or `Issue tracker: github`), use it
-   and pass along any extras on that line (team, labels, project).
+   (e.g. `Issue tracker: linear (team ETHO, initiative Foo)` or
+   `Issue tracker: github`), use it and pass along any extras on that line
+   (team, initiative, labels, project).
 2. **Linear** — else, if Linear MCP tools are available:
    [references/issue-tracker-linear.md](references/issue-tracker-linear.md)
 3. **GitHub** — else, if the repo has a GitHub remote and `gh` works:
-   [references/issue-tracker-github.md](references/issue-tracker-github.md)
+   [references/issue-tracker-github.md](references/issue-tracker-github.md).
+   **Public repos never reach this rung by fall-through**: agent process noise
+   (slices, progress comments) does not belong on a public issue list. If the
+   repo is public (`gh repo view --json visibility`), use GitHub issues only
+   when the repo override explicitly names `github`; otherwise continue to
+   local markdown and tell the user which tracker to pin.
 4. **Local markdown** — otherwise, files named `docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md`:
    [references/issue-tracker-local.md](references/issue-tracker-local.md)
 
@@ -42,8 +48,8 @@ Issues published by this skill are born triaged: label AFK slices
 benefit of issues arriving from *other* sources (humans filing bugs, external
 reports) that must be triaged before work. **Slices published from an approved
 spec are ready by construction** — the implementation loop treats any unblocked
-child of the spec's parent as workable and never interrogates labels; only
-`ready-for-human` stops it.
+issue in the spec's container (project or parent issue) as workable and never
+interrogates labels; only `ready-for-human` stops it.
 
 ## Process
 
@@ -88,22 +94,22 @@ on an unapproved plan: quiz the user and iterate until they approve.
 
 ### 5. Publish to tracker
 
-If the work came from a spec (`docs/agents/specs/NNNN-<slug>.md`), publish the spec's
-goal/scope header as a **parent issue**, then publish the slices as **child issues
-/ sub-issues** that reference it. This is the portable default — it works
-identically on Linear and GitHub. Do NOT close or modify the parent issue.
+If the work came from a spec (`docs/agents/specs/NNNN-<slug>.md`), publish it
+into the tracker's **spec container**: on Linear, a **project** holding the
+slices as issues (see the Linear reference); on GitHub and local markdown, a
+**parent issue** carrying the spec's goal/scope header, with the slices as
+child issues / sub-issues. Do NOT close or modify an existing container.
 
-Before creating the parent, search the tracker for the immutable
+Before creating the container, search the tracker for the immutable
 `<!-- knack-spec: <repo>/<slug> -->` marker — bind the search to repository
 identity **and** slug, since title-only searches collide on renamed or similar
-features. If a marker-bearing parent already exists, reuse it and create only the
-missing children; never create a second parent. When creating a new parent, stamp
-its body with that marker so later runs and `/start-loop` can find it.
+features. If a marker-bearing container already exists, reuse it and create only
+the missing slices; never create a second one. When creating a new container,
+stamp its body/description with that marker so later runs and `/start-loop` can
+find it.
 
-Escalate to **GitHub/Linear** only when the spec is large enough to span
-milestones; then the slices are issues in the project rather than sub-issues. The
-parent issue (or project) is the remote-reviewable home for the "why," and from
-here the tracker — not the local spec — is the task and status ledger.
+The container is the remote-reviewable home for the "why," and from here the
+tracker — not the local spec — is the task and status ledger.
 
 Publish each approved slice to the tracker in dependency order (blockers first)
 so you can reference real issue identifiers in "Blocked by". Apply the triage
