@@ -1,4 +1,4 @@
-"""Prove the deterministic guarantees of write_daily_activity (spec 0006)."""
+"""Prove the deterministic guarantees of write_daily_activity."""
 
 from __future__ import annotations
 

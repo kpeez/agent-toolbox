@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Write the machine-owned `## Projects` block of daily notes from GitHub activity.
 
-Implements spec 0006 / ADR 0007: fetch -> hash -> one model call -> verify -> write.
+Fetch -> hash -> one model call -> verify -> write.
 Deterministic script, not an agent. Processes today and yesterday (local time).
 """
 
