@@ -36,12 +36,16 @@ def git_branch(path):
 branch = git_branch(cwd)
 
 # Model name — strip "Claude " prefix, color by family
+# Muted earth/jewel tones so the model name stays distinct from the neon effort colors below
 model_colors = {
-    "Opus": ansi("38;5;208"),
-    "Sonnet": ansi("38;5;141"),
-    "Haiku": ansi("38;5;203"),
+    "Opus": ansi("38;2;95;179;161"),  # verdigris
+    "Sonnet": ansi("38;2;139;123;216"),  # iris
+    "Haiku": ansi("38;2;217;164;65"),  # amber
+    "Fable": ansi("38;2;162;91;140"),  # mulberry
 }
-model = data["model"]["display_name"].replace(" (default)", "")
+model = (
+    data["model"]["display_name"].replace(" (default)", "").replace(" (1M context)", "")
+)
 model_color = next((c for k, c in model_colors.items() if k in model), ansi(97))
 model_label = f"{model_color}[{model}]{R}"
 # Thinking effort — absent when model doesn't support it
@@ -72,9 +76,14 @@ ctx_size_fmt = (
 )
 pct = min(int(ctx["used_percentage"] or 0), 100)
 filled = pct * BAR_WIDTH // 100
-bar = f"{ansi(96)}{'█' * filled}{R}{ansi(2, 36)}{'░' * (BAR_WIDTH - filled)}{R}"
-pct_label = f"{ansi(96)}{pct}%{R}"
-tok_label = f"{ansi(96)}({ctx_used / 1000:.1f}k/{ctx_size_fmt}){R}"
+# Muted cyan — sits midway between the Opus teal and the high-effort blue, so it reads as
+# its own color without competing; track stays above 3:1 on a dark background to remain visible
+BAR_FILLED = ansi("38;2;169;200;209")
+BAR_EMPTY = ansi("38;2;75;125;139")
+BAR_TEXT = ansi("38;2;133;172;183")
+bar = f"{BAR_FILLED}{'█' * filled}{R}{BAR_EMPTY}{'░' * (BAR_WIDTH - filled)}{R}"
+pct_label = f"{BAR_TEXT}{pct}%{R}"
+tok_label = f"{BAR_TEXT}({ctx_used / 1000:.1f}k/{ctx_size_fmt}){R}"
 
 # Rate limits — absent for non-Pro/Max or before first API response; field is resets_at not reset_at
 rl = data.get("rate_limits") or {}
