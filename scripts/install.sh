@@ -40,6 +40,48 @@ cp "$ROOT_DIR/AGENTS.md" "$HOME/.claude/CLAUDE.md"
 cp "$ROOT_DIR/scripts/cc_statusline.py" "$HOME/.claude/"
 echo "claude instructions + statusline → $HOME/.claude/"
 
+# Wire settings.json to the statusline we just installed. Copying the script was never
+# enough on its own: settings.json is what actually names the command, so an install that
+# only dropped the file left the statusline unwired (or pinned to an older path we no
+# longer update). Ours replaces any command naming a path we have shipped; a statusline
+# pointing anywhere else is the user's own and is left alone.
+python3 - "$HOME/.claude/settings.json" <<'PY'
+import json
+import os
+import sys
+
+# realpath first: settings.json is often a symlink into a dotfiles repo, and os.replace()
+# on the link path would silently swap the link for a regular file.
+path = os.path.realpath(sys.argv[1])
+command = "python3 ~/.claude/cc_statusline.py"
+SHIPPED = ("cc_statusline.py", "statusline.py", "statusline-command.sh")
+
+settings = {}
+if os.path.exists(path):
+    try:
+        with open(path) as f:
+            settings = json.load(f)
+    except json.JSONDecodeError as exc:
+        settings = None
+        print(f"settings.json is not valid JSON ({exc}) — left untouched, statusline unwired")
+    if not isinstance(settings, dict):
+        sys.exit(0)
+
+current = settings.get("statusLine")
+current_cmd = current.get("command", "") if isinstance(current, dict) else ""
+if current is not None and not any(name in current_cmd for name in SHIPPED):
+    print(f"kept your statusLine ({current_cmd or current!r}) — unset it to use ours")
+    sys.exit(0)
+
+settings["statusLine"] = {"type": "command", "command": command}
+tmp = f"{path}.tmp"
+with open(tmp, "w") as f:
+    json.dump(settings, f, indent=2)
+    f.write("\n")
+os.replace(tmp, path)
+print(f"statusLine → {command}")
+PY
+
 
 ################################################################################
 # Codex
