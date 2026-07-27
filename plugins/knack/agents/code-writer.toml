@@ -1,5 +1,5 @@
 name = "code-writer"
-description = "Focused code writing agent. Use for focused, well-scoped tasks with clear file targets. Runs with workspace write access."
+description = "Focused code writing agent. Use for well-scoped tasks with clear file targets — implementing functions, fixing bugs, adding tests. Runs with workspace write access."
 model = "gpt-5.6-luna"
 model_provider = "openai"
 model_reasoning_effort = "xhigh"
