@@ -1,9 +1,9 @@
 ---
 name: start-loop
-description: Run or resume the auto-eng workflow — triage the idea, settle the design (interactive or autonomous), pass the conditional approval gate, then launch the knack-graph conductor. Use only when the user explicitly invokes /start-loop.
+description: Run or resume the eng-loop — triage the idea, settle the design (interactive or autonomous), pass the conditional approval gate, then launch the knack-graph conductor. Use only when the user explicitly invokes /start-loop.
 ---
 
-# /start-loop — auto-eng workflow runner
+# /start-loop — eng-loop runner
 
 You own the interactive half: container, triage, design, gate, launch.
 Everything after — slice → implement → review → ship — belongs to the
@@ -110,6 +110,10 @@ then carries only the fields it needs; no agent receives the tuple verbatim.
 Like every knack handoff they cross a context boundary carrying only
 identifiers and artifact pointers — spec path, slug, container, integration
 branch, scripts dir, optional issue — never the conversation.
+
+Before launching, run
+`uv run <scriptsDir>/validate_artifacts.py spec <specPath>` — a spec that
+fails its frontmatter, status, or marker checks is a stop, not a launch.
 
 After launch, comment the run id on the container as
 `<!-- knack:run-id <id> base=<baseBranch> -->`. The branch is part of the

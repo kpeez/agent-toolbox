@@ -131,10 +131,10 @@ Dual-format subagent definitions in `plugins/knack/agents/` — a Claude `.md`
 | `code-reviewer`    | Reviews the assembled implementation against the spec, one lens per invocation: what was missed, what went wrong, what is bloat |
 | `pr-publisher`     | Ships the finished branch per `ship-pr` — atomic commits, push, draft PR — and returns the PR URL and run summary     |
 
-The last six are the **auto-eng workflow**'s workers, dispatched on
-`/start-loop`'s automated runs: the deterministic `knack-graph.js` script
-decides what runs when, each agent decides how to do its one phase, and
-results flow back to the script as structured data —
+The last six are the **eng-loop**'s workers, dispatched on `/start-loop`'s
+automated runs: the deterministic `knack-graph.js` script decides what runs
+when, each agent decides how to do its one phase, and results flow back to
+the script as structured data —
 identifiers and artifact pointers in, typed status out, never user-facing
 prose.
 
@@ -146,8 +146,8 @@ restates the goal up front, recomputes state from artifacts so it can resume
 mid-flight, and gives every task worker its own goal. A triage policy decides
 the gate: gated runs prompt the user during design (sharpen → spec, and spec
 approval), autonomous runs record the gate verdict on the tracker and prompt
-never; either way an approved spec authorizes the auto-eng workflow to
-slice, publish, implement, review, and ship with no further prompts. The
+never; either way an approved spec authorizes the eng-loop to slice,
+publish, implement, review, and ship with no further prompts. The
 intended shape: design through approval in one session, `/clear`, then bare
 `/start-loop` — it reconstructs state from the spec and tracker, no
 explanation needed. Work
