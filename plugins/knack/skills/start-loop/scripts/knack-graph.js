@@ -157,7 +157,11 @@ Handoff tuple: ${tupleFor(null)}
 Run the to-issues skill against this spec and publish every slice into tracker
 container ${containerId}, wiring blocked-by edges as native tracker relations.
 The skill dedupes against the container's spec marker: on a resumed run reuse
-what is already published rather than creating a second set of slices.`
+what is already published rather than creating a second set of slices.
+
+Before publishing each slice, pipe its drafted body through
+   uv run ${scriptsDir}/validate_artifacts.py issue -
+and fix whatever it rejects; publish only bodies that pass.`
 
 const promptFrontier = () => `Report this run's workable slices as JSON.
 
@@ -267,8 +271,10 @@ Findings:
 ${numbered(findings)}
 
 One issue per finding that needs code. Write bodies against the to-issues
-issue template so validate_artifacts.py's issue checks pass. Do not re-file a
-finding that already has an open issue in the container.`
+issue template and check each with
+   uv run ${scriptsDir}/validate_artifacts.py issue -
+(body on stdin) before publishing. Do not re-file a finding that already has
+an open issue in the container.`
 
 const promptShip = () => `Ship the finished work on ${baseBranch}.
 
