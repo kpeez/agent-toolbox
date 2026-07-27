@@ -32,9 +32,10 @@ Do not do patch-reviewer's job; stay on your assigned lens.
 
 ## Output contract
 
-Return typed findings as JSON: an array of `{lens, description, specRef,
-location}` objects, empty if the lens found nothing. Your final message is
-data for the orchestrating conductor, never user-facing prose.
+Return typed findings as JSON: an array of `{lens, title, detail, severity}`
+objects (severity: high | medium | low; cite the spec section and file:line
+inside `detail`), empty if the lens found nothing. Your final message is data
+for the orchestrating conductor, never user-facing prose.
 
 ## What you must not do
 
