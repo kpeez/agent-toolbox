@@ -5,7 +5,10 @@ description: "How to implement a spec or feature: prove behavior before committi
 
 # Implement
 
-One verification discipline and one stance.
+One verification discipline, two audiences: the orchestrator that fans work
+out across slices, and the implementer that does one. If you're an implementer
+node, read "Prove behavior" and "Implement one slice" and stop there — the
+"Orchestrate the fan-out" section in between is not yours to run.
 
 ## Prove behavior before you commit to it
 
@@ -17,18 +20,23 @@ an ADR, spec decision, or tracker entry — rather than a test. If you catch
 yourself calling a goal done with nothing that verifies it, STOP and write the
 check; a red test, type error, or lint failure is a stop, not a warning.
 
-## Working from the tracker
+## Orchestrate the fan-out
 
-When the work comes from the tracker, take the next unblocked workable issue.
-Slices in an approved spec's container are **ready by construction** — work any
-unblocked one without interrogating labels; skip only `ready-for-human`. The
-`ready-for-agent` label matters when picking up issues from other sources (the
-triage vocabulary and tracker selection live in `/to-issues`). The issue body
-is the brief; the latest comment is the handoff — read both before acting. If
-mid-task you hit a decision only a human can make, comment exactly what's
-needed and relabel the issue `ready-for-human`.
+**Owned by the graph conductor** (`knack-graph.js`) whenever a graph run is
+active — the frontier loop, model selection, and status handling below execute
+as the script's deterministic logic. Outside a graph run — interactive
+sessions, one-off fixes — you are the orchestrator and follow this section by
+hand. Either way, an implementer never runs this section on its own slice.
 
-## Orchestrate; don't do it all yourself
+### Working from the tracker
+
+Take the next unblocked workable issue. Slices in an approved spec's container
+are **ready by construction** — work any unblocked one without interrogating
+labels; skip only `ready-for-human`. The `ready-for-agent` label matters when
+picking up issues from other sources (the triage vocabulary and tracker
+selection live in `/to-issues`).
+
+### Don't do it all yourself
 
 Unless the change is highly trivial, **don't explore the codebase or write the
 code yourself — delegate.** Spend your context coordinating, not reading files
@@ -41,15 +49,9 @@ and typing implementation.
   `NNNN-<slug>.md` sections, key paths, and where the task fits — no more.
 - **Review** what comes back before trusting it.
 
-**The fan-out loop:** take the next unblocked issue → spawn a **doer** (per
+**The fan-out loop:** take the next unblocked issue → spawn an **implementer** (per
 `/delegate`) with the issue, a pointer to the spec, and its own `/goal` →
 review the diff → update the tracker → repeat.
-
-**Escalation ladder.** A blocked worker reports up, never out — BLOCKED/
-NEEDS_CONTEXT to you, never a prompt to the user. Resolve what the spec, ADRs, or
-codebase answer; log the decision on the issue; relaunch. Interrupt the user only
-for a scope change, a spec contradiction, a blocking `ready-for-human` slice, or
-a destructive/irreversible action.
 
 ### Sequential or parallel?
 
@@ -63,23 +65,55 @@ sequential slowness.
 
 Use the least powerful model sufficient for the task (tiers per `/delegate`):
 
-| Complexity | Signals                                                     | Role     | Claude                | Codex                 |
-| ---------- | ----------------------------------------------------------- | -------- | --------------------- | --------------------- |
-| Low        | 1–2 files, mechanical change, complete spec                 | explorer | haiku                 | gpt-5.6-luna (medium) |
-| Medium     | Multi-file, integration concerns, pattern matching          | doer     | sonnet (or opus, low) | gpt-5.6-luna (xhigh)  |
-| High       | Architecture, design judgment, broad codebase understanding | planner  | fable / opus (high)   | gpt-5.6-sol           |
+| Complexity | Signals                                                     | Role        | Claude                | Codex                 |
+| ---------- | ----------------------------------------------------------- | ----------- | --------------------- | --------------------- |
+| Low        | 1–2 files, mechanical change, complete spec                 | explorer    | haiku                 | gpt-5.6-luna (medium) |
+| Medium     | Multi-file, integration concerns, pattern matching          | implementer | sonnet (or opus, low) | gpt-5.6-luna (xhigh)  |
+| High       | Architecture, design judgment, broad codebase understanding | designer    | fable / opus (high)   | gpt-5.6-sol           |
 
 Always tell the worker to follow the verification discipline — prove each
-stated goal with a functional test per `/tdd`, run and passing — and to report status
-(DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED). Handle each status before
-proceeding: address concerns that touch correctness or scope, provide missing
-context and re-dispatch, or diagnose a block before retrying.
+stated goal with a functional test per `/tdd`, run and passing — and to report
+status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED). Handle each status
+before proceeding: address concerns that touch correctness or scope, provide
+missing context and re-dispatch, or diagnose a block before retrying.
 
 ### After each task
 
 Update the tracker issue: move it to Done, or comment progress (what's done,
 what's next, the one gotcha). Status and tasks live on the tracker, not in a
 local file.
+
+### Escalation ladder
+
+A blocked worker reports up, never out — BLOCKED/NEEDS_CONTEXT to whoever
+orchestrates it (the conductor, or you in an interactive session), never a
+prompt to the user. Resolve what the spec, ADRs, or codebase answer; log the
+decision on the issue; relaunch. Interrupt the user only for a scope change, a
+spec contradiction, a blocking `ready-for-human` slice, or a
+destructive/irreversible action.
+
+## Implement one slice
+
+The discipline an **implementer** node — or you, working a single issue
+directly — follows for ONE slice, handed to it as the edge payload (spec path,
+slug, container id, issue id). Never delegate this slice further and never run
+the fan-out above; that's the orchestrator's job.
+
+1. Read the issue body (the brief) and its latest comment (the handoff) before
+   acting.
+2. Prove behavior per `/tdd` — tdd-first, sketching in `tests/temp/` when the
+   design is uncertain.
+3. Verification gates, in order: lint → types → tests. A failure at any gate
+   stops the slice; it is not a warning to note and continue past.
+4. Comment tracker progress on the issue: what's done, what's next, the one
+   gotcha. This comment is your required output, not optional bookkeeping.
+5. Report status to whoever orchestrates you — DONE / DONE_WITH_CONCERNS /
+   NEEDS_CONTEXT / BLOCKED. If mid-slice you hit a decision only a human can
+   make: in a graph run, comment exactly what's needed and report
+   NEEDS_CONTEXT or BLOCKED — your orchestrator escalates it (relabeling
+   `ready-for-human` if warranted); never prompt the user directly. In an
+   interactive session the user is your orchestrator — ask them, same as
+   `/tdd`'s interactive branch.
 
 ## Cross-references
 

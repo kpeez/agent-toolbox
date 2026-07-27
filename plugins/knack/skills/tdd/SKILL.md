@@ -126,7 +126,11 @@ area you're touching. Before writing code:
 
 - [ ] List the stated goals to prove (not implementation steps), and name the
       silent bug each guards against ([references/tests.md](references/tests.md))
-- [ ] Confirm with the user what interface changes are needed
+- [ ] Confirm what interface changes are needed — ask the user directly in an
+      interactive session. In a graph run (or any other non-interactive
+      session), an unresolved interface question is not a user prompt: report
+      NEEDS_CONTEXT with the specific question to your orchestrator and stop
+      that slice; do not guess the interface.
 - [ ] Identify opportunities for
       [deep modules](references/deep-modules.md) — small interface, deep
       implementation
