@@ -7,7 +7,7 @@ tokens reconstructing per-provider flags, and never has the task's file I/O hit 
 own context. stdout is the answer; diagnostics and the metadata line go to stderr.
 
 Provider → engine: codex → GPT-5.x, antigravity → Gemini, copilot → Sonnet.
---role explorer|doer|planner expands to a model + reasoning effort per /delegate's
+--role explorer|implementer|designer expands to a model + reasoning effort per /delegate's
 tiers (codex only). --model selects the model for codex/copilot. antigravity has no
 per-call model flag; set it in ~/.gemini/antigravity-cli/settings.json or via
 `agy /model`. --timeout kills the worker's whole process tree after N seconds
@@ -18,7 +18,7 @@ Prompt input (exactly one): a positional argument, --prompt-file PATH, or stdin
 (omit the argument, or pass '-'). Prefer --prompt-file/stdin for long or code-heavy
 prompts so the caller never has to shell-escape them.
 
-    ext-subagent codex --role doer "Implement X following existing patterns. Run the tests."
+    ext-subagent codex --role implementer "Implement X following existing patterns. Run the tests."
     ext-subagent copilot --prompt-file task.md --model claude-sonnet-4.6
     cat task.md | ext-subagent codex - --retries 2 --max-output-chars 8000
 
@@ -56,8 +56,8 @@ TIMEOUT_RETURNCODE = 124
 # codex-only: it is the one provider with per-call model + effort flags.
 CODEX_ROLES = {
     "explorer": ("gpt-5.6-luna", "medium"),
-    "doer": ("gpt-5.6-luna", "xhigh"),
-    "planner": ("gpt-5.6-sol", "high"),
+    "implementer": ("gpt-5.6-luna", "xhigh"),
+    "designer": ("gpt-5.6-sol", "high"),
 }
 SUBAGENT_ENV = "DELEGATE_INVOKED_SUBAGENT"
 LEGACY_NEST_GUARD_ENV = "EXT_SUBAGENT_ACTIVE"

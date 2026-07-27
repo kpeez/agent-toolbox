@@ -68,8 +68,8 @@ def test_codex_roles_table():
     """CODEX_ROLES table matches the delegate tiers."""
     assert mod.CODEX_ROLES == {
         "explorer": ("gpt-5.6-luna", "medium"),
-        "doer": ("gpt-5.6-luna", "xhigh"),
-        "planner": ("gpt-5.6-sol", "high"),
+        "implementer": ("gpt-5.6-luna", "xhigh"),
+        "designer": ("gpt-5.6-sol", "high"),
     }
     print("✓ role table OK")
     passed.append("codex_roles_table")
@@ -79,7 +79,7 @@ def test_role_with_model_error():
     """--role combined with --model must error."""
     result = subprocess.run(
         [sys.executable, str(Path(__file__).parent / "ext-subagent.py"),
-         "codex", "test", "--role", "doer", "--model", "gpt-5.0-turbo"],
+         "codex", "test", "--role", "implementer", "--model", "gpt-5.0-turbo"],
         capture_output=True,
         text=True,
     )
@@ -94,7 +94,7 @@ def test_role_with_reasoning_effort_error():
     """--role combined with --reasoning-effort must error."""
     result = subprocess.run(
         [sys.executable, str(Path(__file__).parent / "ext-subagent.py"),
-         "codex", "test", "--role", "doer", "--reasoning-effort", "high"],
+         "codex", "test", "--role", "implementer", "--reasoning-effort", "high"],
         capture_output=True,
         text=True,
     )
@@ -109,7 +109,7 @@ def test_role_on_non_codex_error():
     """--role on a non-codex provider must error."""
     result = subprocess.run(
         [sys.executable, str(Path(__file__).parent / "ext-subagent.py"),
-         "copilot", "test", "--role", "doer"],
+         "copilot", "test", "--role", "implementer"],
         capture_output=True,
         text=True,
     )

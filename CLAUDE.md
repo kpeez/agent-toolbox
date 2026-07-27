@@ -18,7 +18,7 @@ runs it end to end as one resumable command; spec approval is the last user
 prompt — after it the loop runs to completion, escalating only real blockers.
 
 The main agent is the orchestrator: route exploration to explorers, plan
-drafting to planners, and well-specified writes to doers per `/delegate` —
+drafting to designers, and well-specified writes to implementers per `/delegate` —
 never burn the lead context on bulk reads or typing implementation.
 
 1. Read this file and README.md
