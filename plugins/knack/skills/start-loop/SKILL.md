@@ -1,9 +1,9 @@
 ---
 name: start-loop
-description: Run or resume the knack feature workflow — triage the idea, settle the design (interactive or autonomous), pass the conditional approval gate, then launch the knack-graph conductor. Use only when the user explicitly invokes /start-loop.
+description: Run or resume the auto-eng workflow — triage the idea, settle the design (interactive or autonomous), pass the conditional approval gate, then launch the knack-graph conductor. Use only when the user explicitly invokes /start-loop.
 ---
 
-# /start-loop — feature pipeline runner
+# /start-loop — auto-eng workflow runner
 
 You own the interactive half: container, triage, design, gate, launch.
 Everything after — slice → implement → review → ship — belongs to the
