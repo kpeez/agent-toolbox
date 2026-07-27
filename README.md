@@ -116,7 +116,7 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 
 Dual-format subagent definitions in `plugins/knack/agents/` — a Claude `.md`
 (frontmatter + prose) and a Codex `.toml` twin (same fields, prose folded into
-`developer_instructions`), kept in parity by `tests/test_agent_twins.py`.
+`developer_instructions`); keep the twins in sync when editing either.
 
 | Agent             | Purpose                                                                                                               |
 | ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
