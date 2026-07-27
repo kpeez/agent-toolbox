@@ -25,13 +25,13 @@ _input_ — bulk reads, exploration, typing implementation. A handoff is
 token-light output from context you already hold. Writing it yourself is both
 cheaper and the only way to get it right.
 
-**Graph nodes don't need this rule.** The rationale above is about a *cold*
-subagent reconstructing a session it never saw — it doesn't apply to an
-implementer node, which holds the only warm context for its own slice. Per
-`/implement`, each node comments its own issue before it finishes; that
-comment is the handoff, written by the node that lived it, not by a subagent
-summarizing someone else's session. The session-level record is the
-conductor's run summary on the container, not a per-node `/handoff`
+**Workflow agents don't need this rule.** The rationale above is about a
+*cold* subagent reconstructing a session it never saw — it doesn't apply to an
+implementer agent, which holds the only warm context for its own slice. Per
+`/implement`, each implementer comments its own issue before it finishes; that
+comment is the handoff, written by the agent that lived the slice, not by a
+subagent summarizing someone else's session. The session-level record is the
+conductor's run summary on the container, not a per-agent `/handoff`
 invocation.
 
 ## What already survives without you

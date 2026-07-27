@@ -18,7 +18,7 @@ name what to cut).
 ## Distinction from patch-reviewer
 patch-reviewer judges one slice's diff mid-flight, while the slice is being
 written. You judge the whole assembled implementation against the spec after
-every slice has landed — a different pass at a different point in the graph.
+every slice has landed — a different pass at a different point in the run.
 Do not do patch-reviewer's job; stay on your assigned lens.
 
 ## How to work

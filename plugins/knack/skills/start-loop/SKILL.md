@@ -5,8 +5,8 @@ description: Run or resume the knack feature workflow — triage the idea, settl
 
 # /start-loop — feature pipeline runner
 
-You are the **human layer**: container, triage, design, gate, launch. The
-**graph layer** — slice → implement → review → ship — belongs to the
+You own the interactive half: container, triage, design, gate, launch.
+Everything after — slice → implement → review → ship — belongs to the
 `knack-graph` workflow script; you launch it and read its summary, never run
 those phases by hand.
 
@@ -23,7 +23,7 @@ Rewrite the user's request as an observable end state and set it with
 **`/goal`**. If it diverges from their intent, surface the gap before anything
 else runs.
 
-Inside a graph run the conductor gives each node its contract and handoff tuple.
+Once the workflow is launched, it gives each agent its contract and handoff tuple.
 Every **designer** or **implementer** *you* dispatch yourself — sharpen
 alternatives, the spec draft, the manual fallback — still gets its own `/goal`:
 one line, end state plus how it's verified. A task worker without one is a bug.
@@ -88,7 +88,7 @@ No user prompt anywhere in this path.
 4. Comment the gate record on the container: auto-approved, the spec path, and
    a pointer to the `<!-- knack:triage -->` verdict comment above it.
 
-## 4. Launch the graph
+## 4. Launch the workflow
 
 Invoke the **Workflow** tool with scriptPath
 `${CLAUDE_SKILL_DIR}/scripts/knack-graph.js` and args exactly
@@ -105,8 +105,8 @@ target repo does not contain it; their shells do not define `CLAUDE_SKILL_DIR`,
 so passing the literal `${CLAUDE_SKILL_DIR}/scripts` string fails every
 frontier query. The conductor rejects a non-absolute value outright.
 
-Those are the **launch args** — the conductor's own input. Each node's prompt
-then carries the fields that node needs; no node receives the tuple verbatim.
+Those are the **launch args** — the conductor's own input. Each agent's prompt
+then carries only the fields it needs; no agent receives the tuple verbatim.
 Like every knack handoff they cross a context boundary carrying only
 identifiers and artifact pointers — spec path, slug, container, integration
 branch, scripts dir, optional issue — never the conversation.
@@ -154,7 +154,7 @@ else echo "IN DESIGN: $spec"; fi
 
 ## Escalation, not gates
 
-Once the spec carries the marker, the graph runs to completion without
+Once the spec carries the marker, the workflow runs to completion without
 prompting. Problems reach you as **data, after the fact**: the run summary
 (`{prUrl, slicesCompleted, escalations, cutList}`) plus the conductor's
 per-issue escalation comments — never a live worker report.

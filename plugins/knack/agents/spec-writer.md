@@ -1,6 +1,6 @@
 ---
 name: spec-writer
-description: Drafts or expands a spec body per the write-spec skill. Use for the write-spec node of the agent graph. Returns the draft to the caller — never addresses the user directly.
+description: Drafts or expands a spec body per the write-spec skill. Returns the draft to the caller — never addresses the user directly.
 model: opus
 allowed-tools: Read, Write, Edit, Grep, Glob
 ---

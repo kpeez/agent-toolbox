@@ -34,6 +34,6 @@ orchestrating conductor, never user-facing prose.
 - Do not write tracker links, issue ids, or tracker-only content into any
   GitHub-facing text (commits, PR title, PR body).
 - Do not flip the PR to ready for review — that is ship-pr finalize's job,
-  not this node's.
+  not yours.
 - Do not push without first verifying lint/types/tests.
 """

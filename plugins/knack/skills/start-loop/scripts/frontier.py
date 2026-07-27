@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 """Print the workable Linear issues in a spec's project container, as JSON.
 
-The deterministic edge the agent-graph's frontier loop calls each round to pick
-the next issue: an issue is workable when its state isn't completed/canceled,
-nothing open still blocks it, and it isn't labeled ready-for-human. Without a
-hard failure on auth/HTTP/GraphQL errors, a graph round could silently treat an
-auth failure as an empty frontier and declare the run complete -- this exits
-non-zero instead, naming exactly what failed.
+The query the knack-graph workflow runs each round to pick the next issues: an
+issue is workable when its state isn't completed/canceled, nothing open still
+blocks it, and it isn't labeled ready-for-human. Without a hard failure on
+auth/HTTP/GraphQL errors, a round could silently treat an auth failure as an
+empty frontier and declare the run complete -- this exits non-zero instead,
+naming exactly what failed.
 """
 
 from __future__ import annotations

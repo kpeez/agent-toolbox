@@ -22,9 +22,9 @@ check; a red test, type error, or lint failure is a stop, not a warning.
 
 ## Orchestrate the fan-out
 
-**Owned by the graph conductor** (`knack-graph.js`) whenever a graph run is
-active — the frontier loop, model selection, and status handling below execute
-as the script's deterministic logic. Outside a graph run — interactive
+**Owned by the `knack-graph.js` workflow script** whenever one is running —
+the frontier loop, model selection, and status handling below execute as the
+script's deterministic logic. Outside a workflow run — interactive
 sessions, one-off fixes — you are the orchestrator and follow this section by
 hand. Either way, an implementer never runs this section on its own slice.
 
@@ -94,8 +94,8 @@ destructive/irreversible action.
 
 ## Implement one slice
 
-The discipline an **implementer** node — or you, working a single issue
-directly — follows for ONE slice, handed to it as the edge payload (spec path,
+The discipline an **implementer** agent — or you, working a single issue
+directly — follows for ONE slice, handed to it as identifiers only (spec path,
 slug, container id, issue id). Never delegate this slice further and never run
 the fan-out above; that's the orchestrator's job.
 
@@ -109,7 +109,7 @@ the fan-out above; that's the orchestrator's job.
    gotcha. This comment is your required output, not optional bookkeeping.
 5. Report status to whoever orchestrates you — DONE / DONE_WITH_CONCERNS /
    NEEDS_CONTEXT / BLOCKED. If mid-slice you hit a decision only a human can
-   make: in a graph run, comment exactly what's needed and report
+   make: in a workflow run, comment exactly what's needed and report
    NEEDS_CONTEXT or BLOCKED — your orchestrator escalates it (relabeling
    `ready-for-human` if warranted); never prompt the user directly. In an
    interactive session the user is your orchestrator — ask them, same as

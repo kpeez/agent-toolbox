@@ -124,17 +124,18 @@ Dual-format subagent definitions in `plugins/knack/agents/` — a Claude `.md`
 | `code-writer`      | Focused implementation — well-scoped tasks with clear file targets: functions, bug fixes, tests                      |
 | `docs-writer`      | Documentation writer — READMEs, guides, API references, changelogs; writes only documentation files                   |
 | `patch-reviewer`   | Reviews one diff mid-flight for correctness, edge cases, missing tests, broken APIs, security, style — read-only       |
-| `design-critic`    | Agent-graph auto-sharpen node — interrogates a plan against the codebase and ADRs, emits the decision list an interview would have settled |
-| `spec-writer`      | Agent-graph write-spec node — drafts/expands a spec design body per the `write-spec` skill, returns the draft to the caller |
-| `issue-slicer`     | Agent-graph slice node — runs `to-issues` on an approved spec, publishes vertical slices with native blocked-by edges  |
-| `implementer`      | Agent-graph implement node — owns one tracker slice end-to-end (tdd, verification, tracker comment); reports DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED |
-| `code-reviewer`    | Agent-graph spec-review node — reviews the assembled implementation against the spec through one lens (missed / wrong / bloat) per invocation |
-| `pr-publisher`     | Agent-graph ship node — runs `ship-pr` on the finished branch, returns the PR URL and run summary                     |
+| `design-critic`    | Stress-tests a plan against the codebase and ADRs, returning the decisions an interactive sharpen session would have settled — read-only |
+| `spec-writer`      | Drafts and expands spec design bodies per the `write-spec` skill; returns the draft to the caller                     |
+| `issue-slicer`     | Publishes an approved spec to the tracker as vertical slices with native blocked-by relations, per `to-issues`        |
+| `implementer`      | Owns one tracker slice end-to-end (tdd, verification, progress comment); reports DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED |
+| `code-reviewer`    | Reviews the assembled implementation against the spec, one lens per invocation: what was missed, what went wrong, what is bloat |
+| `pr-publisher`     | Ships the finished branch per `ship-pr` — atomic commits, push, draft PR — and returns the PR URL and run summary     |
 
-The six agent-graph nodes are permissive workers around the deterministic
-`knack-graph.js` conductor: each receives the handoff tuple
-(`{specPath, slug, containerId, issueId?}`) as input and returns its result as
-data to the conductor, never as user-facing prose.
+The last six exist for `/start-loop`'s automated runs: the deterministic
+`knack-graph.js` workflow script decides what runs when, each agent decides how
+to do its one phase, and results flow back to the script as structured data —
+identifiers and artifact pointers in, typed status out, never user-facing
+prose.
 
 ## Workflow
 
