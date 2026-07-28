@@ -1,7 +1,7 @@
 export const meta = {
-  name: 'knack-graph',
+  name: 'swe-loop',
   description:
-    'Conductor for the knack spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement -> review -> bounded fix -> merge) until it drains, review the assembled work against the spec through three lenses, then ship a draft PR',
+    'Conductor for the swe spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement -> review -> bounded fix -> merge) until it drains, review the assembled work against the spec through three lenses, then ship a draft PR',
   whenToUse:
     'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed skill\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
   phases: [
@@ -42,7 +42,7 @@ const ARGS =
     : args
 if (argsParseError) {
   throw new Error(
-    `knack-graph received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} as an object or as its JSON encoding.`,
+    `swe-loop received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} as an object or as its JSON encoding.`,
   )
 }
 
@@ -50,7 +50,7 @@ const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scripts
 const missing = REQUIRED_ARGS.filter(key => !ARGS || !ARGS[key])
 if (missing.length) {
   throw new Error(
-    `knack-graph requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed skill's scripts directory.`,
+    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed skill's scripts directory.`,
   )
 }
 const specPath = ARGS.specPath
@@ -62,7 +62,7 @@ const baseBranch = ARGS.baseBranch
 const scriptsDir = ARGS.scriptsDir
 if (!scriptsDir.startsWith('/')) {
   throw new Error(
-    `knack-graph got a relative scriptsDir (${scriptsDir}). It must be the EXPANDED absolute path to the installed skill's scripts/ dir — a value like "\${CLAUDE_SKILL_DIR}/scripts" means the variable was passed through unexpanded, and the subagents' shells do not define it.`,
+    `swe-loop got a relative scriptsDir (${scriptsDir}). It must be the EXPANDED absolute path to the installed skill's scripts/ dir — a value like "\${CLAUDE_SKILL_DIR}/scripts" means the variable was passed through unexpanded, and the subagents' shells do not define it.`,
   )
 }
 const resumeIssueId = ARGS.issueId || null
@@ -214,10 +214,10 @@ Issue: ${issue.identifier} — ${issue.title}
 Findings to resolve:
 ${numbered(findings)}
 
-1. git worktree add ../.knack-fix-${issue.identifier} ${branch} — use exactly
+1. git worktree add ../.swe-fix-${issue.identifier} ${branch} — use exactly
    that path; other fixers run concurrently and a shared path would collide.
 2. Apply every finding there, re-run lint/types/tests, and commit to ${branch}.
-3. git worktree remove ../.knack-fix-${issue.identifier} — leave none behind.
+3. git worktree remove ../.swe-fix-${issue.identifier} — leave none behind.
 Do not push and do not merge. Return a concise completion note; this call has
 no additional output schema.`
 
@@ -236,7 +236,7 @@ https://api.linear.app/graphql; LINEAR_API_KEY is in your environment).
 
 The comment body is exactly:
 
-**knack-graph escalation** — ${clip(reason)}
+**swe-loop escalation** — ${clip(reason)}
 
 Post nothing else and change no issue fields.`
 
@@ -292,7 +292,7 @@ environment).
 
 Run: ${slug} — spec ${specPath}, integration branch ${baseBranch}.
 
-The comment body is a short "knack-graph run summary" heading followed by this
+The comment body is a short "swe-loop run summary" heading followed by this
 payload verbatim in a fenced json block:
 
 ${JSON.stringify(summary, null, 2)}
@@ -352,7 +352,7 @@ if (resumeIssueId) {
   log(`Targeted resume on ${resumeIssueId}: slices are already published, skipping the slice phase.`)
 } else {
   log(`Slicing ${specPath} into container ${containerId}.`)
-  const sliced = await agent(promptSlicer(), { label: `slice:${slug}`, phase: 'Slice', agentType: 'knack:planner' })
+  const sliced = await agent(promptSlicer(), { label: `slice:${slug}`, phase: 'Slice', agentType: 'swe:planner' })
   log(sliced ? 'Slicing done.' : 'Slicer returned nothing — the frontier query decides what work actually exists.')
 }
 
@@ -385,7 +385,7 @@ const runFrontierLoop = async passLabel => {
         const result = await agent(promptImplementer(issue), {
           label: `implement:${issue.identifier}`,
           phase: 'Implement',
-          agentType: 'knack:implementer',
+          agentType: 'swe:implementer',
           isolation: 'worktree',
           schema: IMPLEMENTER_SCHEMA,
         })
@@ -402,7 +402,7 @@ const runFrontierLoop = async passLabel => {
         const review = await agent(promptSliceReview(issue, outcome.branch), {
           label: `review:${issue.identifier}`,
           phase: 'Implement',
-          agentType: 'knack:reviewer',
+          agentType: 'swe:reviewer',
           schema: SLICE_REVIEW_SCHEMA,
         })
         if (!review) return escalate(issue, 'slice review returned no verdict')
@@ -418,13 +418,13 @@ const runFrontierLoop = async passLabel => {
           const fixed = await agent(promptFixer(issue, outcome.branch, findings), {
             label: `fix:${issue.identifier}:${fixRound}`,
             phase: 'Implement',
-            agentType: 'knack:implementer',
+            agentType: 'swe:implementer',
           })
           if (!fixed) return escalate(issue, `fix round ${fixRound} returned no result`)
           const review = await agent(promptSliceReview(issue, outcome.branch), {
             label: `re-review:${issue.identifier}:${fixRound}`,
             phase: 'Implement',
-            agentType: 'knack:reviewer',
+            agentType: 'swe:reviewer',
             schema: SLICE_REVIEW_SCHEMA,
           })
           if (!review) return escalate(issue, `re-review after fix round ${fixRound} returned no verdict`)
@@ -503,7 +503,7 @@ const runSpecReview = async () => {
       agent(promptSpecReview(lens), {
         label: `spec-review:${lens}`,
         phase: 'Spec review',
-        agentType: 'knack:reviewer',
+        agentType: 'swe:reviewer',
         schema: SPEC_REVIEW_SCHEMA,
       }),
     ),
@@ -527,7 +527,7 @@ while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
   const filed = await agent(promptFileFindings(openFindings), {
     label: `file-findings:${reentries}`,
     phase: 'Spec review',
-    agentType: 'knack:planner',
+    agentType: 'swe:planner',
   })
   if (!filed) {
     log('Could not file the findings as fix slices — collecting them as escalations instead.')
@@ -553,7 +553,7 @@ phase('Ship')
 const shipped = await agent(promptShip(), {
   label: `ship:${slug}`,
   phase: 'Ship',
-  agentType: 'knack:publisher',
+  agentType: 'swe:publisher',
   schema: SHIP_SCHEMA,
 })
 if (!shipped) {
