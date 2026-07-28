@@ -7,10 +7,10 @@ A portable, spec-driven workflow and skill set for AI coding agents — works ac
 ```text
 agent-toolbox/
 ├── .claude-plugin/
-│   └── marketplace.json       # Claude marketplace; points at plugins/knack and plugins/lab
+│   └── marketplace.json       # Claude marketplace; points at plugins/swe and plugins/lab
 ├── .agents/plugins/
-│   └── marketplace.json       # Codex marketplace; points at plugins/knack and plugins/lab
-├── plugins/knack/             # Core plugin: spec-driven workflows, skills, and agent definitions
+│   └── marketplace.json       # Codex marketplace; points at plugins/swe and plugins/lab
+├── plugins/swe/               # Core plugin: spec-driven workflows, skills, and agent definitions
 │   ├── .claude-plugin/        #   Claude plugin manifest
 │   ├── .codex-plugin/         #   Codex plugin manifest
 │   ├── agents/                #   Agent definitions: Claude .md (via plugin), Codex .toml (via setup script)
@@ -31,7 +31,7 @@ Register this repo as a marketplace and install:
 
 ```bash
 /plugin marketplace add kpeez/agent-toolbox
-/plugin install knack@agent-toolbox
+/plugin install swe@agent-toolbox
 /plugin install lab@agent-toolbox
 ```
 
@@ -43,7 +43,7 @@ Register this repo as a marketplace and install:
 
 ```bash
 codex plugin marketplace add kpeez/agent-toolbox
-codex plugin add knack@agent-toolbox
+codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
@@ -81,7 +81,7 @@ carry no versions or metadata — they only point at the plugin directories.
 Bump both manifests at once:
 
 ```bash
-scripts/bump-plugin-version.sh knack 1.0.2
+scripts/bump-plugin-version.sh swe 1.0.2
 ```
 
 ## Skills
@@ -115,7 +115,7 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 
 ## Agents
 
-Dual-format subagent definitions in `plugins/knack/agents/` — a Claude `.md`
+Dual-format subagent definitions in `plugins/swe/agents/` — a Claude `.md`
 (frontmatter + prose) and a Codex `.toml` twin (same fields, prose folded into
 `developer_instructions`); keep the twins in sync when editing either.
 
@@ -128,8 +128,8 @@ Dual-format subagent definitions in `plugins/knack/agents/` — a Claude `.md`
 | `reviewer`     | Read-only review of a diff or implementation against caller-provided criteria or one lens                    |
 | `publisher`    | Owns git and GitHub publication: intentional commits, push, and pull-request creation or update               |
 
-These six capability roles are the **eng-loop**'s workers, dispatched on `/start-loop`'s
-automated runs: the deterministic `knack-graph.js` script decides what runs
+These six capability roles are the **swe-loop**'s workers, dispatched on `/start-loop`'s
+automated runs: the deterministic `swe-loop.js` script decides what runs
 when, each agent decides how to do its one phase, and results flow back to
 the script as structured data —
 identifiers and artifact pointers in, typed status out, never user-facing
@@ -143,7 +143,7 @@ restates the goal up front, recomputes state from artifacts so it can resume
 mid-flight, and gives every task worker its own goal. A triage policy decides
 the gate: gated runs prompt the user during design (sharpen → spec, and spec
 approval), autonomous runs record the gate verdict on the tracker and prompt
-never; either way an approved spec authorizes the eng-loop to slice,
+never; either way an approved spec authorizes the swe-loop to slice,
 publish, implement, review, and ship with no further prompts. The
 intended shape: design through approval in one session, `/clear`, then bare
 `/start-loop` — it reconstructs state from the spec and tracker, no
@@ -211,12 +211,12 @@ implementation. All heavy work is routed to workers by role:
 
 | Role            | Does                                                               | Typical worker         |
 | --------------- | ------------------------------------------------------------------ | ---------------------- |
-| **explorer**    | reads, traces, and summarizes evidence with cited paths            | `knack:explorer`       |
-| **architect**   | resolves design ambiguity and drafts spec bodies, read-only        | `knack:architect`      |
-| **planner**     | slices approved specs and publishes tracker dependency graphs      | `knack:planner`        |
-| **implementer** | executes one bounded code, test, documentation, or tracker task    | `knack:implementer`    |
-| **reviewer**    | reviews against caller-provided criteria or a single lens          | `knack:reviewer`       |
-| **publisher**   | commits, pushes, and creates or updates pull requests              | `knack:publisher`      |
+| **explorer**    | reads, traces, and summarizes evidence with cited paths            | `swe:explorer`       |
+| **architect**   | resolves design ambiguity and drafts spec bodies, read-only        | `swe:architect`      |
+| **planner**     | slices approved specs and publishes tracker dependency graphs      | `swe:planner`        |
+| **implementer** | executes one bounded code, test, documentation, or tracker task    | `swe:implementer`    |
+| **reviewer**    | reviews against caller-provided criteria or a single lens          | `swe:reviewer`       |
+| **publisher**   | commits, pushes, and creates or updates pull requests              | `swe:publisher`      |
 
 Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
 session (the interview is HITL) but can commission architects for alternatives;
@@ -285,7 +285,7 @@ atomic PRs.
 
 ## Repo Setup
 
-`/setup-repo` sets up a repo for the knack workflow: an injected facts block
+`/setup-repo` sets up a repo for the swe workflow: an injected facts block
 reads the repo state (stack, lockfile, remote, existing files), the skill asks
 which issue tracker to use and drafts a short Structure section, then writes
 the thin repo-root `AGENTS.md` — stack commands (`uv run ruff format` /

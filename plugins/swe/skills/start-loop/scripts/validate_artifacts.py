@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Validate knack workflow artifacts before they're published.
+"""Validate swe workflow artifacts before they're published.
 
 Motivating failure mode: documentation drift -- agents publishing issues that
 are missing acceptance criteria, or specs whose status jumps draft -> done

@@ -1,13 +1,13 @@
 ---
 name: start-loop
-description: Run or resume the eng-loop — triage the idea, settle the design (interactive or autonomous), pass the conditional approval gate, then launch the knack-graph conductor. Use only when the user explicitly invokes /start-loop.
+description: Run or resume the swe-loop — triage the idea, settle the design (interactive or autonomous), pass the conditional approval gate, then launch the swe-loop conductor. Use only when the user explicitly invokes /start-loop.
 ---
 
-# /start-loop — eng-loop runner
+# /start-loop — swe-loop runner
 
 You own the interactive half: container, triage, design, gate, launch.
 Everything after — slice → implement → review → ship — belongs to the
-`knack-graph` workflow script; you launch it and read its summary, never run
+`swe-loop` workflow script; you launch it and read its summary, never run
 those phases by hand.
 
 ## Argument resolution
@@ -45,7 +45,7 @@ on the container (ADR-0005). Comment body, verbatim shape:
 
 ```
 <!-- knack:triage -->
-knack triage verdict: GATED | AUTONOMOUS
+swe triage verdict: GATED | AUTONOMOUS
 - unambiguous against the repo and docs/agents/adrs/: pass|fail — <why>
 - estimated slice count <= 6: pass|fail — <estimate>
 - no destructive or irreversible surface (data migrations, deletions,
@@ -65,7 +65,7 @@ verdict instead of re-evaluating (see Resume).
 ## 3a. Gated path (any criterion failed)
 
 1. `/sharpen` interactively with the user until the branches are resolved.
-2. `/write-spec` — delegate the drafting to the **`knack:architect`** agent;
+2. `/write-spec` — delegate the drafting to the **`swe:architect`** agent;
    you present the draft and the user confirms at the checkpoint prompts.
 3. On unambiguous approval, add `<!-- knack:spec-approved -->` to the spec
    exactly as today. Silence, compaction, or an unrelated reply is **not**
@@ -77,10 +77,10 @@ Exact wording: [references/checkpoint-prompts.md](references/checkpoint-prompts.
 
 No user prompt anywhere in this path.
 
-1. **`knack:architect`** interrogates the idea against the code and the
+1. **`swe:architect`** interrogates the idea against the code and the
    ADRs and returns the settled decisions — what the interview would have
    concluded.
-2. **`knack:architect`** drafts the spec from those decisions.
+2. **`swe:architect`** drafts the spec from those decisions.
 3. You stamp `<!-- knack:spec-approved -->` yourself — the same marker the
    manual gate writes, so every existing grep keeps working — and set the
    spec's `Execution mode` section to `autonomous` (the gated path leaves the
@@ -91,7 +91,7 @@ No user prompt anywhere in this path.
 ## 4. Launch the workflow
 
 Invoke the **Workflow** tool with scriptPath
-`${CLAUDE_SKILL_DIR}/scripts/knack-graph.js` and args exactly
+`${CLAUDE_SKILL_DIR}/scripts/swe-loop.js` and args exactly
 `{specPath, slug, containerId, baseBranch, scriptsDir, issueId?}` — the spec's
 path, its slug, the container from step 1, the branch the run integrates into
 and ships from (if you are on the default branch, create the feature branch
@@ -107,7 +107,7 @@ frontier query. The conductor rejects a non-absolute value outright.
 
 Those are the **launch args** — the conductor's own input. Each agent's prompt
 then carries only the fields it needs; no agent receives the tuple verbatim.
-Like every knack handoff they cross a context boundary carrying only
+Like every swe handoff they cross a context boundary carrying only
 identifiers and artifact pointers — spec path, slug, container, integration
 branch, scripts dir, optional issue — never the conversation.
 
@@ -177,7 +177,7 @@ decision trail.
 
 If the container cannot be created, the tracker cannot be reached, or a
 required skill or agent (`/sharpen`, `/write-spec`, `/to-issues`,
-`knack:architect`) cannot be activated, name it and
+`swe:architect`) cannot be activated, name it and
 stop before changing state — do not improvise a substitute. `/implement` is not
 on that list: on the Workflow host the conductor owns those phases, and
 `/implement` is only the ADR-0006 fallback for hosts without the Workflow tool.

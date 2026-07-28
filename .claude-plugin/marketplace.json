@@ -7,16 +7,16 @@
   },
   "plugins": [
     {
-      "name": "knack",
-      "source": "./plugins/knack"
-    },
-    {
       "name": "lab",
       "source": "./plugins/lab"
     },
     {
       "name": "llmos",
       "source": "./plugins/llmos"
+    },
+    {
+      "name": "swe",
+      "source": "./plugins/swe"
     }
   ]
 }
