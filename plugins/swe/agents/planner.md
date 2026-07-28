@@ -1,7 +1,8 @@
 ---
 name: planner
 description: Slices an approved spec into independently workable tracker issues and publishes native blocked-by relationships.
-model: opus
+model: sonnet
+effort: medium
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 

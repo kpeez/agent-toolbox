@@ -2,6 +2,7 @@
 name: architect
 description: Read-only design and spec architect. Resolves ambiguity against code and ADRs, then returns decisions or draft spec bodies for the orchestrator to apply.
 model: opus
+effort: high
 allowed-tools: Read, Grep, Glob
 ---
 
