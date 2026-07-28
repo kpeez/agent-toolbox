@@ -97,6 +97,6 @@ parallel sub-agents that each design a radically different interface (minimize /
 maximize-flexibility / optimize-common-caller / ports-&-adapters), and compare
 them on depth, locality, and seam placement before recommending one.
 
-> Delegate the heavy exploration here per **`/delegate`** — map unfamiliar
-> code with a fast-model worker rather than loading it into your own context, and
-> review what comes back.
+> Delegate the heavy exploration here — map unfamiliar code with a fast-model
+> worker rather than loading it into your own context, and review what comes
+> back.
