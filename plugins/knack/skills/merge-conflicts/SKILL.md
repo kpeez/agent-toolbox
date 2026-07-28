@@ -17,7 +17,8 @@ trace intent before touching a hunk, and verify behavior after.
    intent you can't state in one sentence for both sides.
 3. **Resolve.** Preserve both intents where possible. Where they're genuinely
    incompatible, pick the side matching the merge's stated goal and note the
-   trade-off. Do **not** invent new behavior. Always resolve; never `--abort`.
+   trade-off. Do **not** invent new behavior. Prefer resolving; abort only when
+   the calling protocol says to (as the eng-loop merge worker's contract does).
 4. **Verify.** Run the project's checks — typecheck, tests, lint/format — and
    fix anything the merge broke. This is what catches semantic conflicts.
 5. **Finish.** Stage everything and commit; if rebasing, `--continue` until all
