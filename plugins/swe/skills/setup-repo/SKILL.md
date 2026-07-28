@@ -1,6 +1,6 @@
 ---
 name: setup-repo
-description: Set up a repo for the knack workflow — interview the user about the issue tracker and repo structure, then write the repo-root AGENTS.md, symlink CLAUDE.md to it, and set up the private docs/agents directory. Use when setting up a new repo, or when the user asks to add AGENTS.md or CLAUDE.md to a project.
+description: Set up a repo for the swe workflow — interview the user about the issue tracker and repo structure, then write the repo-root AGENTS.md, symlink CLAUDE.md to it, and set up the private docs/agents directory. Use when setting up a new repo, or when the user asks to add AGENTS.md or CLAUDE.md to a project.
 disable-model-invocation: true
 ---
 

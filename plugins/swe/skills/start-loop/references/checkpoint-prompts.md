@@ -34,7 +34,7 @@ conductor requires before it will run.
 
 ## After approval: launch, then escalate
 
-There are no publish or implement gates. Launch the `knack-graph` workflow with
+There are no publish or implement gates. Launch the `swe-loop` workflow with
 the handoff tuple per `start-loop`'s "Launch the graph" section; slicing,
 implementation, review, and shipping are the conductor's, not a phase you run in
 prose. Escalations come back in the run summary — what to resolve yourself

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Print the workable Linear issues in a spec's project container, as JSON.
 
-The query the knack-graph workflow runs each round to pick the next issues: an
+The query the swe-loop workflow runs each round to pick the next issues: an
 issue is workable when its state isn't completed/canceled, nothing open still
 blocks it, and it isn't labeled ready-for-human. Without a hard failure on
 auth/HTTP/GraphQL errors, a round could silently treat an auth failure as an
