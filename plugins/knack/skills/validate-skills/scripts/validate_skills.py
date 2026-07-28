@@ -66,8 +66,19 @@ def check_name_matches_dir(dirs: dict[str, Path]) -> None:
             fail(f"name/dir mismatch: {d}/SKILL.md has name={fm!r}, dir is {name!r}")
 
 
+def skills_section_lines(readme: list[str]) -> list[str]:
+    start = next((i for i, line in enumerate(readme) if line.strip() == "## Skills"), None)
+    if start is None:
+        return []
+    end = next(
+        (i for i in range(start + 1, len(readme)) if readme[i].startswith("## ")),
+        len(readme),
+    )
+    return readme[start:end]
+
+
 def check_readme_inventory(dirs: dict[str, Path]) -> None:
-    readme = (ROOT / "README.md").read_text().splitlines()
+    readme = skills_section_lines((ROOT / "README.md").read_text().splitlines())
     listed = {m.group(1) for line in readme if (m := README_ROW.match(line))}
     for name in dirs:
         if name not in listed:

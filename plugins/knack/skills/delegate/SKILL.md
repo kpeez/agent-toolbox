@@ -1,6 +1,6 @@
 ---
 name: delegate
-description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to an explorer, plan/design drafting to a planner, and well-specified codegen to a doer, then review what comes back. Use whenever you are about to read many files to answer a question, draft a plan or spec, or write a substantial, well-specified chunk of code — including from within /start-loop, /implement, /tdd, /diagnose, and /improve-codebase-architecture.
+description: Delegate token-heavy work to cheaper workers instead of doing it yourself — route reads/exploration to an explorer, plan/design drafting to a designer, and well-specified codegen to an implementer, then review what comes back. Use whenever you are about to read many files to answer a question, draft a plan or spec, or write a substantial, well-specified chunk of code — including from within /start-loop, /implement, /tdd, /diagnose, and /improve-codebase-architecture.
 user-invocable: false
 ---
 
@@ -15,28 +15,28 @@ cheaper worker, act on the answer it returns, and review every write with
 
 Pick the least powerful model that fits, by role:
 
-| Role         | Use for                                                                        | Codex                    | Claude                 | Gemini       |
-| ------------ | ------------------------------------------------------------------------------- | ------------------------- | ----------------------- | ------------ |
-| **explorer** | reads / exploration / summarize across many files — low-stakes, reviewed        | `gpt-5.6-luna` (medium)  | haiku                   | `gemini-3.5` |
-| **doer**     | write / implement a well-specified chunk — reviewed via the diff                | `gpt-5.6-luna` (xhigh)   | sonnet (or opus, low)   | —            |
-| **planner**  | plan drafting, design review, spec critique — judgment quality dominates cost   | `gpt-5.6-sol`            | fable / opus (high)     | —            |
+| Role            | Use for                                                                       | Codex                   | Claude                | Gemini       |
+| --------------- | ----------------------------------------------------------------------------- | ----------------------- | --------------------- | ------------ |
+| **explorer**    | reads / exploration / summarize across many files — low-stakes, reviewed      | `gpt-5.6-luna` (medium) | haiku                 | `gemini-3.5` |
+| **implementer** | write / implement a well-specified chunk — reviewed via the diff              | `gpt-5.6-luna` (xhigh)  | sonnet (or opus, low) | —            |
+| **designer**    | plan drafting, design review, spec critique — judgment quality dominates cost | `gpt-5.6-sol`           | fable / opus (high)   | —            |
 
 A slightly imperfect read is fine because you review it. Don't delegate a
 single-file lookup you'd read faster yourself, or a read where a wrong summary
 would mislead you.
 
-Planners return proposals for the lead agent to review with the user — subagents
+Designers return proposals for the lead agent to review with the user — subagents
 never converse with the user directly.
 
-Give every **planner** and **doer** its own `/goal` — a one-line verifiable end
+Give every **designer** and **implementer** its own `/goal` — a one-line verifiable end
 state for its task. **Explorers are exempt**: a read has a question, not an end
 state; skip the goal ceremony for lookups.
 
 ## Two ways to delegate
 
 **1. Host-native subagents (preferred when available).** In Claude Code, spawn a
-`Task` subagent with a model override — haiku for explorer reads, sonnet for doer
-writes, fable/opus for planner drafts. In Codex, use its native subagents. The
+`Task` subagent with a model override — haiku for explorer reads, sonnet for implementer
+writes, fable/opus for designer drafts. In Codex, use its native subagents. The
 worker does the reading, drafting, and generation, so that bulk never enters your
 context.
 
@@ -46,7 +46,7 @@ root:
 
 ```
 uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py auto    "How does auth work?" --retries 2
-uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "Implement X following existing patterns. Run the tests." --role doer
+uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py codex   "Implement X following existing patterns. Run the tests." --role implementer
 echo "Refactor auth to use DI; preserve tests." | uv run ${CLAUDE_SKILL_DIR}/scripts/ext-subagent.py antigravity -
 ```
 
@@ -65,7 +65,7 @@ this SKILL.md.
   one engine, and under `auto` the provider is unknown until runtime. `--role` is
   intent rather than a literal, so it survives selection — it is applied when
   `auto` lands on codex and reported as ignored otherwise.
-- `--role explorer|doer|planner` (codex) expands to the tier's model + reasoning
+- `--role explorer|implementer|designer` (codex) expands to the tier's model + reasoning
   effort — prefer it over hand-picking `--model`/`--reasoning-effort`.
 - Provider → engine: `codex` → GPT-5.x, `antigravity` → Gemini, `copilot` → Sonnet.
   Claude is deliberately absent: a Claude session already has host-native

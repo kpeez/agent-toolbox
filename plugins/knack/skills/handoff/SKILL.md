@@ -12,17 +12,27 @@ isn't already written down, put it on the tracker, and stop.
 This is not a status update. Status is the issue state (`/to-issues` owns that
 vocabulary). This is the residue: what you learned that no artifact records.
 
-## The one rule: you write it, not a subagent
+## The one rule (interactive sessions): you write it, not a subagent
 
-**Never delegate this to a subagent.** A subagent starts cold — it did not
-watch this session and cannot recover what happened in it. Handed a summarizing
-task, it will reconstruct a plausible session instead of reporting the real
-one, and the fabrication is invisible to the reader who needed the truth.
+**In an interactive session, never delegate this to a subagent.** A subagent
+starts cold — it did not watch this session and cannot recover what happened
+in it. Handed a summarizing task, it will reconstruct a plausible session
+instead of reporting the real one, and the fabrication is invisible to the
+reader who needed the truth.
 
 This is the exception to `/delegate`. Delegation pays off on token-heavy
 _input_ — bulk reads, exploration, typing implementation. A handoff is
 token-light output from context you already hold. Writing it yourself is both
 cheaper and the only way to get it right.
+
+**Workflow agents don't need this rule.** The rationale above is about a
+*cold* subagent reconstructing a session it never saw — it doesn't apply to an
+implementer agent, which holds the only warm context for its own slice. Per
+`/implement`, each implementer comments its own issue before it finishes; that
+comment is the handoff, written by the agent that lived the slice, not by a
+subagent summarizing someone else's session. The session-level record is the
+conductor's run summary on the container, not a per-agent `/handoff`
+invocation.
 
 ## What already survives without you
 
@@ -91,7 +101,7 @@ GitHub → local markdown):
 
 The receiving model does not need this session. It needs four identifiers and a
 pointer — spec path, slug, container id, active issue id — exactly the payload
-`/start-loop` passes to a doer. Give it those plus `/implement`, and it will
+`/start-loop` passes to an implementer. Give it those plus `/implement`, and it will
 read the issue body as the brief and your comment as the handoff.
 
 Resist pasting transcript. `/start-loop` puts it plainly: every handoff crosses

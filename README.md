@@ -89,7 +89,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | Skill                           | Purpose                                                                                                               |
 | ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `setup-repo`                    | Interview-driven repo setup: thin repo-level `AGENTS.md`, `CLAUDE.md` symlink, and collision-safe llmOS-backed project docs topology |
-| `start-loop`                    | Run/resume the whole spine as one command (sharpen → spec → issues → implement); spec approval is the last prompt, then the loop runs to done |
+| `start-loop`                    | Run/resume the whole spine as one command (triage → spec → issues → implement); triage decides the approval gate — gated runs make spec approval the last prompt, autonomous runs skip it and record the gate on the tracker — then the loop runs to done |
 | `write-spec`                    | Create a feature spec — a pure-markdown design draft verified by committed tests; `/write-spec new` scaffolds it      |
 | `implement`                     | How to implement a spec — prove behavior with `/tdd`, and orchestrate the work via delegation                         |
 | `tdd`                           | Functional-test discipline — sketch scratch scripts in `tests/temp/` against the real repo, then refactor the survivors into committed tests proving the stated goals; no mock-slop |
@@ -100,7 +100,7 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `improve-codebase-architecture` | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
 | `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                                                      |
 | `ship-pr`                       | Publish branch work — group diff into atomic commits, push, open a draft PR (verifies lint/types/tests first); `finalize` mode flips the draft to ready |
-| `delegate`                      | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a planner, writes to a doer, review what comes back; never write yourself |
+| `delegate`                      | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a designer, writes to an implementer, review what comes back; never write yourself |
 | `handoff`                       | Hand the session across a model boundary — write the residue (ruled out, gotchas, resume) to the tracker; write it yourself, never via a subagent          |
 | `merge-conflicts`               | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
 | `qmd`                           | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
@@ -112,17 +112,45 @@ scripts/bump-plugin-version.sh knack 1.0.2
 Each skill's frontmatter declares whether it is user-invocable.
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
 
+## Agents
+
+Dual-format subagent definitions in `plugins/knack/agents/` — a Claude `.md`
+(frontmatter + prose) and a Codex `.toml` twin (same fields, prose folded into
+`developer_instructions`); keep the twins in sync when editing either.
+
+| Agent             | Purpose                                                                                                               |
+| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
+| `code-explorer`    | Read-only exploration — trace execution paths, find symbol definitions, summarize modules, gather evidence            |
+| `code-writer`      | Focused implementation — well-scoped tasks with clear file targets: functions, bug fixes, tests                      |
+| `docs-writer`      | Documentation writer — READMEs, guides, API references, changelogs; writes only documentation files                   |
+| `patch-reviewer`   | Reviews one diff mid-flight for correctness, edge cases, missing tests, broken APIs, security, style — read-only       |
+| `design-critic`    | Stress-tests a plan against the codebase and ADRs, returning the decisions an interactive sharpen session would have settled — read-only |
+| `spec-writer`      | Drafts and expands spec design bodies per the `write-spec` skill; returns the draft to the caller                     |
+| `issue-slicer`     | Publishes an approved spec to the tracker as vertical slices with native blocked-by relations, per `to-issues`        |
+| `implementer`      | Owns one tracker slice end-to-end (tdd, verification, progress comment); reports DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED |
+| `code-reviewer`    | Reviews the assembled implementation against the spec, one lens per invocation: what was missed, what went wrong, what is bloat |
+| `pr-publisher`     | Ships the finished branch per `ship-pr` — atomic commits, push, draft PR — and returns the PR URL and run summary     |
+
+The last six are the **eng-loop**'s workers, dispatched on `/start-loop`'s
+automated runs: the deterministic `knack-graph.js` script decides what runs
+when, each agent decides how to do its one phase, and results flow back to
+the script as structured data —
+identifiers and artifact pointers in, typed status out, never user-facing
+prose.
+
 ## Workflow
 
 The spine is **sharpen → spec → issues → implement → review → pr**. For a new
 feature, `/start-loop <idea>` runs that spine as one resumable command — it
 restates the goal up front, recomputes state from artifacts so it can resume
-mid-flight, and gives every task worker its own goal. It prompts the user
-exactly twice, both during design (sharpen → spec, and spec approval); an
-approved spec authorizes slicing, publishing, and the implementation loop to
-run to completion with no further prompts. The intended shape: sharpen through
-spec approval in one session, `/clear`, then bare `/start-loop` — it
-reconstructs state from the spec and tracker, no explanation needed. Work
+mid-flight, and gives every task worker its own goal. A triage policy decides
+the gate: gated runs prompt the user during design (sharpen → spec, and spec
+approval), autonomous runs record the gate verdict on the tracker and prompt
+never; either way an approved spec authorizes the eng-loop to slice,
+publish, implement, review, and ship with no further prompts. The
+intended shape: design through approval in one session, `/clear`, then bare
+`/start-loop` — it reconstructs state from the spec and tracker, no
+explanation needed. Work
 also enters at one of three points directly: `/sharpen` for a new feature whose
 design isn't settled, `/diagnose` for a known bug, or
 `/improve-codebase-architecture` when you're hunting for refactors. For
@@ -184,22 +212,22 @@ The main agent is the **orchestrator**: it coordinates, reviews, and holds the
 human gates — it never burns its own context on bulk reads or typing
 implementation. All heavy work is routed to workers by role, per `/delegate`:
 
-| Role         | Does                                                              | Typical worker                             |
-| ------------ | ----------------------------------------------------------------- | ------------------------------------------ |
-| **explorer** | reads, exploration, summarizing across many files                 | haiku / `gpt-5.6-luna` (medium) / `gemini-3.5` |
-| **planner**  | plan drafting, design review, spec critique — judgment over cost  | fable / opus (high) / `gpt-5.6-sol`        |
-| **doer**     | implementing a well-specified chunk, reviewed via the diff        | sonnet / `gpt-5.6-luna` (xhigh)            |
+| Role            | Does                                                              | Typical worker                                 |
+| --------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
+| **explorer**    | reads, exploration, summarizing across many files                | haiku / `gpt-5.6-luna` (medium) / `gemini-3.5` |
+| **designer**    | plan drafting, design review, spec critique — judgment over cost | fable / opus (high) / `gpt-5.6-sol`            |
+| **implementer** | implementing a well-specified chunk, reviewed via the diff       | sonnet / `gpt-5.6-luna` (xhigh)                |
 
 Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
-session (the interview is HITL) but can commission planners for alternatives;
-spec *drafting* can go to a planner while the main session holds the approval
-gate; `to-issues` goes to a **planner** that reviews the approved spec cold,
+session (the interview is HITL) but can commission designers for alternatives;
+spec *drafting* can go to a designer while the main session holds the approval
+gate; `to-issues` goes to a **designer** that reviews the approved spec cold,
 slices, publishes, and returns the issue list; review + `/ship-pr` run in a fresh
 context.
 
 Implementation is the **fan-out loop**:
 
-> take the next unblocked issue → spawn a **doer** with the issue, a pointer to
+> take the next unblocked issue → spawn an **implementer** with the issue, a pointer to
 > the spec, and its own `/goal` → review the diff → update the tracker → repeat
 > until `COMPLETE`.
 
@@ -209,7 +237,7 @@ identifiers and artifact pointers (spec path, slug, tracker ids) — never the
 conversation. Blocked workers escalate to the orchestrator, which resolves what
 the spec/ADRs answer, logs the decision as an issue comment, and relaunches —
 the user is interrupted only for scope changes, spec contradictions, blocking
-`ready-for-human` slices, or destructive actions. Planners return proposals for
+`ready-for-human` slices, or destructive actions. Designers return proposals for
 the orchestrator to review with the user; workers never converse with the user
 directly.
 
