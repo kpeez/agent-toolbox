@@ -39,7 +39,7 @@ check: drift lint types test
 setup:
     ./scripts/install.sh
 
-# Set a plugin's version across its Claude + Codex manifests, e.g. `just bump knack 1.9.0`.
+# Set a plugin's version across its Claude + Codex manifests, e.g. `just bump swe 1.9.0`.
 bump plugin version:
     ./scripts/bump-plugin-version.sh {{plugin}} {{version}}
 

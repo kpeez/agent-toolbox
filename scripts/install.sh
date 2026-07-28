@@ -90,7 +90,7 @@ PY
 # Codex plugins deliver skills but not agents, so the .toml
 # agents in the plugin payload must be installed into Codex's agent directory.
 mkdir -p "$HOME/.codex/agents"
-for agent in "$ROOT_DIR"/plugins/knack/agents/*.toml; do
+for agent in "$ROOT_DIR"/plugins/swe/agents/*.toml; do
     cp "$agent" "$HOME/.codex/agents/"
 done
 echo "codex agents → $HOME/.codex/agents/"

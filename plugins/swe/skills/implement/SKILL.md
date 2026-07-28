@@ -22,7 +22,7 @@ check; a red test, type error, or lint failure is a stop, not a warning.
 
 ## Orchestrate the fan-out
 
-**Owned by the `knack-graph.js` workflow script** whenever one is running —
+**Owned by the `swe-loop.js` workflow script** whenever one is running —
 the frontier loop, model selection, and status handling below execute as the
 script's deterministic logic. Outside a workflow run — interactive
 sessions, one-off fixes — you are the orchestrator and follow this section by
@@ -43,15 +43,15 @@ code yourself — delegate.** Spend your context coordinating, not reading files
 and typing implementation.
 
 - **Explore** with an explorer-tier worker (the `Explore` or
-  `knack:explorer` subagent) instead of loading many files into your own
+  `swe:explorer` subagent) instead of loading many files into your own
   context.
-- **Generate** with a `knack:implementer`. Give it exactly
+- **Generate** with a `swe:implementer`. Give it exactly
   the context it needs — the relevant
   `NNNN-<slug>.md` sections, key paths, and where the task fits — no more.
 - **Review** what comes back before trusting it.
 
 **The fan-out loop:** take the next unblocked issue → spawn an **implementer**
-(the `knack:implementer` agent) with the issue, a pointer to the spec, and its
+(the `swe:implementer` agent) with the issue, a pointer to the spec, and its
 own `/goal` → review the diff → update the tracker → repeat.
 
 ### Sequential or parallel?
