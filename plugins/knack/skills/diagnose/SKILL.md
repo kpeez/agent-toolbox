@@ -108,6 +108,6 @@ original (un-minimised) scenario.
 `/improve-codebase-architecture` with the specifics. Make that recommendation
 **after** the fix is in — you know more now than when you started.
 
-> Delegate substantial reads and writes per **`/delegate`** — explore with a
-> fast model, draft code with a medium one, and review the diff. Don't burn your
-> own context.
+> Delegate substantial reads and writes to subagents — explore with a fast
+> model, draft code with a medium one, and review the diff. Don't burn your own
+> context.

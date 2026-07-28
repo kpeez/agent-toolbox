@@ -100,14 +100,15 @@ scripts/bump-plugin-version.sh knack 1.0.2
 | `improve-codebase-architecture` | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
 | `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                                                      |
 | `ship-pr`                       | Publish branch work — group diff into atomic commits, push, open a draft PR (verifies lint/types/tests first); `finalize` mode flips the draft to ready |
-| `delegate`                      | Delegate to cheaper workers — route reads to an explorer, plan/design drafting to a designer, writes to an implementer, review what comes back; never write yourself |
 | `handoff`                       | Hand the session across a model boundary — write the residue (ruled out, gotchas, resume) to the tracker; write it yourself, never via a subagent          |
 | `merge-conflicts`               | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
 | `qmd`                           | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
 | `research`                      | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
-| `validate-skills`               | Drift guard — check name/dir match, README inventory parity, manifest version parity, and dead skill references        |
 | `autoresearch`                  | Autonomous experiment loops with defined metrics and private logs                                                     |
 | `data-viz`                      | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
+| `maintain-llmos`                | Maintain the shared llmOS Obsidian vault through its canonical conventions and automation                              |
+| `setup-llmos`                   | Diagnose and configure machine access to the shared llmOS vault                                                        |
+| `vault-cli`                     | Route deterministic headless vault operations through the llmos-vault CLI                                              |
 
 Each skill's frontmatter declares whether it is user-invocable.
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
@@ -210,13 +211,13 @@ it up from there.
 
 The main agent is the **orchestrator**: it coordinates, reviews, and holds the
 human gates — it never burns its own context on bulk reads or typing
-implementation. All heavy work is routed to workers by role, per `/delegate`:
+implementation. All heavy work is routed to workers by role:
 
-| Role            | Does                                                              | Typical worker                                 |
-| --------------- | ---------------------------------------------------------------- | ---------------------------------------------- |
-| **explorer**    | reads, exploration, summarizing across many files                | haiku / `gpt-5.6-luna` (medium) / `gemini-3.5` |
-| **designer**    | plan drafting, design review, spec critique — judgment over cost | fable / opus (high) / `gpt-5.6-sol`            |
-| **implementer** | implementing a well-specified chunk, reviewed via the diff       | sonnet / `gpt-5.6-luna` (xhigh)                |
+| Role            | Does                                                              | Typical worker                                      |
+| --------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
+| **explorer**    | reads, exploration, summarizing across many files                 | `knack:code-explorer` / `Explore`                   |
+| **designer**    | plan drafting, design review, spec critique — judgment over cost  | `knack:design-critic` / `knack:spec-writer`         |
+| **implementer** | implementing a well-specified chunk, reviewed via the diff        | `knack:implementer` / `knack:code-writer`           |
 
 Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
 session (the interview is HITL) but can commission designers for alternatives;

@@ -42,16 +42,17 @@ Unless the change is highly trivial, **don't explore the codebase or write the
 code yourself — delegate.** Spend your context coordinating, not reading files
 and typing implementation.
 
-- **Explore** with an explorer-tier worker (`/delegate`'s `ext-subagent`, or the
-  `Explore` subagent) instead of loading many files into your own context.
-- **Generate** with subagents or an external worker (`/delegate`'s
-  `ext-subagent`). Give each worker exactly the context it needs — the relevant
+- **Explore** with an explorer-tier worker (the `Explore` or
+  `knack:code-explorer` subagent) instead of loading many files into your own
+  context.
+- **Generate** with subagents (`knack:code-writer`). Give each worker exactly
+  the context it needs — the relevant
   `NNNN-<slug>.md` sections, key paths, and where the task fits — no more.
 - **Review** what comes back before trusting it.
 
-**The fan-out loop:** take the next unblocked issue → spawn an **implementer** (per
-`/delegate`) with the issue, a pointer to the spec, and its own `/goal` →
-review the diff → update the tracker → repeat.
+**The fan-out loop:** take the next unblocked issue → spawn an **implementer**
+(the `knack:implementer` agent) with the issue, a pointer to the spec, and its
+own `/goal` → review the diff → update the tracker → repeat.
 
 ### Sequential or parallel?
 
@@ -63,13 +64,13 @@ sequential slowness.
 
 ### Model selection
 
-Use the least powerful model sufficient for the task (tiers per `/delegate`):
+Use the least powerful model sufficient for the task:
 
-| Complexity | Signals                                                     | Role        | Claude                | Codex                 |
-| ---------- | ----------------------------------------------------------- | ----------- | --------------------- | --------------------- |
-| Low        | 1–2 files, mechanical change, complete spec                 | explorer    | haiku                 | gpt-5.6-luna (medium) |
-| Medium     | Multi-file, integration concerns, pattern matching          | implementer | sonnet (or opus, low) | gpt-5.6-luna (xhigh)  |
-| High       | Architecture, design judgment, broad codebase understanding | designer    | fable / opus (high)   | gpt-5.6-sol           |
+| Complexity | Signals                                                     | Role        | Claude                |
+| ---------- | ----------------------------------------------------------- | ----------- | --------------------- |
+| Low        | 1–2 files, mechanical change, complete spec                 | explorer    | haiku                 |
+| Medium     | Multi-file, integration concerns, pattern matching          | implementer | sonnet (or opus, low) |
+| High       | Architecture, design judgment, broad codebase understanding | designer    | fable / opus (high)   |
 
 Always tell the worker to follow the verification discipline — prove each
 stated goal with a functional test per `/tdd`, run and passing — and to report
@@ -119,4 +120,3 @@ the fan-out above; that's the orchestrator's job.
 
 - `/sharpen` — stress-test a plan before writing tests or scratch scripts.
 - `/write-spec new <name>` — scaffold a pure-markdown spec whose Verification section names the tests.
-- `/delegate` — the mechanics of exploring and generating via workers.
