@@ -119,20 +119,16 @@ Dual-format subagent definitions in `plugins/knack/agents/` — a Claude `.md`
 (frontmatter + prose) and a Codex `.toml` twin (same fields, prose folded into
 `developer_instructions`); keep the twins in sync when editing either.
 
-| Agent             | Purpose                                                                                                               |
-| ----------------- | ---------------------------------------------------------------------------------------------------------------------- |
-| `code-explorer`    | Read-only exploration — trace execution paths, find symbol definitions, summarize modules, gather evidence            |
-| `code-writer`      | Focused implementation — well-scoped tasks with clear file targets: functions, bug fixes, tests                      |
-| `docs-writer`      | Documentation writer — READMEs, guides, API references, changelogs; writes only documentation files                   |
-| `patch-reviewer`   | Reviews one diff mid-flight for correctness, edge cases, missing tests, broken APIs, security, style — read-only       |
-| `design-critic`    | Stress-tests a plan against the codebase and ADRs, returning the decisions an interactive sharpen session would have settled — read-only |
-| `spec-writer`      | Drafts and expands spec design bodies per the `write-spec` skill; returns the draft to the caller                     |
-| `issue-slicer`     | Publishes an approved spec to the tracker as vertical slices with native blocked-by relations, per `to-issues`        |
-| `implementer`      | Owns one tracker slice end-to-end (tdd, verification, progress comment); reports DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED |
-| `code-reviewer`    | Reviews the assembled implementation against the spec, one lens per invocation: what was missed, what went wrong, what is bloat |
-| `pr-publisher`     | Ships the finished branch per `ship-pr` — atomic commits, push, draft PR — and returns the PR URL and run summary     |
+| Agent          | Purpose                                                                                                        |
+| -------------- | -------------------------------------------------------------------------------------------------------------- |
+| `explorer`     | Cheap read-only evidence gathering with cited paths                                                           |
+| `architect`    | Read-only design resolution and spec drafting; returns decisions or drafts for the orchestrator to apply     |
+| `planner`      | Publishes an approved spec as vertical tracker slices with native blocked-by relations                       |
+| `implementer`  | Executes one bounded code, test, documentation, or tracker task under caller-supplied constraints            |
+| `reviewer`     | Read-only review of a diff or implementation against caller-provided criteria or one lens                    |
+| `publisher`    | Owns git and GitHub publication: intentional commits, push, and pull-request creation or update               |
 
-The last six are the **eng-loop**'s workers, dispatched on `/start-loop`'s
+These six capability roles are the **eng-loop**'s workers, dispatched on `/start-loop`'s
 automated runs: the deterministic `knack-graph.js` script decides what runs
 when, each agent decides how to do its one phase, and results flow back to
 the script as structured data —
@@ -213,16 +209,19 @@ The main agent is the **orchestrator**: it coordinates, reviews, and holds the
 human gates — it never burns its own context on bulk reads or typing
 implementation. All heavy work is routed to workers by role:
 
-| Role            | Does                                                              | Typical worker                                      |
-| --------------- | ----------------------------------------------------------------- | --------------------------------------------------- |
-| **explorer**    | reads, exploration, summarizing across many files                 | `knack:code-explorer` / `Explore`                   |
-| **designer**    | plan drafting, design review, spec critique — judgment over cost  | `knack:design-critic` / `knack:spec-writer`         |
-| **implementer** | implementing a well-specified chunk, reviewed via the diff        | `knack:implementer` / `knack:code-writer`           |
+| Role            | Does                                                               | Typical worker         |
+| --------------- | ------------------------------------------------------------------ | ---------------------- |
+| **explorer**    | reads, traces, and summarizes evidence with cited paths            | `knack:explorer`       |
+| **architect**   | resolves design ambiguity and drafts spec bodies, read-only        | `knack:architect`      |
+| **planner**     | slices approved specs and publishes tracker dependency graphs      | `knack:planner`        |
+| **implementer** | executes one bounded code, test, documentation, or tracker task    | `knack:implementer`    |
+| **reviewer**    | reviews against caller-provided criteria or a single lens          | `knack:reviewer`       |
+| **publisher**   | commits, pushes, and creates or updates pull requests              | `knack:publisher`      |
 
 Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
-session (the interview is HITL) but can commission designers for alternatives;
-spec *drafting* can go to a designer while the main session holds the approval
-gate; `to-issues` goes to a **designer** that reviews the approved spec cold,
+session (the interview is HITL) but can commission architects for alternatives;
+spec *drafting* can go to an architect while the main session holds the approval
+gate; `to-issues` goes to a **planner** that reviews the approved spec cold,
 slices, publishes, and returns the issue list; review + `/ship-pr` run in a fresh
 context.
 

@@ -24,7 +24,7 @@ Rewrite the user's request as an observable end state and set it with
 else runs.
 
 Once the workflow is launched, it gives each agent its contract and handoff tuple.
-Every **designer** or **implementer** *you* dispatch yourself — sharpen
+Every **architect** or **implementer** *you* dispatch yourself — sharpen
 alternatives, the spec draft, the manual fallback — still gets its own `/goal`:
 one line, end state plus how it's verified. A task worker without one is a bug.
 **Explorers are exempt**: a read has a question, not an end state.
@@ -65,7 +65,7 @@ verdict instead of re-evaluating (see Resume).
 ## 3a. Gated path (any criterion failed)
 
 1. `/sharpen` interactively with the user until the branches are resolved.
-2. `/write-spec` — delegate the drafting to the **`knack:spec-writer`** agent;
+2. `/write-spec` — delegate the drafting to the **`knack:architect`** agent;
    you present the draft and the user confirms at the checkpoint prompts.
 3. On unambiguous approval, add `<!-- knack:spec-approved -->` to the spec
    exactly as today. Silence, compaction, or an unrelated reply is **not**
@@ -77,10 +77,10 @@ Exact wording: [references/checkpoint-prompts.md](references/checkpoint-prompts.
 
 No user prompt anywhere in this path.
 
-1. **`knack:design-critic`** interrogates the idea against the code and the
+1. **`knack:architect`** interrogates the idea against the code and the
    ADRs and returns the settled decisions — what the interview would have
    concluded.
-2. **`knack:spec-writer`** drafts the spec from those decisions.
+2. **`knack:architect`** drafts the spec from those decisions.
 3. You stamp `<!-- knack:spec-approved -->` yourself — the same marker the
    manual gate writes, so every existing grep keeps working — and set the
    spec's `Execution mode` section to `autonomous` (the gated path leaves the
@@ -177,7 +177,7 @@ decision trail.
 
 If the container cannot be created, the tracker cannot be reached, or a
 required skill or agent (`/sharpen`, `/write-spec`, `/to-issues`,
-`knack:design-critic`, `knack:spec-writer`) cannot be activated, name it and
+`knack:architect`) cannot be activated, name it and
 stop before changing state — do not improvise a substitute. `/implement` is not
 on that list: on the Workflow host the conductor owns those phases, and
 `/implement` is only the ADR-0006 fallback for hosts without the Workflow tool.

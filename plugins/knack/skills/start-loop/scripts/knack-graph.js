@@ -178,7 +178,7 @@ const promptFrontier = () => `Report this run's workable slices as JSON.
    this run even though its tracker state has not advanced yet.
 4. Return the surviving issues.`
 
-const promptImplementer = issue => `Implement one slice of ${specPath}, end to end.
+const promptImplementer = issue => `Execute this bounded task: implement one slice of ${specPath}, end to end.
 
 Handoff tuple: ${tupleFor(issue.id)}
 Slice: ${issue.identifier} — ${issue.title}
@@ -207,7 +207,7 @@ must change; otherwise "findings" with at least one entry, one per required
 change, each naming the file and the fix. "findings" with an empty list is not
 a valid answer.`
 
-const promptFixer = (issue, branch, findings) => `Apply review findings to an existing slice branch.
+const promptFixer = (issue, branch, findings) => `Execute this bounded task: apply review findings to an existing slice branch.
 
 Branch: ${branch} (already committed, not checked out here)
 Issue: ${issue.identifier} — ${issue.title}
@@ -218,7 +218,8 @@ ${numbered(findings)}
    that path; other fixers run concurrently and a shared path would collide.
 2. Apply every finding there, re-run lint/types/tests, and commit to ${branch}.
 3. git worktree remove ../.knack-fix-${issue.identifier} — leave none behind.
-Do not push and do not merge.`
+Do not push and do not merge. Return a concise completion note; this call has
+no additional output schema.`
 
 const promptCompletionMark = (issue, summary) => `Post one comment on tracker issue ${issue.identifier} (Linear GraphQL at
 https://api.linear.app/graphql; LINEAR_API_KEY is in your environment).
@@ -351,7 +352,7 @@ if (resumeIssueId) {
   log(`Targeted resume on ${resumeIssueId}: slices are already published, skipping the slice phase.`)
 } else {
   log(`Slicing ${specPath} into container ${containerId}.`)
-  const sliced = await agent(promptSlicer(), { label: `slice:${slug}`, phase: 'Slice', agentType: 'knack:issue-slicer' })
+  const sliced = await agent(promptSlicer(), { label: `slice:${slug}`, phase: 'Slice', agentType: 'knack:planner' })
   log(sliced ? 'Slicing done.' : 'Slicer returned nothing — the frontier query decides what work actually exists.')
 }
 
@@ -401,7 +402,7 @@ const runFrontierLoop = async passLabel => {
         const review = await agent(promptSliceReview(issue, outcome.branch), {
           label: `review:${issue.identifier}`,
           phase: 'Implement',
-          agentType: 'knack:patch-reviewer',
+          agentType: 'knack:reviewer',
           schema: SLICE_REVIEW_SCHEMA,
         })
         if (!review) return escalate(issue, 'slice review returned no verdict')
@@ -423,7 +424,7 @@ const runFrontierLoop = async passLabel => {
           const review = await agent(promptSliceReview(issue, outcome.branch), {
             label: `re-review:${issue.identifier}:${fixRound}`,
             phase: 'Implement',
-            agentType: 'knack:patch-reviewer',
+            agentType: 'knack:reviewer',
             schema: SLICE_REVIEW_SCHEMA,
           })
           if (!review) return escalate(issue, `re-review after fix round ${fixRound} returned no verdict`)
@@ -502,7 +503,7 @@ const runSpecReview = async () => {
       agent(promptSpecReview(lens), {
         label: `spec-review:${lens}`,
         phase: 'Spec review',
-        agentType: 'knack:code-reviewer',
+        agentType: 'knack:reviewer',
         schema: SPEC_REVIEW_SCHEMA,
       }),
     ),
@@ -526,7 +527,7 @@ while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
   const filed = await agent(promptFileFindings(openFindings), {
     label: `file-findings:${reentries}`,
     phase: 'Spec review',
-    agentType: 'knack:issue-slicer',
+    agentType: 'knack:planner',
   })
   if (!filed) {
     log('Could not file the findings as fix slices — collecting them as escalations instead.')
@@ -552,11 +553,11 @@ phase('Ship')
 const shipped = await agent(promptShip(), {
   label: `ship:${slug}`,
   phase: 'Ship',
-  agentType: 'knack:pr-publisher',
+  agentType: 'knack:publisher',
   schema: SHIP_SCHEMA,
 })
 if (!shipped) {
-  escalateRun('ship-pr', `pr-publisher returned no PR URL; ${baseBranch} is merged but unpublished`)
+  escalateRun('ship-pr', `publisher returned no PR URL; ${baseBranch} is merged but unpublished`)
   log(`Ship failed — ${baseBranch} holds the merged work but no PR was opened.`)
 } else {
   log(`Draft PR: ${shipped.prUrl}`)
