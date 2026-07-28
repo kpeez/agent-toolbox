@@ -1,45 +1,39 @@
 # agent-toolbox
 
-A portable, spec-driven workflow and skill set for AI coding agents — works across Claude Code, Codex CLI, Antigravity CLI, and GitHub Copilot CLI with a single source of truth[^1].
+A portable, spec-driven workflow and skill set for AI coding agents — one
+source of truth across Claude Code, Codex CLI, Antigravity CLI, and GitHub
+Copilot CLI[^1].
 
-## What's Here
+Three plugins:
+
+- **swe** — the core: the spec-driven workflow skills and the six-agent swe-loop
+- **lab** — research: autonomous experiment loops and data-viz guidance
+- **llmos** — tooling for the shared llmOS Obsidian vault
 
 ```text
 agent-toolbox/
-├── .claude-plugin/
-│   └── marketplace.json       # Claude marketplace; points at plugins/swe and plugins/lab
-├── .agents/plugins/
-│   └── marketplace.json       # Codex marketplace; points at plugins/swe and plugins/lab
-├── plugins/swe/               # Core plugin: spec-driven workflows, skills, and agent definitions
-│   ├── .claude-plugin/        #   Claude plugin manifest
-│   ├── .codex-plugin/         #   Codex plugin manifest
-│   ├── agents/                #   Agent definitions: Claude .md (via plugin), Codex .toml (via setup script)
-│   └── skills/                #   Core skills for all providers
-├── plugins/lab/               # Research plugin: autonomous experiments and data-viz guidance
-│   ├── .claude-plugin/        #   Claude plugin manifest
-│   ├── .codex-plugin/         #   Codex plugin manifest
-│   └── skills/                #   Research skills (autoresearch, data-viz)
-├── AGENTS.md                  # Shared provider-neutral instructions
-└── scripts/install.sh         # Manual path for non-plugin providers
+├── .claude-plugin/marketplace.json    # Claude marketplace catalog
+├── .agents/plugins/marketplace.json   # Codex marketplace catalog
+├── plugins/
+│   ├── swe/                           # Workflow skills + agent definitions (.md + .toml twins)
+│   ├── lab/                           # Research skills
+│   └── llmos/                        # Vault skills, hooks, and the llmos_vault library
+├── AGENTS.md                          # Shared provider-neutral instructions
+└── scripts/install.sh                 # Manual path for non-plugin providers
 ```
 
 ## Installation
 
-### Claude Code (plugin)
-
-Register this repo as a marketplace and install:
+### Claude Code
 
 ```bash
 /plugin marketplace add kpeez/agent-toolbox
 /plugin install swe@agent-toolbox
-/plugin install lab@agent-toolbox
+/plugin install lab@agent-toolbox      # optional: research machines
+/plugin install llmos@agent-toolbox    # optional: machines with the llmOS vault
 ```
 
-> `lab` is optional — install it on research machines where you use `autoresearch` and `data-viz`.
-
-### Codex CLI (plugin)
-
-Register this repo as a marketplace and install:
+### Codex CLI
 
 ```bash
 codex plugin marketplace add kpeez/agent-toolbox
@@ -47,122 +41,94 @@ codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
-> The Codex plugin delivers skills only. Codex plugins do not deliver agents, so
-> the Codex `.toml` subagents are installed by the manual script below.
+> Codex plugins deliver skills only; the Codex `.toml` subagents come from the
+> manual script below.
 
 ### Manual install (Codex agents, Antigravity, Copilot)
-
-Claude Code installs entirely from its plugin. Codex CLI installs skills from its
-plugin but needs the manual script for its subagents. Use the manual script for
-Codex agents and for providers that do not have a complete plugin install path
-here. Skill scripts need no install — skills run them in place with `uv run`.
 
 ```bash
 ./scripts/install.sh
 ```
 
-This installs to:
+| Target            | Installed to                                           |
+| ----------------- | ------------------------------------------------------ |
+| Codex agents      | `~/.codex/agents/*.toml`                               |
+| Antigravity CLI   | `~/.gemini/AGENTS.md` + skills symlinked from the repo |
+| Copilot CLI       | `~/.copilot/copilot-instructions.md`                   |
+| Claude statusline | `~/.claude/cc_statusline.py`                           |
 
-| Target          | Installed by manual script                             |
-| --------------- | ------------------------------------------------------ |
-| Codex agents    | `~/.codex/agents/*.toml`                               |
-| Antigravity CLI | `~/.gemini/AGENTS.md` + skills symlinked from the repo |
-| Copilot CLI     | `~/.copilot/copilot-instructions.md`                   |
-| Claude statusline | `~/.claude/cc_statusline.py`                         |
-
-Re-run after updating agent-toolbox.
-
-### Versioning
-
-Each plugin's version lives in exactly two files, kept identical: its
-`.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. The marketplace
-files (`.claude-plugin/marketplace.json`, `.agents/plugins/marketplace.json`)
-carry no versions or metadata — they only point at the plugin directories.
-Bump both manifests at once:
-
-```bash
-scripts/bump-plugin-version.sh swe 1.0.2
-```
+Re-run after updating agent-toolbox. Skill scripts need no install — skills run
+them in place with `uv run`.
 
 ## Skills
 
-| Skill                           | Purpose                                                                                                               |
-| ------------------------------- | --------------------------------------------------------------------------------------------------------------------- |
-| `setup-repo`                    | Interview-driven repo setup: thin repo-level `AGENTS.md`, `CLAUDE.md` symlink, and collision-safe llmOS-backed project docs topology |
-| `start-loop`                    | Run/resume the whole spine as one command (triage → spec → issues → implement); triage decides the approval gate — gated runs make spec approval the last prompt, autonomous runs skip it and record the gate on the tracker — then the loop runs to done |
-| `write-spec`                    | Create a feature spec — a pure-markdown design draft verified by committed tests; `/write-spec new` scaffolds it      |
-| `implement`                     | How to implement a spec — prove behavior with `/tdd`, and orchestrate the work via delegation                         |
-| `tdd`                           | Functional-test discipline — sketch scratch scripts in `tests/temp/` against the real repo, then refactor the survivors into committed tests proving the stated goals; no mock-slop |
-| `sharpen`                       | Interview the user to stress-test a plan; cross-checks code, sharpens terms, records ADRs                             |
-| `deliberate`                    | Resolve a two-way decision — two independent cases (for/against), one capped rebuttal, evidence-weighted synthesis   |
-| `to-issues`                     | Break a spec/plan into independently-grabbable tracker issues using vertical slices                                 |
-| `diagnose`                      | Disciplined debugging loop — build a feedback loop, reproduce, hypothesize, instrument, fix                           |
-| `improve-codebase-architecture` | Find deepening opportunities — turn shallow modules into deep ones (deletion test, deep modules)                      |
-| `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                                                      |
-| `ship-pr`                       | Publish branch work — group diff into atomic commits, push, open a draft PR (verifies lint/types/tests first); `finalize` mode flips the draft to ready |
-| `handoff`                       | Hand the session across a model boundary — write the residue (ruled out, gotchas, resume) to the tracker; write it yourself, never via a subagent          |
-| `merge-conflicts`               | Resolve merge/rebase conflicts — trace each side's intent, preserve both, verify with checks to catch semantic conflicts |
-| `qmd`                           | Search local markdown knowledge bases (Obsidian vaults, notes, docs) with the `qmd` CLI                               |
-| `research`                      | Investigate a question against primary sources via a background agent; capture cited findings as a Markdown file      |
-| `autoresearch`                  | Autonomous experiment loops with defined metrics and private logs                                                     |
-| `data-viz`                      | Research-backed guidance for designing and critiquing charts, plots, and figures                                      |
-| `maintain-llmos`                | Maintain the shared llmOS Obsidian vault through its canonical conventions and automation                              |
-| `setup-llmos`                   | Diagnose and configure machine access to the shared llmOS vault                                                        |
-| `vault-cli`                     | Route deterministic headless vault operations through the llmos-vault CLI                                              |
-
-Each skill's frontmatter declares whether it is user-invocable.
+Each skill's `SKILL.md` is the canonical contract; this table is just the map.
 Skills follow the [agentskills.io specification](https://agentskills.io/specification).
+
+### swe
+
+| Skill                           | Purpose                                                                                   |
+| ------------------------------- | ----------------------------------------------------------------------------------------- |
+| `start-loop`                    | Run/resume the swe-loop end to end — triage, design, approval gate, then the conductor ships the spec |
+| `sharpen`                       | Interview the user to stress-test a plan; cross-check the code, record ADRs               |
+| `write-spec`                    | Create a feature spec — a pure-markdown design draft proven by committed tests            |
+| `to-issues`                     | Publish a spec as vertical-slice tracker issues with blocked-by relations                 |
+| `implement`                     | Orchestrate implementing a spec — prove behavior with `/tdd`, fan work out to agents      |
+| `tdd`                           | Functional-test discipline — scratch scripts in `tests/temp/`, survivors become committed tests |
+| `ship-pr`                       | Group the branch diff into atomic commits, push, open a draft PR; `finalize` flips it ready |
+| `diagnose`                      | Disciplined debugging — build a feedback loop, reproduce, hypothesize, instrument, fix    |
+| `improve-codebase-architecture` | Find deepening refactors — turn shallow modules into deep ones                            |
+| `deliberate`                    | Resolve a two-way decision with two independent cases and an evidence-weighted synthesis  |
+| `handoff`                       | Write session residue to the tracker so another model can resume mid-flight               |
+| `merge-conflicts`               | Resolve conflicts by tracing each side's intent; verify with the project's checks         |
+| `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                           |
+| `research`                      | Investigate a question against primary sources; capture cited findings as markdown        |
+| `qmd`                           | Search local markdown knowledge bases with the `qmd` CLI                                  |
+| `setup-repo`                    | Interview-driven repo setup — thin `AGENTS.md`, `CLAUDE.md` symlink, `docs/agents/` topology |
+
+### lab
+
+| Skill          | Purpose                                                                  |
+| -------------- | ------------------------------------------------------------------------ |
+| `autoresearch` | Autonomous experiment loops with defined metrics and stop conditions     |
+| `data-viz`     | Research-backed guidance for designing and critiquing charts and figures |
+
+### llmos
+
+| Skill           | Purpose                                                          |
+| --------------- | ---------------------------------------------------------------- |
+| `maintain-llmos` | Maintain the shared llmOS Obsidian vault through its conventions |
+| `setup-llmos`   | Diagnose and configure machine access to the llmOS vault         |
+| `vault-cli`     | Route deterministic vault operations through the llmos-vault CLI |
 
 ## Agents
 
-Dual-format subagent definitions in `plugins/swe/agents/` — a Claude `.md`
-(frontmatter + prose) and a Codex `.toml` twin (same fields, prose folded into
-`developer_instructions`); keep the twins in sync when editing either.
+Six capability roles in `plugins/swe/agents/`, each a Claude `.md` with a Codex
+`.toml` twin (keep them in sync). They are the swe-loop's workers: the
+deterministic `swe-loop.js` conductor decides what runs when, each agent does
+its one phase, and results flow back as structured data — identifiers in,
+typed status out, never user-facing prose.
 
-| Agent          | Purpose                                                                                                        |
-| -------------- | -------------------------------------------------------------------------------------------------------------- |
-| `explorer`     | Cheap read-only evidence gathering with cited paths                                                           |
-| `architect`    | Read-only design resolution and spec drafting; returns decisions or drafts for the orchestrator to apply     |
-| `planner`      | Publishes an approved spec as vertical tracker slices with native blocked-by relations                       |
-| `implementer`  | Executes one bounded code, test, documentation, or tracker task under caller-supplied constraints            |
-| `reviewer`     | Read-only review of a diff or implementation against caller-provided criteria or one lens                    |
-| `publisher`    | Owns git and GitHub publication: intentional commits, push, and pull-request creation or update               |
-
-These six capability roles are the **swe-loop**'s workers, dispatched on `/start-loop`'s
-automated runs: the deterministic `swe-loop.js` script decides what runs
-when, each agent decides how to do its one phase, and results flow back to
-the script as structured data —
-identifiers and artifact pointers in, typed status out, never user-facing
-prose.
+| Agent         | Purpose                                                                                    |
+| ------------- | ------------------------------------------------------------------------------------------ |
+| `explorer`    | Cheap read-only evidence gathering with cited paths                                        |
+| `architect`   | Read-only design resolution and spec drafting; returns drafts for the orchestrator to apply |
+| `planner`     | Publishes an approved spec as vertical tracker slices with native blocked-by relations     |
+| `implementer` | Executes one bounded code, test, documentation, or tracker task under caller constraints   |
+| `reviewer`    | Read-only review of a diff or implementation against caller-provided criteria or one lens  |
+| `publisher`   | Owns git and GitHub publication: atomic commits, push, PR creation                         |
 
 ## Workflow
 
-The spine is **sharpen → spec → issues → implement → review → pr**. For a new
-feature, `/start-loop <idea>` runs that spine as one resumable command — it
-restates the goal up front, recomputes state from artifacts so it can resume
-mid-flight, and gives every task worker its own goal. A triage policy decides
-the gate: gated runs prompt the user during design (sharpen → spec, and spec
-approval), autonomous runs record the gate verdict on the tracker and prompt
-never; either way an approved spec authorizes the swe-loop to slice,
-publish, implement, review, and ship with no further prompts. The
-intended shape: design through approval in one session, `/clear`, then bare
-`/start-loop` — it reconstructs state from the spec and tracker, no
-explanation needed. Work
-also enters at one of three points directly: `/sharpen` for a new feature whose
-design isn't settled, `/diagnose` for a known bug, or
-`/improve-codebase-architecture` when you're hunting for refactors. For
-non-trivial work these converge on `/write-spec`; a small fix can skip straight to
-implement.
-
-Once the spec is settled, `/to-issues` publishes it (parent issue + sub-issues)
-and **the tracker takes over** — each issue is then picked up independently, in a
-fresh chat or a subagent, and runs its own implement → review → ship loop.
-Implementation uses one discipline, `/tdd`: write the functional test directly
-when the behavior is known, or sketch first — scratch scripts in gitignored
-`tests/temp/` that verify the planned implementation against the real repo,
-refactored into committed tests as the code stabilizes. `/tdd` also stands
-alone as a design sketch before you commit to an approach. Durable decisions
-get recorded as ADRs in `docs/agents/adrs/` along the way.
+The spine is **sharpen → spec → issues → implement → review → PR**.
+`/start-loop <idea>` runs it as one resumable command: triage decides whether
+design is interactive or autonomous, and an approved spec authorizes the
+conductor to slice, implement, review, and ship with no further prompts. Work
+can also enter directly — `/sharpen` for an unsettled design, `/diagnose` for
+a known bug, `/improve-codebase-architecture` when hunting refactors — and
+converges on `/write-spec`, after which `/to-issues` makes the tracker the
+task and status ledger. Implementation proves behavior per `/tdd`; a
+host-native review pass (e.g. `/code-review`) runs before `/ship-pr`.
 
 ```mermaid
 graph LR
@@ -187,211 +153,22 @@ style Y fill:#22272e,stroke:#768390,color:#768390
 style P fill:#22272e,stroke:#768390,color:#768390
 ```
 
-| Phase                                 | When / what happens                                                                                                                                                                                                                                          |
-| ------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
-| `/sharpen`                           | **Entry: new feature, design unsettled.** Stress-test the plan against the code, sharpen terminology (into `CONTEXT.md`), record durable decisions as ADRs in `docs/agents/adrs/`.                                                                                  |
-| `/diagnose`                           | **Entry: known bug.** Build a fast deterministic feedback loop, reproduce, rank hypotheses, instrument, fix, regression-test. Small fixes go straight to implement; complex ones feed a spec.                                                                |
-| `/improve-codebase-architecture`      | **Entry: hunting refactors.** Find shallow modules and propose deepening refactors (deletion test, deep modules), informed by `CONTEXT.md` and `docs/agents/adrs/`.                                                                                                 |
-| `/write-spec`                         | Capture the settled plan — pure-markdown `NNNN-<slug>.md` (human goal/scope header + agent design body); its Verification section names the committed tests that prove each behavior. In plan mode, dump the approved plan straight in. Establishes intent.         |
-| `/to-issues`                          | Publish the spec as a parent issue + sub-issues (vertical slices); the tracker becomes the task and status ledger. Skip it only for a single-slice spec you implement in one sitting.                                                                        |
-| **implement (`/tdd`)** | Per issue, in a fresh chat or subagent: one goal at a time (never horizontal batches). Scratch scripts in `tests/temp/` import the real repo to prove behavior, then are refactored into committed tests; the rest are deleted. No mock-slop. `/tdd` also stands alone as a design sketch. |
-| review (host-native)                  | Clean-context review using your harness's built-in reviewer (e.g. Claude `/code-review`, Codex review). Challenge the approach, then flag bugs, bloat, and newly obsolete code before publishing.                                                            |
-| `/ship-pr`                                 | Verify lint/types/tests, group the diff into atomic commits, push, open a draft PR if missing, link it to the tracker issue(s).                                                                                                                              |
+Agent-facing docs (specs, ADRs, research) are never committed to the source
+repo — they live under the gitignored `docs/agents/` symlink into the llmOS
+vault, created by `/setup-repo`.
 
-Not every session hits every phase. The dashed skills are alternate entry points
-or on-demand sketches. Run a host-native review pass before `/ship-pr`. To resume across
-a session boundary, drop a progress comment on the active tracker issue and pick
-it up from there.
+## Versioning
 
-### Roles and the fan-out loop
-
-The main agent is the **orchestrator**: it coordinates, reviews, and holds the
-human gates — it never burns its own context on bulk reads or typing
-implementation. All heavy work is routed to workers by role:
-
-| Role            | Does                                                               | Typical worker         |
-| --------------- | ------------------------------------------------------------------ | ---------------------- |
-| **explorer**    | reads, traces, and summarizes evidence with cited paths            | `swe:explorer`       |
-| **architect**   | resolves design ambiguity and drafts spec bodies, read-only        | `swe:architect`      |
-| **planner**     | slices approved specs and publishes tracker dependency graphs      | `swe:planner`        |
-| **implementer** | executes one bounded code, test, documentation, or tracker task    | `swe:implementer`    |
-| **reviewer**    | reviews against caller-provided criteria or a single lens          | `swe:reviewer`       |
-| **publisher**   | commits, pushes, and creates or updates pull requests              | `swe:publisher`      |
-
-Each `/start-loop` phase maps onto these roles: `sharpen` stays in the main
-session (the interview is HITL) but can commission architects for alternatives;
-spec *drafting* can go to an architect while the main session holds the approval
-gate; `to-issues` goes to a **planner** that reviews the approved spec cold,
-slices, publishes, and returns the issue list; review + `/ship-pr` run in a fresh
-context.
-
-Implementation is the **fan-out loop**:
-
-> take the next unblocked issue → spawn an **implementer** with the issue, a pointer to
-> the spec, and its own `/goal` → review the diff → update the tracker → repeat
-> until `COMPLETE`.
-
-Independent issues fan out in parallel; issues that share files run
-sequentially. Every handoff crosses a context boundary carrying only
-identifiers and artifact pointers (spec path, slug, tracker ids) — never the
-conversation. Blocked workers escalate to the orchestrator, which resolves what
-the spec/ADRs answer, logs the decision as an issue comment, and relaunches —
-the user is interrupted only for scope changes, spec contradictions, blocking
-`ready-for-human` slices, or destructive actions. Designers return proposals for
-the orchestrator to review with the user; workers never converse with the user
-directly.
-
-## Durable decision memory
-
-Knowledge that must outlive a single feature, split by durability and where it
-lives:
-
-- **`docs/agents/adrs/`** — Architecture Decision Records. Durable, but like
-  specs they are **not committed to the source repo**: they live in the shared
-  llmOS vault at `$LLMOS_ROOT/projects/<repo>/adrs`, reached through the
-  gitignored `docs/agents/` symlink. Created lazily by `/sharpen`, `/tdd`, or
-  `/improve-codebase-architecture` when a decision is hard to reverse, surprising
-  without context, and the result of a real trade-off. They stop the agent from
-  re-litigating settled choices. Unlike the transient `docs/agents/specs/` tree,
-  ADRs persist across features.
-- **`CONTEXT.md`** _(optional, repo root, committed)_ — a domain glossary,
-  nothing else. Pins down overloaded terminology (especially useful for
-  ML/research repos). Read by `sharpen`, `diagnose`, and
-  `improve-codebase-architecture`.
-
-The issue tracker is selected at runtime by `/to-issues` — an optional
-`Issue tracker: <name>` line in the repo's `AGENTS.md` wins; otherwise Linear
-when its MCP tools are available, GitHub when the repo has a GitHub remote and
-`gh` works, local markdown named
-`docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md` as the fallback.
-Conventions for each live in the `to-issues` skill's `references/`; there is no
-per-repo config file.
-
-## GitHub Workflow
-
-Specs are work programs, not PR containers. A single spec can produce multiple
-atomic PRs.
-
-- Prefer atomic PRs that can be reviewed independently.
-- Use small, logical commits with imperative, conventional-style subjects.
-- Generate PR titles and bodies directly from `NNNN-<slug>.md`, the linked tracker
-  issues, and the actual diff.
-- Do not create `commits.md` or `draft-pr.md` review artifacts.
-- Use squash merge by default unless the user explicitly asks for another merge
-  method.
-- After a PR merges, comment the PR number, merge or squash commit SHA, and a
-  short note about what shipped on the relevant tracker issue, and move it to
-  Done. Status lives on the tracker, not in a local file.
-
-## Repo Setup
-
-`/setup-repo` sets up a repo for the swe workflow: an injected facts block
-reads the repo state (stack, lockfile, remote, existing files), the skill asks
-which issue tracker to use and drafts a short Structure section, then writes
-the thin repo-root `AGENTS.md` — stack commands (`uv run ruff format` /
-`uv run ruff check` / `uv run ty check` for Python, the repo's real `typecheck`
-script for JS/TS), changesets rules when `.changeset/` exists, and the Agent
-skills block (`Issue tracker:` line, triage labels, domain docs layout) —
-symlinks `CLAUDE.md → AGENTS.md`, and performs the agent docs setup below. The repo
-file carries only repo conventions; the workflow spine and code rules live in
-the user-level instructions, and tracker mechanics stay in `/to-issues`. The repo file carries only repo conventions — the workflow spine
-and code rules already live in the user-level instructions.
-
-## Agent Docs Setup
-
-Agent-facing documentation is never committed to the source repository. It all
-lives under one directory — **`docs/agents/`** — which is a gitignored symlink
-to the project's docs tree in the shared llmOS vault:
-
-```text
-docs/agents -> $LLMOS_ROOT/projects/<project>
-├── specs/     # feature specs, and local-tracker issue files
-├── adrs/      # architecture decision records
-└── research/  # anything else agent-facing lives here too
-```
-
-The link is the whole contract: whatever the project's vault docs tree
-contains shows up under `docs/agents/`, so new categories need no setup step.
-`docs/agents` is the single ignore entry.
-
-`/setup-repo` confirms the project mapping, then runs the reusable operation
-from the installed setup-repo skill. It preflights all collisions before the
-first mutation, migrates legacy project `specs` and `adr` trees plus repository
-`docs/adr` content without overwrite or byte loss, retires the superseded
-`docs/specs`, `docs/adrs`, `specs`, and `adrs` links, and repairs only symlinks:
+Each plugin's version lives in exactly two files, kept identical: its
+`.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. The marketplace
+catalogs carry only names and paths — regenerate them with
+`scripts/gen-marketplaces.py`, never hand-edit. Bump both manifests at once:
 
 ```bash
-: "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
-python3 "<setup-repo-skill-dir>/scripts/setup_project_docs.py" \
-  --repo-root "$(git rev-parse --show-toplevel)" \
-  --llmos-root "$LLMOS_ROOT" \
-  --project "<confirmed-project>"
+scripts/bump-plugin-version.sh swe 1.9.4
 ```
 
-For linked worktrees, point `post-checkout` at that same resolved script. The
-hook recreates missing or incorrect symlinks, never migrates real directories,
-and tells the operator to run `/setup-repo` when migration is required:
-
-```bash
-#!/usr/bin/env bash
-# post-checkout: $1=prev HEAD, $2=new HEAD, $3=1 if branch checkout
-
-# only act on branch checkouts (not file restores)
-[ "$3" = "1" ] || exit 0
-
-# only act when we're inside a linked worktree, not the main repo
-git_dir=$(git rev-parse --git-dir)
-[[ "$git_dir" == *"/worktrees/"* ]] || exit 0
-
-: "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
-python3 "<resolved-setup-repo-skill-dir>/scripts/setup_project_docs.py" \
-  --repo-root "$(pwd)" \
-  --llmos-root "$LLMOS_ROOT" \
-  --project "<confirmed-project>" \
-  --worktree
-```
-
-## Feature Specs
-
-A spec is **`NNNN-<slug>.md`** — nothing more, and pure markdown (created by
-`/write-spec new`). Verification lives in the repo's committed test suite; the
-spec's Verification section names the tests that pin its behaviors.
-
-```text
-docs/agents/specs/
-├── 0001-<slug>.md      # Human goal/scope header + agent-expanded design body
-└── 0002-<slug>.md
-```
-
-Numbered flat, like `docs/agents/adrs/`. The number is the index — `ls` sorts it and
-the highest is the newest, so specs carry no navigation or index file.
-
-`NNNN-<slug>.md` has two ownership zones split by a `---` divider. The **goal/scope
-header** is the user-reviewed contract: goal, scope, non-goals, success criteria,
-validation, and whether implementation is review-gated or autonomous. The
-**design body** is agent-expanded after repo inspection: approach, behavior,
-decision log, risks, and verification mapping. Durable decisions (architecture,
-provider policy, storage model, framework choice) go in the shared vault as ADRs
-under `docs/agents/adrs/`, not the spec.
-
-The spec is a **local, transient design draft** — it forces design thinking and
-gives a review gate, then `/to-issues` hands the work to the tracker. There is no
-local `STATUS.md`: the **issue tracker is the task and status ledger**, because
-it's the one ledger every agent and your phone can read with no local convention.
-
-- `/to-issues` publishes the spec's goal/scope as a **parent issue** plus
-  **sub-issues** (the vertical slices) — the portable default on Linear and
-  GitHub; escalate to a Linear **project** only for large, multi-milestone specs.
-- Status is the issue state, blockers are the blocked-by links, and progress is
-  the container rollup (e.g. 3/7 done) — reviewable remotely, maintained for free.
-- **Resume across agents or context limits:** read the tracker container, grab the
-  next unblocked issue, and before you run out of context drop a short progress
-  comment on the active issue (done / next / the one gotcha). That comment is the
-  handoff, living where the next agent already looks.
-
-Rerun the tests named in the spec's Verification section to confirm behavior.
-Don't keep a separate run log.
-
----
+A bump is inert until it lands on master — both providers install from GitHub,
+not the working copy.
 
 [^1]: Inspired by Matt Pocock's [skills repo](https://github.com/mattpocock/skills)
