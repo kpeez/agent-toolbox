@@ -20,7 +20,7 @@ in it. Handed a summarizing task, it will reconstruct a plausible session
 instead of reporting the real one, and the fabrication is invisible to the
 reader who needed the truth.
 
-This is the exception to `/delegate`. Delegation pays off on token-heavy
+This is the exception to the delegation habit. Delegation pays off on token-heavy
 _input_ — bulk reads, exploration, typing implementation. A handoff is
 token-light output from context you already hold. Writing it yourself is both
 cheaper and the only way to get it right.
