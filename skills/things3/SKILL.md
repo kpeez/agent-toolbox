@@ -1,5 +1,5 @@
 ---
-name: things
+name: things3
 description: Things 3 CLI for reading the local Things database and creating/updating tasks/projects via the Things URL scheme. Use when you need to list, search, or modify Things tasks, projects, areas, or tags from the terminal (deletes use AppleScript).
 ---
 

@@ -167,6 +167,6 @@ experiments, use `lab:autoresearch` instead — it manages worktrees, named
 experiment groups, and result logging. A scratch script is for a question you
 resolve in one sitting.
 
-> Delegate substantial reads and writes per **`/delegate`** — explore with a
-> fast model, draft code with a medium one, and review the diff. Don't burn your
-> own context.
+> Delegate substantial reads and writes to subagents — explore with a fast
+> model, draft code with a medium one, and review the diff. Don't burn your own
+> context.

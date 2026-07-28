@@ -103,31 +103,13 @@ Two semantics worth knowing beyond the template:
   `sharpen`'s `ADR-FORMAT.md`) and are linked from the Decisions section. The
   optional domain glossary is the still-committed `CONTEXT.md` at the repo root.
 
-## Documentation quality
-
-Specs should
-be plain Markdown that is easy to review in an editor, GitHub, or a tracker:
-clear decision up front, explicit scope, nearby evidence, concrete validation,
-and unresolved questions called out plainly.
-
 ## Status lives on the tracker
 
-`/to-issues` selects the tracker (Linear MCP → GitHub → local markdown) and
-publishes the spec into its container — a Linear project, or a parent issue
-with labeled sub-issues. Status is the issue state, blockers are the blocked-by
-links, the rollup is the container view.
-Before running out of context, drop a short progress comment on the active
-issue — what's done, what's next, the one gotcha. That comment is the handoff.
+See `/to-issues` for tracker ownership, status, blockers, and handoff rules.
 
 ## Verification lives in the test suite
 
-Every spec behavior is proven by a committed functional test per `/tdd` —
-written directly, or refactored from a `tests/temp/` scratch script that held
-up (rules live in `/tdd`). These are executable
-demonstrations at caller altitude — real imports, real call paths — not
-unit-test theater. The spec's Verification section names them; the committed
-tests ARE the durable record. Rerun them to verify current state, and paste the
-run result into the issue comment for tracker-linked work.
+See `/tdd` for committed functional-test and scratch-script rules.
 
 ## Resuming work on an existing spec
 
