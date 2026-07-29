@@ -77,6 +77,7 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 | `tdd`                           | Functional-test discipline — scratch scripts in `tests/temp/`, survivors become committed tests |
 | `ship-pr`                       | Group the branch diff into atomic commits, push, open a draft PR; `finalize` flips it ready |
 | `diagnose`                      | Disciplined debugging — build a feedback loop, reproduce, hypothesize, instrument, fix    |
+| `codebase-design`               | Shared deep-module vocabulary — depth, seams, adapters, the deletion test                 |
 | `improve-codebase-architecture` | Find deepening refactors — turn shallow modules into deep ones                            |
 | `merge-conflicts`               | Resolve conflicts by tracing each side's intent; verify with the project's checks         |
 | `research`                      | Investigate a question against primary sources; capture cited findings as markdown        |
