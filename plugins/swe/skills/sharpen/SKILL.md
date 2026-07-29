@@ -30,9 +30,13 @@ Create the file lazily, only when the first term is resolved.
 **Discuss concrete scenarios.** Stress-test domain relationships with specific
 edge-case scenarios that force precision about the boundaries between concepts.
 
-**Escalate close calls to `/deliberate`.** When a decision reduces to two named
-options or a yes/no, don't argue it inline — invoke `/deliberate` to commission
-the two cases, then fold the synthesis back into the interview.
+**Deliberate close calls.** When a decision reduces to two named options or a
+yes/no, build the strongest case for each side *independently* — spawn parallel
+explorers when the evidence needs gathering, and never let one case see the
+other while it's being built. Then synthesize: weigh evidence quality, not
+volume; don't split the difference; "both cases are weak" is a valid outcome
+(say so and recommend gathering data instead). Fold the recommendation back
+into the interview and record load-bearing outcomes as ADRs (below).
 
 ## Recording decisions as ADRs
 
