@@ -11,21 +11,12 @@ AI-navigability.
 
 ## Vocabulary
 
-Use these terms exactly in every suggestion — don't drift into "component,"
+Read the `codebase-design` skill
+([../codebase-design/SKILL.md](../codebase-design/SKILL.md)) first — its
+glossary (module, interface, depth, seam, adapter) and key tests (deletion
+test, interface-as-test-surface, one-vs-two adapters) are the language of every
+suggestion below. Use those terms exactly; don't drift into "component,"
 "service," "API," or "boundary." Consistent language is the point.
-
-- **Module** — anything with an interface and an implementation (function, class, package, slice).
-- **Interface** — everything a caller must know to use the module: types, invariants, error modes, ordering, required config, performance characteristics. Not just the type signature.
-- **Implementation** — the code inside.
-- **Depth** — leverage at the interface: a lot of behaviour behind a small interface. **Deep** = high leverage. **Shallow** = interface nearly as complex as the implementation.
-- **Seam** — where an interface lives; a place behaviour can be altered without editing in place. (Use this, not "boundary.")
-- **Adapter** — a concrete thing satisfying an interface at a seam.
-
-Key principles:
-
-- **Deletion test** — imagine deleting the module. If complexity vanishes, it was a pass-through. If complexity reappears across N callers, it was earning its keep.
-- **The interface is the test surface.**
-- **One adapter = hypothetical seam. Two adapters = real seam.**
 
 This skill is *informed* by the project's domain model: the `CONTEXT.md` glossary
 (if present) gives names to good seams; `docs/agents/adrs/` records decisions the skill

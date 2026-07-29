@@ -131,9 +131,9 @@ area you're touching. Before writing code:
       session), an unresolved interface question is not a user prompt: report
       NEEDS_CONTEXT with the specific question to your orchestrator and stop
       that slice; do not guess the interface.
-- [ ] Identify opportunities for
-      [deep modules](references/deep-modules.md) — small interface, deep
-      implementation
+- [ ] Identify opportunities for deep modules — small interface, deep
+      implementation (vocabulary and key tests in the `codebase-design`
+      skill: [../codebase-design/SKILL.md](../codebase-design/SKILL.md))
 - [ ] Design interfaces for testability — inject boundaries, return results
       ([references/mocking.md](references/mocking.md))
 
