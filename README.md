@@ -81,7 +81,6 @@ Skills follow the [agentskills.io specification](https://agentskills.io/specific
 | `deliberate`                    | Resolve a two-way decision with two independent cases and an evidence-weighted synthesis  |
 | `handoff`                       | Write session residue to the tracker so another model can resume mid-flight               |
 | `merge-conflicts`               | Resolve conflicts by tracing each side's intent; verify with the project's checks         |
-| `zoom-out`                      | Go up a layer of abstraction and map an unfamiliar area of code                           |
 | `research`                      | Investigate a question against primary sources; capture cited findings as markdown        |
 | `qmd`                           | Search local markdown knowledge bases with the `qmd` CLI                                  |
 | `setup-repo`                    | Interview-driven repo setup — thin `AGENTS.md`, `CLAUDE.md` symlink, `docs/agents/` topology |
