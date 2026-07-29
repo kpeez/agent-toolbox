@@ -4,12 +4,39 @@ from __future__ import annotations
 
 import json
 import re
+import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_REFERENCE = re.compile(r"`/([a-z][a-z0-9-]+)`")
 README_ROW = re.compile(r"^\|\s*`([a-z0-9-]+)`\s*\|")
 ALLOWED_HOST_COMMANDS = {"goal", "code-review", "clear"}
+AGENT_MODEL_MATRIX = {
+    "architect": {
+        "claude": ("fable", "high"),
+        "codex": ("gpt-5.6-sol", "high"),
+    },
+    "explorer": {
+        "claude": ("haiku", None),
+        "codex": ("gpt-5.6-luna", "medium"),
+    },
+    "implementer": {
+        "claude": ("opus", "medium"),
+        "codex": ("gpt-5.6-sol", "medium"),
+    },
+    "planner": {
+        "claude": ("sonnet", "medium"),
+        "codex": ("gpt-5.6-terra", "medium"),
+    },
+    "publisher": {
+        "claude": ("sonnet", "medium"),
+        "codex": ("gpt-5.6-terra", "medium"),
+    },
+    "reviewer": {
+        "claude": ("sonnet", "high"),
+        "codex": ("gpt-5.6-terra", "high"),
+    },
+}
 
 
 def plugin_directories() -> list[Path]:
@@ -55,6 +82,41 @@ def readme_skill_names() -> set[str]:
         for line in lines[section_start:section_end]
         if (match := README_ROW.match(line))
     }
+
+
+def claude_agent_settings(role: str) -> tuple[str | None, str | None]:
+    text = (ROOT / "plugins" / "swe" / "agents" / f"{role}.md").read_text()
+    frontmatter = re.match(r"^---\n(.*?)\n---(?:\n|$)", text, re.DOTALL)
+    assert frontmatter is not None
+
+    def field(name: str) -> str | None:
+        match = re.search(
+            rf"^{re.escape(name)}:\s*(.+?)\s*$",
+            frontmatter.group(1),
+            re.MULTILINE,
+        )
+        return match.group(1) if match else None
+
+    return field("model"), field("effort")
+
+
+def codex_agent_settings(role: str) -> tuple[str | None, str | None]:
+    config = tomllib.loads(
+        (ROOT / "plugins" / "swe" / "agents" / f"{role}.toml").read_text()
+    )
+    return config.get("model"), config.get("model_reasoning_effort")
+
+
+def test_swe_agent_models_match_role_complexity() -> None:
+    actual = {
+        role: {
+            "claude": claude_agent_settings(role),
+            "codex": codex_agent_settings(role),
+        }
+        for role in AGENT_MODEL_MATRIX
+    }
+
+    assert actual == AGENT_MODEL_MATRIX
 
 
 def test_frontmatter_names_match_skill_directories() -> None:

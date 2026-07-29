@@ -1,8 +1,8 @@
 name = "publisher"
 description = "Publishes finished work through intentional commits, branch pushes, and pull-request creation or updates."
-model = "gpt-5.6-luna"
+model = "gpt-5.6-terra"
 model_provider = "openai"
-model_reasoning_effort = "xhigh"
+model_reasoning_effort = "medium"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """

@@ -1,7 +1,8 @@
 ---
 name: reviewer
 description: Read-only code reviewer. Evaluates a diff or implementation against caller-provided criteria or a single lens.
-model: opus
+model: sonnet
+effort: high
 allowed-tools: Read, Grep, Glob, Bash
 ---
 

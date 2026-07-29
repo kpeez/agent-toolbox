@@ -64,13 +64,23 @@ sequential slowness.
 
 ### Model selection
 
-Use the least powerful model sufficient for the task:
+Each role pins the least powerful default that still covers its full contract:
 
-| Complexity | Signals                                                     | Role        | Claude                |
-| ---------- | ----------------------------------------------------------- | ----------- | --------------------- |
-| Low        | 1–2 files, mechanical change, complete spec                 | explorer    | haiku                 |
-| Medium     | Multi-file, integration concerns, pattern matching          | implementer | sonnet (or opus, low) |
-| High       | Architecture, design judgment, broad codebase understanding | architect   | fable / opus (high)   |
+| Role        | Claude        | Codex                    | Why                                                   |
+| ----------- | ------------- | ------------------------ | ----------------------------------------------------- |
+| explorer    | haiku         | luna, medium             | Bounded read-only lookup and evidence gathering       |
+| architect   | fable, high   | sol, high                | Open-ended design resolution and specification        |
+| planner     | sonnet, medium | terra, medium           | Constrained decomposition of an approved design       |
+| implementer | opus, medium  | sol, medium              | Quality-first code changes with controlled token spend |
+| reviewer    | sonnet, high  | terra, high              | Narrow but correctness-sensitive checking             |
+| publisher   | sonnet, medium | terra, medium           | Procedural release work with commit-boundary judgment |
+
+Claude Haiku does not support the per-agent `effort` setting, so the explorer
+intentionally specifies only its model. The architect's `fable` pin degrades
+gracefully — where Fable 5 is unavailable, the subagent falls back to the
+session's inherited model rather than failing. Keep these role defaults in the
+provider agent definitions; do not spend frontier-model tokens on a bounded
+role by default.
 
 Always tell the worker to follow the verification discipline — prove each
 stated goal with a functional test per `/tdd`, run and passing — and to report
