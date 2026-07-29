@@ -13,7 +13,7 @@ README_ROW = re.compile(r"^\|\s*`([a-z0-9-]+)`\s*\|")
 ALLOWED_HOST_COMMANDS = {"goal", "code-review", "clear"}
 AGENT_MODEL_MATRIX = {
     "architect": {
-        "claude": ("opus", "high"),
+        "claude": ("fable", "high"),
         "codex": ("gpt-5.6-sol", "high"),
     },
     "explorer": {
