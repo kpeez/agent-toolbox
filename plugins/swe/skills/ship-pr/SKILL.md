@@ -1,6 +1,6 @@
 ---
 name: ship-pr
-description: Publish branch work. Default — group the current branch diff into atomic commits, push, and open a draft PR if missing. `/ship-pr finalize` — re-verify and flip the draft PR to ready for review.
+description: Publish branch work as atomic commits, a push, and a draft PR. Use when the user runs /ship-pr, or proactively when branch changes reach a stable verified state (lint, types, tests green) with no more edits in flight — commit and keep a draft PR current without being asked. `/ship-pr finalize` (user-triggered only) re-verifies and flips the draft PR to ready for review.
 ---
 
 # /ship-pr — Group, Commit, Push, Draft PR
@@ -11,15 +11,21 @@ commits, push, and ensure a draft PR exists.
 Two modes:
 
 - **Default** (`/ship-pr [spec]`) — the workflow below: verify, group, commit,
-  push, draft PR.
+  push, draft PR. May run **quasi-autonomously**: when the work on the branch
+  reaches a stable verified state, run this mode without being asked. Its
+  outputs are all reversible or draft-gated — commits on a branch, a push, a
+  draft PR — so autonomous invocation is safe; flipping to ready is not part
+  of it.
 - **Finalize** (`/ship-pr finalize`) — closing step, see
-  [Finalize](#finalize-ship-pr-finalize). Merging stays a human action.
+  [Finalize](#finalize-ship-pr-finalize). Only the user triggers this mode.
+  Merging stays a human action.
 
 ## Rules
 
 - **Atomic commits.** Imperative, informative subjects. One coherent intent per commit —
   never mixed — ordered so each commit leaves the tree buildable.
-- **PR title and body come from NNNN-<slug>.md, linked tracker issues, and the diff.**
+- **PR title and body come from NNNN-<slug>.md, linked tracker issues, and the
+  diff** — shaped per [PR body](#pr-body) below.
 - **No tracker leakage.** PR bodies, titles, and commit messages are
   self-contained technical text — never include tracker URLs, issue quotes, or
   workflow/process chatter. The PR link lives on the tracker side (private may
@@ -38,6 +44,29 @@ Two modes:
 - **Verify before you commit.** Lint, types, and tests (including the tests
   named in the spec's Verification section) must pass first; a failing check is
   a stop, not a warning.
+
+## PR body
+
+Written for a reviewer with no session context. Three parts:
+
+- **What & why** — the problem, what changed, and why this approach. One or two
+  short paragraphs of self-contained technical text; no process narration.
+- **Reviewer's guide** — how to read the diff: the load-bearing change first,
+  a suggested commit-by-commit order, and which parts are mechanical noise
+  (renames, generated files, formatting).
+- **Verification** — behavioral evidence, not gate status. **Never list
+  lint/type-check/test-suite runs as verification** — those are global
+  blockers; passing them is the price of admission, not proof of anything.
+  Instead demonstrate the stated goals working:
+  - a reproducible command a reviewer can paste, with the actual observed
+    output (or a before → after comparison);
+  - the specific committed tests that pin each goal, by name — not "pytest
+    passed";
+  - known gaps and pre-existing failures, stated explicitly.
+
+  If you cannot produce a single reproducible demonstration of the change,
+  say so and explain what a reviewer should look at instead — don't pad the
+  section with gate output.
 
 ## Workflow
 

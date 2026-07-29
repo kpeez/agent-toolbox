@@ -90,9 +90,9 @@ missing context and re-dispatch, or diagnose a block before retrying.
 
 ### After each task
 
-Update the tracker issue: move it to Done, or comment progress (what's done,
-what's next, the one gotcha). Status and tasks live on the tracker, not in a
-local file.
+Update the tracker issue: move it to Done, or comment progress using the
+residue checklist from "Implement one slice" step 4. Status and tasks live on
+the tracker, not in a local file.
 
 ### Escalation ladder
 
@@ -116,8 +116,18 @@ the fan-out above; that's the orchestrator's job.
    design is uncertain.
 3. Verification gates, in order: lint → types → tests. A failure at any gate
    stops the slice; it is not a warning to note and continue past.
-4. Comment tracker progress on the issue: what's done, what's next, the one
-   gotcha. This comment is your required output, not optional bookkeeping.
+4. Comment tracker progress on the issue before you finish or run out of
+   context. Don't re-narrate what artifacts already record (the diff, the spec,
+   issue state) — write only the residue the session holds, a line or two per
+   non-empty category, leading with Resume:
+   - **Resume** — the concrete next action: the command to run, the step to take
+   - **Ruled out** — approaches tried and abandoned, and why
+   - **Gotcha** — non-obvious constraints discovered the hard way
+   - **Correction** — where the spec or issue body is now stale, and what's true
+   - **In flight** — work started but not committed, and its state
+
+   This comment is your required output, not optional bookkeeping — the next
+   agent reads it as the handoff.
 5. Report status to whoever orchestrates you — DONE / DONE_WITH_CONCERNS /
    NEEDS_CONTEXT / BLOCKED. If mid-slice you hit a decision only a human can
    make: in a workflow run, comment exactly what's needed and report
