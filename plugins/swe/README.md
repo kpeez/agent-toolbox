@@ -73,21 +73,28 @@ structured data (identifiers in, typed status out, never prose).
 flowchart TD
   L(["launch args:<br/>specPath, slug, containerId,<br/>baseBranch, scriptsDir"]) --> S["Slice<br/>planner publishes vertical slices"]
   S --> F{"frontier query:<br/>workable slices?"}
-  F -- "pending" --> IM["implementer<br/>one slice per agent,<br/>isolated worktree"]
-  IM --> R{"reviewer<br/>verdict"}
-  R -- "fix<br/>(max 2 rounds)" --> IM
-  R -- "pass" --> M["sequential merge<br/>into baseBranch"]
+  F -- "pending" --> IM["implementer<br/>one slice per agent,<br/>isolated worktree,<br/>gated on its own tests"]
+  IM --> M["settle: one agent merges<br/>and marks the whole round"]
   M --> F
-  F -- "drained" --> SR["spec review<br/>missed / wrong / bloat lenses"]
-  SR -- "findings<br/>(1 re-entry)" --> FF["planner files<br/>fix slices"]
+  F -- "drained" --> R{"one adherence review<br/>of the assembled work"}
+  R -- "findings<br/>(max 2 fix rounds)" --> FX["fixer on baseBranch"]
+  FX --> R
+  R -- "still open<br/>(1 re-entry)" --> FF["planner files<br/>fix slices"]
   FF --> F
-  SR -- "settled" --> SH["Ship<br/>publisher: atomic commits,<br/>push, draft PR"]
-  SH --> OUT(["summary: prUrl, slicesCompleted,<br/>escalations, cutList"])
+  R -- "settled" --> SH["Ship<br/>publisher: atomic commits,<br/>push, draft PR"]
+  SH --> OUT(["summary: prUrl, slicesCompleted,<br/>escalations"])
 ```
 
+The code is reviewed **once**, assembled, rather than per slice and then again
+through a lens panel: a slice's own gate is the lint/types/tests its
+implementer already runs, which cost no tokens. In the run that motivated this
+shape, reviewing the same lines three times was 52% of the token spend, and
+merging and marking each slice through its own agent was another 15% of it
+spent on deterministic git and one API call per slice.
+
 The loop's cost ceilings are explicit constants, guarded by a static test:
-each slice gets at most **2** implement/review fix rounds, spec-review
-findings re-enter the frontier loop at most **once**, and the frontier loop
+the assembled review gets at most **2** fix rounds, surviving findings
+re-enter the frontier loop at most **once**, and the frontier loop
 itself caps at **25** rounds — anything that will not settle inside those
 bounds becomes a loud escalation instead of a longer run. Remaining
 bloat-lens findings become the cut list; every other unresolved finding

@@ -7,6 +7,16 @@ the single `agentspec` plugin.
 
 ## 1.9.7 — 2026-07-29
 
+- Cut the loop's token cost roughly in half by removing duplicated reading, not
+  capability. Measured on a real 35-agent run (55.9M cache reads against 302K
+  output tokens — the spend is context re-reads, not generation): the same diff
+  was reviewed three times (52% of the run) and each slice was merged and
+  marked by its own pair of agents (15%). Now the code is reviewed **once**,
+  assembled, through a single adherence lens, with a slice's own lint/types/
+  tests as its pre-merge gate; one settle agent merges and marks a whole round
+  in order; and surviving findings are fixed in place on the integration branch
+  before re-slicing them onto the tracker is considered. The `missed`/`wrong`/
+  `bloat` lens panel and the run summary's `cutList` are gone with it.
 - Recreate the gitignored `docs/agents` symlink inside git worktrees:
   `hooks/link-docs-agents.sh`, wired on `SubagentStart` and `SessionStart`,
   mirrors the main worktree's link target so a slice worktree can read
