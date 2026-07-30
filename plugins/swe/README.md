@@ -96,9 +96,8 @@ The loop's cost ceilings are explicit constants, guarded by a static test:
 the assembled review gets at most **2** fix rounds, surviving findings
 re-enter the frontier loop at most **once**, and the frontier loop
 itself caps at **25** rounds — anything that will not settle inside those
-bounds becomes a loud escalation instead of a longer run. Remaining
-bloat-lens findings become the cut list; every other unresolved finding
-becomes an escalation in the summary.
+bounds becomes a loud escalation instead of a longer run. Unresolved findings
+remain structured in the run summary's escalations.
 
 Slices run concurrently: implementers work in isolated git worktrees and
 merges into the integration branch are serialized, so parallel slices never

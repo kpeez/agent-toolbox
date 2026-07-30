@@ -112,7 +112,7 @@ catalogs carry only names and paths — regenerate them with
 `scripts/gen-marketplaces.py`, never hand-edit. Bump both manifests at once:
 
 ```bash
-scripts/bump-plugin-version.sh swe 1.9.7
+scripts/bump-plugin-version.sh swe 1.9.8
 ```
 
 A bump is inert until it lands on master — both providers install from GitHub,

@@ -53,7 +53,7 @@ the repository itself.
 7. When a caller schema is in play and the run did not complete (the ceiling
    expired — `timeout` exits 124, or 143 when Codex is killed — or Codex
    exited non-zero), report through the schema's designated non-completion
-   channel: for a slice review that is `verdict: "did-not-complete"` with the
+   channel: for a review that is `verdict: "did-not-complete"` with the
    stderr and exit code in `detail`. Never report a non-completion as
    substantive output. A timeout recorded as `verdict: "findings"` is what
    burned a real run's fix round and then fed a fixer partial output it acted
