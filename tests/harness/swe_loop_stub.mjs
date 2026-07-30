@@ -1,47 +1,70 @@
-// Drives plugins/swe/workflows/swe-loop.js against scripted agent results.
+// Drives plugins/swe/workflows/swe-loop.js end to end with scripted agent
+// results, so conductor behavior (retries, escalations, what a prompt says) is
+// testable without spawning a single real agent.
 //
-// The workflow is written for a runtime that wraps the file in an async
-// function (it ends in a top-level `return`), so it is compiled here the same
-// way rather than imported as a module.
+// The workflow is written for a runtime that supplies `args/agent/log/phase/
+// pipeline/parallel` as ambient bindings and permits a top-level `return`, so
+// it is compiled here as the body of an async function with those parameters
+// rather than imported as a module. `setTimeout` is a parameter too: the stub's
+// version records the requested delay and fires immediately, which is what
+// makes a 30 s/120 s backoff assertable in a millisecond test.
 //
-// Usage: node swe_loop_stub.mjs <scenario.json>
-//   scenario = { args, responses: [{ match: <regex on the agent label>, result }] }
-// Prints { calls: [{label, prompt, options}], result } as JSON on stdout.
+// Usage: node swe_loop_stub.mjs <config.json>, JSON result on stdout.
+// Config: {
+//   workflowPath, args,
+//   responses: [{ match: <regex on the call label>, result: <any|null>, times? }],
+//   defaultResult: <any|null>   // for labels no response matches
+// }
 import { readFileSync } from 'node:fs'
-import { dirname, resolve } from 'node:path'
-import { fileURLToPath } from 'node:url'
-
-const here = dirname(fileURLToPath(import.meta.url))
-const scenario = JSON.parse(readFileSync(process.argv[2], 'utf8'))
-const source = readFileSync(resolve(here, '../../plugins/swe/workflows/swe-loop.js'), 'utf8')
-
-const calls = []
-const agent = async (prompt, options = {}) => {
-  const label = options.label || ''
-  calls.push({ label, prompt, options })
-  const rule = scenario.responses.find(entry => new RegExp(entry.match).test(label))
-  return rule ? rule.result : null
-}
-const log = () => {}
-const phase = () => {}
-const pipeline = async (items, ...stages) => {
-  const outcomes = []
-  for (const item of items) {
-    let carried = null
-    for (const stage of stages) carried = await stage(carried, item)
-    outcomes.push(carried)
-  }
-  return outcomes
-}
-const parallel = async thunks => {
-  const results = []
-  for (const thunk of thunks) results.push(await thunk())
-  return results
-}
 
 const AsyncFunction = Object.getPrototypeOf(async () => {}).constructor
-const body = source.replace(/^export const meta/m, 'const meta')
-const run = new AsyncFunction('agent', 'log', 'phase', 'pipeline', 'parallel', 'args', body)
-const result = await run(agent, log, phase, pipeline, parallel, scenario.args)
 
-process.stdout.write(JSON.stringify({ calls, result }))
+const config = JSON.parse(readFileSync(process.argv[2], 'utf8'))
+const source = readFileSync(config.workflowPath, 'utf8').replace(/^export const meta =/m, 'const meta =')
+
+const calls = []
+const logs = []
+const phases = []
+const sleeps = []
+const scripted = (config.responses || []).map(response => ({
+  pattern: new RegExp(response.match),
+  result: response.result === undefined ? {} : response.result,
+  remaining: response.times === undefined ? Infinity : response.times,
+}))
+const defaultResult = config.defaultResult === undefined ? {} : config.defaultResult
+
+const agent = async (prompt, options = {}) => {
+  const label = options.label || ''
+  calls.push({ label, phase: options.phase || null, agentType: options.agentType || null, prompt })
+  const hit = scripted.find(response => response.remaining > 0 && response.pattern.test(label))
+  if (!hit) return defaultResult
+  hit.remaining -= 1
+  return hit.result
+}
+const log = line => logs.push(String(line))
+const phase = title => phases.push(String(title))
+const pipeline = async (items, ...stages) =>
+  Promise.all(
+    items.map(async item => {
+      let carried = null
+      for (const stage of stages) carried = await stage(carried, item)
+      return carried
+    }),
+  )
+const parallel = async fns => Promise.all(fns.map(fn => fn()))
+const stubSetTimeout = (fn, ms) => {
+  sleeps.push(ms)
+  return setTimeout(fn, 0)
+}
+
+const run = new AsyncFunction('args', 'agent', 'log', 'phase', 'pipeline', 'parallel', 'setTimeout', source)
+
+let summary = null
+let error = null
+try {
+  summary = await run(config.args, agent, log, phase, pipeline, parallel, stubSetTimeout)
+} catch (e) {
+  error = e.message
+}
+
+process.stdout.write(JSON.stringify({ summary, error, calls, logs, phases, sleeps }, null, 2))

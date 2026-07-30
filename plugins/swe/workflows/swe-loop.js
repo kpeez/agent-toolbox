@@ -23,6 +23,21 @@ const SPEC_REVIEW_REENTRIES = 1
 const MAX_FRONTIER_ROUNDS = 25
 const SLICE_COMPLETE_MARKER = '<!-- knack:slice-complete -->'
 const REVIEW_LENSES = ['missed', 'wrong', 'bloat']
+// The frontier agent call is the one place where a harness/API failure (an
+// overloaded-API 529 killed two observed runs after zero work) takes the whole
+// run down, so a null result -- the shape every such failure arrives in -- is
+// retried with backoff. A non-null result carrying `error` is a real,
+// deterministic tracker failure and is never retried.
+const FRONTIER_ATTEMPTS = 3
+const FRONTIER_BACKOFF_MS = [30000, 120000]
+// Tight on purpose: the hint names a missing or rejected credential, and every
+// string a tracker query emits for that names a 401/403, "credential",
+// "api key", "login", or "unauthorized"/"forbidden". A bare `token` is absent
+// because it false-positives on token-limit errors -- a wrong hint sent one
+// run's operator debugging a valid credential.
+const AUTH_ERROR_SIGNATURE = /\b40[13]\b|unauthorized|forbidden|credential|api[ _-]?key|login/i
+const AUTH_HINT =
+  ' — this looks like an auth failure: the tracker credential named in the tracker reference is missing or invalid in the agent environment; fix it and resume'
 
 // `args` may arrive as the caller's raw JSON string rather than the parsed
 // object, depending on the invoking runtime; normalize so both work. A string
@@ -412,18 +427,37 @@ if (resumeIssueId) {
 }
 
 // ---- Implement --------------------------------------------------------------
-const runFrontierLoop = async passLabel => {
-  phase('Implement')
-  for (let round = 1; round <= MAX_FRONTIER_ROUNDS; round += 1) {
+// Null means the agent call itself died (harness or API), which is transient;
+// retry it with backoff. Anything non-null -- including a result carrying
+// `error` -- is the tracker's own answer and is returned to the caller as-is.
+const requestFrontier = async label => {
+  for (let attempt = 1; attempt <= FRONTIER_ATTEMPTS; attempt += 1) {
     const frontier = await agent(promptFrontier(), {
-      label: `frontier:${passLabel}:${round}`,
+      label: attempt === 1 ? label : `${label}:retry${attempt - 1}`,
       phase: 'Implement',
       effort: 'low',
       schema: FRONTIER_SCHEMA,
     })
+    if (frontier) return frontier
+    if (attempt === FRONTIER_ATTEMPTS) return null
+    const wait = FRONTIER_BACKOFF_MS[attempt - 1]
+    log(`Frontier attempt ${attempt}/${FRONTIER_ATTEMPTS} returned nothing — retrying in ${wait / 1000}s.`)
+    await new Promise(resolve => setTimeout(resolve, wait))
+  }
+  return null
+}
+
+const runFrontierLoop = async passLabel => {
+  phase('Implement')
+  for (let round = 1; round <= MAX_FRONTIER_ROUNDS; round += 1) {
+    const frontier = await requestFrontier(`frontier:${passLabel}:${round}`)
     if (!frontier || frontier.error) {
-      const reason = frontier ? frontier.error : 'frontier agent returned nothing'
-      escalateRun('frontier query', `${reason} — if this is an auth or credential failure, the tracker credential named in the tracker reference is missing or invalid in the agent environment; fix it and resume`)
+      // Verbatim and unclipped: this reason is the only record of what actually
+      // failed, and a truncated 529 or GraphQL error reads as a mystery.
+      const reason = frontier
+        ? String(frontier.error)
+        : `frontier agent returned nothing after ${FRONTIER_ATTEMPTS} attempts`
+      escalateRun('frontier query', AUTH_ERROR_SIGNATURE.test(reason) ? `${reason}${AUTH_HINT}` : reason)
       log(`Frontier query failed (${reason}) — stopping the ${passLabel} loop rather than reading it as an empty frontier.`)
       return
     }
