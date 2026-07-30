@@ -36,6 +36,12 @@ AGENT_MODEL_MATRIX = {
         "claude": ("sonnet", "high"),
         "codex": ("gpt-5.6-terra", "high"),
     },
+    # Claude-side only: on the Codex harness the host is Codex, so the
+    # delegator has no .toml twin.
+    "codex-delegator": {
+        "claude": ("sonnet", "low"),
+        "codex": (None, None),
+    },
 }
 
 
@@ -101,10 +107,36 @@ def claude_agent_settings(role: str) -> tuple[str | None, str | None]:
 
 
 def codex_agent_settings(role: str) -> tuple[str | None, str | None]:
-    config = tomllib.loads(
-        (ROOT / "plugins" / "swe" / "agents" / f"{role}.toml").read_text()
-    )
+    path = ROOT / "plugins" / "swe" / "agents" / f"{role}.toml"
+    if not path.is_file():
+        return (None, None)
+    config = tomllib.loads(path.read_text())
     return config.get("model"), config.get("model_reasoning_effort")
+
+
+SWE_LOOP = ROOT / "plugins" / "swe" / "workflows" / "swe-loop.js"
+
+
+def test_swe_loop_routes_worker_roles_through_the_roles_map() -> None:
+    text = SWE_LOOP.read_text()
+
+    routable = re.search(r"ROUTABLE_ROLES = \[([^\]]+)\]", text)
+    assert routable is not None
+    declared = set(re.findall(r"'([a-z-]+)'", routable.group(1)))
+    routed = set(re.findall(r"agentTypeFor\('([a-z-]+)'\)", text))
+    assert routed == declared == {"planner", "implementer", "reviewer", "publisher"}
+
+    # A hardcoded agentType in any quoting style would bypass the roles arg.
+    assert re.findall(r"agentType:\s*['\"`]swe:", text) == []
+
+
+def test_swe_loop_cost_ceilings_stay_pinned() -> None:
+    text = SWE_LOOP.read_text()
+
+    # The run's cost ceilings; widening either silently is the drift this
+    # guards (see the comment above the constants in swe-loop.js).
+    assert "const MAX_FIX_ROUNDS = 2" in text
+    assert "const SPEC_REVIEW_REENTRIES = 1" in text
 
 
 def test_swe_agent_models_match_role_complexity() -> None:
