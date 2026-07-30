@@ -8,6 +8,7 @@ summary says.
 from __future__ import annotations
 
 import json
+import shutil
 import subprocess
 from pathlib import Path
 from typing import Any
@@ -25,6 +26,8 @@ LAUNCH_ARGS = {
     "baseBranch": "worktree-stub",
     "scriptsDir": "/opt/swe/scripts",
 }
+
+pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="node is required")
 
 # Sentinel meaning "omit defaultResult from the config" (the harness then
 # answers unmatched labels with {}). Pass default_result=None to make
@@ -65,6 +68,10 @@ def call_with_label(result: dict[str, Any], label: str) -> dict[str, Any]:
         f"no agent call labelled {label}; got {[c['label'] for c in result['calls']]}"
     )
     return matches[0]
+
+
+def labels(result: dict[str, Any]) -> list[str]:
+    return [call["label"] for call in result["calls"]]
 
 
 def frontier_calls(result: dict[str, Any]) -> list[str]:
@@ -288,6 +295,176 @@ def test_slice_review_prompt_requires_a_file_line_anchor(tmp_path: Path) -> None
     )
 
     assert "file:line" in call_with_label(result, "review:KP-3")["prompt"]
+
+
+# ---- did-not-complete slice reviews -----------------------------------------
+
+
+SLICE = {"id": "issue-1", "identifier": "KP-1", "title": "one slice"}
+
+
+def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
+    """A run whose first frontier round yields KP-1 and then drains.
+
+    Test-specific responses come first so they win over the happy-path
+    fallbacks that answer whatever the test did not script.
+    """
+    return [
+        {"match": "^frontier:implement:1$", "result": {"issues": [SLICE]}},
+        *responses,
+        {"match": "^frontier:", "result": {"issues": []}},
+        {
+            "match": "^implement:KP-1$",
+            "result": {
+                "status": "DONE",
+                "branch": "knack/slice/KP-1",
+                "summary": "KP-1 implemented",
+            },
+        },
+        {"match": "^(review|re-review):", "result": {"verdict": "pass"}},
+        {"match": "^spec-review:", "result": {"findings": []}},
+        {"match": "^merge:KP-1$", "result": {"merged": True, "detail": "merged"}},
+        {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+    ]
+
+
+def run_one_slice(tmp_path: Path, *responses: dict[str, Any]) -> dict[str, Any]:
+    # issueId makes this a targeted resume: the slice phase is skipped and the
+    # frontier call is the first one, as in the runs these tests pin.
+    return run_loop(tmp_path, one_slice(*responses), args={"issueId": "issue-1"})
+
+
+def test_did_not_complete_review_consumes_no_fix_round(tmp_path: Path) -> None:
+    run = run_one_slice(
+        tmp_path,
+        {
+            "match": "^review:KP-1$",
+            "result": {"verdict": "did-not-complete", "detail": "codex run timed out"},
+        },
+        {"match": "^review:KP-1:retry$", "result": {"verdict": "pass"}},
+    )
+
+    called = labels(run)
+    assert called.count("review:KP-1") == 1
+    assert called.count("review:KP-1:retry") == 1
+    # The dead review never reached a fixer, and no fix round was spent.
+    assert [label for label in called if label.startswith("fix:")] == []
+    assert run["summary"]["slicesCompleted"] == ["KP-1"]
+    assert run["summary"]["escalations"] == []
+
+
+def test_second_did_not_complete_escalates_without_findings(tmp_path: Path) -> None:
+    run = run_one_slice(
+        tmp_path,
+        {
+            "match": "^review:KP-1$",
+            "result": {"verdict": "did-not-complete", "detail": "codex run timed out"},
+        },
+        {
+            "match": "^review:KP-1:retry$",
+            "result": {"verdict": "did-not-complete", "detail": "timed out again"},
+        },
+    )
+
+    called = labels(run)
+    assert called.count("review:KP-1:retry") == 1
+    assert [label for label in called if label.startswith(("fix:", "merge:"))] == []
+    escalations = run["summary"]["escalations"]
+    assert [entry["issue"] for entry in escalations] == ["KP-1"]
+    reason = escalations[0]["reason"]
+    assert "never completed" in reason
+    assert "knack/slice/KP-1" in reason
+    assert "no findings recorded" in reason
+    assert "no fix round consumed" in reason
+    assert run["summary"]["slicesCompleted"] == []
+
+
+def test_did_not_complete_re_review_does_not_increment_the_fix_round(
+    tmp_path: Path,
+) -> None:
+    run = run_one_slice(
+        tmp_path,
+        {
+            "match": "^review:KP-1$",
+            "result": {"verdict": "findings", "findings": ["a.js:12 — guard the null"]},
+        },
+        {
+            "match": "^re-review:KP-1:1$",
+            "result": {"verdict": "did-not-complete", "detail": "reviewer tool failed"},
+        },
+        {"match": "^re-review:KP-1:1:retry$", "result": {"verdict": "pass"}},
+    )
+
+    called = labels(run)
+    # One fixer ran, its re-review's non-completion cost nothing, and the second
+    # fix round was never needed or spent.
+    assert [label for label in called if label.startswith("fix:")] == ["fix:KP-1:1"]
+    assert "re-review:KP-1:2" not in called
+    assert run["summary"]["slicesCompleted"] == ["KP-1"]
+    assert run["summary"]["escalations"] == []
+
+
+def test_second_did_not_complete_re_review_escalates_with_no_findings(
+    tmp_path: Path,
+) -> None:
+    run = run_one_slice(
+        tmp_path,
+        {
+            "match": "^review:KP-1$",
+            "result": {"verdict": "findings", "findings": ["a.js:12 — guard the null"]},
+        },
+        {
+            "match": "^re-review:KP-1:1$",
+            "result": {"verdict": "did-not-complete", "detail": "reviewer tool failed"},
+        },
+        {"match": "^re-review:KP-1:1:retry$", "result": None},
+    )
+
+    called = labels(run)
+    assert [label for label in called if label.startswith("fix:")] == ["fix:KP-1:1"]
+    reason = run["summary"]["escalations"][0]["reason"]
+    assert "re-review after fix round 1 never completed" in reason
+    assert "the retry returned no verdict" in reason
+    assert run["summary"]["slicesCompleted"] == []
+
+
+def test_null_first_review_still_escalates_immediately(tmp_path: Path) -> None:
+    run = run_one_slice(tmp_path, {"match": "^review:KP-1$", "result": None})
+
+    assert "review:KP-1:retry" not in labels(run)
+    assert (
+        run["summary"]["escalations"][0]["reason"] == "slice review returned no verdict"
+    )
+
+
+def test_errored_spec_review_lens_is_unreviewed_and_its_findings_discarded(
+    tmp_path: Path,
+) -> None:
+    run = run_one_slice(
+        tmp_path,
+        {
+            "match": "^spec-review:missed$",
+            "result": {
+                "error": "review tool crashed",
+                "findings": [
+                    {
+                        "lens": "missed",
+                        "title": "partial",
+                        "detail": "junk",
+                        "severity": "high",
+                    }
+                ],
+            },
+        },
+    )
+
+    called = labels(run)
+    assert [label for label in called if label.startswith("file-findings")] == []
+    escalations = run["summary"]["escalations"]
+    assert [entry["title"] for entry in escalations] == ["spec review: missed"]
+    assert "unreviewed, not clean" in escalations[0]["reason"]
+    assert "review tool crashed" in escalations[0]["reason"]
+    assert run["summary"]["cutList"] == []
 
 
 # ---- frontierCmd launch arg -------------------------------------------------
