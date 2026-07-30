@@ -35,7 +35,7 @@ Triage's verdict, the gate record, the run id, and the launch args all need
 `containerId`, so on **every** run, new or resumed, first search the tracker for
 the immutable `<!-- knack-spec: <repo>/<slug> -->` marker bound to this
 repository. Found → reuse that container. Missing → create it per `/to-issues`'s
-container conventions (Linear project, or parent issue), stamped with the same
+container conventions for the repo's tracker, stamped with the same
 marker; `/to-issues` dedupes on it later, so this never yields a second one.
 
 ## 2. Triage — the conditional gate policy
@@ -103,10 +103,11 @@ one already-published slice set.
 
 `scriptsDir` is the **expanded absolute path** to the installed plugin's
 `scripts/` directory — resolve `${CLAUDE_PLUGIN_ROOT}/scripts` to a real `/…`
-path and pass that. The conductor's agents run `frontier.py` from there and the
-target repo does not contain it; their shells do not define `CLAUDE_PLUGIN_ROOT`,
+path and pass that. The conductor's agents run the plugin's scripts from there
+(validators, any frontier script the tracker reference names) and the target
+repo does not contain them; their shells do not define `CLAUDE_PLUGIN_ROOT`,
 so passing the literal `${CLAUDE_PLUGIN_ROOT}/scripts` string fails every
-frontier query. The conductor rejects a non-absolute value outright.
+run that needs one. The conductor rejects a non-absolute value outright.
 
 Optional `roles` routes loop roles to Codex. When the user asked for Codex on
 this run, add a `roles` map to the args — keys among `planner`,

@@ -67,6 +67,13 @@ if (!scriptsDir.startsWith('/')) {
 }
 const resumeIssueId = ARGS.issueId || null
 
+// Tracker mechanics never live in this file: prompts resolve the repo's
+// tracker at runtime and follow the matching to-issues reference (installed
+// beside scripts/ in the same plugin), so the loop runs the same over
+// whichever tracker the repo pins.
+const trackerRefsDir = `${scriptsDir.replace(/\/scripts\/?$/, '')}/skills/to-issues/references`
+const trackerGuide = `Tracker: resolve this repo's tracker per the to-issues skill — an "Issue tracker:" line in the repo's AGENTS.md/CLAUDE.md wins, else the skill's selection ladder — then follow the matching reference in ${trackerRefsDir}/ for every tracker operation.`
+
 // ---- role routing -------------------------------------------------------
 // The launcher may route any capability role to Codex; every other agent
 // (frontier, merge, tracker bookkeeping) is loop plumbing and stays on the
@@ -106,7 +113,7 @@ const FRONTIER_SCHEMA = {
     },
     error: {
       type: 'string',
-      description: 'set ONLY when the frontier could not be determined (auth, HTTP, GraphQL). An empty issues list means the frontier is genuinely drained, never that a query failed.',
+      description: 'set ONLY when the frontier could not be determined (auth, network, failed tracker query). An empty issues list means the frontier is genuinely drained, never that a query failed.',
     },
   },
 }
@@ -189,14 +196,16 @@ and fix whatever it rejects; publish only bodies that pass.`
 
 const promptFrontier = () => `Report this run's workable slices as JSON.
 
-1. From the repo root run:
-   uv run ${scriptsDir}/frontier.py --project ${containerId}
-   It prints a JSON array of {id, identifier, title, labels}. If it exits
-   non-zero, put its stderr in the "error" field and return an empty issues
-   list -- an empty list with no error means the run is finished, so never
-   report a failure that way.
-2. For each returned issue read its Linear comments (GraphQL at
-   https://api.linear.app/graphql; LINEAR_API_KEY is in your environment).
+${trackerGuide}
+
+1. Compute the workable frontier of container ${containerId} per the
+   reference's "swe-loop frontier" section — open issues with no open blocker
+   and no ready-for-human label, each as {id, identifier, title}. Scripts the
+   reference names live in ${scriptsDir}. If the query FAILS (auth, network,
+   missing credential, non-zero script exit), put the failure text in the
+   "error" field and return an empty issues list -- an empty list with no
+   error means the run is finished, so never report a failure that way.
+2. For each returned issue read its tracker comments per the reference.
 3. DROP every issue whose comments contain the literal marker
    ${SLICE_COMPLETE_MARKER} — that slice is already implemented on a branch in
    this run even though its tracker state has not advanced yet.
@@ -245,8 +254,9 @@ ${numbered(findings)}
 Do not push and do not merge. Return a concise completion note; this call has
 no additional output schema.`
 
-const promptCompletionMark = (issue, summary) => `Post one comment on tracker issue ${issue.identifier} (Linear GraphQL at
-https://api.linear.app/graphql; LINEAR_API_KEY is in your environment).
+const promptCompletionMark = (issue, summary) => `Post one comment on tracker issue ${issue.identifier}.
+
+${trackerGuide}
 
 The comment body is exactly the marker line, then a one-line summary:
 
@@ -255,8 +265,9 @@ ${clip(summary)}
 
 Post the marker verbatim — it is what makes a resumed run skip this slice.`
 
-const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier} (Linear GraphQL at
-https://api.linear.app/graphql; LINEAR_API_KEY is in your environment).
+const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
+
+${trackerGuide}
 
 The comment body is exactly:
 
@@ -310,9 +321,10 @@ atomic commits, push ${baseBranch}, and open a DRAFT pull request. Tracker
 links, issue ids, and tracker-only content never appear in commit messages, the
 PR title, or the PR body. Return the PR URL.`
 
-const promptRunSummary = summary => `Post this run's summary as one comment on tracker container ${containerId}
-(Linear GraphQL at https://api.linear.app/graphql; LINEAR_API_KEY is in your
-environment).
+const promptRunSummary = summary => `Post this run's summary as one comment on tracker container ${containerId},
+per the tracker reference's container-comment convention.
+
+${trackerGuide}
 
 Run: ${slug} — spec ${specPath}, integration branch ${baseBranch}.
 
@@ -392,7 +404,7 @@ const runFrontierLoop = async passLabel => {
     })
     if (!frontier || frontier.error) {
       const reason = frontier ? frontier.error : 'frontier agent returned nothing'
-      escalateRun('frontier query', `${reason} — if this is an auth or GraphQL failure, LINEAR_API_KEY is missing or invalid in the agent environment; export it and resume`)
+      escalateRun('frontier query', `${reason} — if this is an auth or credential failure, the tracker credential named in the tracker reference is missing or invalid in the agent environment; fix it and resume`)
       log(`Frontier query failed (${reason}) — stopping the ${passLabel} loop rather than reading it as an empty frontier.`)
       return
     }

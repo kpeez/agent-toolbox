@@ -139,6 +139,20 @@ def test_swe_loop_cost_ceilings_stay_pinned() -> None:
     assert "const SPEC_REVIEW_REENTRIES = 1" in text
 
 
+def test_swe_loop_stays_tracker_agnostic() -> None:
+    # Tracker mechanics live in the to-issues tracker references
+    # (references/issue-tracker-*.md); the loop's runner skill and conductor
+    # dispatch through them at runtime and never name a tracker themselves.
+    start_loop = ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
+    offenders = [
+        (path.name, match)
+        for path in (SWE_LOOP, start_loop)
+        for match in re.findall(r"linear|github", path.read_text(), re.IGNORECASE)
+    ]
+
+    assert offenders == []
+
+
 def test_swe_agent_models_match_role_complexity() -> None:
     actual = {
         role: {

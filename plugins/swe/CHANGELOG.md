@@ -5,6 +5,15 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.9.7 — 2026-07-29
+
+- Make the swe-loop tracker-agnostic: the conductor's prompts no longer name
+  Linear (GraphQL endpoint, `LINEAR_API_KEY`) and instead resolve the repo's
+  tracker at runtime through the to-issues tracker references, which gain a
+  "swe-loop frontier" section per tracker (Linear keeps `frontier.py`; GitHub
+  and local markdown get equivalent procedures). A drift test pins the
+  conductor and `/start-loop` to zero tracker mentions.
+
 ## 1.9.5 – 1.9.6 — 2026-07-29
 
 - Add the `codex-delegator` agent: a thin forwarder that runs one bounded task

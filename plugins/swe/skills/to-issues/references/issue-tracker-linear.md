@@ -46,6 +46,22 @@ the MCP is absent.
   (PR bodies, commits, comments). The private side references the public side,
   never the reverse.
 
+## swe-loop frontier
+
+The loop's frontier query — the workable slices in a spec's container — is
+deterministic here. From the repo root run
+
+    uv run <scriptsDir>/frontier.py --project <containerId>
+
+(the conductor's prompt supplies both values; `<scriptsDir>` is the installed
+plugin's `scripts/` dir). It prints a JSON array of
+`{id, identifier, title, labels}` and exits non-zero on a missing
+`LINEAR_API_KEY`, an HTTP failure, or a GraphQL errors payload — report a
+non-zero exit as a query failure, never as an empty frontier.
+
+The loop's "container comment" (run summary) is a comment on the spec's
+project.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a Linear issue with `save_issue` inside the spec's project (standalone
