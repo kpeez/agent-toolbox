@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Conductor for the swe spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement -> review -> bounded fix -> merge) until it drains, review the assembled work against the spec through three lenses, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed skill\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
   phases: [
     { title: 'Slice', detail: 'publish the spec as vertical slices on the tracker' },
     { title: 'Implement', detail: 'frontier rounds: implement, review, bounded fixes, sequential merge' },
@@ -50,19 +50,19 @@ const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scripts
 const missing = REQUIRED_ARGS.filter(key => !ARGS || !ARGS[key])
 if (missing.length) {
   throw new Error(
-    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed skill's scripts directory.`,
+    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed plugin's scripts directory.`,
   )
 }
 const specPath = ARGS.specPath
 const slug = ARGS.slug
 const containerId = ARGS.containerId
 const baseBranch = ARGS.baseBranch
-// Absolute path to the installed skill's scripts/ dir: the target repo does not
-// contain frontier.py — only the skill installation does.
+// Absolute path to the installed plugin's scripts/ dir: the target repo does
+// not contain frontier.py — only the plugin installation does.
 const scriptsDir = ARGS.scriptsDir
 if (!scriptsDir.startsWith('/')) {
   throw new Error(
-    `swe-loop got a relative scriptsDir (${scriptsDir}). It must be the EXPANDED absolute path to the installed skill's scripts/ dir — a value like "\${CLAUDE_SKILL_DIR}/scripts" means the variable was passed through unexpanded, and the subagents' shells do not define it.`,
+    `swe-loop got a relative scriptsDir (${scriptsDir}). It must be the EXPANDED absolute path to the installed swe plugin's scripts/ dir — a value like "\${CLAUDE_PLUGIN_ROOT}/scripts" means the variable was passed through unexpanded, and the subagents' shells do not define it.`,
   )
 }
 const resumeIssueId = ARGS.issueId || null

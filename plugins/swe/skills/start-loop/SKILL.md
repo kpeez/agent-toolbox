@@ -90,19 +90,21 @@ No user prompt anywhere in this path.
 
 ## 4. Launch the workflow
 
-Invoke the **Workflow** tool with scriptPath
-`${CLAUDE_SKILL_DIR}/scripts/swe-loop.js` and args exactly
+The conductor lives at the plugin root as `workflows/swe-loop.js`, so Claude
+Code also registers it as the named plugin workflow `/swe:swe-loop`. Launch it
+by invoking the **Workflow** tool with scriptPath
+`${CLAUDE_PLUGIN_ROOT}/workflows/swe-loop.js` and args exactly
 `{specPath, slug, containerId, baseBranch, scriptsDir, issueId?}` — the spec's
 path, its slug, the container from step 1, the branch the run integrates into
 and ships from (if you are on the default branch, create the feature branch
 first and pass that), `scriptsDir`, and `issueId` only when resuming against
 one already-published slice set.
 
-`scriptsDir` is the **expanded absolute path** to the installed skill's
-`scripts/` directory — resolve `${CLAUDE_SKILL_DIR}/scripts` to a real `/…`
+`scriptsDir` is the **expanded absolute path** to the installed plugin's
+`scripts/` directory — resolve `${CLAUDE_PLUGIN_ROOT}/scripts` to a real `/…`
 path and pass that. The conductor's agents run `frontier.py` from there and the
-target repo does not contain it; their shells do not define `CLAUDE_SKILL_DIR`,
-so passing the literal `${CLAUDE_SKILL_DIR}/scripts` string fails every
+target repo does not contain it; their shells do not define `CLAUDE_PLUGIN_ROOT`,
+so passing the literal `${CLAUDE_PLUGIN_ROOT}/scripts` string fails every
 frontier query. The conductor rejects a non-absolute value outright.
 
 Those are the **launch args** — the conductor's own input. Each agent's prompt
