@@ -136,7 +136,7 @@ const SLICE_REVIEW_SCHEMA = {
     findings: {
       type: 'array',
       description: 'REQUIRED and non-empty when verdict is "findings"; omit it when the verdict is "pass"',
-      items: { type: 'string', description: 'one required change, naming the file and what to do' },
+      items: { type: 'string', description: 'one required change, opening with a file:line anchor and then what to do' },
     },
   },
 }
@@ -237,8 +237,12 @@ Spec: ${specPath}
 Judge this slice only: correctness, edge cases, missing tests, and whether the
 diff does what the issue asked — no more, no less. Verdict "pass" when nothing
 must change; otherwise "findings" with at least one entry, one per required
-change, each naming the file and the fix. "findings" with an empty list is not
-a valid answer.`
+change, each opening with a file:line anchor and then the fix. "findings" with
+an empty list is not a valid answer.
+
+An unresolved finding is quoted verbatim into the tracker comment a later
+session resumes from, so it must stand alone: the anchor is what makes it
+actionable without this run's context.`
 
 const promptFixer = (issue, branch, findings) => `Execute this bounded task: apply review findings to an existing slice branch.
 
@@ -265,13 +269,25 @@ ${clip(summary)}
 
 Post the marker verbatim — it is what makes a resumed run skip this slice.`
 
-const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
+// The reason is a headline and is clipped; the details never are. This comment
+// is the only durable record a session resuming from the tracker alone can
+// read, so a truncated finding here recreates the blind resume it exists to
+// prevent.
+const promptEscalationNote = (issue, reason, details, branch) => `Post one comment on tracker issue ${issue.identifier}.
 
 ${trackerGuide}
 
 The comment body is exactly:
 
-**swe-loop escalation** — ${clip(reason)}
+**swe-loop escalation** — ${clip(reason)}${
+  details.length
+    ? `
+
+Branch: ${branch}
+Surviving findings:
+${numbered(details)}`
+    : ''
+}
 
 Post nothing else and change no issue fields.`
 
@@ -348,13 +364,16 @@ const escalateRun = (title, reason) => {
   log(`ESCALATED ${title}: ${reason}`)
 }
 
-const escalate = async (issue, reason) => {
+// `details` carries the escalation's surviving findings as structured data
+// rather than folded into `reason`, so the tracker comment and the run summary
+// both keep them verbatim.
+const escalate = async (issue, reason, details = [], branch = branchFor(issue)) => {
   settled.add(issue.id)
-  escalations.push({ issue: issue.identifier, title: issue.title, reason })
+  escalations.push({ issue: issue.identifier, title: issue.title, reason, findings: details })
   log(`ESCALATED ${issue.identifier}: ${reason}`)
   // Best-effort: an escalation only the run summary knows about is invisible to
   // whoever opens the issue later.
-  const noted = await agent(promptEscalationNote(issue, reason), {
+  const noted = await agent(promptEscalationNote(issue, reason, details, branch), {
     label: `escalation-note:${issue.identifier}`,
     phase: 'Implement',
     effort: 'low',
@@ -471,7 +490,12 @@ const runFrontierLoop = async passLabel => {
           findings = reviewed
         }
         if (findings.length) {
-          return escalate(issue, `${findings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds; branch left unmerged`)
+          return escalate(
+            issue,
+            `${findings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds; branch left unmerged`,
+            findings,
+            outcome.branch,
+          )
         }
         return { ...outcome, state: 'passed', findings: [] }
       },
