@@ -174,6 +174,23 @@ def test_swe_hooks_register_worktree_link_script() -> None:
     assert script.stat().st_mode & 0o111
 
 
+def test_codex_delegator_run_ceiling_and_non_completion_contract() -> None:
+    text = (ROOT / "plugins" / "swe" / "agents" / "codex-delegator.md").read_text()
+
+    # The foreground Bash tool caps at 600000 ms, so a foreground call
+    # reintroduces the ceiling that killed a real review mid-run.
+    assert "run_in_background: true" in text
+    assert "timeout 1800 codex exec" in text
+
+    # A non-completion must reach the caller as its own channel, never as
+    # substantive output that a fix agent would act on.
+    assert 'verdict: "did-not-complete"' in text
+    assert "Never report a non-completion as" in text
+
+    # One invocation per delegation still holds; only polling was relaxed.
+    assert "Exactly one Codex invocation per delegation: no retries" in text
+
+
 def test_swe_agent_models_match_role_complexity() -> None:
     actual = {
         role: {
