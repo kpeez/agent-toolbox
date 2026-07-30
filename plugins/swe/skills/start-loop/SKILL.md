@@ -65,11 +65,12 @@ verdict instead of re-evaluating (see Resume).
 ## 3a. Gated path (any criterion failed)
 
 1. `/sharpen` interactively with the user until the branches are resolved.
-2. `/write-spec` — delegate the drafting to the **`swe:architect`** agent;
-   you present the draft and the user confirms at the checkpoint prompts.
+2. `/write-spec` — delegate the drafting to the **`swe:architect`** agent
+   without asking first; the draft is the review material. You present it and
+   the user confirms at the single spec-approval prompt.
 3. On unambiguous approval, add `<!-- knack:spec-approved -->` to the spec
    exactly as today. Silence, compaction, or an unrelated reply is **not**
-   approval; a change request returns to the phase that produced the artifact.
+   approval; a change request reopens sharpening.
 
 Exact wording: [references/checkpoint-prompts.md](references/checkpoint-prompts.md).
 

@@ -60,8 +60,8 @@ Two ways to run the spine:
 against the repo and ADRs, ≤ 6 estimated slices, no destructive surface, no
 new external dependencies). All four pass → the design phase runs
 autonomously and the approval marker is stamped without a prompt. Any fail →
-the gated path: `/sharpen` interactively, `/write-spec` with user checkpoints,
-and explicit approval. Either way the approved spec authorizes the conductor;
+the gated path: `/sharpen` interactively, `/write-spec`, and one explicit
+spec approval — the only prompt. Either way the approved spec authorizes the conductor;
 after that, problems reach the user as data (escalation comments and the run
 summary), never as live prompts.
 
