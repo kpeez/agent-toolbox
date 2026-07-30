@@ -5,7 +5,7 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
-## 1.9.7 — 2026-07-29
+## 1.9.8 — 2026-07-30
 
 - Cut the loop's token cost roughly in half by removing duplicated reading, not
   capability. Measured on a real 35-agent run (55.9M cache reads against 302K
@@ -24,7 +24,7 @@ the single `agentspec` plugin.
   resolves the target from the main worktree (no configuration), never fails a
   session, and removes its own link if the path is not gitignored.
 - Distinguish "the reviewer found problems" from "the reviewer never ran": the
-  slice-review schema gains a `did-not-complete` verdict that is retried once
+  assembled-review schema gains a `did-not-complete` verdict that is retried once
   and then escalated, consuming no fix round and never reaching a fix agent.
   The `codex-delegator` runs Codex in a background call under a 30-minute
   ceiling — the foreground `Bash` tool caps at 10 minutes, which is what killed
@@ -38,6 +38,9 @@ the single `agentspec` plugin.
   and appends the credential hint only when the error looks like auth, and an
   exhausted-fix-rounds escalation posts the surviving findings verbatim with
   `file:line` anchors so a resumed run does not start blind.
+
+## 1.9.7 — 2026-07-29
+
 - Make the swe-loop tracker-agnostic: the conductor's prompts no longer name
   Linear (GraphQL endpoint, `LINEAR_API_KEY`) and instead resolve the repo's
   tracker at runtime through the to-issues tracker references, which gain a
