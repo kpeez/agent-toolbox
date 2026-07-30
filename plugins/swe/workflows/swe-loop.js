@@ -158,11 +158,15 @@ const SLICE_REVIEW_SCHEMA = {
   type: 'object',
   required: ['verdict'],
   properties: {
-    verdict: { type: 'string', enum: ['pass', 'findings'] },
+    verdict: { type: 'string', enum: ['pass', 'findings', 'did-not-complete'] },
     findings: {
       type: 'array',
-      description: 'REQUIRED and non-empty when verdict is "findings"; omit it when the verdict is "pass"',
+      description: 'REQUIRED and non-empty when verdict is "findings"; omit it for any other verdict',
       items: { type: 'string', description: 'one required change, opening with a file:line anchor and then what to do' },
+    },
+    detail: {
+      type: 'string',
+      description: 'REQUIRED when verdict is "did-not-complete": what stopped the review (timeout, tool failure, exit code). Never a judgment about the code.',
     },
   },
 }
@@ -183,6 +187,10 @@ const SPEC_REVIEW_SCHEMA = {
           severity: { type: 'string', enum: ['high', 'medium', 'low'] },
         },
       },
+    },
+    error: {
+      type: 'string',
+      description: 'set ONLY when the review itself could not run to completion (timeout, tool failure); the lens is then unreviewed and any findings it carries are discarded. Never report an infrastructure failure as a finding.',
     },
   },
 }
@@ -283,7 +291,13 @@ an empty list is not a valid answer.
 
 An unresolved finding is quoted verbatim into the tracker comment a later
 session resumes from, so it must stand alone: the anchor is what makes it
-actionable without this run's context.`
+actionable without this run's context.
+
+Verdict "did-not-complete" means YOU could not finish the review — a delegated
+run timed out, a tool failed, a command exited non-zero — and is never a
+judgment about the code. Put what stopped you in "detail" and return no
+findings. An infrastructure failure must never appear as a finding: a fixer
+would act on it.`
 
 const promptFixer = (issue, branch, findings) => `Execute this bounded task: apply review findings to an existing slice branch.
 
@@ -355,7 +369,11 @@ Your lens: ${lens}
 Stay on your lens; another reviewer owns each of the others. Cite the spec
 section and file:line for every finding. Severity is high, medium, or low and
 means impact only — your lens already types the finding, and the conductor
-turns every bloat-lens finding into the run's cut-list.`
+turns every bloat-lens finding into the run's cut-list.
+
+If you cannot finish the review (timeout, tool failure), set "error" to what
+stopped you and return no findings — an unfinished lens is unreviewed, not
+clean, and infrastructure failures are never findings.`
 
 const promptFileFindings = findings => `File spec-review findings as fix slices in tracker container ${containerId}.
 
@@ -429,6 +447,38 @@ const findingsFrom = review => {
   if (review.verdict !== 'findings') return []
   const findings = review.findings || []
   return findings.length ? findings : null
+}
+
+// The one path both review sites (initial review, fix-loop re-review) take.
+// A review that never finished says nothing about the code: it must not reach
+// a fixer as findings and must not spend a fix round. One retry -- a fresh
+// delegation, so the delegator's one-invocation-per-delegation contract is
+// untouched -- absorbs a flaky run; a second non-completion means the task, not
+// the weather, so the slice escalates unmerged with nothing recorded against it.
+// Returns {findings} or {failed: reason}.
+const reviewSlice = async (issue, branch, label, stage) => {
+  const request = attemptLabel =>
+    agent(promptSliceReview(issue, branch), {
+      label: attemptLabel,
+      phase: 'Implement',
+      agentType: agentTypeFor('reviewer'),
+      schema: SLICE_REVIEW_SCHEMA,
+    })
+  let review = await request(label)
+  if (!review) return { failed: `${stage} returned no verdict` }
+  if (review.verdict === 'did-not-complete') {
+    log(`${issue.identifier}: ${stage} did not complete (${clip(review.detail)}) — retrying once; no fix round consumed.`)
+    review = await request(`${label}:retry`)
+    if (!review || review.verdict === 'did-not-complete') {
+      const detail = review ? clip(review.detail) : 'the retry returned no verdict'
+      return {
+        failed: `${stage} never completed after one retry (${detail}); branch ${branch} left unmerged, no findings recorded, no fix round consumed`,
+      }
+    }
+  }
+  const findings = findingsFrom(review)
+  if (!findings) return { failed: `${stage} returned verdict "findings" with no findings — contract violation, not a pass` }
+  return { findings }
 }
 
 const finish = async prUrl => {
@@ -514,16 +564,9 @@ const runFrontierLoop = async passLabel => {
       },
       async (outcome, issue) => {
         if (outcome.state === 'escalated') return outcome
-        const review = await agent(promptSliceReview(issue, outcome.branch), {
-          label: `review:${issue.identifier}`,
-          phase: 'Implement',
-          agentType: agentTypeFor('reviewer'),
-          schema: SLICE_REVIEW_SCHEMA,
-        })
-        if (!review) return escalate(issue, 'slice review returned no verdict')
-        const findings = findingsFrom(review)
-        if (!findings) return escalate(issue, 'slice review returned verdict "findings" with no findings — contract violation, not a pass')
-        return { ...outcome, findings }
+        const reviewed = await reviewSlice(issue, outcome.branch, `review:${issue.identifier}`, 'slice review')
+        if (reviewed.failed) return escalate(issue, reviewed.failed)
+        return { ...outcome, findings: reviewed.findings }
       },
       async (outcome, issue) => {
         if (outcome.state === 'escalated') return outcome
@@ -536,18 +579,14 @@ const runFrontierLoop = async passLabel => {
             agentType: agentTypeFor('implementer'),
           })
           if (!fixed) return escalate(issue, `fix round ${fixRound} returned no result`)
-          const review = await agent(promptSliceReview(issue, outcome.branch), {
-            label: `re-review:${issue.identifier}:${fixRound}`,
-            phase: 'Implement',
-            agentType: agentTypeFor('reviewer'),
-            schema: SLICE_REVIEW_SCHEMA,
-          })
-          if (!review) return escalate(issue, `re-review after fix round ${fixRound} returned no verdict`)
-          const reviewed = findingsFrom(review)
-          if (!reviewed) {
-            return escalate(issue, `re-review after fix round ${fixRound} returned verdict "findings" with no findings — contract violation, not a pass`)
-          }
-          findings = reviewed
+          const reviewed = await reviewSlice(
+            issue,
+            outcome.branch,
+            `re-review:${issue.identifier}:${fixRound}`,
+            `re-review after fix round ${fixRound}`,
+          )
+          if (reviewed.failed) return escalate(issue, reviewed.failed)
+          findings = reviewed.findings
         }
         if (findings.length) {
           return escalate(
@@ -629,11 +668,18 @@ const runSpecReview = async () => {
     ),
   )
   // A dead reviewer contributes no findings, which is indistinguishable from a
-  // clean lens once flattened — name it first.
+  // clean lens once flattened — name it first. A lens that reports `error` did
+  // not run to completion either, so it is treated identically and whatever
+  // partial findings it carries are discarded rather than acted on.
   REVIEW_LENSES.forEach((lens, index) => {
-    if (!results[index]) escalateRun(`spec review: ${lens}`, `the ${lens} lens returned no result; that lens is unreviewed, not clean`)
+    const result = results[index]
+    if (!result) {
+      escalateRun(`spec review: ${lens}`, `the ${lens} lens returned no result; that lens is unreviewed, not clean`)
+    } else if (result.error) {
+      escalateRun(`spec review: ${lens}`, `the ${lens} lens did not complete (${clip(result.error)}); that lens is unreviewed, not clean`)
+    }
   })
-  const findings = results.filter(Boolean).flatMap(result => result.findings || [])
+  const findings = results.filter(result => result && !result.error).flatMap(result => result.findings || [])
   log(`Spec review: ${findings.length} finding(s) across the ${REVIEW_LENSES.join('/')} lenses.`)
   return findings
 }
