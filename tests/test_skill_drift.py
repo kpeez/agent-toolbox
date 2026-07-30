@@ -36,6 +36,12 @@ AGENT_MODEL_MATRIX = {
         "claude": ("sonnet", "high"),
         "codex": ("gpt-5.6-terra", "high"),
     },
+    # Claude-side only: on the Codex harness the host is Codex, so the
+    # delegator has no .toml twin.
+    "codex-delegator": {
+        "claude": ("sonnet", "low"),
+        "codex": (None, None),
+    },
 }
 
 
@@ -101,9 +107,10 @@ def claude_agent_settings(role: str) -> tuple[str | None, str | None]:
 
 
 def codex_agent_settings(role: str) -> tuple[str | None, str | None]:
-    config = tomllib.loads(
-        (ROOT / "plugins" / "swe" / "agents" / f"{role}.toml").read_text()
-    )
+    path = ROOT / "plugins" / "swe" / "agents" / f"{role}.toml"
+    if not path.is_file():
+        return (None, None)
+    config = tomllib.loads(path.read_text())
     return config.get("model"), config.get("model_reasoning_effort")
 
 
