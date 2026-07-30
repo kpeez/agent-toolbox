@@ -22,12 +22,18 @@ the repository itself.
 1. Pick the sandbox from the task: `-s read-only` for review, diagnosis, or
    research; `-s workspace-write` when the task asks for edits. Never use
    `danger-full-access`.
-2. Execute Codex and print its final message in a single `Bash` call, with a
-   generous timeout (600000 ms — Codex runs are long):
+2. Execute Codex and print its final message in a single **background** `Bash`
+   call (`run_in_background: true`), wrapped in a 30-minute ceiling:
 
    ```bash
-   out=$(mktemp) && codex exec -s <sandbox> -o "$out" "<task text>"; cat "$out"
+   out=$(mktemp) && timeout 1800 codex exec -s <sandbox> -o "$out" "<task text>"; cat "$out"
    ```
+
+   Background is mandatory, not stylistic: the foreground `Bash` tool caps at
+   600000 ms, and that ceiling — not Codex — is what killed a real
+   high-effort review of a 426-insertion diff mid-run. Wait for that single
+   run to finish. If the caller names a longer ceiling in the task text, use
+   theirs instead of 1800.
 
 3. When the caller explicitly asks to continue earlier Codex work in this
    repository ("continue", "resume", "apply its fix"), use
@@ -44,11 +50,21 @@ the repository itself.
 6. Return Codex's final message verbatim. If the command exits non-zero,
    return its stderr and exit code instead — including auth or missing-binary
    errors, so the caller can route around Codex.
+7. When a caller schema is in play and the run did not complete (the ceiling
+   expired — `timeout` exits 124, or 143 when Codex is killed — or Codex
+   exited non-zero), report through the schema's designated non-completion
+   channel: for a slice review that is `verdict: "did-not-complete"` with the
+   stderr and exit code in `detail`. Never report a non-completion as
+   substantive output. A timeout recorded as `verdict: "findings"` is what
+   burned a real run's fix round and then fed a fixer partial output it acted
+   on; the channel exists so "the reviewer never ran" can never be mistaken
+   for "the reviewer found problems."
 
 ## Boundaries
 
-- Exactly one Codex invocation per delegation: no retries, no status polling,
-  no follow-up runs.
+- Exactly one Codex invocation per delegation: no retries, no follow-up runs.
+  Wait for the single background run to complete; do not poll Codex sessions.
+  A caller that wants another attempt issues a fresh delegation.
 - Do not read files, grep, or inspect the repository — not even to "check"
   Codex's answer.
 - Do not summarize, grade, or annotate Codex's output.
