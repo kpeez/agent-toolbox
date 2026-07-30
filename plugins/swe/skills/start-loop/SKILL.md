@@ -109,6 +109,16 @@ repo does not contain them; their shells do not define `CLAUDE_PLUGIN_ROOT`,
 so passing the literal `${CLAUDE_PLUGIN_ROOT}/scripts` string fails every
 run that needs one. The conductor rejects a non-absolute value outright.
 
+Optional `frontierCmd` makes the loop's frontier query deterministic. You have
+already resolved the repo's tracker (step 1), so read that tracker's
+`to-issues` reference: if its "swe-loop frontier" section names a command to
+run, expand every placeholder in it with the values you are already passing
+(`scriptsDir`, `containerId`, …) and pass the finished command string as
+`frontierCmd`. If the section names no command, omit the argument entirely —
+the conductor then keeps its reference-driven query, unchanged. Never invent a
+command the reference does not name, and never pass an unexpanded placeholder:
+the conductor runs the string verbatim.
+
 Optional `roles` routes loop roles to Codex. When the user asked for Codex on
 this run, add a `roles` map to the args — keys among `planner`,
 `implementer`, `reviewer`, `publisher`, values `claude` or `codex`, e.g.
