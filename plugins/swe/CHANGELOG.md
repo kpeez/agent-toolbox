@@ -7,6 +7,27 @@ the single `agentspec` plugin.
 
 ## 1.9.7 — 2026-07-29
 
+- Recreate the gitignored `docs/agents` symlink inside git worktrees:
+  `hooks/link-docs-agents.sh`, wired on `SubagentStart` and `SessionStart`,
+  mirrors the main worktree's link target so a slice worktree can read
+  `docs/agents/specs|adrs|research` instead of silently seeing nothing. It
+  resolves the target from the main worktree (no configuration), never fails a
+  session, and removes its own link if the path is not gitignored.
+- Distinguish "the reviewer found problems" from "the reviewer never ran": the
+  slice-review schema gains a `did-not-complete` verdict that is retried once
+  and then escalated, consuming no fix round and never reaching a fix agent.
+  The `codex-delegator` runs Codex in a background call under a 30-minute
+  ceiling — the foreground `Bash` tool caps at 10 minutes, which is what killed
+  a real high-effort review — and reports non-completion through the caller
+  schema's non-completion channel.
+- Take the model off the frontier query's critical path: a new optional
+  `frontierCmd` launch arg runs the tracker's deterministic frontier command
+  verbatim, and the frontier call retries with backoff on harness failures
+  (the observed `529 Overloaded` deaths) instead of ending the run.
+- Escalate honestly: the frontier failure reason carries the actual error text
+  and appends the credential hint only when the error looks like auth, and an
+  exhausted-fix-rounds escalation posts the surviving findings verbatim with
+  `file:line` anchors so a resumed run does not start blind.
 - Make the swe-loop tracker-agnostic: the conductor's prompts no longer name
   Linear (GraphQL endpoint, `LINEAR_API_KEY`) and instead resolve the repo's
   tracker at runtime through the to-issues tracker references, which gain a
