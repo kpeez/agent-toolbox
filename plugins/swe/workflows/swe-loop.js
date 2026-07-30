@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Conductor for the swe spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement -> review -> bounded fix -> merge) until it drains, review the assembled work against the spec through three lenses, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Optional frontierCmd is a command string that prints the container\'s workable-issue JSON array on stdout; pass it when the resolved tracker has a deterministic frontier query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
   phases: [
     { title: 'Slice', detail: 'publish the spec as vertical slices on the tracker' },
     { title: 'Implement', detail: 'frontier rounds: implement, review, bounded fixes, sequential merge' },
@@ -66,6 +66,17 @@ if (!scriptsDir.startsWith('/')) {
   )
 }
 const resumeIssueId = ARGS.issueId || null
+// Optional, opaque: a command that prints the container's workable-issue array
+// on stdout and exits non-zero on failure. The launcher resolves the tracker
+// anyway, so it is the layer that knows whether the tracker's reference names a
+// deterministic frontier query; this file only embeds the string as data.
+// Absent, the reference-driven agent query below runs unchanged.
+const frontierCmd = ARGS.frontierCmd || null
+if (frontierCmd !== null && typeof frontierCmd !== 'string') {
+  throw new Error(
+    `swe-loop got a non-string frontierCmd (${JSON.stringify(ARGS.frontierCmd)}). It must be a single command string that prints the workable-frontier JSON array on stdout and exits non-zero on failure.`,
+  )
+}
 
 // Tracker mechanics never live in this file: prompts resolve the repo's
 // tracker at runtime and follow the matching to-issues reference (installed
@@ -194,17 +205,32 @@ Before publishing each slice, pipe its drafted body through
    uv run ${scriptsDir}/validate_artifacts.py issue -
 and fix whatever it rejects; publish only bodies that pass.`
 
-const promptFrontier = () => `Report this run's workable slices as JSON.
+// Step 1 is the only part of the frontier prompt frontierCmd changes; steps 2-4
+// follow the tracker reference either way. With no frontierCmd this string is
+// what the prompt has always carried, byte for byte.
+const frontierStep1 = frontierCmd
+  ? `1. Run EXACTLY this command with Bash and construct no other query — no
+   improvised tracker calls, no edits to the command, no substitutions:
 
-${trackerGuide}
+       ${frontierCmd}
 
-1. Compute the workable frontier of container ${containerId} per the
+   Its stdout is the container's workable-issue array; take each entry as
+   {id, identifier, title}. On a NON-ZERO exit put stderr verbatim in the
+   "error" field and return an empty issues list -- an empty list with no
+   error means the run is finished, so never report a failure that way.`
+  : `1. Compute the workable frontier of container ${containerId} per the
    reference's "swe-loop frontier" section — open issues with no open blocker
    and no ready-for-human label, each as {id, identifier, title}. Scripts the
    reference names live in ${scriptsDir}. If the query FAILS (auth, network,
    missing credential, non-zero script exit), put the failure text in the
    "error" field and return an empty issues list -- an empty list with no
-   error means the run is finished, so never report a failure that way.
+   error means the run is finished, so never report a failure that way.`
+
+const promptFrontier = () => `Report this run's workable slices as JSON.
+
+${trackerGuide}
+
+${frontierStep1}
 2. For each returned issue read its tracker comments per the reference.
 3. DROP every issue whose comments contain the literal marker
    ${SLICE_COMPLETE_MARKER} — that slice is already implemented on a branch in
