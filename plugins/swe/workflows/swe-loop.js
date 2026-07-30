@@ -1,28 +1,27 @@
 export const meta = {
   name: 'swe-loop',
   description:
-    'Conductor for the swe spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement -> review -> bounded fix -> merge) until it drains, review the assembled work against the spec through three lenses, then ship a draft PR',
+    'Conductor for the swe spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Optional frontierCmd is a command string that prints the container\'s workable-issue JSON array on stdout; pass it when the resolved tracker has a deterministic frontier query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Optional frontierCmd is a command string that prints the container\'s workable-issue JSON array on stdout; pass it when the resolved tracker has a deterministic frontier query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations}; it never prompts the user mid-run.',
   phases: [
     { title: 'Slice', detail: 'publish the spec as vertical slices on the tracker' },
-    { title: 'Implement', detail: 'frontier rounds: implement, review, bounded fixes, sequential merge' },
-    { title: 'Spec review', detail: 'three lenses against the spec, one fix re-entry' },
+    { title: 'Implement', detail: 'frontier rounds: implement in parallel, then one agent merges and marks the round' },
+    { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
     { title: 'Ship', detail: 'ship-pr: atomic commits, push, draft PR' },
   ],
 }
 
-// How many implement/review rounds a single slice gets before it is escalated
-// unmerged, and how many times spec-review findings may re-enter the frontier
-// loop. Both are the run's cost ceiling -- widening them silently is the bug
-// the colocated static test guards against.
+// How many fix rounds the assembled review gets before its surviving findings
+// are escalated, and how many times those findings may re-enter the frontier
+// loop as fresh slices. Both are the run's cost ceiling -- widening them
+// silently is the bug the colocated static test guards against.
 const MAX_FIX_ROUNDS = 2
 const SPEC_REVIEW_REENTRIES = 1
 // The frontier is tracker-derived, so a node that never settles would spin
 // forever; this cap turns that into a loud escalation instead.
 const MAX_FRONTIER_ROUNDS = 25
 const SLICE_COMPLETE_MARKER = '<!-- knack:slice-complete -->'
-const REVIEW_LENSES = ['missed', 'wrong', 'bloat']
 // The frontier agent call is the one place where a harness/API failure (an
 // overloaded-API 529 killed two observed runs after zero work) takes the whole
 // run down, so a null result -- the shape every such failure arrives in -- is
@@ -154,7 +153,11 @@ const IMPLEMENTER_SCHEMA = {
   },
 }
 
-const SLICE_REVIEW_SCHEMA = {
+// One review, one schema. The loop reviews the assembled branch once rather
+// than reviewing each slice and then re-reviewing the same lines through
+// several lenses: in the run that motivated this, 52% of the token spend went
+// on reading the same diff three times.
+const REVIEW_SCHEMA = {
   type: 'object',
   required: ['verdict'],
   properties: {
@@ -171,34 +174,28 @@ const SLICE_REVIEW_SCHEMA = {
   },
 }
 
-const SPEC_REVIEW_SCHEMA = {
+// One agent settles a whole round: merges are sequential anyway (two agents
+// merging into the same branch race on the index), and spawning a merge agent
+// plus a comment agent per slice cost 7M cache reads in the motivating run to
+// do deterministic git and one API call each.
+const SETTLE_SCHEMA = {
   type: 'object',
-  required: ['findings'],
+  required: ['results'],
   properties: {
-    findings: {
+    results: {
       type: 'array',
       items: {
         type: 'object',
-        required: ['lens', 'title', 'detail', 'severity'],
+        required: ['identifier', 'merged', 'marked', 'detail'],
         properties: {
-          lens: { type: 'string', enum: REVIEW_LENSES },
-          title: { type: 'string' },
+          identifier: { type: 'string' },
+          merged: { type: 'boolean' },
+          marked: { type: 'boolean', description: 'whether the slice-complete marker was posted; a merged slice whose marker did not post will be re-implemented by a resumed run' },
           detail: { type: 'string' },
-          severity: { type: 'string', enum: ['high', 'medium', 'low'] },
         },
       },
     },
-    error: {
-      type: 'string',
-      description: 'set ONLY when the review itself could not run to completion (timeout, tool failure); the lens is then unreviewed and any findings it carries are discarded. Never report an infrastructure failure as a finding.',
-    },
   },
-}
-
-const MERGE_SCHEMA = {
-  type: 'object',
-  required: ['merged', 'detail'],
-  properties: { merged: { type: 'boolean' }, detail: { type: 'string' } },
 }
 
 const SHIP_SCHEMA = {
@@ -277,17 +274,24 @@ Slice: ${issue.identifier} — ${issue.title}
    committed to. NEEDS_CONTEXT or BLOCKED means you could not finish: name
    exactly what is missing instead of guessing.`
 
-const promptSliceReview = (issue, branch) => `Review one slice's diff against its issue contract.
+const promptReview = () => `Review the assembled implementation against its spec, through one lens:
+does the code do what the spec asked, correctly?
 
-Diff under review: git diff ${baseBranch}...${branch}
-Issue: ${issue.identifier} — ${issue.title}
+Under review: the work this run merged into ${baseBranch}. Establish the diff
+yourself — the slice merges are on ${baseBranch} and each carries a
+knack/slice/<identifier> branch — and say in your first finding if you could
+not establish it rather than reviewing a guess.
 Spec: ${specPath}
 
-Judge this slice only: correctness, edge cases, missing tests, and whether the
-diff does what the issue asked — no more, no less. Verdict "pass" when nothing
-must change; otherwise "findings" with at least one entry, one per required
-change, each opening with a file:line anchor and then the fix. "findings" with
-an empty list is not a valid answer.
+This is the run's ONLY code review, so judge adherence end to end: behavior the
+spec asked for and the code lacks, behavior that diverges from what the spec
+asked, and missing tests for either. Slice branches were already gated on their
+own lint/types/tests passing — do not re-litigate style or restate what the
+tests already prove.
+
+Verdict "pass" when nothing must change; otherwise "findings" with at least one
+entry, one per required change, each opening with a file:line anchor and then
+the fix. "findings" with an empty list is not a valid answer.
 
 An unresolved finding is quoted verbatim into the tracker comment a later
 session resumes from, so it must stand alone: the anchor is what makes it
@@ -299,83 +303,54 @@ judgment about the code. Put what stopped you in "detail" and return no
 findings. An infrastructure failure must never appear as a finding: a fixer
 would act on it.`
 
-const promptFixer = (issue, branch, findings) => `Execute this bounded task: apply review findings to an existing slice branch.
+const promptFixer = (findings, round) => `Execute this bounded task: apply review findings to ${baseBranch}.
 
-Branch: ${branch} (already committed, not checked out here)
-Issue: ${issue.identifier} — ${issue.title}
-Findings to resolve:
+Findings to resolve (fix round ${round}/${MAX_FIX_ROUNDS}):
 ${numbered(findings)}
 
-1. git worktree add ../.swe-fix-${issue.identifier} ${branch} — use exactly
-   that path; other fixers run concurrently and a shared path would collide.
-2. Apply every finding there, re-run lint/types/tests, and commit to ${branch}.
-3. git worktree remove ../.swe-fix-${issue.identifier} — leave none behind.
-Do not push and do not merge. Return a concise completion note; this call has
-no additional output schema.`
+Work directly on ${baseBranch} in the main worktree at the repo root — the
+slices are already merged there. Apply every finding, re-run lint/types/tests,
+and commit. Do not push and do not merge. Return a concise completion note;
+this call has no additional output schema.`
 
-const promptCompletionMark = (issue, summary) => `Post one comment on tracker issue ${issue.identifier}.
-
-${trackerGuide}
-
-The comment body is exactly the marker line, then a one-line summary:
-
-${SLICE_COMPLETE_MARKER}
-${clip(summary)}
-
-Post the marker verbatim — it is what makes a resumed run skip this slice.`
-
-// The reason is a headline and is clipped; the details never are. This comment
-// is the only durable record a session resuming from the tracker alone can
-// read, so a truncated finding here recreates the blind resume it exists to
-// prevent.
-const promptEscalationNote = (issue, reason, details, branch) => `Post one comment on tracker issue ${issue.identifier}.
+const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
 
 ${trackerGuide}
 
 The comment body is exactly:
 
-**swe-loop escalation** — ${clip(reason)}${
-  details.length
-    ? `
-
-Branch: ${branch}
-Surviving findings:
-${numbered(details)}`
-    : ''
-}
+**swe-loop escalation** — ${clip(reason)}
 
 Post nothing else and change no issue fields.`
 
-const promptMerge = (issue, branch) => `Merge one finished slice into ${baseBranch}, in the main worktree at the repo root.
+const promptSettle = slices => `Settle this round's finished slices into ${baseBranch}, in the main worktree at
+the repo root. Work through them IN THE ORDER GIVEN, one at a time.
 
-1. git checkout ${baseBranch}
-2. git merge --no-ff ${branch}
-3. On conflict, resolve it per the merge-conflicts skill and complete the merge.
-   If you cannot resolve it confidently, git merge --abort and return
-   merged:false with the reason — never force a resolution you are unsure of.
+${trackerGuide}
 
-Return {merged, detail}. Do not push.`
+Slices:
+${numbered(slices.map(slice => `${slice.issue.identifier} on ${slice.branch} — ${clip(slice.summary)}`))}
 
-const promptSpecReview = lens => `Review the assembled implementation on ${baseBranch} against its spec through
-exactly one lens.
+For each slice, in order:
+1. git checkout ${baseBranch} && git merge --no-ff <its branch>
+2. On conflict, resolve it per the merge-conflicts skill and complete the merge.
+   If you cannot resolve it confidently, git merge --abort, record
+   merged:false with the reason, and move on to the next slice — never force a
+   resolution you are unsure of and never abandon the remaining slices.
+3. Only after its merge succeeds, post one comment on that slice's tracker
+   issue whose body is exactly the marker line then its one-line summary:
 
-Handoff tuple: ${tupleFor(null)}
-Spec: ${specPath}
-Your lens: ${lens}
-  missed = the spec asks for it and the code lacks it
-  wrong  = the code diverges from what the spec asked
-  bloat  = the code exceeds the spec; name what to cut
+   ${SLICE_COMPLETE_MARKER}
+   <the summary given above>
 
-Stay on your lens; another reviewer owns each of the others. Cite the spec
-section and file:line for every finding. Severity is high, medium, or low and
-means impact only — your lens already types the finding, and the conductor
-turns every bloat-lens finding into the run's cut-list.
+   Post the marker verbatim — it is what makes a resumed run skip the slice.
+   Record marked:true only if the comment actually posted.
 
-If you cannot finish the review (timeout, tool failure), set "error" to what
-stopped you and return no findings — an unfinished lens is unreviewed, not
-clean, and infrastructure failures are never findings.`
+Return one {identifier, merged, marked, detail} per slice, in the same order.
+Do not push. Marking only after a confirmed merge is deliberate: a resumed run
+re-implementing a merged slice is recoverable, losing one is not.`
 
-const promptFileFindings = findings => `File spec-review findings as fix slices in tracker container ${containerId}.
+const promptFileFindings = findings => `File surviving review findings as fix slices in tracker container ${containerId}.
 
 Spec: ${specPath}
 Findings:
@@ -413,26 +388,25 @@ Post nothing else and change no container fields.`
 // ---- run state --------------------------------------------------------------
 const slicesCompleted = []
 const escalations = []
-const cutList = []
 // Issues settled (merged or escalated) earlier in THIS run. The tracker cannot
 // tell us about them yet -- their state only advances when the PR lands.
 const settled = new Set()
 
-const escalateRun = (title, reason) => {
-  escalations.push({ issue: null, title, reason })
+const escalateRun = (title, reason, details = []) => {
+  escalations.push({ issue: null, title, reason, findings: details })
   log(`ESCALATED ${title}: ${reason}`)
 }
 
-// `details` carries the escalation's surviving findings as structured data
-// rather than folded into `reason`, so the tracker comment and the run summary
-// both keep them verbatim.
-const escalate = async (issue, reason, details = [], branch = branchFor(issue)) => {
+// A slice escalates only when it could not be implemented or merged, so this
+// carries no findings: code findings are run-level now, raised by the assembled
+// review against the integration branch and kept verbatim in the run summary.
+const escalate = async (issue, reason) => {
   settled.add(issue.id)
-  escalations.push({ issue: issue.identifier, title: issue.title, reason, findings: details })
+  escalations.push({ issue: issue.identifier, title: issue.title, reason, findings: [] })
   log(`ESCALATED ${issue.identifier}: ${reason}`)
   // Best-effort: an escalation only the run summary knows about is invisible to
   // whoever opens the issue later.
-  const noted = await agent(promptEscalationNote(issue, reason, details, branch), {
+  const noted = await agent(promptEscalationNote(issue, reason), {
     label: `escalation-note:${issue.identifier}`,
     phase: 'Implement',
     effort: 'low',
@@ -454,25 +428,25 @@ const findingsFrom = review => {
 // a fixer as findings and must not spend a fix round. One retry -- a fresh
 // delegation, so the delegator's one-invocation-per-delegation contract is
 // untouched -- absorbs a flaky run; a second non-completion means the task, not
-// the weather, so the slice escalates unmerged with nothing recorded against it.
+// the weather, so the run escalates with nothing recorded against the code.
 // Returns {findings} or {failed: reason}.
-const reviewSlice = async (issue, branch, label, stage) => {
+const runReview = async (label, stage) => {
   const request = attemptLabel =>
-    agent(promptSliceReview(issue, branch), {
+    agent(promptReview(), {
       label: attemptLabel,
-      phase: 'Implement',
+      phase: 'Review',
       agentType: agentTypeFor('reviewer'),
-      schema: SLICE_REVIEW_SCHEMA,
+      schema: REVIEW_SCHEMA,
     })
   let review = await request(label)
   if (!review) return { failed: `${stage} returned no verdict` }
   if (review.verdict === 'did-not-complete') {
-    log(`${issue.identifier}: ${stage} did not complete (${clip(review.detail)}) — retrying once; no fix round consumed.`)
+    log(`${stage} did not complete (${clip(review.detail)}) — retrying once; no fix round consumed.`)
     review = await request(`${label}:retry`)
     if (!review || review.verdict === 'did-not-complete') {
       const detail = review ? clip(review.detail) : 'the retry returned no verdict'
       return {
-        failed: `${stage} never completed after one retry (${detail}); branch ${branch} left unmerged, no findings recorded, no fix round consumed`,
+        failed: `${stage} never completed after one retry (${detail}); ${baseBranch} is unreviewed, no findings recorded, no fix round consumed`,
       }
     }
   }
@@ -482,7 +456,7 @@ const reviewSlice = async (issue, branch, label, stage) => {
 }
 
 const finish = async prUrl => {
-  const summary = { prUrl, slicesCompleted, escalations, cutList }
+  const summary = { prUrl, slicesCompleted, escalations }
   const posted = await agent(promptRunSummary(summary), {
     label: `run-summary:${slug}`,
     phase: 'Ship',
@@ -544,9 +518,11 @@ const runFrontierLoop = async passLabel => {
     }
     log(`Round ${round} (${passLabel}): ${pending.length} slice(s) — ${pending.map(issue => issue.identifier).join(', ')}`)
 
-    const outcomes = await pipeline(
-      pending,
-      async (_incoming, issue) => {
+    // Implement only. A slice's gate is its own lint/types/tests, which the
+    // implementer runs and which cost no tokens; the code is reviewed once,
+    // assembled, after the loop drains.
+    const outcomes = await parallel(
+      pending.map(issue => async () => {
         const result = await agent(promptImplementer(issue), {
           label: `implement:${issue.identifier}`,
           phase: 'Implement',
@@ -561,78 +537,41 @@ const runFrontierLoop = async passLabel => {
         const branch = result.branch || branchFor(issue)
         log(`${issue.identifier}: implemented (${result.status}) on ${branch}.`)
         return { issue, state: 'implemented', summary: result.summary, branch }
-      },
-      async (outcome, issue) => {
-        if (outcome.state === 'escalated') return outcome
-        const reviewed = await reviewSlice(issue, outcome.branch, `review:${issue.identifier}`, 'slice review')
-        if (reviewed.failed) return escalate(issue, reviewed.failed)
-        return { ...outcome, findings: reviewed.findings }
-      },
-      async (outcome, issue) => {
-        if (outcome.state === 'escalated') return outcome
-        let findings = outcome.findings
-        for (let fixRound = 1; findings.length && fixRound <= MAX_FIX_ROUNDS; fixRound += 1) {
-          log(`${issue.identifier}: fix round ${fixRound}/${MAX_FIX_ROUNDS} for ${findings.length} finding(s).`)
-          const fixed = await agent(promptFixer(issue, outcome.branch, findings), {
-            label: `fix:${issue.identifier}:${fixRound}`,
-            phase: 'Implement',
-            agentType: agentTypeFor('implementer'),
-          })
-          if (!fixed) return escalate(issue, `fix round ${fixRound} returned no result`)
-          const reviewed = await reviewSlice(
-            issue,
-            outcome.branch,
-            `re-review:${issue.identifier}:${fixRound}`,
-            `re-review after fix round ${fixRound}`,
-          )
-          if (reviewed.failed) return escalate(issue, reviewed.failed)
-          findings = reviewed.findings
-        }
-        if (findings.length) {
-          return escalate(
-            issue,
-            `${findings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds; branch left unmerged`,
-            findings,
-            outcome.branch,
-          )
-        }
-        return { ...outcome, state: 'passed', findings: [] }
-      },
+      }),
     )
 
-    // Merges are sequential on purpose: two agents merging into the same
-    // branch in the same working copy would race on the index.
-    const passed = outcomes.filter(Boolean).filter(outcome => outcome.state === 'passed')
+    // One agent merges the whole round in order and marks each slice as it
+    // lands: merges must be sequential anyway (two agents merging into the
+    // same working copy race on the index), so per-slice merge and marker
+    // agents bought nothing but their own context.
+    const ready = outcomes.filter(Boolean).filter(outcome => outcome.state === 'implemented')
     let merged = 0
-    for (const outcome of passed) {
-      const issue = outcome.issue
-      const result = await agent(promptMerge(issue, outcome.branch), {
-        label: `merge:${issue.identifier}`,
+    if (ready.length) {
+      const settlement = await agent(promptSettle(ready), {
+        label: `settle:${passLabel}:${round}`,
         phase: 'Implement',
-        schema: MERGE_SCHEMA,
+        schema: SETTLE_SCHEMA,
       })
-      if (!result || !result.merged) {
-        await escalate(issue, `merge into ${baseBranch} failed: ${result ? clip(result.detail) : 'merge agent returned nothing'}`)
-        continue
+      const results = settlement ? settlement.results || [] : []
+      for (const outcome of ready) {
+        const issue = outcome.issue
+        const result = results.find(entry => entry.identifier === issue.identifier)
+        if (!result || !result.merged) {
+          await escalate(issue, `merge into ${baseBranch} failed: ${result ? clip(result.detail) : 'the settle agent reported nothing for this slice'}`)
+          continue
+        }
+        settled.add(issue.id)
+        slicesCompleted.push(issue.identifier)
+        merged += 1
+        log(`${issue.identifier}: merged ${outcome.branch} into ${baseBranch}.`)
+        // Deliberate trade-off: marking only after a confirmed merge accepts a
+        // crash-after-merge window (a resumed run re-implements a slice already
+        // in the base branch) rather than losing a slice whose merge failed
+        // after it was already marked complete.
+        if (!result.marked) {
+          escalateRun(`slice-complete marker: ${issue.identifier}`, `the marker did not post after merging into ${baseBranch}; a resumed run may re-implement this slice`)
+        }
       }
-      settled.add(issue.id)
-      slicesCompleted.push(issue.identifier)
-      merged += 1
-      log(`${issue.identifier}: merged ${outcome.branch} into ${baseBranch}.`)
-      // Deliberate trade-off: marking only after a confirmed merge accepts a
-      // crash-after-merge window (a resumed run re-implements a slice already
-      // in the base branch) rather than losing a slice whose merge failed
-      // after it was already marked complete.
-      const marked = await agent(promptCompletionMark(issue, outcome.summary), {
-        label: `mark:${issue.identifier}`,
-        phase: 'Implement',
-        effort: 'low',
-      })
-      if (!marked) {
-        escalateRun(`slice-complete marker: ${issue.identifier}`, `the marker did not post after merging into ${baseBranch}; a resumed run may re-implement this slice`)
-        continue
-      }
-      log(`${issue.identifier}: marked slice-complete on the tracker.`)
     }
     // Anything the pipeline dropped (null outcome, unknown state) would come
     // back on the next frontier query and be re-spawned forever; settle it.
@@ -651,68 +590,73 @@ await runFrontierLoop('implement')
 // Reviewing and shipping an unimplemented base branch burns high-tier agents on
 // nothing and can open a PR over an empty diff; stop at the summary instead.
 if (!slicesCompleted.length && escalations.length) {
-  log(`No slice merged into ${baseBranch} and ${escalations.length} escalation(s) stand — skipping spec review and ship.`)
+  log(`No slice merged into ${baseBranch} and ${escalations.length} escalation(s) stand — skipping review and ship.`)
   return await finish(null)
 }
 
-// ---- Spec review ------------------------------------------------------------
-const runSpecReview = async () => {
-  const results = await parallel(
-    REVIEW_LENSES.map(lens => () =>
-      agent(promptSpecReview(lens), {
-        label: `spec-review:${lens}`,
-        phase: 'Spec review',
-        agentType: agentTypeFor('reviewer'),
-        schema: SPEC_REVIEW_SCHEMA,
-      }),
-    ),
-  )
-  // A dead reviewer contributes no findings, which is indistinguishable from a
-  // clean lens once flattened — name it first. A lens that reports `error` did
-  // not run to completion either, so it is treated identically and whatever
-  // partial findings it carries are discarded rather than acted on.
-  REVIEW_LENSES.forEach((lens, index) => {
-    const result = results[index]
-    if (!result) {
-      escalateRun(`spec review: ${lens}`, `the ${lens} lens returned no result; that lens is unreviewed, not clean`)
-    } else if (result.error) {
-      escalateRun(`spec review: ${lens}`, `the ${lens} lens did not complete (${clip(result.error)}); that lens is unreviewed, not clean`)
+// ---- Review -----------------------------------------------------------------
+// One review of the assembled work, then bounded fixes against it. Findings
+// are fixed in place on the integration branch: re-slicing them onto the
+// tracker and re-entering the frontier loop costs a planner, a frontier query,
+// an implementer and a settle agent per pass, so it is the last resort below,
+// not the first response.
+phase('Review')
+// `pass` distinguishes the re-entry's labels from the first pass's: without it
+// both passes emit `fix:1`, and a transcript cannot say which round it is.
+const settleFindings = async (pass = '') => {
+  let reviewed = await runReview(`review${pass}:assembled`, 'assembled review')
+  if (reviewed.failed) {
+    escalateRun('assembled review', reviewed.failed)
+    return []
+  }
+  let findings = reviewed.findings
+  for (let fixRound = 1; findings.length && fixRound <= MAX_FIX_ROUNDS; fixRound += 1) {
+    log(`Fix round ${fixRound}/${MAX_FIX_ROUNDS} for ${findings.length} finding(s).`)
+    const fixed = await agent(promptFixer(findings, fixRound), {
+      label: `fix${pass}:${fixRound}`,
+      phase: 'Review',
+      agentType: agentTypeFor('implementer'),
+    })
+    if (!fixed) {
+      escalateRun(`fix round ${fixRound}`, `the fixer returned no result; ${findings.length} finding(s) stand`)
+      return findings
     }
-  })
-  const findings = results.filter(result => result && !result.error).flatMap(result => result.findings || [])
-  log(`Spec review: ${findings.length} finding(s) across the ${REVIEW_LENSES.join('/')} lenses.`)
+    reviewed = await runReview(`re-review${pass}:${fixRound}`, `re-review after fix round ${fixRound}`)
+    if (reviewed.failed) {
+      escalateRun('assembled review', reviewed.failed)
+      return findings
+    }
+    findings = reviewed.findings
+  }
   return findings
 }
 
-phase('Spec review')
-let openFindings = await runSpecReview()
+let openFindings = await settleFindings()
 let reentries = 0
 while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
   reentries += 1
-  log(`Filing ${openFindings.length} finding(s) as fix slices (re-entry ${reentries}/${SPEC_REVIEW_REENTRIES}).`)
+  log(`${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds — filing them as slices (re-entry ${reentries}/${SPEC_REVIEW_REENTRIES}).`)
   const filed = await agent(promptFileFindings(openFindings), {
     label: `file-findings:${reentries}`,
-    phase: 'Spec review',
+    phase: 'Review',
     agentType: agentTypeFor('planner'),
   })
   if (!filed) {
     log('Could not file the findings as fix slices — collecting them as escalations instead.')
     break
   }
-  await runFrontierLoop(`spec-review-${reentries}`)
-  phase('Spec review')
-  openFindings = await runSpecReview()
+  await runFrontierLoop(`review-${reentries}`)
+  phase('Review')
+  openFindings = await settleFindings(`-r${reentries}`)
 }
-for (const finding of openFindings) {
-  // The lens, not the severity, says what a finding is: the bloat lens exists
-  // to produce the cut-list.
-  if (finding.lens === 'bloat') {
-    cutList.push(finding)
-    continue
-  }
-  escalateRun(`${finding.lens}: ${finding.title}`, clip(finding.detail))
+if (openFindings.length) {
+  escalateRun(
+    `${openFindings.length} finding(s) survived review`,
+    `${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds on ${baseBranch}`,
+    openFindings,
+  )
 }
-log(`Spec review settled: ${cutList.length} cut-list item(s), ${escalations.length} escalation(s) total.`)
+log(`Review settled: ${openFindings.length} open finding(s), ${escalations.length} escalation(s) total.`)
 
 // ---- Ship -------------------------------------------------------------------
 phase('Ship')

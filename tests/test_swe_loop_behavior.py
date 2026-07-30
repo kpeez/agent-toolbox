@@ -192,7 +192,7 @@ def test_no_auth_hint_for_non_auth_errors(tmp_path: Path, error_text: str) -> No
 # ---- escalation comments carry the findings ---------------------------------
 
 
-def test_exhausted_fix_rounds_comment_carries_findings_and_branch(
+def test_exhausted_fix_rounds_carry_findings_verbatim_into_the_run_summary(
     tmp_path: Path,
 ) -> None:
     # Longer than clip()'s 200-char ceiling, so an accidental clip() around the
@@ -206,7 +206,7 @@ def test_exhausted_fix_rounds_comment_carries_findings_and_branch(
     assert len(long_finding) > 200
     findings = [
         long_finding,
-        "tests/test_swe_loop_behavior.py:1 — no test drives a slice through every fix round",
+        "tests/test_swe_loop_behavior.py:1 — no test drives the review through every fix round",
     ]
     issue = {"id": "issue-1", "identifier": "KP-1", "title": "Carry findings"}
     result = run_loop(
@@ -222,31 +222,47 @@ def test_exhausted_fix_rounds_comment_carries_findings_and_branch(
                     "summary": "landed",
                 },
             },
-            {"match": "^fix:KP-1", "result": "applied"},
             {
-                "match": "review:KP-1",
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": "KP-1",
+                            "merged": True,
+                            "marked": True,
+                            "detail": "merged",
+                        }
+                    ]
+                },
+            },
+            {"match": "^fix:", "result": "applied"},
+            {
+                "match": "^(review|re-review):",
                 "result": {"verdict": "findings", "findings": findings},
             },
-            {"match": "^escalation-note:KP-1$", "result": "posted"},
+            # No file-findings response: the re-entry cannot file, so the
+            # findings fall through to the escalation this test pins.
+            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
             {"match": "^run-summary:", "result": "posted"},
         ],
         default_result=None,
     )
 
-    note = call_with_label(result, "escalation-note:KP-1")["prompt"]
-    assert "Branch: knack/slice/KP-1" in note
-    assert "Surviving findings:" in note
-    for index, finding in enumerate(findings, start=1):
-        assert f"{index}. {finding}" in note
-    # The over-200-char finding reaches the note whole, never clipped to a display width.
-    assert long_finding in note
-    assert note.count("END") == 1
-
-    # The run summary keeps the findings structured, not folded into the reason.
-    escalation = result["summary"]["escalations"][0]
-    assert escalation["issue"] == "KP-1"
+    # Two fix rounds ran, then the findings survived.
+    assert [label for label in labels(result) if label.startswith("fix:")] == [
+        "fix:1",
+        "fix:2",
+    ]
+    escalation = result["summary"]["escalations"][-1]
+    assert escalation["issue"] is None
     assert escalation["findings"] == findings
     assert "2 finding(s) survived 2 fix rounds" in escalation["reason"]
+
+    # The run summary is the durable tracker record, so the over-200-char
+    # finding must reach it whole rather than clipped to a display width.
+    summary_prompt = call_with_label(result, "run-summary:stub-run")["prompt"]
+    assert long_finding in summary_prompt
+    assert summary_prompt.count("END") == 1
 
 
 def test_escalations_without_findings_render_the_bare_headline(tmp_path: Path) -> None:
@@ -269,7 +285,7 @@ def test_escalations_without_findings_render_the_bare_headline(tmp_path: Path) -
     assert result["summary"]["escalations"][0]["findings"] == []
 
 
-def test_slice_review_prompt_requires_a_file_line_anchor(tmp_path: Path) -> None:
+def test_review_prompt_requires_a_file_line_anchor(tmp_path: Path) -> None:
     issue = {"id": "issue-3", "identifier": "KP-3", "title": "Anchor"}
     result = run_loop(
         tmp_path,
@@ -284,17 +300,183 @@ def test_slice_review_prompt_requires_a_file_line_anchor(tmp_path: Path) -> None
                     "summary": "landed",
                 },
             },
-            {"match": "^review:KP-3$", "result": {"verdict": "pass"}},
-            {"match": "^merge:KP-3$", "result": {"merged": True, "detail": "merged"}},
-            {"match": "^mark:KP-3$", "result": "posted"},
-            {"match": "^spec-review:", "result": {"findings": []}},
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": "KP-3",
+                            "merged": True,
+                            "marked": True,
+                            "detail": "merged",
+                        }
+                    ]
+                },
+            },
+            {"match": "^review:assembled$", "result": {"verdict": "pass"}},
             {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
             {"match": "^run-summary:", "result": "posted"},
         ],
         default_result=None,
     )
 
-    assert "file:line" in call_with_label(result, "review:KP-3")["prompt"]
+    assert "file:line" in call_with_label(result, "review:assembled")["prompt"]
+
+
+def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> None:
+    issues = [
+        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"slice {n}"}
+        for n in (1, 2, 3)
+    ]
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^frontier:implement:1$", "result": {"issues": issues}},
+            {"match": "^frontier:", "result": {"issues": []}},
+            *[
+                {
+                    "match": f"^implement:KP-{n}$",
+                    "result": {
+                        "status": "DONE",
+                        "branch": f"knack/slice/KP-{n}",
+                        "summary": f"KP-{n} landed",
+                    },
+                }
+                for n in (1, 2, 3)
+            ],
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": f"KP-{n}",
+                            "merged": True,
+                            "marked": True,
+                            "detail": "merged",
+                        }
+                        for n in (1, 2, 3)
+                    ]
+                },
+            },
+            {"match": "^review:assembled$", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^run-summary:", "result": "posted"},
+        ],
+        default_result=None,
+    )
+
+    called = labels(result)
+    # Three slices settle through exactly one agent, not one merge plus one
+    # marker agent each: that fan-out was 7M cache reads of deterministic work.
+    assert [label for label in called if label.startswith("settle:")] == [
+        "settle:implement:1"
+    ]
+    assert [label for label in called if label.startswith(("merge:", "mark:"))] == []
+    assert result["summary"]["slicesCompleted"] == ["KP-1", "KP-2", "KP-3"]
+
+    prompt = call_with_label(result, "settle:implement:1")["prompt"]
+    for n in (1, 2, 3):
+        assert f"KP-{n} on knack/slice/KP-{n}" in prompt
+
+
+def test_an_unmerged_slice_escalates_while_the_round_continues(
+    tmp_path: Path,
+) -> None:
+    issues = [
+        {"id": "issue-1", "identifier": "KP-1", "title": "conflicts"},
+        {"id": "issue-2", "identifier": "KP-2", "title": "clean"},
+    ]
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^frontier:implement:1$", "result": {"issues": issues}},
+            {"match": "^frontier:", "result": {"issues": []}},
+            *[
+                {
+                    "match": f"^implement:KP-{n}$",
+                    "result": {
+                        "status": "DONE",
+                        "branch": f"knack/slice/KP-{n}",
+                        "summary": "landed",
+                    },
+                }
+                for n in (1, 2)
+            ],
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": "KP-1",
+                            "merged": False,
+                            "marked": False,
+                            "detail": "conflict in datasets.py could not be resolved",
+                        },
+                        {
+                            "identifier": "KP-2",
+                            "merged": True,
+                            "marked": True,
+                            "detail": "merged",
+                        },
+                    ]
+                },
+            },
+            {"match": "^escalation-note:KP-1$", "result": "posted"},
+            {"match": "^review:assembled$", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^run-summary:", "result": "posted"},
+        ],
+        default_result=None,
+    )
+
+    assert result["summary"]["slicesCompleted"] == ["KP-2"]
+    escalation = result["summary"]["escalations"][0]
+    assert escalation["issue"] == "KP-1"
+    assert "conflict in datasets.py" in escalation["reason"]
+
+
+def test_an_unposted_marker_escalates_without_losing_the_merge(
+    tmp_path: Path,
+) -> None:
+    issue = {"id": "issue-1", "identifier": "KP-1", "title": "merged but unmarked"}
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^frontier:implement:1$", "result": {"issues": [issue]}},
+            {"match": "^frontier:", "result": {"issues": []}},
+            {
+                "match": "^implement:KP-1$",
+                "result": {
+                    "status": "DONE",
+                    "branch": "knack/slice/KP-1",
+                    "summary": "landed",
+                },
+            },
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": "KP-1",
+                            "merged": True,
+                            "marked": False,
+                            "detail": "merged; comment API rejected the post",
+                        }
+                    ]
+                },
+            },
+            {"match": "^review:assembled$", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^run-summary:", "result": "posted"},
+        ],
+        default_result=None,
+    )
+
+    # The merge stands; the missing marker is loud because a resumed run would
+    # otherwise re-implement a slice that is already on the branch.
+    assert result["summary"]["slicesCompleted"] == ["KP-1"]
+    titles = [entry["title"] for entry in result["summary"]["escalations"]]
+    assert titles == ["slice-complete marker: KP-1"]
 
 
 # ---- did-not-complete slice reviews -----------------------------------------
@@ -321,9 +503,20 @@ def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
                 "summary": "KP-1 implemented",
             },
         },
+        {
+            "match": "^settle:",
+            "result": {
+                "results": [
+                    {
+                        "identifier": "KP-1",
+                        "merged": True,
+                        "marked": True,
+                        "detail": "merged",
+                    }
+                ]
+            },
+        },
         {"match": "^(review|re-review):", "result": {"verdict": "pass"}},
-        {"match": "^spec-review:", "result": {"findings": []}},
-        {"match": "^merge:KP-1$", "result": {"merged": True, "detail": "merged"}},
         {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
     ]
 
@@ -338,15 +531,15 @@ def test_did_not_complete_review_consumes_no_fix_round(tmp_path: Path) -> None:
     run = run_one_slice(
         tmp_path,
         {
-            "match": "^review:KP-1$",
+            "match": "^review:assembled$",
             "result": {"verdict": "did-not-complete", "detail": "codex run timed out"},
         },
-        {"match": "^review:KP-1:retry$", "result": {"verdict": "pass"}},
+        {"match": "^review:assembled:retry$", "result": {"verdict": "pass"}},
     )
 
     called = labels(run)
-    assert called.count("review:KP-1") == 1
-    assert called.count("review:KP-1:retry") == 1
+    assert called.count("review:assembled") == 1
+    assert called.count("review:assembled:retry") == 1
     # The dead review never reached a fixer, and no fix round was spent.
     assert [label for label in called if label.startswith("fix:")] == []
     assert run["summary"]["slicesCompleted"] == ["KP-1"]
@@ -357,26 +550,29 @@ def test_second_did_not_complete_escalates_without_findings(tmp_path: Path) -> N
     run = run_one_slice(
         tmp_path,
         {
-            "match": "^review:KP-1$",
+            "match": "^review:assembled$",
             "result": {"verdict": "did-not-complete", "detail": "codex run timed out"},
         },
         {
-            "match": "^review:KP-1:retry$",
+            "match": "^review:assembled:retry$",
             "result": {"verdict": "did-not-complete", "detail": "timed out again"},
         },
     )
 
     called = labels(run)
-    assert called.count("review:KP-1:retry") == 1
-    assert [label for label in called if label.startswith(("fix:", "merge:"))] == []
+    assert called.count("review:assembled:retry") == 1
+    assert [label for label in called if label.startswith("fix:")] == []
     escalations = run["summary"]["escalations"]
-    assert [entry["issue"] for entry in escalations] == ["KP-1"]
+    assert [entry["title"] for entry in escalations] == ["assembled review"]
     reason = escalations[0]["reason"]
     assert "never completed" in reason
-    assert "knack/slice/KP-1" in reason
+    assert "worktree-stub is unreviewed" in reason
     assert "no findings recorded" in reason
     assert "no fix round consumed" in reason
-    assert run["summary"]["slicesCompleted"] == []
+    assert escalations[0]["findings"] == []
+    # The slices themselves merged before review, so they are not lost by an
+    # unreviewable branch — the branch is flagged unreviewed instead.
+    assert run["summary"]["slicesCompleted"] == ["KP-1"]
 
 
 def test_did_not_complete_re_review_does_not_increment_the_fix_round(
@@ -385,22 +581,21 @@ def test_did_not_complete_re_review_does_not_increment_the_fix_round(
     run = run_one_slice(
         tmp_path,
         {
-            "match": "^review:KP-1$",
+            "match": "^review:assembled$",
             "result": {"verdict": "findings", "findings": ["a.js:12 — guard the null"]},
         },
         {
-            "match": "^re-review:KP-1:1$",
+            "match": "^re-review:1$",
             "result": {"verdict": "did-not-complete", "detail": "reviewer tool failed"},
         },
-        {"match": "^re-review:KP-1:1:retry$", "result": {"verdict": "pass"}},
+        {"match": "^re-review:1:retry$", "result": {"verdict": "pass"}},
     )
 
     called = labels(run)
     # One fixer ran, its re-review's non-completion cost nothing, and the second
     # fix round was never needed or spent.
-    assert [label for label in called if label.startswith("fix:")] == ["fix:KP-1:1"]
-    assert "re-review:KP-1:2" not in called
-    assert run["summary"]["slicesCompleted"] == ["KP-1"]
+    assert [label for label in called if label.startswith("fix:")] == ["fix:1"]
+    assert "re-review:2" not in called
     assert run["summary"]["escalations"] == []
 
 
@@ -410,61 +605,84 @@ def test_second_did_not_complete_re_review_escalates_with_no_findings(
     run = run_one_slice(
         tmp_path,
         {
-            "match": "^review:KP-1$",
+            "match": "^review:assembled$",
             "result": {"verdict": "findings", "findings": ["a.js:12 — guard the null"]},
         },
         {
-            "match": "^re-review:KP-1:1$",
+            "match": "^re-review:1$",
             "result": {"verdict": "did-not-complete", "detail": "reviewer tool failed"},
         },
-        {"match": "^re-review:KP-1:1:retry$", "result": None},
+        {"match": "^re-review:1:retry$", "result": None},
     )
 
     called = labels(run)
-    assert [label for label in called if label.startswith("fix:")] == ["fix:KP-1:1"]
+    assert [label for label in called if label.startswith("fix:")] == ["fix:1"]
     reason = run["summary"]["escalations"][0]["reason"]
     assert "re-review after fix round 1 never completed" in reason
     assert "the retry returned no verdict" in reason
-    assert run["summary"]["slicesCompleted"] == []
 
 
 def test_null_first_review_still_escalates_immediately(tmp_path: Path) -> None:
-    run = run_one_slice(tmp_path, {"match": "^review:KP-1$", "result": None})
+    run = run_one_slice(tmp_path, {"match": "^review:assembled$", "result": None})
 
-    assert "review:KP-1:retry" not in labels(run)
+    assert "review:assembled:retry" not in labels(run)
     assert (
-        run["summary"]["escalations"][0]["reason"] == "slice review returned no verdict"
+        run["summary"]["escalations"][0]["reason"]
+        == "assembled review returned no verdict"
     )
 
 
-def test_errored_spec_review_lens_is_unreviewed_and_its_findings_discarded(
+def test_the_run_reviews_the_assembled_work_once_not_per_slice(
     tmp_path: Path,
 ) -> None:
-    run = run_one_slice(
+    issues = [
+        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"slice {n}"}
+        for n in (1, 2)
+    ]
+    result = run_loop(
         tmp_path,
-        {
-            "match": "^spec-review:missed$",
-            "result": {
-                "error": "review tool crashed",
-                "findings": [
-                    {
-                        "lens": "missed",
-                        "title": "partial",
-                        "detail": "junk",
-                        "severity": "high",
-                    }
-                ],
+        [
+            {"match": "^frontier:implement:1$", "result": {"issues": issues}},
+            {"match": "^frontier:", "result": {"issues": []}},
+            *[
+                {
+                    "match": f"^implement:KP-{n}$",
+                    "result": {
+                        "status": "DONE",
+                        "branch": f"knack/slice/KP-{n}",
+                        "summary": "landed",
+                    },
+                }
+                for n in (1, 2)
+            ],
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": f"KP-{n}",
+                            "merged": True,
+                            "marked": True,
+                            "detail": "merged",
+                        }
+                        for n in (1, 2)
+                    ]
+                },
             },
-        },
+            {"match": "^review:assembled$", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^run-summary:", "result": "posted"},
+        ],
+        default_result=None,
     )
 
-    called = labels(run)
-    assert [label for label in called if label.startswith("file-findings")] == []
-    escalations = run["summary"]["escalations"]
-    assert [entry["title"] for entry in escalations] == ["spec review: missed"]
-    assert "unreviewed, not clean" in escalations[0]["reason"]
-    assert "review tool crashed" in escalations[0]["reason"]
-    assert run["summary"]["cutList"] == []
+    # Two slices, one review: the same lines are never read by a per-slice
+    # reviewer and then again by a lens panel.
+    review_calls = [
+        label for label in labels(result) if label.startswith(("review:", "re-review:"))
+    ]
+    assert review_calls == ["review:assembled"]
+    assert [label for label in labels(result) if label.startswith("spec-review")] == []
 
 
 # ---- frontierCmd launch arg -------------------------------------------------

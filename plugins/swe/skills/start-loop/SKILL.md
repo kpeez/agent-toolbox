@@ -183,10 +183,12 @@ else echo "IN DESIGN: $spec"; fi
 
 Once the spec carries the marker, the workflow runs to completion without
 prompting. Problems reach you as **data, after the fact**: the run summary
-(`{prUrl, slicesCompleted, escalations, cutList}`) plus the conductor's
+(`{prUrl, slicesCompleted, escalations}`) plus the conductor's
 per-issue escalation comments — never a live worker report.
 
-1. Read the summary's `escalations` and `cutList` when the run returns.
+1. Read the summary's `escalations` when the run returns; each carries its
+   surviving findings verbatim, so check them against the spec's Scope before
+   trusting that the run covered it.
 2. **Resolve** anything answerable from the spec, ADRs, or codebase; log the
    decision as a comment on the issue; relaunch the workflow to pick it up. A
    logged judgment call beats a stalled loop.
