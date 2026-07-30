@@ -43,8 +43,17 @@ def call_with_label(run: dict[str, Any], label: str) -> dict[str, Any]:
 def test_exhausted_fix_rounds_comment_carries_findings_and_branch(
     tmp_path: Path,
 ) -> None:
+    # Longer than clip()'s 200-char ceiling, so an accidental clip() around the
+    # findings truncates this string and fails the assertions below.
+    long_finding = (
+        "plugins/swe/workflows/swe-loop.js:462 — the escalation names only the finding "
+        "count and drops the detail that makes it actionable. "
+        + ("detail " * 40)
+        + "END"
+    )
+    assert len(long_finding) > 200
     findings = [
-        "plugins/swe/workflows/swe-loop.js:462 — the escalation names only the finding count; carry the findings themselves",
+        long_finding,
         "tests/test_swe_loop_behavior.py:1 — no test drives a slice through every fix round",
     ]
     issue = {"id": "issue-1", "identifier": "KP-1", "title": "Carry findings"}
@@ -76,6 +85,9 @@ def test_exhausted_fix_rounds_comment_carries_findings_and_branch(
     assert "Surviving findings:" in note
     for index, finding in enumerate(findings, start=1):
         assert f"{index}. {finding}" in note
+    # The over-200-char finding reaches the note whole, never clipped to a display width.
+    assert long_finding in note
+    assert note.count("END") == 1
 
     # The run summary keeps the findings structured, not folded into the reason.
     escalation = run["result"]["escalations"][0]
