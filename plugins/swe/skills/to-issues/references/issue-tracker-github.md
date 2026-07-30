@@ -14,6 +14,20 @@ Issues for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
+## swe-loop frontier
+
+The loop's frontier query — the workable slices in a spec's container — is the
+container parent issue's **open sub-issues**, minus:
+
+- issues labeled `ready-for-human`
+- issues whose `## Blocked by` section still references an open issue
+
+Report each as `{id, identifier, title}` with the issue number as `id` and
+`#<number>` as `identifier`. A failed `gh` call (auth, network, non-zero exit)
+is a query failure, never an empty frontier.
+
+The loop's "container comment" (run summary) is a comment on the parent issue.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a GitHub issue.
