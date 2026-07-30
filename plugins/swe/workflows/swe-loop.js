@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Conductor for the swe spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement -> review -> bounded fix -> merge) until it drains, review the assembled work against the spec through three lenses, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations, cutList}; it never prompts the user mid-run.',
   phases: [
     { title: 'Slice', detail: 'publish the spec as vertical slices on the tracker' },
     { title: 'Implement', detail: 'frontier rounds: implement, review, bounded fixes, sequential merge' },
@@ -66,6 +66,30 @@ if (!scriptsDir.startsWith('/')) {
   )
 }
 const resumeIssueId = ARGS.issueId || null
+
+// ---- role routing -------------------------------------------------------
+// The launcher may route any capability role to Codex; every other agent
+// (frontier, merge, tracker bookkeeping) is loop plumbing and stays on the
+// default workflow subagent.
+const ROUTABLE_ROLES = ['planner', 'implementer', 'reviewer', 'publisher']
+const ROLE_PROVIDERS = ['claude', 'codex']
+const roleRouting = ARGS.roles || {}
+// Object.entries silently yields [] for a boolean or number, which would read
+// as "no routing requested" and discard the caller's intent without a word.
+if (typeof roleRouting !== 'object' || Array.isArray(roleRouting)) {
+  throw new Error(
+    `swe-loop got a non-object roles value (${JSON.stringify(ARGS.roles)}). Pass a map like {"reviewer": "codex"} with keys among ${ROUTABLE_ROLES.join(', ')}.`,
+  )
+}
+const invalidRoles = Object.entries(roleRouting).filter(
+  ([role, provider]) => !ROUTABLE_ROLES.includes(role) || !ROLE_PROVIDERS.includes(provider),
+)
+if (invalidRoles.length) {
+  throw new Error(
+    `swe-loop got an invalid roles map (${JSON.stringify(roleRouting)}). Keys must be among ${ROUTABLE_ROLES.join(', ')}; values must be "claude" or "codex".`,
+  )
+}
+const agentTypeFor = role => (roleRouting[role] === 'codex' ? 'swe:codex-delegator' : `swe:${role}`)
 
 // ---- agent contracts --------------------------------------------------------
 const FRONTIER_SCHEMA = {
@@ -352,7 +376,7 @@ if (resumeIssueId) {
   log(`Targeted resume on ${resumeIssueId}: slices are already published, skipping the slice phase.`)
 } else {
   log(`Slicing ${specPath} into container ${containerId}.`)
-  const sliced = await agent(promptSlicer(), { label: `slice:${slug}`, phase: 'Slice', agentType: 'swe:planner' })
+  const sliced = await agent(promptSlicer(), { label: `slice:${slug}`, phase: 'Slice', agentType: agentTypeFor('planner') })
   log(sliced ? 'Slicing done.' : 'Slicer returned nothing — the frontier query decides what work actually exists.')
 }
 
@@ -385,7 +409,7 @@ const runFrontierLoop = async passLabel => {
         const result = await agent(promptImplementer(issue), {
           label: `implement:${issue.identifier}`,
           phase: 'Implement',
-          agentType: 'swe:implementer',
+          agentType: agentTypeFor('implementer'),
           isolation: 'worktree',
           schema: IMPLEMENTER_SCHEMA,
         })
@@ -402,7 +426,7 @@ const runFrontierLoop = async passLabel => {
         const review = await agent(promptSliceReview(issue, outcome.branch), {
           label: `review:${issue.identifier}`,
           phase: 'Implement',
-          agentType: 'swe:reviewer',
+          agentType: agentTypeFor('reviewer'),
           schema: SLICE_REVIEW_SCHEMA,
         })
         if (!review) return escalate(issue, 'slice review returned no verdict')
@@ -418,13 +442,13 @@ const runFrontierLoop = async passLabel => {
           const fixed = await agent(promptFixer(issue, outcome.branch, findings), {
             label: `fix:${issue.identifier}:${fixRound}`,
             phase: 'Implement',
-            agentType: 'swe:implementer',
+            agentType: agentTypeFor('implementer'),
           })
           if (!fixed) return escalate(issue, `fix round ${fixRound} returned no result`)
           const review = await agent(promptSliceReview(issue, outcome.branch), {
             label: `re-review:${issue.identifier}:${fixRound}`,
             phase: 'Implement',
-            agentType: 'swe:reviewer',
+            agentType: agentTypeFor('reviewer'),
             schema: SLICE_REVIEW_SCHEMA,
           })
           if (!review) return escalate(issue, `re-review after fix round ${fixRound} returned no verdict`)
@@ -503,7 +527,7 @@ const runSpecReview = async () => {
       agent(promptSpecReview(lens), {
         label: `spec-review:${lens}`,
         phase: 'Spec review',
-        agentType: 'swe:reviewer',
+        agentType: agentTypeFor('reviewer'),
         schema: SPEC_REVIEW_SCHEMA,
       }),
     ),
@@ -527,7 +551,7 @@ while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
   const filed = await agent(promptFileFindings(openFindings), {
     label: `file-findings:${reentries}`,
     phase: 'Spec review',
-    agentType: 'swe:planner',
+    agentType: agentTypeFor('planner'),
   })
   if (!filed) {
     log('Could not file the findings as fix slices — collecting them as escalations instead.')
@@ -553,7 +577,7 @@ phase('Ship')
 const shipped = await agent(promptShip(), {
   label: `ship:${slug}`,
   phase: 'Ship',
-  agentType: 'swe:publisher',
+  agentType: agentTypeFor('publisher'),
   schema: SHIP_SCHEMA,
 })
 if (!shipped) {
