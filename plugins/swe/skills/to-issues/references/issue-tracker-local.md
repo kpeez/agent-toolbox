@@ -16,6 +16,23 @@ vault, so issue files and their statuses are private and never committed.
 - Comments and progress notes append to the bottom of the file under a
   `## Comments` heading
 
+## swe-loop frontier
+
+The loop's frontier query — the workable slices in a spec's container — is the
+spec's `NNNN-<slug>-issue-*.md` files, minus:
+
+- files whose `Status:` is `done`, `wontfix`, or `ready-for-human`
+- files with a "Blocked by" reference whose target is not yet `Status: done`
+
+Report each as `{id, identifier, title}` with the file path as `id`, the
+`issue-<NN>-<issue-slug>` filename segment as `identifier`, and the file's
+first heading as `title`. An unreadable or missing spec directory is a query
+failure, never an empty frontier.
+
+Reading or posting an issue's "tracker comments" means its `## Comments`
+section; the loop's "container comment" (run summary) appends under a
+`## Comments` heading at the bottom of the spec file itself.
+
 ## When a skill says "publish to the issue tracker"
 
 Create a new file `docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md` next to the spec.

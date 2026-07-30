@@ -139,6 +139,58 @@ def test_swe_loop_cost_ceilings_stay_pinned() -> None:
     assert "const SPEC_REVIEW_REENTRIES = 1" in text
 
 
+def test_swe_loop_stays_tracker_agnostic() -> None:
+    # Tracker mechanics live in the to-issues tracker references
+    # (references/issue-tracker-*.md); the loop's runner skill and conductor
+    # dispatch through them at runtime and never name a tracker themselves.
+    start_loop = ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
+    offenders = [
+        (path.name, match)
+        for path in (SWE_LOOP, start_loop)
+        for match in re.findall(r"linear|github", path.read_text(), re.IGNORECASE)
+    ]
+
+    assert offenders == []
+
+
+def test_swe_hooks_register_worktree_link_script() -> None:
+    hooks = json.loads((ROOT / "plugins" / "swe" / "hooks" / "hooks.json").read_text())
+    command = '"${CLAUDE_PLUGIN_ROOT}/hooks/link-docs-agents.sh"'
+
+    subagent = hooks["hooks"]["SubagentStart"]
+    assert [entry.get("matcher") for entry in subagent] == [None]
+    assert [hook["command"] for entry in subagent for hook in entry["hooks"]] == [
+        command
+    ]
+
+    session = hooks["hooks"]["SessionStart"]
+    assert [entry["matcher"] for entry in session] == ["startup|resume"]
+    assert [hook["command"] for entry in session for hook in entry["hooks"]] == [
+        command
+    ]
+
+    script = ROOT / "plugins" / "swe" / "hooks" / "link-docs-agents.sh"
+    assert script.is_file()
+    assert script.stat().st_mode & 0o111
+
+
+def test_codex_delegator_run_ceiling_and_non_completion_contract() -> None:
+    text = (ROOT / "plugins" / "swe" / "agents" / "codex-delegator.md").read_text()
+
+    # The foreground Bash tool caps at 600000 ms, so a foreground call
+    # reintroduces the ceiling that killed a real review mid-run.
+    assert "run_in_background: true" in text
+    assert "timeout 1800 codex exec" in text
+
+    # A non-completion must reach the caller as its own channel, never as
+    # substantive output that a fix agent would act on.
+    assert 'verdict: "did-not-complete"' in text
+    assert "Never report a non-completion as" in text
+
+    # One invocation per delegation still holds; only polling was relaxed.
+    assert "Exactly one Codex invocation per delegation: no retries" in text
+
+
 def test_swe_agent_models_match_role_complexity() -> None:
     actual = {
         role: {

@@ -5,6 +5,49 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.9.8 — 2026-07-30
+
+- Cut the loop's token cost roughly in half by removing duplicated reading, not
+  capability. Measured on a real 35-agent run (55.9M cache reads against 302K
+  output tokens — the spend is context re-reads, not generation): the same diff
+  was reviewed three times (52% of the run) and each slice was merged and
+  marked by its own pair of agents (15%). Now the code is reviewed **once**,
+  assembled, through a single adherence lens, with a slice's own lint/types/
+  tests as its pre-merge gate; one settle agent merges and marks a whole round
+  in order; and surviving findings are fixed in place on the integration branch
+  before re-slicing them onto the tracker is considered. The `missed`/`wrong`/
+  `bloat` lens panel and the run summary's `cutList` are gone with it.
+- Recreate the gitignored `docs/agents` symlink inside git worktrees:
+  `hooks/link-docs-agents.sh`, wired on `SubagentStart` and `SessionStart`,
+  mirrors the main worktree's link target so a slice worktree can read
+  `docs/agents/specs|adrs|research` instead of silently seeing nothing. It
+  resolves the target from the main worktree (no configuration), never fails a
+  session, and removes its own link if the path is not gitignored.
+- Distinguish "the reviewer found problems" from "the reviewer never ran": the
+  assembled-review schema gains a `did-not-complete` verdict that is retried once
+  and then escalated, consuming no fix round and never reaching a fix agent.
+  The `codex-delegator` runs Codex in a background call under a 30-minute
+  ceiling — the foreground `Bash` tool caps at 10 minutes, which is what killed
+  a real high-effort review — and reports non-completion through the caller
+  schema's non-completion channel.
+- Take the model off the frontier query's critical path: a new optional
+  `frontierCmd` launch arg runs the tracker's deterministic frontier command
+  verbatim, and the frontier call retries with backoff on harness failures
+  (the observed `529 Overloaded` deaths) instead of ending the run.
+- Escalate honestly: the frontier failure reason carries the actual error text
+  and appends the credential hint only when the error looks like auth, and an
+  exhausted-fix-rounds escalation posts the surviving findings verbatim with
+  `file:line` anchors so a resumed run does not start blind.
+
+## 1.9.7 — 2026-07-29
+
+- Make the swe-loop tracker-agnostic: the conductor's prompts no longer name
+  Linear (GraphQL endpoint, `LINEAR_API_KEY`) and instead resolve the repo's
+  tracker at runtime through the to-issues tracker references, which gain a
+  "swe-loop frontier" section per tracker (Linear keeps `frontier.py`; GitHub
+  and local markdown get equivalent procedures). A drift test pins the
+  conductor and `/start-loop` to zero tracker mentions.
+
 ## 1.9.5 – 1.9.6 — 2026-07-29
 
 - Add the `codex-delegator` agent: a thin forwarder that runs one bounded task

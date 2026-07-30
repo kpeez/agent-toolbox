@@ -35,7 +35,7 @@ Triage's verdict, the gate record, the run id, and the launch args all need
 `containerId`, so on **every** run, new or resumed, first search the tracker for
 the immutable `<!-- knack-spec: <repo>/<slug> -->` marker bound to this
 repository. Found → reuse that container. Missing → create it per `/to-issues`'s
-container conventions (Linear project, or parent issue), stamped with the same
+container conventions for the repo's tracker, stamped with the same
 marker; `/to-issues` dedupes on it later, so this never yields a second one.
 
 ## 2. Triage — the conditional gate policy
@@ -103,10 +103,21 @@ one already-published slice set.
 
 `scriptsDir` is the **expanded absolute path** to the installed plugin's
 `scripts/` directory — resolve `${CLAUDE_PLUGIN_ROOT}/scripts` to a real `/…`
-path and pass that. The conductor's agents run `frontier.py` from there and the
-target repo does not contain it; their shells do not define `CLAUDE_PLUGIN_ROOT`,
+path and pass that. The conductor's agents run the plugin's scripts from there
+(validators, any frontier script the tracker reference names) and the target
+repo does not contain them; their shells do not define `CLAUDE_PLUGIN_ROOT`,
 so passing the literal `${CLAUDE_PLUGIN_ROOT}/scripts` string fails every
-frontier query. The conductor rejects a non-absolute value outright.
+run that needs one. The conductor rejects a non-absolute value outright.
+
+Optional `frontierCmd` makes the loop's frontier query deterministic. You have
+already resolved the repo's tracker (step 1), so read that tracker's
+`to-issues` reference: if its "swe-loop frontier" section names a command to
+run, expand every placeholder in it with the values you are already passing
+(`scriptsDir`, `containerId`, …) and pass the finished command string as
+`frontierCmd`. If the section names no command, omit the argument entirely —
+the conductor then keeps its reference-driven query, unchanged. Never invent a
+command the reference does not name, and never pass an unexpanded placeholder:
+the conductor runs the string verbatim.
 
 Optional `roles` routes loop roles to Codex. When the user asked for Codex on
 this run, add a `roles` map to the args — keys among `planner`,
@@ -172,10 +183,12 @@ else echo "IN DESIGN: $spec"; fi
 
 Once the spec carries the marker, the workflow runs to completion without
 prompting. Problems reach you as **data, after the fact**: the run summary
-(`{prUrl, slicesCompleted, escalations, cutList}`) plus the conductor's
+(`{prUrl, slicesCompleted, escalations}`) plus the conductor's
 per-issue escalation comments — never a live worker report.
 
-1. Read the summary's `escalations` and `cutList` when the run returns.
+1. Read the summary's `escalations` when the run returns; each carries its
+   surviving findings verbatim, so check them against the spec's Scope before
+   trusting that the run covered it.
 2. **Resolve** anything answerable from the spec, ADRs, or codebase; log the
    decision as a comment on the issue; relaunch the workflow to pick it up. A
    logged judgment call beats a stalled loop.
