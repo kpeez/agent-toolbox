@@ -153,6 +153,27 @@ def test_swe_loop_stays_tracker_agnostic() -> None:
     assert offenders == []
 
 
+def test_swe_hooks_register_worktree_link_script() -> None:
+    hooks = json.loads((ROOT / "plugins" / "swe" / "hooks" / "hooks.json").read_text())
+    command = '"${CLAUDE_PLUGIN_ROOT}/hooks/link-docs-agents.sh"'
+
+    subagent = hooks["hooks"]["SubagentStart"]
+    assert [entry.get("matcher") for entry in subagent] == [None]
+    assert [hook["command"] for entry in subagent for hook in entry["hooks"]] == [
+        command
+    ]
+
+    session = hooks["hooks"]["SessionStart"]
+    assert [entry["matcher"] for entry in session] == ["startup|resume"]
+    assert [hook["command"] for entry in session for hook in entry["hooks"]] == [
+        command
+    ]
+
+    script = ROOT / "plugins" / "swe" / "hooks" / "link-docs-agents.sh"
+    assert script.is_file()
+    assert script.stat().st_mode & 0o111
+
+
 def test_swe_agent_models_match_role_complexity() -> None:
     actual = {
         role: {
