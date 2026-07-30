@@ -1,27 +1,26 @@
-# Checkpoint prompts
+# Checkpoint prompt
 
-Two gates, both during design, both on `/start-loop`'s **gated path** — the
-route triage takes when any policy criterion fails. One explicit question per
-transition; only an unambiguous affirmative advances the state machine. Silence,
-context compaction, or an unrelated reply is **not** approval. A change request
-returns to the phase that produced the artifact under review.
+One gate, during design, on `/start-loop`'s **gated path** — the route triage
+takes when any policy criterion fails. One explicit question; only an
+unambiguous affirmative advances the state machine. Silence, context
+compaction, or an unrelated reply is **not** approval. A change request
+returns to the phase that produced the artifact — rejecting the spec reopens
+sharpening.
 
-On the **autonomous path** (all triage criteria pass) neither prompt is asked:
+On the **autonomous path** (all triage criteria pass) the prompt is not asked:
 the lead stamps the approval marker itself and records a gate-record comment on
-the tracker container in their place. The record, not a prompt, is the oversight
+the tracker container in its place. The record, not a prompt, is the oversight
 artifact.
 
 Each phase also opens with a restated **`/goal`** (a clear end state in your own
 words) — and so does each task worker you dispatch within it.
 
-## 1. Sharpen → spec
+## Spec approval — the only prompt
 
-> The design branches look resolved. Ready to turn this plan into the
-> authoritative spec header? Reply `approve`, or name the decision still unsettled.
-
-On approval, run `write-spec` and draft the goal/scope header.
-
-## 2. Spec approval — the last prompt
+When the sharpen interview's branches are resolved, draft the spec without
+asking first — the draft is the review material; a "ready to write the spec?"
+pre-prompt would only approve a promise the spec itself states better. Present
+it with:
 
 > Approve `docs/agents/specs/NNNN-<slug>.md` (Goal, Scope, Non-goals, Success Criteria,
 > Execution Mode, Validation)? On `approve` I'll slice it into issues, publish
