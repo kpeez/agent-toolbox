@@ -87,7 +87,7 @@ Present the breakdown as a numbered list. Per slice show: **Title**, **Type**
 - Should any slices be merged or split?
 
 **Who reviews depends on how you were invoked.** Slicing a spec that carries the
-`<!-- knack:spec-approved -->` marker (e.g. under `/start-loop`): the approval
+`approved: true` in its frontmatter (e.g. under `/start-loop`): the approval
 already authorized publication — return the breakdown to the invoking
 orchestrator for review and publish; do **not** prompt the user. Standalone use
 on an unapproved plan: quiz the user and iterate until they approve.
@@ -100,13 +100,15 @@ slices as issues (see the Linear reference); on GitHub and local markdown, a
 **parent issue** carrying the spec's goal/scope header, with the slices as
 child issues / sub-issues. Do NOT close or modify an existing container.
 
-Before creating the container, search the tracker for the immutable
-`<!-- knack-spec: <repo>/<slug> -->` marker — bind the search to repository
-identity **and** slug, since title-only searches collide on renamed or similar
-features. If a marker-bearing container already exists, reuse it and create only
-the missing slices; never create a second one. When creating a new container,
-stamp its body/description with that marker so later runs and `/start-loop` can
-find it.
+The container is resolved from the spec's own frontmatter
+(`tracker`, `tracker_container`) per the tracker reference's "Container
+identity" section — not by searching tracker bodies for a hidden token. If it
+resolves, reuse that container and create only the missing slices. If it names
+a container that no longer exists, **stop**: creating a second one is the
+failure this resolution order exists to prevent. Only when no container exists
+do you create one, and then record its id on the spec so later runs resolve it
+directly. Give the new container a plain `Spec: <specPath>` line for humans;
+never write a machine-parsed token into its body.
 
 The container is the remote-reviewable home for the "why," and from here the
 tracker — not the local spec — is the task and status ledger.

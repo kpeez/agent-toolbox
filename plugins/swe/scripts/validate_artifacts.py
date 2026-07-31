@@ -19,7 +19,16 @@ from pathlib import Path
 
 STATUSES = ("draft", "active", "review", "done", "archived")
 FORWARD_ORDER = ("draft", "active", "review", "done")
-APPROVAL_MARKER = "<!-- knack:spec-approved -->"
+APPROVAL_KEY = "approved"
+EXECUTION_MODE_KEY = "execution_mode"
+EXECUTION_MODES = ("autonomous", "review-gated")
+TRACKER_KEY = "tracker"
+CONTAINER_KEY = "tracker_container"
+TRACKERS = ("linear", "github", "local")
+# Statuses that mean the spec has been published as real work, so it must carry
+# an approval and a container. `archived` is exempt: it may be an abandoned
+# draft that was never approved in the first place.
+PUBLISHED_STATUSES = ("active", "review", "done")
 
 ISSUE_SECTIONS = (
     "## What to build",
@@ -66,12 +75,16 @@ def validate_spec(text: str, previous_status: str | None) -> list[str]:
     try:
         parsed = parse_frontmatter(text)
     except UnclosedFrontmatter:
-        violations.append("unclosed YAML frontmatter: file opens with '---' but the block never closes")
+        violations.append(
+            "unclosed YAML frontmatter: file opens with '---' but the block never closes"
+        )
         return violations
     if parsed is None:
-        violations.append("missing YAML frontmatter: file must open with a '---' delimited block")
+        violations.append(
+            "missing YAML frontmatter: file must open with a '---' delimited block"
+        )
         return violations
-    frontmatter, body = parsed
+    frontmatter, _body = parsed
 
     status = frontmatter.get("status")
     if not status:
@@ -87,10 +100,33 @@ def validate_spec(text: str, previous_status: str | None) -> list[str]:
         if not is_legal_transition(previous_status, status):
             violations.append(f"illegal transition: {previous_status} -> {status}")
 
-    # archived is exempt: an archived spec may be an abandoned draft that was
-    # never approved in the first place.
-    if status in ("active", "review", "done") and APPROVAL_MARKER not in body:
-        violations.append(f"missing approval marker for status={status}: {APPROVAL_MARKER}")
+    mode = frontmatter.get(EXECUTION_MODE_KEY)
+    if mode and mode not in EXECUTION_MODES:
+        violations.append(
+            f"invalid {EXECUTION_MODE_KEY}: {mode!r} (expected one of {', '.join(EXECUTION_MODES)})"
+        )
+
+    tracker = frontmatter.get(TRACKER_KEY)
+    container = frontmatter.get(CONTAINER_KEY)
+    if tracker and tracker not in TRACKERS:
+        violations.append(
+            f"invalid {TRACKER_KEY}: {tracker!r} (expected one of {', '.join(TRACKERS)})"
+        )
+    if bool(tracker) != bool(container):
+        violations.append(
+            f"{TRACKER_KEY} and {CONTAINER_KEY} must be set together; got "
+            f"{TRACKER_KEY}={tracker!r}, {CONTAINER_KEY}={container!r}"
+        )
+
+    if status in PUBLISHED_STATUSES:
+        if frontmatter.get(APPROVAL_KEY) != "true":
+            violations.append(
+                f"missing approval for status={status}: set '{APPROVAL_KEY}: true' in the frontmatter"
+            )
+        if not container:
+            violations.append(
+                f"missing {CONTAINER_KEY} for status={status}: a published spec records its tracker container"
+            )
 
     return violations
 
@@ -111,7 +147,9 @@ def validate_issue(text: str) -> list[str]:
             violations.append(f"missing section heading: {heading}")
 
     acceptance_criteria = extract_section(text, "## Acceptance criteria")
-    if acceptance_criteria is not None and not CHECKLIST_ITEM_RE.search(acceptance_criteria):
+    if acceptance_criteria is not None and not CHECKLIST_ITEM_RE.search(
+        acceptance_criteria
+    ):
         violations.append("Acceptance criteria section has no checklist items")
 
     return violations
@@ -129,11 +167,15 @@ def main() -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="command", required=True)
 
-    spec_parser = subparsers.add_parser("spec", help="Validate a spec's frontmatter and marker")
+    spec_parser = subparsers.add_parser(
+        "spec", help="Validate a spec's frontmatter and marker"
+    )
     spec_parser.add_argument("path")
     spec_parser.add_argument("--previous-status")
 
-    issue_parser = subparsers.add_parser("issue", help="Validate an issue body's required sections")
+    issue_parser = subparsers.add_parser(
+        "issue", help="Validate an issue body's required sections"
+    )
     issue_parser.add_argument("path", help="path to the issue body, or '-' for stdin")
 
     args = parser.parse_args()

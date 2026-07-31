@@ -27,7 +27,7 @@ it with:
 > them, and run the implementation loop to completion — no further prompts.
 > Reply `approve`, or list the changes.
 
-On approval, add `<!-- knack:spec-approved -->` to the spec. That marker is the
+On approval, set `approved: true` in the spec's frontmatter. That field is the
 standing authorization for everything downstream — it is what the graph
 conductor requires before it will run.
 
