@@ -74,79 +74,95 @@ def labels(result: dict[str, Any]) -> list[str]:
     return [call["label"] for call in result["calls"]]
 
 
-def frontier_calls(result: dict[str, Any]) -> list[str]:
+def workable_calls(result: dict[str, Any]) -> list[str]:
     return [
         call["label"]
         for call in result["calls"]
-        if call["label"].startswith("frontier:")
+        if call["label"].startswith("workable:")
     ]
 
 
-def frontier_escalation(result: dict[str, Any]) -> str:
+def workable_escalation(result: dict[str, Any]) -> str:
     escalations = [
-        e for e in result["summary"]["escalations"] if e["title"] == "frontier query"
+        e for e in result["summary"]["escalations"] if e["title"] == "workable query"
     ]
     assert len(escalations) == 1, result["summary"]["escalations"]
     return escalations[0]["reason"]
 
 
-# ---- frontier retry and error reporting -------------------------------------
+# ---- the launcher slices; the conductor starts at the workable query ---------
 
 
-def test_frontier_null_result_retries_with_backoff_then_escalates(
+def test_the_run_starts_at_the_workable_query_with_no_slicer_agent(
     tmp_path: Path,
 ) -> None:
-    result = run_loop(tmp_path, [{"match": "^frontier:", "result": None}])
+    """Slicing belongs to /start-loop: in every observed run the slices were on
+    the tracker before launch, so the conductor's first act is the workable
+    query — a slicer agent here would re-do the launcher's work."""
+    result = run_loop(tmp_path, [{"match": "^workable:", "result": {"issues": []}}])
 
-    assert len(frontier_calls(result)) == 3
+    called = labels(result)
+    assert called[0].startswith("workable:")
+    assert [label for label in called if label.startswith("slice:")] == []
+
+
+# ---- workable-query retry and error reporting -------------------------------------
+
+
+def test_workable_null_result_retries_with_backoff_then_escalates(
+    tmp_path: Path,
+) -> None:
+    result = run_loop(tmp_path, [{"match": "^workable:", "result": None}])
+
+    assert len(workable_calls(result)) == 3
     assert result["sleeps"] == [30000, 120000]
-    assert "after 3 attempts" in frontier_escalation(result)
+    assert "after 3 attempts" in workable_escalation(result)
     assert result["summary"]["slicesCompleted"] == []
 
 
-def test_frontier_null_result_recovers_on_a_retry(tmp_path: Path) -> None:
+def test_workable_null_result_recovers_on_a_retry(tmp_path: Path) -> None:
     """Two dead agent calls do not kill the run: the third answers and the loop proceeds."""
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:", "result": None, "times": 2},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:", "result": None, "times": 2},
+            {"match": "^workable:", "result": {"issues": []}},
         ],
     )
 
-    assert len(frontier_calls(result)) == 3
+    assert len(workable_calls(result)) == 3
     assert result["sleeps"] == [30000, 120000]
     assert [
-        e for e in result["summary"]["escalations"] if e["title"] == "frontier query"
+        e for e in result["summary"]["escalations"] if e["title"] == "workable query"
     ] == []
     assert any("drained" in line for line in result["logs"])
 
 
-def test_frontier_error_result_escalates_without_retry(tmp_path: Path) -> None:
+def test_workable_error_result_escalates_without_retry(tmp_path: Path) -> None:
     """A result carrying `error` is the tracker's own answer — deterministic, not transient."""
     result = run_loop(
         tmp_path,
         [
             {
-                "match": "^frontier:",
+                "match": "^workable:",
                 "result": {"issues": [], "error": "GraphQL response missing data"},
             }
         ],
     )
 
-    assert len(frontier_calls(result)) == 1
+    assert len(workable_calls(result)) == 1
     assert result["sleeps"] == []
-    assert frontier_escalation(result) == "GraphQL response missing data"
+    assert workable_escalation(result) == "GraphQL response missing data"
 
 
-def test_frontier_error_text_is_verbatim_and_unclipped(tmp_path: Path) -> None:
+def test_workable_error_text_is_verbatim_and_unclipped(tmp_path: Path) -> None:
     long_error = "API Error: 529 Overloaded. " + "the upstream detail continues " * 20
     result = run_loop(
         tmp_path,
-        [{"match": "^frontier:", "result": {"issues": [], "error": long_error}}],
+        [{"match": "^workable:", "result": {"issues": [], "error": long_error}}],
     )
 
-    assert frontier_escalation(result) == long_error
+    assert workable_escalation(result) == long_error
     assert len(long_error) > 200
 
 
@@ -171,10 +187,10 @@ def test_auth_hint_appears_for_auth_signature_errors(
 ) -> None:
     result = run_loop(
         tmp_path,
-        [{"match": "^frontier:", "result": {"issues": [], "error": error_text}}],
+        [{"match": "^workable:", "result": {"issues": [], "error": error_text}}],
     )
 
-    reason = frontier_escalation(result)
+    reason = workable_escalation(result)
     assert reason.startswith(error_text)
     assert "auth failure" in reason
 
@@ -183,10 +199,10 @@ def test_auth_hint_appears_for_auth_signature_errors(
 def test_no_auth_hint_for_non_auth_errors(tmp_path: Path, error_text: str) -> None:
     result = run_loop(
         tmp_path,
-        [{"match": "^frontier:", "result": {"issues": [], "error": error_text}}],
+        [{"match": "^workable:", "result": {"issues": [], "error": error_text}}],
     )
 
-    assert frontier_escalation(result) == error_text
+    assert workable_escalation(result) == error_text
 
 
 # ---- escalation comments carry the findings ---------------------------------
@@ -212,13 +228,13 @@ def test_exhausted_fix_rounds_carry_findings_verbatim_into_the_run_summary(
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:implement:1$", "result": {"issues": [issue]}},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:implement:1$", "result": {"issues": [issue]}},
+            {"match": "^workable:", "result": {"issues": []}},
             {
                 "match": "^implement:KP-1$",
                 "result": {
                     "status": "DONE",
-                    "branch": "knack/slice/KP-1",
+                    "branch": "slice/KP-1",
                     "summary": "landed",
                 },
             },
@@ -229,7 +245,7 @@ def test_exhausted_fix_rounds_carry_findings_verbatim_into_the_run_summary(
                         {
                             "identifier": "KP-1",
                             "merged": True,
-                            "marked": True,
+                            "stateUpdated": True,
                             "detail": "merged",
                         }
                     ]
@@ -270,8 +286,8 @@ def test_escalations_without_findings_render_the_bare_headline(tmp_path: Path) -
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:implement:1$", "result": {"issues": [issue]}},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:implement:1$", "result": {"issues": [issue]}},
+            {"match": "^workable:", "result": {"issues": []}},
             {"match": "^escalation-note:KP-2$", "result": "posted"},
             {"match": "^run-summary:", "result": "posted"},
         ],
@@ -290,13 +306,13 @@ def test_review_prompt_requires_a_file_line_anchor(tmp_path: Path) -> None:
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:implement:1$", "result": {"issues": [issue]}},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:implement:1$", "result": {"issues": [issue]}},
+            {"match": "^workable:", "result": {"issues": []}},
             {
                 "match": "^implement:KP-3$",
                 "result": {
                     "status": "DONE",
-                    "branch": "knack/slice/KP-3",
+                    "branch": "slice/KP-3",
                     "summary": "landed",
                 },
             },
@@ -307,7 +323,7 @@ def test_review_prompt_requires_a_file_line_anchor(tmp_path: Path) -> None:
                         {
                             "identifier": "KP-3",
                             "merged": True,
-                            "marked": True,
+                            "stateUpdated": True,
                             "detail": "merged",
                         }
                     ]
@@ -331,14 +347,14 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:implement:1$", "result": {"issues": issues}},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:implement:1$", "result": {"issues": issues}},
+            {"match": "^workable:", "result": {"issues": []}},
             *[
                 {
                     "match": f"^implement:KP-{n}$",
                     "result": {
                         "status": "DONE",
-                        "branch": f"knack/slice/KP-{n}",
+                        "branch": f"slice/KP-{n}",
                         "summary": f"KP-{n} landed",
                     },
                 }
@@ -351,7 +367,7 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
                         {
                             "identifier": f"KP-{n}",
                             "merged": True,
-                            "marked": True,
+                            "stateUpdated": True,
                             "detail": "merged",
                         }
                         for n in (1, 2, 3)
@@ -376,7 +392,7 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
 
     prompt = call_with_label(result, "settle:implement:1")["prompt"]
     for n in (1, 2, 3):
-        assert f"KP-{n} on knack/slice/KP-{n}" in prompt
+        assert f"KP-{n} on slice/KP-{n}" in prompt
 
 
 def test_an_unmerged_slice_escalates_while_the_round_continues(
@@ -389,14 +405,14 @@ def test_an_unmerged_slice_escalates_while_the_round_continues(
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:implement:1$", "result": {"issues": issues}},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:implement:1$", "result": {"issues": issues}},
+            {"match": "^workable:", "result": {"issues": []}},
             *[
                 {
                     "match": f"^implement:KP-{n}$",
                     "result": {
                         "status": "DONE",
-                        "branch": f"knack/slice/KP-{n}",
+                        "branch": f"slice/KP-{n}",
                         "summary": "landed",
                     },
                 }
@@ -409,13 +425,13 @@ def test_an_unmerged_slice_escalates_while_the_round_continues(
                         {
                             "identifier": "KP-1",
                             "merged": False,
-                            "marked": False,
+                            "stateUpdated": False,
                             "detail": "conflict in datasets.py could not be resolved",
                         },
                         {
                             "identifier": "KP-2",
                             "merged": True,
-                            "marked": True,
+                            "stateUpdated": True,
                             "detail": "merged",
                         },
                     ]
@@ -435,20 +451,23 @@ def test_an_unmerged_slice_escalates_while_the_round_continues(
     assert "conflict in datasets.py" in escalation["reason"]
 
 
-def test_an_unposted_marker_escalates_without_losing_the_merge(
+def test_a_failed_state_write_is_logged_not_escalated(
     tmp_path: Path,
 ) -> None:
-    issue = {"id": "issue-1", "identifier": "KP-1", "title": "merged but unmarked"}
+    """git decides what is merged, so a tracker state write that fails costs
+    visibility, not correctness. This used to escalate, back when a missing
+    marker really could make a resumed run repeat the slice."""
+    issue = {"id": "issue-1", "identifier": "KP-1", "title": "merged but unsynced"}
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:implement:1$", "result": {"issues": [issue]}},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:implement:1$", "result": {"issues": [issue]}},
+            {"match": "^workable:", "result": {"issues": []}},
             {
                 "match": "^implement:KP-1$",
                 "result": {
                     "status": "DONE",
-                    "branch": "knack/slice/KP-1",
+                    "branch": "slice/KP-1",
                     "summary": "landed",
                 },
             },
@@ -459,8 +478,8 @@ def test_an_unposted_marker_escalates_without_losing_the_merge(
                         {
                             "identifier": "KP-1",
                             "merged": True,
-                            "marked": False,
-                            "detail": "merged; comment API rejected the post",
+                            "stateUpdated": False,
+                            "detail": "merged; state write rejected",
                         }
                     ]
                 },
@@ -472,11 +491,9 @@ def test_an_unposted_marker_escalates_without_losing_the_merge(
         default_result=None,
     )
 
-    # The merge stands; the missing marker is loud because a resumed run would
-    # otherwise re-implement a slice that is already on the branch.
     assert result["summary"]["slicesCompleted"] == ["KP-1"]
-    titles = [entry["title"] for entry in result["summary"]["escalations"]]
-    assert titles == ["slice-complete marker: KP-1"]
+    assert result["summary"]["escalations"] == []
+    assert any("tracker under-reports this slice" in line for line in result["logs"])
 
 
 # ---- did-not-complete slice reviews -----------------------------------------
@@ -486,20 +503,20 @@ SLICE = {"id": "issue-1", "identifier": "KP-1", "title": "one slice"}
 
 
 def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
-    """A run whose first frontier round yields KP-1 and then drains.
+    """A run whose first workable round yields KP-1 and then drains.
 
     Test-specific responses come first so they win over the happy-path
     fallbacks that answer whatever the test did not script.
     """
     return [
-        {"match": "^frontier:implement:1$", "result": {"issues": [SLICE]}},
+        {"match": "^workable:implement:1$", "result": {"issues": [SLICE]}},
         *responses,
-        {"match": "^frontier:", "result": {"issues": []}},
+        {"match": "^workable:", "result": {"issues": []}},
         {
             "match": "^implement:KP-1$",
             "result": {
                 "status": "DONE",
-                "branch": "knack/slice/KP-1",
+                "branch": "slice/KP-1",
                 "summary": "KP-1 implemented",
             },
         },
@@ -510,7 +527,7 @@ def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
                     {
                         "identifier": "KP-1",
                         "merged": True,
-                        "marked": True,
+                        "stateUpdated": True,
                         "detail": "merged",
                     }
                 ]
@@ -522,9 +539,7 @@ def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
 
 
 def run_one_slice(tmp_path: Path, *responses: dict[str, Any]) -> dict[str, Any]:
-    # issueId makes this a targeted resume: the slice phase is skipped and the
-    # frontier call is the first one, as in the runs these tests pin.
-    return run_loop(tmp_path, one_slice(*responses), args={"issueId": "issue-1"})
+    return run_loop(tmp_path, one_slice(*responses))
 
 
 def test_did_not_complete_review_consumes_no_fix_round(tmp_path: Path) -> None:
@@ -642,14 +657,14 @@ def test_the_run_reviews_the_assembled_work_once_not_per_slice(
     result = run_loop(
         tmp_path,
         [
-            {"match": "^frontier:implement:1$", "result": {"issues": issues}},
-            {"match": "^frontier:", "result": {"issues": []}},
+            {"match": "^workable:implement:1$", "result": {"issues": issues}},
+            {"match": "^workable:", "result": {"issues": []}},
             *[
                 {
                     "match": f"^implement:KP-{n}$",
                     "result": {
                         "status": "DONE",
-                        "branch": f"knack/slice/KP-{n}",
+                        "branch": f"slice/KP-{n}",
                         "summary": "landed",
                     },
                 }
@@ -662,7 +677,7 @@ def test_the_run_reviews_the_assembled_work_once_not_per_slice(
                         {
                             "identifier": f"KP-{n}",
                             "merged": True,
-                            "marked": True,
+                            "stateUpdated": True,
                             "detail": "merged",
                         }
                         for n in (1, 2)
@@ -685,95 +700,128 @@ def test_the_run_reviews_the_assembled_work_once_not_per_slice(
     assert [label for label in labels(result) if label.startswith("spec-review")] == []
 
 
-# ---- frontierCmd launch arg -------------------------------------------------
+# ---- workableCmd launch arg -------------------------------------------------
 
 
 SCRIPTS_DIR = "/opt/plugins/swe/scripts"
 CONTAINER_ID = "CID"
-FRONTIER_CMD_ARGS = {
+WORKABLE_CMD_ARGS = {
     "specPath": "docs/agents/specs/0016-x.md",
     "slug": "x",
     "containerId": CONTAINER_ID,
     "baseBranch": "integration",
     "scriptsDir": SCRIPTS_DIR,
-    # Resume: the slice phase is skipped, so the frontier call is the first one.
-    "issueId": "ISSUE-1",
 }
-# A frontier failure stops the loop after one round, which is all these tests
+# A workable-query failure stops the loop after one round, which is all these tests
 # need: the prompt the conductor emitted before asking.
-FRONTIER_FAILS = [{"match": "^frontier:", "result": {"issues": [], "error": "boom"}}]
+WORKABLE_FAILS = [{"match": "^workable:", "result": {"issues": [], "error": "boom"}}]
 
-# The reference-driven frontier prompt, verbatim. Pinned here so a change to the
-# frontierCmd path that also perturbs the no-frontierCmd path is loud: in-flight
+# The reference-driven workable prompt, verbatim. Pinned here so a change to the
+# workableCmd path that also perturbs the no-workableCmd path is loud: in-flight
 # runs launched without the argument must keep getting exactly this text.
-REFERENCE_FRONTIER_PROMPT = """Report this run's workable slices as JSON.
+REFERENCE_WORKABLE_PROMPT = """Report this run's workable slices as JSON.
 
 Tracker: resolve this repo's tracker per the to-issues skill — an "Issue tracker:" line in the repo's AGENTS.md/CLAUDE.md wins, else the skill's selection ladder — then follow the matching reference in /opt/plugins/swe/skills/to-issues/references/ for every tracker operation.
 
-1. Compute the workable frontier of container CID per the
-   reference's "swe-loop frontier" section — open issues with no open blocker
-   and no ready-for-human label, each as {id, identifier, title}. Scripts the
-   reference names live in /opt/plugins/swe/scripts. If the query FAILS (auth, network,
-   missing credential, non-zero script exit), put the failure text in the
-   "error" field and return an empty issues list -- an empty list with no
-   error means the run is finished, so never report a failure that way.
-2. For each returned issue read its tracker comments per the reference.
-3. DROP every issue whose comments contain the literal marker
-   <!-- knack:slice-complete --> — that slice is already implemented on a branch in
-   this run even though its tracker state has not advanced yet.
+1. Compute the workable set of container CID per the
+   reference's "swe-loop workable set" section — issues with no ready-for-human
+   label that are not done and whose every blocker IS done, each as
+   {id, identifier, title}. Scripts the reference names live in /opt/plugins/swe/scripts.
+   If the query FAILS (auth, network, missing credential, non-zero script
+   exit), put the failure text in the "error" field and return an empty issues
+   list -- an empty list with no error means the run is finished, so never
+   report a failure that way.
+2. Run `git branch --merged integration` and read every branch it lists
+   named slice/<identifier>. Those slices are merged into this run's
+   integration branch, which is what "done in this run" means — their tracker
+   state does not advance until the run's PR lands, so never judge it from the
+   tracker alone.
+3. An issue counts as DONE when its tracker state is closed OR its identifier
+   appears in that merged list. Drop a done issue, and treat a done blocker as
+   satisfied rather than as still blocking. Skipping the second half is what
+   makes a dependency chain stall after its first slice.
 4. Return the surviving issues."""
 
 
-def frontier_prompt(transcript: dict[str, Any]) -> str:
+def workable_prompt(transcript: dict[str, Any]) -> str:
     return next(
         call["prompt"]
         for call in transcript["calls"]
-        if call["label"].startswith("frontier:")
+        if call["label"].startswith("workable:")
     )
 
 
-def test_frontier_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
+def test_workable_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
     tmp_path: Path,
 ) -> None:
-    command = f"uv run {SCRIPTS_DIR}/frontier.py --project {CONTAINER_ID}"
+    command = (
+        f"uv run {SCRIPTS_DIR}/linear_tracker.py workable --container {CONTAINER_ID}"
+    )
 
-    with_cmd = frontier_prompt(
+    with_cmd = workable_prompt(
         run_loop(
             tmp_path,
-            FRONTIER_FAILS,
-            args={**FRONTIER_CMD_ARGS, "frontierCmd": command},
+            WORKABLE_FAILS,
+            args={**WORKABLE_CMD_ARGS, "workableCmd": command},
         )
     )
-    without_cmd = frontier_prompt(
-        run_loop(tmp_path, FRONTIER_FAILS, args=FRONTIER_CMD_ARGS)
+    without_cmd = workable_prompt(
+        run_loop(tmp_path, WORKABLE_FAILS, args=WORKABLE_CMD_ARGS)
     )
 
     # Verbatim, on its own line, and the agent is forbidden to improvise.
-    assert f"\n       {command}\n" in with_cmd
+    assert f"\n    {command}\n" in with_cmd
     assert "construct no other query" in with_cmd
     assert "improvised tracker calls" in with_cmd
-    # Steps 2-4 still follow the tracker reference either way.
-    for step in ("2. For each returned issue", "3. DROP every issue", "4. Return the"):
-        assert step in with_cmd
+    # The command applies the marker rules itself, so the agent returns its
+    # output rather than re-reading every issue's comments — one Bash call a
+    # round instead of a comment query per issue.
+    assert "Do not read\ntracker comments" in with_cmd
+    assert "return them unchanged" in with_cmd
 
-    assert without_cmd == REFERENCE_FRONTIER_PROMPT
+    assert without_cmd == REFERENCE_WORKABLE_PROMPT
     assert command not in without_cmd
 
 
-def test_frontier_cmd_is_opaque_data_not_a_tracker_name(tmp_path: Path) -> None:
-    transcript = run_loop(
-        tmp_path,
-        FRONTIER_FAILS,
-        args={**FRONTIER_CMD_ARGS, "frontierCmd": "sh -c 'echo []'"},
+def test_both_workable_paths_unblock_dependents_of_a_finished_slice(
+    tmp_path: Path,
+) -> None:
+    """A merged slice's tracker state does not advance until the run's PR lands,
+    so a workable query that reads blockers by state alone strands every dependent
+    slice — the stall that cost both observed runs a manual relaunch."""
+    without_cmd = workable_prompt(
+        run_loop(tmp_path, WORKABLE_FAILS, args=WORKABLE_CMD_ARGS)
     )
+    assert "treat a done blocker as\n   satisfied" in without_cmd
+    assert "stall after its first slice" in without_cmd
 
-    assert "sh -c 'echo []'" in frontier_prompt(transcript)
-
-
-def test_non_string_frontier_cmd_is_rejected_at_launch(tmp_path: Path) -> None:
-    with pytest.raises(AssertionError, match="non-string frontierCmd"):
+    with_cmd = workable_prompt(
         run_loop(
             tmp_path,
-            FRONTIER_FAILS,
-            args={**FRONTIER_CMD_ARGS, "frontierCmd": ["a", "b"]},
+            WORKABLE_FAILS,
+            args={
+                **WORKABLE_CMD_ARGS,
+                "workableCmd": "linear_tracker.py workable --container CID",
+            },
+        )
+    )
+    assert "unblocked their dependents" in with_cmd
+
+
+def test_workable_cmd_is_opaque_data_not_a_tracker_name(tmp_path: Path) -> None:
+    transcript = run_loop(
+        tmp_path,
+        WORKABLE_FAILS,
+        args={**WORKABLE_CMD_ARGS, "workableCmd": "sh -c 'echo []'"},
+    )
+
+    assert "sh -c 'echo []'" in workable_prompt(transcript)
+
+
+def test_non_string_workable_cmd_is_rejected_at_launch(tmp_path: Path) -> None:
+    with pytest.raises(AssertionError, match="non-string workableCmd"):
+        run_loop(
+            tmp_path,
+            WORKABLE_FAILS,
+            args={**WORKABLE_CMD_ARGS, "workableCmd": ["a", "b"]},
         )

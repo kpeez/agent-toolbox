@@ -1,34 +1,32 @@
 export const meta = {
   name: 'swe-loop',
   description:
-    'Conductor for the swe spine after spec approval: slice the spec into tracker issues, run the frontier loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
+    'Conductor for the swe workflow after spec approval and slicing: run the implement loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Pass issueId only to resume against one already-published slice set. Optional frontierCmd is a command string that prints the container\'s workable-issue JSON array on stdout; pass it when the resolved tracker has a deterministic frontier query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker and its slices are published on the tracker — the launcher slices before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding slices this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations}; it never prompts the user mid-run.',
   phases: [
-    { title: 'Slice', detail: 'publish the spec as vertical slices on the tracker' },
-    { title: 'Implement', detail: 'frontier rounds: implement in parallel, then one agent merges and marks the round' },
+    { title: 'Implement', detail: 'rounds: implement in parallel, then one agent merges and records the round' },
     { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
     { title: 'Ship', detail: 'ship-pr: atomic commits, push, draft PR' },
   ],
 }
 
 // How many fix rounds the assembled review gets before its surviving findings
-// are escalated, and how many times those findings may re-enter the frontier
+// are escalated, and how many times those findings may re-enter the implement
 // loop as fresh slices. Both are the run's cost ceiling -- widening them
 // silently is the bug the colocated static test guards against.
 const MAX_FIX_ROUNDS = 2
 const SPEC_REVIEW_REENTRIES = 1
-// The frontier is tracker-derived, so a node that never settles would spin
+// The workable set is tracker-derived, so a node that never settles would spin
 // forever; this cap turns that into a loud escalation instead.
-const MAX_FRONTIER_ROUNDS = 25
-const SLICE_COMPLETE_MARKER = '<!-- knack:slice-complete -->'
-// The frontier agent call is the one place where a harness/API failure (an
+const MAX_IMPLEMENT_ROUNDS = 25
+// The workable agent call is the one place where a harness/API failure (an
 // overloaded-API 529 killed two observed runs after zero work) takes the whole
 // run down, so a null result -- the shape every such failure arrives in -- is
 // retried with backoff. A non-null result carrying `error` is a real,
 // deterministic tracker failure and is never retried.
-const FRONTIER_ATTEMPTS = 3
-const FRONTIER_BACKOFF_MS = [30000, 120000]
+const WORKABLE_ATTEMPTS = 3
+const WORKABLE_BACKOFF_MS = [30000, 120000]
 // Tight on purpose: the hint names a missing or rejected credential, and every
 // string a tracker query emits for that names a 401/403, "credential",
 // "api key", "login", or "unauthorized"/"forbidden". A bare `token` is absent
@@ -56,7 +54,7 @@ const ARGS =
     : args
 if (argsParseError) {
   throw new Error(
-    `swe-loop received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} as an object or as its JSON encoding.`,
+    `swe-loop received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir} as an object or as its JSON encoding.`,
   )
 }
 
@@ -64,7 +62,7 @@ const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scripts
 const missing = REQUIRED_ARGS.filter(key => !ARGS || !ARGS[key])
 if (missing.length) {
   throw new Error(
-    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir, issueId?} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed plugin's scripts directory.`,
+    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed plugin's scripts directory.`,
   )
 }
 const specPath = ARGS.specPath
@@ -72,23 +70,22 @@ const slug = ARGS.slug
 const containerId = ARGS.containerId
 const baseBranch = ARGS.baseBranch
 // Absolute path to the installed plugin's scripts/ dir: the target repo does
-// not contain frontier.py — only the plugin installation does.
+// not contain the plugin's scripts — only the plugin installation does.
 const scriptsDir = ARGS.scriptsDir
 if (!scriptsDir.startsWith('/')) {
   throw new Error(
     `swe-loop got a relative scriptsDir (${scriptsDir}). It must be the EXPANDED absolute path to the installed swe plugin's scripts/ dir — a value like "\${CLAUDE_PLUGIN_ROOT}/scripts" means the variable was passed through unexpanded, and the subagents' shells do not define it.`,
   )
 }
-const resumeIssueId = ARGS.issueId || null
 // Optional, opaque: a command that prints the container's workable-issue array
 // on stdout and exits non-zero on failure. The launcher resolves the tracker
 // anyway, so it is the layer that knows whether the tracker's reference names a
-// deterministic frontier query; this file only embeds the string as data.
+// deterministic workable query; this file only embeds the string as data.
 // Absent, the reference-driven agent query below runs unchanged.
-const frontierCmd = ARGS.frontierCmd || null
-if (frontierCmd !== null && typeof frontierCmd !== 'string') {
+const workableCmd = ARGS.workableCmd || null
+if (workableCmd !== null && typeof workableCmd !== 'string') {
   throw new Error(
-    `swe-loop got a non-string frontierCmd (${JSON.stringify(ARGS.frontierCmd)}). It must be a single command string that prints the workable-frontier JSON array on stdout and exits non-zero on failure.`,
+    `swe-loop got a non-string workableCmd (${JSON.stringify(ARGS.workableCmd)}). It must be a single command string that prints the workable-issue JSON array on stdout and exits non-zero on failure.`,
   )
 }
 
@@ -101,7 +98,7 @@ const trackerGuide = `Tracker: resolve this repo's tracker per the to-issues ski
 
 // ---- role routing -------------------------------------------------------
 // The launcher may route any capability role to Codex; every other agent
-// (frontier, merge, tracker bookkeeping) is loop plumbing and stays on the
+// (workable query, merge, tracker bookkeeping) is loop plumbing and stays on the
 // default workflow subagent.
 const ROUTABLE_ROLES = ['planner', 'implementer', 'reviewer', 'publisher']
 const ROLE_PROVIDERS = ['claude', 'codex']
@@ -124,7 +121,7 @@ if (invalidRoles.length) {
 const agentTypeFor = role => (roleRouting[role] === 'codex' ? 'swe:codex-delegator' : `swe:${role}`)
 
 // ---- agent contracts --------------------------------------------------------
-const FRONTIER_SCHEMA = {
+const WORKABLE_SCHEMA = {
   type: 'object',
   required: ['issues'],
   properties: {
@@ -138,7 +135,7 @@ const FRONTIER_SCHEMA = {
     },
     error: {
       type: 'string',
-      description: 'set ONLY when the frontier could not be determined (auth, network, failed tracker query). An empty issues list means the frontier is genuinely drained, never that a query failed.',
+      description: 'set ONLY when the workable set could not be determined (auth, network, failed tracker query). An empty issues list means the work is genuinely drained, never that a query failed.',
     },
   },
 }
@@ -186,11 +183,11 @@ const SETTLE_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['identifier', 'merged', 'marked', 'detail'],
+        required: ['identifier', 'merged', 'stateUpdated', 'detail'],
         properties: {
           identifier: { type: 'string' },
           merged: { type: 'boolean' },
-          marked: { type: 'boolean', description: 'whether the slice-complete marker was posted; a merged slice whose marker did not post will be re-implemented by a resumed run' },
+          stateUpdated: { type: 'boolean', description: 'whether the issue state was advanced on the tracker; cosmetic only — git, not the tracker, decides what is merged' },
           detail: { type: 'string' },
         },
       },
@@ -209,52 +206,51 @@ const tupleFor = issueId => JSON.stringify({ specPath, slug, containerId, issueI
 // Display-only shortening: log lines and escalation reasons. Never applied to
 // findings handed to an agent that has to act on them.
 const clip = text => String(text == null ? '' : text).replace(/\s+/g, ' ').trim().slice(0, 200)
-const branchFor = issue => `knack/slice/${issue.identifier}`
+const branchFor = issue => `slice/${issue.identifier}`
 const numbered = items => items.map((item, i) => `${i + 1}. ${typeof item === 'string' ? item : JSON.stringify(item)}`).join('\n')
 
-const promptSlicer = () => `Slice the approved spec at ${specPath} into tracker issues.
+// Two shapes, one contract. A workableCmd names a command that applies the
+// marker rules itself (the tracker reference that names the command is what
+// guarantees it), so the agent runs it and returns its output — no per-issue
+// comment reads, which were an API call per issue per round. Without one the
+// agent computes the same rules through the reference.
+const promptWorkable = () => workableCmd
+  ? `Report this run's workable slices as JSON.
 
-Handoff tuple: ${tupleFor(null)}
+Run EXACTLY this command with Bash and construct no other query — no
+improvised tracker calls, no edits to the command, no substitutions:
 
-Run the to-issues skill against this spec and publish every slice into tracker
-container ${containerId}, wiring blocked-by edges as native tracker relations.
-The skill dedupes against the container's spec marker: on a resumed run reuse
-what is already published rather than creating a second set of slices.
+    ${workableCmd}
 
-Before publishing each slice, pipe its drafted body through
-   uv run ${scriptsDir}/validate_artifacts.py issue -
-and fix whatever it rejects; publish only bodies that pass.`
+Its stdout is this run's workable-issue array, already filtered: take each
+entry as {id, identifier, title} and return them unchanged. Do not read
+tracker comments and do not second-guess the list — the command has already
+dropped slices this run finished and unblocked their dependents.
 
-// Step 1 is the only part of the frontier prompt frontierCmd changes; steps 2-4
-// follow the tracker reference either way. With no frontierCmd this string is
-// what the prompt has always carried, byte for byte.
-const frontierStep1 = frontierCmd
-  ? `1. Run EXACTLY this command with Bash and construct no other query — no
-   improvised tracker calls, no edits to the command, no substitutions:
-
-       ${frontierCmd}
-
-   Its stdout is the container's workable-issue array; take each entry as
-   {id, identifier, title}. On a NON-ZERO exit put stderr verbatim in the
-   "error" field and return an empty issues list -- an empty list with no
-   error means the run is finished, so never report a failure that way.`
-  : `1. Compute the workable frontier of container ${containerId} per the
-   reference's "swe-loop frontier" section — open issues with no open blocker
-   and no ready-for-human label, each as {id, identifier, title}. Scripts the
-   reference names live in ${scriptsDir}. If the query FAILS (auth, network,
-   missing credential, non-zero script exit), put the failure text in the
-   "error" field and return an empty issues list -- an empty list with no
-   error means the run is finished, so never report a failure that way.`
-
-const promptFrontier = () => `Report this run's workable slices as JSON.
+On a NON-ZERO exit put stderr verbatim in the "error" field and return an
+empty issues list -- an empty list with no error means the run is finished,
+so never report a failure that way.`
+  : `Report this run's workable slices as JSON.
 
 ${trackerGuide}
 
-${frontierStep1}
-2. For each returned issue read its tracker comments per the reference.
-3. DROP every issue whose comments contain the literal marker
-   ${SLICE_COMPLETE_MARKER} — that slice is already implemented on a branch in
-   this run even though its tracker state has not advanced yet.
+1. Compute the workable set of container ${containerId} per the
+   reference's "swe-loop workable set" section — issues with no ready-for-human
+   label that are not done and whose every blocker IS done, each as
+   {id, identifier, title}. Scripts the reference names live in ${scriptsDir}.
+   If the query FAILS (auth, network, missing credential, non-zero script
+   exit), put the failure text in the "error" field and return an empty issues
+   list -- an empty list with no error means the run is finished, so never
+   report a failure that way.
+2. Run \`git branch --merged ${baseBranch}\` and read every branch it lists
+   named slice/<identifier>. Those slices are merged into this run's
+   integration branch, which is what "done in this run" means — their tracker
+   state does not advance until the run's PR lands, so never judge it from the
+   tracker alone.
+3. An issue counts as DONE when its tracker state is closed OR its identifier
+   appears in that merged list. Drop a done issue, and treat a done blocker as
+   satisfied rather than as still blocking. Skipping the second half is what
+   makes a dependency chain stall after its first slice.
 4. Return the surviving issues.`
 
 const promptImplementer = issue => `Execute this bounded task: implement one slice of ${specPath}, end to end.
@@ -269,7 +265,8 @@ Slice: ${issue.identifier} — ${issue.title}
    the behavior first (tdd), then lint, types, tests.
 3. COMMIT the work to ${branchFor(issue)}. Do not push, do not merge, do not
    open a PR — the conductor merges and ships.
-4. Comment progress on tracker issue ${issue.identifier}.
+4. Advance tracker issue ${issue.identifier} to "in progress" per the tracker
+   reference's state-transition section, and comment your progress on it.
 5. Report {status, branch, summary}; "branch" is the branch you actually
    committed to. NEEDS_CONTEXT or BLOCKED means you could not finish: name
    exactly what is missing instead of guessing.`
@@ -279,7 +276,7 @@ does the code do what the spec asked, correctly?
 
 Under review: the work this run merged into ${baseBranch}. Establish the diff
 yourself — the slice merges are on ${baseBranch} and each carries a
-knack/slice/<identifier> branch — and say in your first finding if you could
+slice/<identifier> branch — and say in your first finding if you could
 not establish it rather than reviewing a guess.
 Spec: ${specPath}
 
@@ -337,18 +334,15 @@ For each slice, in order:
    If you cannot resolve it confidently, git merge --abort, record
    merged:false with the reason, and move on to the next slice — never force a
    resolution you are unsure of and never abandon the remaining slices.
-3. Only after its merge succeeds, post one comment on that slice's tracker
-   issue whose body is exactly the marker line then its one-line summary:
+3. Only after its merge succeeds, advance that issue's state to "in review"
+   per the tracker reference's state-transition section, and post one comment
+   with its one-line summary. Record stateUpdated:true only if the state write
+   actually succeeded.
 
-   ${SLICE_COMPLETE_MARKER}
-   <the summary given above>
-
-   Post the marker verbatim — it is what makes a resumed run skip the slice.
-   Record marked:true only if the comment actually posted.
-
-Return one {identifier, merged, marked, detail} per slice, in the same order.
-Do not push. Marking only after a confirmed merge is deliberate: a resumed run
-re-implementing a merged slice is recoverable, losing one is not.`
+Return one {identifier, merged, stateUpdated, detail} per slice, in the same
+order. Do not push. The state write is for humans reading the tracker: a
+resumed run decides what is already merged from git, so a failed state write
+never loses or repeats work.`
 
 const promptFileFindings = findings => `File surviving review findings as fix slices in tracker container ${containerId}.
 
@@ -383,7 +377,11 @@ payload verbatim in a fenced json block:
 
 ${JSON.stringify(summary, null, 2)}
 
-Post nothing else and change no container fields.`
+Then reconcile the container's own status with its issues per the tracker
+reference's state-transition section: a container still reading "backlog" or
+"planned" while its issues are underway is the drift this step exists to
+correct. Never mark the container complete — this run ends at a draft PR, not
+a merge.`
 
 // ---- run state --------------------------------------------------------------
 const slicesCompleted = []
@@ -466,54 +464,47 @@ const finish = async prUrl => {
   return summary
 }
 
-// ---- Slice ------------------------------------------------------------------
-phase('Slice')
-if (resumeIssueId) {
-  log(`Targeted resume on ${resumeIssueId}: slices are already published, skipping the slice phase.`)
-} else {
-  log(`Slicing ${specPath} into container ${containerId}.`)
-  const sliced = await agent(promptSlicer(), { label: `slice:${slug}`, phase: 'Slice', agentType: agentTypeFor('planner') })
-  log(sliced ? 'Slicing done.' : 'Slicer returned nothing — the frontier query decides what work actually exists.')
-}
-
 // ---- Implement --------------------------------------------------------------
+// Slicing is the launcher's job: /start-loop publishes the slices (or aligns
+// pre-existing tracker issues to the spec) before launching, so the run's
+// first act is asking the tracker what is workable.
 // Null means the agent call itself died (harness or API), which is transient;
 // retry it with backoff. Anything non-null -- including a result carrying
 // `error` -- is the tracker's own answer and is returned to the caller as-is.
-const requestFrontier = async label => {
-  for (let attempt = 1; attempt <= FRONTIER_ATTEMPTS; attempt += 1) {
-    const frontier = await agent(promptFrontier(), {
+const requestWorkable = async label => {
+  for (let attempt = 1; attempt <= WORKABLE_ATTEMPTS; attempt += 1) {
+    const workable = await agent(promptWorkable(), {
       label: attempt === 1 ? label : `${label}:retry${attempt - 1}`,
       phase: 'Implement',
       effort: 'low',
-      schema: FRONTIER_SCHEMA,
+      schema: WORKABLE_SCHEMA,
     })
-    if (frontier) return frontier
-    if (attempt === FRONTIER_ATTEMPTS) return null
-    const wait = FRONTIER_BACKOFF_MS[attempt - 1]
-    log(`Frontier attempt ${attempt}/${FRONTIER_ATTEMPTS} returned nothing — retrying in ${wait / 1000}s.`)
+    if (workable) return workable
+    if (attempt === WORKABLE_ATTEMPTS) return null
+    const wait = WORKABLE_BACKOFF_MS[attempt - 1]
+    log(`Workable query attempt ${attempt}/${WORKABLE_ATTEMPTS} returned nothing — retrying in ${wait / 1000}s.`)
     await new Promise(resolve => setTimeout(resolve, wait))
   }
   return null
 }
 
-const runFrontierLoop = async passLabel => {
+const runImplementLoop = async passLabel => {
   phase('Implement')
-  for (let round = 1; round <= MAX_FRONTIER_ROUNDS; round += 1) {
-    const frontier = await requestFrontier(`frontier:${passLabel}:${round}`)
-    if (!frontier || frontier.error) {
+  for (let round = 1; round <= MAX_IMPLEMENT_ROUNDS; round += 1) {
+    const workable = await requestWorkable(`workable:${passLabel}:${round}`)
+    if (!workable || workable.error) {
       // Verbatim and unclipped: this reason is the only record of what actually
       // failed, and a truncated 529 or GraphQL error reads as a mystery.
-      const reason = frontier
-        ? String(frontier.error)
-        : `frontier agent returned nothing after ${FRONTIER_ATTEMPTS} attempts`
-      escalateRun('frontier query', AUTH_ERROR_SIGNATURE.test(reason) ? `${reason}${AUTH_HINT}` : reason)
-      log(`Frontier query failed (${reason}) — stopping the ${passLabel} loop rather than reading it as an empty frontier.`)
+      const reason = workable
+        ? String(workable.error)
+        : `workable query returned nothing after ${WORKABLE_ATTEMPTS} attempts`
+      escalateRun('workable query', AUTH_ERROR_SIGNATURE.test(reason) ? `${reason}${AUTH_HINT}` : reason)
+      log(`Workable query failed (${reason}) — stopping the ${passLabel} loop rather than reading it as finished work.`)
       return
     }
-    const pending = (frontier.issues || []).filter(issue => !settled.has(issue.id))
+    const pending = (workable.issues || []).filter(issue => !settled.has(issue.id))
     if (!pending.length) {
-      log(`Frontier drained on round ${round} of the ${passLabel} loop.`)
+      log(`Workable set drained on round ${round} of the ${passLabel} loop.`)
       return
     }
     log(`Round ${round} (${passLabel}): ${pending.length} slice(s) — ${pending.map(issue => issue.identifier).join(', ')}`)
@@ -564,28 +555,27 @@ const runFrontierLoop = async passLabel => {
         slicesCompleted.push(issue.identifier)
         merged += 1
         log(`${issue.identifier}: merged ${outcome.branch} into ${baseBranch}.`)
-        // Deliberate trade-off: marking only after a confirmed merge accepts a
-        // crash-after-merge window (a resumed run re-implements a slice already
-        // in the base branch) rather than losing a slice whose merge failed
-        // after it was already marked complete.
-        if (!result.marked) {
-          escalateRun(`slice-complete marker: ${issue.identifier}`, `the marker did not post after merging into ${baseBranch}; a resumed run may re-implement this slice`)
+        // A failed state write is cosmetic and never escalates: the merge is in
+        // git, which is what a resumed run reads. This used to be an escalation
+        // because a missing marker really could lose or repeat a slice.
+        if (!result.stateUpdated) {
+          log(`${issue.identifier}: merged, but its tracker state did not advance — the tracker under-reports this slice.`)
         }
       }
     }
     // Anything the pipeline dropped (null outcome, unknown state) would come
-    // back on the next frontier query and be re-spawned forever; settle it.
+    // back on the next workable query and be re-spawned forever; settle it.
     for (const issue of pending) {
       if (settled.has(issue.id)) continue
       await escalate(issue, 'the implement pipeline produced no settled outcome for this slice')
     }
     log(`Round ${round} (${passLabel}) summary: ${merged} merged, ${pending.length - merged} escalated, ${escalations.length} escalation(s) so far.`)
   }
-  log(`Frontier loop hit its ${MAX_FRONTIER_ROUNDS}-round cap without draining — stopping and escalating.`)
-  escalateRun('frontier loop', `hit the ${MAX_FRONTIER_ROUNDS}-round cap; slices remain unworked`)
+  log(`Implement loop hit its ${MAX_IMPLEMENT_ROUNDS}-round cap without draining — stopping and escalating.`)
+  escalateRun('implement loop', `hit the ${MAX_IMPLEMENT_ROUNDS}-round cap; slices remain unworked`)
 }
 
-await runFrontierLoop('implement')
+await runImplementLoop('implement')
 
 // Reviewing and shipping an unimplemented base branch burns high-tier agents on
 // nothing and can open a PR over an empty diff; stop at the summary instead.
@@ -597,7 +587,7 @@ if (!slicesCompleted.length && escalations.length) {
 // ---- Review -----------------------------------------------------------------
 // One review of the assembled work, then bounded fixes against it. Findings
 // are fixed in place on the integration branch: re-slicing them onto the
-// tracker and re-entering the frontier loop costs a planner, a frontier query,
+// tracker and re-entering the implement loop costs a planner, a workable query,
 // an implementer and a settle agent per pass, so it is the last resort below,
 // not the first response.
 phase('Review')
@@ -645,7 +635,7 @@ while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
     log('Could not file the findings as fix slices — collecting them as escalations instead.')
     break
   }
-  await runFrontierLoop(`review-${reentries}`)
+  await runImplementLoop(`review-${reentries}`)
   phase('Review')
   openFindings = await settleFindings(`-r${reentries}`)
 }
