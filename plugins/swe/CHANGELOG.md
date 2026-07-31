@@ -5,6 +5,69 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.10.0 — 2026-07-31
+
+- Stop managing run state in markdown comments. Nothing a resumed run reads is
+  an HTML comment any more: approval (`approved`), triage outcome
+  (`execution_mode`), run id, integration branch and the tracker container all
+  live in the spec's YAML frontmatter; issue status lives on the tracker; and
+  what a run has already merged is read from git (`git branch --merged` over
+  `slice/<identifier>` branches), which cannot drift because it is the same
+  fact the merge created. `<!-- knack:slice-complete -->` is gone entirely, and
+  with it the escalation for a marker that failed to post — a failed tracker
+  write is now cosmetic, because git decides what is merged. Comments keep only
+  what humans read: triage rationale, progress notes, escalations.
+- Keep the tracker honest while a run works. The loop advances issue state at
+  the two moments it already touches the tracker (picked up → In Progress,
+  merged → In Review) and reconciles the container's own status at the end, so
+  a project can no longer sit in Backlog while its issues are merged and
+  shipped. Nothing is ever marked complete by the loop: a run ends at a draft
+  PR, not a merge.
+- Replace hand-written Linear GraphQL with the `linear` CLI. `frontier.py` is
+  now `linear_tracker.py` — the name says what it talks to — and lost its
+  query, auth and pagination code in the process. It gained `container`, which
+  resolves the project a spec publishes into from that spec's frontmatter with
+  distinct exit codes for "none yet" and "the recorded one is gone" so a run
+  can never create a duplicate project, and `sync` for container status. A
+  `--backfill-all` sweep migrates specs published under the old
+  `<!-- knack-spec: -->` body token; the resolver still reads that token, but
+  nothing writes new ones.
+- Rename the loop's confusing "frontier" vocabulary to "workable": the
+  `frontierCmd` launch arg is `workableCmd`, agent labels are `workable:*`, and
+  slice branches are `slice/<identifier>` (the old `knack/slice/` prefix is
+  still recognised so in-flight runs resolve).
+- Stop restating workability rules in every tracker reference. The conductor
+  states them once; each reference now carries only its own mechanics, its
+  container-identity convention, and its state-transition commands. The GitHub
+  and local references had drifted to the pre-1.9.9 blocker rule and silently
+  contradicted the conductor.
+
+## 1.9.9 — 2026-07-30
+
+- Let a blocked-by chain advance inside one run. A merged slice's tracker state
+  does not change until the run's PR lands, but the frontier judged blockers by
+  state alone — so after slice 1 merged, every slice depending on it stayed
+  "blocked", the frontier drained, and the run shipped early. Both observed
+  multi-slice runs hit this and needed one manual relaunch per dependency edge
+  (four launches for one three-slice spec). The slice-complete marker the loop
+  already posts on merge now counts as done on both sides: a marked issue is
+  dropped from the frontier *and* satisfies anything it blocks. `frontier.py`
+  applies the rules itself, so the frontier agent runs one command and returns
+  its output instead of querying every issue's comments each round; the
+  reference-driven prompt states the same rule for trackers without a command.
+  `tests/test_frontier.py` covers it, including a three-slice chain draining one
+  slice per round.
+- Move slicing out of the conductor and into `/start-loop`. Across every
+  observed run the launcher already had the slices on the tracker before
+  launching (pre-existing issues aligned to the spec, or a resume) and passed
+  `issueId` to skip the conductor's Slice phase — so the slicer agent never
+  once executed, and the `issueId` launch arg's value was never read (its only
+  effect was the skip). The launcher now dispatches the planner to run
+  `/to-issues` (with `validate_artifacts.py` gating) and verifies a non-empty
+  frontier before launch; the conductor starts at the frontier query, and the
+  `issueId` launch arg is gone. A behavior test pins that the run's first
+  agent call is the frontier, with no slicer.
+
 ## 1.9.8 — 2026-07-30
 
 - Cut the loop's token cost roughly in half by removing duplicated reading, not

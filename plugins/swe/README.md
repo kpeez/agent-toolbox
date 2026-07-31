@@ -16,7 +16,7 @@ plugins/swe/
 ├── workflows/
 │   └── swe-loop.js    # deterministic conductor for the post-approval phases
 ├── scripts/
-│   ├── frontier.py            # tracker query: which slices are workable right now
+│   ├── linear_tracker.py      # Linear via the `linear` CLI: workable set, container link, status sync
 │   ├── validate_artifacts.py  # shape checks for specs and issues before publish
 │   └── format-python.sh       # PostToolUse hook target
 └── hooks/hooks.json   # wires format-python.sh to Write/Edit on *.py
@@ -51,15 +51,15 @@ Two ways to run the spine:
 - **Skill by skill** — invoke each skill yourself. Useful for work that is
   already mid-flight or does not need the full loop.
 - **As one resumable command** — `/start-loop <idea>` owns the interactive
-  half (triage, design, approval gate), then launches the swe-loop conductor,
-  which runs every remaining phase without prompting.
+  half (triage, design, approval gate, slicing), then launches the swe-loop
+  conductor, which runs every remaining phase without prompting.
 
 ## The swe-loop
 
 `/start-loop` first triages the idea against four criteria (unambiguous
 against the repo and ADRs, ≤ 6 estimated slices, no destructive surface, no
 new external dependencies). All four pass → the design phase runs
-autonomously and the approval marker is stamped without a prompt. Any fail →
+autonomously and the spec is marked approved without a prompt. Any fail →
 the gated path: `/sharpen` interactively, `/write-spec`, and one explicit
 spec approval — the only prompt. Either way the approved spec authorizes the conductor;
 after that, problems reach the user as data (escalation comments and the run
@@ -71,10 +71,9 @@ structured data (identifiers in, typed status out, never prose).
 
 ```mermaid
 flowchart TD
-  L(["launch args:<br/>specPath, slug, containerId,<br/>baseBranch, scriptsDir"]) --> S["Slice<br/>planner publishes vertical slices"]
-  S --> F{"frontier query:<br/>workable slices?"}
+  L(["launch args:<br/>specPath, slug, containerId,<br/>baseBranch, scriptsDir<br/>(slices already on the tracker)"]) --> F{"workable query:<br/>workable slices?"}
   F -- "pending" --> IM["implementer<br/>one slice per agent,<br/>isolated worktree,<br/>gated on its own tests"]
-  IM --> M["settle: one agent merges<br/>and marks the whole round"]
+  IM --> M["settle: one agent merges,<br/>advances state, whole round"]
   M --> F
   F -- "drained" --> R{"one adherence review<br/>of the assembled work"}
   R -- "findings<br/>(max 2 fix rounds)" --> FX["fixer on baseBranch"]
@@ -94,7 +93,7 @@ spent on deterministic git and one API call per slice.
 
 The loop's cost ceilings are explicit constants, guarded by a static test:
 the assembled review gets at most **2** fix rounds, surviving findings
-re-enter the frontier loop at most **once**, and the frontier loop
+re-enter the implement loop at most **once**, and the implement loop
 itself caps at **25** rounds — anything that will not settle inside those
 bounds becomes a loud escalation instead of a longer run. Unresolved findings
 remain structured in the run summary's escalations.
@@ -106,10 +105,12 @@ race on the working copy.
 ### Handoffs and escalation
 
 Every agent boundary carries only identifiers and artifact pointers — spec
-path, slug, container id, branch — never conversation state. The tracker is
-the durable memory: triage verdicts, gate records, run ids, per-slice
-completion markers, and escalations all land as issue/container comments, so
-a fresh session can resume any run from the tracker alone.
+path, slug, container id, branch — never conversation state. State a resumed
+run reads is machine-readable and never a markdown comment: approval, execution
+mode, run id, integration branch and tracker container live in the spec's YAML
+frontmatter; issue status lives on the tracker; what is already merged lives in
+git. Comments carry only what humans read — triage rationale, progress notes,
+escalations.
 
 ### Codex role routing
 
@@ -127,7 +128,7 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 | Skill        | What it does                                                                                                                                              |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sharpen`    | Interviews the user until every branch of a design's decision tree is resolved; cross-checks claims against the code; records durable decisions as ADRs   |
-| `write-spec` | Produces the feature spec — a pure-markdown `NNNN-<slug>.md` in `docs/agents/specs/` whose behaviors are proven by committed tests; carries the approval marker |
+| `write-spec` | Produces the feature spec — a pure-markdown `NNNN-<slug>.md` in `docs/agents/specs/` whose behaviors are proven by committed tests; carries the approval field |
 | `codebase-design` | Shared vocabulary for deep modules — depth, seams, adapters, the deletion test; loaded by other skills when designing interfaces                      |
 | `improve-codebase-architecture` | Hunts deepening refactors: shallow modules that should absorb their callers' complexity                                                     |
 
@@ -176,14 +177,21 @@ Codex, so there is nothing to delegate to.
 Skills and the conductor run these in place with `uv run`; nothing installs
 into the target repo.
 
-- **`frontier.py`** — prints the workable tracker issues in a spec's
-  container as JSON: not completed/canceled, nothing open blocking, not
-  labeled `ready-for-human`. Fails loudly on auth/HTTP/GraphQL errors so a
-  broken query is never mistaken for a drained frontier.
+- **`linear_tracker.py`** — every deterministic Linear operation, through the
+  `linear` CLI (no hand-written GraphQL or auth). `workable` prints a
+  container's pickup-ready issues as JSON — not closed, nothing still
+  blocking, not `ready-for-human` — where "already done in this run" is read
+  from git (`git branch --merged`), not from tracker state, which does not
+  advance until the run's PR lands. `container` resolves the Linear project a
+  spec publishes into from the spec's own frontmatter, with distinct exit
+  codes for "no container yet" and "the recorded one is gone" so a run can
+  never create a duplicate project. `sync` promotes a container still reading
+  backlog while its issues are underway. Fails loudly so a broken query is
+  never mistaken for finished work.
 - **`validate_artifacts.py`** — validates specs and issues before publish:
-  frontmatter shape, status transitions, approval markers, acceptance
-  criteria. Run by the conductor's graph nodes and by `/start-loop` before
-  launch.
+  frontmatter shape, status transitions, approval and tracker-container keys,
+  acceptance criteria. Run by the conductor's agents and by `/start-loop`
+  before launch.
 
 ## Hooks
 
