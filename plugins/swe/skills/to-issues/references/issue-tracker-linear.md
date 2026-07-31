@@ -19,9 +19,9 @@ the MCP is absent.
 
 - **Spec container**: a spec publishes as a Linear **project** (`save_project`),
   under the initiative named in the repo's `Issue tracker:` extras when given.
-  Put the `<!-- knack-spec: <repo>/<slug> -->` marker in the project
-  description and mirror the spec as a project document (`save_document`) — the
-  local spec file stays canonical; the project copy is for browsing. Slices are
+  Record the project id in the spec's frontmatter (see Container identity) and
+  mirror the spec as a project document (`save_document`) — the local spec file
+  stays canonical; the project copy is for browsing. Slices are
   issues **in that project**, not sub-issues of a parent issue.
 - **Create an issue**: `save_issue` with team, title, markdown body, and the
   spec's project.
@@ -32,12 +32,9 @@ the MCP is absent.
   run out of context — what's done, what's next, the one gotcha.
 - **Triage labels**: apply the label strings from `SKILL.md` via `save_issue`;
   create missing labels with `create_issue_label` first.
-- **Status**: map gate semantics onto the workspace's closest states
-  (`list_issue_statuses`): starting work → In Progress, PR up → In Review,
-  merged → Done, stuck → comment the exact blocker and needed human input.
-  When Linear's GitHub integration is enabled and the branch name carries the
-  issue id (see `/ship-pr`), the In Review and Done transitions happen
-  automatically — verify rather than duplicate them.
+- **Status**: see State transitions below — the loop writes these itself
+  rather than relying on Linear's GitHub integration firing, which is what left
+  a merged, shipped slice sitting in Backlog on an observed run.
 - **Blocked by**: use Linear's native blocked-by relations, not prose.
 - **PRs**: attach the PR link to the issue when publishing branch work, unless
   the GitHub integration already linked it.
@@ -46,21 +43,53 @@ the MCP is absent.
   (PR bodies, commits, comments). The private side references the public side,
   never the reverse.
 
-## swe-loop frontier
+## swe-loop workable set
 
-The loop's frontier query — the workable slices in a spec's container — is
-deterministic here. From the repo root run
+The loop's workable query is deterministic here. From the repo root run
 
-    uv run <scriptsDir>/frontier.py --project <containerId>
+    uv run <scriptsDir>/linear_tracker.py workable --container <containerId> --merged-into <baseBranch>
 
-(the conductor's prompt supplies both values; `<scriptsDir>` is the installed
-plugin's `scripts/` dir). It prints a JSON array of
-`{id, identifier, title, labels}` and exits non-zero on a missing
-`LINEAR_API_KEY`, an HTTP failure, or a GraphQL errors payload — report a
-non-zero exit as a query failure, never as an empty frontier.
+(the conductor's prompt supplies all three values). It prints a JSON array of
+`{id, identifier, title, labels}` and exits non-zero on a failed `linear` call
+— report a non-zero exit as a query failure, never as an empty result.
 
-The loop's "container comment" (run summary) is a comment on the spec's
-project.
+**The output is final.** The script applies the workability rules itself:
+closed or already-merged issues are dropped, a merged issue counts as a
+satisfied blocker, and `ready-for-human` is excluded. Consume the array as-is;
+re-reading the tracker on top of it is wasted work.
+
+"Already merged" is read from git — `git branch --merged <baseBranch>` over
+`slice/<identifier>` branches — not from tracker state, which does not advance
+until the run's PR lands.
+
+## Container identity
+
+A spec records its Linear project in its own YAML frontmatter
+(`tracker: linear`, `tracker_container: <project id>`). Resolve it with
+
+    uv run <scriptsDir>/linear_tracker.py container --spec <specPath>
+
+Exit 0 prints the id; exit 2 means the spec names a project that no longer
+exists (stop — never create a second one); exit 3 means no container exists yet
+and the caller may create one, then record it with `--set <id>`. Containers
+created before this convention carry a `<!-- knack-spec: ... -->` token in their
+body; the resolver still reads it and backfills the frontmatter, but nothing
+writes new ones. Give a new project a plain `Spec: <specPath>` line in its
+description for humans — never a machine-parsed token.
+
+## State transitions
+
+The loop advances issue state as it works, so the tracker reflects reality
+rather than the state work started in:
+
+- slice picked up: `linear issue update <identifier> --state "In Progress"`
+- slice merged into the integration branch: `linear issue update <identifier> --state "In Review"`
+- end of run: `uv run <scriptsDir>/linear_tracker.py sync --container <containerId>`
+  promotes a project still reading backlog/planned while its issues are underway
+
+Never set an issue or project to a completed state: the run ends at a draft PR,
+so nothing it touched is delivered yet. A failed state write is logged and the
+run continues — git, not the tracker, decides what is merged.
 
 ## When a skill says "publish to the issue tracker"
 
