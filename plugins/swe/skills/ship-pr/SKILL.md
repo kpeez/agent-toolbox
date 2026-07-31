@@ -104,9 +104,9 @@ skill — it stays a human action.
 
 1. **Locate** — `gh pr view` for the current branch; stop and report if no PR
    exists (run the default mode first). Resolve the spec as in default step 1,
-   else from the `<!-- knack-spec: <repo>/<slug> -->` marker on the tracker
-   container (parent issue or Linear project) of the PR's linked issue(s);
-   proceed without one if nothing resolves.
+   else by matching the tracker container of the PR's linked issue(s) against
+   the `tracker_container` recorded in each spec's frontmatter; proceed without
+   one if nothing resolves.
 2. **Sync** — ensure the local branch is pushed; commit and push any pending
    work via the default workflow first.
 3. **Verify** — re-run lint, types, and tests (including the spec's
