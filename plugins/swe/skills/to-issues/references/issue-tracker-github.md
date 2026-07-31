@@ -14,19 +14,33 @@ Issues for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
-## swe-loop frontier
+## swe-loop workable set
 
-The loop's frontier query — the workable slices in a spec's container — is the
-container parent issue's **open sub-issues**, minus:
+The container is the parent issue; its slices are that issue's sub-issues. List
+them with `gh issue list` (see Conventions) and report each as
+`{id, identifier, title}` with the issue number as `id` and `#<number>` as
+`identifier`. A failed `gh` call is a query failure, never an empty result.
 
-- issues labeled `ready-for-human`
-- issues whose `## Blocked by` section still references an open issue
+Which of those are workable is the conductor's rule, not this file's — it
+states what counts as done and blocked, including that a slice merged into the
+run's integration branch is done whatever the tracker says. Do not re-derive it
+here.
 
-Report each as `{id, identifier, title}` with the issue number as `id` and
-`#<number>` as `identifier`. A failed `gh` call (auth, network, non-zero exit)
-is a query failure, never an empty frontier.
+## Container identity
 
-The loop's "container comment" (run summary) is a comment on the parent issue.
+A spec records its parent issue in its own YAML frontmatter (`tracker: github`,
+`tracker_container: <issue number>`). Read it from the spec; if absent, create
+the parent issue and record it there. Never write a machine-parsed token into
+an issue body — a plain `Spec: <specPath>` line for humans is fine.
+
+## State transitions
+
+- slice picked up: `gh issue edit <number> --add-label in-progress`
+- slice merged into the integration branch: `gh issue edit <number> --remove-label in-progress --add-label in-review`
+- end of run: nothing to reconcile — GitHub has no project-level status here
+
+Create missing labels with `gh label create` first. Never close an issue: the
+run ends at a draft PR. A failed label write is logged and the run continues.
 
 ## When a skill says "publish to the issue tracker"
 

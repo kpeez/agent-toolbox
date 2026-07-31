@@ -5,10 +5,10 @@ description: Run or resume the swe-loop — triage the idea, settle the design (
 
 # /start-loop — swe-loop runner
 
-You own the interactive half: container, triage, design, gate, launch.
-Everything after — slice → implement → review → ship — belongs to the
-`swe-loop` workflow script; you launch it and read its summary, never run
-those phases by hand.
+You own the interactive half: container, triage, design, gate, slice, launch.
+Everything after — implement → review → ship — belongs to the `swe-loop`
+workflow script; you launch it and read its summary, never run those phases
+by hand.
 
 ## Argument resolution
 
@@ -32,19 +32,33 @@ one line, end state plus how it's verified. A task worker without one is a bug.
 ## 1. Container first
 
 Triage's verdict, the gate record, the run id, and the launch args all need
-`containerId`, so on **every** run, new or resumed, first search the tracker for
-the immutable `<!-- knack-spec: <repo>/<slug> -->` marker bound to this
-repository. Found → reuse that container. Missing → create it per `/to-issues`'s
-container conventions for the repo's tracker, stamped with the same
-marker; `/to-issues` dedupes on it later, so this never yields a second one.
+`containerId`, so resolve it on **every** run, new or resumed, before anything
+else. A spec records its container in its own YAML frontmatter
+(`tracker:`, `tracker_container:`) — that is the only machine-readable link,
+and nothing writes an identity token into tracker bodies any more.
+
+Resolve it per the tracker reference's "Container identity" section. Where that
+names a resolver command, run it and act on its exit code:
+
+- **0** — it printed the container id; use it.
+- **2** — the spec names a container that no longer exists, or several match
+  ambiguously. **Stop and tell the user.** Never create a container on this
+  code: that is exactly how a run makes a duplicate project.
+- **3** — no container exists yet. Create one per `/to-issues`'s container
+  conventions, then record it on the spec (`--set <id>`, or the reference's
+  equivalent) so later runs resolve it directly.
+
+Specs published before this convention resolve through a legacy body token and
+backfill their own frontmatter on first touch.
 
 ## 2. Triage — the conditional gate policy
 
-Evaluate all four criteria and record each one's pass/fail in a verdict comment
-on the container (ADR-0005). Comment body, verbatim shape:
+Evaluate all four criteria. The **decision** goes in the spec's frontmatter as
+`execution_mode: autonomous | review-gated` — that is what a resumed run reads.
+The rationale goes in a verdict comment on the container, for humans; nothing
+parses it. Comment body, verbatim shape:
 
 ```
-<!-- knack:triage -->
 swe triage verdict: GATED | AUTONOMOUS
 - unambiguous against the repo and docs/agents/adrs/: pass|fail — <why>
 - estimated slice count <= 6: pass|fail — <estimate>
@@ -56,8 +70,8 @@ swe triage verdict: GATED | AUTONOMOUS
 **ANY fail → the gated path. ALL pass → the autonomous path.** A design that
 contradicts an accepted ADR fails the first criterion. The threshold of 6 is
 part of the policy and is stated in the comment. "Autonomous" is not
-"unreviewed" — the verdict comment, anchored by `<!-- knack:triage -->`, is the
-audit record.
+"unreviewed" — `execution_mode` records the decision and the verdict comment is
+the audit record.
 
 The verdict is written once per run. On a resumed run, honor the recorded
 verdict instead of re-evaluating (see Resume).
@@ -68,9 +82,9 @@ verdict instead of re-evaluating (see Resume).
 2. `/write-spec` — delegate the drafting to the **`swe:architect`** agent
    without asking first; the draft is the review material. You present it and
    the user confirms at the single spec-approval prompt.
-3. On unambiguous approval, add `<!-- knack:spec-approved -->` to the spec
-   exactly as today. Silence, compaction, or an unrelated reply is **not**
-   approval; a change request reopens sharpening.
+3. On unambiguous approval, set `approved: true` in the spec's frontmatter.
+   Silence, compaction, or an unrelated reply is **not** approval; a change
+   request reopens sharpening.
 
 Exact wording: [references/checkpoint-prompts.md](references/checkpoint-prompts.md).
 
@@ -82,42 +96,58 @@ No user prompt anywhere in this path.
    ADRs and returns the settled decisions — what the interview would have
    concluded.
 2. **`swe:architect`** drafts the spec from those decisions.
-3. You stamp `<!-- knack:spec-approved -->` yourself — the same marker the
-   manual gate writes, so every existing grep keeps working — and set the
-   spec's `Execution mode` section to `autonomous` (the gated path leaves the
-   template default, `review-gated`).
+3. You set `approved: true` in the spec's frontmatter yourself — the same field
+   the manual gate writes — alongside `execution_mode: autonomous` (the gated
+   path writes `review-gated`).
 4. Comment the gate record on the container: auto-approved, the spec path, and
-   a pointer to the `<!-- knack:triage -->` verdict comment above it.
+   a pointer to the triage verdict comment above it.
 
-## 4. Launch the workflow
+## 4. Slice the spec
+
+Slicing is yours, not the conductor's — you hold the spec context, and in
+practice the slices are often already on the tracker before a run starts.
+Dispatch **`swe:planner`** (or the codex delegator when the user routed
+`planner` to Codex) to run `/to-issues` against the approved spec: publish
+every slice into the container from step 1 with native blocked-by relations,
+validating each drafted body with
+`uv run <scriptsDir>/validate_artifacts.py issue -` before it posts. The container is
+already resolved, so a resumed run or a container that already holds issues
+covering the spec gets its existing slices aligned and extended, never
+duplicated.
+
+Then verify the workable set before launching: at least one published slice
+must be workable (not done, unblocked, no `ready-for-human` label). An empty
+set is a stop, not a launch — the conductor would spin its workable query on
+nothing.
+
+## 5. Launch the workflow
 
 The conductor lives at the plugin root as `workflows/swe-loop.js`, so Claude
 Code also registers it as the named plugin workflow `/swe:swe-loop`. Launch it
 by invoking the **Workflow** tool with scriptPath
 `${CLAUDE_PLUGIN_ROOT}/workflows/swe-loop.js` and args exactly
-`{specPath, slug, containerId, baseBranch, scriptsDir, issueId?}` — the spec's
+`{specPath, slug, containerId, baseBranch, scriptsDir}` — the spec's
 path, its slug, the container from step 1, the branch the run integrates into
 and ships from (if you are on the default branch, create the feature branch
-first and pass that), `scriptsDir`, and `issueId` only when resuming against
-one already-published slice set.
+first and pass that), and `scriptsDir`.
 
 `scriptsDir` is the **expanded absolute path** to the installed plugin's
 `scripts/` directory — resolve `${CLAUDE_PLUGIN_ROOT}/scripts` to a real `/…`
 path and pass that. The conductor's agents run the plugin's scripts from there
-(validators, any frontier script the tracker reference names) and the target
+(validators, any query script the tracker reference names) and the target
 repo does not contain them; their shells do not define `CLAUDE_PLUGIN_ROOT`,
 so passing the literal `${CLAUDE_PLUGIN_ROOT}/scripts` string fails every
 run that needs one. The conductor rejects a non-absolute value outright.
 
-Optional `frontierCmd` makes the loop's frontier query deterministic. You have
+Optional `workableCmd` makes the loop's workable query deterministic. You have
 already resolved the repo's tracker (step 1), so read that tracker's
-`to-issues` reference: if its "swe-loop frontier" section names a command to
+`to-issues` reference: if its "swe-loop workable set" section names a command to
 run, expand every placeholder in it with the values you are already passing
-(`scriptsDir`, `containerId`, …) and pass the finished command string as
-`frontierCmd`. If the section names no command, omit the argument entirely —
-the conductor then keeps its reference-driven query, unchanged. Never invent a
-command the reference does not name, and never pass an unexpanded placeholder:
-the conductor runs the string verbatim.
+(`scriptsDir`, `containerId`, `baseBranch`, …) and pass the finished command
+string as `workableCmd`. If the section names no command, omit the argument
+entirely — the conductor then keeps its reference-driven query, unchanged.
+Never invent a command the reference does not name, and never pass an
+unexpanded placeholder: the conductor runs the string verbatim.
 
 Optional `roles` routes loop roles to Codex. When the user asked for Codex on
 this run, add a `roles` map to the args — keys among `planner`,
@@ -138,10 +168,10 @@ Before launching, run
 `uv run <scriptsDir>/validate_artifacts.py spec <specPath>` — a spec that
 fails its frontmatter, status, or marker checks is a stop, not a launch.
 
-After launch, comment the run id on the container as
-`<!-- knack:run-id <id> base=<baseBranch> -->`. The branch is part of the
-marker because a fresh session resuming this run has no other way to recover
-which branch the run integrates into.
+After launch, record the run on the spec's frontmatter as `run_id: <id>` and
+`base_branch: <baseBranch>`. The branch is recorded because a fresh session
+resuming this run has no other way to recover which branch it integrates into,
+and frontmatter keeps it machine-readable instead of buried in a comment.
 
 **No Workflow tool on this host** (non-Claude providers, per ADR-0006) → say so
 and fall back to the manual orchestration in `/implement`'s "Orchestrate the
@@ -151,29 +181,28 @@ fan-out" section. Name the fallback; never improvise a substitute conductor.
 
 Read the tracker first (container marker search above), then the spec.
 
-**Triage is not re-run when it already has a verdict.** Read the container's
-`<!-- knack:triage -->` comment; if one exists, that verdict stands for the
-whole spec — a GATED run stays gated no matter what a later session would
-judge. Only when no verdict comment exists do you run triage (§2) at all.
+**Triage is not re-run when it already has a verdict.** Read the spec's
+`execution_mode` frontmatter; if it is set, that verdict stands for the whole
+spec — a gated run stays gated no matter what a later session would judge. Only
+when it is unset do you run triage (§2) at all.
 
-Route on the approval marker — three ways, deterministically:
+Route on the approval field — three ways, deterministically:
 
 ```
 spec=$(ls docs/agents/specs/[0-9][0-9][0-9][0-9]-<slug>.md 2>/dev/null | head -n1)   # or use the path given
 if [ -z "$spec" ]; then echo "NO SPEC"
-elif grep -Fxq '<!-- knack:spec-approved -->' "$spec"; then echo "APPROVED: $spec"
+elif sed -n '/^---$/,/^---$/p' "$spec" | grep -q '^approved: true'; then echo "APPROVED: $spec"
 else echo "IN DESIGN: $spec"; fi
 ```
 
 - **APPROVED** → relaunch the workflow with the same args. Take `baseBranch`
-  and the run id from the container's `<!-- knack:run-id <id> base=<branch> -->`
-  comment; with no such comment, derive `baseBranch` from the branch you are
-  currently on and say in your reply that you did so. Pass the run id as
-  `resumeFromRunId`, a **parameter of the Workflow tool invocation** — not a
-  field inside `args`, where it is silently ignored. Even without a run id the
-  resume is safe: the conductor drops every issue whose comments carry
-  `<!-- knack:slice-complete -->`, so slices finished on the branch are never
-  redone.
+  and the run id from the spec's `base_branch` and `run_id` frontmatter; with
+  neither recorded, derive `baseBranch` from the branch you are currently on and
+  say in your reply that you did so. Pass the run id as `resumeFromRunId`, a
+  **parameter of the Workflow tool invocation** — not a field inside `args`,
+  where it is silently ignored. Even without a run id the resume is safe: the
+  conductor reads what is already merged from git, so slices finished on the
+  branch are never redone.
 - **IN DESIGN** → resume the design phase the recorded verdict routes to at the
   existing spec: the gated path reopens `write-spec` at the review gate, the
   autonomous path expands and stamps it.
@@ -181,7 +210,7 @@ else echo "IN DESIGN: $spec"; fi
 
 ## Escalation, not gates
 
-Once the spec carries the marker, the workflow runs to completion without
+Once the spec is approved, the workflow runs to completion without
 prompting. Problems reach you as **data, after the fact**: the run summary
 (`{prUrl, slicesCompleted, escalations}`) plus the conductor's
 per-issue escalation comments — never a live worker report.
