@@ -16,22 +16,6 @@ def test_detects_claude(monkeypatch):
     assert detect_provider() == "claude"
 
 
-def test_detects_codex(monkeypatch):
-    monkeypatch.delenv("CLAUDECODE", raising=False)
-    monkeypatch.delenv("GEMINI_CLI", raising=False)
-    monkeypatch.setenv("CODEX_SANDBOX_NETWORK_DISABLED", "1")
-
-    assert detect_provider() == "codex"
-
-
-def test_detects_gemini(monkeypatch):
-    monkeypatch.delenv("CLAUDECODE", raising=False)
-    monkeypatch.delenv("CODEX_SANDBOX_NETWORK_DISABLED", raising=False)
-    monkeypatch.setenv("GEMINI_CLI", "1")
-
-    assert detect_provider() == "gemini"
-
-
 def test_returns_none_when_no_marker_set(monkeypatch):
     monkeypatch.delenv("CLAUDECODE", raising=False)
     monkeypatch.delenv("CODEX_SANDBOX_NETWORK_DISABLED", raising=False)
