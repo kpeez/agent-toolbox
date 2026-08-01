@@ -37,6 +37,10 @@ else. A spec records its container in its own YAML frontmatter
 (`tracker:`, `tracker_container:`) — that is the only machine-readable link,
 and nothing writes an identity token into tracker bodies any more.
 
+On a new run — or any spec whose frontmatter names no tracker — first resolve
+which tracker per `/to-issues`' "Tracker" section; never infer it from where
+the code is hosted. Only then open that tracker's reference.
+
 Resolve it per the tracker reference's "Container identity" section. Where that
 names a resolver command, run it and act on its exit code:
 
