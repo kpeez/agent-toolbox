@@ -77,7 +77,8 @@ Two zones in one file:
 
 ## Behavior
 
-<!-- how does it work? inputs? outputs? each behavior maps to a test -->
+<!-- how does it work? inputs? outputs? each behavior names its evidence:
+     a committed test, a shared pipeline test, or a reproducible PR demo -->
 
 ## Decisions
 
