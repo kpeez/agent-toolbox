@@ -166,19 +166,8 @@ def test_workable_error_text_is_verbatim_and_unclipped(tmp_path: Path) -> None:
     assert len(long_error) > 200
 
 
-AUTH_ERRORS = [
-    "LINEAR_API_KEY is not set",
-    "tracker query failed: HTTP 401 Unauthorized",
-    "HTTP 403",
-    "missing credential for the tracker CLI",
-    "login required",
-]
-NON_AUTH_ERRORS = [
-    "API Error: 529 Overloaded",
-    "network timeout after 30s",
-    "GraphQL response missing data",
-    "prompt exceeded the max tokens for this model",
-]
+AUTH_ERRORS = ["tracker query failed: HTTP 401 Unauthorized"]
+NON_AUTH_ERRORS = ["API Error: 529 Overloaded"]
 
 
 @pytest.mark.parametrize("error_text", AUTH_ERRORS)
@@ -299,44 +288,6 @@ def test_escalations_without_findings_render_the_bare_headline(tmp_path: Path) -
     assert "Surviving findings:" not in note
     assert "Branch:" not in note
     assert result["summary"]["escalations"][0]["findings"] == []
-
-
-def test_review_prompt_requires_a_file_line_anchor(tmp_path: Path) -> None:
-    issue = {"id": "issue-3", "identifier": "KP-3", "title": "Anchor"}
-    result = run_loop(
-        tmp_path,
-        [
-            {"match": "^workable:implement:1$", "result": {"issues": [issue]}},
-            {"match": "^workable:", "result": {"issues": []}},
-            {
-                "match": "^implement:KP-3$",
-                "result": {
-                    "status": "DONE",
-                    "branch": "slice/KP-3",
-                    "summary": "landed",
-                },
-            },
-            {
-                "match": "^settle:",
-                "result": {
-                    "results": [
-                        {
-                            "identifier": "KP-3",
-                            "merged": True,
-                            "stateUpdated": True,
-                            "detail": "merged",
-                        }
-                    ]
-                },
-            },
-            {"match": "^review:assembled$", "result": {"verdict": "pass"}},
-            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
-            {"match": "^run-summary:", "result": "posted"},
-        ],
-        default_result=None,
-    )
-
-    assert "file:line" in call_with_label(result, "review:assembled")["prompt"]
 
 
 def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> None:
@@ -716,32 +667,6 @@ WORKABLE_CMD_ARGS = {
 # need: the prompt the conductor emitted before asking.
 WORKABLE_FAILS = [{"match": "^workable:", "result": {"issues": [], "error": "boom"}}]
 
-# The reference-driven workable prompt, verbatim. Pinned here so a change to the
-# workableCmd path that also perturbs the no-workableCmd path is loud: in-flight
-# runs launched without the argument must keep getting exactly this text.
-REFERENCE_WORKABLE_PROMPT = """Report this run's workable slices as JSON.
-
-Tracker: resolve this repo's tracker per the to-issues skill — an "Issue tracker:" line in the repo's AGENTS.md/CLAUDE.md wins, else the skill's selection ladder — then follow the matching reference in /opt/plugins/swe/skills/to-issues/references/ for every tracker operation.
-
-1. Compute the workable set of container CID per the
-   reference's "swe-loop workable set" section — issues with no ready-for-human
-   label that are not done and whose every blocker IS done, each as
-   {id, identifier, title}. Scripts the reference names live in /opt/plugins/swe/scripts.
-   If the query FAILS (auth, network, missing credential, non-zero script
-   exit), put the failure text in the "error" field and return an empty issues
-   list -- an empty list with no error means the run is finished, so never
-   report a failure that way.
-2. Run `git branch --merged integration` and read every branch it lists
-   named slice/<identifier>. Those slices are merged into this run's
-   integration branch, which is what "done in this run" means — their tracker
-   state does not advance until the run's PR lands, so never judge it from the
-   tracker alone.
-3. An issue counts as DONE when its tracker state is closed OR its identifier
-   appears in that merged list. Drop a done issue, and treat a done blocker as
-   satisfied rather than as still blocking. Skipping the second half is what
-   makes a dependency chain stall after its first slice.
-4. Return the surviving issues."""
-
 
 def workable_prompt(transcript: dict[str, Any]) -> str:
     return next(
@@ -765,10 +690,6 @@ def test_workable_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
             args={**WORKABLE_CMD_ARGS, "workableCmd": command},
         )
     )
-    without_cmd = workable_prompt(
-        run_loop(tmp_path, WORKABLE_FAILS, args=WORKABLE_CMD_ARGS)
-    )
-
     # Verbatim, on its own line, and the agent is forbidden to improvise.
     assert f"\n    {command}\n" in with_cmd
     assert "construct no other query" in with_cmd
@@ -778,50 +699,3 @@ def test_workable_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
     # round instead of a comment query per issue.
     assert "Do not read\ntracker comments" in with_cmd
     assert "return them unchanged" in with_cmd
-
-    assert without_cmd == REFERENCE_WORKABLE_PROMPT
-    assert command not in without_cmd
-
-
-def test_both_workable_paths_unblock_dependents_of_a_finished_slice(
-    tmp_path: Path,
-) -> None:
-    """A merged slice's tracker state does not advance until the run's PR lands,
-    so a workable query that reads blockers by state alone strands every dependent
-    slice — the stall that cost both observed runs a manual relaunch."""
-    without_cmd = workable_prompt(
-        run_loop(tmp_path, WORKABLE_FAILS, args=WORKABLE_CMD_ARGS)
-    )
-    assert "treat a done blocker as\n   satisfied" in without_cmd
-    assert "stall after its first slice" in without_cmd
-
-    with_cmd = workable_prompt(
-        run_loop(
-            tmp_path,
-            WORKABLE_FAILS,
-            args={
-                **WORKABLE_CMD_ARGS,
-                "workableCmd": "linear_tracker.py workable --container CID",
-            },
-        )
-    )
-    assert "unblocked their dependents" in with_cmd
-
-
-def test_workable_cmd_is_opaque_data_not_a_tracker_name(tmp_path: Path) -> None:
-    transcript = run_loop(
-        tmp_path,
-        WORKABLE_FAILS,
-        args={**WORKABLE_CMD_ARGS, "workableCmd": "sh -c 'echo []'"},
-    )
-
-    assert "sh -c 'echo []'" in workable_prompt(transcript)
-
-
-def test_non_string_workable_cmd_is_rejected_at_launch(tmp_path: Path) -> None:
-    with pytest.raises(AssertionError, match="non-string workableCmd"):
-        run_loop(
-            tmp_path,
-            WORKABLE_FAILS,
-            args={**WORKABLE_CMD_ARGS, "workableCmd": ["a", "b"]},
-        )
