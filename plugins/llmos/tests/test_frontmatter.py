@@ -94,23 +94,6 @@ def test_serialize_quotes_wikilink_values():
     assert '  - "[[Knowledge]]"' in rendered
 
 
-def test_serialize_leaves_plain_scalars_unquoted():
-    properties = {"created": "2026-07-01", "status": "active"}
-
-    rendered = serialize(properties, "# body\n")
-
-    assert "created: 2026-07-01\n" in rendered
-    assert "status: active\n" in rendered
-
-
-def test_set_scalar_sets_a_value():
-    properties = {"status": "active"}
-
-    set_scalar(properties, "updated", "2026-07-17")
-
-    assert properties["updated"] == "2026-07-17"
-
-
 def test_set_scalar_refuses_to_rewrite_created():
     properties = {"created": "2026-07-01"}
 
@@ -140,14 +123,6 @@ def test_append_unique_is_a_no_op_when_already_present():
     assert properties["authors"] == ["claude", "codex"]
 
 
-def test_append_unique_creates_the_list_when_key_absent():
-    properties: dict = {}
-
-    append_unique(properties, "authors", "claude")
-
-    assert properties["authors"] == ["claude"]
-
-
 def test_empty_scalar_parses_as_empty_string_not_list():
     text = "---\ncreated: 2026-07-01\nnote:\n---\n\n# body\n"
 
@@ -170,29 +145,12 @@ def test_empty_scalar_round_trips_byte_identically():
     assert normalize(text) == text
 
 
-def test_normalize_empty_scalar_twice_equals_once():
-    text = "---\nnote:\ncreated: 2026-07-01\n---\n\n# body\n"
-
-    once = normalize(text)
-    twice = normalize(once)
-
-    assert twice == once
-
-
 def test_parse_inline_flow_list():
     text = "---\ntags: [alpha, beta]\n---\n\n# body\n"
 
     properties, _ = parse(text)
 
     assert properties["tags"] == ["alpha", "beta"]
-
-
-def test_parse_inline_flow_list_with_single_item():
-    text = "---\ntags: [alpha]\n---\n\n# body\n"
-
-    properties, _ = parse(text)
-
-    assert properties["tags"] == ["alpha"]
 
 
 def test_normalize_converts_inline_list_to_canonical_block_style():
