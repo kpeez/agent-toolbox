@@ -118,6 +118,7 @@ def test_session_start_injects_no_memory(tmp_path, monkeypatch):
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("llmos_hook", HOOK_PATH)
+    assert spec is not None and spec.loader is not None
     llmos_hook = importlib.util.module_from_spec(spec)
     # Ensure vault_root is importable by updating sys.path via monkeypatch
     monkeypatch.syspath_prepend(str(HOOK_PATH.parent.parent / "scripts"))

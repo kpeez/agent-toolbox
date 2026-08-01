@@ -229,6 +229,7 @@ def test_no_vault_filesystem_access_on_fast_path(tmp_path, monkeypatch):
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("guard_bash", HOOK_PATH)
+    assert spec is not None and spec.loader is not None
     guard_bash = importlib.util.module_from_spec(spec)
     monkeypatch.syspath_prepend(str(HOOK_PATH.parent.parent))
     spec.loader.exec_module(guard_bash)

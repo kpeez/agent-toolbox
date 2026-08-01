@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+from collections.abc import Set as AbstractSet
 from pathlib import Path
 from typing import Any
 
@@ -188,7 +189,7 @@ def test_setting_an_existing_key_replaces_it_rather_than_duplicating(
 
 
 def fake_linear_for(
-    *, existing: set[str] = frozenset(), projects: list[dict[str, Any]] | None = None
+    *, existing: AbstractSet[str] = frozenset(), projects: list[dict[str, Any]] | None = None
 ):
     """A `linear` stub: `project view` succeeds only for ids in `existing`.
 

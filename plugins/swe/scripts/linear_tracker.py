@@ -303,6 +303,7 @@ def backfill_all(
         if code == EXIT_NO_CONTAINER:
             report.append(f"skip  {message}")
             continue
+        assert container_id is not None  # EXIT_OK always carries a resolved id
         if already_linked:
             report.append(f"skip  {spec_path.name}: already linked ({container_id})")
             continue
