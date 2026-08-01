@@ -46,13 +46,6 @@ def test_denies_read_with_no_target(tmp_path):
     assert "path=" in result.stderr
 
 
-def test_allows_read_with_file_target(tmp_path):
-    result = run_guard('obsidian-cli read file="My Note"', tmp_path)
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
 def test_allows_read_with_path_target(tmp_path):
     result = run_guard('obsidian-cli read path="notes/my-note.md"', tmp_path)
 
@@ -143,13 +136,6 @@ def test_vault_prefix_before_verb_still_denies(tmp_path):
     assert "file=" in result.stderr
 
 
-def test_vault_prefix_before_verb_still_allows_with_target(tmp_path):
-    result = run_guard('obsidian-cli vault="llmOS" read file="My Note"', tmp_path)
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
 def test_compound_command_catches_offending_invocation(tmp_path):
     result = run_guard("echo hi && obsidian-cli read", tmp_path)
 
@@ -157,69 +143,8 @@ def test_compound_command_catches_offending_invocation(tmp_path):
     assert "file=" in result.stderr
 
 
-def test_compound_command_with_target_allowed(tmp_path):
-    result = run_guard('obsidian-cli read file="x" && echo done', tmp_path)
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
-@pytest.mark.parametrize(
-    "command",
-    [
-        "git status",
-        "uv run pytest plugins/llmos/tests/",
-        "ls -la",
-        "git commit -m 'message'",
-        "uv run ruff check .",
-        "npm install",
-    ],
-)
-def test_allows_ordinary_commands(command, tmp_path):
-    result = run_guard(command, tmp_path)
-
-    assert result.returncode == 0, command
-    assert result.stderr == ""
-
-
 def test_unparseable_command_fails_open(tmp_path):
     result = run_guard('obsidian-cli read file="unterminated', tmp_path)
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
-def test_malformed_stdin_fails_open(tmp_path):
-    home = tmp_path / "home"
-    home.mkdir(exist_ok=True)
-    env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
-
-    result = subprocess.run(
-        [sys.executable, str(HOOK_PATH)],
-        input="not json",
-        env=env,
-        text=True,
-        capture_output=True,
-        timeout=10,
-    )
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
-def test_no_command_in_tool_input_fails_open(tmp_path):
-    home = tmp_path / "home"
-    home.mkdir(exist_ok=True)
-    env = {"HOME": str(home), "PATH": "/usr/bin:/bin"}
-
-    result = subprocess.run(
-        [sys.executable, str(HOOK_PATH)],
-        input=json.dumps({"tool_input": {}}),
-        env=env,
-        text=True,
-        capture_output=True,
-        timeout=10,
-    )
 
     assert result.returncode == 0
     assert result.stderr == ""

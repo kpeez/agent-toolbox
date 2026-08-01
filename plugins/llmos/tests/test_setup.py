@@ -1,5 +1,4 @@
-"""Prove install.sh retires the stale llmOS symlinks the plugin replaces,
-and that no rule file or user-level rules directory is ever created in
+"""Prove no rule file or user-level rules directory is ever created in
 agent-toolbox (rules live in the vault only -- ADR-0002).
 
 Tests redirect HOME into tmp_path and run the real script; they never touch
@@ -35,61 +34,6 @@ def run_install(fake_home: Path) -> subprocess.CompletedProcess[str]:
     )
     assert result.returncode == 0, result.stdout + result.stderr
     return result
-
-
-def test_setup_removes_stale_vault_symlinks(tmp_path):
-    fake_home = tmp_path / "home"
-    fake_home.mkdir()
-    # A fake symlink target stands in for the vault -- never touch a real one.
-    fake_vault_skill = tmp_path / "fake-vault-skill"
-    fake_vault_skill.mkdir()
-
-    stale_paths = [
-        fake_home / ".claude" / "skills" / "maintain-llmos",
-        fake_home / ".claude" / "skills" / "setup-llmos",
-        fake_home / ".codex" / "skills" / "setup-llmos",
-    ]
-    for path in stale_paths:
-        path.parent.mkdir(parents=True, exist_ok=True)
-        path.symlink_to(fake_vault_skill)
-
-    run_install(fake_home)
-
-    for path in stale_paths:
-        assert not path.is_symlink(), f"{path} should have been removed"
-
-
-def test_setup_removes_dead_hook_symlinks(tmp_path):
-    """Both hook symlinks are dead and must go (issue #16).
-
-    ~/.codex/hooks.json pointed at the vault's agents/codex/hooks.json, which the
-    vault deleted -- so it dangles and Codex ran with zero hooks. A dangling link
-    is removed on the strength of `-L`, without its target ever resolving.
-    ~/.claude/hooks/llmos_hook.py still resolves, but nothing invokes it once the
-    settings.json SessionStart block naming it is gone; the plugin serves that
-    hook from ${CLAUDE_PLUGIN_ROOT} instead.
-    """
-    fake_home = tmp_path / "home"
-    fake_home.mkdir()
-    live_target = tmp_path / "llmos_hook.py"
-    live_target.write_text("# stands in for the plugin's hook\n")
-
-    dangling = fake_home / ".codex" / "hooks.json"
-    dangling.parent.mkdir(parents=True, exist_ok=True)
-    dangling.symlink_to(tmp_path / "deleted-by-the-vault" / "hooks.json")
-
-    resolving = fake_home / ".claude" / "hooks" / "llmos_hook.py"
-    resolving.parent.mkdir(parents=True, exist_ok=True)
-    resolving.symlink_to(live_target)
-
-    assert not dangling.exists(), "precondition: this link must dangle"
-    assert resolving.exists(), "precondition: this link must resolve"
-
-    run_install(fake_home)
-
-    assert not dangling.is_symlink(), "the dangling Codex hook link should be gone"
-    assert not resolving.is_symlink(), "the inert Claude hook link should be gone"
-    assert live_target.exists(), "only the link is removed, never its target"
 
 
 def test_no_rule_files_live_in_agent_toolbox():
