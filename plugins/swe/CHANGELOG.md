@@ -5,6 +5,16 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.10.2 — 2026-08-01
+
+- Tracker resolution hardening. The `Issue tracker:` pin may now live in
+  `CONTEXT.md` as well as `AGENTS.md`/`CLAUDE.md` — the pin's home when
+  `AGENTS.md` is a shared global file — and `/to-issues` gains an auto-detect
+  rung that reads prior specs' `tracker:` frontmatter before any capability-
+  or hosting-based guess. `/start-loop`'s container step now resolves the
+  tracker through `/to-issues`' ladder instead of assuming it, closing the
+  gap that let a run land slices on the wrong tracker.
+
 ## 1.10.1 — 2026-08-01
 
 - Replace the test-per-goal quota with an evidence doctrine: goals are covered
