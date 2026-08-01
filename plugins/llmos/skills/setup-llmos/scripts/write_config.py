@@ -16,6 +16,7 @@ from pathlib import Path
 
 _VAULT_ROOT_MODULE = Path(__file__).resolve().parents[3] / "scripts" / "vault_root.py"
 _spec = importlib.util.spec_from_file_location("vault_root", _VAULT_ROOT_MODULE)
+assert _spec is not None and _spec.loader is not None
 vault_root = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(vault_root)
 

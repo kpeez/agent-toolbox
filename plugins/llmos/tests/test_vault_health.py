@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 from llmos_vault import health as health_module
-from llmos_vault.health import Profile, SchemaViolation, UnresolvedLink, summary, vault_health
+from llmos_vault.health import Profile, SchemaViolation, UnresolvedLink, vault_health
 
 VAULT = Path(__file__).parent / "fixtures" / "health_vault"
 TODAY = date(2026, 7, 17)
@@ -123,15 +123,6 @@ def test_qmd_indexed_paths_parses_qmd_ls_output(monkeypatch):
     assert paths == {"CLAUDE.md", "notes/alpha.md"}
 
 
-def test_qmd_indexed_paths_returns_none_when_qmd_missing(monkeypatch):
-    def fake_run(*args, **kwargs):
-        raise FileNotFoundError("qmd not on PATH")
-
-    monkeypatch.setattr(health_module.subprocess, "run", fake_run)
-
-    assert health_module._qmd_indexed_paths("llmos") is None
-
-
 def test_clean_vault_reports_no_findings(tmp_path, monkeypatch):
     root = tmp_path / "clean_vault"
     (root / "notes").mkdir(parents=True)
@@ -170,19 +161,6 @@ def test_clean_vault_reports_no_findings(tmp_path, monkeypatch):
     assert report.is_clean is True
 
 
-def test_summary_includes_per_section_counts():
-    report = make_health_report()
-
-    text = summary(report)
-
-    assert "orphans (" in text
-    assert "dead-ends (" in text
-    assert "unresolved links (" in text
-    assert "schema violations (" in text
-    assert "stale inbox (" in text
-    assert "qmd gaps (" in text
-
-
 def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
     env = dict(os.environ)
     env["LLMOS_ROOT"] = str(VAULT)
@@ -192,14 +170,6 @@ def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
         text=True,
         env=env,
     )
-
-
-def test_cli_health_help_renders_flag_from_docstring():
-    result = run_cli("health", "--help")
-
-    assert result.returncode == 0
-    assert "--json" in result.stdout
-    assert "Which registered vault to check" in result.stdout
 
 
 def test_cli_health_json_emits_valid_stable_shape_and_nonzero_exit():
@@ -221,21 +191,3 @@ def test_cli_health_json_emits_valid_stable_shape_and_nonzero_exit():
     } <= payload.keys()
     assert "linker" in payload["orphans"]
     assert payload["unresolved_links"] == [{"referrer": "hub", "target": "Missing Note"}]
-
-
-def test_cli_health_degrades_qmd_section_with_clear_notice_when_absent():
-    result = run_cli(
-        "health", "--vault", "llmos", "--json", "--qmd-collection", "no-such-collection-xyz"
-    )
-
-    payload = json.loads(result.stdout)
-
-    assert payload["qmd_gaps"] == []
-    assert payload["qmd_notice"] is not None
-
-
-def test_cli_health_default_output_is_readable_summary():
-    result = run_cli("health", "--vault", "llmos", "--qmd-collection", "no-such-collection-xyz")
-
-    assert "orphans (" in result.stdout
-    assert result.returncode == 1

@@ -11,6 +11,7 @@ import pytest
 
 SCRIPT = Path(__file__).parents[1] / "scripts" / "write_daily_activity.py"
 spec = importlib.util.spec_from_file_location("write_daily_activity", SCRIPT)
+assert spec is not None and spec.loader is not None
 wda = importlib.util.module_from_spec(spec)
 sys.modules["write_daily_activity"] = wda
 spec.loader.exec_module(wda)
