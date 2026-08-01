@@ -12,6 +12,7 @@ import pytest
 
 MODULE_PATH = Path(__file__).parent.parent / "scripts" / "vault_root.py"
 _spec = importlib.util.spec_from_file_location("vault_root", MODULE_PATH)
+assert _spec is not None and _spec.loader is not None
 vault_root_module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(vault_root_module)
 
@@ -100,7 +101,7 @@ def test_no_location_derived_fallback(tmp_path, monkeypatch):
     spec = importlib.util.spec_from_file_location(
         "vault_root_planted", fake_module_path
     )
-    assert spec is not None
+    assert spec is not None and spec.loader is not None
     planted_module = importlib.util.module_from_spec(spec)
     sys.modules["vault_root_planted"] = planted_module
 

@@ -11,6 +11,7 @@ import pytest
 
 MODULE_PATH = Path(__file__).parent / "write_config.py"
 _spec = importlib.util.spec_from_file_location("write_config", MODULE_PATH)
+assert _spec is not None and _spec.loader is not None
 write_config_module = importlib.util.module_from_spec(_spec)
 _spec.loader.exec_module(write_config_module)
 

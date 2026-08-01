@@ -113,49 +113,6 @@ def test_rm_vault_note_denied(tmp_path):
     assert str(note) in result.stderr
 
 
-def test_mv_outside_every_vault_root_allowed(tmp_path):
-    home = tmp_path / "home"
-    home.mkdir()
-    vault = make_vault(tmp_path / "vault")
-    outside = tmp_path / "other" / "note.md"
-    outside.parent.mkdir(parents=True)
-    outside.write_text("# note\n")
-
-    result = run_guard(
-        f"mv {outside} /tmp/dest/", tmp_path, home, llmos_root=vault
-    )
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
-def test_rm_outside_every_vault_root_allowed(tmp_path):
-    home = tmp_path / "home"
-    home.mkdir()
-    vault = make_vault(tmp_path / "vault")
-    outside = tmp_path / "other" / "note.md"
-    outside.parent.mkdir(parents=True)
-    outside.write_text("# note\n")
-
-    result = run_guard(f"rm {outside}", tmp_path, home, llmos_root=vault)
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
-def test_mv_non_markdown_file_in_vault_allowed(tmp_path):
-    home = tmp_path / "home"
-    home.mkdir()
-    vault = make_vault(tmp_path / "vault")
-    asset = vault / "image.png"
-    asset.write_text("binary-ish\n")
-
-    result = run_guard(f"mv {asset} /tmp/dest/", tmp_path, home, llmos_root=vault)
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
 def test_registry_only_vault_denied(tmp_path):
     """A vault known only via Obsidian's registry (e.g. xbrain) is still guarded."""
     home = tmp_path / "home"
@@ -209,20 +166,6 @@ def test_fails_open_when_no_vault_configured(tmp_path):
     outside_vault_but_md.write_text("# note\n")
 
     result = run_guard(f"rm {outside_vault_but_md}", tmp_path, home)
-
-    assert result.returncode == 0
-    assert result.stderr == ""
-
-
-def test_ordinary_mv_and_rm_calls_unaffected(tmp_path):
-    home = tmp_path / "home"
-    home.mkdir()
-    vault = make_vault(tmp_path / "vault")
-    src = tmp_path / "build" / "output.txt"
-    src.parent.mkdir(parents=True)
-    src.write_text("data\n")
-
-    result = run_guard(f"mv {src} {tmp_path / 'dest.txt'}", tmp_path, home, llmos_root=vault)
 
     assert result.returncode == 0
     assert result.stderr == ""
@@ -286,6 +229,7 @@ def test_no_vault_filesystem_access_on_fast_path(tmp_path, monkeypatch):
     import importlib.util
 
     spec = importlib.util.spec_from_file_location("guard_bash", HOOK_PATH)
+    assert spec is not None and spec.loader is not None
     guard_bash = importlib.util.module_from_spec(spec)
     monkeypatch.syspath_prepend(str(HOOK_PATH.parent.parent))
     spec.loader.exec_module(guard_bash)

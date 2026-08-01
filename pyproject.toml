@@ -16,3 +16,8 @@ members = ["plugins/llmos"]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6", "ty>=0.0.1a1"]
+
+[tool.ty.environment]
+# `hooks/llmos_hook.py` puts this directory on `sys.path` at import time, so
+# `vault_root` really is importable by name there; tell ty the same thing.
+extra-paths = ["plugins/llmos/scripts"]

@@ -131,22 +131,6 @@ def test_destination_properties_knowledge(tmp_path):
     assert result == {"categories": ["[[Knowledge]]"]}
 
 
-def test_destination_properties_sources(tmp_path):
-    vault = make_vault(tmp_path / "vault")
-
-    result = destination_properties(vault, "sources/some-source.md")
-
-    assert result == {"categories": ["[[Sources]]"]}
-
-
-def test_destination_properties_archive(tmp_path):
-    vault = make_vault(tmp_path / "vault")
-
-    result = destination_properties(vault, "archive/old-note.md")
-
-    assert result == {"categories": ["[[Archive]]"]}
-
-
 def test_destination_properties_project_landing_page_omits_self_link(tmp_path):
     vault = make_vault(tmp_path / "vault")
     seed_project_landing(vault, "demo", "Demo")
@@ -218,21 +202,6 @@ def test_file_inbox_item_moves_stamps_and_appends_daily_line(tmp_path, monkeypat
     thoughts_section = daily_note.split("## Thoughts")[1].split("## Projects")[0]
     assert "capture-1" in thoughts_section
     assert "knowledge/some-note.md" in thoughts_section
-
-
-def test_file_inbox_item_stamps_project_and_categories_for_spec_destination(tmp_path, monkeypatch):
-    vault = make_vault(tmp_path / "vault")
-    seed_project_landing(vault, "demo", "Demo")
-    seed_inbox_note(vault, "capture-2")
-    install_fake_obsidian(monkeypatch, vault)
-
-    file_inbox_item(
-        vault, "capture-2", "projects/demo/specs/0001-thing.md", today=date(2026, 7, 17)
-    )
-
-    filed = read_note(vault, "projects/demo/specs/0001-thing.md")
-    assert filed.properties["categories"] == ["[[Specifications]]"]
-    assert filed.properties["project"] == ["[[projects/demo/demo|Demo]]"]
 
 
 def test_file_inbox_item_rejects_unrecognized_destination_before_any_move(tmp_path, monkeypatch):

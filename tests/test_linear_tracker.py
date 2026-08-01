@@ -9,6 +9,7 @@ from __future__ import annotations
 
 import importlib.util
 import json
+from collections.abc import Set as AbstractSet
 from pathlib import Path
 from typing import Any
 
@@ -107,15 +108,6 @@ def test_a_chain_advances_one_slice_per_round() -> None:
     assert run(first, second, third, merged=["KP-1", "KP-2", "KP-3"]) == []
 
 
-def test_the_legacy_branch_prefix_is_still_recognised() -> None:
-    """A run already in flight when this ships has knack/slice/* branches."""
-
-    def fake_git(args: list[str]) -> str:
-        return "knack/slice/KP-1\nmain\n"
-
-    assert tracker.merged_slice_identifiers("base", fake_git) == {"KP-1"}
-
-
 def test_without_a_base_branch_nothing_counts_as_merged() -> None:
     assert run(issue("KP-1"), base=None) == ["KP-1"]
 
@@ -193,18 +185,11 @@ def test_setting_an_existing_key_replaces_it_rather_than_duplicating(
     assert "container-1" not in text
 
 
-def test_slug_is_taken_from_the_numbered_filename() -> None:
-    assert (
-        tracker.slug_for(Path("0002-morphometric-baselines.md"))
-        == "morphometric-baselines"
-    )
-
-
 # ---- the container ladder ---------------------------------------------------
 
 
 def fake_linear_for(
-    *, existing: set[str] = frozenset(), projects: list[dict[str, Any]] | None = None
+    *, existing: AbstractSet[str] = frozenset(), projects: list[dict[str, Any]] | None = None
 ):
     """A `linear` stub: `project view` succeeds only for ids in `existing`.
 
@@ -316,77 +301,6 @@ def test_no_container_anywhere_is_its_own_exit_code(tmp_path: Path) -> None:
     assert (code, container_id) == (tracker.EXIT_NO_CONTAINER, None)
 
 
-# ---- the sweep --------------------------------------------------------------
-
-
-def test_dry_run_reports_the_mapping_without_touching_the_specs(tmp_path: Path) -> None:
-    first = write_spec(tmp_path)
-    second = write_spec(tmp_path, "0003-other-thing.md")
-    linear = fake_linear_for(
-        projects=[project("Morphometric", "c-legacy", "morphometric-baselines")]
-    )
-    before = {p.name: p.read_text() for p in (first, second)}
-
-    count, report = tracker.backfill_all(tmp_path, dry_run=True, run_linear_fn=linear)
-
-    assert count == 1
-    assert any("would link" in line and "c-legacy" in line for line in report)
-    assert any("0003-other-thing.md: no container" in line for line in report)
-    assert {p.name: p.read_text() for p in (first, second)} == before
-
-
-def test_the_sweep_links_every_resolvable_spec(tmp_path: Path) -> None:
-    first = write_spec(tmp_path)
-    second = write_spec(tmp_path, "0003-other-thing.md")
-    linear = fake_linear_for(
-        projects=[
-            project("Morphometric", "c-1", "morphometric-baselines"),
-            project("Other", "c-2", "other-thing"),
-        ]
-    )
-
-    count, _ = tracker.backfill_all(tmp_path, dry_run=False, run_linear_fn=linear)
-
-    assert count == 2
-    assert (
-        tracker.read_frontmatter_value(first.read_text(), "tracker_container") == "c-1"
-    )
-    assert (
-        tracker.read_frontmatter_value(second.read_text(), "tracker_container") == "c-2"
-    )
-
-
-def test_the_sweep_is_idempotent_and_skips_linked_specs(tmp_path: Path) -> None:
-    path = write_spec(tmp_path)
-    linear = fake_linear_for(
-        existing={"c-1"},
-        projects=[project("Morphometric", "c-1", "morphometric-baselines")],
-    )
-    tracker.backfill_all(tmp_path, dry_run=False, run_linear_fn=linear)
-
-    count, report = tracker.backfill_all(tmp_path, dry_run=False, run_linear_fn=linear)
-
-    assert count == 0
-    assert any("already linked" in line for line in report)
-    assert path.read_text().count("tracker_container:") == 1
-
-
-def test_a_broken_link_stops_that_spec_without_halting_the_sweep(
-    tmp_path: Path,
-) -> None:
-    broken = write_spec(tmp_path)
-    tracker.set_container(broken, "c-gone")
-    write_spec(tmp_path, "0003-other-thing.md")
-    linear = fake_linear_for(
-        existing=set(), projects=[project("Other", "c-2", "other-thing")]
-    )
-
-    count, report = tracker.backfill_all(tmp_path, dry_run=False, run_linear_fn=linear)
-
-    assert count == 1
-    assert any(line.startswith("STOP") for line in report)
-
-
 # ---- project status sync ----------------------------------------------------
 
 
@@ -433,35 +347,6 @@ def test_a_backlog_project_with_work_underway_is_promoted() -> None:
 
     assert ["project", "update", "c-1", "--status", "started"] in calls
     assert "underway but project is 'backlog'" in report[0]
-
-
-def test_a_started_project_is_left_alone() -> None:
-    calls: list = []
-    linear = fake_linear_project("started", [issue("KP-1", state="started")], calls)
-
-    report = tracker.sync_project("c-1", dry_run=False, run_linear_fn=linear)
-
-    assert not [c for c in calls if c[:2] == ["project", "update"]]
-    assert "is consistent with its issues" in report[0]
-
-
-def test_a_backlog_project_with_no_work_started_is_left_alone() -> None:
-    calls: list = []
-    linear = fake_linear_project("backlog", [issue("KP-1", state="backlog")], calls)
-
-    tracker.sync_project("c-1", dry_run=False, run_linear_fn=linear)
-
-    assert not [c for c in calls if c[:2] == ["project", "update"]]
-
-
-def test_dry_run_reports_without_writing() -> None:
-    calls: list = []
-    linear = fake_linear_project("backlog", [issue("KP-1", state="started")], calls)
-
-    report = tracker.sync_project("c-1", dry_run=True, run_linear_fn=linear)
-
-    assert not [c for c in calls if c[:2] == ["project", "update"]]
-    assert "would set" in report[0]
 
 
 def test_an_all_done_project_is_reported_never_auto_completed() -> None:

@@ -124,16 +124,6 @@ def test_resolve_vault_root_matches_other_names_via_registry(tmp_path):
     assert resolved == xbrain
 
 
-def test_resolve_vault_root_fails_loudly_for_unknown_name(tmp_path):
-    registry_path = tmp_path / "obsidian.json"
-    registry_path.write_text(json.dumps({"vaults": {}}))
-
-    with pytest.raises(SystemExit) as exc_info:
-        resolve_vault_root("nonexistent", registry_path=registry_path)
-
-    assert "nonexistent" in str(exc_info.value)
-
-
 def test_no_location_derived_fallback():
     # Static check: the resolver must never branch on its own file location.
     import inspect

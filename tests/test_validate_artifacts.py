@@ -19,13 +19,13 @@ validator = importlib.util.module_from_spec(spec_loader)
 spec_loader.loader.exec_module(validator)
 
 
-def spec_text(**keys: str) -> str:
+def spec_text(**keys: str | None) -> str:
     frontmatter = {"status": "review", "desc": "a spec"} | keys
     lines = "\n".join(f"{k}: {v}" for k, v in frontmatter.items() if v is not None)
     return f"---\n{lines}\n---\n\n# A spec\n"
 
 
-def violations(**keys: str) -> list[str]:
+def violations(**keys: str | None) -> list[str]:
     return validator.validate_spec(spec_text(**keys), None)
 
 

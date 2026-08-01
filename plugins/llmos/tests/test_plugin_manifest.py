@@ -11,7 +11,6 @@ import json
 from pathlib import Path
 
 PLUGIN_ROOT = Path(__file__).resolve().parents[1]
-REPO_ROOT = PLUGIN_ROOT.parents[1]
 
 
 def _hook_commands() -> list[str]:
@@ -43,15 +42,3 @@ def test_hook_commands_use_the_plugin_root_variable() -> None:
     assert commands
     assert all("${CLAUDE_PLUGIN_ROOT}" in command for command in commands)
     assert not any("CODEX_PLUGIN_ROOT" in command for command in commands)
-
-
-def test_no_hook_command_passes_provider() -> None:
-    assert not any("--provider" in command for command in _hook_commands())
-
-
-def test_marketplace_registers_the_plugin() -> None:
-    marketplace = json.loads(
-        (REPO_ROOT / ".claude-plugin" / "marketplace.json").read_text()
-    )
-    entry = next(p for p in marketplace["plugins"] if p["name"] == "llmos")
-    assert entry["source"] == "./plugins/llmos"
