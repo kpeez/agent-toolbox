@@ -12,20 +12,24 @@ Break a plan into independently-grabbable issues using **vertical slices**
 
 Pick the tracker at runtime — no per-repo config beyond an optional one-liner:
 
-1. **Repo override** — if the repo's `AGENTS.md`/`CLAUDE.md` names a tracker
-   (e.g. `Issue tracker: linear (team ETHO, initiative Foo)` or
+1. **Repo override** — if the repo's `AGENTS.md`/`CLAUDE.md`/`CONTEXT.md` names
+   a tracker (e.g. `Issue tracker: linear (team ETHO, initiative Foo)` or
    `Issue tracker: github`), use it and pass along any extras on that line
-   (team, initiative, labels, project).
-2. **Linear** — else, if Linear MCP tools are available:
+   (team, initiative, labels, project). `CONTEXT.md` is the pin's home when
+   `AGENTS.md` is a shared global file with no room for repo-specific lines.
+2. **Prior specs** — else, if specs in `docs/agents/specs/` record a `tracker:`
+   in their frontmatter and agree on one value, use it: what past runs actually
+   used outranks any inference from where the code is hosted.
+3. **Linear** — else, if Linear MCP tools are available:
    [references/issue-tracker-linear.md](references/issue-tracker-linear.md)
-3. **GitHub** — else, if the repo has a GitHub remote and `gh` works:
+4. **GitHub** — else, if the repo has a GitHub remote and `gh` works:
    [references/issue-tracker-github.md](references/issue-tracker-github.md).
    **Public repos never reach this rung by fall-through**: agent process noise
    (slices, progress comments) does not belong on a public issue list. If the
    repo is public (`gh repo view --json visibility`), use GitHub issues only
    when the repo override explicitly names `github`; otherwise continue to
    local markdown and tell the user which tracker to pin.
-4. **Local markdown** — otherwise, files named `docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md`:
+5. **Local markdown** — otherwise, files named `docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md`:
    [references/issue-tracker-local.md](references/issue-tracker-local.md)
 
 Read the matching reference before publishing; mention which tracker you used.
