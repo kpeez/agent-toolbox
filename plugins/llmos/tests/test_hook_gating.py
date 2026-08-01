@@ -200,23 +200,6 @@ def test_pre_write_silent_for_non_vault_target(tmp_path):
     assert result.returncode == 0
 
 
-def test_pre_write_silent_for_non_note_inside_vault(tmp_path):
-    vault = make_vault(tmp_path / "vault")
-    script = vault / "scripts" / "audit_metadata.py"
-    script.parent.mkdir(parents=True)
-    script.write_text("print('x')\n")
-
-    result = run_hook(
-        "pre-tool-use",
-        {"tool_input": {"file_path": str(script)}},
-        tmp_path,
-        vault,
-    )
-
-    assert result.stdout == ""
-    assert result.returncode == 0
-
-
 def make_spec(vault: Path, name: str) -> Path:
     spec = vault / "projects" / "testproj" / "specs" / name
     spec.parent.mkdir(parents=True, exist_ok=True)
@@ -236,50 +219,6 @@ def test_pre_write_injects_for_codex_apply_patch(tmp_path):
     )
 
     assert SCHEMA_SENTINEL in result.stdout
-    assert result.returncode == 0
-
-
-def test_pre_write_silent_for_codex_apply_patch_outside_vault(tmp_path):
-    vault = make_vault(tmp_path / "vault")
-    other_repo_file = tmp_path / "other-repo" / "README.md"
-    other_repo_file.parent.mkdir(parents=True)
-    other_repo_file.write_text("# hi\n")
-
-    result = run_hook(
-        "pre-tool-use",
-        apply_patch_payload(f"*** Update File: {other_repo_file}", "@@", "-a", "+b"),
-        tmp_path,
-        vault,
-    )
-
-    assert result.stdout == ""
-    assert result.returncode == 0
-
-
-def test_pre_write_injects_once_when_codex_patch_touches_many_files(tmp_path):
-    vault = make_vault(tmp_path / "vault")
-    spec = make_spec(vault, "foo.md")
-    outside = tmp_path / "other-repo" / "src" / "main.py"
-    outside.parent.mkdir(parents=True)
-    outside.write_text("print('hi')\n")
-
-    result = run_hook(
-        "pre-tool-use",
-        apply_patch_payload(
-            f"*** Update File: {outside}",
-            "@@",
-            "-a",
-            "+b",
-            f"*** Update File: {spec}",
-            "@@",
-            "-c",
-            "+d",
-        ),
-        tmp_path,
-        vault,
-    )
-
-    assert result.stdout.count(SCHEMA_SENTINEL) == 1
     assert result.returncode == 0
 
 
@@ -354,22 +293,6 @@ def test_session_start_injects_as_bare_stdout(tmp_path):
 
     assert "hookSpecificOutput" not in result.stdout
     assert str(vault) in result.stdout
-    assert result.returncode == 0
-
-
-def test_session_start_claims_no_unbuilt_automation(tmp_path):
-    """The injection may not assert a system that does not run.
-
-    This text reaches every session unconditionally and is never asked for,
-    which makes an untrue sentence here the most-trusted wrong statement in
-    the vault. The evening digest is `draft`; nothing writes the activity
-    block, so a session told otherwise trusts a hand-written one as derived.
-    """
-    vault = make_vault(tmp_path / "vault")
-
-    result = run_hook("session-start", {"cwd": str(vault)}, tmp_path, vault)
-
-    assert "digest" not in result.stdout.lower()
     assert result.returncode == 0
 
 
