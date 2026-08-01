@@ -6,12 +6,16 @@ description: "Functional-test discipline — sketch the intended workflow as scr
 # Functional tests, sketch-first
 
 **Sketch the workflow as scratch scripts → refactor the survivors into committed
-tests. Every stated goal ends up with a functional test; trivia gets none.**
+tests. Goals are covered by evidence, not one test each; trivia gets none.**
 
 This is not strict TDD. There is no red/green choreography and no requirement
 that a test exist before the code. The contract is simpler: by the time the
 work is published, each stated goal — the behaviors the spec or issue actually
-promises — is proven by a committed test that exercises the real code path.
+promises — is backed by evidence that it works. Evidence is a committed test
+exercising the real code path when the failure is silent, one shared
+pipeline-level test when several goals run through it, or a reproducible demo
+recorded in the PR when the failure is loud on the first real run. There is no
+quota; see [references/tests.md](references/tests.md) for which form fits.
 
 ## The rule
 
@@ -69,9 +73,10 @@ easier than what you actually verified. The earn-the-test bar below applies.
 
 By PR time:
 
-- Every stated goal has a functional test in the committed suite, and the
-  spec's Verification section names those tests — committed tests are the
-  record.
+- Every stated goal carries its evidence: a committed test, a shared
+  pipeline-level test it cites alongside other goals, or a reproducible demo
+  in the PR for a loud failure. The spec's Verification section names the
+  committed tests — those are the record for everything a test covers.
 - `tests/temp/` is empty. Each script either **graduated** into the suite or
   reached one of these ends:
   - **Verdict** — it only answered a design question. Capture the question,
