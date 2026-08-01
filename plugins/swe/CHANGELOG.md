@@ -5,6 +5,24 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.10.1 — 2026-08-01
+
+- Replace the test-per-goal quota with an evidence doctrine: goals are covered
+  by evidence, not one test each. A goal whose failure is silent — wrong
+  numbers, leaked data, a broken invariant — earns a committed test; several
+  goals running through one end-to-end path share a single pipeline-level test;
+  a goal whose failure is loud on the first real run is proven by the
+  reproducible demo `/ship-pr` already requires in the PR. The quota was the
+  rule while the quality guards were only advice, so agents backfilled a test
+  per goal and shipped suites that restate the source. `tdd/references/tests.md`
+  is rewritten around the categories that earn a test in any codebase — code
+  boundaries, calculation correctness, behavior invariants, one end-to-end
+  pipeline test — with the ML examples kept as instances rather than the frame,
+  and its anti-pattern list extended with general-software theater (CLI arg
+  parsing, restated validation, trivial serialization). `tdd/SKILL.md`,
+  `implement/SKILL.md`, and `write-spec/templates.md` state the doctrine
+  instead of the quota.
+
 ## 1.10.0 — 2026-07-31
 
 - Stop managing run state in markdown comments. Nothing a resumed run reads is
