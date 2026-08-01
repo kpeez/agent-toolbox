@@ -45,7 +45,9 @@ gitignored symlink to `$LLMOS_ROOT/projects/<repo>` — holding `specs/`,
 
 Durable decisions are ADRs in `docs/agents/adrs/`; the optional domain glossary is
 the still-committed repo-root `CONTEXT.md`. An optional `Issue tracker: <name>`
-line in the repo's `AGENTS.md` pins the tracker; otherwise `/to-issues` auto-detects.
+line in the repo's `AGENTS.md` or `CONTEXT.md` pins the tracker (`CONTEXT.md` when
+`AGENTS.md` is the shared global file); otherwise `/to-issues` auto-detects —
+prior specs' `tracker:` frontmatter outranks hosting inference.
 
 ## Code rules
 
