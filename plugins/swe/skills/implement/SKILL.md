@@ -13,12 +13,16 @@ node, read "Prove behavior" and "Implement one slice" and stop there — the
 ## Prove behavior before you commit to it
 
 **`/tdd`** is the discipline (the sketch→graduate→settle loop lives there):
-every stated goal ends proven by a committed functional test at caller altitude,
-written directly when the behavior is known or graduated from a `tests/temp/`
-scratch script when it isn't. A verdict-only script ends in a recorded decision —
-an ADR, spec decision, or tracker entry — rather than a test. If you catch
-yourself calling a goal done with nothing that verifies it, STOP and write the
-check; a red test, type error, or lint failure is a stop, not a warning.
+goals are covered by evidence, not one test each. Silent failures earn a
+committed test at caller altitude, written directly when the behavior is known
+or graduated from a `tests/temp/` scratch script when it isn't; several goals
+running through one end-to-end path share that pipeline-level test; a goal
+whose failure is loud on the first real run is proven by the reproducible demo
+`/ship-pr` already requires in the PR. A verdict-only script ends in a recorded
+decision — an ADR, spec decision, or tracker entry — rather than a test. If you
+catch yourself calling a goal done with nothing that verifies it, STOP and
+produce the evidence; a red test, type error, or lint failure is a stop, not a
+warning.
 
 ## Orchestrate the fan-out
 
@@ -82,8 +86,8 @@ session's inherited model rather than failing. Keep these role defaults in the
 provider agent definitions; do not spend frontier-model tokens on a bounded
 role by default.
 
-Always tell the worker to follow the verification discipline — prove each
-stated goal with a functional test per `/tdd`, run and passing — and to report
+Always tell the worker to follow the verification discipline — cover each
+stated goal with evidence per `/tdd`, run and passing — and to report
 status (DONE / DONE_WITH_CONCERNS / NEEDS_CONTEXT / BLOCKED). Handle each status
 before proceeding: address concerns that touch correctness or scope, provide
 missing context and re-dispatch, or diagnose a block before retrying.
