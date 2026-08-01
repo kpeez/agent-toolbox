@@ -8,7 +8,14 @@ from __future__ import annotations
 
 from pathlib import Path
 
-from llmos_vault.frontmatter import append_unique, normalize, parse, serialize, set_scalar
+from llmos_vault.frontmatter import (
+    Property,
+    append_unique,
+    normalize,
+    parse,
+    serialize,
+    set_scalar,
+)
 
 FIXTURES = Path(__file__).parent / "fixtures" / "vault" / "notes"
 
@@ -87,7 +94,7 @@ def test_normalize_preserves_body_content():
 
 
 def test_serialize_quotes_wikilink_values():
-    properties = {"categories": ["[[Knowledge]]"]}
+    properties: dict[str, Property] = {"categories": ["[[Knowledge]]"]}
 
     rendered = serialize(properties, "# body\n")
 
@@ -112,7 +119,7 @@ def test_set_scalar_sets_a_value():
 
 
 def test_set_scalar_refuses_to_rewrite_created():
-    properties = {"created": "2026-07-01"}
+    properties: dict[str, Property] = {"created": "2026-07-01"}
 
     try:
         set_scalar(properties, "created", "2026-07-17")
@@ -125,7 +132,7 @@ def test_set_scalar_refuses_to_rewrite_created():
 
 
 def test_append_unique_appends_when_absent():
-    properties = {"authors": ["claude"]}
+    properties: dict[str, Property] = {"authors": ["claude"]}
 
     append_unique(properties, "authors", "codex")
 
@@ -133,7 +140,7 @@ def test_append_unique_appends_when_absent():
 
 
 def test_append_unique_is_a_no_op_when_already_present():
-    properties = {"authors": ["claude", "codex"]}
+    properties: dict[str, Property] = {"authors": ["claude", "codex"]}
 
     append_unique(properties, "authors", "codex")
 
