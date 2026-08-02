@@ -89,7 +89,7 @@ def test_swe_loop_stays_tracker_agnostic() -> None:
 
 def test_swe_hooks_register_worktree_link_script() -> None:
     hooks = json.loads((ROOT / "plugins" / "swe" / "hooks" / "hooks.json").read_text())
-    command = '"${CLAUDE_PLUGIN_ROOT}/hooks/link-docs-agents.sh"'
+    command = '"$CLAUDE_PLUGIN_ROOT"/hooks/link-docs-agents.sh'
 
     subagent = hooks["hooks"]["SubagentStart"]
     assert [entry.get("matcher") for entry in subagent] == [None]

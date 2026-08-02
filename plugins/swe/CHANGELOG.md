@@ -5,6 +5,14 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.10.3 — 2026-08-01
+
+- Make hook commands fish-safe: `${CLAUDE_PLUGIN_ROOT}` becomes
+  `"$CLAUDE_PLUGIN_ROOT"`. Neither harness string-substitutes shell-form hook
+  commands — both export the variable and let a shell expand it — and Codex
+  runs hooks through the login shell, where fish rejects `${VAR}` as a syntax
+  error, killing the format-python hook on every `.py` write.
+
 ## 1.10.2 — 2026-08-01
 
 - Tracker resolution hardening. The `Issue tracker:` pin may now live in

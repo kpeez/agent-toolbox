@@ -37,8 +37,11 @@ def test_hooks_declare_session_start_and_pre_tool_use() -> None:
 
 
 def test_hook_commands_use_the_plugin_root_variable() -> None:
-    # Both harnesses expand ${CLAUDE_PLUGIN_ROOT}; there is no CODEX_PLUGIN_ROOT.
+    # Neither harness string-substitutes shell-form commands: both export
+    # CLAUDE_PLUGIN_ROOT and let a shell expand it. Codex uses the login shell,
+    # where fish rejects ${VAR} outright, so commands must use the "$VAR" form.
     commands = _hook_commands()
     assert commands
-    assert all("${CLAUDE_PLUGIN_ROOT}" in command for command in commands)
+    assert all('"$CLAUDE_PLUGIN_ROOT"/' in command for command in commands)
+    assert not any("${CLAUDE_PLUGIN_ROOT}" in command for command in commands)
     assert not any("CODEX_PLUGIN_ROOT" in command for command in commands)
