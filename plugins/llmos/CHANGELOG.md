@@ -3,8 +3,11 @@
 Newest first. Versions are the `version` field shared by
 `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`.
 
-## Unreleased
+## 1.0.4 — 2026-08-01
 
+- Make hook commands fish-safe: `${CLAUDE_PLUGIN_ROOT}` becomes
+  `"$CLAUDE_PLUGIN_ROOT"`, matching the swe plugin's fix — Codex runs hooks
+  through the login shell, where fish rejects `${VAR}` as a syntax error.
 - Add the nightly daily-activity digest script: scans monitored projects,
   gates on a content hash, summarizes with a single claude call, and writes
   the digest atomically.
