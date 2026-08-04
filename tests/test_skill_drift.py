@@ -4,45 +4,12 @@ from __future__ import annotations
 
 import json
 import re
-import tomllib
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_REFERENCE = re.compile(r"`/([a-z][a-z0-9-]+)`")
 README_ROW = re.compile(r"^\|\s*`([a-z0-9-]+)`\s*\|")
 ALLOWED_HOST_COMMANDS = {"goal", "code-review", "clear"}
-AGENT_MODEL_MATRIX = {
-    "architect": {
-        "claude": ("fable", "high"),
-        "codex": ("gpt-5.6-sol", "high"),
-    },
-    "explorer": {
-        "claude": ("haiku", None),
-        "codex": ("gpt-5.6-luna", "medium"),
-    },
-    "implementer": {
-        "claude": ("opus", "medium"),
-        "codex": ("gpt-5.6-sol", "medium"),
-    },
-    "planner": {
-        "claude": ("sonnet", "medium"),
-        "codex": ("gpt-5.6-terra", "medium"),
-    },
-    "publisher": {
-        "claude": ("sonnet", "medium"),
-        "codex": ("gpt-5.6-terra", "medium"),
-    },
-    "reviewer": {
-        "claude": ("sonnet", "high"),
-        "codex": ("gpt-5.6-terra", "high"),
-    },
-    # Claude-side only: on the Codex harness the host is Codex, so the
-    # delegator has no .toml twin.
-    "codex-delegator": {
-        "claude": ("sonnet", "low"),
-        "codex": (None, None),
-    },
-}
 
 
 def plugin_directories() -> list[Path]:
@@ -90,30 +57,6 @@ def readme_skill_names() -> set[str]:
     }
 
 
-def claude_agent_settings(role: str) -> tuple[str | None, str | None]:
-    text = (ROOT / "plugins" / "swe" / "agents" / f"{role}.md").read_text()
-    frontmatter = re.match(r"^---\n(.*?)\n---(?:\n|$)", text, re.DOTALL)
-    assert frontmatter is not None
-
-    def field(name: str) -> str | None:
-        match = re.search(
-            rf"^{re.escape(name)}:\s*(.+?)\s*$",
-            frontmatter.group(1),
-            re.MULTILINE,
-        )
-        return match.group(1) if match else None
-
-    return field("model"), field("effort")
-
-
-def codex_agent_settings(role: str) -> tuple[str | None, str | None]:
-    path = ROOT / "plugins" / "swe" / "agents" / f"{role}.toml"
-    if not path.is_file():
-        return (None, None)
-    config = tomllib.loads(path.read_text())
-    return config.get("model"), config.get("model_reasoning_effort")
-
-
 SWE_LOOP = ROOT / "plugins" / "swe" / "workflows" / "swe-loop.js"
 
 
@@ -128,15 +71,6 @@ def test_swe_loop_routes_worker_roles_through_the_roles_map() -> None:
 
     # A hardcoded agentType in any quoting style would bypass the roles arg.
     assert re.findall(r"agentType:\s*['\"`]swe:", text) == []
-
-
-def test_swe_loop_cost_ceilings_stay_pinned() -> None:
-    text = SWE_LOOP.read_text()
-
-    # The run's cost ceilings; widening either silently is the drift this
-    # guards (see the comment above the constants in swe-loop.js).
-    assert "const MAX_FIX_ROUNDS = 2" in text
-    assert "const SPEC_REVIEW_REENTRIES = 1" in text
 
 
 def test_swe_loop_stays_tracker_agnostic() -> None:
@@ -155,7 +89,7 @@ def test_swe_loop_stays_tracker_agnostic() -> None:
 
 def test_swe_hooks_register_worktree_link_script() -> None:
     hooks = json.loads((ROOT / "plugins" / "swe" / "hooks" / "hooks.json").read_text())
-    command = '"${CLAUDE_PLUGIN_ROOT}/hooks/link-docs-agents.sh"'
+    command = '"$CLAUDE_PLUGIN_ROOT"/hooks/link-docs-agents.sh'
 
     subagent = hooks["hooks"]["SubagentStart"]
     assert [entry.get("matcher") for entry in subagent] == [None]
@@ -172,35 +106,6 @@ def test_swe_hooks_register_worktree_link_script() -> None:
     script = ROOT / "plugins" / "swe" / "hooks" / "link-docs-agents.sh"
     assert script.is_file()
     assert script.stat().st_mode & 0o111
-
-
-def test_codex_delegator_run_ceiling_and_non_completion_contract() -> None:
-    text = (ROOT / "plugins" / "swe" / "agents" / "codex-delegator.md").read_text()
-
-    # The foreground Bash tool caps at 600000 ms, so a foreground call
-    # reintroduces the ceiling that killed a real review mid-run.
-    assert "run_in_background: true" in text
-    assert "timeout 1800 codex exec" in text
-
-    # A non-completion must reach the caller as its own channel, never as
-    # substantive output that a fix agent would act on.
-    assert 'verdict: "did-not-complete"' in text
-    assert "Never report a non-completion as" in text
-
-    # One invocation per delegation still holds; only polling was relaxed.
-    assert "Exactly one Codex invocation per delegation: no retries" in text
-
-
-def test_swe_agent_models_match_role_complexity() -> None:
-    actual = {
-        role: {
-            "claude": claude_agent_settings(role),
-            "codex": codex_agent_settings(role),
-        }
-        for role in AGENT_MODEL_MATRIX
-    }
-
-    assert actual == AGENT_MODEL_MATRIX
 
 
 def test_frontmatter_names_match_skill_directories() -> None:

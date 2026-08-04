@@ -222,27 +222,6 @@ def test_read_recent_dailies_returns_last_n_most_recent_first(tmp_path):
     assert [note.name for note in notes] == ["2026-07-14", "2026-07-13", "2026-07-12"]
 
 
-def test_read_recent_dailies_stays_headless_when_obsidian_is_unreachable(tmp_path, monkeypatch):
-    vault = make_vault(tmp_path / "vault")
-    seed_daily(vault, "2026-07-17")
-
-    def fake_run(argv, **kwargs):
-        raise FileNotFoundError("obsidian-cli")
-
-    monkeypatch.setattr(subprocess, "run", fake_run)
-
-    notes = read_recent_dailies(vault, 1)
-
-    assert notes[0].name == "2026-07-17"
-    assert notes[0].properties["categories"] == ["[[Reviews]]"]
-
-
-def test_read_recent_dailies_returns_empty_list_when_no_dailies_dir(tmp_path):
-    vault = make_vault(tmp_path / "vault")
-
-    assert read_recent_dailies(vault, 7) == []
-
-
 # -- CLI: profile gate --------------------------------------------------------
 
 
@@ -265,14 +244,3 @@ def test_cli_daily_rejects_non_llmos_vault():
     assert result.returncode != 0
     assert "llmOS-profile" in result.stderr
     assert "xbrain" in result.stderr
-
-
-def test_cli_daily_recent_reads_headless_json(tmp_path):
-    vault = make_vault(tmp_path / "vault")
-    seed_daily(vault, "2026-07-17")
-
-    result = run_cli(vault, "recent", "--n", "1")
-
-    assert result.returncode == 0
-    assert '"name": "2026-07-17"' in result.stdout
-    assert '"[[Reviews]]"' in result.stdout

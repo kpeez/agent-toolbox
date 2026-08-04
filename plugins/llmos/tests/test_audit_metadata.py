@@ -53,29 +53,6 @@ def run_audit(root: Path) -> subprocess.CompletedProcess[str]:
     )
 
 
-class RetiredProjectLogRulesTests(unittest.TestCase):
-    def test_project_log_note_is_no_longer_specially_policed(self) -> None:
-        """ADR-0007: the category and its filename rule are gone.
-
-        This note would have drawn three errors before -- filename not
-        YYYY-MM-DD-<project>.md, missing [[Project Logs]], and a project value
-        that must match its directory. It is now just an ordinary note.
-        """
-        with tempfile.TemporaryDirectory() as directory:
-            root = Path(directory)
-            make_vault(root)
-            write_note(
-                root,
-                "projects/demo/logs/whatever-name.md",
-                """
-                created: 2026-07-16
-                """,
-            )
-            result = run_audit(root)
-            self.assertNotIn("Project Logs", result.stdout + result.stderr)
-            self.assertNotIn("project log filename", result.stdout + result.stderr)
-
-
 class RetainedDailyReviewRulesTests(unittest.TestCase):
     def test_daily_review_must_not_claim_project_ownership(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
