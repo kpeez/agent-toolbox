@@ -17,9 +17,11 @@ plugins/swe/
 │   └── swe-loop.js    # deterministic conductor for the post-approval phases
 ├── scripts/
 │   ├── linear_tracker.py      # Linear via the `linear` CLI: workable set, container link, status sync
-│   ├── validate_artifacts.py  # shape checks for specs and issues before publish
-│   └── format-python.sh       # PostToolUse hook target
-└── hooks/hooks.json   # wires format-python.sh to Write/Edit on *.py
+│   └── validate_artifacts.py  # shape checks for specs and issues before publish
+└── hooks/
+    ├── hooks.json                       # event wiring for the two hooks below
+    ├── symlink-worktree-shared-dirs.sh  # link gitignored local dirs into worktrees
+    └── format-python.sh                 # format + lint .py files after Write/Edit
 ```
 
 ## The workflow spine
@@ -195,7 +197,13 @@ into the target repo.
 
 ## Hooks
 
-`hooks/hooks.json` registers one PostToolUse hook: after any Write/Edit that
-touches a `.py` file, `scripts/format-python.sh` formats and lints it. It
-no-ops silently unless the file lives in a uv/ruff project, so it stays inert
-for repos that have not opted into that toolchain.
+`hooks/hooks.json` registers two hooks:
+
+- **`symlink-worktree-shared-dirs.sh`** — on SessionStart, SubagentStart, and
+  PostToolUse:EnterWorktree, links the main checkout's gitignored `artifacts`,
+  `data`, and `docs/agents` into the current git worktree, so agents there use
+  relative paths instead of climbing back out to the main checkout. Refuses to
+  link anything git would track.
+- **`format-python.sh`** — after any Write/Edit that touches a `.py` file,
+  formats and lints it. It no-ops silently unless the file lives in a uv/ruff
+  project, so it stays inert for repos that have not opted into that toolchain.

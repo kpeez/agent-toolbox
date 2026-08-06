@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/link-docs-agents.sh",
+            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/symlink-worktree-shared-dirs.sh",
             "timeout": 10
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/link-docs-agents.sh",
+            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/symlink-worktree-shared-dirs.sh",
             "timeout": 10
           }
         ]
@@ -25,11 +25,21 @@
     ],
     "PostToolUse": [
       {
+        "matcher": "EnterWorktree",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/symlink-worktree-shared-dirs.sh",
+            "timeout": 10
+          }
+        ]
+      },
+      {
         "matcher": "Write|Edit|MultiEdit",
         "hooks": [
-          { "type": "command", "if": "Edit(*.py)", "command": "\"$CLAUDE_PLUGIN_ROOT\"/scripts/format-python.sh" },
-          { "type": "command", "if": "Write(*.py)", "command": "\"$CLAUDE_PLUGIN_ROOT\"/scripts/format-python.sh" },
-          { "type": "command", "if": "MultiEdit(*.py)", "command": "\"$CLAUDE_PLUGIN_ROOT\"/scripts/format-python.sh" }
+          { "type": "command", "if": "Edit(*.py)", "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/format-python.sh" },
+          { "type": "command", "if": "Write(*.py)", "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/format-python.sh" },
+          { "type": "command", "if": "MultiEdit(*.py)", "command": "\"$CLAUDE_PLUGIN_ROOT\"/hooks/format-python.sh" }
         ]
       }
     ]

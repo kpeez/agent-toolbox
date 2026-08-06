@@ -89,7 +89,7 @@ def test_swe_loop_stays_tracker_agnostic() -> None:
 
 def test_swe_hooks_register_worktree_link_script() -> None:
     hooks = json.loads((ROOT / "plugins" / "swe" / "hooks" / "hooks.json").read_text())
-    command = '"$CLAUDE_PLUGIN_ROOT"/hooks/link-docs-agents.sh'
+    command = '"$CLAUDE_PLUGIN_ROOT"/hooks/symlink-worktree-shared-dirs.sh'
 
     subagent = hooks["hooks"]["SubagentStart"]
     assert [entry.get("matcher") for entry in subagent] == [None]
@@ -103,7 +103,15 @@ def test_swe_hooks_register_worktree_link_script() -> None:
         command
     ]
 
-    script = ROOT / "plugins" / "swe" / "hooks" / "link-docs-agents.sh"
+    post_tool = hooks["hooks"]["PostToolUse"]
+    enter_worktree = [
+        entry for entry in post_tool if entry.get("matcher") == "EnterWorktree"
+    ]
+    assert [
+        hook["command"] for entry in enter_worktree for hook in entry["hooks"]
+    ] == [command]
+
+    script = ROOT / "plugins" / "swe" / "hooks" / "symlink-worktree-shared-dirs.sh"
     assert script.is_file()
     assert script.stat().st_mode & 0o111
 
