@@ -12,6 +12,8 @@ the single `agentspec` plugin.
   and `docs/agents` into a git worktree, and additionally fires on
   `PostToolUse: EnterWorktree` (Session hooks don't re-fire when EnterWorktree
   switches the session mid-turn). Refuses to link anything git would track.
+- Move `format-python.sh` from `scripts/` to `hooks/`: `scripts/` is for
+  swe-loop conductor helpers; hook targets live beside `hooks.json`.
 
 ## 1.10.4 — 2026-08-01
 
