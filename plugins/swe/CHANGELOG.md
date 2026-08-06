@@ -5,6 +5,14 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.10.6 — 2026-08-06
+
+- Replace `link-docs-agents.sh` with `symlink-worktree-shared-dirs.sh`: same
+  job, wider scope. Links the main checkout's gitignored `artifacts`, `data`,
+  and `docs/agents` into a git worktree, and additionally fires on
+  `PostToolUse: EnterWorktree` (Session hooks don't re-fire when EnterWorktree
+  switches the session mid-turn). Refuses to link anything git would track.
+
 ## 1.10.4 — 2026-08-01
 
 - Tracker resolution hardening. The `Issue tracker:` pin may now live in

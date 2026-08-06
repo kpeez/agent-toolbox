@@ -1,4 +1,4 @@
-"""Prove the EnterWorktree hook links shared local-resource dirs into a worktree.
+"""Prove the worktree hook links shared local-resource dirs into a worktree.
 
 Every case runs against a real scratch repo and a real `git worktree add` —
 the defect being fixed is precisely that git does not materialize gitignored
@@ -30,14 +30,11 @@ def git(cwd: Path, *args: str) -> str:
     ).stdout.strip()
 
 
-def run_hook(worktree: Path, *, stdin: str | None = None) -> subprocess.CompletedProcess[str]:
-    payload = (
-        stdin
-        if stdin is not None
-        else json.dumps({"tool_response": {"worktreePath": str(worktree)}})
-    )
+def run_hook(cwd: Path, *, stdin: str = "") -> subprocess.CompletedProcess[str]:
+    """Run the hook as the harness does. cwd is explicit: with empty stdin the
+    script falls back to the process cwd, which must never be this repo."""
     return subprocess.run(
-        [str(HOOK)], input=payload, capture_output=True, text=True
+        [str(HOOK)], cwd=cwd, input=stdin, capture_output=True, text=True
     )
 
 
@@ -78,10 +75,11 @@ def repo(tmp_path: Path) -> tuple[Path, Path]:
     return main, add_worktree(main)
 
 
-def test_hook_links_all_entries_in_a_real_worktree(repo: tuple[Path, Path]) -> None:
+def test_enter_worktree_payload_links_all_entries(repo: tuple[Path, Path]) -> None:
     main, worktree = repo
+    payload = json.dumps({"tool_response": {"worktreePath": str(worktree)}})
 
-    result = run_hook(worktree)
+    result = run_hook(main, stdin=payload)
 
     assert result.returncode == 0
     for entry in ENTRIES:
@@ -94,13 +92,31 @@ def test_hook_links_all_entries_in_a_real_worktree(repo: tuple[Path, Path]) -> N
     assert git(main, "status", "--porcelain") == ""
 
 
-def test_hook_falls_back_to_cwd_field(repo: tuple[Path, Path]) -> None:
-    _main, worktree = repo
+def test_session_start_in_worktree_links_via_cwd(repo: tuple[Path, Path]) -> None:
+    main, worktree = repo
 
-    result = run_hook(worktree, stdin=json.dumps({"cwd": str(worktree)}))
-
-    assert result.returncode == 0
+    assert run_hook(worktree, stdin=json.dumps({"cwd": str(worktree)})).returncode == 0
     assert (worktree / "data").is_symlink()
+
+    for entry in ENTRIES:
+        (worktree / entry).unlink()
+    assert run_hook(worktree).returncode == 0  # no stdin: process-cwd fallback
+    assert (worktree / "data").is_symlink()
+
+
+def test_relative_docs_agents_target_resolves_through_the_chain(
+    tmp_path: Path,
+) -> None:
+    root = tmp_path.resolve()
+    main = build_repo(root)
+    (main / "docs" / "agents").unlink()
+    (main / "docs" / "agents").symlink_to(Path("..") / ".." / "vault")
+    worktree = add_worktree(main)
+
+    assert run_hook(worktree).returncode == 0
+    link = worktree / "docs" / "agents"
+    assert link.resolve() == (root / "vault").resolve()
+    assert (link / "spec.md").read_text() == "spec\n"
 
 
 def test_hook_skips_missing_and_existing_entries(repo: tuple[Path, Path]) -> None:
@@ -130,12 +146,14 @@ def test_hook_never_links_a_non_gitignored_entry(tmp_path: Path) -> None:
     assert git(worktree, "status", "--porcelain") == ""
 
 
-def test_hook_noops_outside_a_managed_worktree(repo: tuple[Path, Path]) -> None:
-    main, worktree = repo
+def test_hook_noops_in_main_worktree_and_outside_git(tmp_path: Path) -> None:
+    main = build_repo(tmp_path.resolve())
 
     assert run_hook(main).returncode == 0
     assert not (main / "artifacts").is_symlink()
 
-    assert run_hook(worktree, stdin="").returncode == 0
-    assert run_hook(worktree, stdin="not json").returncode == 0
-    assert not (worktree / "artifacts").exists()
+    outside = tmp_path.resolve() / "not-a-repo"
+    outside.mkdir()
+    assert run_hook(outside).returncode == 0
+    assert run_hook(outside, stdin="not json").returncode == 0
+    assert list(outside.iterdir()) == []
