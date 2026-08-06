@@ -75,7 +75,7 @@ Each role pins the least powerful default that still covers its full contract:
 | explorer    | haiku         | luna, medium             | Bounded read-only lookup and evidence gathering       |
 | architect   | fable, high   | sol, high                | Open-ended design resolution and specification        |
 | planner     | sonnet, medium | terra, medium           | Constrained decomposition of an approved design       |
-| implementer | opus, medium  | sol, medium              | Quality-first code changes with controlled token spend |
+| implementer | sonnet, medium | sol, medium             | Well-specified code changes; the spec, slice bounds, and review pass carry the quality bar |
 | reviewer    | sonnet, high  | terra, high              | Narrow but correctness-sensitive checking             |
 | publisher   | sonnet, medium | terra, medium           | Procedural release work with commit-boundary judgment |
 

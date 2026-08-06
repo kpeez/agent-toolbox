@@ -164,7 +164,7 @@ decides what runs when.
 | `explorer`        | Cheap read-only evidence gathering with cited paths                                      | haiku                 | gpt-5.6-luna (medium)  |
 | `architect`       | Read-only design resolution and spec drafting; returns drafts for the caller to apply    | fable (high)          | gpt-5.6-sol (high)     |
 | `planner`         | Publishes an approved spec as vertical tracker slices with blocked-by relations          | sonnet (medium)       | gpt-5.6-terra (medium) |
-| `implementer`     | Executes one bounded code, test, documentation, or tracker task under caller constraints | opus (medium)         | gpt-5.6-sol (medium)   |
+| `implementer`     | Executes one bounded code, test, documentation, or tracker task under caller constraints | sonnet (medium)         | gpt-5.6-sol (medium)   |
 | `reviewer`        | Read-only review of a diff or implementation against caller-provided criteria or a lens  | sonnet (high)         | gpt-5.6-terra (high)   |
 | `publisher`       | Owns git and GitHub publication: atomic commits, push, PR creation                       | sonnet (medium)       | gpt-5.6-terra (medium) |
 | `codex-delegator` | Thin forwarder that runs one bounded task on the local Codex CLI, verbatim               | sonnet (low)          | — (Claude-side only)   |
