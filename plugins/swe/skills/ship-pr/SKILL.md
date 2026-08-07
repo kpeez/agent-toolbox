@@ -35,7 +35,12 @@ Two modes:
   creation, before first push) is named `<user>/<issue-id>-<slug>` (e.g.
   `kyle/kp-123-fix-auth`) so Linear's GitHub integration links the PR and
   automates the In Review/Done transitions.
-- **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
+- **Never add agent attribution.** No `Co-authored-by` trailer naming Claude or
+  Anthropic, no `Generated with …` footer, no 🤖, and above all **no session
+  URL** — a `claude.ai`/`claude.com` link in a commit message is unrewritable
+  once pushed. The `block-agent-attribution` hook rejects the commit or
+  `gh` call outright; when it fires, rewrite the text rather than working
+  around the guard.
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only in finalize mode or when the user asks.
 - **Never force-push.** Squash merge by default.
