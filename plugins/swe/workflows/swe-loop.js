@@ -1,19 +1,19 @@
 export const meta = {
   name: 'swe-loop',
   description:
-    'Conductor for the swe workflow after spec approval and slicing: run the implement loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
+    'Conductor for the swe workflow after spec approval and splitting: run the implement loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker and its slices are published on the tracker — the launcher slices before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding slices this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrls, slicesCompleted, escalations}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker and its tasks are published on the tracker — the launcher tasks before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the tasks, baseBranch is the integration branch every task merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding tasks this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrls, tasksCompleted, escalations}; it never prompts the user mid-run.',
   phases: [
     { title: 'Implement', detail: 'rounds: implement in parallel, then one agent merges and records the round' },
     { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
-    { title: 'Ship', detail: 'ship-pr: atomic commits, push, one draft PR per batch' },
+    { title: 'Ship', detail: 'ship-pr: atomic commits, push, one draft PR per changeset' },
   ],
 }
 
 // How many fix rounds the assembled review gets before its surviving findings
 // are escalated, and how many times those findings may re-enter the implement
-// loop as fresh slices. Both are the run's cost ceiling -- widening them
+// loop as fresh tasks. Both are the run's cost ceiling -- widening them
 // silently is the bug the colocated static test guards against.
 const MAX_FIX_ROUNDS = 2
 const SPEC_REVIEW_REENTRIES = 1
@@ -134,9 +134,9 @@ const WORKABLE_SCHEMA = {
           id: { type: 'string' },
           identifier: { type: 'string' },
           title: { type: 'string' },
-          batch: {
+          changeset: {
             type: 'string',
-            description: "the tracker's own batching of this issue (its milestone or equivalent), '' when it has none",
+            description: "the tracker's own grouping of this issue (its milestone or equivalent), '' when it has none",
           },
         },
       },
@@ -157,13 +157,13 @@ const IMPLEMENTER_SCHEMA = {
   required: ['status', 'branch', 'summary'],
   properties: {
     status: { type: 'string', enum: ['DONE', 'DONE_WITH_CONCERNS', 'NEEDS_CONTEXT', 'BLOCKED'] },
-    branch: { type: 'string', description: 'the branch you committed the slice to' },
+    branch: { type: 'string', description: 'the branch you committed the task to' },
     summary: { type: 'string', description: 'one paragraph: what landed and how it was verified' },
   },
 }
 
 // One review, one schema. The loop reviews the assembled branch once rather
-// than reviewing each slice and then re-reviewing the same lines through
+// than reviewing each task and then re-reviewing the same lines through
 // several lenses: in the run that motivated this, 52% of the token spend went
 // on reading the same diff three times.
 const REVIEW_SCHEMA = {
@@ -185,7 +185,7 @@ const REVIEW_SCHEMA = {
 
 // One agent settles a whole round: merges are sequential anyway (two agents
 // merging into the same branch race on the index), and spawning a merge agent
-// plus a comment agent per slice cost 7M cache reads in the motivating run to
+// plus a comment agent per task cost 7M cache reads in the motivating run to
 // do deterministic git and one API call each.
 const SETTLE_SCHEMA = {
   type: 'object',
@@ -199,7 +199,7 @@ const SETTLE_SCHEMA = {
         properties: {
           identifier: { type: 'string' },
           merged: { type: 'boolean' },
-          stackBranch: { type: 'string', description: "the stack branch this slice actually landed on, '' when it did not merge" },
+          stackBranch: { type: 'string', description: "the stack branch this task actually landed on, '' when it did not merge" },
           stateUpdated: { type: 'boolean', description: 'whether the issue state was advanced on the tracker; cosmetic only — git, not the tracker, decides what is merged' },
           detail: { type: 'string' },
         },
@@ -214,7 +214,7 @@ const SHIP_SCHEMA = {
   properties: {
     prUrls: {
       type: 'array',
-      description: 'every PR opened, bottom batch first; one entry for a single-batch run',
+      description: 'every PR opened, bottom changeset first; one entry for a single-changeset run',
       items: { type: 'string' },
     },
   },
@@ -226,23 +226,23 @@ const tupleFor = issueId => JSON.stringify({ specPath, slug, containerId, issueI
 // Display-only shortening: log lines and escalation reasons. Never applied to
 // findings handed to an agent that has to act on them.
 const clip = text => String(text == null ? '' : text).replace(/\s+/g, ' ').trim().slice(0, 200)
-// A batch is a set of slices the tracker groups together (its milestone, or
+// A changeset is a set of tasks the tracker groups together (its milestone, or
 // whatever the tracker reference maps to one): one coherent story, which
 // is what a reviewer holds in their head and therefore what one pull request
 // should hold. It is the unit of work AND of review -- one implementer, one
-// branch, one PR. A slice with no batch is a batch of one.
-const batchesFor = issues => {
+// branch, one PR. A task with no changeset is a changeset of one.
+const changesetsFor = issues => {
   const order = []
   const members = new Map()
   for (const issue of issues) {
-    const name = String(issue.batch || '').trim() || `\u0000${issue.identifier}`
+    const name = String(issue.changeset || '').trim() || `\u0000${issue.identifier}`
     if (!members.has(name)) {
       members.set(name, [])
       order.push(name)
     }
     members.get(name).push(issue)
   }
-  // Deliberately uncapped. A batch too large for one implementer is a spec
+  // Deliberately uncapped. A changeset too large for one implementer is a spec
   // that should have been split, and splitting it here would hide that behind
   // two half-named pull requests instead of surfacing it.
   return order.map(name => ({
@@ -252,22 +252,22 @@ const batchesFor = issues => {
 }
 // Every identifier stays in the branch name: it is the only tracker trace
 // allowed outside the tracker, and a resumed run reads what is done from it.
-const branchForBatch = batch => {
-  const ids = batch.issues.map(issue => issue.identifier).join('-')
-  const slug = batch.issues.length === 1 && batch.name === batch.issues[0].identifier
+const branchForChangeset = changeset => {
+  const ids = changeset.issues.map(issue => issue.identifier).join('-')
+  const slug = changeset.issues.length === 1 && changeset.name === changeset.issues[0].identifier
     ? ''
-    : `-${batch.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)}`
-  return `batch/${ids}${slug}`
+    : `-${changeset.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)}`
+  return `change/${ids}${slug}`
 }
-// The stack, bottom to top: one branch per settled batch, each containing
+// The stack, bottom to top: one branch per settled changeset, each containing
 // every branch below it. Its bottom is the integration branch itself, which
-// keeps a one-batch run byte-identical to the pre-stack behavior -- same
+// keeps a one-changeset run byte-identical to the pre-stack behavior -- same
 // branch, same single PR. Rounds never appear here: a round is only a
-// schedule, while a batch is the story a reviewer reads.
+// schedule, while a changeset is the story a reviewer reads.
 const stack = [baseBranch]
 const stackTip = () => stack[stack.length - 1]
 // stack/<n> branches an earlier session left behind. Numbering is dense by
-// construction (a branch is only added once the one below it landed a batch),
+// construction (a branch is only added once the one below it landed a changeset),
 // so the highest number is the height of the stack.
 const adoptStack = topStackBranch => {
   const height = Number(String(topStackBranch || '').replace(/^stack\//, ''))
@@ -283,7 +283,7 @@ const numbered = items => items.map((item, i) => `${i + 1}. ${typeof item === 's
 // comment reads, which were an API call per issue per round. Without one the
 // agent computes the same rules through the reference.
 const promptWorkable = () => workableCmd
-  ? `Report this run's workable slices as JSON.
+  ? `Report this run's workable tasks as JSON.
 
 Run EXACTLY this command with Bash and construct no other query — no
 improvised tracker calls, no edits to the command, no substitutions:
@@ -293,73 +293,73 @@ improvised tracker calls, no edits to the command, no substitutions:
 Its stdout is this run's workable-issue array, already filtered: take each
 entry as {id, identifier, title} and return them unchanged. Do not read
 tracker comments and do not second-guess the list — the command has already
-dropped slices this run finished and unblocked their dependents.
+dropped tasks this run finished and unblocked their dependents.
 
-Report each entry's batch — its tracker milestone or equivalent — as "batch",
-'' when it has none: the loop hands one implementer everything sharing a batch
+Report each entry's changeset — its tracker milestone or equivalent — as "changeset",
+'' when it has none: the loop hands one implementer everything sharing a changeset
 instead of spawning one per issue.
 
 Then run \`git branch --list 'stack/*'\` and report the highest-numbered
 stack/<n> branch it lists as "topStackBranch" ('' if there are none). A session
 resuming this run has no other record of how many dependency stack it already
-opened, and merging a new slice into the wrong batch breaks the stack.
+opened, and merging a new task into the wrong changeset breaks the stack.
 
 On a NON-ZERO exit put stderr verbatim in the "error" field and return an
 empty issues list -- an empty list with no error means the run is finished,
 so never report a failure that way.`
-  : `Report this run's workable slices as JSON.
+  : `Report this run's workable tasks as JSON.
 
 ${trackerGuide}
 
 1. Compute the workable set of container ${containerId} per the
    reference's "swe-loop workable set" section — issues with no ready-for-human
    label that are not done and whose every blocker IS done, each as
-   {id, identifier, title, batch} — "batch" is the issue's tracker milestone
+   {id, identifier, title, changeset} — "changeset" is the issue's tracker milestone
    or equivalent, '' when it has none, and is what lets the loop hand one
-   implementer a whole batch instead of one agent per issue.
+   implementer a whole changeset instead of one agent per issue.
    Scripts the reference names live in ${scriptsDir}.
    If the query FAILS (auth, network, missing credential, non-zero script
    exit), put the failure text in the "error" field and return an empty issues
    list -- an empty list with no error means the run is finished, so never
    report a failure that way.
 2. Run \`git branch --merged ${stackTip()}\` and read every branch it lists
-   whose name begins with slice/, then take EVERY issue identifier appearing
-   anywhere in those names — one branch carries a whole batch of slices, so
-   matching only slice/<identifier> exactly under-reports what is done. Those
-   slices are merged into this run's topmost
-   dependency batch, which contains every batch below it and is therefore what
+   whose name begins with task/, then take EVERY issue identifier appearing
+   anywhere in those names — one branch carries a whole changeset of tasks, so
+   matching only task/<identifier> exactly under-reports what is done. Those
+   tasks are merged into this run's topmost
+   dependency changeset, which contains every changeset below it and is therefore what
    "done in this run" means — their tracker
    state does not advance until the run's PR lands, so never judge it from the
    tracker alone.
 3. An issue counts as DONE when its tracker state is closed OR its identifier
    appears in that merged list. Drop a done issue, and treat a done blocker as
    satisfied rather than as still blocking. Skipping the second half is what
-   makes a dependency chain stall after its first slice.
+   makes a dependency chain stall after its first task.
 4. Run \`git branch --list 'stack/*'\` and report the highest-numbered
    stack/<n> branch it lists as "topStackBranch" ('' if there are none). A session
-   resuming this run has no other record of how many dependency stack it
-   already opened, and merging a new slice into the wrong batch breaks the
+   resuming this run has no other record of how many stack branches it
+   already opened, and merging a changeset onto the wrong one breaks the
    stack.
 5. Return the surviving issues.`
 
-const promptImplementer = (batch, from) => `Execute this bounded task: implement ${batch.issues.length === 1 ? 'one slice' : `${batch.issues.length} related slices`} of ${specPath}, end to end.
+const promptImplementer = (changeset, from) => `Execute this bounded assignment: implement ${changeset.issues.length === 1 ? 'one task' : `${changeset.issues.length} related tasks`} of ${specPath}, end to end.
 
-Handoff tuple: ${tupleFor(batch.issues.map(issue => issue.id))}
-${batch.issues.length === 1 ? `Slice: ${batch.issues[0].identifier} — ${batch.issues[0].title}` : `Batch "${batch.name}", to be implemented in one pass because these slices
+Handoff tuple: ${tupleFor(changeset.issues.map(issue => issue.id))}
+${changeset.issues.length === 1 ? `Task: ${changeset.issues[0].identifier} — ${changeset.issues[0].title}` : `Changeset "${changeset.name}", to be implemented in one pass because these tasks
 share a concern and will be reviewed as one pull request:
-${numbered(batch.issues.map(issue => `${issue.identifier} — ${issue.title}`))}`}
+${numbered(changeset.issues.map(issue => `${issue.identifier} — ${issue.title}`))}`}
 
-1. Create or check out branch ${branchForBatch(batch)} from ${from} and work
-   only there — on a resumed or retried slice the branch may already exist,
+1. Create or check out branch ${branchForChangeset(changeset)} from ${from} and work
+   only there — on a resumed or retried task the branch may already exist,
    with earlier commits on it.
-2. Implement ${batch.issues.length === 1 ? 'the slice' : 'each slice, in the order listed'} per the implement skill's per-slice
+2. Implement ${changeset.issues.length === 1 ? 'the task' : 'each task, in the order listed'} per the implement skill's per-task
    discipline: prove the behavior first (tdd), then lint, types, tests.
-   ${batch.issues.length === 1 ? '' : `Commit each slice separately, so the pull request this branch becomes reads
-   as one coherent change per commit. A slice you cannot finish does not sink
+   ${changeset.issues.length === 1 ? '' : `Commit each task separately, so the pull request this branch becomes reads
+   as one coherent change per commit. A task you cannot finish does not sink
    the rest: implement the others and name it in your summary.`}
-3. COMMIT the work to ${branchForBatch(batch)}. Do not push, do not merge, do
+3. COMMIT the work to ${branchForChangeset(changeset)}. Do not push, do not merge, do
    not open a PR — the conductor merges and ships.
-4. Advance ${batch.issues.length === 1 ? `tracker issue ${batch.issues[0].identifier}` : `each of ${batch.issues.map(issue => issue.identifier).join(', ')}`} to "in progress" per the
+4. Advance ${changeset.issues.length === 1 ? `tracker issue ${changeset.issues[0].identifier}` : `each of ${changeset.issues.map(issue => issue.identifier).join(', ')}`} to "in progress" per the
    tracker reference's state-transition section, and comment your progress.
 5. Report {status, branch, summary}; "branch" is the branch you actually
    committed to. NEEDS_CONTEXT or BLOCKED means you could not finish: name
@@ -369,15 +369,15 @@ const promptReview = () => `Review the assembled implementation against its spec
 does the code do what the spec asked, correctly?
 
 Under review: the complete work of this run, which lives on ${stackTip()} —
-the top of the run's dependency stack, containing every batch below it.
-Establish the diff yourself — the slice merges are on the batch branches and
-each slice carries a slice/<identifier> branch — and say in your first finding
+the top of the run's dependency stack, containing every changeset below it.
+Establish the diff yourself — the task merges are on the changeset branches and
+each task carries a task/<identifier> branch — and say in your first finding
 if you could not establish it rather than reviewing a guess.
 Spec: ${specPath}
 
 This is the run's ONLY code review, so judge adherence end to end: behavior the
 spec asked for and the code lacks, behavior that diverges from what the spec
-asked, and missing tests for either. Slice branches were already gated on their
+asked, and missing tests for either. Task branches were already gated on their
 own lint/types/tests passing — do not re-litigate style or restate what the
 tests already prove.
 
@@ -395,22 +395,22 @@ judgment about the code. Put what stopped you in "detail" and return no
 findings. An infrastructure failure must never appear as a finding: a fixer
 would act on it.`
 
-const promptFixer = (findings, round) => `Execute this bounded task: apply review findings.
+const promptFixer = (findings, round) => `Execute this bounded assignment: apply review findings.
 
 Findings to resolve (fix round ${round}/${MAX_FIX_ROUNDS}):
 ${numbered(findings)}
 
 Work in the main worktree at the repo root.
 ${stack.length === 1
-  ? `Work directly on ${baseBranch} — the slices are already merged there.`
+  ? `Work directly on ${baseBranch} — the tasks are already merged there.`
   : `This run landed in ${stack.length} dependency stack, bottom to top:
 ${numbered(stack)}
-Every finding opens with a file:line anchor. Fix it on the LOWEST batch that
-contains the code it names — \`git log <batch> -- <file>\` says which batch
-introduced the line — never on the top batch by default: a fix committed above
+Every finding opens with a file:line anchor. Fix it on the LOWEST changeset that
+contains the code it names — \`git log <changeset> -- <file>\` says which changeset
+introduced the line — never on the top changeset by default: a fix committed above
 the layer that owns it lands in the wrong pull request. After committing on a
-batch below the top, replay the stack above it so they carry the fix, in order:
-\`git checkout <higher batch> && git rebase <the batch directly below it>\`. On
+changeset below the top, replay the stack above it so they carry the fix, in order:
+\`git checkout <higher changeset> && git rebase <the changeset directly below it>\`. On
 conflict, resolve per the merge-conflicts skill and continue the rebase.
 Nothing is published yet, so these rebases rewrite local branches only.`}
 Apply every finding, re-run lint/types/tests, and commit. Do not push and do not
@@ -427,44 +427,44 @@ The comment body is exactly:
 
 Post nothing else and change no issue fields.`
 
-const promptSettle = plan => `Settle this round's finished batches, in the main worktree at the repo root.
+const promptSettle = plan => `Settle this round's finished changesets, in the main worktree at the repo root.
 Work through them IN THE ORDER GIVEN, one at a time.
 
 ${trackerGuide}
 
-Each batch lands on its OWN stack branch, stacked on the branch below it: a
-batch is one coherent story and becomes one pull request, so putting two on one
+Each changeset lands on its OWN stack branch, stacked on the branch below it: a
+changeset is one coherent story and becomes one pull request, so putting two on one
 branch is what makes a diff unreviewable. The branches nest — each contains
 every branch below it — which is what lets each pull request base on the last.
 
-Batches:
+Changesets:
 ${numbered(plan.map(entry => `${entry.branch} → stack branch ${entry.target}${entry.target === entry.from ? '' : `, created from ${entry.from}`} (${entry.issues.map(issue => issue.identifier).join(', ')})`))}
 
-For each batch, in order:
+For each changeset, in order:
 1. Check out its stack branch, creating it from the branch named above if it
    does not exist yet (git checkout -b <target> <from>). Never cut a stack
-   branch from the default branch — it would drop every batch below it.
-2. git merge --no-ff <the batch branch>
+   branch from the default branch — it would drop every changeset below it.
+2. git merge --no-ff <the changeset branch>
 3. On conflict, resolve it per the merge-conflicts skill and complete the merge.
    If you cannot resolve it confidently, git merge --abort, record merged:false
    with the reason, and move on — never force a resolution you are unsure of
-   and never abandon the remaining batches. A batch that fails leaves its stack
-   branch uncreated, so settle the NEXT batch onto the last stack branch that
+   and never abandon the remaining changesets. A changeset that fails leaves its stack
+   branch uncreated, so settle the NEXT changeset onto the last stack branch that
    did succeed (or ${plan[0].from} if none has).
-4. Only after its merge succeeds, advance each of that batch's issues to
+4. Only after its merge succeeds, advance each of that changeset's issues to
    "in review" per the tracker reference's state-transition section, and post
    one comment with its one-line summary. Record stateUpdated:true only if the
    state write actually succeeded.
 
-Return one {identifier, merged, stateUpdated, detail, stackBranch} per SLICE —
-every slice of every batch, in the order listed. "stackBranch" is the branch
-that slice actually landed on, '' when it did not merge; the conductor builds
+Return one {identifier, merged, stateUpdated, detail, stackBranch} per TASK —
+every task of every changeset, in the order listed. "stackBranch" is the branch
+that task actually landed on, '' when it did not merge; the conductor builds
 the stack from what you report, so a branch you renamed or skipped must be
 reported as you left it. Do not push. The state write is for humans reading the
 tracker: a resumed run decides what is already merged from git, so a failed
 state write never loses or repeats work.`
 
-const promptFileFindings = findings => `File surviving review findings as fix slices in tracker container ${containerId}.
+const promptFileFindings = findings => `File surviving review findings as fix tasks in tracker container ${containerId}.
 
 Spec: ${specPath}
 Findings:
@@ -481,27 +481,27 @@ const promptShip = () => stack.length === 1
 
 Handoff tuple: ${tupleFor(null)}
 
-Run the ship-pr skill: verify lint/types/tests, batch any uncommitted work into
+Run the ship-pr skill: verify lint/types/tests, changeset any uncommitted work into
 atomic commits, push ${baseBranch}, and open a DRAFT pull request. Tracker
 links, issue ids, and tracker-only content never appear in commit messages, the
 PR title, or the PR body. Return the PR URL as the one entry of prUrls.`
   : `Ship this run's work as a STACKED pull request — it landed in
 ${stack.length} dependency stack, bottom to top:
 ${numbered(stack)}
-Each batch branch contains every batch below it, so ${stackTip()} holds the
+Each changeset branch contains every changeset below it, so ${stackTip()} holds the
 complete work.
 
 Handoff tuple: ${tupleFor(null)}
 
-Run the ship-pr skill in STACK MODE: verify lint/types/tests, batch any
-uncommitted work into atomic commits on the batch that owns it, then publish the
-stack in the order listed above as one DRAFT pull request per batch, each based
-on the batch below it and each with a body that stands on its own. The skill
+Run the ship-pr skill in STACK MODE: verify lint/types/tests, changeset any
+uncommitted work into atomic commits on the changeset that owns it, then publish the
+stack in the order listed above as one DRAFT pull request per changeset, each based
+on the changeset below it and each with a body that stands on its own. The skill
 names the exact commands, and the fallback for a host where stacked pull
 requests are unavailable — do not improvise a substitute.
 
 Tracker links, issue ids, and tracker-only content never appear in commit
-messages, PR titles, or PR bodies. Return every PR URL in prUrls, bottom batch
+messages, PR titles, or PR bodies. Return every PR URL in prUrls, bottom changeset
 first.`
 
 const promptRunSummary = summary => `Post this run's summary as one comment on tracker container ${containerId},
@@ -524,7 +524,7 @@ correct. Never mark the container complete — this run ends at a draft PR, not
 a merge.`
 
 // ---- run state --------------------------------------------------------------
-const slicesCompleted = []
+const tasksCompleted = []
 const escalations = []
 // Issues settled (merged or escalated) earlier in THIS run. The tracker cannot
 // tell us about them yet -- their state only advances when the PR lands.
@@ -535,7 +535,7 @@ const escalateRun = (title, reason, details = []) => {
   log(`ESCALATED ${title}: ${reason}`)
 }
 
-// A slice escalates only when it could not be implemented or merged, so this
+// A task escalates only when it could not be implemented or merged, so this
 // carries no findings: code findings are run-level now, raised by the assembled
 // review against the integration branch and kept verbatim in the run summary.
 const escalate = async (issue, reason) => {
@@ -594,7 +594,7 @@ const runReview = async (label, stage) => {
 }
 
 const finish = async prUrls => {
-  const summary = { prUrls, slicesCompleted, escalations }
+  const summary = { prUrls, tasksCompleted, escalations }
   const posted = await agent(promptRunSummary(summary), {
     label: `run-summary:${slug}`,
     phase: 'Ship',
@@ -605,7 +605,7 @@ const finish = async prUrls => {
 }
 
 // ---- Implement --------------------------------------------------------------
-// Slicing is the launcher's job: /start-loop publishes the slices (or aligns
+// Splitting is the launcher's job: /start-loop publishes the tasks (or aligns
 // pre-existing tracker issues to the spec) before launching, so the run's
 // first act is asking the tracker what is workable.
 // Null means the agent call itself died (harness or API), which is transient;
@@ -643,7 +643,7 @@ const runImplementLoop = async passLabel => {
       return
     }
     // A cold resume (no resumeFromRunId) starts with stack = [baseBranch] and
-    // would settle round 1 straight into batch 1, on top of layers a previous
+    // would settle round 1 straight into changeset 1, on top of layers a previous
     // session already opened. git is the only record of them.
     adoptStack(workable.topStackBranch)
     const pending = (workable.issues || []).filter(issue => !settled.has(issue.id))
@@ -651,56 +651,56 @@ const runImplementLoop = async passLabel => {
       log(`Workable set drained on round ${round} of the ${passLabel} loop.`)
       return
     }
-    log(`Round ${round} (${passLabel}): ${pending.length} slice(s) — ${pending.map(issue => issue.identifier).join(', ')}`)
+    log(`Round ${round} (${passLabel}): ${pending.length} task(s) — ${pending.map(issue => issue.identifier).join(', ')}`)
 
-    // Implement only. A slice's gate is its own lint/types/tests, which the
+    // Implement only. A task's gate is its own lint/types/tests, which the
     // implementer runs and which cost no tokens; the code is reviewed once,
     // assembled, after the loop drains.
     // Batching happens before the fan-out, not after: a subagent costs its whole
     // context load plus a worktree plus a merge before it edits a line, so
     // parallelising two five-line fixes costs more than doing both in one.
-    const batches = batchesFor(pending)
-    log(`Round ${round}: ${pending.length} slice(s) in ${batches.length} batch(es) — ${batches.map(batch => `${batch.name} (${batch.issues.length})`).join(', ')}.`)
+    const changesets = changesetsFor(pending)
+    log(`Round ${round}: ${pending.length} task(s) in ${changesets.length} changeset(es) — ${changesets.map(changeset => `${changeset.name} (${changeset.issues.length})`).join(', ')}.`)
     const from = stackTip()
     const outcomes = await parallel(
-      batches.map(batch => async () => {
-        const result = await agent(promptImplementer(batch, from), {
-          label: `implement:${batch.name}`,
+      changesets.map(changeset => async () => {
+        const result = await agent(promptImplementer(changeset, from), {
+          label: `implement:${changeset.name}`,
           phase: 'Implement',
           agentType: agentTypeFor('implementer'),
           isolation: 'worktree',
           schema: IMPLEMENTER_SCHEMA,
         })
         const fail = async reason => {
-          for (const issue of batch.issues) await escalate(issue, reason)
+          for (const issue of changeset.issues) await escalate(issue, reason)
           return null
         }
         if (!result) return await fail('implementer returned no result (skipped or errored)')
         if (result.status === 'NEEDS_CONTEXT' || result.status === 'BLOCKED') {
           return await fail(`implementer reported ${result.status}: ${clip(result.summary)}`)
         }
-        const branch = result.branch || branchForBatch(batch)
-        log(`${batch.name}: implemented (${result.status}) on ${branch}.`)
-        return { batch, state: 'implemented', summary: result.summary, branch }
+        const branch = result.branch || branchForChangeset(changeset)
+        log(`${changeset.name}: implemented (${result.status}) on ${branch}.`)
+        return { changeset, state: 'implemented', summary: result.summary, branch }
       }),
     )
 
-    // One agent merges the whole round in order and marks each slice as it
+    // One agent merges the whole round in order and marks each task as it
     // lands: merges must be sequential anyway (two agents merging into the
-    // same working copy race on the index), so per-slice merge and marker
+    // same working copy race on the index), so per-task merge and marker
     // agents bought nothing but their own context.
     const ready = outcomes.filter(Boolean).filter(outcome => outcome.state === 'implemented')
     let merged = 0
     if (ready.length) {
-      // One batch per batch, chained in settle order. Named up front so the
+      // One changeset per changeset, chained in settle order. Named up front so the
       // agent chains deterministically; read back from its report, because a
-      // batch that fails to merge leaves its batch uncreated.
+      // changeset that fails to merge leaves its changeset uncreated.
       let tip = from
       let height = stack.length
-      let landed = slicesCompleted.length > 0 || height > 1
+      let landed = tasksCompleted.length > 0 || height > 1
       const plan = ready.map(outcome => {
         const target = landed ? `stack/${height + 1}` : baseBranch
-        const entry = { branch: outcome.branch, issues: outcome.batch.issues, from: tip, target }
+        const entry = { branch: outcome.branch, issues: outcome.changeset.issues, from: tip, target }
         if (target !== tip) height += 1
         tip = target
         landed = true
@@ -712,14 +712,14 @@ const runImplementLoop = async passLabel => {
         schema: SETTLE_SCHEMA,
       })
       const results = settlement ? settlement.results || [] : []
-      for (const issue of ready.flatMap(outcome => outcome.batch.issues)) {
+      for (const issue of ready.flatMap(outcome => outcome.changeset.issues)) {
         const result = results.find(entry => entry.identifier === issue.identifier)
         if (!result || !result.merged) {
-          await escalate(issue, `merge failed: ${result ? clip(result.detail) : 'the settle agent reported nothing for this slice'}`)
+          await escalate(issue, `merge failed: ${result ? clip(result.detail) : 'the settle agent reported nothing for this task'}`)
           continue
         }
         settled.add(issue.id)
-        slicesCompleted.push(issue.identifier)
+        tasksCompleted.push(issue.identifier)
         merged += 1
         if (result.stackBranch && !stack.includes(result.stackBranch)) {
           stack.push(result.stackBranch)
@@ -728,9 +728,9 @@ const runImplementLoop = async passLabel => {
         log(`${issue.identifier}: merged into ${result.stackBranch || baseBranch}.`)
         // A failed state write is cosmetic and never escalates: the merge is in
         // git, which is what a resumed run reads. This used to be an escalation
-        // because a missing marker really could lose or repeat a slice.
+        // because a missing marker really could lose or repeat a task.
         if (!result.stateUpdated) {
-          log(`${issue.identifier}: merged, but its tracker state did not advance — the tracker under-reports this slice.`)
+          log(`${issue.identifier}: merged, but its tracker state did not advance — the tracker under-reports this task.`)
         }
       }
     }
@@ -738,26 +738,26 @@ const runImplementLoop = async passLabel => {
     // back on the next workable query and be re-spawned forever; settle it.
     for (const issue of pending) {
       if (settled.has(issue.id)) continue
-      await escalate(issue, 'the implement pipeline produced no settled outcome for this slice')
+      await escalate(issue, 'the implement pipeline produced no settled outcome for this task')
     }
     log(`Round ${round} (${passLabel}) summary: ${merged} merged, ${pending.length - merged} escalated, ${escalations.length} escalation(s) so far.`)
   }
   log(`Implement loop hit its ${MAX_IMPLEMENT_ROUNDS}-round cap without draining — stopping and escalating.`)
-  escalateRun('implement loop', `hit the ${MAX_IMPLEMENT_ROUNDS}-round cap; slices remain unworked`)
+  escalateRun('implement loop', `hit the ${MAX_IMPLEMENT_ROUNDS}-round cap; tasks remain unworked`)
 }
 
 await runImplementLoop('implement')
 
 // Reviewing and shipping an unimplemented base branch burns high-tier agents on
 // nothing and can open a PR over an empty diff; stop at the summary instead.
-if (!slicesCompleted.length && escalations.length) {
-  log(`No slice merged into ${baseBranch} and ${escalations.length} escalation(s) stand — skipping review and ship.`)
+if (!tasksCompleted.length && escalations.length) {
+  log(`No task merged into ${baseBranch} and ${escalations.length} escalation(s) stand — skipping review and ship.`)
   return await finish([])
 }
 
 // ---- Review -----------------------------------------------------------------
 // One review of the assembled work, then bounded fixes against it. Findings
-// are fixed in place on the integration branch: re-slicing them onto the
+// are fixed in place on the integration branch: re-splitting them onto the
 // tracker and re-entering the implement loop costs a planner, a workable query,
 // an implementer and a settle agent per pass, so it is the last resort below,
 // not the first response.
@@ -796,14 +796,14 @@ let openFindings = await settleFindings()
 let reentries = 0
 while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
   reentries += 1
-  log(`${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds — filing them as slices (re-entry ${reentries}/${SPEC_REVIEW_REENTRIES}).`)
+  log(`${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds — filing them as tasks (re-entry ${reentries}/${SPEC_REVIEW_REENTRIES}).`)
   const filed = await agent(promptFileFindings(openFindings), {
     label: `file-findings:${reentries}`,
     phase: 'Review',
     agentType: agentTypeFor('planner'),
   })
   if (!filed) {
-    log('Could not file the findings as fix slices — collecting them as escalations instead.')
+    log('Could not file the findings as fix tasks — collecting them as escalations instead.')
     break
   }
   await runImplementLoop(`review-${reentries}`)

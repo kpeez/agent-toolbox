@@ -90,20 +90,20 @@ def workable_escalation(result: dict[str, Any]) -> str:
     return escalations[0]["reason"]
 
 
-# ---- the launcher slices; the conductor starts at the workable query ---------
+# ---- the launcher tasks; the conductor starts at the workable query ---------
 
 
 def test_the_run_starts_at_the_workable_query_with_no_slicer_agent(
     tmp_path: Path,
 ) -> None:
-    """Slicing belongs to /start-loop: in every observed run the slices were on
+    """Splitting belongs to /start-loop: in every observed run the tasks were on
     the tracker before launch, so the conductor's first act is the workable
     query — a slicer agent here would re-do the launcher's work."""
     result = run_loop(tmp_path, [{"match": "^workable:", "result": {"issues": []}}])
 
     called = labels(result)
     assert called[0].startswith("workable:")
-    assert [label for label in called if label.startswith("slice:")] == []
+    assert [label for label in called if label.startswith("task:")] == []
 
 
 # ---- workable-query retry and error reporting -------------------------------------
@@ -117,7 +117,7 @@ def test_workable_null_result_retries_with_backoff_then_escalates(
     assert len(workable_calls(result)) == 3
     assert result["sleeps"] == [30000, 120000]
     assert "after 3 attempts" in workable_escalation(result)
-    assert result["summary"]["slicesCompleted"] == []
+    assert result["summary"]["tasksCompleted"] == []
 
 
 def test_workable_null_result_recovers_on_a_retry(tmp_path: Path) -> None:
@@ -223,7 +223,7 @@ def test_exhausted_fix_rounds_carry_findings_verbatim_into_the_run_summary(
                 "match": "^implement:KP-1$",
                 "result": {
                     "status": "DONE",
-                    "branch": "batch/KP-1",
+                    "branch": "change/KP-1",
                     "summary": "landed",
                 },
             },
@@ -292,7 +292,7 @@ def test_escalations_without_findings_render_the_bare_headline(tmp_path: Path) -
 
 def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> None:
     issues = [
-        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"slice {n}"}
+        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"task {n}"}
         for n in (1, 2, 3)
     ]
     result = run_loop(
@@ -305,7 +305,7 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
                     "match": f"^implement:KP-{n}$",
                     "result": {
                         "status": "DONE",
-                        "branch": f"batch/KP-{n}",
+                        "branch": f"change/KP-{n}",
                         "summary": f"KP-{n} landed",
                     },
                 }
@@ -322,7 +322,7 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
                             "detail": "merged",
                             "stackBranch": branch,
                         }
-                        # Three unbatched slices are three batches of one, so
+                        # Three unbatched tasks are three changesets of one, so
                         # each lands on its own stack branch.
                         for n, branch in ((1, "worktree-stub"), (2, "stack/2"), (3, "stack/3"))
                     ]
@@ -336,17 +336,17 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
     )
 
     called = labels(result)
-    # Three slices settle through exactly one agent, not one merge plus one
+    # Three tasks settle through exactly one agent, not one merge plus one
     # marker agent each: that fan-out was 7M cache reads of deterministic work.
     assert [label for label in called if label.startswith("settle:")] == [
         "settle:implement:1"
     ]
     assert [label for label in called if label.startswith(("merge:", "mark:"))] == []
-    assert result["summary"]["slicesCompleted"] == ["KP-1", "KP-2", "KP-3"]
+    assert result["summary"]["tasksCompleted"] == ["KP-1", "KP-2", "KP-3"]
 
     prompt = call_with_label(result, "settle:implement:1")["prompt"]
     for n in (1, 2, 3):
-        assert f"batch/KP-{n} → stack branch" in prompt
+        assert f"change/KP-{n} → stack branch" in prompt
 
 
 def test_an_unmerged_slice_escalates_while_the_round_continues(
@@ -366,7 +366,7 @@ def test_an_unmerged_slice_escalates_while_the_round_continues(
                     "match": f"^implement:KP-{n}$",
                     "result": {
                         "status": "DONE",
-                        "branch": f"batch/KP-{n}",
+                        "branch": f"change/KP-{n}",
                         "summary": "landed",
                     },
                 }
@@ -399,7 +399,7 @@ def test_an_unmerged_slice_escalates_while_the_round_continues(
         default_result=None,
     )
 
-    assert result["summary"]["slicesCompleted"] == ["KP-2"]
+    assert result["summary"]["tasksCompleted"] == ["KP-2"]
     escalation = result["summary"]["escalations"][0]
     assert escalation["issue"] == "KP-1"
     assert "conflict in datasets.py" in escalation["reason"]
@@ -410,7 +410,7 @@ def test_a_failed_state_write_is_logged_not_escalated(
 ) -> None:
     """git decides what is merged, so a tracker state write that fails costs
     visibility, not correctness. This used to escalate, back when a missing
-    marker really could make a resumed run repeat the slice."""
+    marker really could make a resumed run repeat the task."""
     issue = {"id": "issue-1", "identifier": "KP-1", "title": "merged but unsynced"}
     result = run_loop(
         tmp_path,
@@ -421,7 +421,7 @@ def test_a_failed_state_write_is_logged_not_escalated(
                 "match": "^implement:KP-1$",
                 "result": {
                     "status": "DONE",
-                    "branch": "batch/KP-1",
+                    "branch": "change/KP-1",
                     "summary": "landed",
                 },
             },
@@ -445,32 +445,32 @@ def test_a_failed_state_write_is_logged_not_escalated(
         default_result=None,
     )
 
-    assert result["summary"]["slicesCompleted"] == ["KP-1"]
+    assert result["summary"]["tasksCompleted"] == ["KP-1"]
     assert result["summary"]["escalations"] == []
-    assert any("tracker under-reports this slice" in line for line in result["logs"])
+    assert any("tracker under-reports this task" in line for line in result["logs"])
 
 
-# ---- did-not-complete slice reviews -----------------------------------------
+# ---- did-not-complete task reviews -----------------------------------------
 
 
-SLICE = {"id": "issue-1", "identifier": "KP-1", "title": "one slice"}
+TASK = {"id": "issue-1", "identifier": "KP-1", "title": "one task"}
 
 
-def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
+def one_task(*responses: dict[str, Any]) -> list[dict[str, Any]]:
     """A run whose first workable round yields KP-1 and then drains.
 
     Test-specific responses come first so they win over the happy-path
     fallbacks that answer whatever the test did not script.
     """
     return [
-        {"match": "^workable:implement:1$", "result": {"issues": [SLICE]}},
+        {"match": "^workable:implement:1$", "result": {"issues": [TASK]}},
         *responses,
         {"match": "^workable:", "result": {"issues": []}},
         {
             "match": "^implement:KP-1$",
             "result": {
                 "status": "DONE",
-                "branch": "batch/KP-1",
+                "branch": "change/KP-1",
                 "summary": "KP-1 implemented",
             },
         },
@@ -492,12 +492,12 @@ def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
     ]
 
 
-def run_one_slice(tmp_path: Path, *responses: dict[str, Any]) -> dict[str, Any]:
-    return run_loop(tmp_path, one_slice(*responses))
+def run_one_task(tmp_path: Path, *responses: dict[str, Any]) -> dict[str, Any]:
+    return run_loop(tmp_path, one_task(*responses))
 
 
 def test_did_not_complete_review_consumes_no_fix_round(tmp_path: Path) -> None:
-    run = run_one_slice(
+    run = run_one_task(
         tmp_path,
         {
             "match": "^review:assembled$",
@@ -511,12 +511,12 @@ def test_did_not_complete_review_consumes_no_fix_round(tmp_path: Path) -> None:
     assert called.count("review:assembled:retry") == 1
     # The dead review never reached a fixer, and no fix round was spent.
     assert [label for label in called if label.startswith("fix:")] == []
-    assert run["summary"]["slicesCompleted"] == ["KP-1"]
+    assert run["summary"]["tasksCompleted"] == ["KP-1"]
     assert run["summary"]["escalations"] == []
 
 
 def test_second_did_not_complete_escalates_without_findings(tmp_path: Path) -> None:
-    run = run_one_slice(
+    run = run_one_task(
         tmp_path,
         {
             "match": "^review:assembled$",
@@ -539,15 +539,15 @@ def test_second_did_not_complete_escalates_without_findings(tmp_path: Path) -> N
     assert "no findings recorded" in reason
     assert "no fix round consumed" in reason
     assert escalations[0]["findings"] == []
-    # The slices themselves merged before review, so they are not lost by an
+    # The tasks themselves merged before review, so they are not lost by an
     # unreviewable branch — the branch is flagged unreviewed instead.
-    assert run["summary"]["slicesCompleted"] == ["KP-1"]
+    assert run["summary"]["tasksCompleted"] == ["KP-1"]
 
 
 def test_did_not_complete_re_review_does_not_increment_the_fix_round(
     tmp_path: Path,
 ) -> None:
-    run = run_one_slice(
+    run = run_one_task(
         tmp_path,
         {
             "match": "^review:assembled$",
@@ -571,7 +571,7 @@ def test_did_not_complete_re_review_does_not_increment_the_fix_round(
 def test_second_did_not_complete_re_review_escalates_with_no_findings(
     tmp_path: Path,
 ) -> None:
-    run = run_one_slice(
+    run = run_one_task(
         tmp_path,
         {
             "match": "^review:assembled$",
@@ -592,7 +592,7 @@ def test_second_did_not_complete_re_review_escalates_with_no_findings(
 
 
 def test_null_first_review_still_escalates_immediately(tmp_path: Path) -> None:
-    run = run_one_slice(tmp_path, {"match": "^review:assembled$", "result": None})
+    run = run_one_task(tmp_path, {"match": "^review:assembled$", "result": None})
 
     assert "review:assembled:retry" not in labels(run)
     assert (
@@ -601,11 +601,11 @@ def test_null_first_review_still_escalates_immediately(tmp_path: Path) -> None:
     )
 
 
-def test_the_run_reviews_the_assembled_work_once_not_per_slice(
+def test_the_run_reviews_the_assembled_work_once_not_per_task(
     tmp_path: Path,
 ) -> None:
     issues = [
-        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"slice {n}"}
+        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"task {n}"}
         for n in (1, 2)
     ]
     result = run_loop(
@@ -618,7 +618,7 @@ def test_the_run_reviews_the_assembled_work_once_not_per_slice(
                     "match": f"^implement:KP-{n}$",
                     "result": {
                         "status": "DONE",
-                        "branch": f"batch/KP-{n}",
+                        "branch": f"change/KP-{n}",
                         "summary": "landed",
                     },
                 }
@@ -645,7 +645,7 @@ def test_the_run_reviews_the_assembled_work_once_not_per_slice(
         default_result=None,
     )
 
-    # Two slices, one review: the same lines are never read by a per-slice
+    # Two tasks, one review: the same lines are never read by a per-task
     # reviewer and then again by a lens panel.
     review_calls = [
         label for label in labels(result) if label.startswith(("review:", "re-review:"))
@@ -711,18 +711,18 @@ def test_workable_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
 # and that a one-round run is indistinguishable from the pre-stack behavior.
 
 
-def run_waves(
+def run_stack(
     tmp_path: Path,
     rounds: int,
     *,
     first_workable: dict[str, Any] | None = None,
     stack: list[str] | None = None,
 ) -> dict[str, Any]:
-    """Script `rounds` rounds of one slice each, every slice merging cleanly."""
+    """Script `rounds` rounds of one task each, every task merging cleanly."""
     landed = stack or ["worktree-stub", *[f"stack/{n}" for n in range(2, rounds + 1)]]
     responses: list[dict[str, Any]] = []
     for r in range(1, rounds + 1):
-        issue = {"id": f"issue-{r}", "identifier": f"KP-{r}", "title": f"slice {r}"}
+        issue = {"id": f"issue-{r}", "identifier": f"KP-{r}", "title": f"task {r}"}
         payload = {"issues": [issue]}
         if r == 1 and first_workable:
             payload = {**payload, **first_workable}
@@ -736,7 +736,7 @@ def run_waves(
                 "match": f"^implement:KP-{r}$",
                 "result": {
                     "status": "DONE",
-                    "branch": f"batch/KP-{r}",
+                    "branch": f"change/KP-{r}",
                     "summary": f"KP-{r} landed",
                 },
             }
@@ -765,45 +765,45 @@ def run_waves(
     return run_loop(tmp_path, responses, default_result=None)
 
 
-def test_a_single_wave_run_settles_and_ships_exactly_as_before(
+def test_a_single_changeset_run_settles_and_ships_exactly_as_before(
     tmp_path: Path,
 ) -> None:
-    result = run_waves(tmp_path, 1)
+    result = run_stack(tmp_path, 1)
 
     settle = call_with_label(result, "settle:implement:1")["prompt"]
     assert "stack branch worktree-stub" in settle
     assert "created from" not in settle
-    # One batch is not a stack: the run must not reach for gh stack at all.
+    # One changeset is not a stack: the run must not reach for gh stack at all.
     ship = call_with_label(result, "ship:stub-run")["prompt"]
     assert "gh stack link" not in ship
     assert "Ship the finished work on worktree-stub." in ship
 
 
-def test_a_later_round_settles_into_a_wave_stacked_on_the_one_below(
+def test_a_later_round_settles_onto_a_stack_branch_above_the_one_below(
     tmp_path: Path,
 ) -> None:
-    result = run_waves(tmp_path, 3)
+    result = run_stack(tmp_path, 3)
 
     second = call_with_label(result, "settle:implement:2")["prompt"]
-    # Cutting the batch from the batch below is what makes it contain every layer
+    # Cutting the changeset from the changeset below is what makes it contain every layer
     # underneath, which the PR base chaining depends on.
     assert "stack branch stack/2, created from worktree-stub" in second
     third = call_with_label(result, "settle:implement:3")["prompt"]
     assert "stack branch stack/3, created from stack/2" in third
 
 
-def test_implementers_branch_from_the_current_wave_tip(tmp_path: Path) -> None:
-    result = run_waves(tmp_path, 3)
+def test_implementers_branch_from_the_current_stack_tip(tmp_path: Path) -> None:
+    result = run_stack(tmp_path, 3)
 
     assert "from worktree-stub" in call_with_label(result, "implement:KP-1")["prompt"]
     assert "from worktree-stub" in call_with_label(result, "implement:KP-2")["prompt"]
-    # Round 3 branches off the batch round 2 opened, not off the integration
-    # branch: a slice cut from below its dependencies rebuilds work it needs.
+    # Round 3 branches off the changeset round 2 opened, not off the integration
+    # branch: a task cut from below its dependencies rebuilds work it needs.
     assert "from stack/2" in call_with_label(result, "implement:KP-3")["prompt"]
 
 
 def test_review_and_ship_target_the_top_of_the_stack(tmp_path: Path) -> None:
-    result = run_waves(tmp_path, 2)
+    result = run_stack(tmp_path, 2)
 
     assert "stack/2" in call_with_label(result, "review:assembled")["prompt"]
     ship = call_with_label(result, "ship:stub-run")["prompt"]
@@ -814,13 +814,13 @@ def test_review_and_ship_target_the_top_of_the_stack(tmp_path: Path) -> None:
     assert result["summary"]["prUrls"] == ["https://example.test/pr/1"]
 
 
-def test_waves_left_by_an_earlier_session_are_adopted_before_settling(
+def test_stack_branches_left_by_an_earlier_session_are_adopted_before_settling(
     tmp_path: Path,
 ) -> None:
     # A cold resume (no resumeFromRunId) has no memory of the layers a previous
-    # session opened; git is the only record. Settling into batch 1 on top of an
+    # session opened; git is the only record. Settling into changeset 1 on top of an
     # existing stack/3 would bury three layers of published work.
-    result = run_waves(tmp_path, 1, first_workable={"topStackBranch": "stack/3"}, stack=["stack/4"])
+    result = run_stack(tmp_path, 1, first_workable={"topStackBranch": "stack/3"}, stack=["stack/4"])
 
     settle = call_with_label(result, "settle:implement:1")["prompt"]
     assert "stack branch stack/4, created from stack/3" in settle
@@ -828,11 +828,11 @@ def test_waves_left_by_an_earlier_session_are_adopted_before_settling(
     assert "1. worktree-stub\n2. stack/2\n3. stack/3\n4. stack/4" in ship
 
 
-# ---- batching: one implementer per story, not per issue -------------------
+# ---- grouping: one implementer per story, not per issue -------------------
 # Spawning a subagent costs its whole context load, a worktree and a merge
 # before it edits a line. A sweep that files 41 findings across 7 milestones
 # must cost 7 implementers, not 41 -- and the milestone is also the boundary a
-# reviewer reads, so the same batching sets the pull requests.
+# reviewer reads, so the same grouping sets the pull requests.
 
 B1 = "B1 Tracking correctness"
 B2 = "B2 Output durability & schema"
@@ -841,7 +841,7 @@ B2 = "B2 Output durability & schema"
 def batched_issues() -> list[dict[str, Any]]:
     grouped = [(432, B1), (439, B1), (433, B2), (438, B2), (445, B2)]
     return [
-        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"finding {n}", "batch": g}
+        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"finding {n}", "changeset": g}
         for n, g in grouped
     ]
 
@@ -880,7 +880,7 @@ def settled(*pairs: tuple[int, str]) -> list[dict[str, Any]]:
     ]
 
 
-def test_slices_sharing_a_batch_go_to_one_implementer(
+def test_tasks_sharing_a_changeset_go_to_one_implementer(
     tmp_path: Path,
 ) -> None:
     result = run_batched(
@@ -900,13 +900,13 @@ def test_slices_sharing_a_batch_go_to_one_implementer(
     assert implementers == [f"implement:{B1}", f"implement:{B2}"]
 
     prompt = call_with_label(result, f"implement:{B2}")["prompt"]
-    assert "implement 3 related slices" in prompt
+    assert "implement 3 related tasks" in prompt
     for n in (433, 438, 445):
         assert f"KP-{n}" in prompt
     # All three identifiers stay in the branch name: it is the only trace a
-    # resumed run has of what this batch already finished.
-    assert "batch/KP-433-KP-438-KP-445-b2-output-durability-schema" in prompt
-    assert result["summary"]["slicesCompleted"] == [
+    # resumed run has of what this changeset already finished.
+    assert "change/KP-433-KP-438-KP-445-b2-output-durability-schema" in prompt
+    assert result["summary"]["tasksCompleted"] == [
         "KP-432",
         "KP-439",
         "KP-433",
@@ -915,7 +915,7 @@ def test_slices_sharing_a_batch_go_to_one_implementer(
     ]
 
 
-def test_each_batch_lands_on_its_own_stack_branch_within_one_round(
+def test_each_changeset_lands_on_its_own_stack_branch_within_one_round(
     tmp_path: Path,
 ) -> None:
     result = run_batched(
@@ -930,7 +930,7 @@ def test_each_batch_lands_on_its_own_stack_branch_within_one_round(
         ),
     )
 
-    # Two batches unblocked at the same moment are still two stories, so one
+    # Two changesets unblocked at the same moment are still two stories, so one
     # round produces two stacked pull requests rather than one mixed diff.
     settle = call_with_label(result, "settle:implement:1")["prompt"]
     assert "stack branch worktree-stub" in settle
@@ -939,13 +939,13 @@ def test_each_batch_lands_on_its_own_stack_branch_within_one_round(
     assert "1. worktree-stub\n2. stack/2" in ship
 
 
-def test_a_large_batch_is_never_split(tmp_path: Path) -> None:
+def test_a_large_changeset_is_never_split(tmp_path: Path) -> None:
     issues = [
         {
             "id": f"issue-{n}",
             "identifier": f"KP-{n}",
             "title": f"finding {n}",
-            "batch": "B6 Data, eval & utils bugs",
+            "changeset": "B6 Data, eval & utils bugs",
         }
         for n in range(1, 11)
     ]
@@ -953,9 +953,9 @@ def test_a_large_batch_is_never_split(tmp_path: Path) -> None:
         tmp_path, issues, settled(*[(n, "worktree-stub") for n in range(1, 11)])
     )
 
-    # Ten slices in one batch is a spec that should have been split. Chunking
+    # Ten tasks in one changeset is a spec that should have been split. Chunking
     # them here would hide that behind two half-named pull requests, so the
-    # batch stays whole and the scoping failure stays visible.
+    # changeset stays whole and the scoping failure stays visible.
     implementers = [label for label in labels(result) if label.startswith("implement:")]
     assert implementers == ["implement:B6 Data, eval & utils bugs"]
-    assert "implement 10 related slices" in call_with_label(result, implementers[0])["prompt"]
+    assert "implement 10 related tasks" in call_with_label(result, implementers[0])["prompt"]
