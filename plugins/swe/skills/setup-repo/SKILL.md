@@ -61,7 +61,7 @@ exit 0
    Linear if Linear MCP tools are available in the session, GitHub if
    `origin` points at github.com **and the repo is private**, local markdown
    otherwise. For public repos, steer away from GitHub issues: agent process
-   noise (slices, progress comments) would land on the public issue list.
+   noise (tasks, progress comments) would land on the public issue list.
    Options: GitHub / Linear (capture team and optionally initiative, e.g.
    `linear (team Personal, initiative <name>)`) / local markdown / other
    (capture a one-line description). The answer becomes the `Issue tracker:`

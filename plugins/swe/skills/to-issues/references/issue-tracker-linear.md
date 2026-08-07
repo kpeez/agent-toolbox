@@ -21,7 +21,7 @@ the MCP is absent.
   under the initiative named in the repo's `Issue tracker:` extras when given.
   Record the project id in the spec's frontmatter (see Container identity) and
   mirror the spec as a project document (`save_document`) — the local spec file
-  stays canonical; the project copy is for browsing. Slices are
+  stays canonical; the project copy is for browsing. Tasks are
   issues **in that project**, not sub-issues of a parent issue.
 - **Create an issue**: `save_issue` with team, title, markdown body, and the
   spec's project.
@@ -34,7 +34,7 @@ the MCP is absent.
   create missing labels with `create_issue_label` first.
 - **Status**: see State transitions below — the loop writes these itself
   rather than relying on Linear's GitHub integration firing, which is what left
-  a merged, shipped slice sitting in Backlog on an observed run.
+  a merged, shipped task sitting in Backlog on an observed run.
 - **Blocked by**: use Linear's native blocked-by relations, not prose.
 - **PRs**: attach the PR link to the issue when publishing branch work, unless
   the GitHub integration already linked it.
@@ -50,8 +50,11 @@ The loop's workable query is deterministic here. From the repo root run
     uv run <scriptsDir>/linear_tracker.py workable --container <containerId> --merged-into <baseBranch>
 
 (the conductor's prompt supplies all three values). It prints a JSON array of
-`{id, identifier, title, labels}` and exits non-zero on a failed `linear` call
-— report a non-zero exit as a query failure, never as an empty result.
+`{id, identifier, title, labels, changeset}` and exits non-zero on a failed
+`linear` call — report a non-zero exit as a query failure, never as an empty
+result. `changeset` is the task's **project milestone** (`''` when it has none).
+File every task belonging to one reviewable story on one milestone: the loop
+hands a whole changeset to one implementer and publishes it as one pull request.
 
 **The output is final.** The script applies the workability rules itself:
 closed or already-merged issues are dropped, a merged issue counts as a
@@ -59,7 +62,7 @@ satisfied blocker, and `ready-for-human` is excluded. Consume the array as-is;
 re-reading the tracker on top of it is wasted work.
 
 "Already merged" is read from git — `git branch --merged <baseBranch>` over
-`slice/<identifier>` branches — not from tracker state, which does not advance
+`task/<identifier>` branches — not from tracker state, which does not advance
 until the run's PR lands.
 
 ## Container identity
@@ -82,8 +85,8 @@ description for humans — never a machine-parsed token.
 The loop advances issue state as it works, so the tracker reflects reality
 rather than the state work started in:
 
-- slice picked up: `linear issue update <identifier> --state "In Progress"`
-- slice merged into the integration branch: `linear issue update <identifier> --state "In Review"`
+- task picked up: `linear issue update <identifier> --state "In Progress"`
+- task merged into the integration branch: `linear issue update <identifier> --state "In Review"`
 - end of run: `uv run <scriptsDir>/linear_tracker.py sync --container <containerId>`
   promotes a project still reading backlog/planned while its issues are underway
 
