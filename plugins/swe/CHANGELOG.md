@@ -5,6 +5,36 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.11.0 — 2026-08-07
+
+- Publish a run as a **stack of pull requests**, one per changeset, instead of
+  one PR for everything. Each changeset settles onto its own branch cut from
+  the branch below, so the branches nest and each PR bases on the one below;
+  review and ship run from the top. A one-changeset run is unchanged — same
+  branch, same single PR, no `gh stack`. `ship-pr` gains a stack mode
+  (`gh stack link`, never `gh pr create` per branch; `gh stack merge --yes`,
+  never `gh pr merge`) and a force-push carve-out scoped to published stacks.
+  The conductor returns `{prUrls, …}` in place of `{prUrl, …}`.
+- Hand one implementer a whole changeset rather than spawning one per task. A
+  subagent costs its full context load, a worktree and a merge before it edits
+  a line, so a sweep filing 41 findings across 7 milestones now costs 7
+  implementers, not 41. Changesets are implemented in parallel and settled
+  sequentially, so the stack costs no wall-clock. Deliberately uncapped: a
+  changeset too large for one implementer is a spec that should have been
+  split, and `/to-issues` now calls that split at slicing time.
+- Settle the work hierarchy on **spec → changeset → task**, with **stack** for
+  the published chain and **round** demoted to scheduling that never reaches a
+  branch or an artifact. Recorded in the repo's `CONTEXT.md` glossary.
+  Branches are `change/<ids>-<slug>` for the work and `stack/<n>` for what it
+  lands on; the tracker still accepts the older `slice/` and `batch/` prefixes
+  so a run already in flight resolves what it merged.
+- Add the `block-agent-attribution` PreToolUse hook. `ship-pr` forbade agent
+  attribution in prose and prose did not hold: session URLs and "Generated
+  with" footers kept reaching commit messages, where they cannot be rewritten
+  after a push. The hook inspects publishing verbs only (`git commit`,
+  `git tag`, `gh pr|issue|stack`) plus any `--body-file` they name, and
+  rejects the call rather than editing the text underneath the agent.
+
 ## 1.10.6 — 2026-08-06
 
 - Replace `link-docs-agents.sh` with `symlink-worktree-shared-dirs.sh`: same
