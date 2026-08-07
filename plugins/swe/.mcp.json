@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "codex": {
+      "command": "codex",
+      "args": ["mcp-server"],
+      "timeout": 3600000
+    },
+    "copilot": {
+      "command": "python3",
+      "args": ["${CLAUDE_PLUGIN_ROOT}/mcp/acp_bridge.py", "copilot", "--acp"],
+      "timeout": 3600000
+    }
+  }
+}
