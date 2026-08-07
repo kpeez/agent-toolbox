@@ -216,7 +216,8 @@ else echo "IN DESIGN: $spec"; fi
 
 Once the spec is approved, the workflow runs to completion without
 prompting. Problems reach you as **data, after the fact**: the run summary
-(`{prUrl, slicesCompleted, escalations}`) plus the conductor's
+(`{prUrls, slicesCompleted, escalations}` — one URL per dependency wave)
+plus the conductor's
 per-issue escalation comments — never a live worker report.
 
 1. Read the summary's `escalations` when the run returns; each carries its

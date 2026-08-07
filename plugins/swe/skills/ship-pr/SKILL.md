@@ -43,7 +43,9 @@ Two modes:
   around the guard.
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only in finalize mode or when the user asks.
-- **Never force-push.** Squash merge by default.
+- **Never force-push** — except when rebasing a published stack, where
+  `gh stack rebase`/`sync` force-push by design and there is no alternative.
+  Squash merge by default.
 - **Reviewable Markdown.** PR bodies and optional PR markdown artifacts must be
   easy to review as plain Markdown.
 - **Verify before you commit.** Lint, types, and tests (including the tests
@@ -72,6 +74,32 @@ Written for a reviewer with no session context. Three parts:
   If you cannot produce a single reproducible demonstration of the change,
   say so and explain what a reviewer should look at instead — don't pad the
   section with gate output.
+
+## Stack mode
+
+For work that arrived in dependency waves — each branch built on the one below
+— publish one draft PR per layer instead of one PR for everything. Reviewers
+see a layer at a time, and lower layers can land while upper ones are still in
+review.
+
+Everything above still applies; three steps change:
+
+- **Publish with `gh stack link --base <default branch> <bottom> … <top>`**,
+  never `gh pr create` per branch. `link` pushes every branch, opens a draft PR
+  per layer with the correct base chaining, corrects any base that is already
+  wrong, and groups them into a GitHub stack — with no local stack state to
+  keep in sync. Exit code 9 means stacked PRs are not enabled on the
+  repository: fall back to a single PR from the top branch and say so.
+- **Each PR body stands alone** and names the layer's position in the stack.
+  The reviewer's guide covers that layer's diff, not the whole feature.
+- **Never `gh pr merge` a stacked PR** — it does not work. Merging is
+  `gh stack merge --yes`, bottom-up and all-or-nothing, and stays a human
+  action. Finalize flips the drafts with `gh stack submit --auto --open`.
+
+Fix findings on the lowest layer that owns the code, then replay the layers
+above it (`git rebase` per layer while unpublished, `gh stack rebase --upstack`
+once the stack exists). A fix committed above the layer it belongs to lands in
+the wrong PR.
 
 ## Workflow
 

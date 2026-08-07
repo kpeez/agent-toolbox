@@ -83,7 +83,7 @@ flowchart TD
   R -- "still open<br/>(1 re-entry)" --> FF["planner files<br/>fix slices"]
   FF --> F
   R -- "settled" --> SH["Ship<br/>publisher: atomic commits,<br/>push, draft PR"]
-  SH --> OUT(["summary: prUrl, slicesCompleted,<br/>escalations"])
+  SH --> OUT(["summary: prUrls, slicesCompleted,<br/>escalations"])
 ```
 
 The code is reviewed **once**, assembled, rather than per slice and then again

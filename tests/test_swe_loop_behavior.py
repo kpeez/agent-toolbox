@@ -247,7 +247,7 @@ def test_exhausted_fix_rounds_carry_findings_verbatim_into_the_run_summary(
             },
             # No file-findings response: the re-entry cannot file, so the
             # findings fall through to the escalation this test pins.
-            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
             {"match": "^run-summary:", "result": "posted"},
         ],
         default_result=None,
@@ -326,7 +326,7 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
                 },
             },
             {"match": "^review:assembled$", "result": {"verdict": "pass"}},
-            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
             {"match": "^run-summary:", "result": "posted"},
         ],
         default_result=None,
@@ -390,7 +390,7 @@ def test_an_unmerged_slice_escalates_while_the_round_continues(
             },
             {"match": "^escalation-note:KP-1$", "result": "posted"},
             {"match": "^review:assembled$", "result": {"verdict": "pass"}},
-            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
             {"match": "^run-summary:", "result": "posted"},
         ],
         default_result=None,
@@ -436,7 +436,7 @@ def test_a_failed_state_write_is_logged_not_escalated(
                 },
             },
             {"match": "^review:assembled$", "result": {"verdict": "pass"}},
-            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
             {"match": "^run-summary:", "result": "posted"},
         ],
         default_result=None,
@@ -485,7 +485,7 @@ def one_slice(*responses: dict[str, Any]) -> list[dict[str, Any]]:
             },
         },
         {"match": "^(review|re-review):", "result": {"verdict": "pass"}},
-        {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+        {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
     ]
 
 
@@ -636,7 +636,7 @@ def test_the_run_reviews_the_assembled_work_once_not_per_slice(
                 },
             },
             {"match": "^review:assembled$", "result": {"verdict": "pass"}},
-            {"match": "^ship:", "result": {"prUrl": "https://example.test/pr/1"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
             {"match": "^run-summary:", "result": "posted"},
         ],
         default_result=None,
@@ -699,3 +699,123 @@ def test_workable_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
     # round instead of a comment query per issue.
     assert "Do not read\ntracker comments" in with_cmd
     assert "return them unchanged" in with_cmd
+
+
+# ---- dependency waves become a stacked pull request -------------------------
+# A round's workable set is an antichain, and the next round is unblocked by it,
+# so consecutive rounds are exactly the layers of a stack. These tests pin that
+# mapping: which branch each round settles into, what implementers branch from,
+# and that a one-round run is indistinguishable from the pre-stack behavior.
+
+
+def run_waves(
+    tmp_path: Path, rounds: int, *, first_workable: dict[str, Any] | None = None
+) -> dict[str, Any]:
+    """Script `rounds` rounds of one slice each, every slice merging cleanly."""
+    responses: list[dict[str, Any]] = []
+    for r in range(1, rounds + 1):
+        issue = {"id": f"issue-{r}", "identifier": f"KP-{r}", "title": f"slice {r}"}
+        payload = {"issues": [issue]}
+        if r == 1 and first_workable:
+            payload = {**payload, **first_workable}
+        responses.append(
+            {"match": f"^workable:implement:{r}$", "result": payload},
+        )
+    responses.append({"match": "^workable:", "result": {"issues": []}})
+    for r in range(1, rounds + 1):
+        responses.append(
+            {
+                "match": f"^implement:KP-{r}$",
+                "result": {
+                    "status": "DONE",
+                    "branch": f"slice/KP-{r}",
+                    "summary": f"KP-{r} landed",
+                },
+            }
+        )
+        responses.append(
+            {
+                "match": f"^settle:implement:{r}$",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": f"KP-{r}",
+                            "merged": True,
+                            "stateUpdated": True,
+                            "detail": "merged",
+                        }
+                    ]
+                },
+            }
+        )
+    responses += [
+        {"match": "^review:assembled$", "result": {"verdict": "pass"}},
+        {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
+        {"match": "^run-summary:", "result": "posted"},
+    ]
+    return run_loop(tmp_path, responses, default_result=None)
+
+
+def test_a_single_wave_run_settles_and_ships_exactly_as_before(
+    tmp_path: Path,
+) -> None:
+    result = run_waves(tmp_path, 1)
+
+    settle = call_with_label(result, "settle:implement:1")["prompt"]
+    assert "into worktree-stub" in settle
+    assert "wave/" not in settle
+    # One wave is not a stack: the run must not reach for gh stack at all.
+    ship = call_with_label(result, "ship:stub-run")["prompt"]
+    assert "gh stack link" not in ship
+    assert "Ship the finished work on worktree-stub." in ship
+
+
+def test_a_later_round_settles_into_a_wave_stacked_on_the_one_below(
+    tmp_path: Path,
+) -> None:
+    result = run_waves(tmp_path, 3)
+
+    second = call_with_label(result, "settle:implement:2")["prompt"]
+    assert "into wave/2" in second
+    # Cutting the wave from the wave below is what makes it contain every layer
+    # underneath, which the PR base chaining depends on.
+    assert "git checkout -b wave/2 worktree-stub" in second
+    third = call_with_label(result, "settle:implement:3")["prompt"]
+    assert "git checkout -b wave/3 wave/2" in third
+
+
+def test_implementers_branch_from_the_current_wave_tip(tmp_path: Path) -> None:
+    result = run_waves(tmp_path, 3)
+
+    assert "from worktree-stub" in call_with_label(result, "implement:KP-1")["prompt"]
+    assert "from worktree-stub" in call_with_label(result, "implement:KP-2")["prompt"]
+    # Round 3 branches off the wave round 2 opened, not off the integration
+    # branch: a slice cut from below its dependencies rebuilds work it needs.
+    assert "from wave/2" in call_with_label(result, "implement:KP-3")["prompt"]
+
+
+def test_review_and_ship_target_the_top_of_the_stack(tmp_path: Path) -> None:
+    result = run_waves(tmp_path, 2)
+
+    assert "wave/2" in call_with_label(result, "review:assembled")["prompt"]
+    ship = call_with_label(result, "ship:stub-run")["prompt"]
+    assert "STACK MODE" in ship
+    # The conductor names the waves and their order; the host-specific commands
+    # stay in ship-pr, which is what keeps this file tracker- and forge-agnostic.
+    assert "1. worktree-stub\n2. wave/2" in ship
+    assert result["summary"]["prUrls"] == ["https://example.test/pr/1"]
+
+
+def test_waves_left_by_an_earlier_session_are_adopted_before_settling(
+    tmp_path: Path,
+) -> None:
+    # A cold resume (no resumeFromRunId) has no memory of the layers a previous
+    # session opened; git is the only record. Settling into wave 1 on top of an
+    # existing wave/3 would bury three layers of published work.
+    result = run_waves(tmp_path, 1, first_workable={"topWave": "wave/3"})
+
+    settle = call_with_label(result, "settle:implement:1")["prompt"]
+    assert "into wave/4" in settle
+    assert "git checkout -b wave/4 wave/3" in settle
+    ship = call_with_label(result, "ship:stub-run")["prompt"]
+    assert "1. worktree-stub\n2. wave/2\n3. wave/3\n4. wave/4" in ship

@@ -3,11 +3,11 @@ export const meta = {
   description:
     'Conductor for the swe workflow after spec approval and slicing: run the implement loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker and its slices are published on the tracker — the launcher slices before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding slices this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrl, slicesCompleted, escalations}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker and its slices are published on the tracker — the launcher slices before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the slices, baseBranch is the integration branch every slice merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding slices this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrls, slicesCompleted, escalations}; it never prompts the user mid-run.',
   phases: [
     { title: 'Implement', detail: 'rounds: implement in parallel, then one agent merges and records the round' },
     { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
-    { title: 'Ship', detail: 'ship-pr: atomic commits, push, draft PR' },
+    { title: 'Ship', detail: 'ship-pr: atomic commits, push, one draft PR per wave' },
   ],
 }
 
@@ -137,6 +137,10 @@ const WORKABLE_SCHEMA = {
       type: 'string',
       description: 'set ONLY when the workable set could not be determined (auth, network, failed tracker query). An empty issues list means the work is genuinely drained, never that a query failed.',
     },
+    topWave: {
+      type: 'string',
+      description: "the highest-numbered wave/<n> branch that already exists for this run, or '' when there is none",
+    },
   },
 }
 
@@ -197,8 +201,14 @@ const SETTLE_SCHEMA = {
 
 const SHIP_SCHEMA = {
   type: 'object',
-  required: ['prUrl'],
-  properties: { prUrl: { type: 'string' } },
+  required: ['prUrls'],
+  properties: {
+    prUrls: {
+      type: 'array',
+      description: 'every PR opened, bottom wave first; one entry for a single-wave run',
+      items: { type: 'string' },
+    },
+  },
 }
 
 // ---- prompts ----------------------------------------------------------------
@@ -207,6 +217,24 @@ const tupleFor = issueId => JSON.stringify({ specPath, slug, containerId, issueI
 // findings handed to an agent that has to act on them.
 const clip = text => String(text == null ? '' : text).replace(/\s+/g, ' ').trim().slice(0, 200)
 const branchFor = issue => `slice/${issue.identifier}`
+// Dependency waves, bottom to top. A round's workable set is an antichain --
+// mutually independent slices -- and the round after it was unblocked by this
+// one, so rounds ARE the stack's layers and the loop already computes them.
+// Wave 1 is the integration branch itself, which keeps a single-wave run
+// byte-identical to the pre-stack behavior: same branch, same single PR.
+const waves = [baseBranch]
+const waveTip = () => waves[waves.length - 1]
+// A round only opens a new layer once something has already landed below it.
+const nextWave = () => (slicesCompleted.length || waves.length > 1 ? `wave/${waves.length + 1}` : waveTip())
+// wave/<n> branches an earlier session left behind. Numbering is dense by
+// construction (a wave only opens once the one below it landed work), so the
+// highest number is the height of the stack.
+const adoptWaves = topWave => {
+  const height = Number(String(topWave || '').replace(/^wave\//, ''))
+  if (!Number.isInteger(height) || height < 2 || height <= waves.length) return
+  while (waves.length < height) waves.push(`wave/${waves.length + 1}`)
+  log(`Adopted ${waves.length} existing dependency wave(s) from git: ${waves.join(' → ')}.`)
+}
 const numbered = items => items.map((item, i) => `${i + 1}. ${typeof item === 'string' ? item : JSON.stringify(item)}`).join('\n')
 
 // Two shapes, one contract. A workableCmd names a command that applies the
@@ -227,6 +255,11 @@ entry as {id, identifier, title} and return them unchanged. Do not read
 tracker comments and do not second-guess the list — the command has already
 dropped slices this run finished and unblocked their dependents.
 
+Then run \`git branch --list 'wave/*'\` and report the highest-numbered
+wave/<n> branch it lists as "topWave" ('' if there are none). A session
+resuming this run has no other record of how many dependency waves it already
+opened, and merging a new slice into the wrong wave breaks the stack.
+
 On a NON-ZERO exit put stderr verbatim in the "error" field and return an
 empty issues list -- an empty list with no error means the run is finished,
 so never report a failure that way.`
@@ -242,23 +275,29 @@ ${trackerGuide}
    exit), put the failure text in the "error" field and return an empty issues
    list -- an empty list with no error means the run is finished, so never
    report a failure that way.
-2. Run \`git branch --merged ${baseBranch}\` and read every branch it lists
-   named slice/<identifier>. Those slices are merged into this run's
-   integration branch, which is what "done in this run" means — their tracker
+2. Run \`git branch --merged ${waveTip()}\` and read every branch it lists
+   named slice/<identifier>. Those slices are merged into this run's topmost
+   dependency wave, which contains every wave below it and is therefore what
+   "done in this run" means — their tracker
    state does not advance until the run's PR lands, so never judge it from the
    tracker alone.
 3. An issue counts as DONE when its tracker state is closed OR its identifier
    appears in that merged list. Drop a done issue, and treat a done blocker as
    satisfied rather than as still blocking. Skipping the second half is what
    makes a dependency chain stall after its first slice.
-4. Return the surviving issues.`
+4. Run \`git branch --list 'wave/*'\` and report the highest-numbered
+   wave/<n> branch it lists as "topWave" ('' if there are none). A session
+   resuming this run has no other record of how many dependency waves it
+   already opened, and merging a new slice into the wrong wave breaks the
+   stack.
+5. Return the surviving issues.`
 
-const promptImplementer = issue => `Execute this bounded task: implement one slice of ${specPath}, end to end.
+const promptImplementer = (issue, from) => `Execute this bounded task: implement one slice of ${specPath}, end to end.
 
 Handoff tuple: ${tupleFor(issue.id)}
 Slice: ${issue.identifier} — ${issue.title}
 
-1. Create or check out branch ${branchFor(issue)} from ${baseBranch} and work
+1. Create or check out branch ${branchFor(issue)} from ${from} and work
    only there — on a resumed or retried slice the branch may already exist,
    with earlier commits on it.
 2. Implement the slice per the implement skill's per-slice discipline: prove
@@ -274,10 +313,11 @@ Slice: ${issue.identifier} — ${issue.title}
 const promptReview = () => `Review the assembled implementation against its spec, through one lens:
 does the code do what the spec asked, correctly?
 
-Under review: the work this run merged into ${baseBranch}. Establish the diff
-yourself — the slice merges are on ${baseBranch} and each carries a
-slice/<identifier> branch — and say in your first finding if you could
-not establish it rather than reviewing a guess.
+Under review: the complete work of this run, which lives on ${waveTip()} —
+the top of the run's dependency waves, containing every wave below it.
+Establish the diff yourself — the slice merges are on the wave branches and
+each slice carries a slice/<identifier> branch — and say in your first finding
+if you could not establish it rather than reviewing a guess.
 Spec: ${specPath}
 
 This is the run's ONLY code review, so judge adherence end to end: behavior the
@@ -300,15 +340,27 @@ judgment about the code. Put what stopped you in "detail" and return no
 findings. An infrastructure failure must never appear as a finding: a fixer
 would act on it.`
 
-const promptFixer = (findings, round) => `Execute this bounded task: apply review findings to ${baseBranch}.
+const promptFixer = (findings, round) => `Execute this bounded task: apply review findings.
 
 Findings to resolve (fix round ${round}/${MAX_FIX_ROUNDS}):
 ${numbered(findings)}
 
-Work directly on ${baseBranch} in the main worktree at the repo root — the
-slices are already merged there. Apply every finding, re-run lint/types/tests,
-and commit. Do not push and do not merge. Return a concise completion note;
-this call has no additional output schema.`
+Work in the main worktree at the repo root.
+${waves.length === 1
+  ? `Work directly on ${baseBranch} — the slices are already merged there.`
+  : `This run landed in ${waves.length} dependency waves, bottom to top:
+${numbered(waves)}
+Every finding opens with a file:line anchor. Fix it on the LOWEST wave that
+contains the code it names — \`git log <wave> -- <file>\` says which wave
+introduced the line — never on the top wave by default: a fix committed above
+the layer that owns it lands in the wrong pull request. After committing on a
+wave below the top, replay the waves above it so they carry the fix, in order:
+\`git checkout <higher wave> && git rebase <the wave directly below it>\`. On
+conflict, resolve per the merge-conflicts skill and continue the rebase.
+Nothing is published yet, so these rebases rewrite local branches only.`}
+Apply every finding, re-run lint/types/tests, and commit. Do not push and do not
+merge. Return a concise completion note; this call has no additional output
+schema.`
 
 const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
 
@@ -320,16 +372,22 @@ The comment body is exactly:
 
 Post nothing else and change no issue fields.`
 
-const promptSettle = slices => `Settle this round's finished slices into ${baseBranch}, in the main worktree at
+const promptSettle = (slices, target, from) => `Settle this round's finished slices into ${target}, in the main worktree at
 the repo root. Work through them IN THE ORDER GIVEN, one at a time.
 
 ${trackerGuide}
-
+${target === from ? '' : `
+${target} is this run's next dependency wave, stacked on the wave below it.
+Create it first if it does not already exist:
+   git checkout -b ${target} ${from}
+Branching it from ${from} is what makes it contain every wave below, which the
+stacked pull requests depend on. Never cut it from the default branch.
+`}
 Slices:
 ${numbered(slices.map(slice => `${slice.issue.identifier} on ${slice.branch} — ${clip(slice.summary)}`))}
 
 For each slice, in order:
-1. git checkout ${baseBranch} && git merge --no-ff <its branch>
+1. git checkout ${target} && git merge --no-ff <its branch>
 2. On conflict, resolve it per the merge-conflicts skill and complete the merge.
    If you cannot resolve it confidently, git merge --abort, record
    merged:false with the reason, and move on to the next slice — never force a
@@ -356,21 +414,41 @@ issue template and check each with
 (body on stdin) before publishing. Do not re-file a finding that already has
 an open issue in the container.`
 
-const promptShip = () => `Ship the finished work on ${baseBranch}.
+const promptShip = () => waves.length === 1
+  ? `Ship the finished work on ${baseBranch}.
 
 Handoff tuple: ${tupleFor(null)}
 
 Run the ship-pr skill: verify lint/types/tests, group any uncommitted work into
 atomic commits, push ${baseBranch}, and open a DRAFT pull request. Tracker
 links, issue ids, and tracker-only content never appear in commit messages, the
-PR title, or the PR body. Return the PR URL.`
+PR title, or the PR body. Return the PR URL as the one entry of prUrls.`
+  : `Ship this run's work as a STACKED pull request — it landed in
+${waves.length} dependency waves, bottom to top:
+${numbered(waves)}
+Each wave branch contains every wave below it, so ${waveTip()} holds the
+complete work.
+
+Handoff tuple: ${tupleFor(null)}
+
+Run the ship-pr skill in STACK MODE: verify lint/types/tests, group any
+uncommitted work into atomic commits on the wave that owns it, then publish the
+waves in the order listed above as one DRAFT pull request per wave, each based
+on the wave below it and each with a body that stands on its own. The skill
+names the exact commands, and the fallback for a host where stacked pull
+requests are unavailable — do not improvise a substitute.
+
+Tracker links, issue ids, and tracker-only content never appear in commit
+messages, PR titles, or PR bodies. Return every PR URL in prUrls, bottom wave
+first.`
 
 const promptRunSummary = summary => `Post this run's summary as one comment on tracker container ${containerId},
 per the tracker reference's container-comment convention.
 
 ${trackerGuide}
 
-Run: ${slug} — spec ${specPath}, integration branch ${baseBranch}.
+Run: ${slug} — spec ${specPath}, integration branch ${baseBranch},
+dependency waves ${waves.join(' → ')}.
 
 The comment body is a short "swe-loop run summary" heading followed by this
 payload verbatim in a fenced json block:
@@ -453,8 +531,8 @@ const runReview = async (label, stage) => {
   return { findings }
 }
 
-const finish = async prUrl => {
-  const summary = { prUrl, slicesCompleted, escalations }
+const finish = async prUrls => {
+  const summary = { prUrls, slicesCompleted, escalations }
   const posted = await agent(promptRunSummary(summary), {
     label: `run-summary:${slug}`,
     phase: 'Ship',
@@ -502,6 +580,10 @@ const runImplementLoop = async passLabel => {
       log(`Workable query failed (${reason}) — stopping the ${passLabel} loop rather than reading it as finished work.`)
       return
     }
+    // A cold resume (no resumeFromRunId) starts with waves = [baseBranch] and
+    // would settle round 1 straight into wave 1, on top of layers a previous
+    // session already opened. git is the only record of them.
+    adoptWaves(workable.topWave)
     const pending = (workable.issues || []).filter(issue => !settled.has(issue.id))
     if (!pending.length) {
       log(`Workable set drained on round ${round} of the ${passLabel} loop.`)
@@ -514,7 +596,7 @@ const runImplementLoop = async passLabel => {
     // assembled, after the loop drains.
     const outcomes = await parallel(
       pending.map(issue => async () => {
-        const result = await agent(promptImplementer(issue), {
+        const result = await agent(promptImplementer(issue, waveTip()), {
           label: `implement:${issue.identifier}`,
           phase: 'Implement',
           agentType: agentTypeFor('implementer'),
@@ -537,8 +619,12 @@ const runImplementLoop = async passLabel => {
     // agents bought nothing but their own context.
     const ready = outcomes.filter(Boolean).filter(outcome => outcome.state === 'implemented')
     let merged = 0
+    // Fixed before the settle agent runs and reused for the whole round: the
+    // target must not shift underneath the merges as slicesCompleted grows.
+    const from = waveTip()
+    const target = nextWave()
     if (ready.length) {
-      const settlement = await agent(promptSettle(ready), {
+      const settlement = await agent(promptSettle(ready, target, from), {
         label: `settle:${passLabel}:${round}`,
         phase: 'Implement',
         schema: SETTLE_SCHEMA,
@@ -548,13 +634,13 @@ const runImplementLoop = async passLabel => {
         const issue = outcome.issue
         const result = results.find(entry => entry.identifier === issue.identifier)
         if (!result || !result.merged) {
-          await escalate(issue, `merge into ${baseBranch} failed: ${result ? clip(result.detail) : 'the settle agent reported nothing for this slice'}`)
+          await escalate(issue, `merge into ${target} failed: ${result ? clip(result.detail) : 'the settle agent reported nothing for this slice'}`)
           continue
         }
         settled.add(issue.id)
         slicesCompleted.push(issue.identifier)
         merged += 1
-        log(`${issue.identifier}: merged ${outcome.branch} into ${baseBranch}.`)
+        log(`${issue.identifier}: merged ${outcome.branch} into ${target}.`)
         // A failed state write is cosmetic and never escalates: the merge is in
         // git, which is what a resumed run reads. This used to be an escalation
         // because a missing marker really could lose or repeat a slice.
@@ -562,6 +648,12 @@ const runImplementLoop = async passLabel => {
           log(`${issue.identifier}: merged, but its tracker state did not advance — the tracker under-reports this slice.`)
         }
       }
+    }
+    // A wave exists only once something is on it: a round where every slice
+    // failed to merge must not leave an empty layer in the stack.
+    if (merged && target !== from) {
+      waves.push(target)
+      log(`Wave ${waves.length} opened: ${target}, stacked on ${from}.`)
     }
     // Anything the pipeline dropped (null outcome, unknown state) would come
     // back on the next workable query and be re-spawned forever; settle it.
@@ -581,7 +673,7 @@ await runImplementLoop('implement')
 // nothing and can open a PR over an empty diff; stop at the summary instead.
 if (!slicesCompleted.length && escalations.length) {
   log(`No slice merged into ${baseBranch} and ${escalations.length} escalation(s) stand — skipping review and ship.`)
-  return await finish(null)
+  return await finish([])
 }
 
 // ---- Review -----------------------------------------------------------------
@@ -642,7 +734,7 @@ while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
 if (openFindings.length) {
   escalateRun(
     `${openFindings.length} finding(s) survived review`,
-    `${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds on ${baseBranch}`,
+    `${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds on ${waveTip()}`,
     openFindings,
   )
 }
@@ -657,10 +749,10 @@ const shipped = await agent(promptShip(), {
   schema: SHIP_SCHEMA,
 })
 if (!shipped) {
-  escalateRun('ship-pr', `publisher returned no PR URL; ${baseBranch} is merged but unpublished`)
-  log(`Ship failed — ${baseBranch} holds the merged work but no PR was opened.`)
+  escalateRun('ship-pr', `publisher returned no PR URL; ${waveTip()} is merged but unpublished`)
+  log(`Ship failed — ${waveTip()} holds the merged work but no PR was opened.`)
 } else {
-  log(`Draft PR: ${shipped.prUrl}`)
+  log(`Draft PR(s): ${(shipped.prUrls || []).join(', ')}`)
 }
 
-return await finish(shipped ? shipped.prUrl : null)
+return await finish(shipped ? shipped.prUrls || [] : [])
