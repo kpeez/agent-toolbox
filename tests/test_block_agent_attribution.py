@@ -36,8 +36,8 @@ def run_hook(command: str) -> subprocess.CompletedProcess[str]:
 
 
 CLEAN = [
-    'git commit -m "Add wave stacking to the conductor"',
-    "gh pr create --draft --title 'Stack the waves' --body 'Reviewer guide: ...'",
+    'git commit -m "Stack a run\'s batches into one PR each"',
+    "gh pr create --draft --title 'Stack the batches' --body 'Reviewer guide: ...'",
     # Not a publishing verb: the guard must not police every mention of the URL.
     "curl -s https://claude.ai/foo",
     "grep -rn claude.ai docs/",

@@ -77,28 +77,28 @@ Written for a reviewer with no session context. Three parts:
 
 ## Stack mode
 
-For work that arrived in dependency waves — each branch built on the one below
-— publish one draft PR per layer instead of one PR for everything. Reviewers
-see a layer at a time, and lower layers can land while upper ones are still in
-review.
+For work that arrived as a **stack** — one branch per batch, each built on the
+one below — publish one draft PR per batch instead of one PR for everything. A
+batch is one reviewable story, so the reviewer reads one story at a time, and
+lower batches can land while upper ones are still in review.
 
 Everything above still applies; three steps change:
 
 - **Publish with `gh stack link --base <default branch> <bottom> … <top>`**,
   never `gh pr create` per branch. `link` pushes every branch, opens a draft PR
-  per layer with the correct base chaining, corrects any base that is already
-  wrong, and groups them into a GitHub stack — with no local stack state to
+  per batch with the correct base chaining, corrects any base that is already
+  wrong, and registers them as a GitHub stack — with no local stack state to
   keep in sync. Exit code 9 means stacked PRs are not enabled on the
   repository: fall back to a single PR from the top branch and say so.
-- **Each PR body stands alone** and names the layer's position in the stack.
-  The reviewer's guide covers that layer's diff, not the whole feature.
+- **Each PR body stands alone** and names its batch's position in the stack.
+  The reviewer's guide covers that batch's diff, not the whole feature.
 - **Never `gh pr merge` a stacked PR** — it does not work. Merging is
   `gh stack merge --yes`, bottom-up and all-or-nothing, and stays a human
   action. Finalize flips the drafts with `gh stack submit --auto --open`.
 
-Fix findings on the lowest layer that owns the code, then replay the layers
-above it (`git rebase` per layer while unpublished, `gh stack rebase --upstack`
-once the stack exists). A fix committed above the layer it belongs to lands in
+Fix findings on the lowest branch that owns the code, then replay the branches
+above it (`git rebase` per branch while unpublished, `gh stack rebase --upstack`
+once the stack exists). A fix committed above the batch it belongs to lands in
 the wrong PR.
 
 ## Workflow

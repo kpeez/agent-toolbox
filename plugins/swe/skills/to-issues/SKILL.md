@@ -81,6 +81,20 @@ Mark each slice **AFK** (an agent can implement and merge it with no human
 interaction) or **HITL** (needs a human — architectural call, design review).
 Prefer AFK where possible.
 
+Then assign every slice to a **batch** — the tracker grouping (a milestone)
+that collects the slices belonging to one reviewable story. The batch, not the
+slice, is the unit the loop acts on: one implementer takes a whole batch, and
+it ships as one pull request. See CONTEXT.md for the full hierarchy.
+
+- A batch is what one reviewer reads in one sitting, and what one implementer
+  holds without losing the thread. Both fail at the same size.
+- **A batch too large for that is a spec that should have been split.** Say so
+  and split the spec into part one and part two rather than filing the
+  oversized batch — nothing downstream will fix it, and a spec split is cheap
+  at this point and expensive after implementation starts.
+- A slice with no natural batch-mate is a batch of one. That is fine; it is not
+  a reason to invent a grouping.
+
 ### 4. Review the breakdown
 
 Present the breakdown as a numbered list. Per slice show: **Title**, **Type**
@@ -89,6 +103,8 @@ Present the breakdown as a numbered list. Per slice show: **Title**, **Type**
 - Does the granularity feel right (too coarse / too fine)?
 - Are the dependency relationships correct?
 - Should any slices be merged or split?
+- Is each batch one story a reviewer reads in one sitting? If any batch is not,
+  the spec is too broad — split the spec, not the batch.
 
 **Who reviews depends on how you were invoked.** Slicing a spec that carries the
 `approved: true` in its frontmatter (e.g. under `/start-loop`): the approval

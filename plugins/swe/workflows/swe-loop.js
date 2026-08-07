@@ -7,7 +7,7 @@ export const meta = {
   phases: [
     { title: 'Implement', detail: 'rounds: implement in parallel, then one agent merges and records the round' },
     { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
-    { title: 'Ship', detail: 'ship-pr: atomic commits, push, one draft PR per wave' },
+    { title: 'Ship', detail: 'ship-pr: atomic commits, push, one draft PR per batch' },
   ],
 }
 
@@ -20,12 +20,6 @@ const SPEC_REVIEW_REENTRIES = 1
 // The workable set is tracker-derived, so a node that never settles would spin
 // forever; this cap turns that into a loud escalation instead.
 const MAX_IMPLEMENT_ROUNDS = 25
-// A cap on issues per implementer, not a target. Spawning a subagent costs its
-// whole context load, a worktree and a merge before it edits a line, so a
-// five-line dead-code deletion must never be worth one on its own -- but an
-// implementer holding twenty findings loses the thread, and the wave it
-// produces stops being reviewable in one sitting.
-const MAX_GROUP_SIZE = 8
 // The workable agent call is the one place where a harness/API failure (an
 // overloaded-API 529 killed two observed runs after zero work) takes the whole
 // run down, so a null result -- the shape every such failure arrives in -- is
@@ -140,9 +134,9 @@ const WORKABLE_SCHEMA = {
           id: { type: 'string' },
           identifier: { type: 'string' },
           title: { type: 'string' },
-          group: {
+          batch: {
             type: 'string',
-            description: "the tracker's own clustering of this issue (its milestone or equivalent), '' when it has none",
+            description: "the tracker's own batching of this issue (its milestone or equivalent), '' when it has none",
           },
         },
       },
@@ -151,9 +145,9 @@ const WORKABLE_SCHEMA = {
       type: 'string',
       description: 'set ONLY when the workable set could not be determined (auth, network, failed tracker query). An empty issues list means the work is genuinely drained, never that a query failed.',
     },
-    topWave: {
+    topStackBranch: {
       type: 'string',
-      description: "the highest-numbered wave/<n> branch that already exists for this run, or '' when there is none",
+      description: "the highest-numbered stack/<n> branch that already exists for this run, or '' when there is none",
     },
   },
 }
@@ -201,11 +195,11 @@ const SETTLE_SCHEMA = {
       type: 'array',
       items: {
         type: 'object',
-        required: ['identifier', 'merged', 'stateUpdated', 'detail', 'wave'],
+        required: ['identifier', 'merged', 'stateUpdated', 'detail', 'stackBranch'],
         properties: {
           identifier: { type: 'string' },
           merged: { type: 'boolean' },
-          wave: { type: 'string', description: 'the wave branch this slice actually landed on, \'\' when it did not merge' },
+          stackBranch: { type: 'string', description: "the stack branch this slice actually landed on, '' when it did not merge" },
           stateUpdated: { type: 'boolean', description: 'whether the issue state was advanced on the tracker; cosmetic only — git, not the tracker, decides what is merged' },
           detail: { type: 'string' },
         },
@@ -220,7 +214,7 @@ const SHIP_SCHEMA = {
   properties: {
     prUrls: {
       type: 'array',
-      description: 'every PR opened, bottom wave first; one entry for a single-wave run',
+      description: 'every PR opened, bottom batch first; one entry for a single-batch run',
       items: { type: 'string' },
     },
   },
@@ -232,59 +226,54 @@ const tupleFor = issueId => JSON.stringify({ specPath, slug, containerId, issueI
 // Display-only shortening: log lines and escalation reasons. Never applied to
 // findings handed to an agent that has to act on them.
 const clip = text => String(text == null ? '' : text).replace(/\s+/g, ' ').trim().slice(0, 200)
-// Clustering a round's issues into implementer-sized tasks. The tracker's own
-// grouping is the unit of both work and review: it names one coherent story,
-// which is what a reviewer holds in their head and therefore what one pull
-// request should hold. Ungrouped issues stay one per task -- the old behavior.
-const groupsFor = issues => {
+// A batch is a set of slices the tracker groups together (its milestone, or
+// whatever the tracker reference maps to one): one coherent story, which
+// is what a reviewer holds in their head and therefore what one pull request
+// should hold. It is the unit of work AND of review -- one implementer, one
+// branch, one PR. A slice with no batch is a batch of one.
+const batchesFor = issues => {
   const order = []
   const members = new Map()
   for (const issue of issues) {
-    const name = String(issue.group || '').trim() || `\u0000${issue.identifier}`
+    const name = String(issue.batch || '').trim() || `\u0000${issue.identifier}`
     if (!members.has(name)) {
       members.set(name, [])
       order.push(name)
     }
     members.get(name).push(issue)
   }
-  const groups = []
-  for (const name of order) {
-    const all = members.get(name)
-    const bare = name.startsWith('\u0000')
-    for (let start = 0; start < all.length; start += MAX_GROUP_SIZE) {
-      const chunk = all.slice(start, start + MAX_GROUP_SIZE)
-      const part = all.length > MAX_GROUP_SIZE ? ` (${start / MAX_GROUP_SIZE + 1})` : ''
-      groups.push({ name: bare ? chunk[0].identifier : `${name}${part}`, issues: chunk })
-    }
-  }
-  return groups
+  // Deliberately uncapped. A batch too large for one implementer is a spec
+  // that should have been split, and splitting it here would hide that behind
+  // two half-named pull requests instead of surfacing it.
+  return order.map(name => ({
+    name: name.startsWith('\u0000') ? members.get(name)[0].identifier : name,
+    issues: members.get(name),
+  }))
 }
 // Every identifier stays in the branch name: it is the only tracker trace
 // allowed outside the tracker, and a resumed run reads what is done from it.
-const branchForGroup = group => {
-  const ids = group.issues.map(issue => issue.identifier).join('-')
-  const slug = group.issues.length === 1 && group.name === group.issues[0].identifier
+const branchForBatch = batch => {
+  const ids = batch.issues.map(issue => issue.identifier).join('-')
+  const slug = batch.issues.length === 1 && batch.name === batch.issues[0].identifier
     ? ''
-    : `-${group.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)}`
-  return `slice/${ids}${slug}`
+    : `-${batch.name.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '').slice(0, 40)}`
+  return `batch/${ids}${slug}`
 }
-// Dependency waves, bottom to top. A round's workable set is an antichain --
-// mutually independent slices -- and the round after it was unblocked by this
-// one, so rounds ARE the stack's layers and the loop already computes them.
-// Wave 1 is the integration branch itself, which keeps a single-wave run
-// byte-identical to the pre-stack behavior: same branch, same single PR.
-// A wave is opened by a settled GROUP, never by a round: the round is only a
-// schedule, while the group is the story a reviewer reads.
-const waves = [baseBranch]
-const waveTip = () => waves[waves.length - 1]
-// wave/<n> branches an earlier session left behind. Numbering is dense by
-// construction (a wave only opens once the one below it landed work), so the
-// highest number is the height of the stack.
-const adoptWaves = topWave => {
-  const height = Number(String(topWave || '').replace(/^wave\//, ''))
-  if (!Number.isInteger(height) || height < 2 || height <= waves.length) return
-  while (waves.length < height) waves.push(`wave/${waves.length + 1}`)
-  log(`Adopted ${waves.length} existing dependency wave(s) from git: ${waves.join(' → ')}.`)
+// The stack, bottom to top: one branch per settled batch, each containing
+// every branch below it. Its bottom is the integration branch itself, which
+// keeps a one-batch run byte-identical to the pre-stack behavior -- same
+// branch, same single PR. Rounds never appear here: a round is only a
+// schedule, while a batch is the story a reviewer reads.
+const stack = [baseBranch]
+const stackTip = () => stack[stack.length - 1]
+// stack/<n> branches an earlier session left behind. Numbering is dense by
+// construction (a branch is only added once the one below it landed a batch),
+// so the highest number is the height of the stack.
+const adoptStack = topStackBranch => {
+  const height = Number(String(topStackBranch || '').replace(/^stack\//, ''))
+  if (!Number.isInteger(height) || height < 2 || height <= stack.length) return
+  while (stack.length < height) stack.push(`stack/${stack.length + 1}`)
+  log(`Adopted ${stack.length} existing stack branch(es) from git: ${stack.join(' → ')}.`)
 }
 const numbered = items => items.map((item, i) => `${i + 1}. ${typeof item === 'string' ? item : JSON.stringify(item)}`).join('\n')
 
@@ -306,14 +295,14 @@ entry as {id, identifier, title} and return them unchanged. Do not read
 tracker comments and do not second-guess the list — the command has already
 dropped slices this run finished and unblocked their dependents.
 
-Report each entry's tracker grouping (its milestone or equivalent) as "group",
-'' when it has none: the loop hands one implementer everything sharing a group
+Report each entry's batch — its tracker milestone or equivalent — as "batch",
+'' when it has none: the loop hands one implementer everything sharing a batch
 instead of spawning one per issue.
 
-Then run \`git branch --list 'wave/*'\` and report the highest-numbered
-wave/<n> branch it lists as "topWave" ('' if there are none). A session
-resuming this run has no other record of how many dependency waves it already
-opened, and merging a new slice into the wrong wave breaks the stack.
+Then run \`git branch --list 'stack/*'\` and report the highest-numbered
+stack/<n> branch it lists as "topStackBranch" ('' if there are none). A session
+resuming this run has no other record of how many dependency stack it already
+opened, and merging a new slice into the wrong batch breaks the stack.
 
 On a NON-ZERO exit put stderr verbatim in the "error" field and return an
 empty issues list -- an empty list with no error means the run is finished,
@@ -325,20 +314,20 @@ ${trackerGuide}
 1. Compute the workable set of container ${containerId} per the
    reference's "swe-loop workable set" section — issues with no ready-for-human
    label that are not done and whose every blocker IS done, each as
-   {id, identifier, title, group} — "group" is the issue's tracker grouping
-   (its milestone or equivalent), '' when it has none, and is what lets the
-   loop hand one implementer a whole cluster instead of one agent per issue.
+   {id, identifier, title, batch} — "batch" is the issue's tracker milestone
+   or equivalent, '' when it has none, and is what lets the loop hand one
+   implementer a whole batch instead of one agent per issue.
    Scripts the reference names live in ${scriptsDir}.
    If the query FAILS (auth, network, missing credential, non-zero script
    exit), put the failure text in the "error" field and return an empty issues
    list -- an empty list with no error means the run is finished, so never
    report a failure that way.
-2. Run \`git branch --merged ${waveTip()}\` and read every branch it lists
+2. Run \`git branch --merged ${stackTip()}\` and read every branch it lists
    whose name begins with slice/, then take EVERY issue identifier appearing
-   anywhere in those names — one branch carries a whole cluster of slices, so
+   anywhere in those names — one branch carries a whole batch of slices, so
    matching only slice/<identifier> exactly under-reports what is done. Those
    slices are merged into this run's topmost
-   dependency wave, which contains every wave below it and is therefore what
+   dependency batch, which contains every batch below it and is therefore what
    "done in this run" means — their tracker
    state does not advance until the run's PR lands, so never judge it from the
    tracker alone.
@@ -346,31 +335,31 @@ ${trackerGuide}
    appears in that merged list. Drop a done issue, and treat a done blocker as
    satisfied rather than as still blocking. Skipping the second half is what
    makes a dependency chain stall after its first slice.
-4. Run \`git branch --list 'wave/*'\` and report the highest-numbered
-   wave/<n> branch it lists as "topWave" ('' if there are none). A session
-   resuming this run has no other record of how many dependency waves it
-   already opened, and merging a new slice into the wrong wave breaks the
+4. Run \`git branch --list 'stack/*'\` and report the highest-numbered
+   stack/<n> branch it lists as "topStackBranch" ('' if there are none). A session
+   resuming this run has no other record of how many dependency stack it
+   already opened, and merging a new slice into the wrong batch breaks the
    stack.
 5. Return the surviving issues.`
 
-const promptImplementer = (group, from) => `Execute this bounded task: implement ${group.issues.length === 1 ? 'one slice' : `${group.issues.length} related slices`} of ${specPath}, end to end.
+const promptImplementer = (batch, from) => `Execute this bounded task: implement ${batch.issues.length === 1 ? 'one slice' : `${batch.issues.length} related slices`} of ${specPath}, end to end.
 
-Handoff tuple: ${tupleFor(group.issues.map(issue => issue.id))}
-${group.issues.length === 1 ? `Slice: ${group.issues[0].identifier} — ${group.issues[0].title}` : `Cluster "${group.name}", to be implemented in one pass because these slices
+Handoff tuple: ${tupleFor(batch.issues.map(issue => issue.id))}
+${batch.issues.length === 1 ? `Slice: ${batch.issues[0].identifier} — ${batch.issues[0].title}` : `Batch "${batch.name}", to be implemented in one pass because these slices
 share a concern and will be reviewed as one pull request:
-${numbered(group.issues.map(issue => `${issue.identifier} — ${issue.title}`))}`}
+${numbered(batch.issues.map(issue => `${issue.identifier} — ${issue.title}`))}`}
 
-1. Create or check out branch ${branchForGroup(group)} from ${from} and work
+1. Create or check out branch ${branchForBatch(batch)} from ${from} and work
    only there — on a resumed or retried slice the branch may already exist,
    with earlier commits on it.
-2. Implement ${group.issues.length === 1 ? 'the slice' : 'each slice, in the order listed'} per the implement skill's per-slice
+2. Implement ${batch.issues.length === 1 ? 'the slice' : 'each slice, in the order listed'} per the implement skill's per-slice
    discipline: prove the behavior first (tdd), then lint, types, tests.
-   ${group.issues.length === 1 ? '' : `Commit each slice separately, so the pull request this branch becomes reads
+   ${batch.issues.length === 1 ? '' : `Commit each slice separately, so the pull request this branch becomes reads
    as one coherent change per commit. A slice you cannot finish does not sink
    the rest: implement the others and name it in your summary.`}
-3. COMMIT the work to ${branchForGroup(group)}. Do not push, do not merge, do
+3. COMMIT the work to ${branchForBatch(batch)}. Do not push, do not merge, do
    not open a PR — the conductor merges and ships.
-4. Advance ${group.issues.length === 1 ? `tracker issue ${group.issues[0].identifier}` : `each of ${group.issues.map(issue => issue.identifier).join(', ')}`} to "in progress" per the
+4. Advance ${batch.issues.length === 1 ? `tracker issue ${batch.issues[0].identifier}` : `each of ${batch.issues.map(issue => issue.identifier).join(', ')}`} to "in progress" per the
    tracker reference's state-transition section, and comment your progress.
 5. Report {status, branch, summary}; "branch" is the branch you actually
    committed to. NEEDS_CONTEXT or BLOCKED means you could not finish: name
@@ -379,9 +368,9 @@ ${numbered(group.issues.map(issue => `${issue.identifier} — ${issue.title}`))}
 const promptReview = () => `Review the assembled implementation against its spec, through one lens:
 does the code do what the spec asked, correctly?
 
-Under review: the complete work of this run, which lives on ${waveTip()} —
-the top of the run's dependency waves, containing every wave below it.
-Establish the diff yourself — the slice merges are on the wave branches and
+Under review: the complete work of this run, which lives on ${stackTip()} —
+the top of the run's dependency stack, containing every batch below it.
+Establish the diff yourself — the slice merges are on the batch branches and
 each slice carries a slice/<identifier> branch — and say in your first finding
 if you could not establish it rather than reviewing a guess.
 Spec: ${specPath}
@@ -412,16 +401,16 @@ Findings to resolve (fix round ${round}/${MAX_FIX_ROUNDS}):
 ${numbered(findings)}
 
 Work in the main worktree at the repo root.
-${waves.length === 1
+${stack.length === 1
   ? `Work directly on ${baseBranch} — the slices are already merged there.`
-  : `This run landed in ${waves.length} dependency waves, bottom to top:
-${numbered(waves)}
-Every finding opens with a file:line anchor. Fix it on the LOWEST wave that
-contains the code it names — \`git log <wave> -- <file>\` says which wave
-introduced the line — never on the top wave by default: a fix committed above
+  : `This run landed in ${stack.length} dependency stack, bottom to top:
+${numbered(stack)}
+Every finding opens with a file:line anchor. Fix it on the LOWEST batch that
+contains the code it names — \`git log <batch> -- <file>\` says which batch
+introduced the line — never on the top batch by default: a fix committed above
 the layer that owns it lands in the wrong pull request. After committing on a
-wave below the top, replay the waves above it so they carry the fix, in order:
-\`git checkout <higher wave> && git rebase <the wave directly below it>\`. On
+batch below the top, replay the stack above it so they carry the fix, in order:
+\`git checkout <higher batch> && git rebase <the batch directly below it>\`. On
 conflict, resolve per the merge-conflicts skill and continue the rebase.
 Nothing is published yet, so these rebases rewrite local branches only.`}
 Apply every finding, re-run lint/types/tests, and commit. Do not push and do not
@@ -438,42 +427,42 @@ The comment body is exactly:
 
 Post nothing else and change no issue fields.`
 
-const promptSettle = plan => `Settle this round's finished clusters, in the main worktree at the repo root.
+const promptSettle = plan => `Settle this round's finished batches, in the main worktree at the repo root.
 Work through them IN THE ORDER GIVEN, one at a time.
 
 ${trackerGuide}
 
-Each cluster lands on its OWN wave branch, stacked on the wave below it: the
-cluster is one coherent story and becomes one pull request, so mixing two into
-a wave is what makes a diff unreviewable. Waves nest — every wave contains all
-of them below it — which is what lets each pull request base on the last.
+Each batch lands on its OWN stack branch, stacked on the branch below it: a
+batch is one coherent story and becomes one pull request, so putting two on one
+branch is what makes a diff unreviewable. The branches nest — each contains
+every branch below it — which is what lets each pull request base on the last.
 
-Clusters:
-${numbered(plan.map(entry => `${entry.branch} → wave branch ${entry.target}${entry.target === entry.from ? '' : `, created from ${entry.from}`} (${entry.issues.map(issue => issue.identifier).join(', ')})`))}
+Batches:
+${numbered(plan.map(entry => `${entry.branch} → stack branch ${entry.target}${entry.target === entry.from ? '' : `, created from ${entry.from}`} (${entry.issues.map(issue => issue.identifier).join(', ')})`))}
 
-For each cluster, in order:
-1. Check out its wave branch, creating it from the branch named above if it
-   does not exist yet (git checkout -b <target> <from>). Never cut a wave from
-   the default branch — it would drop every wave below it.
-2. git merge --no-ff <its slice branch>
+For each batch, in order:
+1. Check out its stack branch, creating it from the branch named above if it
+   does not exist yet (git checkout -b <target> <from>). Never cut a stack
+   branch from the default branch — it would drop every batch below it.
+2. git merge --no-ff <the batch branch>
 3. On conflict, resolve it per the merge-conflicts skill and complete the merge.
    If you cannot resolve it confidently, git merge --abort, record merged:false
    with the reason, and move on — never force a resolution you are unsure of
-   and never abandon the remaining clusters. A cluster that fails leaves its
-   wave uncreated, so settle the NEXT cluster onto the last wave that did
-   succeed (or ${plan[0].from} if none has).
-4. Only after its merge succeeds, advance each of that cluster's issues to
+   and never abandon the remaining batches. A batch that fails leaves its stack
+   branch uncreated, so settle the NEXT batch onto the last stack branch that
+   did succeed (or ${plan[0].from} if none has).
+4. Only after its merge succeeds, advance each of that batch's issues to
    "in review" per the tracker reference's state-transition section, and post
    one comment with its one-line summary. Record stateUpdated:true only if the
    state write actually succeeded.
 
-Return one {identifier, merged, stateUpdated, detail, wave} per ISSUE — every
-issue of every cluster, in the order listed. "wave" is the branch that issue
-actually landed on, '' when it did not merge; the conductor builds the stack
-from what you report, so a wave you renamed or skipped must be reported as you
-left it. Do not push. The state write is for humans reading the tracker: a
-resumed run decides what is already merged from git, so a failed state write
-never loses or repeats work.`
+Return one {identifier, merged, stateUpdated, detail, stackBranch} per SLICE —
+every slice of every batch, in the order listed. "stackBranch" is the branch
+that slice actually landed on, '' when it did not merge; the conductor builds
+the stack from what you report, so a branch you renamed or skipped must be
+reported as you left it. Do not push. The state write is for humans reading the
+tracker: a resumed run decides what is already merged from git, so a failed
+state write never loses or repeats work.`
 
 const promptFileFindings = findings => `File surviving review findings as fix slices in tracker container ${containerId}.
 
@@ -487,32 +476,32 @@ issue template and check each with
 (body on stdin) before publishing. Do not re-file a finding that already has
 an open issue in the container.`
 
-const promptShip = () => waves.length === 1
+const promptShip = () => stack.length === 1
   ? `Ship the finished work on ${baseBranch}.
 
 Handoff tuple: ${tupleFor(null)}
 
-Run the ship-pr skill: verify lint/types/tests, group any uncommitted work into
+Run the ship-pr skill: verify lint/types/tests, batch any uncommitted work into
 atomic commits, push ${baseBranch}, and open a DRAFT pull request. Tracker
 links, issue ids, and tracker-only content never appear in commit messages, the
 PR title, or the PR body. Return the PR URL as the one entry of prUrls.`
   : `Ship this run's work as a STACKED pull request — it landed in
-${waves.length} dependency waves, bottom to top:
-${numbered(waves)}
-Each wave branch contains every wave below it, so ${waveTip()} holds the
+${stack.length} dependency stack, bottom to top:
+${numbered(stack)}
+Each batch branch contains every batch below it, so ${stackTip()} holds the
 complete work.
 
 Handoff tuple: ${tupleFor(null)}
 
-Run the ship-pr skill in STACK MODE: verify lint/types/tests, group any
-uncommitted work into atomic commits on the wave that owns it, then publish the
-waves in the order listed above as one DRAFT pull request per wave, each based
-on the wave below it and each with a body that stands on its own. The skill
+Run the ship-pr skill in STACK MODE: verify lint/types/tests, batch any
+uncommitted work into atomic commits on the batch that owns it, then publish the
+stack in the order listed above as one DRAFT pull request per batch, each based
+on the batch below it and each with a body that stands on its own. The skill
 names the exact commands, and the fallback for a host where stacked pull
 requests are unavailable — do not improvise a substitute.
 
 Tracker links, issue ids, and tracker-only content never appear in commit
-messages, PR titles, or PR bodies. Return every PR URL in prUrls, bottom wave
+messages, PR titles, or PR bodies. Return every PR URL in prUrls, bottom batch
 first.`
 
 const promptRunSummary = summary => `Post this run's summary as one comment on tracker container ${containerId},
@@ -521,7 +510,7 @@ per the tracker reference's container-comment convention.
 ${trackerGuide}
 
 Run: ${slug} — spec ${specPath}, integration branch ${baseBranch},
-dependency waves ${waves.join(' → ')}.
+dependency stack ${stack.join(' → ')}.
 
 The comment body is a short "swe-loop run summary" heading followed by this
 payload verbatim in a fenced json block:
@@ -653,10 +642,10 @@ const runImplementLoop = async passLabel => {
       log(`Workable query failed (${reason}) — stopping the ${passLabel} loop rather than reading it as finished work.`)
       return
     }
-    // A cold resume (no resumeFromRunId) starts with waves = [baseBranch] and
-    // would settle round 1 straight into wave 1, on top of layers a previous
+    // A cold resume (no resumeFromRunId) starts with stack = [baseBranch] and
+    // would settle round 1 straight into batch 1, on top of layers a previous
     // session already opened. git is the only record of them.
-    adoptWaves(workable.topWave)
+    adoptStack(workable.topStackBranch)
     const pending = (workable.issues || []).filter(issue => !settled.has(issue.id))
     if (!pending.length) {
       log(`Workable set drained on round ${round} of the ${passLabel} loop.`)
@@ -667,35 +656,32 @@ const runImplementLoop = async passLabel => {
     // Implement only. A slice's gate is its own lint/types/tests, which the
     // implementer runs and which cost no tokens; the code is reviewed once,
     // assembled, after the loop drains.
-    // Clustering happens before the fan-out, not after: the tax of a subagent
-    // is its whole context load plus a worktree plus a merge, paid before it
-    // edits a line, so parallelising two five-line fixes costs more than doing
-    // them in one context.
-    const groups = groupsFor(pending)
-    if (groups.length < pending.length) {
-      log(`Round ${round}: ${pending.length} slice(s) clustered into ${groups.length} implementer task(s).`)
-    }
-    const from = waveTip()
+    // Batching happens before the fan-out, not after: a subagent costs its whole
+    // context load plus a worktree plus a merge before it edits a line, so
+    // parallelising two five-line fixes costs more than doing both in one.
+    const batches = batchesFor(pending)
+    log(`Round ${round}: ${pending.length} slice(s) in ${batches.length} batch(es) — ${batches.map(batch => `${batch.name} (${batch.issues.length})`).join(', ')}.`)
+    const from = stackTip()
     const outcomes = await parallel(
-      groups.map(group => async () => {
-        const result = await agent(promptImplementer(group, from), {
-          label: `implement:${group.name}`,
+      batches.map(batch => async () => {
+        const result = await agent(promptImplementer(batch, from), {
+          label: `implement:${batch.name}`,
           phase: 'Implement',
           agentType: agentTypeFor('implementer'),
           isolation: 'worktree',
           schema: IMPLEMENTER_SCHEMA,
         })
         const fail = async reason => {
-          for (const issue of group.issues) await escalate(issue, reason)
+          for (const issue of batch.issues) await escalate(issue, reason)
           return null
         }
         if (!result) return await fail('implementer returned no result (skipped or errored)')
         if (result.status === 'NEEDS_CONTEXT' || result.status === 'BLOCKED') {
           return await fail(`implementer reported ${result.status}: ${clip(result.summary)}`)
         }
-        const branch = result.branch || branchForGroup(group)
-        log(`${group.name}: implemented (${result.status}) on ${branch}.`)
-        return { group, state: 'implemented', summary: result.summary, branch }
+        const branch = result.branch || branchForBatch(batch)
+        log(`${batch.name}: implemented (${result.status}) on ${branch}.`)
+        return { batch, state: 'implemented', summary: result.summary, branch }
       }),
     )
 
@@ -706,15 +692,15 @@ const runImplementLoop = async passLabel => {
     const ready = outcomes.filter(Boolean).filter(outcome => outcome.state === 'implemented')
     let merged = 0
     if (ready.length) {
-      // One wave per cluster, chained in settle order. Named up front so the
+      // One batch per batch, chained in settle order. Named up front so the
       // agent chains deterministically; read back from its report, because a
-      // cluster that fails to merge leaves its wave uncreated.
+      // batch that fails to merge leaves its batch uncreated.
       let tip = from
-      let height = waves.length
+      let height = stack.length
       let landed = slicesCompleted.length > 0 || height > 1
       const plan = ready.map(outcome => {
-        const target = landed ? `wave/${height + 1}` : baseBranch
-        const entry = { branch: outcome.branch, issues: outcome.group.issues, from: tip, target }
+        const target = landed ? `stack/${height + 1}` : baseBranch
+        const entry = { branch: outcome.branch, issues: outcome.batch.issues, from: tip, target }
         if (target !== tip) height += 1
         tip = target
         landed = true
@@ -726,7 +712,7 @@ const runImplementLoop = async passLabel => {
         schema: SETTLE_SCHEMA,
       })
       const results = settlement ? settlement.results || [] : []
-      for (const issue of ready.flatMap(outcome => outcome.group.issues)) {
+      for (const issue of ready.flatMap(outcome => outcome.batch.issues)) {
         const result = results.find(entry => entry.identifier === issue.identifier)
         if (!result || !result.merged) {
           await escalate(issue, `merge failed: ${result ? clip(result.detail) : 'the settle agent reported nothing for this slice'}`)
@@ -735,11 +721,11 @@ const runImplementLoop = async passLabel => {
         settled.add(issue.id)
         slicesCompleted.push(issue.identifier)
         merged += 1
-        if (result.wave && !waves.includes(result.wave)) {
-          waves.push(result.wave)
-          log(`Wave ${waves.length} opened: ${result.wave}.`)
+        if (result.stackBranch && !stack.includes(result.stackBranch)) {
+          stack.push(result.stackBranch)
+          log(`Stack height ${stack.length}: ${result.stackBranch}.`)
         }
-        log(`${issue.identifier}: merged into ${result.wave || baseBranch}.`)
+        log(`${issue.identifier}: merged into ${result.stackBranch || baseBranch}.`)
         // A failed state write is cosmetic and never escalates: the merge is in
         // git, which is what a resumed run reads. This used to be an escalation
         // because a missing marker really could lose or repeat a slice.
@@ -827,7 +813,7 @@ while (openFindings.length && reentries < SPEC_REVIEW_REENTRIES) {
 if (openFindings.length) {
   escalateRun(
     `${openFindings.length} finding(s) survived review`,
-    `${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds on ${waveTip()}`,
+    `${openFindings.length} finding(s) survived ${MAX_FIX_ROUNDS} fix rounds on ${stackTip()}`,
     openFindings,
   )
 }
@@ -842,8 +828,8 @@ const shipped = await agent(promptShip(), {
   schema: SHIP_SCHEMA,
 })
 if (!shipped) {
-  escalateRun('ship-pr', `publisher returned no PR URL; ${waveTip()} is merged but unpublished`)
-  log(`Ship failed — ${waveTip()} holds the merged work but no PR was opened.`)
+  escalateRun('ship-pr', `publisher returned no PR URL; ${stackTip()} is merged but unpublished`)
+  log(`Ship failed — ${stackTip()} holds the merged work but no PR was opened.`)
 } else {
   log(`Draft PR(s): ${(shipped.prUrls || []).join(', ')}`)
 }

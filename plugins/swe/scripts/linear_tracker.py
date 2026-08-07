@@ -31,9 +31,10 @@ READY_FOR_HUMAN_LABEL = "ready-for-human"
 BLOCKS_RELATION_TYPE = "blocks"
 # `knack/slice/` is the pre-rename prefix; both are accepted so a run already
 # in flight when this ships still has its branches recognised.
-SLICE_BRANCH_RE = re.compile(r"^(?:knack/)?slice/(?P<slug>.+)$")
-# One branch carries a whole cluster of slices, so every identifier in the
-# name counts as merged -- not just a name that is exactly slice/<identifier>.
+BATCH_BRANCH_RE = re.compile(r"^(?:knack/)?(?:slice|batch)/(?P<slug>.+)$")
+# One branch carries a whole batch of slices, so every identifier in the name
+# counts as merged -- not just a name that is exactly batch/<identifier>.
+# slice/ is still accepted: it is what runs started before the rename use.
 IDENTIFIER_RE = re.compile(r"[A-Z][A-Z0-9]*-\d+")
 # Written into a spec's YAML frontmatter. `project:` is already taken by the
 # llmOS vault link, hence the tracker_ prefix.
@@ -98,7 +99,7 @@ def merged_slice_identifiers(base_branch: str, run_git_fn=run_git) -> set[str]:
     )
     identifiers = set()
     for line in output.splitlines():
-        match = SLICE_BRANCH_RE.match(line.strip())
+        match = BATCH_BRANCH_RE.match(line.strip())
         if match:
             identifiers.update(IDENTIFIER_RE.findall(match.group("slug")))
     return identifiers
@@ -154,10 +155,10 @@ def workable_issues(
                 "identifier": issue["identifier"],
                 "title": issue["title"],
                 "labels": labels,
-                # The tracker's own clustering. The loop hands one implementer
-                # everything sharing it instead of one agent per issue, and the
-                # cluster becomes one pull request.
-                "group": (issue.get("projectMilestone") or {}).get("name", ""),
+                # The slice's batch. One implementer takes a whole batch
+                # instead of one agent per slice, and the batch is what becomes
+                # one pull request.
+                "batch": (issue.get("projectMilestone") or {}).get("name", ""),
             }
         )
     return result

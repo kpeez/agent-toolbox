@@ -50,12 +50,11 @@ The loop's workable query is deterministic here. From the repo root run
     uv run <scriptsDir>/linear_tracker.py workable --container <containerId> --merged-into <baseBranch>
 
 (the conductor's prompt supplies all three values). It prints a JSON array of
-`{id, identifier, title, labels, group}` and exits non-zero on a failed
+`{id, identifier, title, labels, batch}` and exits non-zero on a failed
 `linear` call — report a non-zero exit as a query failure, never as an empty
-result. `group` is the issue's **project milestone** (`''` when it has none):
-the loop hands one implementer everything sharing a milestone rather than
-spawning one per issue, and that cluster becomes one pull request. Put slices
-that belong to one reviewable story on one milestone when you file them.
+result. `batch` is the slice's **project milestone** (`''` when it has none).
+File every slice belonging to one reviewable story on one milestone: the loop
+hands a whole batch to one implementer and publishes it as one pull request.
 
 **The output is final.** The script applies the workability rules itself:
 closed or already-merged issues are dropped, a merged issue counts as a
