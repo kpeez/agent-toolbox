@@ -38,7 +38,7 @@ def issue(
     return {
         "id": f"id-{identifier}",
         "identifier": identifier,
-        "title": f"slice {identifier}",
+        "title": f"task {identifier}",
         "state": {"type": state},
         "labels": {"nodes": [{"name": name} for name in labels or []]},
         "inverseRelations": {"nodes": relations},
@@ -48,13 +48,13 @@ def issue(
 def run(
     *issues: dict[str, Any], merged: list[str] | None = None, base: str | None = "base"
 ) -> list[str]:
-    """Identifiers reported workable, given `merged` slice branches on `base`."""
+    """Identifiers reported workable, given `merged` task branches on `base`."""
 
     def fake_linear(args: list[str]) -> str:
         return json.dumps({"nodes": list(issues)})
 
     def fake_git(args: list[str]) -> str:
-        return "\n".join([f"slice/{name}" for name in merged or []] + ["main"])
+        return "\n".join([f"change/{name}" for name in merged or []] + ["main"])
 
     result = tracker.workable_issues(
         "container-1", base, run_linear_fn=fake_linear, run_git_fn=fake_git
@@ -70,9 +70,9 @@ def test_a_merged_slice_is_dropped_from_the_frontier() -> None:
 
 
 def test_a_merged_blocker_unblocks_its_dependent() -> None:
-    """The stall both observed multi-slice runs hit: a merged slice keeps its
+    """The stall both observed multi-task runs hit: a merged task keeps its
     open tracker state until the PR lands, so judging blockers by state alone
-    strands every dependent slice."""
+    strands every dependent task."""
     blocker = issue("KP-1")
     assert run(blocker, issue("KP-2", blocked_by=[blocker]), merged=["KP-1"]) == [
         "KP-2"

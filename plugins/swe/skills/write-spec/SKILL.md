@@ -8,7 +8,7 @@ description: Create a feature spec — a local, pure-markdown design draft whose
 A spec is a **local, transient, pure-markdown design draft**. It exists to
 force design thinking before code and to give the human a review gate. It is NOT a
 status ledger: task and status truth live on the issue tracker (see `/to-issues`).
-Once the design is settled and sliced into issues, the tracker is authoritative —
+Once the design is settled and split into issues, the tracker is authoritative —
 the local spec is authoring residue.
 
 Specs are not user-written. A spec is the product of a `/sharpen` session (or an
@@ -50,10 +50,10 @@ the `---` divider, and flag the header for the user to confirm.
 4. **Fork** — hand off or implement solo:
    - **Hand off (default when work will fan out):** run `/to-issues` to publish
      the spec into its tracker container (parent issue, or Linear project) with
-     labeled slice issues. Separate agents pick up
+     labeled task issues. Separate agents pick up
      each issue and run its own test → implement → review → PR loop. The
      tracker owns status from here.
-   - **Solo (single-slice spec, one sitting):** prove each behavior per
+   - **Solo (single-task spec, one sitting):** prove each behavior per
      `/tdd`, then a host-native review pass, then `/ship-pr`.
 
 ## /write-spec new <name>

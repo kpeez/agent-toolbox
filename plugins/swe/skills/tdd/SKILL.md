@@ -135,7 +135,7 @@ area you're touching. Before writing code:
       interactive session. In a workflow run (or any other non-interactive
       session), an unresolved interface question is not a user prompt: report
       NEEDS_CONTEXT with the specific question to your orchestrator and stop
-      that slice; do not guess the interface.
+      that task; do not guess the interface.
 - [ ] Identify opportunities for deep modules — small interface, deep
       implementation (vocabulary and key tests in the `codebase-design`
       skill: [../codebase-design/SKILL.md](../codebase-design/SKILL.md))

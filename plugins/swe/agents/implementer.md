@@ -1,6 +1,6 @@
 ---
 name: implementer
-description: Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker slices.
+description: Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker tasks.
 model: sonnet
 effort: medium
 allowed-tools: Read, Write, Edit, Grep, Glob, Bash
@@ -17,7 +17,7 @@ schema win. Do not impose an additional status, prose, or response shape.
 
 ## Scope
 
-- Implement only the code, tests, documentation, or tracker slice the caller
+- Implement only the code, tests, documentation, or tracker task the caller
   assigns.
 - Treat caller-supplied paths, constraints, and workflow steps as hard
   boundaries.

@@ -53,13 +53,13 @@ Two ways to run the spine:
 - **Skill by skill** — invoke each skill yourself. Useful for work that is
   already mid-flight or does not need the full loop.
 - **As one resumable command** — `/start-loop <idea>` owns the interactive
-  half (triage, design, approval gate, slicing), then launches the swe-loop
+  half (triage, design, approval gate, splitting), then launches the swe-loop
   conductor, which runs every remaining phase without prompting.
 
 ## The swe-loop
 
 `/start-loop` first triages the idea against four criteria (unambiguous
-against the repo and ADRs, ≤ 6 estimated slices, no destructive surface, no
+against the repo and ADRs, ≤ 6 estimated tasks, no destructive surface, no
 new external dependencies). All four pass → the design phase runs
 autonomously and the spec is marked approved without a prompt. Any fail →
 the gated path: `/sharpen` interactively, `/write-spec`, and one explicit
@@ -73,25 +73,25 @@ structured data (identifiers in, typed status out, never prose).
 
 ```mermaid
 flowchart TD
-  L(["launch args:<br/>specPath, slug, containerId,<br/>baseBranch, scriptsDir<br/>(slices already on the tracker)"]) --> F{"workable query:<br/>workable slices?"}
-  F -- "pending" --> IM["implementer<br/>one slice per agent,<br/>isolated worktree,<br/>gated on its own tests"]
+  L(["launch args:<br/>specPath, slug, containerId,<br/>baseBranch, scriptsDir<br/>(tasks already on the tracker)"]) --> F{"workable query:<br/>workable tasks?"}
+  F -- "pending" --> IM["implementer<br/>one task per agent,<br/>isolated worktree,<br/>gated on its own tests"]
   IM --> M["settle: one agent merges,<br/>advances state, whole round"]
   M --> F
   F -- "drained" --> R{"one adherence review<br/>of the assembled work"}
   R -- "findings<br/>(max 2 fix rounds)" --> FX["fixer on baseBranch"]
   FX --> R
-  R -- "still open<br/>(1 re-entry)" --> FF["planner files<br/>fix slices"]
+  R -- "still open<br/>(1 re-entry)" --> FF["planner files<br/>fix tasks"]
   FF --> F
   R -- "settled" --> SH["Ship<br/>publisher: atomic commits,<br/>push, draft PR"]
-  SH --> OUT(["summary: prUrl, slicesCompleted,<br/>escalations"])
+  SH --> OUT(["summary: prUrls, tasksCompleted,<br/>escalations"])
 ```
 
-The code is reviewed **once**, assembled, rather than per slice and then again
-through a lens panel: a slice's own gate is the lint/types/tests its
+The code is reviewed **once**, assembled, rather than per task and then again
+through a lens panel: a task's own gate is the lint/types/tests its
 implementer already runs, which cost no tokens. In the run that motivated this
 shape, reviewing the same lines three times was 52% of the token spend, and
-merging and marking each slice through its own agent was another 15% of it
-spent on deterministic git and one API call per slice.
+merging and marking each task through its own agent was another 15% of it
+spent on deterministic git and one API call per task.
 
 The loop's cost ceilings are explicit constants, guarded by a static test:
 the assembled review gets at most **2** fix rounds, surviving findings
@@ -100,8 +100,8 @@ itself caps at **25** rounds — anything that will not settle inside those
 bounds becomes a loud escalation instead of a longer run. Unresolved findings
 remain structured in the run summary's escalations.
 
-Slices run concurrently: implementers work in isolated git worktrees and
-merges into the integration branch are serialized, so parallel slices never
+Tasks run concurrently: implementers work in isolated git worktrees and
+merges into the integration branch are serialized, so parallel tasks never
 race on the working copy.
 
 ### Handoffs and escalation
@@ -139,7 +139,7 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 | Skill        | What it does                                                                                                                       |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
 | `start-loop` | Runs or resumes the swe-loop: container, triage, design, approval gate, then launches the conductor                                 |
-| `to-issues`  | Publishes a spec as vertical-slice tracker issues with native blocked-by relations; the tracker becomes the status ledger           |
+| `to-issues`  | Publishes a spec as vertical-task tracker issues with native blocked-by relations; the tracker becomes the status ledger           |
 | `implement`  | Orchestrates implementation — and is the manual fallback conductor on hosts without the Workflow tool                               |
 | `tdd`        | Functional-test discipline: sketch intended behavior as `tests/temp/` scratch scripts, refactor survivors into committed tests      |
 | `ship-pr`    | Atomic commits, push, draft PR kept current; `finalize` re-verifies and flips it ready for review                                   |
@@ -165,7 +165,7 @@ decides what runs when.
 | ----------------- | ---------------------------------------------------------------------------------------- | --------------------- | ---------------------- |
 | `explorer`        | Cheap read-only evidence gathering with cited paths                                      | haiku                 | gpt-5.6-luna (medium)  |
 | `architect`       | Read-only design resolution and spec drafting; returns drafts for the caller to apply    | fable (high)          | gpt-5.6-sol (high)     |
-| `planner`         | Publishes an approved spec as vertical tracker slices with blocked-by relations          | sonnet (medium)       | gpt-5.6-terra (medium) |
+| `planner`         | Publishes an approved spec as vertical tracker tasks with blocked-by relations          | sonnet (medium)       | gpt-5.6-terra (medium) |
 | `implementer`     | Executes one bounded code, test, documentation, or tracker task under caller constraints | sonnet (medium)         | gpt-5.6-sol (medium)   |
 | `reviewer`        | Read-only review of a diff or implementation against caller-provided criteria or a lens  | sonnet (high)         | gpt-5.6-terra (high)   |
 | `publisher`       | Owns git and GitHub publication: atomic commits, push, PR creation                       | sonnet (medium)       | gpt-5.6-terra (medium) |

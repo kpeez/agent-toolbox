@@ -35,10 +35,17 @@ Two modes:
   creation, before first push) is named `<user>/<issue-id>-<slug>` (e.g.
   `kyle/kp-123-fix-auth`) so Linear's GitHub integration links the PR and
   automates the In Review/Done transitions.
-- **Never add agent attribution** (`Co-authored-by`, `Generated with`, etc.).
+- **Never add agent attribution.** No `Co-authored-by` trailer naming Claude or
+  Anthropic, no `Generated with …` footer, no 🤖, and above all **no session
+  URL** — a `claude.ai`/`claude.com` link in a commit message is unrewritable
+  once pushed. The `block-agent-attribution` hook rejects the commit or
+  `gh` call outright; when it fires, rewrite the text rather than working
+  around the guard.
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only in finalize mode or when the user asks.
-- **Never force-push.** Squash merge by default.
+- **Never force-push** — except when rebasing a published stack, where
+  `gh stack rebase`/`sync` force-push by design and there is no alternative.
+  Squash merge by default.
 - **Reviewable Markdown.** PR bodies and optional PR markdown artifacts must be
   easy to review as plain Markdown.
 - **Verify before you commit.** Lint, types, and tests (including the tests
@@ -68,11 +75,37 @@ Written for a reviewer with no session context. Three parts:
   say so and explain what a reviewer should look at instead — don't pad the
   section with gate output.
 
+## Stack mode
+
+For work that arrived as a **stack** — one branch per changeset, each built on the
+one below — publish one draft PR per changeset instead of one PR for everything. A
+changeset is one reviewable story, so the reviewer reads one story at a time, and
+lower changesets can land while upper ones are still in review.
+
+Everything above still applies; three steps change:
+
+- **Publish with `gh stack link --base <default branch> <bottom> … <top>`**,
+  never `gh pr create` per branch. `link` pushes every branch, opens a draft PR
+  per changeset with the correct base chaining, corrects any base that is already
+  wrong, and registers them as a GitHub stack — with no local stack state to
+  keep in sync. Exit code 9 means stacked PRs are not enabled on the
+  repository: fall back to a single PR from the top branch and say so.
+- **Each PR body stands alone** and names its changeset's position in the stack.
+  The reviewer's guide covers that changeset's diff, not the whole feature.
+- **Never `gh pr merge` a stacked PR** — it does not work. Merging is
+  `gh stack merge --yes`, bottom-up and all-or-nothing, and stays a human
+  action. Finalize flips the drafts with `gh stack submit --auto --open`.
+
+Fix findings on the lowest branch that owns the code, then replay the branches
+above it (`git rebase` per branch while unpublished, `gh stack rebase --upstack`
+once the stack exists). A fix committed above the changeset it belongs to lands in
+the wrong PR.
+
 ## Workflow
 
 1. **Context** — resolve the spec: the argument if given, else the most
    recently modified `docs/agents/specs/NNNN-*.md`, else proceed without one. Read
-   the spec and its linked tracker issues for intent and the desired PR slice.
+   the spec and its linked tracker issues for intent and the desired PR scope.
    Resolve the base branch from the remote default — never assume `main`:
    `gh repo view --json defaultBranchRef -q .defaultBranchRef.name`, else
    `git symbolic-ref --short refs/remotes/origin/HEAD | sed 's@^origin/@@'`,
@@ -115,10 +148,10 @@ skill — it stays a human action.
 5. **Link** — comment on the tracker issue(s) and move them to review/done per
    the tracker's states.
 6. **Close the spec** — if a spec was resolved in step 1 and its container's
-   remaining slices are closed, set `status: done`: bump `updated`, preserve
+   remaining tasks are closed, set `status: done`: bump `updated`, preserve
    `created`, and append yourself to `authors` if the spec carries them — never
    remove a prior author. This is the step nothing else can do for you: a merged
-   PR does not know which spec it completed. No spec, or slices still open —
+   PR does not know which spec it completed. No spec, or tasks still open —
    leave the status alone and say so in the summary.
 7. **Summarize** — PR URL, verification results, tracker issues touched, spec
    status.

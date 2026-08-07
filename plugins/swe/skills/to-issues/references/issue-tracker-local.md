@@ -20,14 +20,14 @@ vault, so issue files and their statuses are private and never committed.
 
 ## swe-loop workable set
 
-The container is the spec; its slices are the spec's `NNNN-<slug>-issue-*.md`
+The container is the spec; its tasks are the spec's `NNNN-<slug>-issue-*.md`
 files. Report each as `{id, identifier, title}` with the file path as `id`, the
 `issue-<NN>-<issue-slug>` filename segment as `identifier`, and the file's first
 heading as `title`. An unreadable or missing spec directory is a query failure,
 never an empty result.
 
 Which of those are workable is the conductor's rule, not this file's — it states
-what counts as done and blocked, including that a slice merged into the run's
+what counts as done and blocked, including that a task merged into the run's
 integration branch is done whatever the file says. Do not re-derive it here.
 
 "Blocked by" references other issue files by relative path. Reading or posting
@@ -44,8 +44,8 @@ The spec is its own container, so no lookup is needed; a spec may still record
 
 Set the issue file's frontmatter `status:` as the loop works:
 
-- slice picked up: `status: in-progress`
-- slice merged into the integration branch: `status: in-review`
+- task picked up: `status: in-progress`
+- task merged into the integration branch: `status: in-review`
 - end of run: nothing to reconcile — the spec has no separate status of its own
   beyond its own lifecycle field
 

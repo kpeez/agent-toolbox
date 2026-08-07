@@ -9,10 +9,10 @@ Two verbs:
 Everything reaches Linear through the `linear` CLI, so this file holds policy
 rather than transport: no GraphQL, no auth, no pagination of its own.
 
-Why a slice counts as done is the subtle part. A slice the loop merged has not
+Why a task counts as done is the subtle part. A task the loop merged has not
 changed state in Linear -- that only happens when the run's PR lands -- so
-judging by tracker state alone strands every dependent slice and drains the
-frontier after the first round of a chain. The authority is git: a slice whose
+judging by tracker state alone strands every dependent task and drains the
+frontier after the first round of a chain. The authority is git: a task whose
 branch is merged into the integration branch is done, full stop. Tracker state
 is the human-visible projection of that, never the thing correctness rests on.
 """
@@ -29,9 +29,14 @@ from pathlib import Path
 CLOSED_STATE_TYPES = {"completed", "canceled"}
 READY_FOR_HUMAN_LABEL = "ready-for-human"
 BLOCKS_RELATION_TYPE = "blocks"
-# `knack/slice/` is the pre-rename prefix; both are accepted so a run already
+# `knack/task/` is the pre-rename prefix; both are accepted so a run already
 # in flight when this ships still has its branches recognised.
-SLICE_BRANCH_RE = re.compile(r"^(?:knack/)?slice/(?P<identifier>.+)$")
+CHANGE_BRANCH_RE = re.compile(r"^(?:knack/)?(?:slice|batch|change)/(?P<slug>.+)$")
+# One branch carries a whole changeset of tasks, so every identifier in the name
+# counts as merged -- not just a name that is exactly change/<identifier>.
+# slice/ and batch/ are still accepted: they are what runs started
+# before the rename use.
+IDENTIFIER_RE = re.compile(r"[A-Z][A-Z0-9]*-\d+")
 # Written into a spec's YAML frontmatter. `project:` is already taken by the
 # llmOS vault link, hence the tracker_ prefix.
 CONTAINER_KEY = "tracker_container"
@@ -88,16 +93,16 @@ def load_json(payload: str, what: str) -> dict:
 # ---- workable ---------------------------------------------------------------
 
 
-def merged_slice_identifiers(base_branch: str, run_git_fn=run_git) -> set[str]:
-    """Identifiers whose slice branch is already merged into `base_branch`."""
+def merged_task_identifiers(base_branch: str, run_git_fn=run_git) -> set[str]:
+    """Identifiers whose task branch is already merged into `base_branch`."""
     output = run_git_fn(
         ["branch", "--merged", base_branch, "--format=%(refname:short)"]
     )
     identifiers = set()
     for line in output.splitlines():
-        match = SLICE_BRANCH_RE.match(line.strip())
+        match = CHANGE_BRANCH_RE.match(line.strip())
         if match:
-            identifiers.add(match.group("identifier"))
+            identifiers.update(IDENTIFIER_RE.findall(match.group("slug")))
     return identifiers
 
 
@@ -130,7 +135,7 @@ def workable_issues(
     run_git_fn=run_git,
 ) -> list[dict]:
     """Issues that are not done, not blocked, and not flagged for a human."""
-    merged = merged_slice_identifiers(base_branch, run_git_fn) if base_branch else set()
+    merged = merged_task_identifiers(base_branch, run_git_fn) if base_branch else set()
     result = []
     for issue in fetch_container_issues(container_id, run_linear_fn):
         if is_done(issue, merged):
@@ -151,6 +156,10 @@ def workable_issues(
                 "identifier": issue["identifier"],
                 "title": issue["title"],
                 "labels": labels,
+                # The task's changeset. One implementer takes a whole changeset
+                # instead of one agent per task, and the changeset is what becomes
+                # one pull request.
+                "changeset": (issue.get("projectMilestone") or {}).get("name", ""),
             }
         )
     return result
@@ -378,7 +387,7 @@ def main() -> int:
     workable.add_argument(
         "--merged-into",
         metavar="BRANCH",
-        help="integration branch; slices already merged into it count as done",
+        help="integration branch; tasks already merged into it count as done",
     )
 
     container = verbs.add_parser(

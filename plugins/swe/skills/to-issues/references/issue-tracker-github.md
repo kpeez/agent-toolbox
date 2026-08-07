@@ -9,20 +9,20 @@ Issues for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 - **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
 - **Comment on an issue**: `gh issue comment <number> --body "..."`
 - **Apply / remove triage labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`. Create missing labels with `gh label create` before applying.
-- **Parent/sub-issues**: GitHub supports native sub-issues — link each child to the parent via the sub-issues REST API or the GitHub MCP `sub_issue_write` tool; don't hand-maintain a `- [ ]` task list in the parent body. Each slice's body still links back to the parent.
+- **Parent/sub-issues**: GitHub supports native sub-issues — link each child to the parent via the sub-issues REST API or the GitHub MCP `sub_issue_write` tool; don't hand-maintain a `- [ ]` task list in the parent body. Each task's body still links back to the parent.
 - **Close**: `gh issue close <number> --comment "..."`
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
 ## swe-loop workable set
 
-The container is the parent issue; its slices are that issue's sub-issues. List
+The container is the parent issue; its tasks are that issue's sub-issues. List
 them with `gh issue list` (see Conventions) and report each as
 `{id, identifier, title}` with the issue number as `id` and `#<number>` as
 `identifier`. A failed `gh` call is a query failure, never an empty result.
 
 Which of those are workable is the conductor's rule, not this file's — it
-states what counts as done and blocked, including that a slice merged into the
+states what counts as done and blocked, including that a task merged into the
 run's integration branch is done whatever the tracker says. Do not re-derive it
 here.
 
@@ -35,8 +35,8 @@ an issue body — a plain `Spec: <specPath>` line for humans is fine.
 
 ## State transitions
 
-- slice picked up: `gh issue edit <number> --add-label in-progress`
-- slice merged into the integration branch: `gh issue edit <number> --remove-label in-progress --add-label in-review`
+- task picked up: `gh issue edit <number> --add-label in-progress`
+- task merged into the integration branch: `gh issue edit <number> --remove-label in-progress --add-label in-review`
 - end of run: nothing to reconcile — GitHub has no project-level status here
 
 Create missing labels with `gh label create` first. Never close an issue: the

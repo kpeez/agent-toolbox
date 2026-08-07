@@ -5,7 +5,7 @@ description: Run or resume the swe-loop — triage the idea, settle the design (
 
 # /start-loop — swe-loop runner
 
-You own the interactive half: container, triage, design, gate, slice, launch.
+You own the interactive half: container, triage, design, gate, task, launch.
 Everything after — implement → review → ship — belongs to the `swe-loop`
 workflow script; you launch it and read its summary, never run those phases
 by hand.
@@ -65,7 +65,7 @@ parses it. Comment body, verbatim shape:
 ```
 swe triage verdict: GATED | AUTONOMOUS
 - unambiguous against the repo and docs/agents/adrs/: pass|fail — <why>
-- estimated slice count <= 6: pass|fail — <estimate>
+- estimated task count <= 6: pass|fail — <estimate>
 - no destructive or irreversible surface (data migrations, deletions,
   external side effects): pass|fail — <why>
 - no new external dependencies: pass|fail — <why>
@@ -106,20 +106,20 @@ No user prompt anywhere in this path.
 4. Comment the gate record on the container: auto-approved, the spec path, and
    a pointer to the triage verdict comment above it.
 
-## 4. Slice the spec
+## 4. Task the spec
 
-Slicing is yours, not the conductor's — you hold the spec context, and in
-practice the slices are often already on the tracker before a run starts.
+Splitting is yours, not the conductor's — you hold the spec context, and in
+practice the tasks are often already on the tracker before a run starts.
 Dispatch **`swe:planner`** (or the codex delegator when the user routed
 `planner` to Codex) to run `/to-issues` against the approved spec: publish
-every slice into the container from step 1 with native blocked-by relations,
+every task into the container from step 1 with native blocked-by relations,
 validating each drafted body with
 `uv run <scriptsDir>/validate_artifacts.py issue -` before it posts. The container is
 already resolved, so a resumed run or a container that already holds issues
-covering the spec gets its existing slices aligned and extended, never
+covering the spec gets its existing tasks aligned and extended, never
 duplicated.
 
-Then verify the workable set before launching: at least one published slice
+Then verify the workable set before launching: at least one published task
 must be workable (not done, unblocked, no `ready-for-human` label). An empty
 set is a stop, not a launch — the conductor would spin its workable query on
 nothing.
@@ -205,7 +205,7 @@ else echo "IN DESIGN: $spec"; fi
   say in your reply that you did so. Pass the run id as `resumeFromRunId`, a
   **parameter of the Workflow tool invocation** — not a field inside `args`,
   where it is silently ignored. Even without a run id the resume is safe: the
-  conductor reads what is already merged from git, so slices finished on the
+  conductor reads what is already merged from git, so tasks finished on the
   branch are never redone.
 - **IN DESIGN** → resume the design phase the recorded verdict routes to at the
   existing spec: the gated path reopens `write-spec` at the review gate, the
@@ -216,7 +216,8 @@ else echo "IN DESIGN: $spec"; fi
 
 Once the spec is approved, the workflow runs to completion without
 prompting. Problems reach you as **data, after the fact**: the run summary
-(`{prUrl, slicesCompleted, escalations}`) plus the conductor's
+(`{prUrls, tasksCompleted, escalations}` — one URL per changeset)
+plus the conductor's
 per-issue escalation comments — never a live worker report.
 
 1. Read the summary's `escalations` when the run returns; each carries its
@@ -226,7 +227,7 @@ per-issue escalation comments — never a live worker report.
    decision as a comment on the issue; relaunch the workflow to pick it up. A
    logged judgment call beats a stalled loop.
 3. **Interrupt the user only for**: a scope change, a spec contradiction, a
-   blocking `ready-for-human` slice, or a destructive/irreversible action.
+   blocking `ready-for-human` task, or a destructive/irreversible action.
 
 Every resolution lands as an issue comment so a fresh session inherits the
 decision trail.
