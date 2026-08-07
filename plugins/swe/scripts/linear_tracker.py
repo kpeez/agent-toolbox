@@ -31,7 +31,10 @@ READY_FOR_HUMAN_LABEL = "ready-for-human"
 BLOCKS_RELATION_TYPE = "blocks"
 # `knack/slice/` is the pre-rename prefix; both are accepted so a run already
 # in flight when this ships still has its branches recognised.
-SLICE_BRANCH_RE = re.compile(r"^(?:knack/)?slice/(?P<identifier>.+)$")
+SLICE_BRANCH_RE = re.compile(r"^(?:knack/)?slice/(?P<slug>.+)$")
+# One branch carries a whole cluster of slices, so every identifier in the
+# name counts as merged -- not just a name that is exactly slice/<identifier>.
+IDENTIFIER_RE = re.compile(r"[A-Z][A-Z0-9]*-\d+")
 # Written into a spec's YAML frontmatter. `project:` is already taken by the
 # llmOS vault link, hence the tracker_ prefix.
 CONTAINER_KEY = "tracker_container"
@@ -97,7 +100,7 @@ def merged_slice_identifiers(base_branch: str, run_git_fn=run_git) -> set[str]:
     for line in output.splitlines():
         match = SLICE_BRANCH_RE.match(line.strip())
         if match:
-            identifiers.add(match.group("identifier"))
+            identifiers.update(IDENTIFIER_RE.findall(match.group("slug")))
     return identifiers
 
 
@@ -151,6 +154,10 @@ def workable_issues(
                 "identifier": issue["identifier"],
                 "title": issue["title"],
                 "labels": labels,
+                # The tracker's own clustering. The loop hands one implementer
+                # everything sharing it instead of one agent per issue, and the
+                # cluster becomes one pull request.
+                "group": (issue.get("projectMilestone") or {}).get("name", ""),
             }
         )
     return result

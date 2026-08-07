@@ -320,8 +320,11 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
                             "merged": True,
                             "stateUpdated": True,
                             "detail": "merged",
+                            "wave": wave,
                         }
-                        for n in (1, 2, 3)
+                        # Three ungrouped slices are three clusters, so each
+                        # lands on its own wave.
+                        for n, wave in ((1, "worktree-stub"), (2, "wave/2"), (3, "wave/3"))
                     ]
                 },
             },
@@ -343,7 +346,7 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
 
     prompt = call_with_label(result, "settle:implement:1")["prompt"]
     for n in (1, 2, 3):
-        assert f"KP-{n} on slice/KP-{n}" in prompt
+        assert f"slice/KP-{n} → wave branch" in prompt
 
 
 def test_an_unmerged_slice_escalates_while_the_round_continues(
@@ -709,9 +712,14 @@ def test_workable_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
 
 
 def run_waves(
-    tmp_path: Path, rounds: int, *, first_workable: dict[str, Any] | None = None
+    tmp_path: Path,
+    rounds: int,
+    *,
+    first_workable: dict[str, Any] | None = None,
+    waves: list[str] | None = None,
 ) -> dict[str, Any]:
     """Script `rounds` rounds of one slice each, every slice merging cleanly."""
+    landed = waves or ["worktree-stub", *[f"wave/{n}" for n in range(2, rounds + 1)]]
     responses: list[dict[str, Any]] = []
     for r in range(1, rounds + 1):
         issue = {"id": f"issue-{r}", "identifier": f"KP-{r}", "title": f"slice {r}"}
@@ -743,6 +751,7 @@ def run_waves(
                             "merged": True,
                             "stateUpdated": True,
                             "detail": "merged",
+                            "wave": landed[r - 1],
                         }
                     ]
                 },
@@ -762,8 +771,8 @@ def test_a_single_wave_run_settles_and_ships_exactly_as_before(
     result = run_waves(tmp_path, 1)
 
     settle = call_with_label(result, "settle:implement:1")["prompt"]
-    assert "into worktree-stub" in settle
-    assert "wave/" not in settle
+    assert "wave branch worktree-stub" in settle
+    assert "created from" not in settle
     # One wave is not a stack: the run must not reach for gh stack at all.
     ship = call_with_label(result, "ship:stub-run")["prompt"]
     assert "gh stack link" not in ship
@@ -776,12 +785,11 @@ def test_a_later_round_settles_into_a_wave_stacked_on_the_one_below(
     result = run_waves(tmp_path, 3)
 
     second = call_with_label(result, "settle:implement:2")["prompt"]
-    assert "into wave/2" in second
     # Cutting the wave from the wave below is what makes it contain every layer
     # underneath, which the PR base chaining depends on.
-    assert "git checkout -b wave/2 worktree-stub" in second
+    assert "wave branch wave/2, created from worktree-stub" in second
     third = call_with_label(result, "settle:implement:3")["prompt"]
-    assert "git checkout -b wave/3 wave/2" in third
+    assert "wave branch wave/3, created from wave/2" in third
 
 
 def test_implementers_branch_from_the_current_wave_tip(tmp_path: Path) -> None:
@@ -812,10 +820,149 @@ def test_waves_left_by_an_earlier_session_are_adopted_before_settling(
     # A cold resume (no resumeFromRunId) has no memory of the layers a previous
     # session opened; git is the only record. Settling into wave 1 on top of an
     # existing wave/3 would bury three layers of published work.
-    result = run_waves(tmp_path, 1, first_workable={"topWave": "wave/3"})
+    result = run_waves(tmp_path, 1, first_workable={"topWave": "wave/3"}, waves=["wave/4"])
 
     settle = call_with_label(result, "settle:implement:1")["prompt"]
-    assert "into wave/4" in settle
-    assert "git checkout -b wave/4 wave/3" in settle
+    assert "wave branch wave/4, created from wave/3" in settle
     ship = call_with_label(result, "ship:stub-run")["prompt"]
     assert "1. worktree-stub\n2. wave/2\n3. wave/3\n4. wave/4" in ship
+
+
+# ---- clustering: one implementer per story, not per issue -------------------
+# Spawning a subagent costs its whole context load, a worktree and a merge
+# before it edits a line. A sweep that files 41 findings across 7 milestones
+# must cost 7 implementers, not 41 -- and the milestone is also the boundary a
+# reviewer reads, so the same clustering sets the pull requests.
+
+B1 = "B1 Tracking correctness"
+B2 = "B2 Output durability & schema"
+
+
+def clustered_issues() -> list[dict[str, Any]]:
+    grouped = [(432, B1), (439, B1), (433, B2), (438, B2), (445, B2)]
+    return [
+        {"id": f"issue-{n}", "identifier": f"KP-{n}", "title": f"finding {n}", "group": g}
+        for n, g in grouped
+    ]
+
+
+def run_clustered(
+    tmp_path: Path, issues: list[dict[str, Any]], settle: list[dict[str, Any]]
+) -> dict[str, Any]:
+    return run_loop(
+        tmp_path,
+        [
+            {"match": "^workable:implement:1$", "result": {"issues": issues}},
+            {"match": "^workable:", "result": {"issues": []}},
+            {
+                "match": "^implement:",
+                "result": {"status": "DONE", "branch": "", "summary": "landed"},
+            },
+            {"match": "^settle:", "result": {"results": settle}},
+            {"match": "^review:assembled$", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example.test/pr/1"]}},
+            {"match": "^run-summary:", "result": "posted"},
+        ],
+        default_result=None,
+    )
+
+
+def settled(*pairs: tuple[int, str]) -> list[dict[str, Any]]:
+    return [
+        {
+            "identifier": f"KP-{n}",
+            "merged": True,
+            "stateUpdated": True,
+            "detail": "merged",
+            "wave": wave,
+        }
+        for n, wave in pairs
+    ]
+
+
+def test_issues_sharing_a_tracker_group_go_to_one_implementer(
+    tmp_path: Path,
+) -> None:
+    result = run_clustered(
+        tmp_path,
+        clustered_issues(),
+        settled(
+            (432, "worktree-stub"),
+            (439, "worktree-stub"),
+            (433, "wave/2"),
+            (438, "wave/2"),
+            (445, "wave/2"),
+        ),
+    )
+
+    # Five findings, two milestones, two implementers.
+    implementers = [label for label in labels(result) if label.startswith("implement:")]
+    assert implementers == [f"implement:{B1}", f"implement:{B2}"]
+
+    prompt = call_with_label(result, f"implement:{B2}")["prompt"]
+    assert "implement 3 related slices" in prompt
+    for n in (433, 438, 445):
+        assert f"KP-{n}" in prompt
+    # All three identifiers stay in the branch name: it is the only trace a
+    # resumed run has of what this cluster already finished.
+    assert "slice/KP-433-KP-438-KP-445-b2-output-durability-schema" in prompt
+    assert result["summary"]["slicesCompleted"] == [
+        "KP-432",
+        "KP-439",
+        "KP-433",
+        "KP-438",
+        "KP-445",
+    ]
+
+
+def test_each_cluster_lands_on_its_own_wave_within_one_round(
+    tmp_path: Path,
+) -> None:
+    result = run_clustered(
+        tmp_path,
+        clustered_issues(),
+        settled(
+            (432, "worktree-stub"),
+            (439, "worktree-stub"),
+            (433, "wave/2"),
+            (438, "wave/2"),
+            (445, "wave/2"),
+        ),
+    )
+
+    # Two clusters unblocked at the same moment are still two stories, so one
+    # round produces two stacked pull requests rather than one mixed diff.
+    settle = call_with_label(result, "settle:implement:1")["prompt"]
+    assert "wave branch worktree-stub" in settle
+    assert "wave branch wave/2, created from worktree-stub" in settle
+    ship = call_with_label(result, "ship:stub-run")["prompt"]
+    assert "1. worktree-stub\n2. wave/2" in ship
+
+
+def test_a_cluster_larger_than_the_cap_splits_into_two_implementers(
+    tmp_path: Path,
+) -> None:
+    issues = [
+        {
+            "id": f"issue-{n}",
+            "identifier": f"KP-{n}",
+            "title": f"finding {n}",
+            "group": "B6 Data, eval & utils bugs",
+        }
+        for n in range(1, 11)
+    ]
+    result = run_clustered(
+        tmp_path,
+        issues,
+        settled(*[(n, "worktree-stub" if n <= 8 else "wave/2") for n in range(1, 11)]),
+    )
+
+    # Ten findings in one milestone exceed what one implementer holds without
+    # losing the thread, so the cap splits them -- 8 then 2.
+    implementers = [label for label in labels(result) if label.startswith("implement:")]
+    assert implementers == [
+        "implement:B6 Data, eval & utils bugs (1)",
+        "implement:B6 Data, eval & utils bugs (2)",
+    ]
+    assert "implement 8 related slices" in call_with_label(result, implementers[0])["prompt"]
+    assert "implement 2 related slices" in call_with_label(result, implementers[1])["prompt"]
