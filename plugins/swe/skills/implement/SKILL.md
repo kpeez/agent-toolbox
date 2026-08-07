@@ -79,6 +79,10 @@ Each role pins the least powerful default that still covers its full contract:
 | reviewer    | sonnet, high  | terra, high              | Narrow but correctness-sensitive checking             |
 | publisher   | sonnet, medium | terra, medium           | Procedural release work with commit-boundary judgment |
 
+A role routed to another provider (`codex`, `copilot`) does not use this
+matrix: it runs through that provider's forwarder agent on the provider's own
+default model, unless the dispatching prompt names one.
+
 Claude Haiku does not support the per-agent `effort` setting, so the explorer
 intentionally specifies only its model. The architect's `fable` pin degrades
 gracefully — where Fable 5 is unavailable, the subagent falls back to the

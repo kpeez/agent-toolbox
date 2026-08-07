@@ -5,6 +5,34 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.12.0 — 2026-08-07
+
+- Delegate to another provider through **typed tool calls instead of shell
+  strings**. Each external provider is registered in the plugin's `.mcp.json`,
+  so a delegation is a JSON schema the model fills rather than a command line it
+  composes: no quoting, no sandbox-flag drift, no `timeout`/exit-code juggling,
+  and session resume becomes an argument. Codex registers natively via
+  `codex mcp-server`; Copilot arrives through the new `mcp/acp_bridge.py`.
+- Add `mcp/acp_bridge.py`, translating an [Agent Client
+  Protocol](https://agentclientprotocol.com) agent onto MCP. ACP is what
+  Copilot, Gemini CLI and the Zed agents speak, so another such provider is one
+  `.mcp.json` entry. The bridge answers the agent's permission requests itself,
+  which is what makes `mode: read-only` true for a provider that has no
+  OS-level sandbox: it rejects every mutating tool kind, including kinds ACP
+  adds later, and in `write` mode rejects any path resolving outside the
+  workspace. Streamed ACP events become MCP progress notifications, keeping a
+  long delegation clear of the stdio idle timeout.
+- Add the `copilot-delegator` agent and let `roles` route `planner`,
+  `implementer`, `reviewer` or `publisher` to `copilot` as well as `codex`.
+- Fix the forwarder agents' tool restriction. Both delegators declared
+  `allowed-tools`, which is not a subagent frontmatter field — Claude Code
+  ignored it and gave them every tool, so "never work the task yourself" was
+  prose a forwarder could quietly disregard by answering from its own
+  exploration. They now declare `tools` naming only their provider's MCP tools,
+  and `tests/test_skill_drift.py` pins it. **The other six agents still declare
+  `allowed-tools` and still run unrestricted**; correcting them changes what the
+  loop's workers can do and is left as its own change.
+
 ## 1.11.0 — 2026-08-07
 
 - Publish a run as a **stack of pull requests**, one per changeset, instead of

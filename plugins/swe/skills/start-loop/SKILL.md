@@ -110,8 +110,8 @@ No user prompt anywhere in this path.
 
 Splitting is yours, not the conductor's — you hold the spec context, and in
 practice the tasks are often already on the tracker before a run starts.
-Dispatch **`swe:planner`** (or the codex delegator when the user routed
-`planner` to Codex) to run `/to-issues` against the approved spec: publish
+Dispatch **`swe:planner`** (or the matching delegator when the user routed
+`planner` to another provider) to run `/to-issues` against the approved spec: publish
 every task into the container from step 1 with native blocked-by relations,
 validating each drafted body with
 `uv run <scriptsDir>/validate_artifacts.py issue -` before it posts. The container is
@@ -153,14 +153,15 @@ entirely — the conductor then keeps its reference-driven query, unchanged.
 Never invent a command the reference does not name, and never pass an
 unexpanded placeholder: the conductor runs the string verbatim.
 
-Optional `roles` routes loop roles to Codex. When the user asked for Codex on
-this run, add a `roles` map to the args — keys among `planner`,
-`implementer`, `reviewer`, `publisher`, values `claude` or `codex`, e.g.
-`{"implementer": "codex", "reviewer": "codex"}`. A `codex` role runs through
-the `swe:codex-delegator` agent, so the machine needs an authenticated
-`codex` CLI: verify with `codex login status` before launching, and treat a
-failure as a stop, not a silent fallback to Claude. Omit the map for the
-default all-Claude run; never route a role the user did not ask for.
+Optional `roles` routes loop roles to another provider. When the user asked for
+one on this run, add a `roles` map to the args — keys among `planner`,
+`implementer`, `reviewer`, `publisher`, values `claude`, `codex` or `copilot`,
+e.g. `{"implementer": "copilot", "reviewer": "codex"}`. A routed role runs
+through that provider's forwarder agent, so the machine needs that CLI
+installed and authenticated: verify with `codex login status` or
+`copilot --version` before launching, and treat a failure as a stop, not a
+silent fallback to Claude. Omit the map for the default all-Claude run; never
+route a role the user did not ask for.
 
 Those are the **launch args** — the conductor's own input. Each agent's prompt
 then carries only the fields it needs; no agent receives the tuple verbatim.

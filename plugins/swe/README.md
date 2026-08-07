@@ -12,9 +12,12 @@ publication is atomic commits behind a draft PR.
 ```text
 plugins/swe/
 ├── skills/            # 14 workflow skills (SKILL.md each — the canonical contracts)
-├── agents/            # 7 agent definitions: Claude .md + Codex .toml twins (codex-delegator: .md only)
+├── agents/            # 8 agent definitions: Claude .md + Codex .toml twins (the delegators: .md only)
 ├── workflows/
 │   └── swe-loop.js    # deterministic conductor for the post-approval phases
+├── .mcp.json          # external providers, exposed to Claude Code as tools
+├── mcp/
+│   └── acp_bridge.py  # Agent Client Protocol agent -> MCP, with the permission policy
 ├── scripts/
 │   ├── linear_tracker.py      # Linear via the `linear` CLI: workable set, container link, status sync
 │   └── validate_artifacts.py  # shape checks for specs and issues before publish
@@ -114,12 +117,20 @@ frontmatter; issue status lives on the tracker; what is already merged lives in
 git. Comments carry only what humans read — triage rationale, progress notes,
 escalations.
 
-### Codex role routing
+### Cross-provider role routing
 
 The launch args accept an optional `roles` map that points any worker role
-(`planner`, `implementer`, `reviewer`, `publisher`) at the local Codex CLI —
-those agents then run through the `codex-delegator` forwarder while Claude
-stays the orchestrator. Unlisted roles stay on Claude.
+(`planner`, `implementer`, `reviewer`, `publisher`) at another provider —
+`codex` or `copilot`. Those roles then run through that provider's forwarder
+agent while Claude stays the orchestrator. Unlisted roles stay on Claude.
+
+```jsonc
+{ "roles": { "implementer": "copilot", "reviewer": "codex" } }
+```
+
+A routed role needs that provider's CLI installed and authenticated; the loop
+surfaces an unavailable provider as an escalation rather than silently falling
+back to Claude.
 
 ## Skills
 
@@ -156,7 +167,7 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 
 ## Agents
 
-Seven definitions in `agents/`: each a Claude `.md`, six with a Codex `.toml`
+Eight definitions in `agents/`: each a Claude `.md`, six with a Codex `.toml`
 twin kept in sync (the model matrix below is pinned by `tests/test_skill_drift.py`).
 They are the loop's workers; the conductor or the orchestrating session
 decides what runs when.
@@ -170,9 +181,57 @@ decides what runs when.
 | `reviewer`        | Read-only review of a diff or implementation against caller-provided criteria or a lens  | sonnet (high)         | gpt-5.6-terra (high)   |
 | `publisher`       | Owns git and GitHub publication: atomic commits, push, PR creation                       | sonnet (medium)       | gpt-5.6-terra (medium) |
 | `codex-delegator` | Thin forwarder that runs one bounded task on the local Codex CLI, verbatim               | sonnet (low)          | — (Claude-side only)   |
+| `copilot-delegator` | Thin forwarder that runs one bounded task on the local Copilot CLI, verbatim           | sonnet (low)          | — (Claude-side only)   |
 
-`codex-delegator` has no `.toml` twin: on the Codex harness the host *is*
-Codex, so there is nothing to delegate to.
+The delegators have no `.toml` twin: on the Codex harness the host *is* a
+provider, so there is nothing to delegate to.
+
+## Delegating to another provider
+
+The delegators do not shell out. Each external provider is registered in
+`.mcp.json` as an MCP server, so a delegation is a typed tool call — the model
+fills a JSON schema instead of composing a command line, and quoting, sandbox
+flags, exit codes and timeout ceilings stop being the model's problem.
+
+| Provider | Surface                                    | Tools                                    |
+| -------- | ------------------------------------------ | ---------------------------------------- |
+| Codex    | `codex mcp-server` (native MCP over stdio) | `mcp__codex__codex`, `…__codex-reply`    |
+| Copilot  | `copilot --acp` through `mcp/acp_bridge.py` | `mcp__copilot__delegate`                 |
+
+Each forwarder agent's `tools` field lists only its own provider's tools, so
+"never work the task yourself" is a property of the agent rather than a rule in
+its prompt: it holds no `Read`, no `Grep`, no `Bash`. An agent that inherited
+every tool could quietly answer from its own exploration and never call the
+provider at all.
+
+### The ACP bridge
+
+[Agent Client Protocol](https://agentclientprotocol.com) is the JSON-RPC
+protocol Copilot, Gemini CLI and the Zed agents speak; `mcp/acp_bridge.py`
+translates one onto MCP. Adding another ACP agent is one `.mcp.json` entry —
+the bridge takes the agent's command as its argv.
+
+The bridge is also where `mode: read-only` becomes true. Codex has an OS-level
+sandbox (`sandbox: read-only`); Copilot has none, and instead asks the client
+for permission per tool call. The bridge answers those requests itself:
+
+- `read-only` allows only non-mutating tool kinds (`read`, `search`, `fetch`,
+  `think`) and rejects everything else, including kinds ACP may add later
+- `write` allows a mutating call when every path it names resolves inside the
+  workspace — symlinks resolved first, so a link out of the worktree is a write
+  out of the worktree
+- one-shot options are always preferred, so the bridge never installs a standing
+  grant covering calls its policy never saw
+
+A tool call naming no location — a shell command — is allowed in `write` mode:
+ACP does not describe its effects, and Codex's sandbox is the stronger
+guarantee when a task needs one.
+
+Streamed ACP events become MCP progress notifications, which both surface live
+progress and keep a long delegation clear of the 30-minute stdio idle timeout;
+`.mcp.json` sets a one-hour wall-clock ceiling per call. Claude Code moves any
+tool call past ~2 minutes into a background task on its own, so a long
+delegation never blocks the session.
 
 ## Scripts
 
