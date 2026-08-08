@@ -22,11 +22,12 @@ act on directly.
 cd "$(git rev-parse --show-toplevel)" 2>/dev/null
 echo "repo: $(basename "$PWD")"
 echo "origin: $(git remote get-url origin 2>/dev/null || echo none)"
-for f in AGENTS.md CLAUDE.md CONTEXT.md CONTEXT-MAP.md docs/agents docs/specs docs/adrs specs adrs docs/adr; do
+for f in AGENTS.md CLAUDE.md CONTEXT-MAP.md docs/agents docs/agents/CONTEXT.md docs/specs docs/adrs specs adrs docs/adr; do
     [ -e "$f" ] && echo "present: $f"
 done
 [ -L CLAUDE.md ] && echo "CLAUDE.md is a symlink -> $(readlink CLAUDE.md)"
-grep -h '^Issue tracker:' AGENTS.md CLAUDE.md 2>/dev/null | sort -u
+[ -f CONTEXT.md ] && echo "legacy: stray CONTEXT.md — move it into docs/agents/"
+grep -h '^Issue tracker:' AGENTS.md CLAUDE.md docs/agents/CONTEXT.md 2>/dev/null | sort -u
 echo "top-level dirs: $(ls -d */ 2>/dev/null | tr '\n' ' ')"
 echo
 echo "--- AGENTS.md header, resolved (use verbatim) ---"
@@ -40,8 +41,8 @@ if [ -f package.json ] && grep -q '"typecheck"' package.json; then
     if [ -f bun.lockb ] || [ -f bun.lock ]; then pm=bun; fi
     printf 'Use `%s run typecheck` for type checking.\n\n' "$pm"
 fi
-if [ -f CONTEXT.md ]; then
-    printf 'Check [./CONTEXT.md](./CONTEXT.md) for terminology questions.\n\n'
+if [ -f docs/agents/CONTEXT.md ]; then
+    printf 'Check [docs/agents/CONTEXT.md](docs/agents/CONTEXT.md) for terminology questions.\n\n'
 fi
 if [ -d .changeset ]; then
     cat <<'EOF'
@@ -127,7 +128,7 @@ Canonical: `needs-triage`, `needs-info`, `ready-for-agent`, `ready-for-human`, `
 
 ### Domain docs
 
-<Single-context layout: committed `CONTEXT.md` at the repo root, plus all agent-facing docs under `docs/agents/` — one gitignored symlink into the shared llmOS vault holding `specs/`, `adrs/`, and anything else agents write. — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
+<Single-context layout: all agent-facing docs under `docs/agents/` — one gitignored symlink into the shared llmOS vault holding `CONTEXT.md`, `specs/`, `adrs/`, and anything else agents write. — or, when CONTEXT-MAP.md exists: Multi-context: `CONTEXT-MAP.md` points at per-context `CONTEXT.md` files.>
 
 Before working in an area, read the ADRs that touch it. If your output contradicts one, flag it explicitly (_"contradicts ADR-0007 — but worth reopening because…"_) rather than silently overriding.
 ```
