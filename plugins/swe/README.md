@@ -235,21 +235,25 @@ subscription — check both with `opencode providers list`, which must list
 `OpenCode Go`. Nothing else is configured: the plugin registers three ACP-bridged
 MCP servers, one per role, each pinning its model in `.mcp.json`.
 
-| Forwarder              | Model                          | Reasoning | Mode      |
-| ---------------------- | ------------------------------ | --------- | --------- |
-| `opencode-explorer`    | `opencode-go/deepseek-v4-flash`| high      | read-only |
-| `opencode-implementer` | `opencode-go/gpt-5.6-luna`     | high      | write     |
-| `opencode-reviewer`    | `opencode-go/deepseek-v4-pro`  | max       | read-only |
+| Forwarder              | Model                         | Reasoning | Mode      |
+| ---------------------- | ----------------------------- | --------- | --------- |
+| `opencode-explorer`    | `opencode-go/gpt-5.6-luna`    | medium    | read-only |
+| `opencode-implementer` | `opencode-go/gpt-5.6-luna`    | high      | write     |
+| `opencode-reviewer`    | `opencode-go/deepseek-v4-pro` | max       | read-only |
 
-Three roles, three models, on purpose:
+Why these, and why review is the one that must differ:
 
-- **Exploration** is high-volume read-only repository archaeology. V4 Flash is
-  the cheapest model on the plan with a 1M-token context, which is the shape
-  that work has.
 - **Implementation** is where a model error costs the most, so it gets Luna,
-  the stronger agentic coding model.
+  the stronger agentic coding model, at high reasoning.
 - **Review** must not share the implementer's model, or it re-reads its own
-  reasoning. V4 Pro is strong, inexpensive, long-context, and different.
+  reasoning and confirms it. V4 Pro is strong, inexpensive, long-context, and
+  different — that difference is the point, not a preference.
+- **Exploration** is high-volume read-only repository archaeology: it reads a
+  lot and reasons little. Sharing the implementer's model is harmless here —
+  an explorer gathers evidence and grades nothing — so it runs Luna at medium
+  reasoning, which keeps the billable output tokens down on the role that runs
+  most often. Its 1.05M context is the largest on the plan, which is the shape
+  that work has.
 
 `.mcp.json` is the only operative source for those ids: the forwarder agents
 receive a `delegate` tool with no `model` field at all, so a model is something

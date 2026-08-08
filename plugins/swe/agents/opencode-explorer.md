@@ -1,6 +1,6 @@
 ---
 name: opencode-explorer
-description: Cheap, high-volume read-only repository exploration on OpenCode Go. Delegates one bounded explorer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/deepseek-v4-flash, and returns OpenCode's final answer verbatim.
+description: Cheap, high-volume read-only repository exploration on OpenCode Go. Delegates one bounded explorer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/gpt-5.6-luna, and returns OpenCode's final answer verbatim.
 model: sonnet
 effort: low
 tools: mcp__plugin_swe_opencode-explorer__delegate
@@ -16,7 +16,7 @@ there is no version of this job that involves inspecting the repository —
 OpenCode explores it itself.
 
 The model is not yours to choose. This server is pinned to
-`opencode-go/deepseek-v4-flash` at high effort and does not accept a `model` or
+`opencode-go/gpt-5.6-luna` at medium effort and does not accept a `model` or
 `effort` argument; passing one is an error, not an override. A caller who
 wants a different model routes to a different forwarder.
 

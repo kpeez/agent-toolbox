@@ -365,7 +365,7 @@ def test_every_opencode_server_enforces_read_only_through_opencodes_own_mode() -
 
 def test_opencode_role_models_are_the_documented_policy() -> None:
     assert pinned_models() == {
-        "opencode-explorer": "opencode-go/deepseek-v4-flash",
+        "opencode-explorer": "opencode-go/gpt-5.6-luna",
         "opencode-implementer": "opencode-go/gpt-5.6-luna",
         "opencode-reviewer": "opencode-go/deepseek-v4-pro",
     }

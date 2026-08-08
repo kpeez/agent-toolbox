@@ -12,9 +12,9 @@
       "args": [
         "${CLAUDE_PLUGIN_ROOT}/mcp/acp_bridge.py",
         "--model",
-        "opencode-go/deepseek-v4-flash",
+        "opencode-go/gpt-5.6-luna",
         "--effort",
-        "high",
+        "medium",
         "--read-only-mode",
         "plan",
         "opencode",
