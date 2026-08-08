@@ -79,9 +79,11 @@ Each role pins the least powerful default that still covers its full contract:
 | reviewer    | sonnet, high  | terra, high              | Narrow but correctness-sensitive checking             |
 | publisher   | sonnet, medium | terra, medium           | Procedural release work with commit-boundary judgment |
 
-A role routed to another provider (`codex`, `copilot`) does not use this
-matrix: it runs through that provider's forwarder agent on the provider's own
-default model, unless the dispatching prompt names one.
+A role routed to another provider (`codex`, `opencode`) does not use this
+matrix: it runs through that provider's forwarder agent. Codex uses its own
+default model unless the dispatching prompt names one; OpenCode's forwarders are
+pinned to a model per role in the plugin's `.mcp.json` and accept no model
+argument at all.
 
 Claude Haiku does not support the per-agent `effort` setting, so the explorer
 intentionally specifies only its model. The architect's `fable` pin degrades

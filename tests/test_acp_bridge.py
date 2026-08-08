@@ -1,8 +1,10 @@
 """The ACP bridge: permission policy, and the protocol path end to end.
 
-The policy tests matter most. Copilot has no OS-level sandbox, so `mode` is
-only meaningful because this bridge answers the agent's permission requests --
-if the policy leaks, "read-only delegation" is a lie told to the caller.
+The policy tests matter most. An ACP agent has no OS-level sandbox, so `mode`
+is only meaningful because this bridge answers the agent's permission requests
+-- or, for an agent that does not ask, because the bridge selects that agent's
+own read-only session mode. If either leaks, "read-only delegation" is a lie
+told to the caller.
 """
 
 from __future__ import annotations
@@ -146,13 +148,20 @@ def test_the_agents_own_answer_is_returned_untouched() -> None:
 class BridgeClient:
     """Drives acp_bridge.py over stdio the way Claude Code drives an MCP server."""
 
-    def __init__(self, cwd: Path) -> None:
+    def __init__(
+        self,
+        cwd: Path,
+        options: list[str] | None = None,
+        agent_args: list[str] | None = None,
+    ) -> None:
         self.process = subprocess.Popen(
             [
                 sys.executable,
                 str(ROOT / "plugins" / "swe" / "mcp" / "acp_bridge.py"),
+                *(options or []),
                 sys.executable,
                 str(FAKE_AGENT),
+                *(agent_args or []),
             ],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -202,6 +211,31 @@ def bridge(tmp_path: Path):
     client = BridgeClient(tmp_path)
     yield client
     client.close()
+
+
+@pytest.fixture
+def bridges(tmp_path: Path):
+    """Bridges configured per test, all torn down together."""
+    opened: list[BridgeClient] = []
+
+    def open_bridge(options: list[str], agent_args: list[str]) -> BridgeClient:
+        client = BridgeClient(tmp_path, options, agent_args)
+        opened.append(client)
+        return client
+
+    yield open_bridge
+    for client in opened:
+        client.close()
+
+
+# The OpenCode-shaped fixture: a model list it validates against, a
+# model-dependent `effort` option, and a `mode` option whose second value is
+# read-only. Mirrors what `opencode acp` advertises.
+OPENCODE_LIKE = [
+    "--models", "go/luna,go/flash",
+    "--efforts", "low,high,max",
+    "--modes", "build,plan",
+]
 
 
 def directive(**payload) -> str:
@@ -298,3 +332,192 @@ def test_an_unknown_mode_is_rejected_before_the_agent_runs(
 
     assert result["isError"] is True
     assert "yolo" in result["content"][0]["text"]
+
+
+# ---------------------------------------------------------------------------
+# bridge options: model policy that lives in argv, not in a prompt
+# ---------------------------------------------------------------------------
+
+
+def test_bridge_options_are_split_from_the_agent_command() -> None:
+    options, command = acp_bridge.split_argv(
+        ["--model", "go/luna", "--effort", "high", "--read-only-mode", "plan", "opencode", "acp"]
+    )
+
+    assert options == {"model": "go/luna", "effort": "high", "read_only_mode": "plan"}
+    assert command == ["opencode", "acp"]
+
+
+def test_option_parsing_stops_at_the_agent_command() -> None:
+    """An agent flag that looks like a bridge flag belongs to the agent."""
+    options, command = acp_bridge.split_argv(["opencode", "acp", "--model", "sneaky"])
+
+    assert options == {}
+    assert command == ["opencode", "acp", "--model", "sneaky"]
+
+
+def test_an_option_without_a_value_is_an_error() -> None:
+    with pytest.raises(ValueError, match="--model needs a value"):
+        acp_bridge.split_argv(["--model"])
+
+
+def test_a_pinned_server_does_not_offer_the_model_as_a_choice() -> None:
+    """The whole point of pinning: the caller is never asked which model to run."""
+    pinned = acp_bridge.delegate_tool("go/luna")
+
+    assert "model" not in pinned["inputSchema"]["properties"]
+    assert "effort" not in pinned["inputSchema"]["properties"]
+    assert "go/luna" in pinned["description"]
+    assert "model" in acp_bridge.delegate_tool(None)["inputSchema"]["properties"]
+
+
+def test_a_pinned_server_advertises_the_reduced_schema_over_the_wire(bridges) -> None:
+    client = bridges(["--model", "go/luna"], OPENCODE_LIKE)
+
+    listed = client.call("tools/list", {})["result"]["tools"]
+
+    assert "model" not in listed[0]["inputSchema"]["properties"]
+
+
+def test_a_pinned_server_rejects_a_caller_supplied_model(bridges, tmp_path: Path) -> None:
+    """Silently honouring it would let a role run on a model it was not routed to."""
+    client = bridges(["--model", "go/luna"], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path), model="go/flash"
+    )
+
+    assert result["isError"] is True
+    assert "pinned to model go/luna" in result["content"][0]["text"]
+
+
+def test_the_pinned_model_is_selected_before_its_effort_variant(bridges, tmp_path: Path) -> None:
+    """Effort values are model-dependent, so the order is load-bearing, not style."""
+    client = bridges(["--model", "go/luna", "--effort", "max"], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="", echo_config=True), mode="write", cwd=str(tmp_path)
+    )
+
+    assert result["content"][0]["text"].startswith("config=model=go/luna|effort=max")
+
+
+def test_an_unavailable_model_surfaces_instead_of_running_the_default(
+    bridges, tmp_path: Path
+) -> None:
+    """Falling through to the agent's default would break the cost routing silently."""
+    client = bridges(["--model", "go/not-a-model"], OPENCODE_LIKE)
+
+    result = client.delegate(task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path))
+
+    assert result["isError"] is True
+    assert "model not found: go/not-a-model" in result["content"][0]["text"]
+
+
+def test_an_unavailable_effort_surfaces_too(bridges, tmp_path: Path) -> None:
+    client = bridges(["--model", "go/luna", "--effort", "ludicrous"], OPENCODE_LIKE)
+
+    result = client.delegate(task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path))
+
+    assert result["isError"] is True
+    assert "effort not found: ludicrous" in result["content"][0]["text"]
+
+
+def test_a_caller_supplied_model_still_works_on_an_unpinned_server(
+    bridges, tmp_path: Path
+) -> None:
+    """Pinning is opt-in; the generic delegate contract is unchanged without it."""
+    client = bridges([], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="", echo_config=True),
+        mode="write",
+        cwd=str(tmp_path),
+        model="go/flash",
+        effort="low",
+    )
+
+    assert result["content"][0]["text"] == "config=model=go/flash|effort=low"
+
+
+# ---------------------------------------------------------------------------
+# read-only for an agent that does not ask before writing
+# ---------------------------------------------------------------------------
+
+
+def test_read_only_selects_the_agents_own_read_only_session_mode(
+    bridges, tmp_path: Path
+) -> None:
+    """OpenCode auto-approves in-workspace edits, so the kind policy never sees
+    them; its own read-only mode is the only thing that actually stops them."""
+    client = bridges(["--read-only-mode", "plan"], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="", echo_config=True), mode="read-only", cwd=str(tmp_path)
+    )
+
+    assert result["content"][0]["text"] == "config=mode=plan"
+
+
+def test_write_restores_the_mode_the_session_opened_in(bridges, tmp_path: Path) -> None:
+    """A read-only session continued for a write would otherwise stay muzzled."""
+    client = bridges(["--read-only-mode", "plan"], OPENCODE_LIKE)
+
+    first = client.delegate(task=directive(reply="one"), mode="read-only", cwd=str(tmp_path))
+    result = client.delegate(
+        task=directive(reply="", echo_config=True),
+        mode="write",
+        sessionId=first["structuredContent"]["sessionId"],
+    )
+
+    assert result["content"][0]["text"] == "config=mode=plan|mode=build"
+
+
+def test_read_only_refuses_when_the_agent_has_no_read_only_mode(
+    bridges, tmp_path: Path
+) -> None:
+    """Fail closed: running unprotected is the one outcome worse than erroring."""
+    client = bridges(["--read-only-mode", "plan"], [])
+
+    result = client.delegate(task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path))
+
+    assert result["isError"] is True
+    assert "refusing to run a read-only delegation unprotected" in result["content"][0]["text"]
+
+
+def test_an_unconfigured_bridge_never_touches_the_session_mode(
+    bridges, tmp_path: Path
+) -> None:
+    """Agents that do ask for permission keep the pre-existing behavior exactly."""
+    client = bridges([], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="", echo_config=True), mode="read-only", cwd=str(tmp_path)
+    )
+
+    assert result["content"][0]["text"] == "config="
+
+
+def test_the_permission_policy_still_guards_a_read_only_run(bridges, tmp_path: Path) -> None:
+    """Both layers, not one: an agent that DOES ask is still refused its edits."""
+    client = bridges(["--read-only-mode", "plan"], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(
+            attempts=[{"kind": "edit", "title": "Create file", "paths": [str(tmp_path / "x")]}],
+            echo_granted=True,
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["structuredContent"]["deniedToolCalls"] == ["edit: Create file"]
+
+
+def test_a_blocked_write_run_is_not_told_to_retry_in_the_mode_it_used() -> None:
+    """Observed live: a write delegation denied for escaping the workspace was
+    advised to "re-dispatch with mode='write'", which is what it already did."""
+    text = acp_bridge.final_text("", ["other: /outside"], "write")
+
+    assert "mode='write'" not in text
+    assert "outside the workspace" in text

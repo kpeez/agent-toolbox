@@ -7,6 +7,19 @@ attempt, which lets one fixture stand in for every permission scenario:
 
 Each attempt triggers a real `session/request_permission` round trip, so the
 bridge's policy is exercised over the wire rather than called directly.
+
+Command-line flags shape what the agent advertises, so one fixture also stands
+in for the two ACP dialects the bridge has to speak: a bare agent that exposes
+nothing but `session/set_model`, and an OpenCode-shaped one that answers
+`session/new` with `configOptions` and validates every selection.
+
+    --models a,b        session/set_model rejects anything else
+    --efforts low,high  advertise an `effort` config option (first is current)
+    --modes build,plan  advertise a `mode` config option (first is current)
+
+`{"echo_config": true}` in the directive appends the selections the agent
+actually ended up with, which is how a test proves the bridge sent them -- and
+sent the model before the effort that depends on it.
 """
 
 from __future__ import annotations
@@ -16,6 +29,38 @@ import sys
 from typing import Any
 
 SESSION_ID = "fake-session-1"
+
+# What this run advertises and what has been selected on it. A module-level
+# dict is enough: the fixture serves exactly one session.
+CONFIG: dict[str, Any] = {"model": None, "order": []}
+ADVERTISED: dict[str, list[str]] = {}
+KNOWN_MODELS: list[str] = []
+
+
+def config_options() -> list[dict[str, Any]]:
+    return [
+        {
+            "id": config_id,
+            "name": config_id,
+            "type": "select",
+            "currentValue": CONFIG.get(config_id, values[0]),
+            "options": [{"value": value, "name": value} for value in values],
+        }
+        for config_id, values in ADVERTISED.items()
+    ]
+
+
+def set_config_option(params: dict[str, Any]) -> dict[str, Any] | str:
+    """Apply one selection, or return the error text for an illegal one."""
+    config_id = params.get("configId")
+    value = params.get("value")
+    if config_id not in ADVERTISED:
+        return f"unknown config option: {config_id}"
+    if value not in ADVERTISED[config_id]:
+        return f"{config_id} not found: {value}"
+    CONFIG[config_id] = value
+    CONFIG["order"].append(f"{config_id}={value}")
+    return {"configOptions": config_options()}
 
 
 def send(frame: dict[str, Any]) -> None:
@@ -96,6 +141,8 @@ def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
     reply = directive.get("reply", "")
     if directive.get("echo_granted"):
         reply = f"{reply}granted={','.join(granted)}"
+    if directive.get("echo_config"):
+        reply = f"{reply}config={'|'.join(CONFIG['order'])}"
     if reply:
         send(
             {
@@ -123,7 +170,24 @@ def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
     )
 
 
+def error(message_id: Any, text: str) -> dict[str, Any]:
+    """An ACP agent rejects an illegal selection; it does not silently ignore it."""
+    return {
+        "jsonrpc": "2.0",
+        "id": message_id,
+        "error": {"code": -32602, "message": f"Invalid params: {text}"},
+    }
+
+
 def main() -> int:
+    argv = sys.argv[1:]
+    for index in range(0, len(argv) - 1, 2):
+        flag, value = argv[index], argv[index + 1]
+        if flag == "--models":
+            KNOWN_MODELS.extend(value.split(","))
+        elif flag in ("--efforts", "--modes"):
+            ADVERTISED[flag.removeprefix("--").rstrip("s")] = value.split(",")
+
     permission_id = [0]
     while True:
         message = read_frame()
@@ -144,9 +208,24 @@ def main() -> int:
                 }
             )
         elif method == "session/new":
-            send({"jsonrpc": "2.0", "id": message["id"], "result": {"sessionId": SESSION_ID}})
+            result: dict[str, Any] = {"sessionId": SESSION_ID}
+            if ADVERTISED:
+                result["configOptions"] = config_options()
+            send({"jsonrpc": "2.0", "id": message["id"], "result": result})
         elif method == "session/set_model":
+            model = message["params"].get("modelId")
+            if KNOWN_MODELS and model not in KNOWN_MODELS:
+                send(error(message["id"], f"model not found: {model}"))
+                continue
+            CONFIG["model"] = model
+            CONFIG["order"].append(f"model={model}")
             send({"jsonrpc": "2.0", "id": message["id"], "result": {}})
+        elif method == "session/set_config_option":
+            applied = set_config_option(message["params"])
+            if isinstance(applied, str):
+                send(error(message["id"], applied))
+                continue
+            send({"jsonrpc": "2.0", "id": message["id"], "result": applied})
         elif method == "session/prompt":
             handle_prompt(message, permission_id)
         elif "id" in message:

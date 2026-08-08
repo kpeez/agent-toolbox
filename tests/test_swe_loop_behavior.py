@@ -959,3 +959,150 @@ def test_a_large_changeset_is_never_split(tmp_path: Path) -> None:
     implementers = [label for label in labels(result) if label.startswith("implement:")]
     assert implementers == ["implement:B6 Data, eval & utils bugs"]
     assert "implement 10 related tasks" in call_with_label(result, implementers[0])["prompt"]
+
+
+# ---- provider routing -------------------------------------------------------
+# The conductor never names an agent type inline; every capability role resolves
+# through the roles map, so these tests read the agentType the stub was handed.
+
+
+def agent_type_for(result: dict[str, Any], label_prefix: str) -> str | None:
+    matches = [
+        call for call in result["calls"] if call["label"].startswith(label_prefix)
+    ]
+    assert matches, f"no call labelled {label_prefix}*; got {labels(result)}"
+    return matches[0]["agentType"]
+
+
+ONE_TASK = [{"id": "i1", "identifier": "T-1", "title": "the task", "changeset": ""}]
+
+
+def routed_run(
+    tmp_path: Path, roles: dict[str, str] | None = None
+) -> dict[str, Any]:
+    """One task through implement, review with findings, fix, ship.
+
+    Findings on the first review and a pass on the re-review exercise the fixer,
+    which shares the implementer's routing, without spending the fix ceiling.
+    """
+    responses: list[dict[str, Any]] = [
+        {"match": "^workable:", "result": {"issues": ONE_TASK}, "times": 1},
+        {"match": "^workable:", "result": {"issues": []}},
+        {
+            "match": "^implement:",
+            "result": {"status": "DONE", "branch": "change/T-1", "summary": "landed"},
+        },
+        {
+            "match": "^settle:",
+            "result": {
+                "results": [
+                    {
+                        "identifier": "T-1",
+                        "merged": True,
+                        "stateUpdated": True,
+                        "detail": "merged",
+                        "stackBranch": "worktree-stub",
+                    }
+                ]
+            },
+        },
+        {
+            "match": "^review:assembled",
+            "result": {"verdict": "findings", "findings": ["a.py:1 fix it"]},
+        },
+        {"match": "^re-review:", "result": {"verdict": "pass"}},
+        {"match": "^ship:", "result": {"prUrls": ["https://example/pr/1"]}},
+    ]
+    return run_loop(tmp_path, responses, args={"roles": roles} if roles else None)
+
+
+def test_implementer_and_reviewer_default_to_opencode(tmp_path: Path) -> None:
+    """The point of the defaults: an ordinary run offloads the two expensive
+    roles to OpenCode Go without the caller passing a roles map at all."""
+    result = routed_run(tmp_path)
+
+    assert agent_type_for(result, "implement:") == "swe:opencode-implementer"
+    assert agent_type_for(result, "review:assembled") == "swe:opencode-reviewer"
+
+
+def test_the_fixer_follows_the_implementer_route(tmp_path: Path) -> None:
+    result = routed_run(tmp_path)
+
+    assert agent_type_for(result, "fix:") == "swe:opencode-implementer"
+
+
+def test_publisher_stays_host_native_by_default(tmp_path: Path) -> None:
+    """Publishing is low-token and high-side-effect; there is nothing to save."""
+    result = routed_run(tmp_path)
+
+    assert agent_type_for(result, "ship:") == "swe:publisher"
+
+
+def test_deterministic_plumbing_calls_are_never_routed(tmp_path: Path) -> None:
+    """The workable query, the settle agent, and the run summary are the loop's
+    own bookkeeping: they stay on the host and never reach a provider."""
+    result = routed_run(tmp_path)
+
+    for prefix in ("workable:", "settle:", "run-summary:"):
+        assert agent_type_for(result, prefix) is None
+
+
+def test_an_explicit_role_beats_the_default(tmp_path: Path) -> None:
+    result = routed_run(tmp_path, {"implementer": "claude", "reviewer": "codex"})
+
+    assert agent_type_for(result, "implement:") == "swe:implementer"
+    assert agent_type_for(result, "fix:") == "swe:implementer"
+    assert agent_type_for(result, "review:assembled") == "swe:codex-delegator"
+
+
+def test_codex_still_routes_every_role_it_is_given(tmp_path: Path) -> None:
+    result = routed_run(tmp_path, {"implementer": "codex", "publisher": "codex"})
+
+    assert agent_type_for(result, "implement:") == "swe:codex-delegator"
+    assert agent_type_for(result, "ship:") == "swe:codex-delegator"
+
+
+def test_reviewer_defaults_to_a_different_model_than_the_implementer(
+    tmp_path: Path,
+) -> None:
+    """Cross-model review is the reason review is not on the implementer's model."""
+    result = routed_run(tmp_path)
+
+    assert agent_type_for(result, "implement:") != agent_type_for(
+        result, "review:assembled"
+    )
+
+
+def failed_launch(tmp_path: Path, roles: Any) -> str:
+    config = tmp_path / "config.json"
+    config.write_text(
+        json.dumps(
+            {
+                "workflowPath": str(WORKFLOW),
+                "args": {**LAUNCH_ARGS, "roles": roles},
+                "responses": [{"match": "^workable:", "result": {"issues": []}}],
+            }
+        )
+    )
+    proc = subprocess.run(
+        ["node", str(STUB), str(config)], capture_output=True, text=True, timeout=60
+    )
+    error = json.loads(proc.stdout)["error"]
+    assert error is not None, "expected the launch to be rejected"
+    return error
+
+
+def test_routing_a_role_opencode_has_no_forwarder_for_is_a_launch_stop(
+    tmp_path: Path,
+) -> None:
+    """A provider accepted at launch but undispatchable fails mid-run otherwise."""
+    error = failed_launch(tmp_path, {"publisher": "opencode"})
+
+    assert "publisher to opencode" in error
+    assert "no forwarder agent" in error
+
+
+def test_an_unknown_provider_is_still_rejected(tmp_path: Path) -> None:
+    error = failed_launch(tmp_path, {"reviewer": "gemini"})
+
+    assert "invalid roles map" in error

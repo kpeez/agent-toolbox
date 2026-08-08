@@ -153,15 +153,17 @@ entirely — the conductor then keeps its reference-driven query, unchanged.
 Never invent a command the reference does not name, and never pass an
 unexpanded placeholder: the conductor runs the string verbatim.
 
-Optional `roles` routes loop roles to another provider. When the user asked for
-one on this run, add a `roles` map to the args — keys among `planner`,
-`implementer`, `reviewer`, `publisher`, values `claude`, `codex` or `copilot`,
-e.g. `{"implementer": "copilot", "reviewer": "codex"}`. A routed role runs
-through that provider's forwarder agent, so the machine needs that CLI
-installed and authenticated: verify with `codex login status` or
-`copilot --version` before launching, and treat a failure as a stop, not a
-silent fallback to Claude. Omit the map for the default all-Claude run; never
-route a role the user did not ask for.
+Optional `roles` overrides the conductor's default provider routing. By default
+`implementer` and `reviewer` run on OpenCode Go and everything else stays on
+Claude, so the machine needs `opencode` installed and an authenticated OpenCode
+Go subscription: verify with `opencode providers list` before launching. Pass a
+`roles` map only to change that — keys among `planner`, `implementer`,
+`reviewer`, `publisher`, values `claude`, `codex` or `opencode` (`opencode`
+is valid for `implementer` and `reviewer` only, the two roles it has a
+model-pinned forwarder for). `{"implementer": "claude", "reviewer": "codex"}`
+pulls implementation back host-native and sends review to Codex; verify Codex
+with `codex login status` first. A provider that is missing or unauthenticated
+is a stop, not a silent fallback to a more expensive one.
 
 Those are the **launch args** — the conductor's own input. Each agent's prompt
 then carries only the fields it needs; no agent receives the tuple verbatim.

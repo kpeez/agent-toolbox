@@ -5,6 +5,34 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.13.0 — 2026-08-08
+
+- Add **OpenCode Go as an external worker provider**, through the existing ACP
+  bridge (`opencode acp`) rather than a second delegation path. `implementer`
+  and `reviewer` now default to it; `planner`, `publisher` and every
+  deterministic step stay host-native.
+- Pin one model per OpenCode role in `.mcp.json` — explorer on
+  `deepseek-v4-flash`, implementer on `gpt-5.6-luna`, reviewer on
+  `deepseek-v4-pro`, so review never shares the implementer's model. A pinned
+  server serves a `delegate` tool with no `model` field, so the ids live in one
+  manifest instead of in three prompts a subagent has to obey.
+- Teach the bridge three flags: `--model` and `--effort` pin a server, and
+  `--read-only-mode` selects the agent's own read-only session mode.
+  OpenCode auto-approves edits inside the session cwd and never asks the
+  client, so the permission policy alone would have let a read-only delegation
+  write; escaping writes still arrive as permission requests, so the
+  workspace-containment rule is unchanged. A bridge that cannot select the mode
+  refuses the delegation rather than running it unprotected. Reasoning effort
+  is a separate, model-dependent config option applied after the model, which
+  is why the order is enforced rather than incidental.
+- Pin the model on the conductor's unrouted plumbing calls (workable query,
+  settle, escalation note, run summary). They inherited the host session's
+  model, so the same run could settle a round on a different model each time.
+- Remove the Copilot forwarder and its `.mcp.json` entry. The bridge it
+  motivated stays and is now what OpenCode arrives through.
+- Reject a `roles` entry naming a provider that has no forwarder for that role
+  at launch, instead of failing mid-run.
+
 ## 1.12.0 — 2026-08-07
 
 - Delegate to another provider through **typed tool calls instead of shell
