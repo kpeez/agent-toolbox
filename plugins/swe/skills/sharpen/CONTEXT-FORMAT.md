@@ -1,9 +1,11 @@
 # CONTEXT.md Format
 
-`CONTEXT.md` is a **committed**, repo-root domain glossary — and nothing else.
-Not a spec, not a scratch pad, not a place for implementation decisions (those go
-in `docs/agents/adrs/`). It pins down the project's vocabulary so terminology doesn't
-drift across sessions. Create it lazily, only when the first term needs resolving.
+`docs/agents/CONTEXT.md` is a domain glossary — and nothing else. Not a spec, not
+a scratch pad, not a place for implementation decisions (those go in
+`docs/agents/adrs/`). It pins down the project's vocabulary so terminology doesn't
+drift across sessions. Like everything under `docs/agents/`, it is uncommitted:
+it lives in the shared vault, not the repo. Create it lazily, only when the first
+term needs resolving.
 
 It is optional. Most small changes never touch it. It earns its place when a
 project has overloaded or ambiguous domain terms — common in ML/research work
@@ -39,5 +41,6 @@ _Avoid_: reward (reward is per-step), score
 - **Only project-specific terms.** General programming concepts (timeouts, error types, caching) don't belong even if used heavily. Ask: is this unique to this project's domain, or general? Only the former.
 - **Group under subheadings** when natural clusters emerge; a flat list is fine otherwise.
 
-This repo uses a **single** root `CONTEXT.md` — the multi-context `CONTEXT-MAP.md`
-pattern (one glossary per package in a monorepo) is intentionally not adopted.
+This repo uses a **single** `docs/agents/CONTEXT.md` — the multi-context
+`CONTEXT-MAP.md` pattern (one glossary per package in a monorepo) is
+intentionally not adopted.

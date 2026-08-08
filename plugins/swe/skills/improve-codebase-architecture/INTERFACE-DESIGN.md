@@ -39,8 +39,9 @@ behind the seam) and a different design constraint:
 - Agent 4 (if cross-seam deps): **Design around ports & adapters** for the
   remote-owned / true-external dependencies.
 
-Include both the `SKILL.md` architecture vocabulary and the project's `CONTEXT.md`
-domain vocabulary in each brief so agents name things consistently. Each sub-agent
+Include both the `SKILL.md` architecture vocabulary and the project's
+`docs/agents/CONTEXT.md` domain vocabulary in each brief so agents name things
+consistently. Each sub-agent
 outputs:
 
 1. Interface — types, methods, params, plus invariants, ordering, error modes

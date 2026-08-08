@@ -12,7 +12,7 @@ Break a plan into independently-grabbable issues using **vertical tasks**
 
 Pick the tracker at runtime — no per-repo config beyond an optional one-liner:
 
-1. **Repo override** — if the repo's `AGENTS.md`/`CLAUDE.md`/`CONTEXT.md` names
+1. **Repo override** — if the repo's `AGENTS.md`/`CLAUDE.md`/`docs/agents/CONTEXT.md` names
    a tracker (e.g. `Issue tracker: linear (team ETHO, initiative Foo)` or
    `Issue tracker: github`), use it and pass along any extras on that line
    (team, initiative, labels, project). `CONTEXT.md` is the pin's home when
@@ -65,7 +65,7 @@ Work from what's already in context. If the user passes an issue reference
 ### 2. Explore the codebase (optional)
 
 If you haven't already, explore so issue titles/descriptions use the project's
-own vocabulary (the `CONTEXT.md` glossary if present) and respect ADRs in
+own vocabulary (the `docs/agents/CONTEXT.md` glossary if present) and respect ADRs in
 `docs/agents/adrs/` for the area you're touching.
 
 ### 3. Draft tasks as vertical cuts
@@ -84,7 +84,7 @@ Prefer AFK where possible.
 Then assign every task to a **changeset** — the tracker milestone collecting
 the tasks that make up one reviewable change. The changeset, not the task, is
 what the loop acts on: one implementer takes a whole changeset and it ships as
-one pull request. CONTEXT.md holds the full hierarchy.
+one pull request. `docs/agents/CONTEXT.md` holds the full hierarchy.
 
 - A changeset is what one reviewer reads in one sitting, and what one
   implementer holds without losing the thread. Both fail at the same size.

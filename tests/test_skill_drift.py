@@ -10,6 +10,13 @@ ROOT = Path(__file__).resolve().parents[1]
 SKILL_REFERENCE = re.compile(r"`/([a-z][a-z0-9-]+)`")
 README_ROW = re.compile(r"^\|\s*`([a-z0-9-]+)`\s*\|")
 ALLOWED_HOST_COMMANDS = {"goal", "code-review", "clear"}
+ROOT_CONTEXT_CLAIM = re.compile(
+    r"\./CONTEXT\.md"
+    r"|repo[- ]root[^.\n]{0,40}CONTEXT\.md"
+    r"|CONTEXT\.md[^.\n]{0,40}repo[- ]root"
+    r"|committed[^.\n]{0,40}CONTEXT\.md",
+    re.IGNORECASE,
+)
 
 
 def plugin_directories() -> list[Path]:
@@ -35,6 +42,15 @@ def frontmatter_name(skill_file: Path) -> str | None:
         return None
     name = re.search(r"^name:\s*(.+?)\s*$", match.group(1), re.MULTILINE)
     return name.group(1) if name else None
+
+
+def documentation_files() -> list[Path]:
+    """Committed prose agents read. CHANGELOGs record history and are exempt."""
+    return [ROOT / "README.md", ROOT / "AGENTS.md"] + sorted(
+        markdown
+        for markdown in (ROOT / "plugins").rglob("*.md")
+        if markdown.name != "CHANGELOG.md"
+    )
 
 
 def readme_skill_names() -> set[str]:
@@ -107,9 +123,9 @@ def test_swe_hooks_register_worktree_link_script() -> None:
     enter_worktree = [
         entry for entry in post_tool if entry.get("matcher") == "EnterWorktree"
     ]
-    assert [
-        hook["command"] for entry in enter_worktree for hook in entry["hooks"]
-    ] == [command]
+    assert [hook["command"] for entry in enter_worktree for hook in entry["hooks"]] == [
+        command
+    ]
 
     script = ROOT / "plugins" / "swe" / "hooks" / "symlink-worktree-shared-dirs.sh"
     assert script.is_file()
@@ -172,3 +188,17 @@ def test_backtick_skill_references_are_live() -> None:
     ]
 
     assert dead_references == []
+
+
+def test_context_glossary_is_not_in_the_repo() -> None:
+    assert not (ROOT / "CONTEXT.md").exists()
+
+
+def test_documentation_places_context_glossary_under_docs_agents() -> None:
+    stale_claims = [
+        (markdown.relative_to(ROOT), match.group(0))
+        for markdown in documentation_files()
+        for match in ROOT_CONTEXT_CLAIM.finditer(markdown.read_text())
+    ]
+
+    assert stale_claims == []

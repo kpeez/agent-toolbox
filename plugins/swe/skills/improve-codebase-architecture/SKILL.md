@@ -18,15 +18,15 @@ test, interface-as-test-surface, one-vs-two adapters) are the language of every
 suggestion below. Use those terms exactly; don't drift into "component,"
 "service," "API," or "boundary." Consistent language is the point.
 
-This skill is *informed* by the project's domain model: the `CONTEXT.md` glossary
-(if present) gives names to good seams; `docs/agents/adrs/` records decisions the skill
-should not re-litigate.
+This skill is *informed* by the project's domain model: the `docs/agents/CONTEXT.md`
+glossary (if present) gives names to good seams; `docs/agents/adrs/` records decisions
+the skill should not re-litigate.
 
 ## Process
 
 ### 1. Explore
 
-Read `CONTEXT.md` and any `docs/agents/adrs/` in the area first. Then walk the codebase
+Read `docs/agents/CONTEXT.md` and any `docs/agents/adrs/` in the area first. Then walk the codebase
 (use the `Explore` subagent for breadth). Don't follow rigid heuristics — note
 where you experience friction:
 
