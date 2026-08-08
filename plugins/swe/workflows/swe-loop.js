@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Conductor for the swe workflow after spec approval and splitting: run the implement loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker and its tasks are published on the tracker — the launcher tasks before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the tasks, baseBranch is the integration branch every task merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding tasks this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" to run that role through swe:codex-delegator on the local Codex CLI (unlisted roles stay on Claude). Returns {prUrls, tasksCompleted, escalations}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker and its tasks are published on the tracker — the launcher tasks before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the tasks, baseBranch is the integration branch every task merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding tasks this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" or "copilot" to run that role on that provider through its forwarder agent (unlisted roles stay on Claude). Returns {prUrls, tasksCompleted, escalations}; it never prompts the user mid-run.',
   phases: [
     { title: 'Implement', detail: 'rounds: implement in parallel, then one agent merges and records the round' },
     { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
@@ -97,11 +97,13 @@ const trackerRefsDir = `${scriptsDir.replace(/\/scripts\/?$/, '')}/skills/to-iss
 const trackerGuide = `Tracker: resolve this repo's tracker per the to-issues skill — an "Issue tracker:" line in the repo's AGENTS.md/CLAUDE.md wins, else the skill's selection ladder — then follow the matching reference in ${trackerRefsDir}/ for every tracker operation.`
 
 // ---- role routing -------------------------------------------------------
-// The launcher may route any capability role to Codex; every other agent
-// (workable query, merge, tracker bookkeeping) is loop plumbing and stays on the
-// default workflow subagent.
+// The launcher may route any capability role to another provider; every other
+// agent (workable query, merge, tracker bookkeeping) is loop plumbing and stays
+// on the default workflow subagent. A routed role runs through that provider's
+// forwarder agent, which holds only that provider's MCP tool.
 const ROUTABLE_ROLES = ['planner', 'implementer', 'reviewer', 'publisher']
-const ROLE_PROVIDERS = ['claude', 'codex']
+const DELEGATORS = { codex: 'swe:codex-delegator', copilot: 'swe:copilot-delegator' }
+const ROLE_PROVIDERS = ['claude', ...Object.keys(DELEGATORS)]
 const roleRouting = ARGS.roles || {}
 // Object.entries silently yields [] for a boolean or number, which would read
 // as "no routing requested" and discard the caller's intent without a word.
@@ -115,10 +117,10 @@ const invalidRoles = Object.entries(roleRouting).filter(
 )
 if (invalidRoles.length) {
   throw new Error(
-    `swe-loop got an invalid roles map (${JSON.stringify(roleRouting)}). Keys must be among ${ROUTABLE_ROLES.join(', ')}; values must be "claude" or "codex".`,
+    `swe-loop got an invalid roles map (${JSON.stringify(roleRouting)}). Keys must be among ${ROUTABLE_ROLES.join(', ')}; values must be among ${ROLE_PROVIDERS.join(', ')}.`,
   )
 }
-const agentTypeFor = role => (roleRouting[role] === 'codex' ? 'swe:codex-delegator' : `swe:${role}`)
+const agentTypeFor = role => DELEGATORS[roleRouting[role]] ?? `swe:${role}`
 
 // ---- agent contracts --------------------------------------------------------
 const WORKABLE_SCHEMA = {

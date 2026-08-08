@@ -89,6 +89,66 @@ def test_swe_loop_routes_worker_roles_through_the_roles_map() -> None:
     assert re.findall(r"agentType:\s*['\"`]swe:", text) == []
 
 
+def test_every_routable_provider_has_a_forwarder_agent() -> None:
+    """A provider the loop accepts but cannot dispatch fails only at run time."""
+    text = SWE_LOOP.read_text()
+    declaration = re.search(r"DELEGATORS = \{([^}]+)\}", text)
+    assert declaration is not None, "swe-loop.js no longer declares a DELEGATORS map"
+
+    delegators = dict(re.findall(r"(\w+): '(swe:[a-z-]+)'", declaration.group(1)))
+    agents_dir = ROOT / "plugins" / "swe" / "agents"
+
+    assert delegators == {"codex": "swe:codex-delegator", "copilot": "swe:copilot-delegator"}
+    missing = [
+        agent_type
+        for agent_type in delegators.values()
+        if not (agents_dir / f"{agent_type.removeprefix('swe:')}.md").is_file()
+    ]
+
+    assert missing == []
+
+
+def test_forwarder_agents_hold_only_their_providers_mcp_tools() -> None:
+    """The forwarder contract is enforced by `tools`, not by its prose.
+
+    `allowed-tools` is not a subagent frontmatter field -- an agent declaring it
+    inherits every tool instead, which would let a forwarder work the task
+    itself. Pin the working key on the agents whose whole purpose is delegation.
+    """
+    agents_dir = ROOT / "plugins" / "swe" / "agents"
+    expected = {
+        "codex-delegator": "mcp__plugin_swe_codex__codex, mcp__plugin_swe_codex__codex-reply",
+        "copilot-delegator": "mcp__plugin_swe_copilot__delegate",
+    }
+
+    declared = {
+        name: re.search(r"^tools:\s*(.+?)\s*$", (agents_dir / f"{name}.md").read_text(), re.M)
+        for name in expected
+    }
+
+    assert {name: match.group(1) for name, match in declared.items() if match} == expected
+
+
+def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
+    """A plugin-bundled tool is `mcp__plugin_<plugin>_<server>__<tool>`.
+
+    The bare `mcp__<server>__<tool>` form resolves to nothing for a plugin
+    server, and a subagent whose `tools` list resolves to nothing fails to
+    launch -- so getting this wrong breaks delegation entirely rather than
+    degrading it.
+    """
+    servers = json.loads((ROOT / "plugins" / "swe" / ".mcp.json").read_text())["mcpServers"]
+    agents_dir = ROOT / "plugins" / "swe" / "agents"
+
+    referenced = {
+        tool.rsplit("__", 1)[0].removeprefix("mcp__")
+        for agent in ("codex-delegator", "copilot-delegator")
+        for tool in re.findall(r"mcp__[\w-]+__[\w-]+", (agents_dir / f"{agent}.md").read_text())
+    }
+
+    assert referenced == {f"plugin_swe_{server}" for server in servers}
+
+
 def test_swe_loop_stays_tracker_agnostic() -> None:
     # Tracker mechanics live in the to-issues tracker references
     # (references/issue-tracker-*.md); the loop's runner skill and conductor
