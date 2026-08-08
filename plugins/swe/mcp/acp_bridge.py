@@ -2,16 +2,23 @@
 """Expose an Agent Client Protocol agent to Claude Code as an MCP tool.
 
 Motivating failure mode: delegation by shell string. A forwarder subagent that
-composes `copilot -p "..."` in Bash re-derives quoting, sandbox flags, timeout
+composes `opencode run "..."` in Bash re-derives quoting, sandbox flags, timeout
 ceilings, and exit-code handling on every call, and "never work the task
 yourself" is only a prose rule the model may ignore. Here the caller fills a
 JSON schema, and the subagent that calls it is allowed no other tool.
 
-The bridge is also where read-only actually means read-only. Copilot has no
-OS-level sandbox the way `codex exec -s read-only` does; ACP instead asks the
+The bridge is also where read-only actually means read-only. An ACP agent has
+no OS-level sandbox the way `codex exec -s read-only` does; ACP instead asks the
 client for permission per tool call, so this process answers those requests
 itself and rejects every write when the caller asked for read-only. That is the
 whole reason to own a bridge rather than shell out.
+
+Answering permission requests is not enough on its own, though: OpenCode
+auto-approves edits inside the session cwd and never asks, so the kind policy
+below simply never fires for them. An agent like that needs its OWN read-only
+session mode selected, which `--read-only-mode` does. Writes that escape the
+cwd DO come through as permission requests, so the workspace-containment policy
+still covers the case the sandbox is really there for.
 
 Both protocols are newline-delimited JSON-RPC over stdio, so the bridge is a
 transport translation and a permission policy -- nothing else. One ACP
@@ -43,7 +50,13 @@ READ_ONLY_KINDS = frozenset({"read", "search", "fetch", "think"})
 
 MODES = ("read-only", "write")
 
-DELEGATE_TOOL = {
+# Leading argv flags, ahead of the ACP agent's own command line. `--model` and
+# `--effort` pin a server to one model so the caller cannot pick another: model
+# policy then lives in the .mcp.json entry, not in a prompt some model has to
+# obey. `--read-only-mode` names the agent's own read-only session mode.
+BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode")
+
+DELEGATE_TOOL: dict[str, Any] = {
     "name": "delegate",
     "title": "Delegate a task to an external coding agent",
     "description": (
@@ -76,6 +89,15 @@ DELEGATE_TOOL = {
                 "type": "string",
                 "description": "Agent-specific model id. Omit to use its default.",
             },
+            "effort": {
+                "type": "string",
+                "description": (
+                    "Reasoning-effort variant, applied as the agent's `effort` "
+                    "config option AFTER the model -- the set of legal values "
+                    "depends on which model is selected. Agents that expose no "
+                    "such option reject it."
+                ),
+            },
             "cwd": {
                 "type": "string",
                 "description": (
@@ -102,6 +124,54 @@ DELEGATE_TOOL = {
         },
     },
 }
+
+
+def delegate_tool(model: str | None) -> dict[str, Any]:
+    """The advertised `delegate` tool, minus anything this server has pinned.
+
+    A pinned server exists precisely so the model is not negotiable, so the
+    caller is not offered the choice: dropping the fields is what keeps role
+    model policy out of a prompt and in the `.mcp.json` entry.
+    """
+    if model is None:
+        return DELEGATE_TOOL
+    schema = dict(DELEGATE_TOOL["inputSchema"])
+    schema["properties"] = {
+        name: value
+        for name, value in schema["properties"].items()
+        if name not in ("model", "effort")
+    }
+    return {
+        **DELEGATE_TOOL,
+        "description": f"{DELEGATE_TOOL['description']} This server always runs {model}.",
+        "inputSchema": schema,
+    }
+
+
+def split_argv(argv: list[str]) -> tuple[dict[str, str], list[str]]:
+    """Split the bridge's own leading options from the ACP agent's command.
+
+    Parsing stops at the first token that is not a bridge option, so an agent
+    flag that happens to share a name (`some-agent --model x`) is never claimed
+    here.
+    """
+    options: dict[str, str] = {}
+    index = 0
+    while index < len(argv) and argv[index] in BRIDGE_OPTIONS:
+        if index + 1 >= len(argv):
+            raise ValueError(f"{argv[index]} needs a value")
+        options[argv[index].removeprefix("--").replace("-", "_")] = argv[index + 1]
+        index += 2
+    return options, argv[index:]
+
+
+def config_value(config_options: list[dict[str, Any]], config_id: str) -> str | None:
+    """The current value of one `session/new` config option, if the agent has it."""
+    for option in config_options:
+        if option.get("id") == config_id:
+            value = option.get("currentValue")
+            return value if isinstance(value, str) else None
+    return None
 
 
 # ---------------------------------------------------------------------------
@@ -191,6 +261,9 @@ class AcpSession:
 
     def __init__(self, command: list[str], cwd: str) -> None:
         self.cwd = cwd
+        # The agent's own session mode when it opened, so a session reused for a
+        # write delegation can be switched back out of read-only.
+        self.default_mode: str | None = None
         self.process = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
@@ -320,10 +393,17 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
         return answer
     if denied:
         blocked = "; ".join(denied)
+        remedy = (
+            "Re-dispatch with mode='write' if this task is meant to change files."
+            if mode == "read-only"
+            # A write run's denials are escapes, not the mode: telling the caller
+            # to retry in the mode it already used sends it round the same loop.
+            else "Every denial named a path outside the workspace; re-scope the "
+            "task to the workspace, or dispatch it with a cwd that contains those paths."
+        )
         return (
             f"The agent returned no message. The bridge denied {len(denied)} tool "
-            f"call(s) under mode={mode}: {blocked}. Re-dispatch with mode='write' "
-            "if this task is meant to change files."
+            f"call(s) under mode={mode}: {blocked}. {remedy}"
         )
     return "The agent returned no message."
 
@@ -334,8 +414,18 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
 
 
 class Bridge:
-    def __init__(self, command: list[str]) -> None:
+    def __init__(
+        self,
+        command: list[str],
+        model: str | None = None,
+        effort: str | None = None,
+        read_only_mode: str | None = None,
+    ) -> None:
         self.command = command
+        self.model = model
+        self.effort = effort
+        self.read_only_mode = read_only_mode
+        self.tool = delegate_tool(model)
         self.sessions: dict[str, AcpSession] = {}
         self._lock = threading.Lock()
 
@@ -350,15 +440,68 @@ class Bridge:
         )
         created = session.request("session/new", {"cwd": cwd, "mcpServers": []})
         session_id = created["sessionId"]
+        session.default_mode = config_value(created.get("configOptions", []), "mode")
         with self._lock:
             self.sessions[session_id] = session
         return session, session_id
+
+    def select_model(self, session: AcpSession, session_id: str, model: str, effort: str | None) -> None:
+        """Pin the session to one model, then to a reasoning variant of it.
+
+        Order is not cosmetic: an agent's effort values are model-dependent
+        (OpenCode offers `high|max` on one model and `none|low|medium|high|
+        xhigh|max` on another, and none at all on a third), so the variant can
+        only be set once the model is. Both requests raise on an unknown value
+        rather than running whatever the agent defaulted to -- a delegation
+        that silently ran a different model than the one it was routed to
+        would destroy exactly the cost guarantee the routing exists for.
+        """
+        session.request("session/set_model", {"sessionId": session_id, "modelId": model})
+        if effort:
+            session.request(
+                "session/set_config_option",
+                {"sessionId": session_id, "configId": "effort", "value": effort},
+            )
+
+    def select_session_mode(self, session: AcpSession, session_id: str, mode: str) -> None:
+        """Put the agent in its own read-only mode for a read-only delegation.
+
+        Only for agents configured with `--read-only-mode`: the ones that
+        auto-approve their in-workspace writes instead of asking, where the
+        permission policy alone never sees the call. Restoring the session's
+        opening mode for a write delegation matters when a read-only session is
+        continued by id -- otherwise the follow-up's edits are silently refused.
+        """
+        if not self.read_only_mode:
+            return
+        # No `mode` option at all means the agent never advertised one on
+        # session/new -- there is nothing to select, and for a read-only
+        # delegation nothing to enforce with either.
+        if session.default_mode is None:
+            if mode != "read-only":
+                return
+            raise RuntimeError(
+                f"this server enforces read-only through the agent's {self.read_only_mode!r} "
+                "session mode, and the agent advertised no `mode` config option; refusing to "
+                "run a read-only delegation unprotected"
+            )
+        target = self.read_only_mode if mode == "read-only" else session.default_mode
+        session.request(
+            "session/set_config_option",
+            {"sessionId": session_id, "configId": "mode", "value": target},
+        )
 
     def delegate(self, arguments: dict[str, Any], report: Any) -> dict[str, Any]:
         task = arguments["task"]
         mode = arguments["mode"]
         if mode not in MODES:
             raise ValueError(f"unknown mode {mode!r}; expected one of {MODES}")
+        if self.model and (arguments.get("model") or arguments.get("effort")):
+            raise ValueError(
+                f"this server is pinned to model {self.model}"
+                f"{f' ({self.effort} effort)' if self.effort else ''}; "
+                "drop `model`/`effort` from the call, or use a server that does not pin one"
+            )
 
         session_id = arguments.get("sessionId")
         if session_id:
@@ -374,9 +517,12 @@ class Bridge:
             if not Path(cwd).is_dir():
                 raise ValueError(f"cwd {cwd!r} is not a directory")
             session, session_id = self.open_session(cwd)
+            if self.model:
+                self.select_model(session, session_id, self.model, self.effort)
 
         if model := arguments.get("model"):
-            session.request("session/set_model", {"sessionId": session_id, "modelId": model})
+            self.select_model(session, session_id, model, arguments.get("effort"))
+        self.select_session_mode(session, session_id, mode)
 
         turn = run_turn(session, session_id, task, mode, report)
         return {"sessionId": session_id, **turn}
@@ -389,7 +535,7 @@ def send_mcp(frame: dict[str, Any]) -> None:
 
 def handle_tools_call(bridge: Bridge, message: dict[str, Any]) -> dict[str, Any]:
     params = message.get("params", {})
-    if params.get("name") != DELEGATE_TOOL["name"]:
+    if params.get("name") != bridge.tool["name"]:
         raise ValueError(f"unknown tool {params.get('name')!r}")
 
     progress_token = params.get("_meta", {}).get("progressToken")
@@ -451,7 +597,7 @@ def serve(bridge: Bridge) -> None:
                 }
             )
         elif method == "tools/list":
-            send_mcp({"jsonrpc": "2.0", "id": message_id, "result": {"tools": [DELEGATE_TOOL]}})
+            send_mcp({"jsonrpc": "2.0", "id": message_id, "result": {"tools": [bridge.tool]}})
         elif method == "tools/call":
             threading.Thread(
                 target=_run_tool_call, args=(bridge, message), daemon=True
@@ -477,11 +623,22 @@ def _run_tool_call(bridge: Bridge, message: dict[str, Any]) -> None:
     send_mcp({"jsonrpc": "2.0", "id": message["id"], "result": result})
 
 
+USAGE = (
+    "usage: acp_bridge.py [--model ID] [--effort LEVEL] [--read-only-mode MODE] "
+    "<agent-command> [args...]\n"
+)
+
+
 def main(argv: list[str]) -> int:
-    if not argv:
-        sys.stderr.write("usage: acp_bridge.py <agent-command> [args...]\n")
+    try:
+        options, command = split_argv(argv)
+    except ValueError as error:
+        sys.stderr.write(f"{error}\n{USAGE}")
         return 2
-    serve(Bridge(argv))
+    if not command:
+        sys.stderr.write(USAGE)
+        return 2
+    serve(Bridge(command, **options))
     return 0
 
 
