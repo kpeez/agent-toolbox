@@ -195,8 +195,8 @@ flags, exit codes and timeout ceilings stop being the model's problem.
 
 | Provider | Surface                                    | Tools                                    |
 | -------- | ------------------------------------------ | ---------------------------------------- |
-| Codex    | `codex mcp-server` (native MCP over stdio) | `mcp__codex__codex`, `…__codex-reply`    |
-| Copilot  | `copilot --acp` through `mcp/acp_bridge.py` | `mcp__copilot__delegate`                 |
+| Codex    | `codex mcp-server` (native MCP over stdio) | `mcp__plugin_swe_codex__codex`, `…__codex-reply`    |
+| Copilot  | `copilot --acp` through `mcp/acp_bridge.py` | `mcp__plugin_swe_copilot__delegate`                 |
 
 Each forwarder agent's `tools` field lists only its own provider's tools, so
 "never work the task yourself" is a property of the agent rather than a rule in

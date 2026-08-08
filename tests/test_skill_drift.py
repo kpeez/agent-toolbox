@@ -117,8 +117,8 @@ def test_forwarder_agents_hold_only_their_providers_mcp_tools() -> None:
     """
     agents_dir = ROOT / "plugins" / "swe" / "agents"
     expected = {
-        "codex-delegator": "mcp__codex__codex, mcp__codex__codex-reply",
-        "copilot-delegator": "mcp__copilot__delegate",
+        "codex-delegator": "mcp__plugin_swe_codex__codex, mcp__plugin_swe_codex__codex-reply",
+        "copilot-delegator": "mcp__plugin_swe_copilot__delegate",
     }
 
     declared = {
@@ -129,18 +129,24 @@ def test_forwarder_agents_hold_only_their_providers_mcp_tools() -> None:
     assert {name: match.group(1) for name, match in declared.items() if match} == expected
 
 
-def test_forwarder_mcp_tools_come_from_registered_servers() -> None:
-    """Tool names encode their server: `mcp__<server>__<tool>`."""
+def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
+    """A plugin-bundled tool is `mcp__plugin_<plugin>_<server>__<tool>`.
+
+    The bare `mcp__<server>__<tool>` form resolves to nothing for a plugin
+    server, and a subagent whose `tools` list resolves to nothing fails to
+    launch -- so getting this wrong breaks delegation entirely rather than
+    degrading it.
+    """
     servers = json.loads((ROOT / "plugins" / "swe" / ".mcp.json").read_text())["mcpServers"]
     agents_dir = ROOT / "plugins" / "swe" / "agents"
 
     referenced = {
-        tool.split("__")[1]
+        tool.rsplit("__", 1)[0].removeprefix("mcp__")
         for agent in ("codex-delegator", "copilot-delegator")
-        for tool in re.findall(r"mcp__\w+__[\w-]+", (agents_dir / f"{agent}.md").read_text())
+        for tool in re.findall(r"mcp__[\w-]+__[\w-]+", (agents_dir / f"{agent}.md").read_text())
     }
 
-    assert referenced == set(servers)
+    assert referenced == {f"plugin_swe_{server}" for server in servers}
 
 
 def test_swe_loop_stays_tracker_agnostic() -> None:
