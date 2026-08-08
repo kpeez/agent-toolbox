@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Conductor for the swe workflow after spec approval and splitting: run the implement loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker and its tasks are published on the tracker — the launcher tasks before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the tasks, baseBranch is the integration branch every task merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding tasks this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to "codex" or "copilot" to run that role on that provider through its forwarder agent (unlisted roles stay on Claude). Returns {prUrls, tasksCompleted, escalations}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker and its tasks are published on the tracker — the launcher tasks before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the tasks, baseBranch is the integration branch every task merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding tasks this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to a provider ("claude", "codex", or "opencode") to run that role on that provider through its forwarder agent. Unlisted roles take the default routing: implementer and reviewer run on OpenCode Go (pinned to GPT-5.6 Luna and DeepSeek V4 Pro respectively), planner and publisher stay on Claude. An explicit entry always beats the default, so {"implementer": "claude"} pulls implementation back host-native; "opencode" is only valid for implementer and reviewer. Returns {prUrls, tasksCompleted, escalations}; it never prompts the user mid-run.',
   phases: [
     { title: 'Implement', detail: 'rounds: implement in parallel, then one agent merges and records the round' },
     { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
@@ -102,25 +102,67 @@ const trackerGuide = `Tracker: resolve this repo's tracker per the to-issues ski
 // on the default workflow subagent. A routed role runs through that provider's
 // forwarder agent, which holds only that provider's MCP tool.
 const ROUTABLE_ROLES = ['planner', 'implementer', 'reviewer', 'publisher']
-const DELEGATORS = { codex: 'swe:codex-delegator', copilot: 'swe:copilot-delegator' }
+// A provider that runs every role through one forwarder names it directly. A
+// provider whose forwarder is per-role names a map instead: OpenCode pins one
+// model per role at the MCP layer, so choosing the forwarder IS choosing the
+// model, and it can only take a role it has a forwarder for. Routing a role it
+// has none for is a launch-time stop rather than a run-time surprise.
+const DELEGATORS = {
+  codex: 'swe:codex-delegator',
+  opencode: {
+    implementer: 'swe:opencode-implementer',
+    reviewer: 'swe:opencode-reviewer',
+  },
+}
 const ROLE_PROVIDERS = ['claude', ...Object.keys(DELEGATORS)]
-const roleRouting = ARGS.roles || {}
+// Where the two expensive roles run when the caller says nothing. Implementation
+// and review dominate a run's token cost and are bounded enough to hand over
+// whole; planning and publishing are low-token and high-side-effect, so they
+// stay host-native along with every deterministic step (workable query, settle,
+// tracker bookkeeping, run summary), which is never routed at all.
+const DEFAULT_ROLE_PROVIDERS = { implementer: 'opencode', reviewer: 'opencode' }
+const requestedRoles = ARGS.roles || {}
 // Object.entries silently yields [] for a boolean or number, which would read
 // as "no routing requested" and discard the caller's intent without a word.
-if (typeof roleRouting !== 'object' || Array.isArray(roleRouting)) {
+if (typeof requestedRoles !== 'object' || Array.isArray(requestedRoles)) {
   throw new Error(
     `swe-loop got a non-object roles value (${JSON.stringify(ARGS.roles)}). Pass a map like {"reviewer": "codex"} with keys among ${ROUTABLE_ROLES.join(', ')}.`,
   )
 }
-const invalidRoles = Object.entries(roleRouting).filter(
+const delegatorFor = (role, provider) => {
+  const entry = DELEGATORS[provider]
+  if (typeof entry === 'string') return entry
+  return entry ? entry[role] : undefined
+}
+const invalidRoles = Object.entries(requestedRoles).filter(
   ([role, provider]) => !ROUTABLE_ROLES.includes(role) || !ROLE_PROVIDERS.includes(provider),
 )
 if (invalidRoles.length) {
   throw new Error(
-    `swe-loop got an invalid roles map (${JSON.stringify(roleRouting)}). Keys must be among ${ROUTABLE_ROLES.join(', ')}; values must be among ${ROLE_PROVIDERS.join(', ')}.`,
+    `swe-loop got an invalid roles map (${JSON.stringify(requestedRoles)}). Keys must be among ${ROUTABLE_ROLES.join(', ')}; values must be among ${ROLE_PROVIDERS.join(', ')}.`,
   )
 }
-const agentTypeFor = role => DELEGATORS[roleRouting[role]] ?? `swe:${role}`
+const unsupportedRoles = Object.entries(requestedRoles).filter(
+  ([role, provider]) => provider !== 'claude' && !delegatorFor(role, provider),
+)
+if (unsupportedRoles.length) {
+  throw new Error(
+    `swe-loop cannot route ${unsupportedRoles.map(([role, provider]) => `${role} to ${provider}`).join(', ')}: that provider has no forwarder agent for that role. Provider coverage: ${JSON.stringify(DELEGATORS)}.`,
+  )
+}
+// An explicit entry always beats the default: the defaults are what an
+// unopinionated run gets, never a policy the caller has to fight. Routing a
+// defaulted role back to "claude" is how a caller opts out.
+const roleRouting = { ...DEFAULT_ROLE_PROVIDERS, ...requestedRoles }
+const agentTypeFor = role => delegatorFor(role, roleRouting[role]) ?? `swe:${role}`
+// Plumbing calls carry no capability agent, so without an explicit model they
+// inherit whatever model the host session happens to be running -- which is how
+// one run settles a round on Fable and the next on Sonnet. These steps are
+// deterministic git and tracker work whose behavior must not depend on the
+// host's model picker, so the tier is pinned here and the colocated static test
+// keeps every unrouted call from drifting back to "whatever the session is".
+const PLUMBING_MODEL = 'sonnet'
+log(`Role routing: ${ROUTABLE_ROLES.map(role => `${role}=${roleRouting[role] || 'claude'}`).join(' ')}.`)
 
 // ---- agent contracts --------------------------------------------------------
 const WORKABLE_SCHEMA = {
@@ -548,6 +590,7 @@ const escalate = async (issue, reason) => {
   // whoever opens the issue later.
   const noted = await agent(promptEscalationNote(issue, reason), {
     label: `escalation-note:${issue.identifier}`,
+    model: PLUMBING_MODEL,
     phase: 'Implement',
     effort: 'low',
   })
@@ -599,6 +642,7 @@ const finish = async prUrls => {
   const summary = { prUrls, tasksCompleted, escalations }
   const posted = await agent(promptRunSummary(summary), {
     label: `run-summary:${slug}`,
+    model: PLUMBING_MODEL,
     phase: 'Ship',
     effort: 'low',
   })
@@ -617,6 +661,7 @@ const requestWorkable = async label => {
   for (let attempt = 1; attempt <= WORKABLE_ATTEMPTS; attempt += 1) {
     const workable = await agent(promptWorkable(), {
       label: attempt === 1 ? label : `${label}:retry${attempt - 1}`,
+      model: PLUMBING_MODEL,
       phase: 'Implement',
       effort: 'low',
       schema: WORKABLE_SCHEMA,
@@ -710,6 +755,7 @@ const runImplementLoop = async passLabel => {
       })
       const settlement = await agent(promptSettle(plan), {
         label: `settle:${passLabel}:${round}`,
+        model: PLUMBING_MODEL,
         phase: 'Implement',
         schema: SETTLE_SCHEMA,
       })
