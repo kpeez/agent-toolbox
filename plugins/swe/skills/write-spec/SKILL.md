@@ -101,7 +101,7 @@ Two semantics worth knowing beyond the template:
 - **Durable decisions** (architecture, provider policy, storage model, security
   posture) go in the shared vault as ADRs under `docs/agents/adrs/` (see
   `sharpen`'s `ADR-FORMAT.md`) and are linked from the Decisions section. The
-  optional domain glossary is the still-committed `CONTEXT.md` at the repo root.
+  optional domain glossary is `docs/agents/CONTEXT.md`, in that same vault.
 
 ## Status lives on the tracker
 

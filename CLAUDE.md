@@ -44,8 +44,8 @@ gitignored symlink to `$LLMOS_ROOT/projects/<repo>` — holding `specs/`,
 `/setup-repo`; never create it as a real directory.
 
 Durable decisions are ADRs in `docs/agents/adrs/`; the optional domain glossary is
-the still-committed repo-root `CONTEXT.md`. An optional `Issue tracker: <name>`
-line in the repo's `AGENTS.md` or `CONTEXT.md` pins the tracker (`CONTEXT.md` when
+`docs/agents/CONTEXT.md`. An optional `Issue tracker: <name>` line in the repo's
+`AGENTS.md` or `docs/agents/CONTEXT.md` pins the tracker (`CONTEXT.md` when
 `AGENTS.md` is the shared global file); otherwise `/to-issues` auto-detects —
 prior specs' `tracker:` frontmatter outranks hosting inference.
 

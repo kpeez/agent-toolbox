@@ -22,7 +22,7 @@ is right?"
 
 **Sharpen fuzzy language.** When I use a vague or overloaded term, propose a
 precise canonical one. "You're saying 'account' — do you mean the Customer or the
-User? Those are different things." If a repo-root `CONTEXT.md` glossary exists,
+User? Those are different things." If a `docs/agents/CONTEXT.md` glossary exists,
 challenge any term that conflicts with it. When a term gets pinned down, capture
 it in `CONTEXT.md` right there — see [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
 Create the file lazily, only when the first term is resolved.
