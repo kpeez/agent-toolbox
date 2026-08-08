@@ -272,9 +272,12 @@ Changing one is a one-line edit, and `tests/test_skill_drift.py` fails if any
 prose disagrees with it.
 
 The explorer is deliberately not a swe-loop role — the conductor has no
-exploration phase to spend it on. It is there for any skill or orchestrator
-that wants cheap repository evidence: dispatch the `swe:opencode-explorer`
-subagent with a bounded question and a workspace root.
+exploration phase to spend it on. Its callers are the two places that do
+explore: the interactive orchestrator, which `/implement` and `/to-issues`
+point at `swe:opencode-explorer`, and the planner, which cannot nest subagents
+and so calls `mcp__plugin_swe_opencode-explorer__delegate` directly. Both reach
+the same forwarder and get back only the answer, which is the whole point —
+the sweep never lands in the caller's context.
 
 ### The ACP bridge
 
