@@ -5,7 +5,7 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
-## Unreleased
+## 1.13.0 — 2026-08-08
 
 - Add **OpenCode Go as an external worker provider**, through the existing ACP
   bridge (`opencode acp`) rather than a second delegation path. `implementer`
