@@ -39,6 +39,27 @@ codex plugin add lab@agent-toolbox
 > Codex plugins deliver skills only; the Codex `.toml` subagents come from the
 > manual script below.
 
+### skills.sh — any agent
+
+The [skills.sh](https://skills.sh) installer copies editable skill files into
+your project, no plugin harness required:
+
+```bash
+npx skills@latest add kpeez/agent-toolbox                     # pick skills and target agent
+npx skills@latest add kpeez/agent-toolbox --skill start-loop
+npx skills@latest add kpeez/agent-toolbox/plugins/swe      # one plugin's skills
+npx skills@latest update                                    # refresh installed skills
+```
+
+Skills install as plain editable files (Claude Code: `.claude/skills/`, a
+symlink to the shared `.agents/skills/` copy). They live in your project and
+need no plugin harness, but re-running `add` or `update` rewrites them from
+the source, so keep customizations in your own fork rather than the installed
+copies. The install is skills-only: the swe conductor (`swe-loop.js`), the
+`swe:*` agents, hooks, and MCP servers are not copied, so `start-loop` and
+`implement` rely on one of the plugin installs above (or the manual script
+below) being present on the same machine.
+
 ### Manual install (Codex agents, Antigravity, Copilot)
 
 ```bash
