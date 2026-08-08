@@ -1,0 +1,85 @@
+{
+  "version": 1,
+  "skills": {
+    "autoresearch": {
+      "source": "./plugins/lab",
+      "sourceType": "local",
+      "computedHash": "b4fc154d502b882cfe856cd08a3f18395edf5d2b02aaf6fa29637fcbebaa93de"
+    },
+    "codebase-design": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "2470f357331803da268e6e12cc4484e9d432c3d0aafc22aeb88a0372c920f51d"
+    },
+    "data-viz": {
+      "source": "./plugins/lab",
+      "sourceType": "local",
+      "computedHash": "1820289cff850d7e3d8086afa40abbbddb54ece34496a1fe82a7ff24043254ee"
+    },
+    "diagnose": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "3cb40044facacc0c49cff7c49880dce14c6d9fadf89bc66efeec3fc07324b485"
+    },
+    "implement": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "51f22b2763a387d07534bfcb75110526dff6908e96f3e1f0d3525af4f13222a1"
+    },
+    "improve-codebase-architecture": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "b969c0e22fcd80a9ab354fd103a2041df96e53d8e6c609e739dc2d575e738961"
+    },
+    "merge-conflicts": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "b050e1cf4695dce6295fdea59d7fd9a5cce6aaad0bb1bb1adedc443935554ac4"
+    },
+    "qmd": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "3b42e9c129438685999fc7dd12b19b94c0e698ecf3a9ffee32b4485a554ad460"
+    },
+    "research": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "a1a69ec59a35effad2bf363d333a6359af92ed058472c0bc380b2d05996b9764"
+    },
+    "setup-repo": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "f2e927bd3cdf358b91f9ed401007c47df374e123d10144c255595ffa2bb29df7"
+    },
+    "sharpen": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "45bcd73eaed0637ec6d4f2e39fc2a3e995e0ceaf1b4d5b1d8f97f15ee0ecaa03"
+    },
+    "ship-pr": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "7df58854fb1b99599320c3271354e6bc5f2596b1c969c617cdb04e805199cd7a"
+    },
+    "start-loop": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "8b621fdf62c83e7ad15e6c35e94fec3c61ee6eea83e5a05ddfc6b3b0000393b0"
+    },
+    "tdd": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "84e0e5bb179b2ba3a12bb42df29f079ded8154d5b74e63d8a6c38863c11cfa05"
+    },
+    "to-issues": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "56921741f6f868bf5bd3810f7421cdd73bbc4194decc6344f141891e53a26a29"
+    },
+    "write-spec": {
+      "source": "./plugins/swe",
+      "sourceType": "local",
+      "computedHash": "7a63a3ecfbecde8538001089d006b124929d3fe83af4e3ecbd5592a451ccc6e4"
+    }
+  }
+}
