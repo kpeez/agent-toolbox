@@ -60,7 +60,7 @@ copies. The install is skills-only: the swe conductor (`swe-loop.js`), the
 `implement` rely on one of the plugin installs above (or the manual script
 below) being present on the same machine.
 
-### Manual install (Codex agents, Antigravity, Copilot)
+### Manual install (Codex agents, opencode, Antigravity, Copilot)
 
 ```bash
 ./scripts/install.sh
@@ -69,6 +69,7 @@ below) being present on the same machine.
 | Target            | Installed to                                           |
 | ----------------- | ------------------------------------------------------ |
 | Codex agents      | `~/.codex/agents/*.toml`                               |
+| opencode          | `~/.agents/skills/*` — plugin skills symlinked          |
 | Antigravity CLI   | `~/.gemini/AGENTS.md` + skills symlinked from the repo |
 | Copilot CLI       | `~/.copilot/copilot-instructions.md`                   |
 | Claude statusline | `~/.claude/cc_statusline.py`                           |
