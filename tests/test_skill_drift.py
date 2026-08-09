@@ -5,6 +5,7 @@ from __future__ import annotations
 import json
 import re
 from pathlib import Path
+from typing import Any
 
 ROOT = Path(__file__).resolve().parents[1]
 SKILL_REFERENCE = re.compile(r"`/([a-z][a-z0-9-]+)`")
@@ -208,9 +209,9 @@ def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
     launch -- so getting this wrong breaks delegation entirely rather than
     degrading it.
     """
-    servers = json.loads((ROOT / "plugins" / "swe" / ".mcp.json").read_text())[
-        "mcpServers"
-    ]
+    servers = json.loads(
+        (ROOT / "plugins" / "swe" / ".mcp.claude.json").read_text()
+    )["mcpServers"]
     agents_dir = ROOT / "plugins" / "swe" / "agents"
 
     referenced = {
@@ -417,7 +418,9 @@ def test_documentation_places_context_glossary_under_docs_agents() -> None:
     assert stale_claims == []
 
 
-SWE_MCP = ROOT / "plugins" / "swe" / ".mcp.json"
+SWE_PLUGIN = ROOT / "plugins" / "swe"
+SWE_MCP = SWE_PLUGIN / ".mcp.json"
+SWE_CLAUDE_MCP = SWE_PLUGIN / ".mcp.claude.json"
 OPENCODE_MODEL = re.compile(r"opencode-go/[\w.-]+")
 
 
@@ -438,6 +441,55 @@ def pinned_models() -> dict[str, str]:
     }
 
 
+def normalized_opencode_contract(
+    config: dict[str, Any], *, timeout_field: str, timeout_scale: int
+) -> dict[str, object]:
+    args = list(config["args"])
+    bridge = str(args[0])
+    if bridge in {
+        "${CLAUDE_PLUGIN_ROOT}/mcp/acp_bridge.py",
+        "mcp/acp_bridge.py",
+    }:
+        args[0] = "<plugin-root>/mcp/acp_bridge.py"
+
+    return {
+        "command": config["command"],
+        "args": args,
+        "timeout_ms": config[timeout_field] * timeout_scale,
+    }
+
+
+def test_codex_and_claude_package_the_same_opencode_role_contracts() -> None:
+    """A host-specific transport edit must not silently change provider policy."""
+    claude_manifest = json.loads(
+        (SWE_PLUGIN / ".claude-plugin" / "plugin.json").read_text()
+    )
+    codex_manifest = json.loads(
+        (SWE_PLUGIN / ".codex-plugin" / "plugin.json").read_text()
+    )
+    assert claude_manifest["mcpServers"] == "./.mcp.claude.json"
+    assert codex_manifest["mcpServers"] == "./.mcp.json"
+
+    claude_servers = json.loads(SWE_CLAUDE_MCP.read_text())["mcpServers"]
+    codex_servers = json.loads(SWE_MCP.read_text())["mcpServers"]
+    role_names = {
+        "opencode-explorer",
+        "opencode-implementer",
+        "opencode-reviewer",
+    }
+
+    assert set(claude_servers) == {"codex", *role_names}
+    assert set(codex_servers) == role_names
+    for name in role_names:
+        assert codex_servers[name]["cwd"] == "."
+        assert "${CLAUDE_PLUGIN_ROOT}" not in json.dumps(codex_servers[name])
+        assert normalized_opencode_contract(
+            claude_servers[name], timeout_field="timeout", timeout_scale=1
+        ) == normalized_opencode_contract(
+            codex_servers[name], timeout_field="tool_timeout_sec", timeout_scale=1000
+        )
+
+
 def test_opencode_runs_through_the_generic_acp_bridge() -> None:
     """Not a parallel delegation path: the same bridge Copilot proved out, with
     the agent command as its argv, is what OpenCode arrives through."""
@@ -449,7 +501,7 @@ def test_opencode_runs_through_the_generic_acp_bridge() -> None:
     }
 
     for name, args in servers.items():
-        assert args[0].endswith("/mcp/acp_bridge.py"), name
+        assert args[0].endswith("mcp/acp_bridge.py"), name
         assert args[-2:] == ["opencode", "acp"], name
 
 
@@ -567,3 +619,27 @@ def test_every_opencode_forwarder_has_a_caller() -> None:
     ]
 
     assert uncalled == []
+
+
+def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
+    """Codex has no Workflow tool or Claude forwarder agents, so its manual
+    conductor must call each plugin-delivered delegate directly and preserve
+    the role's write boundary."""
+    skills = ROOT / "plugins" / "swe" / "skills"
+    implement = (skills / "implement" / "SKILL.md").read_text()
+    to_issues = (skills / "to-issues" / "SKILL.md").read_text()
+    start_loop = (skills / "start-loop" / "SKILL.md").read_text()
+
+    assert "mcp__plugin_swe_opencode-explorer__delegate" in implement
+    assert "mcp__plugin_swe_opencode-implementer__delegate" in implement
+    assert "mcp__plugin_swe_opencode-reviewer__delegate" in implement
+    assert "mcp__plugin_swe_opencode-explorer__delegate" in to_issues
+    assert 'mode: "write"' in implement
+    assert implement.count('mode: "read-only"') >= 2
+    assert "cwd" in implement
+    assert "manual orchestration in `/implement`" in start_loop
+
+    assert "swe:opencode-explorer" in implement
+    assert "swe:opencode-implementer" in implement
+    assert "swe:opencode-reviewer" in implement
+    assert "silent fallback" in implement
