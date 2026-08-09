@@ -54,18 +54,24 @@ const ARGS =
     : args
 if (argsParseError) {
   throw new Error(
-    `swe-loop received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir} as an object or as its JSON encoding.`,
+    `swe-loop received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir, specText} as an object or as its JSON encoding.`,
   )
 }
 
-const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scriptsDir']
+const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scriptsDir', 'specText']
 const missing = REQUIRED_ARGS.filter(key => !ARGS || !ARGS[key])
 if (missing.length) {
   throw new Error(
-    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed plugin's scripts directory.`,
+    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir, specText} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch, the installed plugin's scripts directory, and the spec file's text.`,
   )
 }
 const specPath = ARGS.specPath
+// The spec's own text, read by the launcher. Any capability role may be routed
+// to another provider, whose CLI runs sandboxed to the repo workspace and
+// cannot open specPath -- the spec lives under docs/agents/, a symlink out of
+// the repo. So the conductor carries the spec rather than naming a path only a
+// host-native agent could read, and every routed prompt embeds it.
+const specText = ARGS.specText
 const slug = ARGS.slug
 const containerId = ARGS.containerId
 const baseBranch = ARGS.baseBranch
@@ -261,6 +267,14 @@ const SHIP_SCHEMA = {
 // ---- prompts ----------------------------------------------------------------
 const tupleFor = issueId => JSON.stringify({ specPath, slug, containerId, issueId })
 
+// Named for provenance, embedded because a routed provider cannot open it: an
+// agent that goes looking for the file spends a denied tool call and then
+// reviews or implements against a guess.
+const specBrief = `--- SPEC ${specPath} (verbatim below; the file itself is outside the
+repo workspace and may be unreadable from your sandbox, so do not go looking
+for it -- this copy is authoritative) ---
+${specText}`
+
 // Display-only shortening: log lines and escalation reasons. Never applied to
 // findings handed to an agent that has to act on them.
 const clip = text => String(text == null ? '' : text).replace(/\s+/g, ' ').trim().slice(0, 200)
@@ -397,11 +411,15 @@ ${numbered(changeset.issues.map(issue => `${issue.identifier} — ${issue.title}
    the rest: implement the others and name it in your summary.`}
 3. COMMIT the work to ${branchForChangeset(changeset)}. Do not push, do not merge, do
    not open a PR — the conductor merges and ships.
-4. Advance ${changeset.issues.length === 1 ? `tracker issue ${changeset.issues[0].identifier}` : `each of ${changeset.issues.map(issue => issue.identifier).join(', ')}`} to "in progress" per the
-   tracker reference's state-transition section, and comment your progress.
-5. Report {status, branch, summary}; "branch" is the branch you actually
+4. Report {status, branch, summary}; "branch" is the branch you actually
    committed to. NEEDS_CONTEXT or BLOCKED means you could not finish: name
-   exactly what is missing instead of guessing.`
+   exactly what is missing instead of guessing.
+
+Do not touch the tracker: the conductor has already marked these tasks in
+progress and comments the outcome once the changeset merges. Your summary is
+what it comments.
+
+${specBrief}`
 
 const promptReview = () => `Review the assembled implementation against its spec, through one lens:
 does the code do what the spec asked, correctly?
@@ -431,7 +449,9 @@ Verdict "did-not-complete" means YOU could not finish the review — a delegated
 run timed out, a tool failed, a command exited non-zero — and is never a
 judgment about the code. Put what stopped you in "detail" and return no
 findings. An infrastructure failure must never appear as a finding: a fixer
-would act on it.`
+would act on it.
+
+${specBrief}`
 
 const promptFixer = (findings, round) => `Execute this bounded assignment: apply review findings.
 
@@ -449,11 +469,29 @@ introduced the line — never on the top changeset by default: a fix committed a
 the layer that owns it lands in the wrong pull request. After committing on a
 changeset below the top, replay the stack above it so they carry the fix, in order:
 \`git checkout <higher changeset> && git rebase <the changeset directly below it>\`. On
-conflict, resolve per the merge-conflicts skill and continue the rebase.
+conflict, read what each side was trying to do before choosing — keep both
+intents where they can coexist, and never resolve by taking one side wholesale
+— then re-run the project's checks and continue the rebase.
 Nothing is published yet, so these rebases rewrite local branches only.`}
 Apply every finding, re-run lint/types/tests, and commit. Do not push and do not
 merge. Return a concise completion note; this call has no additional output
-schema.`
+schema.
+
+${specBrief}`
+
+// The implementer may be routed to a provider with no tracker access of any
+// kind, so the round's state write stays here, on the default agent, batched
+// for every task the round is about to start.
+const promptMarkInProgress = issues => `Advance this round's tasks to "in progress" on the tracker.
+
+${trackerGuide}
+
+Tasks: ${issues.map(issue => issue.identifier).join(', ')}
+
+Move each to the state the reference's state-transition section calls "in
+progress". Post no comments and change no other fields — the run comments each
+task's outcome when its changeset merges. Report in one line what you moved;
+a write that does not land is worth reporting and never worth retrying.`
 
 const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
 
@@ -703,6 +741,13 @@ const runImplementLoop = async passLabel => {
     const changesets = changesetsFor(pending)
     log(`Round ${round}: ${pending.length} task(s) in ${changesets.length} changeset(es) — ${changesets.map(changeset => `${changeset.name} (${changeset.issues.length})`).join(', ')}.`)
     const from = stackTip()
+    const marked = await agent(promptMarkInProgress(pending), {
+      label: `mark-in-progress:${round}`,
+      model: PLUMBING_MODEL,
+      phase: 'Implement',
+      effort: 'low',
+    })
+    if (!marked) log(`Round ${round}: tasks were not marked in progress; the run proceeds regardless.`)
     const outcomes = await parallel(
       changesets.map(changeset => async () => {
         const result = await agent(promptImplementer(changeset, from), {

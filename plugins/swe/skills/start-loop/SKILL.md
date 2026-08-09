@@ -130,10 +130,19 @@ The conductor lives at the plugin root as `workflows/swe-loop.js`, so Claude
 Code also registers it as the named plugin workflow `/swe:swe-loop`. Launch it
 by invoking the **Workflow** tool with scriptPath
 `${CLAUDE_PLUGIN_ROOT}/workflows/swe-loop.js` and args exactly
-`{specPath, slug, containerId, baseBranch, scriptsDir}` — the spec's
+`{specPath, slug, containerId, baseBranch, scriptsDir, specText}` — the spec's
 path, its slug, the container from step 1, the branch the run integrates into
 and ships from (if you are on the default branch, create the feature branch
-first and pass that), and `scriptsDir`.
+first and pass that), `scriptsDir`, and `specText`.
+
+`specText` is the spec file's **entire text**, read verbatim. Read `specPath`
+and pass what you read; never summarise it, and never pass a path in its place.
+The conductor may route implementation and review to another provider (ADR-0006)
+whose CLI is sandboxed to the repo workspace, and the spec sits under
+`docs/agents/`, a symlink pointing out of the repo — so an agent given only the
+path spends a denied tool call and then works against a guess. The conductor
+embeds this text in every prompt that can be routed. It rejects a launch
+without it.
 
 `scriptsDir` is the **expanded absolute path** to the installed plugin's
 `scripts/` directory — resolve `${CLAUDE_PLUGIN_ROOT}/scripts` to a real `/…`
@@ -205,7 +214,9 @@ elif sed -n '/^---$/,/^---$/p' "$spec" | grep -q '^approved: true'; then echo "A
 else echo "IN DESIGN: $spec"; fi
 ```
 
-- **APPROVED** → relaunch the workflow with the same args. Take `baseBranch`
+- **APPROVED** → relaunch the workflow with the same args, re-reading
+  `specText` from the spec file so a spec edited since the last launch takes
+  effect. Take `baseBranch`
   and the run id from the spec's `base_branch` and `run_id` frontmatter; with
   neither recorded, derive `baseBranch` from the branch you are currently on and
   say in your reply that you did so. Pass the run id as `resumeFromRunId`, a

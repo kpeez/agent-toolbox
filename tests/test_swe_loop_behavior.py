@@ -25,6 +25,7 @@ LAUNCH_ARGS = {
     "containerId": "container-1",
     "baseBranch": "worktree-stub",
     "scriptsDir": "/opt/swe/scripts",
+    "specText": "# Stub spec\n\nB1 - the stubbed behavior.",
 }
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="node is required")
@@ -1106,3 +1107,143 @@ def test_an_unknown_provider_is_still_rejected(tmp_path: Path) -> None:
     error = failed_launch(tmp_path, {"reviewer": "gemini"})
 
     assert "invalid roles map" in error
+
+
+# ---- the spec travels with the run, not as a path ---------------------------
+
+
+def prompt_for(result: dict[str, Any], label_prefix: str) -> str:
+    matches = [
+        call for call in result["calls"] if call["label"].startswith(label_prefix)
+    ]
+    assert matches, f"no call labelled {label_prefix}*; got {labels(result)}"
+    return matches[0]["prompt"]
+
+
+def test_every_routable_prompt_carries_the_spec_text(tmp_path: Path) -> None:
+    """A routed role runs on a provider sandboxed to the repo workspace, and the
+    spec lives outside it under the docs/agents symlink. Naming the path there
+    buys a denied tool call and then work against a guess."""
+    result = routed_run(tmp_path)
+
+    for prefix in ("implement:", "review:assembled", "fix:"):
+        assert LAUNCH_ARGS["specText"] in prompt_for(result, prefix), prefix
+
+
+def test_the_spec_text_stays_out_of_the_plumbing_prompts(tmp_path: Path) -> None:
+    """Only the routable roles judge code against the spec; paying to ship the
+    whole spec to the workable query or the merge agent is waste."""
+    result = routed_run(tmp_path)
+
+    for prefix in ("workable:", "settle:", "mark-in-progress:"):
+        assert LAUNCH_ARGS["specText"] not in prompt_for(result, prefix), prefix
+
+
+def test_a_routed_prompt_tells_the_agent_not_to_hunt_for_the_spec_file(
+    tmp_path: Path,
+) -> None:
+    result = routed_run(tmp_path)
+
+    assert "do not go looking" in prompt_for(result, "implement:")
+
+
+def test_a_launch_without_the_spec_text_is_rejected(tmp_path: Path) -> None:
+    """Absent specText the run silently reverts to naming an unreadable path,
+    so it is a launch stop rather than a default."""
+    args = {key: value for key, value in LAUNCH_ARGS.items() if key != "specText"}
+    config = tmp_path / "config.json"
+    config.write_text(
+        json.dumps(
+            {
+                "workflowPath": str(WORKFLOW),
+                "args": args,
+                "responses": [{"match": "^workable:", "result": {"issues": []}}],
+            }
+        )
+    )
+    proc = subprocess.run(
+        ["node", str(STUB), str(config)], capture_output=True, text=True, timeout=60
+    )
+
+    error = json.loads(proc.stdout)["error"]
+    assert error is not None, "expected the launch to be rejected"
+    assert "missing: specText" in error
+
+
+# ---- tracker writes stay on the host ----------------------------------------
+
+
+def test_the_implementer_is_told_to_leave_the_tracker_alone(tmp_path: Path) -> None:
+    """A routed implementer has no tracker credential and no tracker reference;
+    asking it for a state write is what drove one run to hardcode a vendor API."""
+    prompt = prompt_for(routed_run(tmp_path), "implement:")
+
+    assert 'to "in progress"' not in prompt
+    assert "Do not touch the tracker" in prompt
+
+
+def test_each_round_marks_its_own_tasks_in_progress_on_the_host(
+    tmp_path: Path,
+) -> None:
+    result = routed_run(tmp_path)
+
+    call = call_with_label(result, "mark-in-progress:1")
+    assert call["agentType"] is None
+    assert "T-1" in call["prompt"]
+
+
+def test_marking_in_progress_precedes_the_implementers(tmp_path: Path) -> None:
+    called = labels(routed_run(tmp_path))
+
+    assert called.index("mark-in-progress:1") < called.index("implement:T-1")
+
+
+def test_a_failed_in_progress_write_does_not_stop_the_round(tmp_path: Path) -> None:
+    """Tracker state is bookkeeping for humans; the code still has to get written."""
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^workable:", "result": {"issues": ONE_TASK}, "times": 1},
+            {"match": "^workable:", "result": {"issues": []}},
+            {"match": "^mark-in-progress:", "result": None},
+            {
+                "match": "^implement:",
+                "result": {
+                    "status": "DONE",
+                    "branch": "change/T-1",
+                    "summary": "landed",
+                },
+            },
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": "T-1",
+                            "merged": True,
+                            "stateUpdated": True,
+                            "detail": "merged",
+                            "stackBranch": "worktree-stub",
+                        }
+                    ]
+                },
+            },
+            {"match": "^review:assembled", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example/pr/1"]}},
+        ],
+    )
+
+    assert result["summary"]["tasksCompleted"] == ["T-1"]
+    assert result["summary"]["escalations"] == []
+    assert any("not marked in progress" in line for line in result["logs"])
+
+
+# ---- prompts a routed provider can actually follow ---------------------------
+
+
+def test_the_fixer_prompt_names_no_host_only_skill(tmp_path: Path) -> None:
+    """The fixer follows the implementer's route, so a Claude plugin skill named
+    in its prompt is an instruction the agent running it cannot load."""
+    prompt = prompt_for(routed_run(tmp_path), "fix:")
+
+    assert "merge-conflicts skill" not in prompt

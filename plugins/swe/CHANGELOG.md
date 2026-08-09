@@ -7,6 +7,21 @@ the single `agentspec` plugin.
 
 ## Unreleased
 
+- **Carry the spec with the run instead of naming its path.** `/start-loop` now
+  passes `specText` (the spec file read verbatim) alongside `specPath`, and the
+  conductor embeds it in every prompt that can be routed off-host. A routed
+  provider's CLI is sandboxed to the repo workspace, and the spec lives under
+  the `docs/agents` symlink pointing out of it, so an implementer or reviewer
+  given only a path spent a denied tool call and then worked against a guess.
+  A launch without `specText` is rejected.
+- **Tracker writes stay host-native.** The implementer no longer advances its
+  own tasks to "in progress" — a routed provider has neither the tracker
+  credential nor the tracker reference. Each round marks its tasks through one
+  low-effort agent on the host before the fan-out; outcomes are still commented
+  by the settle agent after the merge.
+- **The fixer prompt no longer names the merge-conflicts skill.** It follows the
+  implementer's route, so a host-only plugin skill was an instruction the agent
+  running it could not load; the conflict guidance is inline now.
 - Fix the deterministic workable query for stacked runs: `linear_tracker.py`
   judged "already merged" against the integration branch, which mid-stack
   never receives changesets past the first (they land on `stack/<n>` branches),
