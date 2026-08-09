@@ -114,6 +114,32 @@ echo "unpackaged skills → $HOME/.claude/skills/, $HOME/.codex/skills/"
 
 
 ################################################################################
+# opencode
+################################################################################
+# opencode auto-scans ~/.claude/skills and ~/.agents/skills for **/SKILL.md and
+# follows symlinks, so the unpackaged skills above already reach it. Plugin
+# skills do not: they reach Claude Code through the plugin marketplace, which
+# opencode cannot read. ~/.agents is the one tree opencode scans and Claude Code
+# ignores, so linking plugin skills here registers each exactly once -- linking
+# them under ~/.claude instead would double-list them against the marketplace
+# copies and make opencode log a duplicate skill name.
+#
+# Unlike the antigravity tree below, this directory is not ours alone: `npx
+# skills` installs here and tracks what it owns in ~/.agents/.skill-lock.json.
+# Replace our own links by name rather than wiping the directory. Replacing by
+# name also repairs links left dangling by a moved or deleted source.
+OC_SKILLS="$HOME/.agents/skills"
+mkdir -p "$OC_SKILLS"
+for skill_dir in "$ROOT_DIR"/plugins/*/skills/*/; do
+    [[ -f "$skill_dir/SKILL.md" ]] || continue
+    name="$(basename "$skill_dir")"
+    rm -rf "${OC_SKILLS:?}/$name"
+    ln -s "${skill_dir%/}" "$OC_SKILLS/$name"
+done
+echo "plugin skills → $OC_SKILLS"
+
+
+################################################################################
 # Antigravity
 ################################################################################
 # antigravity skills: symlink each skill straight from the repo (single source, no copies)
