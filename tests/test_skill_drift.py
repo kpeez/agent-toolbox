@@ -32,16 +32,26 @@ def plugin_skill_files() -> list[Path]:
 
 
 def all_skill_files() -> list[Path]:
-    return plugin_skill_files() + sorted((ROOT / "skills").glob("*/SKILL.md"))
+    return (
+        plugin_skill_files()
+        + sorted((ROOT / "skills").glob("*/SKILL.md"))
+        + sorted((ROOT / ".agents" / "skills").glob("*/SKILL.md"))
+    )
 
 
-def frontmatter_name(skill_file: Path) -> str | None:
+def frontmatter_field(skill_file: Path, field: str) -> str | None:
+    """Raw frontmatter value as written (quotes included), or None."""
     text = skill_file.read_text()
     match = re.match(r"^---\n(.*?)\n---(?:\n|$)", text, re.DOTALL)
     if match is None:
         return None
-    name = re.search(r"^name:\s*(.+?)\s*$", match.group(1), re.MULTILINE)
-    return name.group(1) if name else None
+    value = re.search(rf"^{field}:\s*(.+?)\s*$", match.group(1), re.MULTILINE)
+    return value.group(1).strip() if value else None
+
+
+def frontmatter_name(skill_file: Path) -> str | None:
+    name = frontmatter_field(skill_file, "name")
+    return name.strip("\"'") if name else None
 
 
 def documentation_files() -> list[Path]:
@@ -267,6 +277,86 @@ def test_frontmatter_names_match_skill_directories() -> None:
     ]
 
     assert mismatches == []
+
+
+def test_installed_skill_copies_mirror_their_plugin_sources() -> None:
+    """.agents/skills/ is the committed skills.sh install target, so opencode
+    loads its skills in-tree. A plugin edit forgotten from `npx skills update`
+    leaves those copies stale; every installed file must be byte-identical to
+    its plugin source, and neither side may hold files the other lacks."""
+    installed_root = ROOT / ".agents" / "skills"
+    assert installed_root.is_dir()
+
+    def plugin_source(skill_dir: Path) -> Path:
+        sources = [
+            ROOT / "plugins" / plugin.name / "skills" / skill_dir.name
+            for plugin in plugin_directories()
+            if (ROOT / "plugins" / plugin.name / "skills" / skill_dir.name).is_dir()
+        ]
+        assert len(sources) == 1, (
+            f"installed skill {skill_dir.name} has {len(sources)} plugin sources"
+        )
+        return sources[0]
+
+    mismatches: list[tuple[str, str]] = []
+    for skill_dir in sorted(installed_root.iterdir()):
+        source_dir = plugin_source(skill_dir)
+        source_files = {
+            path.relative_to(source_dir): path
+            for path in source_dir.rglob("*")
+            if path.is_file()
+        }
+        installed_files = {
+            path.relative_to(skill_dir): path
+            for path in skill_dir.rglob("*")
+            if path.is_file()
+        }
+        for rel in sorted(set(source_files) | set(installed_files)):
+            if rel not in source_files or rel not in installed_files:
+                mismatches.append(
+                    (f".agents/skills/{skill_dir.name}/{rel}", "one side only")
+                )
+            elif source_files[rel].read_bytes() != installed_files[rel].read_bytes():
+                mismatches.append(
+                    (f".agents/skills/{skill_dir.name}/{rel}", "content differs")
+                )
+
+    assert mismatches == []
+
+
+YAML_NON_STRING = re.compile(
+    r"^(?:true|false|null|~|nan|[-+]?\d[\d._]*(?:[eE][-+]?\d+)?)$", re.IGNORECASE
+)
+
+
+def parse_contract_problem(skill_file: Path) -> str | None:
+    """First skills.sh parse-contract violation, or None.
+
+    The skills.sh CLI skips any SKILL.md whose `name` or `description` is
+    missing or parses as a YAML non-string (number, boolean, null), silently
+    dropping the skill from the picker. Quoted values are YAML strings and
+    pass; block scalars (`|`) are strings too and do not match the regex."""
+    for field in ("name", "description"):
+        value = frontmatter_field(skill_file, field)
+        if not value:
+            return f"missing {field}"
+        if not value.startswith(("'", '"')) and YAML_NON_STRING.match(value):
+            return f"{field} is a YAML non-string ({value})"
+    return None
+
+
+def test_skills_meet_the_skills_sh_parse_contract() -> None:
+    """The skills.sh installer (npx skills add) skips any SKILL.md without
+    string `name` and `description` frontmatter, silently dropping the skill
+    from the picker. Every skill must satisfy that contract or the npx install
+    path loses it."""
+    problems = [
+        (skill_file.relative_to(ROOT), problem)
+        for skill_file in all_skill_files()
+        if (problem := parse_contract_problem(skill_file))
+    ]
+
+    assert problems == []
 
 
 def test_plugin_manifest_versions_match() -> None:
