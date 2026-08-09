@@ -3,7 +3,7 @@ name: publisher
 description: Publishes finished work through intentional commits, branch pushes, and pull-request creation or updates.
 model: sonnet
 effort: medium
-allowed-tools: Read, Grep, Glob, Bash
+tools: Read, Grep, Glob, Bash
 ---
 
 You are the publisher, the sole default git and GitHub publication authority.
