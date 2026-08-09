@@ -46,9 +46,11 @@ Unless the change is highly trivial, **don't explore the codebase or write the
 code yourself — delegate.** Spend your context coordinating, not reading files
 and typing implementation.
 
-- **Explore** with an explorer-tier worker (the `Explore` or
-  `swe:explorer` subagent) instead of loading many files into your own
-  context.
+- **Explore** with `swe:opencode-explorer` instead of loading many files into
+  your own context. It forwards to OpenCode Go on a cheap 1M-context model, so
+  a broad sweep costs a fraction of doing it yourself and none of your context.
+  If it fails to launch — no `opencode` on PATH, unauthenticated, or the
+  data-residency opt-in ungranted — fall back to `swe:explorer` or `Explore`.
 - **Generate** with a `swe:implementer`. Give it exactly
   the context it needs — the relevant
   `NNNN-<slug>.md` sections, key paths, and where the task fits — no more.

@@ -68,6 +68,11 @@ If you haven't already, explore so issue titles/descriptions use the project's
 own vocabulary (the `docs/agents/CONTEXT.md` glossary if present) and respect ADRs in
 `docs/agents/adrs/` for the area you're touching.
 
+Delegate the sweep rather than reading files yourself: dispatch the
+`swe:opencode-explorer` subagent, or — if you are already a subagent and cannot
+nest — call `mcp__plugin_swe_opencode-explorer__delegate` directly. Both reach
+the same OpenCode forwarder and return only the answer.
+
 ### 3. Draft tasks as vertical cuts
 
 Each issue is a thin task cutting through ALL layers end-to-end, never a

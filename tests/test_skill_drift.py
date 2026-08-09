@@ -179,11 +179,15 @@ def test_forwarder_agents_hold_only_their_providers_mcp_tools() -> None:
     }
 
     declared = {
-        name: re.search(r"^tools:\s*(.+?)\s*$", (agents_dir / f"{name}.md").read_text(), re.M)
+        name: re.search(
+            r"^tools:\s*(.+?)\s*$", (agents_dir / f"{name}.md").read_text(), re.M
+        )
         for name in expected
     }
 
-    assert {name: match.group(1) for name, match in declared.items() if match} == expected
+    assert {
+        name: match.group(1) for name, match in declared.items() if match
+    } == expected
 
 
 def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
@@ -194,7 +198,9 @@ def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
     launch -- so getting this wrong breaks delegation entirely rather than
     degrading it.
     """
-    servers = json.loads((ROOT / "plugins" / "swe" / ".mcp.json").read_text())["mcpServers"]
+    servers = json.loads((ROOT / "plugins" / "swe" / ".mcp.json").read_text())[
+        "mcpServers"
+    ]
     agents_dir = ROOT / "plugins" / "swe" / "agents"
 
     referenced = {
@@ -337,7 +343,8 @@ def opencode_servers() -> dict[str, list[str]]:
 def pinned_models() -> dict[str, str]:
     """server -> the model its `--model` flag pins, the one operative source."""
     return {
-        name: args[args.index("--model") + 1] for name, args in opencode_servers().items()
+        name: args[args.index("--model") + 1]
+        for name, args in opencode_servers().items()
     }
 
 
@@ -400,7 +407,9 @@ def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
     assert offenders == []
 
     # Documentation may list the policy, but only models the manifest pins.
-    documented = set(OPENCODE_MODEL.findall((ROOT / "plugins" / "swe" / "README.md").read_text()))
+    documented = set(
+        OPENCODE_MODEL.findall((ROOT / "plugins" / "swe" / "README.md").read_text())
+    )
     assert documented <= set(models.values())
 
 
@@ -419,3 +428,52 @@ def test_dropping_copilot_left_no_dangling_references() -> None:
     ]
 
     assert offenders == []
+
+
+def test_no_agent_declares_the_ignored_allowed_tools_key() -> None:
+    """`allowed-tools` is a slash-command field; a subagent declaring it is not
+    restricted at all, it inherits everything. Prose calling an agent read-only
+    while it silently holds Write and Bash is the failure this prevents."""
+    agents_dir = ROOT / "plugins" / "swe" / "agents"
+    offenders = [
+        path.name
+        for path in sorted(agents_dir.glob("*.md"))
+        if re.search(r"^allowed-tools:", path.read_text(), re.M)
+    ]
+
+    assert offenders == []
+
+
+def test_the_planner_reaches_the_explorer_without_nesting() -> None:
+    """A subagent cannot spawn a subagent, so the planner calls the forwarder's
+    MCP tool directly. It declares no `tools:` list on purpose: /to-issues
+    resolves the tracker per repo at runtime, and a static list would cut off
+    whichever of Linear's MCP tools, `gh`, or plain files it picks."""
+    planner = (ROOT / "plugins" / "swe" / "agents" / "planner.md").read_text()
+
+    assert "mcp__plugin_swe_opencode-explorer__delegate" in planner
+    assert re.search(r"^tools:", planner, re.M) is None
+
+
+def test_every_opencode_forwarder_has_a_caller() -> None:
+    """A forwarder nothing dispatches is a pinned model, a documented rationale
+    and a spawned bridge process serving no call site. Reachability is the
+    property worth pinning, so either entry point counts: the subagent name for
+    a caller that can nest, the MCP tool for one that cannot."""
+    plugin = ROOT / "plugins" / "swe"
+    callers = [plugin / "workflows" / "swe-loop.js"]
+    callers += sorted((plugin / "skills").glob("*/SKILL.md"))
+    callers += sorted(
+        path
+        for path in (plugin / "agents").glob("*.md")
+        if not path.name.startswith("opencode-")
+    )
+    text = "\n".join(path.read_text() for path in callers)
+
+    uncalled = [
+        name
+        for name in opencode_servers()
+        if f"swe:{name}" not in text and f"mcp__plugin_swe_{name}__delegate" not in text
+    ]
+
+    assert uncalled == []

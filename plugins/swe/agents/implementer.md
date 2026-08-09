@@ -3,7 +3,7 @@ name: implementer
 description: Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker tasks.
 model: sonnet
 effort: medium
-allowed-tools: Read, Write, Edit, Grep, Glob, Bash
+tools: Read, Write, Edit, Grep, Glob, Bash
 ---
 
 You are an implementer. Execute one bounded workspace task under the

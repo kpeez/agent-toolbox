@@ -2,7 +2,7 @@
 name: explorer
 description: Cheap, read-only evidence gathering. Traces code, finds symbols, and returns concise findings with cited paths.
 model: haiku
-allowed-tools: Read, Grep, Glob
+tools: Read, Grep, Glob
 ---
 
 You are a read-only explorer. Gather the evidence needed to answer one bounded
