@@ -236,7 +236,13 @@ class BridgeClient:
         return response["result"]
 
     def close(self) -> None:
-        self.process.terminate()
+        if self.process.poll() is None:
+            self.process.terminate()
+            self.process.wait(timeout=10)
+
+    def shutdown(self) -> None:
+        assert self.process.stdin is not None
+        self.process.stdin.close()
         self.process.wait(timeout=10)
 
 
@@ -285,6 +291,33 @@ for line in sys.stdin:
         send({"jsonrpc": "2.0", "id": message["id"], "result": {"sessionId": session_id}})
     elif method == "session/prompt":
         directive = json.loads(message["params"]["prompt"][0]["text"])
+        if diagnostic := directive.get("diagnostic"):
+            sys.stderr.write(diagnostic + "\n")
+        for diagnostic_index in range(directive.get("diagnostic_lines", 0)):
+            sys.stderr.write(f"routine-diagnostic-{diagnostic_index:04d}\n")
+        sys.stderr.flush()
+        with open(f"{session_id}.ready", "w") as ready_file:
+            ready_file.write("ready")
+        if directive.get("break_reply"):
+            os.close(0)
+            send({
+                "jsonrpc": "2.0",
+                "id": 99,
+                "method": "session/request_permission",
+                "params": {
+                    "sessionId": session_id,
+                    "toolCall": {
+                        "toolCallId": "reply-break",
+                        "title": "Read fixture",
+                        "kind": "read",
+                    },
+                    "options": [
+                        {"optionId": "allow_once", "kind": "allow_once", "name": "Allow"}
+                    ],
+                },
+            })
+            while True:
+                time.sleep(1)
         if directive.get("exit"):
             os._exit(7)
         if directive.get("block"):
@@ -322,6 +355,15 @@ def wait_for_sessions(tmp_path: Path, count: int) -> list[Path]:
             return paths
         time.sleep(0.01)
     raise AssertionError(f"expected {count} ACP session(s)")
+
+
+def wait_for_ready_session(tmp_path: Path) -> None:
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        if next(tmp_path.glob("lifecycle-*.ready"), None) is not None:
+            return
+        time.sleep(0.01)
+    raise AssertionError("expected the ACP prompt to start")
 
 
 def assert_process_stopped(pid_path: Path) -> None:
@@ -465,6 +507,96 @@ def test_child_exit_stops_the_wait_and_forgets_the_session(
     assert "is not open" in continuation["content"][0]["text"]
 
 
+def test_unexpected_exit_reports_only_bounded_allowlisted_stderr_metadata(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    private_fixture = "token=fixture-value /example/private.txt"
+    known_failures = "authentication failed; connection refused; model not found; rate limit"
+    diagnostic = f"{known_failures}; {private_fixture}; unclassified detail"
+    diagnostic_lines = 1000
+    expected_bytes = len((diagnostic + "\n").encode()) + sum(
+        len(f"routine-diagnostic-{index:04d}\n".encode())
+        for index in range(diagnostic_lines)
+    )
+
+    result = lifecycle_bridge.delegate(
+        task=directive(
+            diagnostic=diagnostic, diagnostic_lines=diagnostic_lines, exit=True
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+    error_text = result["content"][0]["text"]
+
+    assert "exited before answering session/prompt" in error_text
+    assert "ACP stderr metadata:" in error_text
+    assert f"bytes={expected_bytes}" in error_text
+    assert "truncated=true" in error_text
+    assert "exitCode=7" in error_text
+    assert "categories=authentication,model,network,rate-limit" in error_text
+    assert private_fixture not in error_text
+    assert "unclassified detail" not in error_text
+    assert "routine-diagnostic" not in error_text
+
+
+def test_permission_reply_send_failure_includes_safe_stderr_metadata(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = lifecycle_bridge.delegate(
+        task=directive(
+            diagnostic="network unavailable; token=fixture-value /example/private.txt",
+            break_reply=True,
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+    error_text = result["content"][0]["text"]
+
+    assert "session/prompt failed" in error_text
+    assert "ACP stderr metadata:" in error_text
+    assert "categories=network" in error_text
+    assert "fixture-value" not in error_text
+    assert "/example/private.txt" not in error_text
+
+
+def test_success_does_not_expose_stderr_metadata(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = lifecycle_bridge.delegate(
+        task=directive(
+            diagnostic="authentication failed token=fixture-value /example/private.txt",
+            reply="clean answer",
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "clean answer"
+    assert "stderr" not in json.dumps(result).lower()
+    assert "authentication" not in json.dumps(result).lower()
+
+
+def test_cancellation_does_not_expose_stderr_metadata(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    request_id = lifecycle_bridge.start_delegate(
+        task=directive(
+            diagnostic="network failed token=fixture-value /example/private.txt",
+            block=True,
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+    wait_for_ready_session(tmp_path)
+
+    lifecycle_bridge.cancel(request_id)
+    result = lifecycle_bridge.receive(request_id)["result"]
+
+    assert "cancelled" in result["content"][0]["text"].lower()
+    assert "stderr" not in json.dumps(result).lower()
+    assert "network" not in json.dumps(result).lower()
+
+
 def test_cancelling_one_concurrent_call_does_not_corrupt_the_other(
     lifecycle_bridge: BridgeClient, tmp_path: Path
 ) -> None:
@@ -492,6 +624,25 @@ def test_cancelling_one_concurrent_call_does_not_corrupt_the_other(
         sessionId=successful_session_id,
     )
     assert continued["content"][0]["text"] == "still alive"
+
+
+def test_server_shutdown_stops_retained_acp_sessions(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    retained = lifecycle_bridge.delegate(
+        task=directive(reply="complete"), mode="read-only", cwd=str(tmp_path)
+    )
+    lifecycle_bridge.start_delegate(
+        task=directive(block=True), mode="read-only", cwd=str(tmp_path)
+    )
+    pid_paths = wait_for_sessions(tmp_path, 2)
+    wait_for_ready_session(tmp_path)
+
+    assert retained["content"][0]["text"] == "complete"
+    lifecycle_bridge.shutdown()
+
+    for pid_path in pid_paths:
+        assert_process_stopped(pid_path)
 
 
 def test_an_unknown_session_is_an_error_the_caller_can_see(

@@ -50,6 +50,18 @@ READ_ONLY_KINDS = frozenset({"read", "search", "fetch", "think"})
 
 MODES = ("read-only", "write")
 
+ACP_STDERR_OBSERVATION_BYTES = 4096
+ACP_STDERR_READ_BYTES = 1024
+ACP_STDERR_CATEGORIES: dict[str, tuple[bytes, ...]] = {
+    "authentication": (b"authentication", b"unauthorized", b"api key"),
+    "network": (b"connection", b"network", b"dns", b"timed out"),
+    "model": (b"model not found", b"unknown model", b"invalid model"),
+    "rate-limit": (b"rate limit", b"rate-limit", b"too many requests", b"429"),
+}
+ACP_STDERR_PATTERN_OVERLAP = max(
+    len(pattern) for patterns in ACP_STDERR_CATEGORIES.values() for pattern in patterns
+) - 1
+
 # Leading argv flags, ahead of the ACP agent's own command line. `--model` and
 # `--effort` pin a server to one model so the caller cannot pick another: model
 # policy then lives in the .mcp.json entry, not in a prompt some model has to
@@ -252,6 +264,12 @@ def describe_tool_call(tool_call: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 
 
+class AcpRequestError(RuntimeError):
+    def __init__(self, message: str, exit_code: int | None = None) -> None:
+        super().__init__(message)
+        self.exit_code = exit_code
+
+
 class AcpSession:
     """One ACP agent subprocess driven over stdio.
 
@@ -268,7 +286,7 @@ class AcpSession:
             command,
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
-            stderr=subprocess.DEVNULL,
+            stderr=subprocess.PIPE,
             text=True,
             bufsize=1,
             cwd=cwd,
@@ -278,9 +296,16 @@ class AcpSession:
         self._request_lock = threading.Lock()
         self._close_lock = threading.Lock()
         self._closed = threading.Event()
+        self._stderr_lock = threading.Lock()
+        self._stderr_closed = threading.Event()
+        self._stderr_bytes = 0
+        self._stderr_observed_bytes = 0
+        self._stderr_categories: set[str] = set()
         self._inbox: queue.Queue[dict[str, Any]] = queue.Queue()
         self._reader = threading.Thread(target=self._read_frames, daemon=True)
+        self._stderr_reader = threading.Thread(target=self._read_stderr, daemon=True)
         self._reader.start()
+        self._stderr_reader.start()
 
     def _read_frames(self) -> None:
         assert self.process.stdout is not None
@@ -296,6 +321,49 @@ class AcpSession:
         finally:
             self._closed.set()
             self._inbox.put({"__closed__": True})
+
+    def _read_stderr(self) -> None:
+        """Drain stderr and retain only bounded, allowlisted accounting."""
+        overlap = bytearray()
+        try:
+            assert self.process.stderr is not None
+            while chunk := os.read(self.process.stderr.fileno(), ACP_STDERR_READ_BYTES):
+                with self._stderr_lock:
+                    self._stderr_bytes += len(chunk)
+                    remaining = max(
+                        0, ACP_STDERR_OBSERVATION_BYTES - self._stderr_observed_bytes
+                    )
+                    observed = chunk[:remaining]
+                    self._stderr_observed_bytes += len(observed)
+                    if observed:
+                        scan = bytes(overlap) + observed.lower()
+                        for category, patterns in ACP_STDERR_CATEGORIES.items():
+                            if any(pattern in scan for pattern in patterns):
+                                self._stderr_categories.add(category)
+                        overlap.clear()
+                        overlap.extend(scan[-ACP_STDERR_PATTERN_OVERLAP:])
+                    if remaining <= len(chunk):
+                        overlap.clear()
+        except OSError:
+            pass
+        finally:
+            overlap.clear()
+            self._stderr_closed.set()
+
+    def enrich_request_error(self, error: AcpRequestError) -> AcpRequestError:
+        """Append safe stderr metadata after the child has been cleaned up."""
+        self._stderr_closed.wait()
+        with self._stderr_lock:
+            byte_count = self._stderr_bytes
+            is_truncated = self._stderr_bytes > ACP_STDERR_OBSERVATION_BYTES
+            categories = sorted(self._stderr_categories)
+        fields = [f"bytes={byte_count}", f"truncated={str(is_truncated).lower()}"]
+        if error.exit_code is not None:
+            fields.append(f"exitCode={error.exit_code}")
+        if categories:
+            fields.append(f"categories={','.join(categories)}")
+        metadata = "; ".join(fields)
+        return AcpRequestError(f"{error}\n\nACP stderr metadata: {metadata}", error.exit_code)
 
     def _send(self, frame: dict[str, Any]) -> None:
         assert self.process.stdin is not None
@@ -316,25 +384,39 @@ class AcpSession:
         """
         with self._request_lock:
             if self._closed.is_set() or self.process.poll() is not None:
-                raise RuntimeError(f"the ACP agent exited before answering {method}")
+                raise AcpRequestError(
+                    f"the ACP agent exited before answering {method}", self.process.poll()
+                )
             self._next_id += 1
             request_id = self._next_id
-            self._send(
-                {"jsonrpc": "2.0", "id": request_id, "method": method, "params": params}
-            )
+            try:
+                self._send(
+                    {"jsonrpc": "2.0", "id": request_id, "method": method, "params": params}
+                )
+            except OSError as error:
+                raise AcpRequestError(
+                    f"{method} failed: {error}", self.process.poll()
+                ) from error
 
             while True:
                 frame = self._inbox.get()
                 if frame.get("__closed__"):
-                    raise RuntimeError(f"the ACP agent exited before answering {method}")
+                    raise AcpRequestError(
+                        f"the ACP agent exited before answering {method}", self.process.poll()
+                    )
                 if frame.get("id") == request_id and ("result" in frame or "error" in frame):
                     if "error" in frame:
-                        raise RuntimeError(f"{method} failed: {frame['error']}")
+                        raise AcpRequestError(f"{method} failed: {frame['error']}")
                     return frame["result"]
                 if on_frame is not None:
                     reply = on_frame(frame)
                     if reply is not None:
-                        self._send(reply)
+                        try:
+                            self._send(reply)
+                        except OSError as error:
+                            raise AcpRequestError(
+                                f"{method} failed: {error}", self.process.poll()
+                            ) from error
 
     def close(self) -> None:
         with self._close_lock:
@@ -345,6 +427,7 @@ class AcpSession:
                 except subprocess.TimeoutExpired:
                     self.process.kill()
             self.process.wait()
+            self._stderr_closed.wait()
 
 
 class ToolCallCancelled(RuntimeError):
@@ -368,14 +451,12 @@ class ActiveCall:
             session.close()
             raise ToolCallCancelled("tool call cancelled")
 
-    def cancel(self) -> None:
+    def cancel(self) -> AcpSession | None:
         with self._lock:
             if self._completed:
-                return
+                return None
             self._cancelled = True
-            session = self._session
-        if session is not None:
-            session.close()
+            return self._session
 
     def complete(self) -> None:
         with self._lock:
@@ -513,6 +594,9 @@ class Bridge:
             with self._lock:
                 self.sessions[session_id] = session
             return session, session_id
+        except AcpRequestError as error:
+            session.close()
+            raise session.enrich_request_error(error) from error
         except Exception:
             session.close()
             raise
@@ -534,12 +618,28 @@ class Bridge:
         with self._lock:
             active_call = self.active_calls.get(request_id)
         if active_call is not None:
-            active_call.cancel()
+            session = active_call.cancel()
+            if session is not None:
+                session.close()
 
     def finish_call(self, request_id: Any, active_call: ActiveCall) -> None:
         with self._lock:
             if self.active_calls.get(request_id) is active_call:
                 del self.active_calls[request_id]
+
+    def close(self) -> None:
+        """Stop active and retained ACP children when the MCP transport closes."""
+        with self._lock:
+            active_calls = list(self.active_calls.values())
+            sessions = list(self.sessions.values())
+            self.active_calls.clear()
+            self.sessions.clear()
+        for active_call in active_calls:
+            if session := active_call.cancel():
+                sessions.append(session)
+        sessions_by_identity = {id(session): session for session in sessions}
+        for session in sessions_by_identity.values():
+            session.close()
 
     def select_model(self, session: AcpSession, session_id: str, model: str, effort: str | None) -> None:
         """Pin the session to one model, then to a reasoning variant of it.
@@ -635,6 +735,8 @@ class Bridge:
                 self.discard_session(session_id, session)
             if active_call.is_cancelled() and not isinstance(error, ToolCallCancelled):
                 raise ToolCallCancelled("tool call cancelled") from error
+            if session is not None and isinstance(error, AcpRequestError):
+                raise session.enrich_request_error(error) from error
             raise
 
 
@@ -684,49 +786,58 @@ def serve(bridge: Bridge) -> None:
     Each tool call runs on its own thread: two delegations dispatched in
     parallel by the caller should run in parallel here too.
     """
-    for line in sys.stdin:
-        line = line.strip()
-        if not line:
-            continue
-        try:
-            message = json.loads(line)
-        except json.JSONDecodeError:
-            continue
+    try:
+        for line in sys.stdin:
+            line = line.strip()
+            if not line:
+                continue
+            try:
+                message = json.loads(line)
+            except json.JSONDecodeError:
+                continue
 
-        method = message.get("method")
-        message_id = message.get("id")
+            method = message.get("method")
+            message_id = message.get("id")
 
-        if method == "initialize":
-            send_mcp(
-                {
-                    "jsonrpc": "2.0",
-                    "id": message_id,
-                    "result": {
-                        "protocolVersion": MCP_PROTOCOL_VERSION,
-                        "capabilities": {"tools": {}},
-                        "serverInfo": {"name": SERVER_NAME, "version": "1.0.0"},
-                    },
-                }
-            )
-        elif method == "tools/list":
-            send_mcp({"jsonrpc": "2.0", "id": message_id, "result": {"tools": [bridge.tool]}})
-        elif method == "tools/call":
-            active_call = bridge.start_call(message_id)
-            threading.Thread(
-                target=_run_tool_call,
-                args=(bridge, message, active_call),
-                daemon=True,
-            ).start()
-        elif method == "notifications/cancelled":
-            bridge.cancel_call(message.get("params", {}).get("requestId"))
-        elif message_id is not None:
-            send_mcp(
-                {
-                    "jsonrpc": "2.0",
-                    "id": message_id,
-                    "error": {"code": -32601, "message": f"method not found: {method}"},
-                }
-            )
+            if method == "initialize":
+                send_mcp(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": message_id,
+                        "result": {
+                            "protocolVersion": MCP_PROTOCOL_VERSION,
+                            "capabilities": {"tools": {}},
+                            "serverInfo": {"name": SERVER_NAME, "version": "1.0.0"},
+                        },
+                    }
+                )
+            elif method == "tools/list":
+                send_mcp(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": message_id,
+                        "result": {"tools": [bridge.tool]},
+                    }
+                )
+            elif method == "tools/call":
+                active_call = bridge.start_call(message_id)
+                threading.Thread(
+                    target=_run_tool_call,
+                    args=(bridge, message, active_call),
+                    daemon=True,
+                ).start()
+            elif method == "notifications/cancelled":
+                bridge.cancel_call(message.get("params", {}).get("requestId"))
+            elif message_id is not None:
+                send_mcp(
+                    {
+                        "jsonrpc": "2.0",
+                        "id": message_id,
+                        "error": {"code": -32601, "message": f"method not found: {method}"},
+                    }
+                )
+    finally:
+        bridge.close()
 
 
 def _run_tool_call(
