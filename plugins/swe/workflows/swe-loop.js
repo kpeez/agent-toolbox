@@ -415,9 +415,9 @@ ${numbered(changeset.issues.map(issue => `${issue.identifier} — ${issue.title}
    committed to. NEEDS_CONTEXT or BLOCKED means you could not finish: name
    exactly what is missing instead of guessing.
 
-Do not touch the tracker: the conductor has already marked these tasks in
-progress and comments the outcome once the changeset merges. Your summary is
-what it comments.
+Do not touch the tracker: the run records each task's outcome itself once the
+changeset merges, and your summary is what it records. Nothing moves on the
+tracker until work is merged, so there is no state for you to set here.
 
 ${specBrief}`
 
@@ -478,20 +478,6 @@ merge. Return a concise completion note; this call has no additional output
 schema.
 
 ${specBrief}`
-
-// The implementer may be routed to a provider with no tracker access of any
-// kind, so the round's state write stays here, on the default agent, batched
-// for every task the round is about to start.
-const promptMarkInProgress = issues => `Advance this round's tasks to "in progress" on the tracker.
-
-${trackerGuide}
-
-Tasks: ${issues.map(issue => issue.identifier).join(', ')}
-
-Move each to the state the reference's state-transition section calls "in
-progress". Post no comments and change no other fields — the run comments each
-task's outcome when its changeset merges. Report in one line what you moved;
-a write that does not land is worth reporting and never worth retrying.`
 
 const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
 
@@ -741,13 +727,6 @@ const runImplementLoop = async passLabel => {
     const changesets = changesetsFor(pending)
     log(`Round ${round}: ${pending.length} task(s) in ${changesets.length} changeset(es) — ${changesets.map(changeset => `${changeset.name} (${changeset.issues.length})`).join(', ')}.`)
     const from = stackTip()
-    const marked = await agent(promptMarkInProgress(pending), {
-      label: `mark-in-progress:${round}`,
-      model: PLUMBING_MODEL,
-      phase: 'Implement',
-      effort: 'low',
-    })
-    if (!marked) log(`Round ${round}: tasks were not marked in progress; the run proceeds regardless.`)
     const outcomes = await parallel(
       changesets.map(changeset => async () => {
         const result = await agent(promptImplementer(changeset, from), {

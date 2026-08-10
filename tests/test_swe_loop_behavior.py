@@ -1135,7 +1135,7 @@ def test_the_spec_text_stays_out_of_the_plumbing_prompts(tmp_path: Path) -> None
     whole spec to the workable query or the merge agent is waste."""
     result = routed_run(tmp_path)
 
-    for prefix in ("workable:", "settle:", "mark-in-progress:"):
+    for prefix in ("workable:", "settle:", "ship:"):
         assert LAUNCH_ARGS["specText"] not in prompt_for(result, prefix), prefix
 
 
@@ -1182,60 +1182,10 @@ def test_the_implementer_is_told_to_leave_the_tracker_alone(tmp_path: Path) -> N
     assert "Do not touch the tracker" in prompt
 
 
-def test_each_round_marks_its_own_tasks_in_progress_on_the_host(
-    tmp_path: Path,
-) -> None:
-    result = routed_run(tmp_path)
-
-    call = call_with_label(result, "mark-in-progress:1")
-    assert call["agentType"] is None
-    assert "T-1" in call["prompt"]
 
 
-def test_marking_in_progress_precedes_the_implementers(tmp_path: Path) -> None:
-    called = labels(routed_run(tmp_path))
-
-    assert called.index("mark-in-progress:1") < called.index("implement:T-1")
 
 
-def test_a_failed_in_progress_write_does_not_stop_the_round(tmp_path: Path) -> None:
-    """Tracker state is bookkeeping for humans; the code still has to get written."""
-    result = run_loop(
-        tmp_path,
-        [
-            {"match": "^workable:", "result": {"issues": ONE_TASK}, "times": 1},
-            {"match": "^workable:", "result": {"issues": []}},
-            {"match": "^mark-in-progress:", "result": None},
-            {
-                "match": "^implement:",
-                "result": {
-                    "status": "DONE",
-                    "branch": "change/T-1",
-                    "summary": "landed",
-                },
-            },
-            {
-                "match": "^settle:",
-                "result": {
-                    "results": [
-                        {
-                            "identifier": "T-1",
-                            "merged": True,
-                            "stateUpdated": True,
-                            "detail": "merged",
-                            "stackBranch": "worktree-stub",
-                        }
-                    ]
-                },
-            },
-            {"match": "^review:assembled", "result": {"verdict": "pass"}},
-            {"match": "^ship:", "result": {"prUrls": ["https://example/pr/1"]}},
-        ],
-    )
-
-    assert result["summary"]["tasksCompleted"] == ["T-1"]
-    assert result["summary"]["escalations"] == []
-    assert any("not marked in progress" in line for line in result["logs"])
 
 
 # ---- prompts a routed provider can actually follow ---------------------------
@@ -1260,3 +1210,17 @@ def test_the_workable_query_looks_for_the_branches_the_loop_actually_creates(
 
     assert "begins with change/" in prompt
     assert "task/" not in prompt
+
+
+def test_a_round_spends_no_agent_on_tracker_state_before_the_merge(
+    tmp_path: Path,
+) -> None:
+    """The tracker is strictly monotonic: nothing moves until work merges, so no
+    failed write can strand an issue in a state the run never repairs. A round
+    is exactly the workable query and the implementers, then the merge."""
+    called = labels(routed_run(tmp_path))
+
+    assert called[: called.index("settle:implement:1")] == [
+        "workable:implement:1",
+        "implement:T-1",
+    ]
