@@ -1233,3 +1233,63 @@ def test_a_round_spends_no_agent_on_tracker_state_before_the_merge(
         "workable:implement:1",
         "implement:T-1",
     ]
+
+
+def test_a_fixer_that_did_not_complete_buys_no_re_review(tmp_path: Path) -> None:
+    """A fixer that stopped early leaves the code as the review found it. While
+    the fixer answered in free text, that was indistinguishable from success and
+    the run spent a reviewer re-deriving the same findings from unchanged files."""
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^workable:implement:1$", "result": {"issues": ONE_TASK}},
+            {"match": "^workable:", "result": {"issues": []}},
+            {
+                "match": "^implement:",
+                "result": {
+                    "status": "DONE",
+                    "branch": "change/T-1",
+                    "summary": "landed",
+                },
+            },
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": "T-1",
+                            "merged": True,
+                            "stateUpdated": True,
+                            "detail": "merged",
+                            "stackBranch": "worktree-stub",
+                        }
+                    ]
+                },
+            },
+            {
+                "match": "^review:assembled",
+                "result": {
+                    "verdict": "findings",
+                    "findings": ["a.py:1 — add the missing guard"],
+                },
+            },
+            {
+                "match": "^fix:1$",
+                "result": {
+                    "status": "did-not-complete",
+                    "detail": "the rebase onto stack/1 conflicted and I could not finish it",
+                },
+            },
+            {"match": "^file-findings:", "result": "filed"},
+            {"match": "^review-r1:assembled", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example/pr/1"]}},
+        ],
+    )
+
+    assert "re-review:1" not in labels(result)
+    escalation = [
+        e for e in result["summary"]["escalations"] if e["title"] == "fix round 1"
+    ]
+    assert len(escalation) == 1, result["summary"]["escalations"]
+    assert "conflicted" in escalation[0]["reason"]
+    assert "1 finding(s) stand" in escalation[0]["reason"]

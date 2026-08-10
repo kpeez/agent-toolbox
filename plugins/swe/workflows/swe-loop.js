@@ -252,6 +252,24 @@ const SETTLE_SCHEMA = {
   },
 }
 
+// Without this the fixer answered in free text, so a fixer that timed out or
+// could not finish a rebase read exactly like one that applied everything --
+// and the run spent a reviewer re-deriving the same findings from unchanged
+// files.
+const FIX_SCHEMA = {
+  type: 'object',
+  required: ['status', 'detail'],
+  properties: {
+    status: { type: 'string', enum: ['applied', 'did-not-complete'] },
+    detail: { type: 'string', description: 'what landed, or what stopped the run' },
+    unresolved: {
+      type: 'array',
+      description: 'anchors of findings left unresolved; omit when every finding was applied',
+      items: { type: 'string' },
+    },
+  },
+}
+
 const SHIP_SCHEMA = {
   type: 'object',
   required: ['prUrls'],
@@ -474,8 +492,12 @@ intents where they can coexist, and never resolve by taking one side wholesale
 — then re-run the project's checks and continue the rebase.
 Nothing is published yet, so these rebases rewrite local branches only.`}
 Apply every finding, re-run lint/types/tests, and commit. Do not push and do not
-merge. Return a concise completion note; this call has no additional output
-schema.`
+merge.
+
+Report {status, detail, unresolved}. "did-not-complete" means the run itself
+stopped — a timeout, a tool failure, a rebase you could not finish — and is
+never a judgment about the code. Name every finding you did not resolve in
+"unresolved", by its file:line anchor.`
 
 const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
 
@@ -841,10 +863,18 @@ const settleFindings = async (pass = '') => {
       label: `fix${pass}:${fixRound}`,
       phase: 'Review',
       agentType: agentTypeFor('implementer'),
+      schema: FIX_SCHEMA,
     })
-    if (!fixed) {
-      escalateRun(`fix round ${fixRound}`, `the fixer returned no result; ${findings.length} finding(s) stand`)
+    // A fixer that stopped early leaves the code exactly as the review found
+    // it, so re-reviewing would spend a reviewer to re-derive the same
+    // findings from unchanged files.
+    if (!fixed || fixed.status === 'did-not-complete') {
+      const why = fixed ? clip(fixed.detail) : 'the fixer returned no result'
+      escalateRun(`fix round ${fixRound}`, `${why}; ${findings.length} finding(s) stand`)
       return findings
+    }
+    if (fixed.unresolved && fixed.unresolved.length) {
+      log(`Fix round ${fixRound}: ${fixed.unresolved.length} finding(s) reported unresolved — ${fixed.unresolved.join(', ')}.`)
     }
     reviewed = await runReview(`re-review${pass}:${fixRound}`, `re-review after fix round ${fixRound}`)
     if (reviewed.failed) {
