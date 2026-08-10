@@ -158,11 +158,10 @@ Optional `roles` overrides the conductor's default provider routing. By default
 Claude, so the machine needs `opencode` installed and an authenticated OpenCode
 Go subscription: verify with `opencode providers list` before launching. Pass a
 `roles` map only to change that — keys among `planner`, `implementer`,
-`reviewer`, `publisher`, values `claude`, `codex` or `opencode` (`opencode`
+`reviewer`, `publisher`, values `claude` or `opencode` (`opencode`
 is valid for `implementer` and `reviewer` only, the two roles it has a
-model-pinned forwarder for). `{"implementer": "claude", "reviewer": "codex"}`
-pulls implementation back host-native and sends review to Codex; verify Codex
-with `codex login status` first. A provider that is missing or unauthenticated
+model-pinned forwarder for). `{"implementer": "claude"}` pulls implementation
+back host-native. A provider that is missing or unauthenticated
 is a stop, not a silent fallback to a more expensive one.
 
 Those are the **launch args** — the conductor's own input. Each agent's prompt
@@ -180,9 +179,9 @@ After launch, record the run on the spec's frontmatter as `run_id: <id>` and
 resuming this run has no other way to recover which branch it integrates into,
 and frontmatter keeps it machine-readable instead of buried in a comment.
 
-**No Workflow tool on this host** (non-Claude providers, per ADR-0006) → say so
+**No Workflow tool on this host** (per ADR-0006) → say so
 and fall back to the manual orchestration in `/implement`'s "Orchestrate the
-fan-out" section. On Codex that manual path calls the three plugin-delivered
+fan-out" section. That manual path calls the three plugin-delivered
 OpenCode delegate tools directly for read-only exploration, one bounded write
 assignment per changeset, and final read-only assembled-diff review. Name the
 fallback; never improvise a substitute conductor or silently replace a failed

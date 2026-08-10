@@ -384,7 +384,7 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     """The agent's answer, or an account of why there isn't one.
 
     An agent that gets its writes rejected often stops without saying anything.
-    Returning that silence as the answer is the failure the codex delegator
+    Returning that silence as the answer is a failure earlier delegators
     already learned the hard way: a caller cannot tell "nothing to report" from
     "the run was blocked", and acts on the emptiness either way.
     """

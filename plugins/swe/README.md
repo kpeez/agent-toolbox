@@ -12,11 +12,11 @@ publication is atomic commits behind a draft PR.
 ```text
 plugins/swe/
 ├── skills/            # 14 workflow skills (SKILL.md each — the canonical contracts)
-├── agents/            # 10 agent definitions: Claude .md + Codex .toml twins (the delegators: .md only)
+├── agents/            # 9 agent definitions: Claude .md + Codex .toml twins (the forwarders: .md only)
 ├── workflows/
 │   └── swe-loop.js    # deterministic conductor for the post-approval phases
 ├── .mcp.json          # the three OpenCode delegates exposed natively to Codex
-├── .mcp.claude.json   # Claude's Codex delegator and OpenCode delegates
+├── .mcp.claude.json   # Claude's OpenCode delegates
 ├── mcp/
 │   └── acp_bridge.py  # Agent Client Protocol agent -> MCP, with the permission policy
 ├── scripts/
@@ -139,10 +139,10 @@ at all, on a pinned model so a run behaves the same whatever the host session
 is running.
 
 The launch args accept an optional `roles` map that overrides any of it. Keys
-are the four roles; values are `claude`, `codex` or `opencode`.
+are the four roles; values are `claude` or `opencode`.
 
 ```jsonc
-{ "roles": { "implementer": "claude", "reviewer": "codex" } }
+{ "roles": { "implementer": "claude" } }
 ```
 
 An explicit entry always beats the default, so routing a role back to `claude`
@@ -154,7 +154,7 @@ A routed role needs that provider's CLI installed and authenticated. An
 unavailable provider, an unauthenticated subscription, an unavailable model or
 a failed ACP startup surfaces as a delegation failure and then an escalation.
 Nothing ever falls back to another provider on its own: a silent fallback would
-quietly spend Claude or Codex budget on work that was routed elsewhere
+quietly spend host-model budget on work that was routed elsewhere
 precisely to avoid that.
 
 ## Skills
@@ -192,7 +192,7 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 
 ## Agents
 
-Ten definitions in `agents/`: each a Claude `.md`, six with a Codex `.toml`
+Nine definitions in `agents/`: each a Claude `.md`, six with a Codex `.toml`
 twin kept in sync (the model matrix below is pinned by `tests/test_skill_drift.py`).
 They are the loop's workers; the conductor or the orchestrating session
 decides what runs when.
@@ -205,26 +205,25 @@ decides what runs when.
 | `implementer`     | Executes one bounded code, test, documentation, or tracker task under caller constraints | sonnet (medium)         | gpt-5.6-sol (medium)   |
 | `reviewer`        | Read-only review of a diff or implementation against caller-provided criteria or a lens  | sonnet (high)         | gpt-5.6-terra (high)   |
 | `publisher`       | Owns git and GitHub publication: atomic commits, push, PR creation                       | sonnet (medium)       | gpt-5.6-terra (medium) |
-| `codex-delegator` | Thin forwarder that runs one bounded task on the local Codex CLI, verbatim               | sonnet (low)          | — (Claude-side only)   |
 | `opencode-explorer` | Thin forwarder: read-only repository exploration on OpenCode Go                        | sonnet (low)          | — (Claude-side only)   |
 | `opencode-implementer` | Thin forwarder: one bounded write assignment on OpenCode Go                         | sonnet (low)          | — (Claude-side only)   |
 | `opencode-reviewer` | Thin forwarder: read-only review on OpenCode Go                                        | sonnet (low)          | — (Claude-side only)   |
 
-The delegators have no `.toml` twin. Claude needs their single-tool allowlists
+The forwarders have no `.toml` twin. Claude needs their single-tool allowlists
 because its conductor dispatches agent names. Codex receives the three OpenCode
 MCP tools from the plugin and calls them directly; a TOML wrapper would add a
 second host-model hop without strengthening the bridge's permissions.
 
 ## Delegating to another provider
 
-The delegators do not shell out. Each external provider is registered in a
+The forwarders do not shell out. The external provider is registered in a
 host MCP companion, so a delegation is a typed tool call — the model fills a
 JSON schema instead of composing a command line, and quoting, sandbox flags,
 exit codes and timeout ceilings stop being the model's problem.
 
 | Host   | Provider surface | Caller |
 | ------ | ---------------- | ------ |
-| Claude | `codex mcp-server` or `opencode acp` through `mcp/acp_bridge.py` | `swe:codex-delegator` or the three `swe:opencode-*` forwarders |
+| Claude | `opencode acp` through `mcp/acp_bridge.py` | the three `swe:opencode-*` forwarders |
 | Codex  | `opencode acp` through the same `mcp/acp_bridge.py` | `mcp__plugin_swe_opencode-{explorer,implementer,reviewer}__delegate` directly |
 
 Each Claude forwarder agent's `tools` field lists only its own provider's tools, so

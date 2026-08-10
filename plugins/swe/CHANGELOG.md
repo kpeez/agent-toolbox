@@ -5,6 +5,23 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.15.0 — 2026-08-10
+
+- Remove Codex as a delegation target: the `codex-delegator` agent, the `codex`
+  MCP server in `.mcp.claude.json`, and the `"codex"` value in the swe-loop
+  `roles` map are gone. Codex delegation lives in the codex plugin; Codex as a
+  *host* (the `.toml` agent twins, `.mcp.json`, native delegate calls) is
+  unchanged.
+- Make the skills provider-agnostic: host-specific "On Claude"/"On Codex"
+  branches are now phrased by capability (named subagents vs direct delegate
+  calls), and no skill names a model — the implement skill's per-role model
+  matrix is replaced by role-altitude guidance, with pins living only in the
+  agent definitions and MCP companion configs.
+- Stop committing the `npx skills` self-install: `.agents/skills/` and
+  `skills-lock.json` are untracked and gitignored (`.agents/plugins/` stays).
+  opencode reaches the plugin skills through the `~/.agents/skills` symlinks
+  `scripts/install.sh` already creates.
+
 ## 1.14.0 — 2026-08-09
 
 - Deliver the explorer, implementer, and reviewer OpenCode MCP servers natively
