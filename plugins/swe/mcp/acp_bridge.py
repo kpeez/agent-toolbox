@@ -275,21 +275,27 @@ class AcpSession:
         )
         self._next_id = 0
         self._write_lock = threading.Lock()
+        self._request_lock = threading.Lock()
+        self._close_lock = threading.Lock()
+        self._closed = threading.Event()
         self._inbox: queue.Queue[dict[str, Any]] = queue.Queue()
         self._reader = threading.Thread(target=self._read_frames, daemon=True)
         self._reader.start()
 
     def _read_frames(self) -> None:
         assert self.process.stdout is not None
-        for line in self.process.stdout:
-            line = line.strip()
-            if not line:
-                continue
-            try:
-                self._inbox.put(json.loads(line))
-            except json.JSONDecodeError:
-                continue
-        self._inbox.put({"__closed__": True})
+        try:
+            for line in self.process.stdout:
+                line = line.strip()
+                if not line:
+                    continue
+                try:
+                    self._inbox.put(json.loads(line))
+                except json.JSONDecodeError:
+                    continue
+        finally:
+            self._closed.set()
+            self._inbox.put({"__closed__": True})
 
     def _send(self, frame: dict[str, Any]) -> None:
         assert self.process.stdin is not None
@@ -308,25 +314,83 @@ class AcpSession:
         `on_frame` sees every intervening frame -- notifications to report as
         progress, and agent-to-client requests such as permission prompts.
         """
-        self._next_id += 1
-        request_id = self._next_id
-        self._send({"jsonrpc": "2.0", "id": request_id, "method": method, "params": params})
-
-        while True:
-            frame = self._inbox.get()
-            if frame.get("__closed__"):
+        with self._request_lock:
+            if self._closed.is_set() or self.process.poll() is not None:
                 raise RuntimeError(f"the ACP agent exited before answering {method}")
-            if frame.get("id") == request_id and ("result" in frame or "error" in frame):
-                if "error" in frame:
-                    raise RuntimeError(f"{method} failed: {frame['error']}")
-                return frame["result"]
-            if on_frame is not None:
-                reply = on_frame(frame)
-                if reply is not None:
-                    self._send(reply)
+            self._next_id += 1
+            request_id = self._next_id
+            self._send(
+                {"jsonrpc": "2.0", "id": request_id, "method": method, "params": params}
+            )
+
+            while True:
+                frame = self._inbox.get()
+                if frame.get("__closed__"):
+                    raise RuntimeError(f"the ACP agent exited before answering {method}")
+                if frame.get("id") == request_id and ("result" in frame or "error" in frame):
+                    if "error" in frame:
+                        raise RuntimeError(f"{method} failed: {frame['error']}")
+                    return frame["result"]
+                if on_frame is not None:
+                    reply = on_frame(frame)
+                    if reply is not None:
+                        self._send(reply)
 
     def close(self) -> None:
-        self.process.terminate()
+        with self._close_lock:
+            if self.process.poll() is None:
+                self.process.terminate()
+                try:
+                    self.process.wait(timeout=1)
+                except subprocess.TimeoutExpired:
+                    self.process.kill()
+            self.process.wait()
+
+
+class ToolCallCancelled(RuntimeError):
+    pass
+
+
+class ActiveCall:
+    """The one ACP process owned by an active MCP tools/call request."""
+
+    def __init__(self) -> None:
+        self._lock = threading.Lock()
+        self._session: AcpSession | None = None
+        self._cancelled = False
+        self._completed = False
+
+    def attach(self, session: AcpSession) -> None:
+        with self._lock:
+            self._session = session
+            should_close = self._cancelled and not self._completed
+        if should_close:
+            session.close()
+            raise ToolCallCancelled("tool call cancelled")
+
+    def cancel(self) -> None:
+        with self._lock:
+            if self._completed:
+                return
+            self._cancelled = True
+            session = self._session
+        if session is not None:
+            session.close()
+
+    def complete(self) -> None:
+        with self._lock:
+            self._completed = True
+            self._session = None
+
+    def raise_if_cancelled(self) -> None:
+        with self._lock:
+            cancelled = self._cancelled
+        if cancelled:
+            raise ToolCallCancelled("tool call cancelled")
+
+    def is_cancelled(self) -> bool:
+        with self._lock:
+            return self._cancelled
 
 
 def run_turn(
@@ -427,23 +491,55 @@ class Bridge:
         self.read_only_mode = read_only_mode
         self.tool = delegate_tool(model)
         self.sessions: dict[str, AcpSession] = {}
+        self.active_calls: dict[Any, ActiveCall] = {}
         self._lock = threading.Lock()
 
-    def open_session(self, cwd: str) -> tuple[AcpSession, str]:
+    def open_session(self, cwd: str, active_call: ActiveCall) -> tuple[AcpSession, str]:
         session = AcpSession(self.command, cwd)
-        session.request(
-            "initialize",
-            {
-                "protocolVersion": ACP_PROTOCOL_VERSION,
-                "clientCapabilities": {"fs": {"readTextFile": False, "writeTextFile": False}},
-            },
-        )
-        created = session.request("session/new", {"cwd": cwd, "mcpServers": []})
-        session_id = created["sessionId"]
-        session.default_mode = config_value(created.get("configOptions", []), "mode")
+        try:
+            active_call.attach(session)
+            session.request(
+                "initialize",
+                {
+                    "protocolVersion": ACP_PROTOCOL_VERSION,
+                    "clientCapabilities": {
+                        "fs": {"readTextFile": False, "writeTextFile": False}
+                    },
+                },
+            )
+            created = session.request("session/new", {"cwd": cwd, "mcpServers": []})
+            session_id = created["sessionId"]
+            session.default_mode = config_value(created.get("configOptions", []), "mode")
+            with self._lock:
+                self.sessions[session_id] = session
+            return session, session_id
+        except Exception:
+            session.close()
+            raise
+
+    def discard_session(self, session_id: str | None, session: AcpSession) -> None:
+        if session_id is not None:
+            with self._lock:
+                if self.sessions.get(session_id) is session:
+                    del self.sessions[session_id]
+        session.close()
+
+    def start_call(self, request_id: Any) -> ActiveCall:
+        active_call = ActiveCall()
         with self._lock:
-            self.sessions[session_id] = session
-        return session, session_id
+            self.active_calls[request_id] = active_call
+        return active_call
+
+    def cancel_call(self, request_id: Any) -> None:
+        with self._lock:
+            active_call = self.active_calls.get(request_id)
+        if active_call is not None:
+            active_call.cancel()
+
+    def finish_call(self, request_id: Any, active_call: ActiveCall) -> None:
+        with self._lock:
+            if self.active_calls.get(request_id) is active_call:
+                del self.active_calls[request_id]
 
     def select_model(self, session: AcpSession, session_id: str, model: str, effort: str | None) -> None:
         """Pin the session to one model, then to a reasoning variant of it.
@@ -491,7 +587,9 @@ class Bridge:
             {"sessionId": session_id, "configId": "mode", "value": target},
         )
 
-    def delegate(self, arguments: dict[str, Any], report: Any) -> dict[str, Any]:
+    def delegate(
+        self, arguments: dict[str, Any], report: Any, active_call: ActiveCall
+    ) -> dict[str, Any]:
         task = arguments["task"]
         mode = arguments["mode"]
         if mode not in MODES:
@@ -503,29 +601,41 @@ class Bridge:
                 "drop `model`/`effort` from the call, or use a server that does not pin one"
             )
 
+        session: AcpSession | None = None
         session_id = arguments.get("sessionId")
-        if session_id:
-            with self._lock:
-                session = self.sessions.get(session_id)
-            if session is None:
-                raise ValueError(
-                    f"session {session_id} is not open on this bridge; "
-                    "omit sessionId to start a fresh one"
-                )
-        else:
-            cwd = arguments.get("cwd") or os.getcwd()
-            if not Path(cwd).is_dir():
-                raise ValueError(f"cwd {cwd!r} is not a directory")
-            session, session_id = self.open_session(cwd)
-            if self.model:
-                self.select_model(session, session_id, self.model, self.effort)
+        try:
+            active_call.raise_if_cancelled()
+            if session_id:
+                with self._lock:
+                    session = self.sessions.get(session_id)
+                if session is None:
+                    raise ValueError(
+                        f"session {session_id} is not open on this bridge; "
+                        "omit sessionId to start a fresh one"
+                    )
+                active_call.attach(session)
+            else:
+                cwd = arguments.get("cwd") or os.getcwd()
+                if not Path(cwd).is_dir():
+                    raise ValueError(f"cwd {cwd!r} is not a directory")
+                session, session_id = self.open_session(cwd, active_call)
+                if self.model:
+                    self.select_model(session, session_id, self.model, self.effort)
 
-        if model := arguments.get("model"):
-            self.select_model(session, session_id, model, arguments.get("effort"))
-        self.select_session_mode(session, session_id, mode)
+            if model := arguments.get("model"):
+                self.select_model(session, session_id, model, arguments.get("effort"))
+            self.select_session_mode(session, session_id, mode)
 
-        turn = run_turn(session, session_id, task, mode, report)
-        return {"sessionId": session_id, **turn}
+            turn = run_turn(session, session_id, task, mode, report)
+            active_call.raise_if_cancelled()
+            active_call.complete()
+            return {"sessionId": session_id, **turn}
+        except Exception as error:
+            if session is not None:
+                self.discard_session(session_id, session)
+            if active_call.is_cancelled() and not isinstance(error, ToolCallCancelled):
+                raise ToolCallCancelled("tool call cancelled") from error
+            raise
 
 
 def send_mcp(frame: dict[str, Any]) -> None:
@@ -533,7 +643,9 @@ def send_mcp(frame: dict[str, Any]) -> None:
     sys.stdout.flush()
 
 
-def handle_tools_call(bridge: Bridge, message: dict[str, Any]) -> dict[str, Any]:
+def handle_tools_call(
+    bridge: Bridge, message: dict[str, Any], active_call: ActiveCall
+) -> dict[str, Any]:
     params = message.get("params", {})
     if params.get("name") != bridge.tool["name"]:
         raise ValueError(f"unknown tool {params.get('name')!r}")
@@ -559,7 +671,7 @@ def handle_tools_call(bridge: Bridge, message: dict[str, Any]) -> dict[str, Any]
             }
         )
 
-    result = bridge.delegate(params.get("arguments", {}), report)
+    result = bridge.delegate(params.get("arguments", {}), report, active_call)
     return {
         "content": [{"type": "text", "text": result["text"]}],
         "structuredContent": result,
@@ -599,9 +711,14 @@ def serve(bridge: Bridge) -> None:
         elif method == "tools/list":
             send_mcp({"jsonrpc": "2.0", "id": message_id, "result": {"tools": [bridge.tool]}})
         elif method == "tools/call":
+            active_call = bridge.start_call(message_id)
             threading.Thread(
-                target=_run_tool_call, args=(bridge, message), daemon=True
+                target=_run_tool_call,
+                args=(bridge, message, active_call),
+                daemon=True,
             ).start()
+        elif method == "notifications/cancelled":
+            bridge.cancel_call(message.get("params", {}).get("requestId"))
         elif message_id is not None:
             send_mcp(
                 {
@@ -612,14 +729,18 @@ def serve(bridge: Bridge) -> None:
             )
 
 
-def _run_tool_call(bridge: Bridge, message: dict[str, Any]) -> None:
+def _run_tool_call(
+    bridge: Bridge, message: dict[str, Any], active_call: ActiveCall
+) -> None:
     try:
-        result = handle_tools_call(bridge, message)
+        result = handle_tools_call(bridge, message, active_call)
     except Exception as error:  # surfaced to the caller, never swallowed
         result = {
             "content": [{"type": "text", "text": f"{type(error).__name__}: {error}"}],
             "isError": True,
         }
+    finally:
+        bridge.finish_call(message["id"], active_call)
     send_mcp({"jsonrpc": "2.0", "id": message["id"], "result": result})
 
 
