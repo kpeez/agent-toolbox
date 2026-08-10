@@ -1126,8 +1126,17 @@ def test_every_routable_prompt_carries_the_spec_text(tmp_path: Path) -> None:
     buys a denied tool call and then work against a guess."""
     result = routed_run(tmp_path)
 
-    for prefix in ("implement:", "review:assembled", "fix:"):
+    for prefix in ("implement:", "review:assembled"):
         assert LAUNCH_ARGS["specText"] in prompt_for(result, prefix), prefix
+
+
+def test_the_fixer_is_not_shipped_the_spec(tmp_path: Path) -> None:
+    """A finding already names the file, the line, and the change. The fixer is
+    the one routed role that never needs the spec to do its job, and it ran
+    twice a round in the worst case."""
+    result = routed_run(tmp_path)
+
+    assert LAUNCH_ARGS["specText"] not in prompt_for(result, "fix:")
 
 
 def test_the_spec_text_stays_out_of_the_plumbing_prompts(tmp_path: Path) -> None:

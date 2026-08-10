@@ -475,9 +475,7 @@ intents where they can coexist, and never resolve by taking one side wholesale
 Nothing is published yet, so these rebases rewrite local branches only.`}
 Apply every finding, re-run lint/types/tests, and commit. Do not push and do not
 merge. Return a concise completion note; this call has no additional output
-schema.
-
-${specBrief}`
+schema.`
 
 const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
 
