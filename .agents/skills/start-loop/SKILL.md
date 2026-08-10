@@ -182,7 +182,11 @@ and frontmatter keeps it machine-readable instead of buried in a comment.
 
 **No Workflow tool on this host** (non-Claude providers, per ADR-0006) → say so
 and fall back to the manual orchestration in `/implement`'s "Orchestrate the
-fan-out" section. Name the fallback; never improvise a substitute conductor.
+fan-out" section. On Codex that manual path calls the three plugin-delivered
+OpenCode delegate tools directly for read-only exploration, one bounded write
+assignment per changeset, and final read-only assembled-diff review. Name the
+fallback; never improvise a substitute conductor or silently replace a failed
+delegation with a host-native agent or shell command.
 
 ## Resume (given a slug or path)
 

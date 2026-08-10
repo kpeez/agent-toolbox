@@ -36,8 +36,25 @@ codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
-> Codex plugins deliver skills only; the Codex `.toml` subagents come from the
-> manual script below.
+The Codex SWE plugin delivers its skills plus three native OpenCode delegate
+tools. The Codex `.toml` capability agents still come from the manual script
+below.
+
+#### Codex OpenCode smoke check
+
+Tool registration is fixed when a task starts. After installing or upgrading
+the plugin, start a **fresh Codex task** in a repository and confirm its tool
+registry contains all three names:
+
+- `mcp__plugin_swe_opencode-explorer__delegate`
+- `mcp__plugin_swe_opencode-implementer__delegate`
+- `mcp__plugin_swe_opencode-reviewer__delegate`
+
+Then call the explorer with `task: "Return the repository name and the path to
+its root README only."`, `mode: "read-only"`, and the repository's absolute
+path as `cwd`. The smoke check passes only when the delegate returns that
+bounded answer successfully; a missing tool, unresolved plugin-root path, ACP
+startup error, authentication error, or model error is a failed check.
 
 ### skills.sh — any agent
 
@@ -120,10 +137,10 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 ## Workflow
 
 The spine is **sharpen → spec → issues → implement → review → PR**.
-`/start-loop <idea>` runs it as one resumable command: spec approval is the
-last user prompt, after which the swe-loop conductor slices, implements,
-reviews, and ships with no further prompting. The
-[swe plugin README](plugins/swe/README.md) documents the spine, the agents,
+`/start-loop <idea>` runs it as one resumable command: after spec approval,
+Claude launches the swe-loop conductor; Codex, which has no Workflow tool,
+names `/implement` as the manual conductor and uses its native OpenCode tools.
+The [swe plugin README](plugins/swe/README.md) documents the spine, the agents,
 and the conductor in detail, with diagrams.
 
 ## Versioning
@@ -134,7 +151,7 @@ catalogs carry only names and paths — regenerate them with
 `scripts/gen-marketplaces.py`, never hand-edit. Bump both manifests at once:
 
 ```bash
-scripts/bump-plugin-version.sh swe 1.9.8
+scripts/bump-plugin-version.sh swe 1.14.0
 ```
 
 A bump is inert until it lands on master — both providers install from GitHub,

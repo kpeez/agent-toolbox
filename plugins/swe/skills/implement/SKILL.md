@@ -44,21 +44,31 @@ selection live in `/to-issues`).
 
 Unless the change is highly trivial, **don't explore the codebase or write the
 code yourself — delegate.** Spend your context coordinating, not reading files
-and typing implementation.
+and typing implementation. The provider surface is host-specific:
 
-- **Explore** with `swe:opencode-explorer` instead of loading many files into
-  your own context. It forwards to OpenCode Go on a cheap 1M-context model, so
-  a broad sweep costs a fraction of doing it yourself and none of your context.
-  If it fails to launch — no `opencode` on PATH, unauthenticated, or the
-  data-residency opt-in ungranted — fall back to `swe:explorer` or `Explore`.
-- **Generate** with a `swe:implementer`. Give it exactly
-  the context it needs — the relevant
-  `NNNN-<slug>.md` sections, key paths, and where the task fits — no more.
-- **Review** what comes back before trusting it.
+- **On Claude**, explore with `swe:opencode-explorer`, give one bounded
+  changeset to `swe:opencode-implementer`, and send the final assembled diff to
+  `swe:opencode-reviewer`. Those thin forwarders make the typed OpenCode calls.
+- **On Codex**, call the plugin-delivered tools directly. Every call names the
+  absolute worktree root as `cwd`: use
+  `mcp__plugin_swe_opencode-explorer__delegate` with `mode: "read-only"` for
+  repository archaeology,
+  `mcp__plugin_swe_opencode-implementer__delegate` with `mode: "write"` for
+  exactly one changeset and its issue/spec identifiers and evidence gates, and
+  `mcp__plugin_swe_opencode-reviewer__delegate` with `mode: "read-only"` for
+  one review of the complete assembled diff.
 
-**The fan-out loop:** take the next unblocked issue → spawn an **implementer**
-(the `swe:implementer` agent) with the issue, a pointer to the spec, and its
-own `/goal` → review the diff → update the tracker → repeat.
+The model is pinned by the plugin and is not a delegation argument. If a
+requested OpenCode tool is missing, fails to start, or returns non-completion,
+surface that result to the orchestrator. There is no silent fallback to a
+host-native agent and no `opencode run` shell-out path. A user may explicitly
+choose a host-native role where the calling workflow supports provider routing;
+that explicit choice is not a fallback.
+
+**The fan-out loop:** take the next unblocked changeset → send its bounded task
+to the host-specific OpenCode implementer above with its own `/goal` → inspect
+the result and update the tracker → repeat. When the frontier drains, send the
+assembled change to the host-specific OpenCode reviewer once before publishing.
 
 ### Sequential or parallel?
 
@@ -82,10 +92,10 @@ Each role pins the least powerful default that still covers its full contract:
 | publisher   | sonnet, medium | terra, medium           | Procedural release work with commit-boundary judgment |
 
 A role routed to another provider (`codex`, `opencode`) does not use this
-matrix: it runs through that provider's forwarder agent. Codex uses its own
-default model unless the dispatching prompt names one; OpenCode's forwarders are
-pinned to a model per role in the plugin's `.mcp.json` and accept no model
-argument at all.
+matrix. Codex uses its own default model unless the dispatching prompt names
+one; OpenCode is pinned to a model per role in the plugin's MCP companion and
+accepts no model argument. Claude reaches it through a forwarder agent; Codex
+reaches the same bridge through the native tools named above.
 
 Claude Haiku does not support the per-agent `effort` setting, so the explorer
 intentionally specifies only its model. The architect's `fable` pin degrades

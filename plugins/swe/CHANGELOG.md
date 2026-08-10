@@ -5,6 +5,22 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.14.0 — 2026-08-09
+
+- Deliver the explorer, implementer, and reviewer OpenCode MCP servers natively
+  with the Codex plugin. Codex resolves the bridge from the installed plugin
+  root; Claude retains its existing forwarder agents, Codex delegator, and
+  Workflow-conductor routing through a host-specific MCP companion.
+- Route Codex's manual `/implement` path directly through the three namespaced
+  `delegate` tools: read-only exploration, one bounded write delegation per
+  changeset, then one read-only review of the assembled diff. Missing or failed
+  requested tools remain loud; there is no host-model fallback or shell-out
+  delegation path.
+- Document the fresh-task runtime check that confirms all three Codex tools and
+  completes a bounded explorer call. Host-normalized drift coverage keeps the
+  two MCP companions on the same OpenCode model, effort, mode, argv, and
+  timeout policy.
+
 ## 1.13.0 — 2026-08-08
 
 - Add **OpenCode Go as an external worker provider**, through the existing ACP
