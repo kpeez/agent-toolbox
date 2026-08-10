@@ -427,7 +427,7 @@ does the code do what the spec asked, correctly?
 Under review: the complete work of this run, which lives on ${stackTip()} —
 the top of the run's dependency stack, containing every changeset below it.
 Establish the diff yourself — the task merges are on the changeset branches and
-each task carries a task/<identifier> branch — and say in your first finding
+each changeset carries a change/<identifiers> branch — and say in your first finding
 if you could not establish it rather than reviewing a guess.
 Spec: ${specPath}
 

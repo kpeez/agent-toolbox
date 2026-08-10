@@ -1247,3 +1247,16 @@ def test_the_fixer_prompt_names_no_host_only_skill(tmp_path: Path) -> None:
     prompt = prompt_for(routed_run(tmp_path), "fix:")
 
     assert "merge-conflicts skill" not in prompt
+
+
+def test_the_workable_query_looks_for_the_branches_the_loop_actually_creates(
+    tmp_path: Path,
+) -> None:
+    """branchForChangeset writes change/<identifiers>. While this prompt said
+    task/, the reference-driven path found nothing merged, so finished tasks
+    were never dropped and the loop re-implemented them every round."""
+    result = run_loop(tmp_path, [{"match": "^workable:", "result": {"issues": []}}])
+    prompt = prompt_for(result, "workable:")
+
+    assert "begins with change/" in prompt
+    assert "task/" not in prompt
