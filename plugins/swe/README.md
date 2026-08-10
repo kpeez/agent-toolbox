@@ -322,9 +322,11 @@ client for permission per tool call. The bridge answers those requests itself:
 
 - `read-only` allows only non-mutating tool kinds (`read`, `search`, `fetch`,
   `think`) and rejects everything else, including kinds ACP may add later
-- `write` allows a mutating call when every path it names resolves inside the
-  workspace — symlinks resolved first, so a link out of the worktree is a write
-  out of the worktree
+- `write` allows a mutating call when every path it names stays inside the
+  workspace, lexically or after resolution — a workspace-planted symlink
+  (`docs/agents` → a vault dir, say) is sanctioned when the write is spelled
+  inside the tree, while a `..` escape or the link target's own outside path
+  is rejected
 - one-shot options are always preferred, so the bridge never installs a standing
   grant covering calls its policy never saw
 
