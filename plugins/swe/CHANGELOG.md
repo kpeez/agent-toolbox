@@ -21,6 +21,11 @@ the single `agentspec` plugin.
   `skills-lock.json` are untracked and gitignored (`.agents/plugins/` stays).
   opencode reaches the plugin skills through the `~/.agents/skills` symlinks
   `scripts/install.sh` already creates.
+- Sanction workspace-planted symlinks in the ACP bridge's write policy: a path
+  spelled inside the workspace is allowed even when a symlink (`docs/agents` →
+  a vault dir) carries it elsewhere, so delegated spec and ADR writes stop
+  coming back denied. Lexical escapes (`..`, the link target's own outside
+  path) are still rejected.
 
 ## 1.14.0 — 2026-08-09
 

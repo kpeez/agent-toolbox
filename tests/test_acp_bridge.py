@@ -90,15 +90,39 @@ def test_write_rejects_when_any_location_escapes(tmp_path: Path) -> None:
     assert not allowed(outcome("write", "edit", str(workspace), paths=paths))
 
 
-def test_write_rejects_an_edit_through_a_symlink_out_of_the_workspace(tmp_path: Path) -> None:
+def test_write_allows_an_edit_through_a_workspace_internal_symlink(tmp_path: Path) -> None:
+    """docs/agents is a repo-planted symlink out of the tree; a write spelled
+    inside the workspace is sanctioned even when the link carries it elsewhere,
+    or every spec/ADR write in a delegated run comes back denied."""
     workspace = tmp_path / "repo"
     workspace.mkdir()
-    (tmp_path / "secrets").mkdir()
-    (workspace / "link").symlink_to(tmp_path / "secrets")
+    (tmp_path / "vault").mkdir()
+    (workspace / "docs").symlink_to(tmp_path / "vault")
 
-    result = outcome("write", "edit", str(workspace), paths=[str(workspace / "link" / "k.env")])
+    result = outcome("write", "edit", str(workspace), paths=[str(workspace / "docs" / "spec.md")])
+
+    assert allowed(result)
+
+
+def test_write_rejects_the_symlink_targets_own_path(tmp_path: Path) -> None:
+    """The sanction covers the workspace spelling only: naming the resolved
+    target directly is an escape like any other absolute path outside."""
+    workspace = tmp_path / "repo"
+    workspace.mkdir()
+    (tmp_path / "vault").mkdir()
+    (workspace / "docs").symlink_to(tmp_path / "vault")
+
+    result = outcome("write", "edit", str(workspace), paths=[str(tmp_path / "vault" / "spec.md")])
 
     assert not allowed(result)
+
+
+def test_write_rejects_a_lexical_dotdot_escape(tmp_path: Path) -> None:
+    workspace = tmp_path / "repo"
+    (workspace / "sub").mkdir(parents=True)
+
+    escape = workspace / "sub" / ".." / ".." / "escape.py"
+    assert not allowed(outcome("write", "edit", str(workspace), paths=[str(escape)]))
 
 
 def test_write_allows_a_call_that_names_no_location(tmp_path: Path) -> None:

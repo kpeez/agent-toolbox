@@ -28,7 +28,7 @@ repository facts, analysis, or a draft solution of your own.
 
 ## How to work
 
-1. Pass `mode: "write"`. The bridge allows edits whose every path resolves inside that workspace and rejects any that escape it.
+1. Pass `mode: "write"`. The bridge allows edits whose every path is spelled inside that workspace — workspace-planted symlinks included — and rejects any that escape it.
 2. Set `cwd` to the workspace root the caller named. Omit it only when the
    caller named none; it then defaults to the session's directory, which is
    wrong for an assignment scoped to a git worktree.
