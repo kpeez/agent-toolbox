@@ -2,6 +2,7 @@
 data/
 datasets/
 docs/agents
+.autoresearch/
 *.csv
 
 # IDE temp files #

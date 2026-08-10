@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import json
 import re
+import subprocess
 from pathlib import Path
 from typing import Any
 
@@ -380,6 +381,49 @@ def test_plugin_manifest_versions_match() -> None:
             mismatches.append((plugin.name, claude_version, codex_version))
 
     assert mismatches == []
+
+
+def test_lab_owns_the_complete_research_workflow_surface() -> None:
+    """A missing or duplicated entry point silently changes installed capability."""
+    skill_names = {
+        plugin.name: {
+            skill_file.parent.name
+            for skill_file in (plugin / "skills").glob("*/SKILL.md")
+        }
+        for plugin in plugin_directories()
+    }
+
+    assert skill_names["lab"] == {
+        "research",
+        "deep-research",
+        "autoresearch",
+        "data-viz",
+    }
+    assert "research" not in skill_names["swe"]
+
+
+def test_lab_manifests_share_installation_metadata() -> None:
+    """Provider installs must describe and version the same Lab product."""
+    lab = ROOT / "plugins" / "lab"
+    claude = json.loads((lab / ".claude-plugin" / "plugin.json").read_text())
+    codex = json.loads((lab / ".codex-plugin" / "plugin.json").read_text())
+
+    shared_fields = ("name", "description", "version", "homepage", "repository", "license", "keywords")
+    assert {field: claude[field] for field in shared_fields} == {
+        field: codex[field] for field in shared_fields
+    }
+    assert codex["skills"] == "./skills/"
+
+
+def test_autoresearch_default_artifact_root_is_gitignored() -> None:
+    """Private run artifacts must not become publishable repository changes."""
+    result = subprocess.run(
+        ["git", "check-ignore", "--quiet", ".autoresearch/example/results.tsv"],
+        cwd=ROOT,
+        check=False,
+    )
+
+    assert result.returncode == 0
 
 
 def test_readme_skills_table_matches_plugin_skills() -> None:
