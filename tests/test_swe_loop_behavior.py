@@ -1048,18 +1048,18 @@ def test_deterministic_plumbing_calls_are_never_routed(tmp_path: Path) -> None:
 
 
 def test_an_explicit_role_beats_the_default(tmp_path: Path) -> None:
-    result = routed_run(tmp_path, {"implementer": "claude", "reviewer": "codex"})
+    result = routed_run(tmp_path, {"implementer": "claude", "reviewer": "claude"})
 
     assert agent_type_for(result, "implement:") == "swe:implementer"
     assert agent_type_for(result, "fix:") == "swe:implementer"
-    assert agent_type_for(result, "review:assembled") == "swe:codex-delegator"
+    assert agent_type_for(result, "review:assembled") == "swe:reviewer"
 
 
-def test_codex_still_routes_every_role_it_is_given(tmp_path: Path) -> None:
-    result = routed_run(tmp_path, {"implementer": "codex", "publisher": "codex"})
+def test_codex_is_no_longer_a_routable_provider(tmp_path: Path) -> None:
+    """Codex delegation lives wholly in the codex plugin now."""
+    error = failed_launch(tmp_path, {"implementer": "codex"})
 
-    assert agent_type_for(result, "implement:") == "swe:codex-delegator"
-    assert agent_type_for(result, "ship:") == "swe:codex-delegator"
+    assert "invalid roles map" in error
 
 
 def test_reviewer_defaults_to_a_different_model_than_the_implementer(
