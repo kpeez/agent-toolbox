@@ -10,8 +10,10 @@ told to the caller.
 from __future__ import annotations
 
 import json
+import os
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 import pytest
@@ -153,15 +155,14 @@ class BridgeClient:
         cwd: Path,
         options: list[str] | None = None,
         agent_args: list[str] | None = None,
+        agent_command: list[str] | None = None,
     ) -> None:
         self.process = subprocess.Popen(
             [
                 sys.executable,
                 str(ROOT / "plugins" / "swe" / "mcp" / "acp_bridge.py"),
                 *(options or []),
-                sys.executable,
-                str(FAKE_AGENT),
-                *(agent_args or []),
+                *(agent_command or [sys.executable, str(FAKE_AGENT), *(agent_args or [])]),
             ],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -172,8 +173,9 @@ class BridgeClient:
         )
         self._next_id = 0
         self.progress: list[str] = []
+        self._responses: dict[int, dict] = {}
 
-    def call(self, method: str, params: dict) -> dict:
+    def start_call(self, method: str, params: dict) -> int:
         self._next_id += 1
         request_id = self._next_id
         assert self.process.stdin is not None
@@ -182,17 +184,49 @@ class BridgeClient:
             + "\n"
         )
         self.process.stdin.flush()
+        return request_id
+
+    def receive(self, request_id: int) -> dict:
+        if response := self._responses.pop(request_id, None):
+            return response
         assert self.process.stdout is not None
         while True:
             line = self.process.stdout.readline()
             if not line:
-                raise RuntimeError(f"bridge exited while waiting for {method}")
+                raise RuntimeError(f"bridge exited while waiting for request {request_id}")
             frame = json.loads(line)
             if frame.get("method") == "notifications/progress":
                 self.progress.append(frame["params"]["message"])
                 continue
-            if frame.get("id") == request_id:
+            response_id = frame.get("id")
+            if response_id == request_id:
                 return frame
+            if isinstance(response_id, int):
+                self._responses[response_id] = frame
+
+    def call(self, method: str, params: dict) -> dict:
+        request_id = self.start_call(method, params)
+        return self.receive(request_id)
+
+    def start_delegate(self, **arguments) -> int:
+        meta = {"_meta": {"progressToken": "p1"}}
+        return self.start_call(
+            "tools/call", {"name": "delegate", "arguments": arguments, **meta}
+        )
+
+    def cancel(self, request_id: int) -> None:
+        assert self.process.stdin is not None
+        self.process.stdin.write(
+            json.dumps(
+                {
+                    "jsonrpc": "2.0",
+                    "method": "notifications/cancelled",
+                    "params": {"requestId": request_id, "reason": "test cancellation"},
+                }
+            )
+            + "\n"
+        )
+        self.process.stdin.flush()
 
     def delegate(self, **arguments) -> dict:
         meta = {"_meta": {"progressToken": "p1"}}
@@ -226,6 +260,80 @@ def bridges(tmp_path: Path):
     yield open_bridge
     for client in opened:
         client.close()
+
+
+LIFECYCLE_AGENT = r"""
+import json
+import os
+import sys
+import time
+
+session_id = f"lifecycle-{os.getpid()}"
+
+def send(frame):
+    sys.stdout.write(json.dumps(frame) + "\n")
+    sys.stdout.flush()
+
+for line in sys.stdin:
+    message = json.loads(line)
+    method = message.get("method")
+    if method == "initialize":
+        send({"jsonrpc": "2.0", "id": message["id"], "result": {"protocolVersion": 1}})
+    elif method == "session/new":
+        with open(f"{session_id}.pid", "w") as pid_file:
+            pid_file.write(str(os.getpid()))
+        send({"jsonrpc": "2.0", "id": message["id"], "result": {"sessionId": session_id}})
+    elif method == "session/prompt":
+        directive = json.loads(message["params"]["prompt"][0]["text"])
+        if directive.get("exit"):
+            os._exit(7)
+        if directive.get("block"):
+            while True:
+                time.sleep(1)
+        reply = directive.get("reply", "")
+        if reply:
+            send({
+                "jsonrpc": "2.0",
+                "method": "session/update",
+                "params": {"sessionId": session_id, "update": {
+                    "sessionUpdate": "agent_message_chunk",
+                    "content": {"type": "text", "text": reply},
+                }},
+            })
+        send({"jsonrpc": "2.0", "id": message["id"], "result": {"stopReason": "end_turn"}})
+"""
+
+
+@pytest.fixture
+def lifecycle_bridge(tmp_path: Path):
+    client = BridgeClient(
+        tmp_path,
+        agent_command=[sys.executable, "-u", "-c", LIFECYCLE_AGENT],
+    )
+    yield client
+    client.close()
+
+
+def wait_for_sessions(tmp_path: Path, count: int) -> list[Path]:
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        paths = list(tmp_path.glob("lifecycle-*.pid"))
+        if len(paths) >= count:
+            return paths
+        time.sleep(0.01)
+    raise AssertionError(f"expected {count} ACP session(s)")
+
+
+def assert_process_stopped(pid_path: Path) -> None:
+    pid = int(pid_path.read_text())
+    deadline = time.monotonic() + 5
+    while time.monotonic() < deadline:
+        try:
+            os.kill(pid, 0)
+        except ProcessLookupError:
+            return
+        time.sleep(0.01)
+    raise AssertionError(f"ACP process {pid} is still running")
 
 
 # The OpenCode-shaped fixture: a model list it validates against, a
@@ -312,6 +420,78 @@ def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) 
 
     assert second["structuredContent"]["sessionId"] == session_id
     assert second["content"][0]["text"] == "two"
+
+
+def test_cancelling_a_tool_call_stops_and_forgets_its_acp_session(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    request_id = lifecycle_bridge.start_delegate(
+        task=directive(block=True), mode="read-only", cwd=str(tmp_path)
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+
+    lifecycle_bridge.cancel(request_id)
+    result = lifecycle_bridge.receive(request_id)["result"]
+
+    assert result["isError"] is True
+    assert "cancelled" in result["content"][0]["text"].lower()
+    assert_process_stopped(pid_path)
+    continuation = lifecycle_bridge.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        sessionId=pid_path.stem,
+    )
+    assert "is not open" in continuation["content"][0]["text"]
+
+
+def test_child_exit_stops_the_wait_and_forgets_the_session(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    request_id = lifecycle_bridge.start_delegate(
+        task=directive(exit=True), mode="read-only", cwd=str(tmp_path)
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+
+    result = lifecycle_bridge.receive(request_id)["result"]
+
+    assert result["isError"] is True
+    assert "exited before answering session/prompt" in result["content"][0]["text"]
+    assert_process_stopped(pid_path)
+    continuation = lifecycle_bridge.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        sessionId=pid_path.stem,
+    )
+    assert "is not open" in continuation["content"][0]["text"]
+
+
+def test_cancelling_one_concurrent_call_does_not_corrupt_the_other(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    blocked_id = lifecycle_bridge.start_delegate(
+        task=directive(block=True), mode="read-only", cwd=str(tmp_path)
+    )
+    wait_for_sessions(tmp_path, 1)
+    successful_id = lifecycle_bridge.start_delegate(
+        task=directive(reply="independent"), mode="read-only", cwd=str(tmp_path)
+    )
+    pid_paths = wait_for_sessions(tmp_path, 2)
+
+    successful = lifecycle_bridge.receive(successful_id)["result"]
+    successful_session_id = successful["structuredContent"]["sessionId"]
+    lifecycle_bridge.cancel(blocked_id)
+    cancelled = lifecycle_bridge.receive(blocked_id)["result"]
+
+    assert successful["content"][0]["text"] == "independent"
+    assert cancelled["isError"] is True
+    blocked_pid_path = next(path for path in pid_paths if path.stem != successful_session_id)
+    assert_process_stopped(blocked_pid_path)
+    continued = lifecycle_bridge.delegate(
+        task=directive(reply="still alive"),
+        mode="read-only",
+        sessionId=successful_session_id,
+    )
+    assert continued["content"][0]["text"] == "still alive"
 
 
 def test_an_unknown_session_is_an_error_the_caller_can_see(
