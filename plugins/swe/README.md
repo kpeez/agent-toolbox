@@ -15,7 +15,8 @@ plugins/swe/
 ├── agents/            # 10 agent definitions: Claude .md + Codex .toml twins (the delegators: .md only)
 ├── workflows/
 │   └── swe-loop.js    # deterministic conductor for the post-approval phases
-├── .mcp.json          # external providers, exposed to Claude Code as tools
+├── .mcp.json          # the three OpenCode delegates exposed natively to Codex
+├── .mcp.claude.json   # Claude's Codex delegator and OpenCode delegates
 ├── mcp/
 │   └── acp_bridge.py  # Agent Client Protocol agent -> MCP, with the permission policy
 ├── scripts/
@@ -57,7 +58,8 @@ Two ways to run the spine:
   already mid-flight or does not need the full loop.
 - **As one resumable command** — `/start-loop <idea>` owns the interactive
   half (triage, design, approval gate, splitting), then launches the swe-loop
-  conductor, which runs every remaining phase without prompting.
+  conductor on Claude. On Codex it explicitly hands the same spine to
+  `/implement` for manual orchestration because the Workflow tool is absent.
 
 ## The swe-loop
 
@@ -119,7 +121,8 @@ escalations.
 
 ### Cross-provider role routing
 
-Claude is always the orchestrator. Two worker roles run elsewhere by default:
+The Workflow conductor runs only on Claude, which remains its orchestrator.
+Two worker roles run elsewhere by default in that route:
 
 | Role          | Default provider | Model                        |
 | ------------- | ---------------- | ---------------------------- |
@@ -206,33 +209,61 @@ decides what runs when.
 | `opencode-implementer` | Thin forwarder: one bounded write assignment on OpenCode Go                         | sonnet (low)          | — (Claude-side only)   |
 | `opencode-reviewer` | Thin forwarder: read-only review on OpenCode Go                                        | sonnet (low)          | — (Claude-side only)   |
 
-The delegators have no `.toml` twin: on the Codex harness the host *is* a
-provider, so there is nothing to delegate to.
+The delegators have no `.toml` twin. Claude needs their single-tool allowlists
+because its conductor dispatches agent names. Codex receives the three OpenCode
+MCP tools from the plugin and calls them directly; a TOML wrapper would add a
+second host-model hop without strengthening the bridge's permissions.
 
 ## Delegating to another provider
 
-The delegators do not shell out. Each external provider is registered in
-`.mcp.json` as an MCP server, so a delegation is a typed tool call — the model
-fills a JSON schema instead of composing a command line, and quoting, sandbox
-flags, exit codes and timeout ceilings stop being the model's problem.
+The delegators do not shell out. Each external provider is registered in a
+host MCP companion, so a delegation is a typed tool call — the model fills a
+JSON schema instead of composing a command line, and quoting, sandbox flags,
+exit codes and timeout ceilings stop being the model's problem.
 
-| Provider | Surface                                    | Tools                                    |
-| -------- | ------------------------------------------ | ---------------------------------------- |
-| Codex    | `codex mcp-server` (native MCP over stdio) | `mcp__plugin_swe_codex__codex`, `…__codex-reply`    |
-| OpenCode | `opencode acp` through `mcp/acp_bridge.py`, one server per role | `mcp__plugin_swe_opencode-{explorer,implementer,reviewer}__delegate` |
+| Host   | Provider surface | Caller |
+| ------ | ---------------- | ------ |
+| Claude | `codex mcp-server` or `opencode acp` through `mcp/acp_bridge.py` | `swe:codex-delegator` or the three `swe:opencode-*` forwarders |
+| Codex  | `opencode acp` through the same `mcp/acp_bridge.py` | `mcp__plugin_swe_opencode-{explorer,implementer,reviewer}__delegate` directly |
 
-Each forwarder agent's `tools` field lists only its own provider's tools, so
+Each Claude forwarder agent's `tools` field lists only its own provider's tools, so
 "never work the task yourself" is a property of the agent rather than a rule in
 its prompt: it holds no `Read`, no `Grep`, no `Bash`. An agent that inherited
 every tool could quietly answer from its own exploration and never call the
-provider at all.
+provider at all. On Codex the skill contract tells the orchestrator which
+namespaced MCP tool and mode to use; the bridge remains the permission boundary.
+
+### Native Codex calls
+
+Codex has no Workflow tool, so `/start-loop` names `/implement` as its manual
+conductor. That path calls the plugin-delivered tools directly with the
+absolute worktree root as `cwd`:
+
+| Phase | Tool | Mode | Boundary |
+| ----- | ---- | ---- | -------- |
+| Explore | `mcp__plugin_swe_opencode-explorer__delegate` | `read-only` | One bounded repository sweep |
+| Implement | `mcp__plugin_swe_opencode-implementer__delegate` | `write` | One changeset with issue/spec identifiers and verification gates |
+| Review | `mcp__plugin_swe_opencode-reviewer__delegate` | `read-only` | One review of the complete assembled diff |
+
+A missing tool, startup/auth/model failure, denied tool call, or non-completion
+is returned to the orchestrator. The manual path never silently switches to a
+host-native model and never shells out to `opencode run`. Claude retains its
+existing forwarder names and Workflow-conductor routing.
+
+After installation or upgrade, start a **fresh Codex task**; an existing task
+cannot pick up a changed tool registry. Confirm all three exact tool names in
+the table are callable, then invoke the explorer with `task: "Return the
+repository name and root README path only."`, `mode: "read-only"`, and the
+repository's absolute path as `cwd`. A bounded answer is the runtime proof;
+manifest validation alone is not.
 
 ### OpenCode Go
 
 Requires the `opencode` CLI on PATH and an authenticated OpenCode Go
 subscription — check both with `opencode providers list`, which must list
-`OpenCode Go`. Nothing else is configured: the plugin registers three ACP-bridged
-MCP servers, one per role, each pinning its model in `.mcp.json`.
+`OpenCode Go`. Nothing else is configured: the plugin registers three
+ACP-bridged MCP servers, one per role, in `.mcp.claude.json` for Claude and
+`.mcp.json` for Codex; both companions pin the same role policy.
 
 | Forwarder              | Model                          | Reasoning | Mode      |
 | ---------------------- | ------------------------------ | --------- | --------- |
@@ -264,19 +295,18 @@ something else. The closest substitute if you would rather not grant it is
 tag, the same effective price — but it exposes no reasoning variants, so drop
 `--effort` from that server or the bridge will reject it at session open.
 
-`.mcp.json` is the only operative source for those ids: the forwarder agents
+The MCP companions are the only operative source for those ids: callers
 receive a `delegate` tool with no `model` field at all, so a model is something
 the plugin configures rather than something a subagent is asked to remember.
-Changing one is a one-line edit, and `tests/test_skill_drift.py` fails if any
-prose disagrees with it.
+`tests/test_skill_drift.py` normalizes the host-specific transport syntax and
+fails if the two role policies or their prose disagree.
 
 The explorer is deliberately not a swe-loop role — the conductor has no
-exploration phase to spend it on. Its callers are the two places that do
-explore: the interactive orchestrator, which `/implement` and `/to-issues`
-point at `swe:opencode-explorer`, and the planner, which cannot nest subagents
-and so calls `mcp__plugin_swe_opencode-explorer__delegate` directly. Both reach
-the same forwarder and get back only the answer, which is the whole point —
-the sweep never lands in the caller's context.
+exploration phase to spend it on. On Claude, `/implement` and `/to-issues`
+dispatch `swe:opencode-explorer`; the planner, which cannot nest subagents,
+calls its MCP tool directly. On Codex, both skills call the plugin-delivered
+MCP tool directly. Every route reaches the same bridge and returns only the
+answer, so the sweep never lands in the caller's context.
 
 ### The ACP bridge
 
@@ -313,9 +343,9 @@ rather than running it unprotected.
 
 Streamed ACP events become MCP progress notifications, which both surface live
 progress and keep a long delegation clear of the 30-minute stdio idle timeout;
-`.mcp.json` sets a one-hour wall-clock ceiling per call. Claude Code moves any
-tool call past ~2 minutes into a background task on its own, so a long
-delegation never blocks the session.
+both MCP companions set a one-hour wall-clock ceiling per call. Claude Code
+moves any tool call past ~2 minutes into a background task on its own, so a
+long delegation never blocks the session.
 
 ## Scripts
 

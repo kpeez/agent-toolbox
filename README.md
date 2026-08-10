@@ -36,10 +36,48 @@ codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
-> Codex plugins deliver skills only; the Codex `.toml` subagents come from the
-> manual script below.
+The Codex SWE plugin delivers its skills plus three native OpenCode delegate
+tools. The Codex `.toml` capability agents still come from the manual script
+below.
 
-### Manual install (Codex agents, Antigravity, Copilot)
+#### Codex OpenCode smoke check
+
+Tool registration is fixed when a task starts. After installing or upgrading
+the plugin, start a **fresh Codex task** in a repository and confirm its tool
+registry contains all three names:
+
+- `mcp__plugin_swe_opencode-explorer__delegate`
+- `mcp__plugin_swe_opencode-implementer__delegate`
+- `mcp__plugin_swe_opencode-reviewer__delegate`
+
+Then call the explorer with `task: "Return the repository name and the path to
+its root README only."`, `mode: "read-only"`, and the repository's absolute
+path as `cwd`. The smoke check passes only when the delegate returns that
+bounded answer successfully; a missing tool, unresolved plugin-root path, ACP
+startup error, authentication error, or model error is a failed check.
+
+### skills.sh — any agent
+
+The [skills.sh](https://skills.sh) installer copies editable skill files into
+your project, no plugin harness required:
+
+```bash
+npx skills@latest add kpeez/agent-toolbox                     # pick skills and target agent
+npx skills@latest add kpeez/agent-toolbox --skill start-loop
+npx skills@latest add kpeez/agent-toolbox/plugins/swe      # one plugin's skills
+npx skills@latest update                                    # refresh installed skills
+```
+
+Skills install as plain editable files (Claude Code: `.claude/skills/`, a
+symlink to the shared `.agents/skills/` copy). They live in your project and
+need no plugin harness, but re-running `add` or `update` rewrites them from
+the source, so keep customizations in your own fork rather than the installed
+copies. The install is skills-only: the swe conductor (`swe-loop.js`), the
+`swe:*` agents, hooks, and MCP servers are not copied, so `start-loop` and
+`implement` rely on one of the plugin installs above (or the manual script
+below) being present on the same machine.
+
+### Manual install (Codex agents, opencode, Antigravity, Copilot)
 
 ```bash
 ./scripts/install.sh
@@ -48,6 +86,7 @@ codex plugin add lab@agent-toolbox
 | Target            | Installed to                                           |
 | ----------------- | ------------------------------------------------------ |
 | Codex agents      | `~/.codex/agents/*.toml`                               |
+| opencode          | `~/.agents/skills/*` — plugin skills symlinked          |
 | Antigravity CLI   | `~/.gemini/AGENTS.md` + skills symlinked from the repo |
 | Copilot CLI       | `~/.copilot/copilot-instructions.md`                   |
 | Claude statusline | `~/.claude/cc_statusline.py`                           |
@@ -99,10 +138,10 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 ## Workflow
 
 The spine is **sharpen → spec → issues → implement → review → PR**.
-`/start-loop <idea>` runs it as one resumable command: spec approval is the
-last user prompt, after which the swe-loop conductor slices, implements,
-reviews, and ships with no further prompting. The
-[swe plugin README](plugins/swe/README.md) documents the spine, the agents,
+`/start-loop <idea>` runs it as one resumable command: after spec approval,
+Claude launches the swe-loop conductor; Codex, which has no Workflow tool,
+names `/implement` as the manual conductor and uses its native OpenCode tools.
+The [swe plugin README](plugins/swe/README.md) documents the spine, the agents,
 and the conductor in detail, with diagrams.
 
 ## Versioning
@@ -113,7 +152,7 @@ catalogs carry only names and paths — regenerate them with
 `scripts/gen-marketplaces.py`, never hand-edit. Bump both manifests at once:
 
 ```bash
-scripts/bump-plugin-version.sh swe 1.9.8
+scripts/bump-plugin-version.sh swe 1.14.0
 ```
 
 A bump is inert until it lands on master — both providers install from GitHub,
