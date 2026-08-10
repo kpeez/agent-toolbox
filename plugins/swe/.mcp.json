@@ -1,16 +1,9 @@
 {
   "mcpServers": {
-    "codex": {
-      "command": "codex",
-      "args": [
-        "mcp-server"
-      ],
-      "timeout": 3600000
-    },
     "opencode-explorer": {
       "command": "python3",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp/acp_bridge.py",
+        "mcp/acp_bridge.py",
         "--model",
         "opencode-go/deepseek-v4-flash",
         "--effort",
@@ -20,12 +13,13 @@
         "opencode",
         "acp"
       ],
-      "timeout": 3600000
+      "cwd": ".",
+      "tool_timeout_sec": 3600
     },
     "opencode-implementer": {
       "command": "python3",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp/acp_bridge.py",
+        "mcp/acp_bridge.py",
         "--model",
         "opencode-go/gpt-5.6-luna",
         "--effort",
@@ -35,12 +29,13 @@
         "opencode",
         "acp"
       ],
-      "timeout": 3600000
+      "cwd": ".",
+      "tool_timeout_sec": 3600
     },
     "opencode-reviewer": {
       "command": "python3",
       "args": [
-        "${CLAUDE_PLUGIN_ROOT}/mcp/acp_bridge.py",
+        "mcp/acp_bridge.py",
         "--model",
         "opencode-go/deepseek-v4-pro",
         "--effort",
@@ -50,7 +45,8 @@
         "opencode",
         "acp"
       ],
-      "timeout": 3600000
+      "cwd": ".",
+      "tool_timeout_sec": 3600
     }
   }
 }

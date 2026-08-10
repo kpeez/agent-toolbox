@@ -24,7 +24,7 @@
     "implement": {
       "source": "./plugins/swe",
       "sourceType": "local",
-      "computedHash": "51f22b2763a387d07534bfcb75110526dff6908e96f3e1f0d3525af4f13222a1"
+      "computedHash": "a0c45cd6e391195c71c3bf6728ce65261e8b49605f248aec2b0f096b8119b0b7"
     },
     "improve-codebase-architecture": {
       "source": "./plugins/swe",
@@ -64,7 +64,7 @@
     "start-loop": {
       "source": "./plugins/swe",
       "sourceType": "local",
-      "computedHash": "8b621fdf62c83e7ad15e6c35e94fec3c61ee6eea83e5a05ddfc6b3b0000393b0"
+      "computedHash": "513f1761a66ec6014214efe0127037673c255af79e01980cd8800750bb44b0dd"
     },
     "tdd": {
       "source": "./plugins/swe",
@@ -74,7 +74,7 @@
     "to-issues": {
       "source": "./plugins/swe",
       "sourceType": "local",
-      "computedHash": "56921741f6f868bf5bd3810f7421cdd73bbc4194decc6344f141891e53a26a29"
+      "computedHash": "de1a452448592f58247ce5fb5ea93dfc8070defa798dc37461a40173c9e3d7bd"
     },
     "write-spec": {
       "source": "./plugins/swe",
