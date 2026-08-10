@@ -9,8 +9,8 @@ Three plugins, each documented in detail by its own README:
 - [**swe**](plugins/swe/README.md) — the core: the spec-driven workflow
   skills, the capability agents, and the swe-loop conductor that ships an
   approved spec end to end
-- [**lab**](plugins/lab/README.md) — research: autonomous experiment loops
-  and data-visualization guidance
+- [**lab**](plugins/lab/README.md) — bounded and deep source-backed research,
+  autonomous experiment loops, and data-visualization guidance
 - [**llmos**](plugins/llmos/README.md) — tooling, hooks, and the
   `llmos-vault` CLI for the shared llmOS Obsidian vault
 
@@ -76,16 +76,17 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 | `codebase-design`               | Shared deep-module vocabulary — depth, seams, adapters, the deletion test                               |
 | `improve-codebase-architecture` | Find deepening refactors — turn shallow modules into deep ones                                          |
 | `merge-conflicts`               | Resolve conflicts by tracing each side's intent; verify with the project's checks                       |
-| `research`                      | Investigate a question against primary sources; capture cited findings as markdown                      |
 | `qmd`                           | Search local markdown knowledge bases with the `qmd` CLI                                                |
 | `setup-repo`                    | Interview-driven repo setup — thin `AGENTS.md`, `CLAUDE.md` symlink, `docs/agents/` topology            |
 
 ### lab
 
-| Skill          | Purpose                                                                  |
-| -------------- | ------------------------------------------------------------------------ |
-| `autoresearch` | Autonomous experiment loops with defined metrics and stop conditions     |
-| `data-viz`     | Research-backed guidance for designing and critiquing charts and figures |
+| Skill           | Purpose                                                                                      |
+| --------------- | -------------------------------------------------------------------------------------------- |
+| `research`      | Investigate one bounded question against high-trust sources; write one cited private memo    |
+| `deep-research` | Coordinate read-only evidence lanes; retain packets and produce one citation-audited synthesis |
+| `autoresearch`  | Run reproducible experiment loops under an approved program and frozen evaluator             |
+| `data-viz`      | Research-backed guidance for designing and critiquing charts and figures                     |
 
 ### llmos
 

@@ -5,6 +5,12 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## Unreleased
+
+- Remove `/research` in an immediate breaking ownership transfer to the Lab
+  plugin. Existing consumers must install Lab and call `lab:research`; SWE
+  keeps no forwarding compatibility copy.
+
 ## 1.13.0 — 2026-08-08
 
 - Add **OpenCode Go as an external worker provider**, through the existing ACP

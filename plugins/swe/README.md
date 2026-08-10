@@ -11,7 +11,7 @@ publication is atomic commits behind a draft PR.
 
 ```text
 plugins/swe/
-├── skills/            # 14 workflow skills (SKILL.md each — the canonical contracts)
+├── skills/            # 13 workflow skills (SKILL.md each — the canonical contracts)
 ├── agents/            # 10 agent definitions: Claude .md + Codex .toml twins (the delegators: .md only)
 ├── workflows/
 │   └── swe-loop.js    # deterministic conductor for the post-approval phases
@@ -183,7 +183,6 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 | ----------------- | ----------------------------------------------------------------------------------------------- |
 | `diagnose`        | Disciplined debugging: feedback loop, reproduce, hypothesize, instrument, fix, regression-test  |
 | `merge-conflicts` | Resolves merge/rebase conflicts by tracing each side's intent; verifies with the project checks |
-| `research`        | Investigates a question against primary sources; captures cited findings as markdown            |
 | `qmd`             | Searches local markdown knowledge bases with the `qmd` CLI                                      |
 | `setup-repo`      | Interview-driven repo setup: thin `AGENTS.md`, `CLAUDE.md` symlink, `docs/agents/` topology     |
 
