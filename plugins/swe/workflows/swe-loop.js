@@ -599,11 +599,15 @@ payload verbatim in a fenced json block:
 
 ${JSON.stringify(summary, null, 2)}
 
-Then reconcile the container's own status with its issues per the tracker
-reference's state-transition section: a container still reading "backlog" or
-"planned" while its issues are underway is the drift this step exists to
-correct. Never mark the container complete — this run ends at a draft PR, not
-a merge.`
+Then run the reconcile named in the tracker reference's state-transition
+section, for container ${containerId} against integration branch ${baseBranch}.
+It repairs both kinds of drift this run can leave: an issue whose changeset
+merged but whose state write did not land, and a container still reading
+"backlog" or "planned" while its issues are underway. Every state write during
+the run is best-effort, so this is the step that makes the board agree with git
+— run it even when the run escalated or merged nothing, and report what it
+printed. Never mark anything complete: this run ends at a draft PR, not a
+merge.`
 
 // ---- run state --------------------------------------------------------------
 const tasksCompleted = []

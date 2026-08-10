@@ -1293,3 +1293,33 @@ def test_a_fixer_that_did_not_complete_buys_no_re_review(tmp_path: Path) -> None
     assert len(escalation) == 1, result["summary"]["escalations"]
     assert "conflicted" in escalation[0]["reason"]
     assert "1 finding(s) stand" in escalation[0]["reason"]
+
+
+def test_the_run_summary_reconciles_tracker_state_against_the_branch(
+    tmp_path: Path,
+) -> None:
+    """finish() is the run's only exit, so the reconcile there runs whether the
+    run shipped, escalated, or merged nothing — which is what makes it the
+    repair for every best-effort state write the run made."""
+    result = routed_run(tmp_path)
+    prompt = prompt_for(result, "run-summary:")
+
+    assert "reconcile" in prompt
+    assert LAUNCH_ARGS["baseBranch"] in prompt
+    assert "even when the run escalated or merged nothing" in prompt
+
+
+def test_a_run_that_merged_nothing_still_reconciles(tmp_path: Path) -> None:
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^workable:implement:1$", "result": {"issues": ONE_TASK}},
+            {"match": "^workable:", "result": {"issues": []}},
+            {"match": "^escalation-note:", "result": "posted"},
+            {"match": "^run-summary:", "result": "posted"},
+        ],
+        default_result=None,
+    )
+
+    assert result["summary"]["tasksCompleted"] == []
+    assert "reconcile" in prompt_for(result, "run-summary:")
