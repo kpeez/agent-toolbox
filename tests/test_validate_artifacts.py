@@ -82,3 +82,36 @@ def test_both_execution_modes_are_accepted() -> None:
 def test_an_archived_spec_is_exempt_from_approval() -> None:
     """It may be an abandoned draft that was never approved at all."""
     assert violations(status="archived") == []
+
+
+def spec_with_tasks(tasks_block: str) -> str:
+    return (
+        "---\nstatus: draft\ndesc: a spec\n---\n\n"
+        f"## Tasks\n\n{tasks_block}\n"
+    )
+
+
+def test_a_well_formed_tasks_section_passes() -> None:
+    tasks = (
+        "- [ ] T1: Add the widget — a one-line brief\n"
+        "- [ ] T2: Wire it up — a brief (after: T1)\n"
+    )
+    assert validator.validate_spec(spec_with_tasks(tasks), None) == []
+
+
+def test_a_malformed_task_line_is_rejected() -> None:
+    found = validator.validate_spec(
+        spec_with_tasks("- [ ] T1 missing the colon and brief\n"), None
+    )
+    assert any("malformed task line" in v for v in found)
+
+
+def test_a_dangling_after_reference_is_rejected() -> None:
+    found = validator.validate_spec(
+        spec_with_tasks("- [ ] T1: Add the widget — a brief (after: T9)\n"), None
+    )
+    assert any("dangling 'after' reference" in v and "T9" in v for v in found)
+
+
+def test_a_spec_without_a_tasks_section_still_passes() -> None:
+    assert violations(status="draft") == []
