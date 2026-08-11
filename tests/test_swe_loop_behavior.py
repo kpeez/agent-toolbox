@@ -25,6 +25,7 @@ LAUNCH_ARGS = {
     "containerId": "container-1",
     "baseBranch": "worktree-stub",
     "scriptsDir": "/opt/swe/scripts",
+    "specText": "# Stub spec\n\nB1 - the stubbed behavior.",
 }
 
 pytestmark = pytest.mark.skipif(shutil.which("node") is None, reason="node is required")
@@ -1106,3 +1107,219 @@ def test_an_unknown_provider_is_still_rejected(tmp_path: Path) -> None:
     error = failed_launch(tmp_path, {"reviewer": "gemini"})
 
     assert "invalid roles map" in error
+
+
+# ---- the spec travels with the run, not as a path ---------------------------
+
+
+def prompt_for(result: dict[str, Any], label_prefix: str) -> str:
+    matches = [
+        call for call in result["calls"] if call["label"].startswith(label_prefix)
+    ]
+    assert matches, f"no call labelled {label_prefix}*; got {labels(result)}"
+    return matches[0]["prompt"]
+
+
+def test_every_routable_prompt_carries_the_spec_text(tmp_path: Path) -> None:
+    """A routed role runs on a provider sandboxed to the repo workspace, and the
+    spec lives outside it under the docs/agents symlink. Naming the path there
+    buys a denied tool call and then work against a guess."""
+    result = routed_run(tmp_path)
+
+    for prefix in ("implement:", "review:assembled"):
+        assert LAUNCH_ARGS["specText"] in prompt_for(result, prefix), prefix
+
+
+def test_the_fixer_is_not_shipped_the_spec(tmp_path: Path) -> None:
+    """A finding already names the file, the line, and the change. The fixer is
+    the one routed role that never needs the spec to do its job, and it ran
+    twice a round in the worst case."""
+    result = routed_run(tmp_path)
+
+    assert LAUNCH_ARGS["specText"] not in prompt_for(result, "fix:")
+
+
+def test_the_spec_text_stays_out_of_the_plumbing_prompts(tmp_path: Path) -> None:
+    """Only the routable roles judge code against the spec; paying to ship the
+    whole spec to the workable query or the merge agent is waste."""
+    result = routed_run(tmp_path)
+
+    for prefix in ("workable:", "settle:", "ship:"):
+        assert LAUNCH_ARGS["specText"] not in prompt_for(result, prefix), prefix
+
+
+def test_a_routed_prompt_tells_the_agent_not_to_hunt_for_the_spec_file(
+    tmp_path: Path,
+) -> None:
+    result = routed_run(tmp_path)
+
+    assert "do not go looking" in prompt_for(result, "implement:")
+
+
+def test_a_launch_without_the_spec_text_is_rejected(tmp_path: Path) -> None:
+    """Absent specText the run silently reverts to naming an unreadable path,
+    so it is a launch stop rather than a default."""
+    args = {key: value for key, value in LAUNCH_ARGS.items() if key != "specText"}
+    config = tmp_path / "config.json"
+    config.write_text(
+        json.dumps(
+            {
+                "workflowPath": str(WORKFLOW),
+                "args": args,
+                "responses": [{"match": "^workable:", "result": {"issues": []}}],
+            }
+        )
+    )
+    proc = subprocess.run(
+        ["node", str(STUB), str(config)], capture_output=True, text=True, timeout=60
+    )
+
+    error = json.loads(proc.stdout)["error"]
+    assert error is not None, "expected the launch to be rejected"
+    assert "missing: specText" in error
+
+
+# ---- tracker writes stay on the host ----------------------------------------
+
+
+def test_the_implementer_is_told_to_leave_the_tracker_alone(tmp_path: Path) -> None:
+    """A routed implementer has no tracker credential and no tracker reference;
+    asking it for a state write is what drove one run to hardcode a vendor API."""
+    prompt = prompt_for(routed_run(tmp_path), "implement:")
+
+    assert 'to "in progress"' not in prompt
+    assert "Do not touch the tracker" in prompt
+
+
+
+
+
+
+
+
+# ---- prompts a routed provider can actually follow ---------------------------
+
+
+def test_the_fixer_prompt_names_no_host_only_skill(tmp_path: Path) -> None:
+    """The fixer follows the implementer's route, so a Claude plugin skill named
+    in its prompt is an instruction the agent running it cannot load."""
+    prompt = prompt_for(routed_run(tmp_path), "fix:")
+
+    assert "merge-conflicts skill" not in prompt
+
+
+def test_the_workable_query_looks_for_the_branches_the_loop_actually_creates(
+    tmp_path: Path,
+) -> None:
+    """branchForChangeset writes change/<identifiers>. While this prompt said
+    task/, the reference-driven path found nothing merged, so finished tasks
+    were never dropped and the loop re-implemented them every round."""
+    result = run_loop(tmp_path, [{"match": "^workable:", "result": {"issues": []}}])
+    prompt = prompt_for(result, "workable:")
+
+    assert "begins with change/" in prompt
+    assert "task/" not in prompt
+
+
+def test_a_round_spends_no_agent_on_tracker_state_before_the_merge(
+    tmp_path: Path,
+) -> None:
+    """The tracker is strictly monotonic: nothing moves until work merges, so no
+    failed write can strand an issue in a state the run never repairs. A round
+    is exactly the workable query and the implementers, then the merge."""
+    called = labels(routed_run(tmp_path))
+
+    assert called[: called.index("settle:implement:1")] == [
+        "workable:implement:1",
+        "implement:T-1",
+    ]
+
+
+def test_a_fixer_that_did_not_complete_buys_no_re_review(tmp_path: Path) -> None:
+    """A fixer that stopped early leaves the code as the review found it. While
+    the fixer answered in free text, that was indistinguishable from success and
+    the run spent a reviewer re-deriving the same findings from unchanged files."""
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^workable:implement:1$", "result": {"issues": ONE_TASK}},
+            {"match": "^workable:", "result": {"issues": []}},
+            {
+                "match": "^implement:",
+                "result": {
+                    "status": "DONE",
+                    "branch": "change/T-1",
+                    "summary": "landed",
+                },
+            },
+            {
+                "match": "^settle:",
+                "result": {
+                    "results": [
+                        {
+                            "identifier": "T-1",
+                            "merged": True,
+                            "stateUpdated": True,
+                            "detail": "merged",
+                            "stackBranch": "worktree-stub",
+                        }
+                    ]
+                },
+            },
+            {
+                "match": "^review:assembled",
+                "result": {
+                    "verdict": "findings",
+                    "findings": ["a.py:1 — add the missing guard"],
+                },
+            },
+            {
+                "match": "^fix:1$",
+                "result": {
+                    "status": "did-not-complete",
+                    "detail": "the rebase onto stack/1 conflicted and I could not finish it",
+                },
+            },
+            {"match": "^file-findings:", "result": "filed"},
+            {"match": "^review-r1:assembled", "result": {"verdict": "pass"}},
+            {"match": "^ship:", "result": {"prUrls": ["https://example/pr/1"]}},
+        ],
+    )
+
+    assert "re-review:1" not in labels(result)
+    escalation = [
+        e for e in result["summary"]["escalations"] if e["title"] == "fix round 1"
+    ]
+    assert len(escalation) == 1, result["summary"]["escalations"]
+    assert "conflicted" in escalation[0]["reason"]
+    assert "1 finding(s) stand" in escalation[0]["reason"]
+
+
+def test_the_run_summary_reconciles_tracker_state_against_the_branch(
+    tmp_path: Path,
+) -> None:
+    """finish() is the run's only exit, so the reconcile there runs whether the
+    run shipped, escalated, or merged nothing — which is what makes it the
+    repair for every best-effort state write the run made."""
+    result = routed_run(tmp_path)
+    prompt = prompt_for(result, "run-summary:")
+
+    assert "reconcile" in prompt
+    assert LAUNCH_ARGS["baseBranch"] in prompt
+    assert "even when the run escalated or merged nothing" in prompt
+
+
+def test_a_run_that_merged_nothing_still_reconciles(tmp_path: Path) -> None:
+    result = run_loop(
+        tmp_path,
+        [
+            {"match": "^workable:implement:1$", "result": {"issues": ONE_TASK}},
+            {"match": "^workable:", "result": {"issues": []}},
+            {"match": "^escalation-note:", "result": "posted"},
+            {"match": "^run-summary:", "result": "posted"},
+        ],
+        default_result=None,
+    )
+
+    assert result["summary"]["tasksCompleted"] == []
+    assert "reconcile" in prompt_for(result, "run-summary:")

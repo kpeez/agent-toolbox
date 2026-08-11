@@ -362,6 +362,56 @@ PROJECT_QUERY = (
 # is the lie this verb exists to correct.
 NOT_STARTED_STATUSES = {"backlog", "planned"}
 STARTED_STATE_TYPES = {"started", "completed"}
+# Where a merged-but-unshipped task belongs. The run ends at a draft PR, so this
+# is as far as anything the loop touches ever moves.
+MERGED_STATE = "In Review"
+
+
+def reconcile_issues(
+    container_id: str,
+    base_branch: str,
+    dry_run: bool = False,
+    run_linear_fn=run_linear,
+    run_git_fn=run_git,
+) -> list[str]:
+    """Promote issues whose changeset branch is merged, reading git not the run.
+
+    The loop's own state writes are best-effort and nothing else repairs them,
+    so this is where drift is corrected. Because it derives what is merged from
+    git rather than from run history, it repairs the same way whether the run
+    finished, escalated, or died halfway through.
+
+    Promote-only, like `sync_project`. An unmerged issue is left exactly as it
+    is: an escalated task has a branch and no merge, and moving it would assert
+    work is underway that nobody is doing.
+
+    Nothing moves an issue to a started state except its merge, so an issue
+    already reading one has been promoted and is skipped.
+    """
+    merged = merged_task_identifiers(base_branch, run_git_fn)
+    if not merged:
+        return [f"nothing merged into {base_branch}; no issue state to reconcile"]
+    settled_types = CLOSED_STATE_TYPES | STARTED_STATE_TYPES
+    stale = [
+        issue
+        for issue in fetch_container_issues(container_id, run_linear_fn)
+        if issue.get("identifier") in merged
+        and issue["state"]["type"] not in settled_types
+    ]
+    if not stale:
+        return [f"every issue merged into {base_branch} already reads as underway"]
+    report = []
+    for issue in stale:
+        verb = "would set" if dry_run else "setting"
+        report.append(
+            f"{issue['identifier']}: merged into {base_branch} but reads "
+            f"'{issue['state']['type']}' — {verb} it to '{MERGED_STATE}'"
+        )
+        if not dry_run:
+            run_linear_fn(
+                ["issue", "update", issue["identifier"], "--state", MERGED_STATE]
+            )
+    return report
 
 
 def project_status(container_id: str, run_linear_fn=run_linear) -> tuple[str, str]:
@@ -430,6 +480,12 @@ def main() -> int:
 
     sync = verbs.add_parser("sync", help="reconcile a project's status with its issues")
     sync.add_argument("--container", required=True, metavar="ID")
+    sync.add_argument(
+        "--merged-into",
+        metavar="BRANCH",
+        help="integration branch; issues whose changeset is merged into it are "
+        f"promoted to '{MERGED_STATE}' before the project status is checked",
+    )
     sync.add_argument("--dry-run", action="store_true")
 
     args = parser.parse_args()
@@ -439,7 +495,14 @@ def main() -> int:
             return EXIT_OK
 
         if args.verb == "sync":
-            for line in sync_project(args.container, args.dry_run):
+            lines = []
+            # Issues first: the project's own status is derived from them.
+            if args.merged_into:
+                lines += reconcile_issues(
+                    args.container, args.merged_into, args.dry_run
+                )
+            lines += sync_project(args.container, args.dry_run)
+            for line in lines:
                 print(line)
             return EXIT_OK
 

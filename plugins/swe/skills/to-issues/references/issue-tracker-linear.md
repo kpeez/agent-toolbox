@@ -88,14 +88,26 @@ description for humans — never a machine-parsed token.
 The loop advances issue state as it works, so the tracker reflects reality
 rather than the state work started in:
 
-- task picked up: `linear issue update <identifier> --state "In Progress"`
 - task merged into the integration branch: `linear issue update <identifier> --state "In Review"`
-- end of run: `uv run <scriptsDir>/linear_tracker.py sync --container <containerId>`
-  promotes a project still reading backlog/planned while its issues are underway
+- end of run:
 
-Never set an issue or project to a completed state: the run ends at a draft PR,
-so nothing it touched is delivered yet. A failed state write is logged and the
-run continues — git, not the tracker, decides what is merged.
+      uv run <scriptsDir>/linear_tracker.py sync --container <containerId> --merged-into <baseBranch>
+
+  promotes every issue whose `change/` branch is merged into `<baseBranch>` to
+  "In Review", then promotes a project still reading backlog/planned while its
+  issues are underway.
+
+Nothing moves before its work merges. There is deliberately no "picked up"
+transition: a write made when work starts is the one nothing can repair, because
+a task that then fails would sit at "In Progress" forever.
+
+Both writes are promote-only and neither is verified in the moment — a failed
+state write is logged and the run continues, because git, not the tracker,
+decides what is merged. The end-of-run reconcile is what repairs them, and it
+reads git rather than the run's own history, so it corrects the same way whether
+the run finished, escalated, or died halfway. Never set an issue or project to a
+completed state: the run ends at a draft PR, so nothing it touched is delivered
+yet.
 
 ## When a skill says "publish to the issue tracker"
 

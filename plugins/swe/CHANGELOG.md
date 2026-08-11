@@ -7,6 +7,36 @@ the single `agentspec` plugin.
 
 ## Unreleased
 
+- **Carry the spec with the run instead of naming its path.** `/start-loop` now
+  passes `specText` (the spec file read verbatim) alongside `specPath`, and the
+  conductor embeds it in every prompt that can be routed off-host. A routed
+  provider's CLI is sandboxed to the repo workspace, and the spec lives under
+  the `docs/agents` symlink pointing out of it, so an implementer or reviewer
+  given only a path spent a denied tool call and then worked against a guess.
+  A launch without `specText` is rejected.
+- **Tracker writes stay host-native.** The implementer no longer advances its
+  own tasks to "in progress" — a routed provider has neither the tracker
+  credential nor the tracker reference. Each round marks its tasks through one
+  low-effort agent on the host before the fan-out; outcomes are still commented
+  by the settle agent after the merge.
+- **The fixer prompt no longer names the merge-conflicts skill.** It follows the
+  implementer's route, so a host-only plugin skill was an instruction the agent
+  running it could not load; the conflict guidance is inline now.
+- **Tracker drift is repaired at the end of every run, from git.** `sync` gains
+  `--merged-into <branch>`: it promotes every issue whose `change/` branch is
+  merged into the integration branch to "In Review", then reconciles the project
+  status as before. Promote-only, and derived from git rather than run history,
+  so it repairs identically whether the run finished, escalated or died —
+  `finish()` is the run's only exit, so it always runs. See ADR-0011.
+- **Nothing moves on the tracker until its work merges.** The "in progress"
+  write is gone: it was the one write nothing could repair, so a task that
+  failed sat there permanently. Tracker state is now strictly monotonic.
+- **The fixer reports `{status, detail, unresolved}`.** In free text, a fixer
+  that timed out or could not finish a rebase was indistinguishable from one
+  that applied every finding, and the run answered by spending a reviewer to
+  re-derive the same findings from unchanged files.
+- **The fixer is no longer shipped the spec.** Findings already name the file,
+  the line and the change; it is the one routed role that never needs it.
 - Fix the deterministic workable query for stacked runs: `linear_tracker.py`
   judged "already merged" against the integration branch, which mid-stack
   never receives changesets past the first (they land on `stack/<n>` branches),

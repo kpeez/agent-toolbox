@@ -407,3 +407,95 @@ def test_an_all_done_project_is_reported_never_auto_completed() -> None:
 
     assert not [c for c in calls if c[:2] == ["project", "update"]]
     assert any("consider completing the project" in line for line in report)
+
+
+# ---- end-of-run reconcile ---------------------------------------------------
+
+
+def reconcile(
+    *issues: dict[str, Any],
+    merged: list[str] | None = None,
+    dry_run: bool = False,
+) -> tuple[list[str], list]:
+    calls: list = []
+
+    def fake_linear(args: list[str]) -> str:
+        calls.append(args)
+        return json.dumps({"nodes": list(issues)})
+
+    def fake_git(args: list[str]) -> str:
+        return "\n".join([f"change/{name}" for name in merged or []] + ["main"])
+
+    report = tracker.reconcile_issues(
+        "c-1", "base", dry_run=dry_run, run_linear_fn=fake_linear, run_git_fn=fake_git
+    )
+    return report, calls
+
+
+def test_a_merged_issue_left_behind_by_a_failed_write_is_promoted() -> None:
+    """The observed drift: the task merged, the run's own state write did not
+    land, and nothing else ever repaired it."""
+    report, calls = reconcile(
+        issue("KP-1", state="unstarted"), merged=["KP-1"]
+    )
+
+    assert ["issue", "update", "KP-1", "--state", "In Review"] in calls
+    assert "merged into base but reads 'unstarted'" in report[0]
+
+
+def test_an_unmerged_issue_is_never_touched() -> None:
+    """An escalated task has a branch and no merge. Moving it would assert work
+    is underway that nobody is doing."""
+    report, calls = reconcile(
+        issue("KP-1", state="unstarted"), issue("KP-2", state="unstarted"),
+        merged=["KP-1"],
+    )
+
+    assert [c for c in calls if c[:2] == ["issue", "update"]] == [
+        ["issue", "update", "KP-1", "--state", "In Review"]
+    ]
+    assert not any("KP-2" in line for line in report)
+
+
+def test_an_issue_already_underway_is_left_alone() -> None:
+    """Nothing moves an issue to a started state except its merge, so a started
+    issue has already been promoted and rewriting it is a wasted call."""
+    report, calls = reconcile(issue("KP-1", state="started"), merged=["KP-1"])
+
+    assert not [c for c in calls if c[:2] == ["issue", "update"]]
+    assert "already reads as underway" in report[0]
+
+
+def test_a_closed_issue_is_never_reopened() -> None:
+    report, calls = reconcile(issue("KP-1", state="completed"), merged=["KP-1"])
+
+    assert not [c for c in calls if c[:2] == ["issue", "update"]]
+
+
+def test_a_run_that_merged_nothing_reconciles_nothing() -> None:
+    """A run that died before its first merge must not read as work underway."""
+    report, calls = reconcile(issue("KP-1", state="unstarted"), merged=[])
+
+    assert calls == []
+    assert "nothing merged into base" in report[0]
+
+
+def test_a_changeset_branch_promotes_every_task_it_carries() -> None:
+    """One branch carries a whole changeset, so every identifier in its name is
+    merged — matching only change/<identifier> under-reports what landed."""
+    report, calls = reconcile(
+        issue("KP-1", state="unstarted"), issue("KP-2", state="unstarted"),
+        merged=["KP-1-KP-2-auth"],
+    )
+
+    updated = [c[2] for c in calls if c[:2] == ["issue", "update"]]
+    assert updated == ["KP-1", "KP-2"]
+
+
+def test_dry_run_reports_without_writing() -> None:
+    report, calls = reconcile(
+        issue("KP-1", state="unstarted"), merged=["KP-1"], dry_run=True
+    )
+
+    assert not [c for c in calls if c[:2] == ["issue", "update"]]
+    assert "would set" in report[0]
