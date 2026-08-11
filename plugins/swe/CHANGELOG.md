@@ -5,7 +5,7 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
-## 1.16.0 — 2026-08-10
+## 1.15.1 — 2026-08-10
 
 - Broaden `opencode-explorer` to web research: its description now advertises
   web searches, documentation and API lookups, current facts, and
