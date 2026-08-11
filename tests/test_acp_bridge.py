@@ -995,6 +995,18 @@ def test_a_loaded_session_gets_the_model_pin_and_mode_selection(bridges, tmp_pat
     assert result["content"][0]["text"] == "config=model=go/luna|effort=max|mode=plan"
 
 
+def test_write_mode_selects_the_explicit_write_session_mode(bridges, tmp_path: Path) -> None:
+    client = bridges(["--write-mode", "build"], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="", echo_config=True),
+        mode="write",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "config=mode=build"
+
+
 def test_a_failed_load_surfaces_the_agents_error(bridges, tmp_path: Path) -> None:
     client = bridges([], OPENCODE_LIKE)
 
@@ -1026,10 +1038,26 @@ def test_an_unknown_mode_is_rejected_before_the_agent_runs(
 
 def test_bridge_options_are_split_from_the_agent_command() -> None:
     options, command = acp_bridge.split_argv(
-        ["--model", "go/luna", "--effort", "high", "--read-only-mode", "plan", "opencode", "acp"]
+        [
+            "--model",
+            "go/luna",
+            "--effort",
+            "high",
+            "--read-only-mode",
+            "plan",
+            "--write-mode",
+            "build",
+            "opencode",
+            "acp",
+        ]
     )
 
-    assert options == {"model": "go/luna", "effort": "high", "read_only_mode": "plan"}
+    assert options == {
+        "model": "go/luna",
+        "effort": "high",
+        "read_only_mode": "plan",
+        "write_mode": "build",
+    }
     assert command == ["opencode", "acp"]
 
 

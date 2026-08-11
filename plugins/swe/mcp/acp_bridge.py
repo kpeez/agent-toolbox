@@ -59,7 +59,14 @@ MESSAGE_PROGRESS_INTERVAL = 200
 # `--effort` pin a server to one model so the caller cannot pick another: model
 # policy then lives in the .mcp.json entry, not in a prompt some model has to
 # obey. `--read-only-mode` names the agent's own read-only session mode.
-BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode", "--mode", "--turn-timeout")
+BRIDGE_OPTIONS = (
+    "--model",
+    "--effort",
+    "--read-only-mode",
+    "--write-mode",
+    "--mode",
+    "--turn-timeout",
+)
 
 DELEGATE_TOOL: dict[str, Any] = {
     "name": "delegate",
@@ -648,6 +655,7 @@ class Bridge:
         model: str | None = None,
         effort: str | None = None,
         read_only_mode: str | None = None,
+        write_mode: str | None = None,
         mode: str | None = None,
         turn_timeout: float | None = None,
     ) -> None:
@@ -657,6 +665,7 @@ class Bridge:
         self.model = model
         self.effort = effort
         self.read_only_mode = read_only_mode
+        self.write_mode = write_mode
         self.mode = mode
         self.turn_timeout = turn_timeout
         self.tool = delegate_tool(model)
@@ -774,20 +783,20 @@ class Bridge:
         opening mode for a write delegation matters when a read-only session is
         continued by id -- otherwise the follow-up's edits are silently refused.
         """
-        if not self.read_only_mode:
+        target = self.read_only_mode if mode == "read-only" else self.write_mode
+        if target is None and mode != "read-only" and self.read_only_mode:
+            target = session.default_mode
+        if target is None:
             return
         # No `mode` option at all means the agent never advertised one on
         # session/new -- there is nothing to select, and for a read-only
         # delegation nothing to enforce with either.
-        if session.default_mode is None:
-            if mode != "read-only":
-                return
+        if mode == "read-only" and session.default_mode is None:
             raise RuntimeError(
                 f"this server enforces read-only through the agent's {self.read_only_mode!r} "
                 "session mode, and the agent advertised no `mode` config option; refusing to "
                 "run a read-only delegation unprotected"
             )
-        target = self.read_only_mode if mode == "read-only" else session.default_mode
         session.request(
             "session/set_config_option",
             {"sessionId": session_id, "configId": "mode", "value": target},
@@ -998,6 +1007,7 @@ def _run_tool_call(
 
 USAGE = (
     "usage: acp_bridge.py [--model ID] [--effort LEVEL] [--read-only-mode MODE] "
+    "[--write-mode MODE] "
     "[--turn-timeout SECONDS] "
     "<agent-command> [args...]\n"
 )
@@ -1023,6 +1033,7 @@ def main(argv: list[str]) -> int:
             model=options.get("model"),
             effort=options.get("effort"),
             read_only_mode=options.get("read_only_mode"),
+            write_mode=options.get("write_mode"),
             mode=options.get("mode"),
             turn_timeout=turn_timeout,
         )
