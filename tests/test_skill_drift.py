@@ -623,3 +623,12 @@ def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
     assert "The conductor owns the frontier query, fan-out, and settle" in implement
     assert "mcp__plugin_swe_opencode-explorer__delegate" in to_issues
     assert "manual orchestration in `/implement`" in start_loop
+
+    for tool, mode in (
+        ("mcp__plugin_swe_opencode-explorer__delegate", 'mode: "read-only"'),
+        ("mcp__plugin_swe_opencode-implementer__delegate", 'mode: "write"'),
+        ("mcp__plugin_swe_opencode-reviewer__delegate", 'mode: "review"'),
+    ):
+        assert tool in implement, f"{tool} missing from implement's manual fallback"
+        assert mode in implement, f"{mode} missing from implement's manual fallback"
+    assert "cwd" in implement
