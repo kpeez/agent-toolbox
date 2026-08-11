@@ -54,18 +54,24 @@ const ARGS =
     : args
 if (argsParseError) {
   throw new Error(
-    `swe-loop received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir} as an object or as its JSON encoding.`,
+    `swe-loop received args as a string that is not JSON (${argsParseError}). Pass the handoff tuple {specPath, slug, containerId, baseBranch, scriptsDir, specText} as an object or as its JSON encoding.`,
   )
 }
 
-const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scriptsDir']
+const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scriptsDir', 'specText']
 const missing = REQUIRED_ARGS.filter(key => !ARGS || !ARGS[key])
 if (missing.length) {
   throw new Error(
-    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch and the installed plugin's scripts directory.`,
+    `swe-loop requires args {specPath, slug, containerId, baseBranch, scriptsDir, specText} — missing: ${missing.join(', ')}. /start-loop passes the handoff tuple plus the run's integration branch, the installed plugin's scripts directory, and the spec file's text.`,
   )
 }
 const specPath = ARGS.specPath
+// The spec's own text, read by the launcher. Any capability role may be routed
+// to another provider, whose CLI runs sandboxed to the repo workspace and
+// cannot open specPath -- the spec lives under docs/agents/, a symlink out of
+// the repo. So the conductor carries the spec rather than naming a path only a
+// host-native agent could read, and every routed prompt embeds it.
+const specText = ARGS.specText
 const slug = ARGS.slug
 const containerId = ARGS.containerId
 const baseBranch = ARGS.baseBranch
@@ -246,6 +252,24 @@ const SETTLE_SCHEMA = {
   },
 }
 
+// Without this the fixer answered in free text, so a fixer that timed out or
+// could not finish a rebase read exactly like one that applied everything --
+// and the run spent a reviewer re-deriving the same findings from unchanged
+// files.
+const FIX_SCHEMA = {
+  type: 'object',
+  required: ['status', 'detail'],
+  properties: {
+    status: { type: 'string', enum: ['applied', 'did-not-complete'] },
+    detail: { type: 'string', description: 'what landed, or what stopped the run' },
+    unresolved: {
+      type: 'array',
+      description: 'anchors of findings left unresolved; omit when every finding was applied',
+      items: { type: 'string' },
+    },
+  },
+}
+
 const SHIP_SCHEMA = {
   type: 'object',
   required: ['prUrls'],
@@ -260,6 +284,14 @@ const SHIP_SCHEMA = {
 
 // ---- prompts ----------------------------------------------------------------
 const tupleFor = issueId => JSON.stringify({ specPath, slug, containerId, issueId })
+
+// Named for provenance, embedded because a routed provider cannot open it: an
+// agent that goes looking for the file spends a denied tool call and then
+// reviews or implements against a guess.
+const specBrief = `--- SPEC ${specPath} (verbatim below; the file itself is outside the
+repo workspace and may be unreadable from your sandbox, so do not go looking
+for it -- this copy is authoritative) ---
+${specText}`
 
 // Display-only shortening: log lines and escalation reasons. Never applied to
 // findings handed to an agent that has to act on them.
@@ -397,11 +429,15 @@ ${numbered(changeset.issues.map(issue => `${issue.identifier} — ${issue.title}
    the rest: implement the others and name it in your summary.`}
 3. COMMIT the work to ${branchForChangeset(changeset)}. Do not push, do not merge, do
    not open a PR — the conductor merges and ships.
-4. Advance ${changeset.issues.length === 1 ? `tracker issue ${changeset.issues[0].identifier}` : `each of ${changeset.issues.map(issue => issue.identifier).join(', ')}`} to "in progress" per the
-   tracker reference's state-transition section, and comment your progress.
-5. Report {status, branch, summary}; "branch" is the branch you actually
+4. Report {status, branch, summary}; "branch" is the branch you actually
    committed to. NEEDS_CONTEXT or BLOCKED means you could not finish: name
-   exactly what is missing instead of guessing.`
+   exactly what is missing instead of guessing.
+
+Do not touch the tracker: the run records each task's outcome itself once the
+changeset merges, and your summary is what it records. Nothing moves on the
+tracker until work is merged, so there is no state for you to set here.
+
+${specBrief}`
 
 const promptReview = () => `Review the assembled implementation against its spec, through one lens:
 does the code do what the spec asked, correctly?
@@ -409,7 +445,7 @@ does the code do what the spec asked, correctly?
 Under review: the complete work of this run, which lives on ${stackTip()} —
 the top of the run's dependency stack, containing every changeset below it.
 Establish the diff yourself — the task merges are on the changeset branches and
-each task carries a task/<identifier> branch — and say in your first finding
+each changeset carries a change/<identifiers> branch — and say in your first finding
 if you could not establish it rather than reviewing a guess.
 Spec: ${specPath}
 
@@ -431,7 +467,9 @@ Verdict "did-not-complete" means YOU could not finish the review — a delegated
 run timed out, a tool failed, a command exited non-zero — and is never a
 judgment about the code. Put what stopped you in "detail" and return no
 findings. An infrastructure failure must never appear as a finding: a fixer
-would act on it.`
+would act on it.
+
+${specBrief}`
 
 const promptFixer = (findings, round) => `Execute this bounded assignment: apply review findings.
 
@@ -449,11 +487,17 @@ introduced the line — never on the top changeset by default: a fix committed a
 the layer that owns it lands in the wrong pull request. After committing on a
 changeset below the top, replay the stack above it so they carry the fix, in order:
 \`git checkout <higher changeset> && git rebase <the changeset directly below it>\`. On
-conflict, resolve per the merge-conflicts skill and continue the rebase.
+conflict, read what each side was trying to do before choosing — keep both
+intents where they can coexist, and never resolve by taking one side wholesale
+— then re-run the project's checks and continue the rebase.
 Nothing is published yet, so these rebases rewrite local branches only.`}
 Apply every finding, re-run lint/types/tests, and commit. Do not push and do not
-merge. Return a concise completion note; this call has no additional output
-schema.`
+merge.
+
+Report {status, detail, unresolved}. "did-not-complete" means the run itself
+stopped — a timeout, a tool failure, a rebase you could not finish — and is
+never a judgment about the code. Name every finding you did not resolve in
+"unresolved", by its file:line anchor.`
 
 const promptEscalationNote = (issue, reason) => `Post one comment on tracker issue ${issue.identifier}.
 
@@ -555,11 +599,15 @@ payload verbatim in a fenced json block:
 
 ${JSON.stringify(summary, null, 2)}
 
-Then reconcile the container's own status with its issues per the tracker
-reference's state-transition section: a container still reading "backlog" or
-"planned" while its issues are underway is the drift this step exists to
-correct. Never mark the container complete — this run ends at a draft PR, not
-a merge.`
+Then run the reconcile named in the tracker reference's state-transition
+section, for container ${containerId} against integration branch ${baseBranch}.
+It repairs both kinds of drift this run can leave: an issue whose changeset
+merged but whose state write did not land, and a container still reading
+"backlog" or "planned" while its issues are underway. Every state write during
+the run is best-effort, so this is the step that makes the board agree with git
+— run it even when the run escalated or merged nothing, and report what it
+printed. Never mark anything complete: this run ends at a draft PR, not a
+merge.`
 
 // ---- run state --------------------------------------------------------------
 const tasksCompleted = []
@@ -819,10 +867,18 @@ const settleFindings = async (pass = '') => {
       label: `fix${pass}:${fixRound}`,
       phase: 'Review',
       agentType: agentTypeFor('implementer'),
+      schema: FIX_SCHEMA,
     })
-    if (!fixed) {
-      escalateRun(`fix round ${fixRound}`, `the fixer returned no result; ${findings.length} finding(s) stand`)
+    // A fixer that stopped early leaves the code exactly as the review found
+    // it, so re-reviewing would spend a reviewer to re-derive the same
+    // findings from unchanged files.
+    if (!fixed || fixed.status === 'did-not-complete') {
+      const why = fixed ? clip(fixed.detail) : 'the fixer returned no result'
+      escalateRun(`fix round ${fixRound}`, `${why}; ${findings.length} finding(s) stand`)
       return findings
+    }
+    if (fixed.unresolved && fixed.unresolved.length) {
+      log(`Fix round ${fixRound}: ${fixed.unresolved.length} finding(s) reported unresolved — ${fixed.unresolved.join(', ')}.`)
     }
     reviewed = await runReview(`re-review${pass}:${fixRound}`, `re-review after fix round ${fixRound}`)
     if (reviewed.failed) {
