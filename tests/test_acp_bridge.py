@@ -83,6 +83,13 @@ def test_write_rejects_an_edit_outside_the_workspace(tmp_path: Path) -> None:
     assert not allowed(outcome("write", "edit", str(tmp_path / "repo"), paths=[str(outside)]))
 
 
+@pytest.mark.parametrize("kind", sorted(acp_bridge.READ_ONLY_KINDS))
+def test_write_allows_read_only_kinds_outside_the_workspace(kind: str, tmp_path: Path) -> None:
+    outside = tmp_path.parent / "outside-read.txt"
+
+    assert allowed(outcome("write", kind, str(tmp_path / "repo"), paths=[str(outside)]))
+
+
 def test_write_rejects_when_any_location_escapes(tmp_path: Path) -> None:
     """One bad path in a batch poisons the whole call; it is one approval."""
     workspace = tmp_path / "repo"
@@ -503,6 +510,48 @@ def test_write_mode_grants_the_same_edit(bridge: BridgeClient, tmp_path: Path) -
 
     assert result["structuredContent"]["deniedToolCalls"] == []
     assert result["content"][0]["text"] == "granted=edit"
+
+
+def test_write_mode_grants_a_read_outside_the_workspace(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            attempts=[{"kind": "read", "paths": [str(tmp_path.parent / "outside-read.txt")]}],
+            echo_granted=True,
+        ),
+        mode="write",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "granted=read"
+    assert result["structuredContent"]["deniedToolCalls"] == []
+
+
+def test_a_denied_but_chatty_run_carries_the_denial_account(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            attempts=[
+                {
+                    "kind": "edit",
+                    "title": "Edit outside workspace",
+                    "paths": [str(tmp_path.parent / "outside-edit.txt")],
+                }
+            ],
+            reply="planning sentence",
+        ),
+        mode="write",
+        cwd=str(tmp_path),
+    )
+
+    text = result["content"][0]["text"]
+    assert text.startswith("planning sentence\n\n---\n\n")
+    assert "The bridge denied 1 tool call(s) under mode=write" in text
+    assert "edit: Edit outside workspace" in text
+    assert "outside the workspace" in text
+    assert result["structuredContent"]["deniedToolCalls"] == ["edit: Edit outside workspace"]
 
 
 def test_tool_calls_are_reported_as_progress(bridge: BridgeClient, tmp_path: Path) -> None:

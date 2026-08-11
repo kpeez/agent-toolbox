@@ -244,11 +244,11 @@ def permission_outcome(
     """Answer one ACP `session/request_permission` without asking a human.
 
     read-only: only non-mutating tool kinds pass.
-    write: mutating kinds pass when every named location is inside the
-    workspace. A tool call naming no location (a shell command, say) is allowed
-    in write mode -- ACP does not describe its effects, and a write delegation
-    asked for exactly that. Codex's OS-level sandbox is the stronger guarantee
-    when a task needs one.
+    write: read-only kinds pass regardless of location; remaining kinds pass
+    when every named location is inside the workspace. A tool call naming no
+    location (a shell command, say) is allowed in write mode -- ACP does not
+    describe its effects, and a write delegation asked for exactly that.
+    Codex's OS-level sandbox is the stronger guarantee when a task needs one.
     """
     if mode not in MODES:
         raise ValueError(f"unknown delegation mode {mode!r}; expected one of {MODES}")
@@ -256,6 +256,8 @@ def permission_outcome(
     kind = tool_call.get("kind", "other")
     if mode == "read-only":
         return select_option(options, allow=kind in READ_ONLY_KINDS)
+    if kind in READ_ONLY_KINDS:
+        return select_option(options, allow=True)
 
     locations = [
         location["path"]
@@ -624,8 +626,6 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     "the run was blocked", and acts on the emptiness either way.
     """
     answer = streamed.strip()
-    if answer:
-        return answer
     if denied:
         blocked = "; ".join(denied)
         remedy = (
@@ -636,10 +636,15 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
             else "Every denial named a path outside the workspace; re-scope the "
             "task to the workspace, or dispatch it with a cwd that contains those paths."
         )
-        return (
-            f"The agent returned no message. The bridge denied {len(denied)} tool "
-            f"call(s) under mode={mode}: {blocked}. {remedy}"
+        account = (
+            f"The bridge denied {len(denied)} tool call(s) under mode={mode}: "
+            f"{blocked}. {remedy}"
         )
+        if answer:
+            return f"{answer}\n\n---\n\n{account}"
+        return f"The agent returned no message. {account}"
+    if answer:
+        return answer
     return "The agent returned no message."
 
 
