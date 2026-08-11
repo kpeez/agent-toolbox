@@ -1,4 +1,4 @@
-"""Behavior tests for plugins/swe/scripts/linear_tracker.py.
+"""Behavior tests for plugins/swe/scripts/tracker.py.
 
 Every Linear and git call is injected, so these drive the policy with scripted
 CLI output and assert on what survives the filter and how the container ladder
@@ -16,12 +16,37 @@ from typing import Any
 import pytest
 
 ROOT = Path(__file__).resolve().parents[1]
-SCRIPT = ROOT / "plugins" / "swe" / "scripts" / "linear_tracker.py"
+SCRIPT = ROOT / "plugins" / "swe" / "scripts" / "tracker.py"
 
-spec = importlib.util.spec_from_file_location("linear_tracker", SCRIPT)
+spec = importlib.util.spec_from_file_location("tracker", SCRIPT)
 assert spec and spec.loader
 tracker = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(tracker)
+
+
+def test_linear_backend_implements_tracker_protocol_and_wraps_issue_query() -> None:
+    calls: list[list[str]] = []
+    expected = issue("KP-1")
+
+    def fake_linear(args: list[str]) -> str:
+        calls.append(args)
+        return json.dumps({"nodes": [expected]})
+
+    backend = tracker.LinearBackend(fake_linear)
+
+    assert isinstance(backend, tracker.TrackerBackend)
+    assert backend.fetch_container_issues("container-1") == [expected]
+    assert calls == [
+        [
+            "issue",
+            "query",
+            "--project",
+            "container-1",
+            "--all-teams",
+            "--json",
+            "--no-pager",
+        ]
+    ]
 
 
 def issue(
@@ -435,9 +460,7 @@ def reconcile(
 def test_a_merged_issue_left_behind_by_a_failed_write_is_promoted() -> None:
     """The observed drift: the task merged, the run's own state write did not
     land, and nothing else ever repaired it."""
-    report, calls = reconcile(
-        issue("KP-1", state="unstarted"), merged=["KP-1"]
-    )
+    report, calls = reconcile(issue("KP-1", state="unstarted"), merged=["KP-1"])
 
     assert ["issue", "update", "KP-1", "--state", "In Review"] in calls
     assert "merged into base but reads 'unstarted'" in report[0]
@@ -447,7 +470,8 @@ def test_an_unmerged_issue_is_never_touched() -> None:
     """An escalated task has a branch and no merge. Moving it would assert work
     is underway that nobody is doing."""
     report, calls = reconcile(
-        issue("KP-1", state="unstarted"), issue("KP-2", state="unstarted"),
+        issue("KP-1", state="unstarted"),
+        issue("KP-2", state="unstarted"),
         merged=["KP-1"],
     )
 
@@ -484,7 +508,8 @@ def test_a_changeset_branch_promotes_every_task_it_carries() -> None:
     """One branch carries a whole changeset, so every identifier in its name is
     merged — matching only change/<identifier> under-reports what landed."""
     report, calls = reconcile(
-        issue("KP-1", state="unstarted"), issue("KP-2", state="unstarted"),
+        issue("KP-1", state="unstarted"),
+        issue("KP-2", state="unstarted"),
         merged=["KP-1-KP-2-auth"],
     )
 

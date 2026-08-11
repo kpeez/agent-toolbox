@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Deterministic Linear operations for the swe-loop.
+"""Deterministic tracker operations for the swe-loop.
 
 Two verbs:
 
@@ -29,7 +29,9 @@ import json
 import re
 import subprocess
 import sys
+from collections.abc import Callable
 from pathlib import Path
+from typing import Protocol, runtime_checkable
 
 CLOSED_STATE_TYPES = {"completed", "canceled"}
 READY_FOR_HUMAN_LABEL = "ready-for-human"
@@ -65,8 +67,11 @@ EXIT_BROKEN_LINK = 2
 EXIT_NO_CONTAINER = 3
 
 
-class LinearError(Exception):
-    """A failed `linear` invocation, or a response that could not be parsed."""
+class TrackerError(Exception):
+    """A failed tracker invocation, or a response that could not be parsed."""
+
+
+LinearError = TrackerError
 
 
 def run_linear(args: list[str]) -> str:
@@ -83,6 +88,80 @@ def run_linear(args: list[str]) -> str:
     if result.returncode != 0:
         raise LinearError(f"linear {' '.join(args)} failed: {result.stderr.strip()}")
     return result.stdout
+
+
+@runtime_checkable
+class TrackerBackend(Protocol):
+    """Tracker operations used by the backend-independent policy."""
+
+    def fetch_container_issues(self, container_id: str) -> list[dict]: ...
+
+    def container_exists(self, container_id: str) -> bool: ...
+
+    def find_legacy_containers(self, slug: str) -> list[dict]: ...
+
+    def project_status(self, container_id: str) -> tuple[str, str]: ...
+
+    def update_issue(self, identifier: str, state: str) -> None: ...
+
+    def update_project(self, container_id: str, status: str) -> None: ...
+
+
+class LinearBackend:
+    """Linear adapter for the tracker policy."""
+
+    def __init__(self, run_linear_fn: Callable[[list[str]], str] = run_linear) -> None:
+        self._run_linear = run_linear_fn
+
+    def fetch_container_issues(self, container_id: str) -> list[dict]:
+        payload = self._run_linear(
+            [
+                "issue",
+                "query",
+                "--project",
+                container_id,
+                "--all-teams",
+                "--json",
+                "--no-pager",
+            ]
+        )
+        data = load_json(payload, "linear issue query")
+        return data["nodes"] if isinstance(data, dict) else data
+
+    def container_exists(self, container_id: str) -> bool:
+        try:
+            self._run_linear(["project", "view", container_id])
+        except LinearError:
+            return False
+        return True
+
+    def find_legacy_containers(self, slug: str) -> list[dict]:
+        payload = self._run_linear(
+            [
+                "api",
+                "query { projects(first: 250) { nodes { id name description content } } }",
+            ]
+        )
+        data = load_json(payload, "linear api")
+        matches = []
+        for node in data["data"]["projects"]["nodes"]:
+            body = (node.get("description") or "") + (node.get("content") or "")
+            if any(m.group("slug") == slug for m in LEGACY_MARKER_RE.finditer(body)):
+                matches.append(node)
+        return matches
+
+    def project_status(self, container_id: str) -> tuple[str, str]:
+        payload = self._run_linear(
+            ["api", PROJECT_QUERY.format(container_id=container_id)]
+        )
+        project = load_json(payload, "linear api")["data"]["project"]
+        return project["name"], project["status"]["type"]
+
+    def update_issue(self, identifier: str, state: str) -> None:
+        self._run_linear(["issue", "update", identifier, "--state", state])
+
+    def update_project(self, container_id: str, status: str) -> None:
+        self._run_linear(["project", "update", container_id, "--status", status])
 
 
 def run_git(args: list[str]) -> str:
@@ -135,20 +214,15 @@ def merged_task_identifiers(base_branch: str, run_git_fn=run_git) -> set[str]:
     return identifiers
 
 
-def fetch_container_issues(container_id: str, run_linear_fn=run_linear) -> list[dict]:
-    payload = run_linear_fn(
-        [
-            "issue",
-            "query",
-            "--project",
-            container_id,
-            "--all-teams",
-            "--json",
-            "--no-pager",
-        ]
+def fetch_container_issues(
+    container_id: str,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    *,
+    backend: TrackerBackend | None = None,
+) -> list[dict]:
+    return (backend or LinearBackend(run_linear_fn)).fetch_container_issues(
+        container_id
     )
-    data = load_json(payload, "linear issue query")
-    return data["nodes"] if isinstance(data, dict) else data
 
 
 def is_done(issue: dict, merged: set[str]) -> bool:
@@ -160,13 +234,16 @@ def is_done(issue: dict, merged: set[str]) -> bool:
 def workable_issues(
     container_id: str,
     base_branch: str | None = None,
-    run_linear_fn=run_linear,
-    run_git_fn=run_git,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    run_git_fn: Callable[[list[str]], str] = run_git,
+    *,
+    backend: TrackerBackend | None = None,
 ) -> list[dict]:
     """Issues that are not done, not blocked, and not flagged for a human."""
+    selected_backend = backend or LinearBackend(run_linear_fn)
     merged = merged_task_identifiers(base_branch, run_git_fn) if base_branch else set()
     result = []
-    for issue in fetch_container_issues(container_id, run_linear_fn):
+    for issue in fetch_container_issues(container_id, backend=selected_backend):
         if is_done(issue, merged):
             continue
         labels = [node["name"] for node in (issue.get("labels") or {}).get("nodes", [])]
@@ -245,35 +322,22 @@ def write_frontmatter_value(text: str, key: str, value: str) -> str:
 # ---- container --------------------------------------------------------------
 
 
-def container_exists(container_id: str, run_linear_fn=run_linear) -> bool:
-    """`project view` exits 0 for a real project and 1 for a missing one.
-
-    Deliberately no --json: that flag does not exist on this subcommand and
-    passing it exits 2 on every id, which reads every live container as
-    missing and turns the whole sweep into broken-link reports.
-    """
-    try:
-        run_linear_fn(["project", "view", container_id])
-    except LinearError:
-        return False
-    return True
+def container_exists(
+    container_id: str,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    *,
+    backend: TrackerBackend | None = None,
+) -> bool:
+    return (backend or LinearBackend(run_linear_fn)).container_exists(container_id)
 
 
-def find_legacy_containers(slug: str, run_linear_fn=run_linear) -> list[dict]:
-    """Projects whose body still carries the pre-frontmatter identity token."""
-    payload = run_linear_fn(
-        [
-            "api",
-            "query { projects(first: 250) { nodes { id name description content } } }",
-        ]
-    )
-    data = load_json(payload, "linear api")
-    matches = []
-    for node in data["data"]["projects"]["nodes"]:
-        body = (node.get("description") or "") + (node.get("content") or "")
-        if any(m.group("slug") == slug for m in LEGACY_MARKER_RE.finditer(body)):
-            matches.append(node)
-    return matches
+def find_legacy_containers(
+    slug: str,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    *,
+    backend: TrackerBackend | None = None,
+) -> list[dict]:
+    return (backend or LinearBackend(run_linear_fn)).find_legacy_containers(slug)
 
 
 def slug_for(spec_path: Path) -> str:
@@ -283,12 +347,16 @@ def slug_for(spec_path: Path) -> str:
 
 
 def resolve_container(
-    spec_path: Path, run_linear_fn=run_linear
+    spec_path: Path,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    *,
+    backend: TrackerBackend | None = None,
 ) -> tuple[int, str | None, str]:
     """Resolve a spec's container. Returns (exit code, container id, message)."""
+    selected_backend = backend or LinearBackend(run_linear_fn)
     recorded = read_frontmatter_value(spec_path.read_text(), CONTAINER_KEY)
     if recorded:
-        if container_exists(recorded, run_linear_fn):
+        if container_exists(recorded, backend=selected_backend):
             return EXIT_OK, recorded, f"{spec_path.name}: {recorded} (frontmatter)"
         return (
             EXIT_BROKEN_LINK,
@@ -298,7 +366,7 @@ def resolve_container(
         )
 
     slug = slug_for(spec_path)
-    legacy = find_legacy_containers(slug, run_linear_fn)
+    legacy = find_legacy_containers(slug, backend=selected_backend)
     if len(legacy) > 1:
         names = ", ".join(f"{node['name']} ({node['id']})" for node in legacy)
         return (
@@ -324,17 +392,24 @@ def set_container(spec_path: Path, container_id: str, tracker: str = "linear") -
 
 
 def backfill_all(
-    specs_dir: Path, dry_run: bool, run_linear_fn=run_linear
+    specs_dir: Path,
+    dry_run: bool,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    *,
+    backend: TrackerBackend | None = None,
 ) -> tuple[int, list[str]]:
     """Record the container of every spec that resolves through the legacy marker."""
     report = []
     linked = 0
+    selected_backend = backend or LinearBackend(run_linear_fn)
     for spec_path in sorted(specs_dir.glob("[0-9][0-9][0-9][0-9]-*.md")):
         # Already-linked specs are resolved too, not skipped on sight: a sweep
         # that reports "already linked" for a container that no longer exists
         # produces exactly the mapping it was run to make trustworthy.
         already_linked = read_frontmatter_value(spec_path.read_text(), CONTAINER_KEY)
-        code, container_id, message = resolve_container(spec_path, run_linear_fn)
+        code, container_id, message = resolve_container(
+            spec_path, backend=selected_backend
+        )
         if code == EXIT_BROKEN_LINK:
             report.append(f"STOP  {message}")
             continue
@@ -371,8 +446,10 @@ def reconcile_issues(
     container_id: str,
     base_branch: str,
     dry_run: bool = False,
-    run_linear_fn=run_linear,
-    run_git_fn=run_git,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    run_git_fn: Callable[[list[str]], str] = run_git,
+    *,
+    backend: TrackerBackend | None = None,
 ) -> list[str]:
     """Promote issues whose changeset branch is merged, reading git not the run.
 
@@ -388,13 +465,14 @@ def reconcile_issues(
     Nothing moves an issue to a started state except its merge, so an issue
     already reading one has been promoted and is skipped.
     """
+    selected_backend = backend or LinearBackend(run_linear_fn)
     merged = merged_task_identifiers(base_branch, run_git_fn)
     if not merged:
         return [f"nothing merged into {base_branch}; no issue state to reconcile"]
     settled_types = CLOSED_STATE_TYPES | STARTED_STATE_TYPES
     stale = [
         issue
-        for issue in fetch_container_issues(container_id, run_linear_fn)
+        for issue in fetch_container_issues(container_id, backend=selected_backend)
         if issue.get("identifier") in merged
         and issue["state"]["type"] not in settled_types
     ]
@@ -408,20 +486,25 @@ def reconcile_issues(
             f"'{issue['state']['type']}' — {verb} it to '{MERGED_STATE}'"
         )
         if not dry_run:
-            run_linear_fn(
-                ["issue", "update", issue["identifier"], "--state", MERGED_STATE]
-            )
+            selected_backend.update_issue(issue["identifier"], MERGED_STATE)
     return report
 
 
-def project_status(container_id: str, run_linear_fn=run_linear) -> tuple[str, str]:
-    payload = run_linear_fn(["api", PROJECT_QUERY.format(container_id=container_id)])
-    project = load_json(payload, "linear api")["data"]["project"]
-    return project["name"], project["status"]["type"]
+def project_status(
+    container_id: str,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    *,
+    backend: TrackerBackend | None = None,
+) -> tuple[str, str]:
+    return (backend or LinearBackend(run_linear_fn)).project_status(container_id)
 
 
 def sync_project(
-    container_id: str, dry_run: bool = False, run_linear_fn=run_linear
+    container_id: str,
+    dry_run: bool = False,
+    run_linear_fn: Callable[[list[str]], str] = run_linear,
+    *,
+    backend: TrackerBackend | None = None,
 ) -> list[str]:
     """Promote a project whose issues are underway out of a not-started status.
 
@@ -429,8 +512,9 @@ def sync_project(
     done" is not delivery and auto-completing a project would assert something
     the loop cannot know; that case is reported for a human instead.
     """
-    name, status = project_status(container_id, run_linear_fn)
-    issues = fetch_container_issues(container_id, run_linear_fn)
+    selected_backend = backend or LinearBackend(run_linear_fn)
+    name, status = project_status(container_id, backend=selected_backend)
+    issues = fetch_container_issues(container_id, backend=selected_backend)
     if not issues:
         return [f"{name}: no issues, nothing to sync"]
 
@@ -443,7 +527,7 @@ def sync_project(
             f"'{status}' — {'would set' if dry_run else 'setting'} it to 'started'"
         )
         if not dry_run:
-            run_linear_fn(["project", "update", container_id, "--status", "started"])
+            selected_backend.update_project(container_id, "started")
     else:
         report.append(f"{name}: status '{status}' is consistent with its issues")
     if not unfinished and status != "completed":
@@ -457,11 +541,18 @@ def sync_project(
 # ---- cli --------------------------------------------------------------------
 
 
+def get_backend(name: str) -> TrackerBackend:
+    if name == "linear":
+        return LinearBackend()
+    raise TrackerError(f"unsupported tracker: {name}")
+
+
 def main() -> int:
-    parser = argparse.ArgumentParser(prog="linear_tracker")
+    parser = argparse.ArgumentParser(prog="tracker")
     verbs = parser.add_subparsers(dest="verb", required=True)
 
     workable = verbs.add_parser("workable", help="issues that can be worked right now")
+    workable.add_argument("--tracker", choices=["linear"], default="linear")
     workable.add_argument("--container", required=True, metavar="ID")
     workable.add_argument(
         "--merged-into",
@@ -479,6 +570,7 @@ def main() -> int:
     container.add_argument("--dry-run", action="store_true")
 
     sync = verbs.add_parser("sync", help="reconcile a project's status with its issues")
+    sync.add_argument("--tracker", choices=["linear"], default="linear")
     sync.add_argument("--container", required=True, metavar="ID")
     sync.add_argument(
         "--merged-into",
@@ -491,17 +583,29 @@ def main() -> int:
     args = parser.parse_args()
     try:
         if args.verb == "workable":
-            print(json.dumps(workable_issues(args.container, args.merged_into)))
+            print(
+                json.dumps(
+                    workable_issues(
+                        args.container,
+                        args.merged_into,
+                        backend=get_backend(args.tracker),
+                    )
+                )
+            )
             return EXIT_OK
 
         if args.verb == "sync":
             lines = []
             # Issues first: the project's own status is derived from them.
+            backend = get_backend(args.tracker)
             if args.merged_into:
                 lines += reconcile_issues(
-                    args.container, args.merged_into, args.dry_run
+                    args.container,
+                    args.merged_into,
+                    args.dry_run,
+                    backend=backend,
                 )
-            lines += sync_project(args.container, args.dry_run)
+            lines += sync_project(args.container, args.dry_run, backend=backend)
             for line in lines:
                 print(line)
             return EXIT_OK
@@ -525,7 +629,7 @@ def main() -> int:
         print(message, file=sys.stderr)
         return code
     except LinearError as exc:
-        print(f"linear_tracker: {exc}", file=sys.stderr)
+        print(f"tracker: {exc}", file=sys.stderr)
         return EXIT_ERROR
 
 
