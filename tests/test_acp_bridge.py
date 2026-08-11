@@ -799,12 +799,10 @@ def test_child_exit_stops_the_wait_and_forgets_the_session(
     assert "is not open" in continuation["content"][0]["text"]
 
 
-def test_unexpected_exit_reports_only_bounded_allowlisted_stderr_metadata(
+def test_unexpected_exit_reports_bounded_raw_stderr_metadata(
     lifecycle_bridge: BridgeClient, tmp_path: Path
 ) -> None:
-    private_fixture = "token=fixture-value /example/private.txt"
-    known_failures = "authentication failed; connection refused; model not found; rate limit"
-    diagnostic = f"{known_failures}; {private_fixture}; unclassified detail"
+    diagnostic = "authentication failed; connection refused; unclassified detail"
     diagnostic_lines = 1000
     expected_bytes = len((diagnostic + "\n").encode()) + sum(
         len(f"routine-diagnostic-{index:04d}\n".encode())
@@ -825,13 +823,12 @@ def test_unexpected_exit_reports_only_bounded_allowlisted_stderr_metadata(
     assert f"bytes={expected_bytes}" in error_text
     assert "truncated=true" in error_text
     assert "exitCode=7" in error_text
-    assert "categories=authentication,model,network,rate-limit" in error_text
-    assert private_fixture not in error_text
-    assert "unclassified detail" not in error_text
-    assert "routine-diagnostic" not in error_text
+    assert "categories=" not in error_text
+    assert "tail=" in error_text
+    assert "routine-diagnostic-0999" in error_text
 
 
-def test_permission_reply_send_failure_includes_safe_stderr_metadata(
+def test_permission_reply_send_failure_includes_raw_stderr_metadata(
     lifecycle_bridge: BridgeClient, tmp_path: Path
 ) -> None:
     result = lifecycle_bridge.delegate(
@@ -846,9 +843,9 @@ def test_permission_reply_send_failure_includes_safe_stderr_metadata(
 
     assert "session/prompt failed" in error_text
     assert "ACP stderr metadata:" in error_text
-    assert "categories=network" in error_text
-    assert "fixture-value" not in error_text
-    assert "/example/private.txt" not in error_text
+    assert "tail=" in error_text
+    assert "network unavailable" in error_text
+    assert "categories=" not in error_text
 
 
 def test_success_does_not_expose_stderr_metadata(
