@@ -675,6 +675,55 @@ def test_github_workable_parses_blocked_by_sections() -> None:
     assert result[0]["changeset"] == ""
 
 
+def test_github_workable_drains_a_merged_task_off_the_frontier() -> None:
+    """`change/#11-...` merged into the run's stack tip must be recognised as
+    done, the same as a Linear `change/KP-1` branch. Regression for the
+    `#<number>`-shaped identifier never matching IDENTIFIER_RE."""
+    payload = [
+        {
+            "number": 11,
+            "title": "task",
+            "body": "",
+            "labels": [],
+            "state": "OPEN",
+            "comments": [],
+        }
+    ]
+    backend = tracker.GithubBackend(lambda args: json.dumps(payload))
+
+    def fake_git(args: list[str]) -> str:
+        if args[:3] == ["branch", "--list", "stack/*"]:
+            return ""
+        assert args[:2] == ["branch", "--merged"]
+        assert args[2] == "base"
+        return "change/#11-task\nmain"
+
+    result = tracker.workable_issues(
+        "99", "base", run_git_fn=fake_git, backend=backend
+    )
+
+    assert result == []
+
+
+def test_github_blocked_by_section_with_no_recognized_shape_raises() -> None:
+    """A '## Blocked by' section that names blockers in prose neither `#<n>`
+    nor 'None' must fail loudly, not silently report the issue workable."""
+    payload = [
+        {
+            "number": 12,
+            "title": "dependent",
+            "body": "## Blocked by\n- the auth work\n\n## Acceptance criteria\n- works",
+            "labels": [],
+            "state": "OPEN",
+            "comments": [],
+        }
+    ]
+    backend = tracker.GithubBackend(lambda args: json.dumps(payload))
+
+    with pytest.raises(tracker.TrackerError, match="#12"):
+        tracker.workable_issues("99", backend=backend)
+
+
 def test_github_state_write_flips_labels() -> None:
     calls: list[list[str]] = []
 

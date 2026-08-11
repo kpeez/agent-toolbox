@@ -1,6 +1,6 @@
 ---
 name: opencode-reviewer
-description: Read-only code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/deepseek-v4-pro, and returns OpenCode's final answer verbatim.
+description: Code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge in review mode -- non-mutating tools plus execute (for running tests/lints), no file writes -- on opencode-go/deepseek-v4-pro, and returns OpenCode's final answer verbatim.
 model: sonnet
 effort: low
 tools: mcp__plugin_swe_opencode-reviewer__delegate
