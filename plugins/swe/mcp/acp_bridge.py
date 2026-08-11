@@ -295,6 +295,7 @@ class AcpSession:
         # The agent's own session mode when it opened, so a session reused for a
         # write delegation can be switched back out of read-only.
         self.default_mode: str | None = None
+        self.load_session = False
         self.process = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
@@ -657,11 +658,13 @@ class Bridge:
         self.active_calls: dict[Any, ActiveCall] = {}
         self._lock = threading.Lock()
 
-    def open_session(self, cwd: str, active_call: ActiveCall) -> tuple[AcpSession, str]:
+    def open_session(
+        self, cwd: str, active_call: ActiveCall, session_id: str | None = None
+    ) -> tuple[AcpSession, str]:
         session = AcpSession(self.command, cwd)
         try:
             active_call.attach(session, None)
-            session.request(
+            initialized = session.request(
                 "initialize",
                 {
                     "protocolVersion": ACP_PROTOCOL_VERSION,
@@ -670,13 +673,29 @@ class Bridge:
                     },
                 },
             )
-            created = session.request("session/new", {"cwd": cwd, "mcpServers": []})
-            session_id = created["sessionId"]
-            active_call.attach(session, session_id)
-            session.default_mode = config_value(created.get("configOptions", []), "mode")
+            capabilities = initialized.get("agentCapabilities", {})
+            session.load_session = isinstance(capabilities, dict) and capabilities.get(
+                "loadSession", False
+            ) is True
+            if session_id is None:
+                opened = session.request("session/new", {"cwd": cwd, "mcpServers": []})
+            else:
+                if not session.load_session:
+                    raise ValueError(
+                        f"session {session_id} is not open on this bridge; "
+                        "omit sessionId to start a fresh one"
+                    )
+                opened = session.request(
+                    "session/load",
+                    {"sessionId": session_id, "cwd": cwd, "mcpServers": []},
+                    on_frame=lambda _frame: None,
+                )
+            opened_session_id = opened["sessionId"]
+            active_call.attach(session, opened_session_id)
+            session.default_mode = config_value(opened.get("configOptions", []), "mode")
             with self._lock:
-                self.sessions[session_id] = session
-            return session, session_id
+                self.sessions[opened_session_id] = session
+            return session, opened_session_id
         except AcpRequestError as error:
             session.close()
             raise session.enrich_request_error(error) from error
@@ -790,11 +809,14 @@ class Bridge:
                 with self._lock:
                     session = self.sessions.get(session_id)
                 if session is None:
-                    raise ValueError(
-                        f"session {session_id} is not open on this bridge; "
-                        "omit sessionId to start a fresh one"
-                    )
-                active_call.attach(session, session_id)
+                    cwd = arguments.get("cwd") or os.getcwd()
+                    if not Path(cwd).is_dir():
+                        raise ValueError(f"cwd {cwd!r} is not a directory")
+                    session, session_id = self.open_session(cwd, active_call, session_id)
+                    if self.model:
+                        self.select_model(session, session_id, self.model, self.effort)
+                else:
+                    active_call.attach(session, session_id)
             else:
                 cwd = arguments.get("cwd") or os.getcwd()
                 if not Path(cwd).is_dir():
