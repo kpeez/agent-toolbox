@@ -4,10 +4,11 @@
 Two verbs:
 
   workable  -- the issues in a container that can be picked up right now
-  container -- resolve (or record) the Linear project a spec publishes into
+  container -- resolve (or record) the tracker container a spec publishes into
+  settle    -- merge a changeset plan in order and record tracker state
 
-Everything reaches Linear through the `linear` CLI, so this file holds policy
-rather than transport: no GraphQL, no auth, no pagination of its own.
+Linear and GitHub transport live behind small backend adapters, so this file
+holds policy rather than auth or tracker-specific workflow logic.
 
 Why a task counts as done is the subtle part. A task the loop merged has not
 changed state in Linear -- that only happens when the run's PR lands -- so
@@ -52,11 +53,6 @@ STACK_BRANCH_RE = re.compile(r"^stack/(?P<height>\d+)$")
 # llmOS vault link, hence the tracker_ prefix.
 CONTAINER_KEY = "tracker_container"
 TRACKER_KEY = "tracker"
-# The pre-frontmatter identity token, still in the body of containers created
-# before this change. Read to migrate, never written.
-LEGACY_MARKER_RE = re.compile(
-    r"<!--\s*knack-spec:\s*(?P<repo>[^/\s]+)/(?P<slug>\S+?)\s*-->"
-)
 
 EXIT_OK = 0
 EXIT_ERROR = 1
@@ -65,6 +61,7 @@ EXIT_ERROR = 1
 # the two is exactly how a run creates a duplicate project.
 EXIT_BROKEN_LINK = 2
 EXIT_NO_CONTAINER = 3
+EXIT_CONFLICT = 4
 
 
 class TrackerError(Exception):
@@ -90,6 +87,19 @@ def run_linear(args: list[str]) -> str:
     return result.stdout
 
 
+def run_gh(args: list[str]) -> str:
+    """Run the `gh` CLI and return stdout, raising on a non-zero exit."""
+    try:
+        result = subprocess.run(
+            ["gh", *args], capture_output=True, text=True, check=False
+        )
+    except FileNotFoundError as exc:
+        raise TrackerError("the `gh` CLI is not installed or not on PATH") from exc
+    if result.returncode != 0:
+        raise TrackerError(f"gh {' '.join(args)} failed: {result.stderr.strip()}")
+    return result.stdout
+
+
 @runtime_checkable
 class TrackerBackend(Protocol):
     """Tracker operations used by the backend-independent policy."""
@@ -97,8 +107,6 @@ class TrackerBackend(Protocol):
     def fetch_container_issues(self, container_id: str) -> list[dict]: ...
 
     def container_exists(self, container_id: str) -> bool: ...
-
-    def find_legacy_containers(self, slug: str) -> list[dict]: ...
 
     def project_status(self, container_id: str) -> tuple[str, str]: ...
 
@@ -135,21 +143,6 @@ class LinearBackend:
             return False
         return True
 
-    def find_legacy_containers(self, slug: str) -> list[dict]:
-        payload = self._run_linear(
-            [
-                "api",
-                "query { projects(first: 250) { nodes { id name description content } } }",
-            ]
-        )
-        data = load_json(payload, "linear api")
-        matches = []
-        for node in data["data"]["projects"]["nodes"]:
-            body = (node.get("description") or "") + (node.get("content") or "")
-            if any(m.group("slug") == slug for m in LEGACY_MARKER_RE.finditer(body)):
-                matches.append(node)
-        return matches
-
     def project_status(self, container_id: str) -> tuple[str, str]:
         payload = self._run_linear(
             ["api", PROJECT_QUERY.format(container_id=container_id)]
@@ -162,6 +155,131 @@ class LinearBackend:
 
     def update_project(self, container_id: str, status: str) -> None:
         self._run_linear(["project", "update", container_id, "--status", status])
+
+
+class GithubBackend:
+    """GitHub issue adapter for the tracker policy."""
+
+    def __init__(self, run_gh_fn: Callable[[list[str]], str] = run_gh) -> None:
+        self._run_gh = run_gh_fn
+
+    def fetch_container_issues(self, container_id: str) -> list[dict]:
+        payload = self._run_gh(
+            [
+                "issue",
+                "list",
+                "--state",
+                "all",
+                "--limit",
+                "1000",
+                "--json",
+                "number,title,body,labels,state,comments",
+            ]
+        )
+        nodes = load_json(payload, "gh issue list")
+        by_number = {str(node["number"]): node for node in nodes}
+        issues = []
+        for node in nodes:
+            number = str(node["number"])
+            state = str(node.get("state", "OPEN")).lower()
+            issue = {
+                "id": number,
+                "identifier": f"#{number}",
+                "title": node["title"],
+                "body": node.get("body") or "",
+                "state": {"type": "completed" if state == "closed" else "started"},
+                "labels": {
+                    "nodes": [
+                        {"name": label["name"]}
+                        for label in node.get("labels", [])
+                    ]
+                },
+                "inverseRelations": {"nodes": []},
+                "changeset": "",
+            }
+            for blocked_number in blocked_by_numbers(issue["body"]):
+                blocker = by_number.get(blocked_number)
+                if blocker is None:
+                    blocker = {
+                        "number": int(blocked_number),
+                        "title": f"#{blocked_number}",
+                        "state": "OPEN",
+                        "labels": [],
+                    }
+                blocker_state = str(blocker.get("state", "OPEN")).lower()
+                issue["inverseRelations"]["nodes"].append(
+                    {
+                        "type": BLOCKS_RELATION_TYPE,
+                        "issue": {
+                            "id": blocked_number,
+                            "identifier": f"#{blocked_number}",
+                            "title": blocker.get("title", f"#{blocked_number}"),
+                            "state": {
+                                "type": "completed"
+                                if blocker_state == "closed"
+                                else "started"
+                            },
+                            "labels": {
+                                "nodes": [
+                                    {"name": label["name"]}
+                                    for label in blocker.get("labels", [])
+                                ]
+                            },
+                            "inverseRelations": {"nodes": []},
+                        },
+                    }
+                )
+            issues.append(issue)
+        return issues
+
+    def container_exists(self, container_id: str) -> bool:
+        try:
+            self._run_gh(["issue", "view", container_id, "--json", "number"])
+        except TrackerError:
+            return False
+        return True
+
+    def project_status(self, container_id: str) -> tuple[str, str]:
+        return container_id, "started"
+
+    def update_issue(self, identifier: str, state: str) -> None:
+        number = identifier.removeprefix("#")
+        if state.lower().replace(" ", "-") in {"in-review", "review"}:
+            self._run_gh(
+                [
+                    "issue",
+                    "edit",
+                    number,
+                    "--add-label",
+                    "in-review",
+                    "--remove-label",
+                    "in-progress",
+                ]
+            )
+            self._run_gh(
+                [
+                    "issue",
+                    "comment",
+                    number,
+                    "--body",
+                    "swe-loop: state changed to in-review",
+                ]
+            )
+
+    def update_project(self, container_id: str, status: str) -> None:
+        return None
+
+
+BLOCKED_BY_SECTION_RE = re.compile(
+    r"^##\s+Blocked by\s*$\n?(?P<body>.*?)(?=^##\s|\Z)",
+    re.MULTILINE | re.DOTALL,
+)
+ISSUE_NUMBER_RE = re.compile(r"#(?P<number>\d+)")
+
+
+def blocked_by_numbers(body: str) -> list[str]:
+    match = BLOCKED_BY_SECTION_RE.search(body)
+    return ISSUE_NUMBER_RE.findall(match.group("body")) if match else []
 
 
 def run_git(args: list[str]) -> str:
@@ -331,21 +449,6 @@ def container_exists(
     return (backend or LinearBackend(run_linear_fn)).container_exists(container_id)
 
 
-def find_legacy_containers(
-    slug: str,
-    run_linear_fn: Callable[[list[str]], str] = run_linear,
-    *,
-    backend: TrackerBackend | None = None,
-) -> list[dict]:
-    return (backend or LinearBackend(run_linear_fn)).find_legacy_containers(slug)
-
-
-def slug_for(spec_path: Path) -> str:
-    """`0002-morphometric-baselines.md` -> `morphometric-baselines`."""
-    numbered = re.match(r"^\d+-(?P<slug>.+)$", spec_path.stem)
-    return numbered.group("slug") if numbered else spec_path.stem
-
-
 def resolve_container(
     spec_path: Path,
     run_linear_fn: Callable[[list[str]], str] = run_linear,
@@ -365,22 +468,6 @@ def resolve_container(
             "Re-link with --set <id> or fix the spec; refusing to create a second container.",
         )
 
-    slug = slug_for(spec_path)
-    legacy = find_legacy_containers(slug, backend=selected_backend)
-    if len(legacy) > 1:
-        names = ", ".join(f"{node['name']} ({node['id']})" for node in legacy)
-        return (
-            EXIT_BROKEN_LINK,
-            None,
-            f"{spec_path.name}: {len(legacy)} containers carry the legacy marker "
-            f"for '{slug}' — {names}. Pick one with --set <id>.",
-        )
-    if len(legacy) == 1:
-        return (
-            EXIT_OK,
-            legacy[0]["id"],
-            f"{spec_path.name}: {legacy[0]['id']} (legacy marker, needs backfill)",
-        )
     return EXIT_NO_CONTAINER, None, f"{spec_path.name}: no container"
 
 
@@ -389,43 +476,6 @@ def set_container(spec_path: Path, container_id: str, tracker: str = "linear") -
     text = write_frontmatter_value(text, TRACKER_KEY, tracker)
     text = write_frontmatter_value(text, CONTAINER_KEY, container_id)
     spec_path.write_text(text)
-
-
-def backfill_all(
-    specs_dir: Path,
-    dry_run: bool,
-    run_linear_fn: Callable[[list[str]], str] = run_linear,
-    *,
-    backend: TrackerBackend | None = None,
-) -> tuple[int, list[str]]:
-    """Record the container of every spec that resolves through the legacy marker."""
-    report = []
-    linked = 0
-    selected_backend = backend or LinearBackend(run_linear_fn)
-    for spec_path in sorted(specs_dir.glob("[0-9][0-9][0-9][0-9]-*.md")):
-        # Already-linked specs are resolved too, not skipped on sight: a sweep
-        # that reports "already linked" for a container that no longer exists
-        # produces exactly the mapping it was run to make trustworthy.
-        already_linked = read_frontmatter_value(spec_path.read_text(), CONTAINER_KEY)
-        code, container_id, message = resolve_container(
-            spec_path, backend=selected_backend
-        )
-        if code == EXIT_BROKEN_LINK:
-            report.append(f"STOP  {message}")
-            continue
-        if code == EXIT_NO_CONTAINER:
-            report.append(f"skip  {message}")
-            continue
-        assert container_id is not None  # EXIT_OK always carries a resolved id
-        if already_linked:
-            report.append(f"skip  {spec_path.name}: already linked ({container_id})")
-            continue
-        verb = "would link" if dry_run else "link"
-        report.append(f"{verb}  {spec_path.name} -> {container_id}")
-        if not dry_run:
-            set_container(spec_path, container_id)
-        linked += 1
-    return linked, report
 
 
 # ---- sync -------------------------------------------------------------------
@@ -538,12 +588,216 @@ def sync_project(
     return report
 
 
+# ---- settle -----------------------------------------------------------------
+
+
+def _settle_state_path(run_git_fn=run_git) -> Path:
+    return Path(run_git_fn(["rev-parse", "--git-path", "swe-settle-state.json"]).strip())
+
+
+def _write_settle_state(state: dict, run_git_fn=run_git) -> None:
+    path = _settle_state_path(run_git_fn)
+    path.write_text(json.dumps(state, indent=2) + "\n")
+
+
+def _read_settle_state(run_git_fn=run_git) -> dict:
+    path = _settle_state_path(run_git_fn)
+    if not path.exists():
+        raise TrackerError("no interrupted settle plan is recorded")
+    return json.loads(path.read_text())
+
+
+def _remove_settle_state(run_git_fn=run_git) -> None:
+    _settle_state_path(run_git_fn).unlink(missing_ok=True)
+
+
+def _branch_exists(branch: str, run_git_fn=run_git) -> bool:
+    return bool(run_git_fn(["branch", "--list", branch, "--format=%(refname:short)"]).strip())
+
+
+def _task_results(
+    entry: dict,
+    *,
+    merged: bool,
+    state_updated: bool,
+    detail: str,
+    stack_branch: str,
+) -> list[dict]:
+    return [
+        {
+            "identifier": issue["identifier"],
+            "merged": merged,
+            "stateUpdated": state_updated if merged else False,
+            "detail": detail,
+            "stackBranch": stack_branch if merged else "",
+        }
+        for issue in entry.get("issues", [])
+    ]
+
+
+def _write_task_states(entry: dict, backend: TrackerBackend) -> bool:
+    state_updated = True
+    for issue in entry.get("issues", []):
+        try:
+            backend.update_issue(issue["identifier"], MERGED_STATE)
+        except TrackerError:
+            state_updated = False
+    return state_updated
+
+
+def _conflict_payload(entry: dict, target: str, run_git_fn=run_git) -> dict:
+    try:
+        files = run_git_fn(["diff", "--name-only", "--diff-filter=U"]).splitlines()
+    except TrackerError:
+        files = []
+    return {"conflict": {"branch": entry["branch"], "target": target, "files": files}}
+
+
+def _settle_entries(
+    state: dict,
+    backend: TrackerBackend,
+    run_git_fn=run_git,
+    *,
+    continue_merge: bool = False,
+) -> tuple[int, dict]:
+    plan = state["plan"]
+    index = state["index"]
+    results = state["results"]
+    while index < len(plan):
+        entry = plan[index]
+        target = entry["target"]
+        already_merged = False
+        state["index"] = index
+        _write_settle_state(state, run_git_fn)
+        if continue_merge:
+            try:
+                run_git_fn(["add", "-A"])
+                run_git_fn(["commit", "--no-edit"])
+            except TrackerError:
+                payload = _conflict_payload(entry, target, run_git_fn)
+                _write_settle_state(state, run_git_fn)
+                return EXIT_CONFLICT, payload
+            continue_merge = False
+        else:
+            if not _branch_exists(target, run_git_fn):
+                run_git_fn(["checkout", "-b", target, entry["from"]])
+            else:
+                run_git_fn(["checkout", target])
+            already_merged = run_git_fn(
+                ["rev-list", "--count", f"{target}..{entry['branch']}"]
+            ).strip() == "0"
+            if not already_merged:
+                try:
+                    run_git_fn(["merge", "--no-ff", entry["branch"]])
+                except TrackerError:
+                    payload = _conflict_payload(entry, target, run_git_fn)
+                    _write_settle_state(state, run_git_fn)
+                    return EXIT_CONFLICT, payload
+        state_updated = _write_task_states(entry, backend)
+        results.extend(
+            _task_results(
+                entry,
+                merged=True,
+                state_updated=state_updated,
+                detail="already merged" if already_merged else "merged",
+                stack_branch=target,
+            )
+        )
+        index += 1
+        state["index"] = index
+        state["results"] = results
+        continue_merge = False
+    _remove_settle_state(run_git_fn)
+    return EXIT_OK, {"results": results}
+
+
+def settle_plan(
+    plan: list[dict],
+    tracker: str = "linear",
+    *,
+    backend: TrackerBackend | None = None,
+    run_git_fn=run_git,
+) -> tuple[int, dict]:
+    if not plan:
+        return EXIT_OK, {"results": []}
+    state = {"plan": plan, "index": 0, "results": []}
+    selected_backend = backend or get_backend(tracker)
+    return _settle_entries(state, selected_backend, run_git_fn)
+
+
+def continue_settle(
+    tracker: str = "linear",
+    *,
+    backend: TrackerBackend | None = None,
+    run_git_fn=run_git,
+) -> tuple[int, dict]:
+    state = _read_settle_state(run_git_fn)
+    selected_backend = backend or get_backend(tracker)
+    return _settle_entries(state, selected_backend, run_git_fn, continue_merge=True)
+
+
+def skip_settle(
+    branch: str,
+    tracker: str = "linear",
+    *,
+    backend: TrackerBackend | None = None,
+    run_git_fn=run_git,
+) -> tuple[int, dict]:
+    state = _read_settle_state(run_git_fn)
+    index = state["index"]
+    plan = state["plan"]
+    if index >= len(plan) or plan[index]["branch"] != branch:
+        raise TrackerError(f"settle is interrupted on {plan[index]['branch'] if index < len(plan) else 'no branch'}")
+    try:
+        run_git_fn(["merge", "--abort"])
+    except TrackerError:
+        pass
+    skipped = plan[index]
+    state["results"].extend(
+        _task_results(
+            skipped,
+            merged=False,
+            state_updated=False,
+            detail="skipped",
+            stack_branch="",
+        )
+    )
+    initial_from = plan[0]["from"]
+    successful = [result["stackBranch"] for result in state["results"] if result["merged"]]
+    last_target = successful[-1] if successful else initial_from
+    landed = bool(successful)
+    height = max(
+        [
+            int(match.group("height"))
+            for target in successful
+            if (match := STACK_BRANCH_RE.match(target))
+        ],
+        default=1,
+    )
+    for downstream in plan[index + 1 :]:
+        downstream["from"] = last_target
+        if not landed:
+            downstream["target"] = initial_from
+            landed = True
+        else:
+            height += 1
+            downstream["target"] = f"stack/{height}"
+        last_target = downstream["target"]
+    state["index"] = index + 1
+    state["plan"] = plan
+    state["results"] = state["results"]
+    selected_backend = backend or get_backend(tracker)
+    return _settle_entries(state, selected_backend, run_git_fn)
+
+
 # ---- cli --------------------------------------------------------------------
 
 
 def get_backend(name: str) -> TrackerBackend:
     if name == "linear":
         return LinearBackend()
+    if name == "github":
+        return GithubBackend()
     raise TrackerError(f"unsupported tracker: {name}")
 
 
@@ -552,7 +806,7 @@ def main() -> int:
     verbs = parser.add_subparsers(dest="verb", required=True)
 
     workable = verbs.add_parser("workable", help="issues that can be worked right now")
-    workable.add_argument("--tracker", choices=["linear"], default="linear")
+    workable.add_argument("--tracker", choices=["linear", "github"], default="linear")
     workable.add_argument("--container", required=True, metavar="ID")
     workable.add_argument(
         "--merged-into",
@@ -564,13 +818,12 @@ def main() -> int:
     container = verbs.add_parser(
         "container", help="resolve or record a spec's container"
     )
+    container.add_argument("--tracker", choices=["linear", "github"], default="linear")
     container.add_argument("--spec", type=Path, metavar="PATH")
     container.add_argument("--set", dest="container_id", metavar="ID")
-    container.add_argument("--backfill-all", type=Path, metavar="SPECS_DIR")
-    container.add_argument("--dry-run", action="store_true")
 
     sync = verbs.add_parser("sync", help="reconcile a project's status with its issues")
-    sync.add_argument("--tracker", choices=["linear"], default="linear")
+    sync.add_argument("--tracker", choices=["linear", "github"], default="linear")
     sync.add_argument("--container", required=True, metavar="ID")
     sync.add_argument(
         "--merged-into",
@@ -579,6 +832,13 @@ def main() -> int:
         f"promoted to '{MERGED_STATE}' before the project status is checked",
     )
     sync.add_argument("--dry-run", action="store_true")
+
+    settle = verbs.add_parser("settle", help="merge a changeset plan in order")
+    settle.add_argument("--tracker", choices=["linear", "github"], default="linear")
+    settle_mode = settle.add_mutually_exclusive_group(required=True)
+    settle_mode.add_argument("--plan", metavar="-", help="read a JSON plan from stdin")
+    settle_mode.add_argument("--continue", dest="continue_merge", action="store_true")
+    settle_mode.add_argument("--skip", metavar="BRANCH")
 
     args = parser.parse_args()
     try:
@@ -595,6 +855,9 @@ def main() -> int:
             return EXIT_OK
 
         if args.verb == "sync":
+            if args.tracker == "github":
+                print("nothing to reconcile")
+                return EXIT_OK
             lines = []
             # Issues first: the project's own status is derived from them.
             backend = get_backend(args.tracker)
@@ -610,19 +873,27 @@ def main() -> int:
                 print(line)
             return EXIT_OK
 
-        if args.backfill_all:
-            linked, report = backfill_all(args.backfill_all, args.dry_run)
-            for line in report:
-                print(line)
-            print(f"{linked} spec(s) {'would be ' if args.dry_run else ''}linked")
-            return EXIT_OK
+        if args.verb == "settle":
+            if args.plan is not None and args.plan != "-":
+                parser.error("settle requires --plan -")
+            if args.plan == "-":
+                plan = json.load(sys.stdin)
+                code, payload = settle_plan(plan, args.tracker)
+            elif args.continue_merge:
+                code, payload = continue_settle(args.tracker)
+            else:
+                code, payload = skip_settle(args.skip, args.tracker)
+            print(json.dumps(payload))
+            return code
         if not args.spec:
-            parser.error("container needs --spec or --backfill-all")
+            parser.error("container needs --spec")
         if args.container_id:
-            set_container(args.spec, args.container_id)
+            set_container(args.spec, args.container_id, args.tracker)
             print(args.container_id)
             return EXIT_OK
-        code, container_id, message = resolve_container(args.spec)
+        code, container_id, message = resolve_container(
+            args.spec, backend=get_backend(args.tracker)
+        )
         if code == EXIT_OK:
             print(container_id)
             return EXIT_OK
