@@ -83,6 +83,13 @@ def test_write_rejects_an_edit_outside_the_workspace(tmp_path: Path) -> None:
     assert not allowed(outcome("write", "edit", str(tmp_path / "repo"), paths=[str(outside)]))
 
 
+@pytest.mark.parametrize("kind", sorted(acp_bridge.READ_ONLY_KINDS))
+def test_write_allows_read_only_kinds_outside_the_workspace(kind: str, tmp_path: Path) -> None:
+    outside = tmp_path.parent / "outside-read.txt"
+
+    assert allowed(outcome("write", kind, str(tmp_path / "repo"), paths=[str(outside)]))
+
+
 def test_write_rejects_when_any_location_escapes(tmp_path: Path) -> None:
     """One bad path in a batch poisons the whole call; it is one approval."""
     workspace = tmp_path / "repo"
@@ -347,6 +354,28 @@ for line in sys.stdin:
         if directive.get("block"):
             while True:
                 time.sleep(1)
+        if directive.get("cancellable"):
+            for line in sys.stdin:
+                cancel = json.loads(line)
+                if cancel.get("method") != "session/cancel":
+                    continue
+                partial_reply = directive.get("partial_reply", "")
+                if partial_reply:
+                    send({
+                        "jsonrpc": "2.0",
+                        "method": "session/update",
+                        "params": {"sessionId": session_id, "update": {
+                            "sessionUpdate": "agent_message_chunk",
+                            "content": {"type": "text", "text": partial_reply},
+                        }},
+                    })
+                send({
+                    "jsonrpc": "2.0",
+                    "id": message["id"],
+                    "result": {"stopReason": "cancelled"},
+                })
+                break
+            continue
         reply = directive.get("reply", "")
         if reply:
             send({
@@ -369,6 +398,24 @@ def lifecycle_bridge(tmp_path: Path):
     )
     yield client
     client.close()
+
+
+@pytest.fixture
+def lifecycle_bridges(tmp_path: Path):
+    opened: list[BridgeClient] = []
+
+    def open_bridge(options: list[str]) -> BridgeClient:
+        client = BridgeClient(
+            tmp_path,
+            options=options,
+            agent_command=[sys.executable, "-u", "-c", LIFECYCLE_AGENT],
+        )
+        opened.append(client)
+        return client
+
+    yield open_bridge
+    for client in opened:
+        client.close()
 
 
 def wait_for_sessions(tmp_path: Path, count: int) -> list[Path]:
@@ -465,6 +512,48 @@ def test_write_mode_grants_the_same_edit(bridge: BridgeClient, tmp_path: Path) -
     assert result["content"][0]["text"] == "granted=edit"
 
 
+def test_write_mode_grants_a_read_outside_the_workspace(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            attempts=[{"kind": "read", "paths": [str(tmp_path.parent / "outside-read.txt")]}],
+            echo_granted=True,
+        ),
+        mode="write",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "granted=read"
+    assert result["structuredContent"]["deniedToolCalls"] == []
+
+
+def test_a_denied_but_chatty_run_carries_the_denial_account(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            attempts=[
+                {
+                    "kind": "edit",
+                    "title": "Edit outside workspace",
+                    "paths": [str(tmp_path.parent / "outside-edit.txt")],
+                }
+            ],
+            reply="planning sentence",
+        ),
+        mode="write",
+        cwd=str(tmp_path),
+    )
+
+    text = result["content"][0]["text"]
+    assert text.startswith("planning sentence\n\n---\n\n")
+    assert "The bridge denied 1 tool call(s) under mode=write" in text
+    assert "edit: Edit outside workspace" in text
+    assert "outside the workspace" in text
+    assert result["structuredContent"]["deniedToolCalls"] == ["edit: Edit outside workspace"]
+
+
 def test_tool_calls_are_reported_as_progress(bridge: BridgeClient, tmp_path: Path) -> None:
     """Progress is what keeps a long delegation off the stdio idle timeout."""
     bridge.delegate(
@@ -474,6 +563,62 @@ def test_tool_calls_are_reported_as_progress(bridge: BridgeClient, tmp_path: Pat
     )
 
     assert "Reading files" in bridge.progress
+
+
+def test_message_chunks_stream_as_throttled_progress(bridge: BridgeClient, tmp_path: Path) -> None:
+    chunks = ["a" * 75, "b" * 75, "c" * 75, "d" * 75, "e" * 75, "f" * 75]
+
+    result = bridge.delegate(
+        task=directive(
+            attempts=[{"kind": "read", "title": "Reading files"}],
+            reply_chunks=chunks,
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert len([message for message in bridge.progress if "Reading files" not in message]) == 2
+    assert result["content"][0]["text"] == "".join(chunks)
+    assert "Reading files" in bridge.progress
+
+
+def test_a_short_answer_emits_no_message_progress(bridge: BridgeClient, tmp_path: Path) -> None:
+    bridge.delegate(
+        task=directive(reply="a" * (acp_bridge.MESSAGE_PROGRESS_INTERVAL - 1)),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert bridge.progress == []
+
+
+def test_non_text_content_becomes_a_placeholder(bridge: BridgeClient, tmp_path: Path) -> None:
+    result = bridge.delegate(
+        task=directive(
+            reply_blocks=[
+                {"type": "text", "text": "before "},
+                {"type": "image", "uri": "data:image/png;base64,fixture"},
+                {"type": "text", "text": "after"},
+            ]
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "before [image omitted]after"
+
+
+def test_an_image_only_answer_is_not_reported_as_silence(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(reply_blocks=[{"type": "image", "uri": "fixture"}]),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "[image omitted]"
+    assert "The agent returned no message" not in result["content"][0]["text"]
 
 
 def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) -> None:
@@ -486,6 +631,33 @@ def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) 
 
     assert second["structuredContent"]["sessionId"] == session_id
     assert second["content"][0]["text"] == "two"
+
+
+def test_a_compliant_agent_cancels_gracefully_and_keeps_its_session(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    request_id = lifecycle_bridge.start_delegate(
+        task=directive(cancellable=True, partial_reply="partial answer"),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+    wait_for_ready_session(tmp_path)
+
+    lifecycle_bridge.cancel(request_id)
+    result = lifecycle_bridge.receive(request_id)["result"]
+
+    assert "isError" not in result
+    assert result["structuredContent"]["stopReason"] == "cancelled"
+    assert result["content"][0]["text"] == "partial answer"
+    session_id = result["structuredContent"]["sessionId"]
+    assert session_id == pid_path.stem
+    os.kill(int(pid_path.read_text()), 0)
+
+    continuation = lifecycle_bridge.delegate(
+        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+    )
+    assert continuation["content"][0]["text"] == "still alive"
 
 
 def test_cancelling_a_tool_call_stops_and_forgets_its_acp_session(
@@ -508,6 +680,71 @@ def test_cancelling_a_tool_call_stops_and_forgets_its_acp_session(
         sessionId=pid_path.stem,
     )
     assert "is not open" in continuation["content"][0]["text"]
+
+
+def test_a_hung_turn_times_out_with_a_named_error(lifecycle_bridges, tmp_path: Path) -> None:
+    client = lifecycle_bridges(["--turn-timeout", "0.05"])
+    request_id = client.start_delegate(
+        task=directive(block=True), mode="read-only", cwd=str(tmp_path)
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+
+    result = client.receive(request_id)["result"]
+
+    error_text = result["content"][0]["text"]
+    assert result["isError"] is True
+    assert "TurnTimeout" in error_text
+    assert "0.05" in error_text
+    assert_process_stopped(pid_path)
+
+
+def test_a_timed_out_compliant_agent_keeps_its_session(lifecycle_bridges, tmp_path: Path) -> None:
+    client = lifecycle_bridges(["--turn-timeout", "0.05"])
+    request_id = client.start_delegate(
+        task=directive(cancellable=True, partial_reply="partial answer"),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+    wait_for_ready_session(tmp_path)
+
+    result = client.receive(request_id)["result"]
+
+    error_text = result["content"][0]["text"]
+    session_id = pid_path.stem
+    assert result["isError"] is True
+    assert "TurnTimeout" in error_text
+    assert "0.05" in error_text
+    assert session_id == pid_path.stem
+    assert session_id in error_text
+    continuation = client.delegate(
+        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+    )
+    assert continuation["content"][0]["text"] == "still alive"
+
+
+def test_the_timeout_timer_is_disarmed_when_the_turn_completes(
+    lifecycle_bridges, tmp_path: Path
+) -> None:
+    client = lifecycle_bridges(["--turn-timeout", "0.05"])
+    first = client.delegate(
+        task=directive(reply="complete"), mode="read-only", cwd=str(tmp_path)
+    )
+    session_id = first["structuredContent"]["sessionId"]
+    time.sleep(0.15)
+
+    continuation = client.delegate(
+        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+    )
+
+    assert continuation["content"][0]["text"] == "still alive"
+
+
+@pytest.mark.parametrize("value", ["not-a-number", "0", "-1"])
+def test_a_bad_turn_timeout_is_a_usage_error(value: str, capsys: pytest.CaptureFixture) -> None:
+    assert acp_bridge.main(["--turn-timeout", value]) == 2
+
+    assert "usage:" in capsys.readouterr().err
 
 
 def test_child_exit_stops_the_wait_and_forgets_the_session(
@@ -669,15 +906,64 @@ def test_server_shutdown_stops_retained_acp_sessions(
         assert_process_stopped(pid_path)
 
 
-def test_an_unknown_session_is_an_error_the_caller_can_see(
+def test_an_unknown_session_is_loaded_when_the_agent_supports_it(
     bridge: BridgeClient, tmp_path: Path
 ) -> None:
     result = bridge.delegate(
-        task=directive(reply="hi"), mode="read-only", sessionId="never-opened"
+        task=directive(reply="loaded"), mode="read-only", sessionId="fake-session-1"
+    )
+
+    assert result["content"][0]["text"] == "loaded"
+    assert "replayed history" not in result["content"][0]["text"]
+    assert "replayed history" not in bridge.progress
+    session_id = result["structuredContent"]["sessionId"]
+    continuation = bridge.delegate(
+        task=directive(reply="continued"), mode="read-only", sessionId=session_id
+    )
+    assert continuation["content"][0]["text"] == "continued"
+
+
+def test_load_is_refused_when_the_capability_is_absent(bridges, tmp_path: Path) -> None:
+    client = bridges([], ["--no-load-session"])
+
+    result = client.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        sessionId="fake-session-1",
     )
 
     assert result["isError"] is True
-    assert "never-opened" in result["content"][0]["text"]
+    assert "fake-session-1 is not open on this bridge" in result["content"][0]["text"]
+
+
+def test_a_loaded_session_gets_the_model_pin_and_mode_selection(bridges, tmp_path: Path) -> None:
+    client = bridges(
+        ["--model", "go/luna", "--effort", "max", "--read-only-mode", "plan"],
+        OPENCODE_LIKE,
+    )
+
+    result = client.delegate(
+        task=directive(reply="", echo_config=True),
+        mode="read-only",
+        sessionId="fake-session-1",
+    )
+
+    assert result["content"][0]["text"] == "config=model=go/luna|effort=max|mode=plan"
+
+
+def test_a_failed_load_surfaces_the_agents_error(bridges, tmp_path: Path) -> None:
+    client = bridges([], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        sessionId="never-opened",
+    )
+
+    assert result["isError"] is True
+    assert "session/load failed" in result["content"][0]["text"]
+    assert "unknown session: never-opened" in result["content"][0]["text"]
+    assert_process_stopped(tmp_path / "fake-agent.pid")
 
 
 def test_an_unknown_mode_is_rejected_before_the_agent_runs(

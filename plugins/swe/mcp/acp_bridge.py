@@ -35,7 +35,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 MCP_PROTOCOL_VERSION = "2025-06-18"
 ACP_PROTOCOL_VERSION = 1
@@ -52,6 +52,8 @@ MODES = ("read-only", "write")
 
 ACP_STDERR_OBSERVATION_BYTES = 4096
 ACP_STDERR_READ_BYTES = 1024
+CANCEL_GRACE_SECONDS = 2.0
+MESSAGE_PROGRESS_INTERVAL = 200
 ACP_STDERR_CATEGORIES: dict[str, tuple[bytes, ...]] = {
     "authentication": (b"authentication", b"unauthorized", b"api key"),
     "network": (b"connection", b"network", b"dns", b"timed out"),
@@ -66,7 +68,7 @@ ACP_STDERR_PATTERN_OVERLAP = max(
 # `--effort` pin a server to one model so the caller cannot pick another: model
 # policy then lives in the .mcp.json entry, not in a prompt some model has to
 # obey. `--read-only-mode` names the agent's own read-only session mode.
-BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode")
+BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode", "--turn-timeout")
 
 DELEGATE_TOOL: dict[str, Any] = {
     "name": "delegate",
@@ -242,11 +244,11 @@ def permission_outcome(
     """Answer one ACP `session/request_permission` without asking a human.
 
     read-only: only non-mutating tool kinds pass.
-    write: mutating kinds pass when every named location is inside the
-    workspace. A tool call naming no location (a shell command, say) is allowed
-    in write mode -- ACP does not describe its effects, and a write delegation
-    asked for exactly that. Codex's OS-level sandbox is the stronger guarantee
-    when a task needs one.
+    write: read-only kinds pass regardless of location; remaining kinds pass
+    when every named location is inside the workspace. A tool call naming no
+    location (a shell command, say) is allowed in write mode -- ACP does not
+    describe its effects, and a write delegation asked for exactly that.
+    Codex's OS-level sandbox is the stronger guarantee when a task needs one.
     """
     if mode not in MODES:
         raise ValueError(f"unknown delegation mode {mode!r}; expected one of {MODES}")
@@ -254,6 +256,8 @@ def permission_outcome(
     kind = tool_call.get("kind", "other")
     if mode == "read-only":
         return select_option(options, allow=kind in READ_ONLY_KINDS)
+    if kind in READ_ONLY_KINDS:
+        return select_option(options, allow=True)
 
     locations = [
         location["path"]
@@ -293,6 +297,7 @@ class AcpSession:
         # The agent's own session mode when it opened, so a session reused for a
         # write delegation can be switched back out of read-only.
         self.default_mode: str | None = None
+        self.load_session = False
         self.process = subprocess.Popen(
             command,
             stdin=subprocess.PIPE,
@@ -382,6 +387,10 @@ class AcpSession:
             self.process.stdin.write(json.dumps(frame) + "\n")
             self.process.stdin.flush()
 
+    def notify(self, method: str, params: dict[str, Any]) -> None:
+        """Send an id-less JSON-RPC notification alongside the request pump."""
+        self._send({"jsonrpc": "2.0", "method": method, "params": params})
+
     def request(
         self,
         method: str,
@@ -445,44 +454,100 @@ class ToolCallCancelled(RuntimeError):
     pass
 
 
+class TurnTimeout(RuntimeError):
+    pass
+
+
 class ActiveCall:
-    """The one ACP process owned by an active MCP tools/call request."""
+    """The one ACP process owned by an active MCP tools/call request.
+
+    A session survives a cancel iff the agent ends the turn before the grace
+    timer fires.
+    """
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._session: AcpSession | None = None
-        self._cancelled = False
+        self._session_id: str | None = None
+        self._cancel_reason: Literal["cancelled", "timeout"] | None = None
         self._completed = False
+        self._prompt_started = False
+        self._cancel_timer: threading.Timer | None = None
 
-    def attach(self, session: AcpSession) -> None:
+    def attach(self, session: AcpSession, session_id: str | None) -> None:
         with self._lock:
             self._session = session
-            should_close = self._cancelled and not self._completed
+            self._session_id = session_id
+            should_close = self._cancel_reason is not None and not self._completed
         if should_close:
             session.close()
             raise ToolCallCancelled("tool call cancelled")
 
-    def cancel(self) -> AcpSession | None:
+    def cancel(self, reason: Literal["cancelled", "timeout"] = "cancelled") -> AcpSession | None:
         with self._lock:
             if self._completed:
                 return None
-            self._cancelled = True
-            return self._session
+            if self._cancel_reason is not None:
+                return self._session
+            self._cancel_reason = reason
+            session = self._session
+            session_id = self._session_id
+            if session is None:
+                return None
+            if session_id is None or not self._prompt_started:
+                close_immediately = True
+            else:
+                close_immediately = False
+                timer = threading.Timer(CANCEL_GRACE_SECONDS, self._close_session)
+                timer.daemon = True
+                self._cancel_timer = timer
+                timer.start()
+        if close_immediately:
+            session.close()
+            return None
+        try:
+            session.notify("session/cancel", {"sessionId": session_id})
+        except OSError:
+            pass
+        return session
+
+    def _close_session(self) -> None:
+        with self._lock:
+            if self._completed:
+                return
+            session = self._session
+        if session is not None:
+            session.close()
 
     def complete(self) -> None:
         with self._lock:
             self._completed = True
+            timer = self._cancel_timer
+            self._cancel_timer = None
             self._session = None
+            self._session_id = None
+        if timer is not None:
+            timer.cancel()
+
+    def start_prompt(self) -> None:
+        with self._lock:
+            if self._cancel_reason is not None:
+                raise ToolCallCancelled("tool call cancelled")
+            self._prompt_started = True
 
     def raise_if_cancelled(self) -> None:
         with self._lock:
-            cancelled = self._cancelled
-        if cancelled:
+            cancel_reason = self._cancel_reason
+        if cancel_reason is not None:
             raise ToolCallCancelled("tool call cancelled")
 
-    def is_cancelled(self) -> bool:
+    def cancel_reason(self) -> Literal["cancelled", "timeout"] | None:
         with self._lock:
-            return self._cancelled
+            return self._cancel_reason
+
+    def is_completed(self) -> bool:
+        with self._lock:
+            return self._completed
 
 
 def run_turn(
@@ -499,6 +564,7 @@ def run_turn(
     """
     chunks: list[str] = []
     denied: list[str] = []
+    unreported_text = ""
 
     def on_frame(frame: dict[str, Any]) -> dict[str, Any] | None:
         method = frame.get("method")
@@ -518,7 +584,22 @@ def run_turn(
             update = frame.get("params", {}).get("update", {})
             kind = update.get("sessionUpdate")
             if kind == "agent_message_chunk":
-                chunks.append(update.get("content", {}).get("text", ""))
+                nonlocal unreported_text
+                content = update.get("content", {})
+                if content.get("type") == "text":
+                    text = content.get("text", "")
+                else:
+                    content_type = content.get("type")
+                    text = (
+                        f"[{content_type} omitted]"
+                        if content_type
+                        else "[non-text content omitted]"
+                    )
+                chunks.append(text)
+                unreported_text += text
+                while len(unreported_text) >= MESSAGE_PROGRESS_INTERVAL:
+                    report(" ".join(unreported_text.split())[-MESSAGE_PROGRESS_INTERVAL:])
+                    unreported_text = unreported_text[MESSAGE_PROGRESS_INTERVAL:]
             elif kind == "tool_call":
                 report(update.get("title") or update.get("kind") or "working")
         return None
@@ -545,7 +626,7 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     "the run was blocked", and acts on the emptiness either way.
     """
     answer = streamed.strip()
-    if answer:
+    if answer and (mode != "write" or not denied):
         return answer
     if denied:
         blocked = "; ".join(denied)
@@ -557,10 +638,15 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
             else "Every denial named a path outside the workspace; re-scope the "
             "task to the workspace, or dispatch it with a cwd that contains those paths."
         )
-        return (
-            f"The agent returned no message. The bridge denied {len(denied)} tool "
-            f"call(s) under mode={mode}: {blocked}. {remedy}"
+        account = (
+            f"The bridge denied {len(denied)} tool call(s) under mode={mode}: "
+            f"{blocked}. {remedy}"
         )
+        if answer:
+            return f"{answer}\n\n---\n\n{account}"
+        return f"The agent returned no message. {account}"
+    if answer:
+        return answer
     return "The agent returned no message."
 
 
@@ -576,21 +662,25 @@ class Bridge:
         model: str | None = None,
         effort: str | None = None,
         read_only_mode: str | None = None,
+        turn_timeout: float | None = None,
     ) -> None:
         self.command = command
         self.model = model
         self.effort = effort
         self.read_only_mode = read_only_mode
+        self.turn_timeout = turn_timeout
         self.tool = delegate_tool(model)
         self.sessions: dict[str, AcpSession] = {}
         self.active_calls: dict[Any, ActiveCall] = {}
         self._lock = threading.Lock()
 
-    def open_session(self, cwd: str, active_call: ActiveCall) -> tuple[AcpSession, str]:
+    def open_session(
+        self, cwd: str, active_call: ActiveCall, session_id: str | None = None
+    ) -> tuple[AcpSession, str]:
         session = AcpSession(self.command, cwd)
         try:
-            active_call.attach(session)
-            session.request(
+            active_call.attach(session, None)
+            initialized = session.request(
                 "initialize",
                 {
                     "protocolVersion": ACP_PROTOCOL_VERSION,
@@ -599,12 +689,29 @@ class Bridge:
                     },
                 },
             )
-            created = session.request("session/new", {"cwd": cwd, "mcpServers": []})
-            session_id = created["sessionId"]
-            session.default_mode = config_value(created.get("configOptions", []), "mode")
+            capabilities = initialized.get("agentCapabilities", {})
+            session.load_session = isinstance(capabilities, dict) and capabilities.get(
+                "loadSession", False
+            ) is True
+            if session_id is None:
+                opened = session.request("session/new", {"cwd": cwd, "mcpServers": []})
+            else:
+                if not session.load_session:
+                    raise ValueError(
+                        f"session {session_id} is not open on this bridge; "
+                        "omit sessionId to start a fresh one"
+                    )
+                opened = session.request(
+                    "session/load",
+                    {"sessionId": session_id, "cwd": cwd, "mcpServers": []},
+                    on_frame=lambda _frame: None,
+                )
+            opened_session_id = opened["sessionId"]
+            active_call.attach(session, opened_session_id)
+            session.default_mode = config_value(opened.get("configOptions", []), "mode")
             with self._lock:
-                self.sessions[session_id] = session
-            return session, session_id
+                self.sessions[opened_session_id] = session
+            return session, opened_session_id
         except AcpRequestError as error:
             session.close()
             raise session.enrich_request_error(error) from error
@@ -629,9 +736,7 @@ class Bridge:
         with self._lock:
             active_call = self.active_calls.get(request_id)
         if active_call is not None:
-            session = active_call.cancel()
-            if session is not None:
-                session.close()
+            active_call.cancel()
 
     def finish_call(self, request_id: Any, active_call: ActiveCall) -> None:
         with self._lock:
@@ -720,11 +825,14 @@ class Bridge:
                 with self._lock:
                     session = self.sessions.get(session_id)
                 if session is None:
-                    raise ValueError(
-                        f"session {session_id} is not open on this bridge; "
-                        "omit sessionId to start a fresh one"
-                    )
-                active_call.attach(session)
+                    cwd = arguments.get("cwd") or os.getcwd()
+                    if not Path(cwd).is_dir():
+                        raise ValueError(f"cwd {cwd!r} is not a directory")
+                    session, session_id = self.open_session(cwd, active_call, session_id)
+                    if self.model:
+                        self.select_model(session, session_id, self.model, self.effort)
+                else:
+                    active_call.attach(session, session_id)
             else:
                 cwd = arguments.get("cwd") or os.getcwd()
                 if not Path(cwd).is_dir():
@@ -737,14 +845,41 @@ class Bridge:
                 self.select_model(session, session_id, model, arguments.get("effort"))
             self.select_session_mode(session, session_id, mode)
 
-            turn = run_turn(session, session_id, task, mode, report)
-            active_call.raise_if_cancelled()
+            active_call.start_prompt()
+            timeout_timer: threading.Timer | None = None
+            if self.turn_timeout is not None:
+                timeout_timer = threading.Timer(
+                    self.turn_timeout, active_call.cancel, args=("timeout",)
+                )
+                timeout_timer.daemon = True
+                timeout_timer.start()
+            try:
+                turn = run_turn(session, session_id, task, mode, report)
+            finally:
+                if timeout_timer is not None:
+                    timeout_timer.cancel()
+
+            if active_call.cancel_reason() == "timeout":
+                active_call.complete()
+                raise TurnTimeout(
+                    f"turn timed out after {self.turn_timeout} seconds; "
+                    f"session {session_id} retained"
+                )
             active_call.complete()
             return {"sessionId": session_id, **turn}
         except Exception as error:
-            if session is not None:
+            cancel_reason = active_call.cancel_reason()
+            completed = active_call.is_completed()
+            if session is not None and not (cancel_reason == "timeout" and completed):
                 self.discard_session(session_id, session)
-            if active_call.is_cancelled() and not isinstance(error, ToolCallCancelled):
+            if cancel_reason == "timeout":
+                if isinstance(error, TurnTimeout):
+                    raise
+                retained = f"; session {session_id} retained" if completed else ""
+                raise TurnTimeout(
+                    f"turn timed out after {self.turn_timeout} seconds{retained}"
+                ) from error
+            if cancel_reason == "cancelled" and not isinstance(error, ToolCallCancelled):
                 raise ToolCallCancelled("tool call cancelled") from error
             if session is not None and isinstance(error, AcpRequestError):
                 raise session.enrich_request_error(error) from error
@@ -868,6 +1003,7 @@ def _run_tool_call(
 
 USAGE = (
     "usage: acp_bridge.py [--model ID] [--effort LEVEL] [--read-only-mode MODE] "
+    "[--turn-timeout SECONDS] "
     "<agent-command> [args...]\n"
 )
 
@@ -875,13 +1011,26 @@ USAGE = (
 def main(argv: list[str]) -> int:
     try:
         options, command = split_argv(argv)
+        turn_timeout = None
+        if "turn_timeout" in options:
+            turn_timeout = float(options["turn_timeout"])
+            if not turn_timeout > 0:
+                raise ValueError("--turn-timeout must be greater than 0")
     except ValueError as error:
         sys.stderr.write(f"{error}\n{USAGE}")
         return 2
     if not command:
         sys.stderr.write(USAGE)
         return 2
-    serve(Bridge(command, **options))
+    serve(
+        Bridge(
+            command,
+            model=options.get("model"),
+            effort=options.get("effort"),
+            read_only_mode=options.get("read_only_mode"),
+            turn_timeout=turn_timeout,
+        )
+    )
     return 0
 
 
