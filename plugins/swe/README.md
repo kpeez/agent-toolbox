@@ -1,8 +1,7 @@
 # swe plugin
 
 The core of agent-toolbox: a spec-driven software-engineering workflow packaged
-as skills, capability agents, a deterministic workflow conductor, and a
-formatting hook. The premise is that agents ship reliable work when the
+as skills, capability agents, and a formatting hook. The premise is that agents ship reliable work when the
 process is explicit — designs get stress-tested before they become specs,
 specs are proven by committed tests, status lives on the issue tracker, and
 publication is atomic commits behind a draft PR.
@@ -13,8 +12,6 @@ publication is atomic commits behind a draft PR.
 plugins/swe/
 ├── skills/            # 14 workflow skills (SKILL.md each — the canonical contracts)
 ├── agents/            # 9 agent definitions: Claude .md + Codex .toml twins (the forwarders: .md only)
-├── workflows/
-│   └── swe-loop.js    # deterministic conductor for the post-approval phases
 ├── .mcp.json          # the three OpenCode delegates exposed natively to Codex
 ├── .mcp.claude.json   # Claude's OpenCode delegates
 ├── mcp/
@@ -56,57 +53,31 @@ Two ways to run the spine:
 
 - **Skill by skill** — invoke each skill yourself. Useful for work that is
   already mid-flight or does not need the full loop.
-- **As one resumable command** — `/start-loop <idea>` owns the interactive
-  half (triage, design, approval gate, splitting), then launches the swe-loop
-  conductor on Claude. On Codex it explicitly hands the same spine to
-  `/implement` for manual orchestration because the Workflow tool is absent.
+- **As one resumable command** — `/start-loop <idea>` runs the approved-spec
+  half to completion itself: dispatch, gates, merges, review, and ship, with
+  no live prompts.
 
 ## The swe-loop
 
-`/start-loop` first triages the idea against four criteria (unambiguous
-against the repo and ADRs, ≤ 6 estimated tasks, no destructive surface, no
-new external dependencies). All four pass → the design phase runs
-autonomously and the spec is marked approved without a prompt. Any fail →
-the gated path: `/sharpen` interactively, `/write-spec`, and one explicit
-spec approval — the only prompt. Either way the approved spec authorizes the conductor;
-after that, problems reach the user as data (escalation comments and the run
-summary), never as live prompts.
+Sharpening and spec-writing happen in a prior session, never inside the run
+itself. `/start-loop` requires the spec's frontmatter to already carry
+`approved: true` — a spec without it is a stop, pointing at `/sharpen` or
+`/write-spec` instead of proceeding. Once the approved spec authorizes the
+run, problems reach the user as data (escalation reports), never as live
+prompts.
 
-The conductor is `workflows/swe-loop.js` — a deterministic script, not an
-agent. It decides what runs when; agents do exactly one phase each and return
-structured data (identifiers in, typed status out, never prose).
+There is no conductor process and no Workflow tool: the lead session runs the
+loop directly. It dispatches one implementer subagent per unblocked task —
+parallel when tasks are independent — reads back each `{status, branch,
+summary}` report, and runs the verification gates and the merge itself with
+shell commands, never a model call. When the frontier drains it dispatches a
+single reviewer against the assembled diff, cycles at most two fix rounds,
+then ships one PR with `gh pr create`. The lead never reads implementation
+code itself — reports, gate output, and merge results are its whole context
+diet.
 
-```mermaid
-flowchart TD
-  L(["launch args:<br/>specPath, slug, containerId,<br/>baseBranch, scriptsDir<br/>(tasks already on the tracker)"]) --> F{"workable query:<br/>workable tasks?"}
-  F -- "pending" --> IM["implementer<br/>one task per agent,<br/>isolated worktree,<br/>gated on its own tests"]
-  IM --> M["settle: one agent merges,<br/>advances state, whole round"]
-  M --> F
-  F -- "drained" --> R{"one adherence review<br/>of the assembled work"}
-  R -- "findings<br/>(max 2 fix rounds)" --> FX["fixer on baseBranch"]
-  FX --> R
-  R -- "still open<br/>(1 re-entry)" --> FF["planner files<br/>fix tasks"]
-  FF --> F
-  R -- "settled" --> SH["Ship<br/>publisher: atomic commits,<br/>push, draft PR"]
-  SH --> OUT(["summary: prUrls, tasksCompleted,<br/>escalations"])
-```
-
-The code is reviewed **once**, assembled, rather than per task and then again
-through a lens panel: a task's own gate is the lint/types/tests its
-implementer already runs, which cost no tokens. In the run that motivated this
-shape, reviewing the same lines three times was 52% of the token spend, and
-merging and marking each task through its own agent was another 15% of it
-spent on deterministic git and one API call per task.
-
-The loop's cost ceilings are explicit constants, guarded by a static test:
-the assembled review gets at most **2** fix rounds, surviving findings
-re-enter the implement loop at most **once**, and the implement loop
-itself caps at **25** rounds — anything that will not settle inside those
-bounds becomes a loud escalation instead of a longer run. Unresolved findings
-remain structured in the run summary's escalations.
-
-Tasks run concurrently: implementers work in isolated git worktrees and
-merges into the integration branch are serialized, so parallel tasks never
+Tasks run concurrently: implementers work in isolated git worktrees and the
+lead serializes merges into the integration branch, so parallel tasks never
 race on the working copy.
 
 ### Handoffs and escalation
@@ -119,43 +90,17 @@ frontmatter; issue status lives on the tracker; what is already merged lives in
 git. Comments carry only what humans read — triage rationale, progress notes,
 escalations.
 
-### Cross-provider role routing
+### Model policy
 
-The Workflow conductor runs only on Claude, which remains its orchestrator.
-Two worker roles run elsewhere by default in that route:
-
-| Role          | Default provider | Model                        |
-| ------------- | ---------------- | ---------------------------- |
-| `implementer` | OpenCode Go      | `opencode-go/gpt-5.6-luna`   |
-| `reviewer`    | OpenCode Go      | `opencode-go/deepseek-v4-pro`|
-| `planner`     | Claude           | `swe:planner`                |
-| `publisher`   | Claude           | `swe:publisher`              |
-
-Implementation and review dominate a run's token cost and are bounded enough to
-hand over whole. Planning and publishing are low-token and high-side-effect, so
-outsourcing them buys nothing — and every deterministic step (the workable
-query, the settle agent, tracker bookkeeping, the run summary) is never routed
-at all, on a pinned model so a run behaves the same whatever the host session
-is running.
-
-The launch args accept an optional `roles` map that overrides any of it. Keys
-are the four roles; values are `claude` or `opencode`.
-
-```jsonc
-{ "roles": { "implementer": "claude" } }
-```
-
-An explicit entry always beats the default, so routing a role back to `claude`
-is how you opt out. `opencode` is valid for `implementer` and `reviewer` only —
-the two roles it has a model-pinned forwarder for — and routing another role
-there is rejected at launch rather than mid-run.
-
-A routed role needs that provider's CLI installed and authenticated. An
-unavailable provider, an unauthenticated subscription, an unavailable model or
-a failed ACP startup surfaces as a delegation failure and then an escalation.
-Nothing ever falls back to another provider on its own: a silent fallback would
-quietly spend host-model budget on work that was routed elsewhere
-precisely to avoid that.
+The lead session (Opus suffices) reads reports and runs git; it never runs an
+implementer's or reviewer's model itself. Implementers and the fixer default
+to OpenCode (`gpt-5.6-luna`) when the Go subscription is flat-rate, else
+Sonnet at high effort, escalating to Opus after two failed gate rounds on the
+same task. The reviewer always runs on a different model family from the
+implementer — deepseek-v4-pro, or Sonnet/Opus — one invocation, on the
+assembled diff. A routed provider that is missing, unauthenticated, or fails
+ACP startup surfaces as a delegation failure and then an escalation; nothing
+ever falls back to another provider on its own.
 
 ## Skills
 
@@ -174,9 +119,9 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 
 | Skill        | What it does                                                                                                                       |
 | ------------ | ---------------------------------------------------------------------------------------------------------------------------------- |
-| `start-loop` | Runs or resumes the swe-loop: container, triage, design, approval gate, then launches the conductor                                 |
+| `start-loop` | Runs an approved spec to a shipped PR: the lead dispatches implementers and a reviewer, and runs gates and merges itself            |
 | `to-issues`  | Publishes a spec as vertical-task tracker issues with native blocked-by relations; the tracker becomes the status ledger           |
-| `implement`  | Orchestrates implementation — and is the manual fallback conductor on hosts without the Workflow tool                               |
+| `implement`  | Orchestrates implementation for a single task or changeset outside a `/start-loop` run                                              |
 | `tdd`        | Functional-test discipline: sketch intended behavior as `tests/temp/` scratch scripts, refactor survivors into committed tests      |
 | `ship-pr`    | Atomic commits, push, draft PR kept current; `finalize` re-verifies and flips it ready for review                                   |
 
@@ -193,8 +138,11 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 
 Nine definitions in `agents/`: each a Claude `.md`, six with a Codex `.toml`
 twin kept in sync (the model matrix below is pinned by `tests/test_skill_drift.py`).
-They are the loop's workers; the conductor or the orchestrating session
-decides what runs when.
+`/start-loop` dispatches `implementer` and `reviewer` directly; `explorer` and
+`architect` are dispatched by other skills (`/sharpen`, `/write-spec`,
+`/implement`, `/to-issues`). `planner` and `publisher` are standalone
+agents — callerless by the workflow skills — available for direct dispatch
+when you want their bounded behavior outside a skill.
 
 | Agent             | Purpose                                                                                  | Claude model (effort) | Codex model (effort)   |
 | ----------------- | ---------------------------------------------------------------------------------------- | --------------------- | ---------------------- |
@@ -209,9 +157,10 @@ decides what runs when.
 | `opencode-reviewer` | Thin forwarder: read-only review on OpenCode Go                                        | sonnet (low)          | — (Claude-side only)   |
 
 The forwarders have no `.toml` twin. Claude needs their single-tool allowlists
-because its conductor dispatches agent names. Codex receives the three OpenCode
-MCP tools from the plugin and calls them directly; a TOML wrapper would add a
-second host-model hop without strengthening the bridge's permissions.
+because the lead session dispatches agent names directly. Codex receives the
+three OpenCode MCP tools from the plugin and calls them directly; a TOML
+wrapper would add a second host-model hop without strengthening the bridge's
+permissions.
 
 ## Delegating to another provider
 
@@ -234,8 +183,8 @@ namespaced MCP tool and mode to use; the bridge remains the permission boundary.
 
 ### Native Codex calls
 
-Codex has no Workflow tool, so `/start-loop` names `/implement` as its manual
-conductor. That path calls the plugin-delivered tools directly with the
+Codex has no forwarder subagents, so `/start-loop` names `/implement` as its
+manual fallback. That path calls the plugin-delivered tools directly with the
 absolute worktree root as `cwd`:
 
 | Phase | Tool | Mode | Boundary |
@@ -247,7 +196,7 @@ absolute worktree root as `cwd`:
 A missing tool, startup/auth/model failure, denied tool call, or non-completion
 is returned to the orchestrator. The manual path never silently switches to a
 host-native model and never shells out to `opencode run`. Claude retains its
-existing forwarder names and Workflow-conductor routing.
+existing forwarder names and direct agent dispatch.
 
 After installation or upgrade, start a **fresh Codex task**; an existing task
 cannot pick up a changed tool registry. Confirm all three exact tool names in
@@ -305,8 +254,9 @@ the plugin configures rather than something a subagent is asked to remember.
 `tests/test_skill_drift.py` normalizes the host-specific transport syntax and
 fails if the two role policies or their prose disagree.
 
-The explorer is deliberately not a swe-loop role — the conductor has no
-exploration phase to spend it on. On Claude, `/implement` and `/to-issues`
+The explorer is deliberately not a `/start-loop` role — the lead never reads
+code, so it has no exploration phase to spend it on. On Claude, `/implement`
+and `/to-issues`
 dispatch `swe:opencode-explorer` for repository archaeology and web research
 alike; the planner, which cannot nest subagents, calls its MCP tool directly.
 On Codex, both skills call the plugin-delivered MCP tool directly. Every
@@ -356,7 +306,7 @@ long delegation never blocks the session.
 
 ## Scripts
 
-Skills and the conductor run these in place with `uv run`; nothing installs
+Skills and `/start-loop` run these in place with `uv run`; nothing installs
 into the target repo.
 
 - **`linear_tracker.py`** — every deterministic Linear operation, through the
@@ -372,8 +322,8 @@ into the target repo.
   never mistaken for finished work.
 - **`validate_artifacts.py`** — validates specs and issues before publish:
   frontmatter shape, status transitions, approval and tracker-container keys,
-  acceptance criteria. Run by the conductor's agents and by `/start-loop`
-  before launch.
+  acceptance criteria. Run by `/start-loop` and its implementers before
+  launch.
 
 ## Hooks
 

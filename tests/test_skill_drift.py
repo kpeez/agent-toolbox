@@ -81,95 +81,6 @@ def readme_skill_names() -> set[str]:
     }
 
 
-SWE_LOOP = ROOT / "plugins" / "swe" / "workflows" / "swe-loop.js"
-
-
-def test_swe_loop_routes_worker_roles_through_the_roles_map() -> None:
-    text = SWE_LOOP.read_text()
-
-    routable = re.search(r"ROUTABLE_ROLES = \[([^\]]+)\]", text)
-    assert routable is not None
-    declared = set(re.findall(r"'([a-z-]+)'", routable.group(1)))
-    routed = set(re.findall(r"agentTypeFor\('([a-z-]+)'\)", text))
-    assert routed == declared == {"planner", "implementer", "reviewer", "publisher"}
-
-    # A hardcoded agentType in any quoting style would bypass the roles arg.
-    assert re.findall(r"agentType:\s*['\"`]swe:", text) == []
-
-
-def delegators_block() -> str:
-    """The DELEGATORS literal, brace-matched -- one provider's value is a map."""
-    text = SWE_LOOP.read_text()
-    start = text.index("const DELEGATORS = {")
-    depth = 0
-    for index in range(text.index("{", start), len(text)):
-        depth += {"{": 1, "}": -1}.get(text[index], 0)
-        if depth == 0:
-            return text[start : index + 1]
-    raise AssertionError("swe-loop.js no longer declares a closed DELEGATORS map")
-
-
-def test_every_routable_provider_has_a_forwarder_agent() -> None:
-    """A provider the loop accepts but cannot dispatch fails only at run time."""
-    agents_dir = ROOT / "plugins" / "swe" / "agents"
-    forwarders = set(re.findall(r"'(swe:[a-z0-9-]+)'", delegators_block()))
-
-    assert forwarders == {
-        "swe:opencode-implementer",
-        "swe:opencode-reviewer",
-    }
-    missing = [
-        agent_type
-        for agent_type in forwarders
-        if not (agents_dir / f"{agent_type.removeprefix('swe:')}.md").is_file()
-    ]
-
-    assert missing == []
-
-
-def test_the_default_routing_offloads_exactly_implementer_and_reviewer() -> None:
-    """These defaults are the run's cost policy: widening them silently is the
-    change this guards, the same way the fix-round ceilings are guarded."""
-    declaration = re.search(
-        r"DEFAULT_ROLE_PROVIDERS = \{([^}]*)\}", SWE_LOOP.read_text()
-    )
-    assert declaration is not None
-
-    assert dict(re.findall(r"(\w+): '([a-z]+)'", declaration.group(1))) == {
-        "implementer": "opencode",
-        "reviewer": "opencode",
-    }
-
-
-def agent_calls(text: str) -> list[str]:
-    """Every `agent(...)` call in the conductor, paren-matched to its close."""
-    calls = []
-    for match in re.finditer(r"\bagent\(", text):
-        depth = 0
-        for index in range(match.end() - 1, len(text)):
-            depth += {"(": 1, ")": -1}.get(text[index], 0)
-            if depth == 0:
-                calls.append(text[match.start() : index + 1])
-                break
-    return [call for call in calls if "label:" in call]
-
-
-def test_every_conductor_agent_call_pins_its_model() -> None:
-    """A call with neither agentType nor model inherits whatever model the host
-    session is running, so the same run settles on Fable one day and Sonnet the
-    next. Every call must name one or the other."""
-    calls = agent_calls(SWE_LOOP.read_text())
-    assert len(calls) >= 8, f"only found {len(calls)} agent call sites"
-
-    unpinned = [
-        call.split("label:", 1)[1].splitlines()[0].strip()
-        for call in calls
-        if "agentType:" not in call and "model:" not in call
-    ]
-
-    assert unpinned == []
-
-
 def test_forwarder_agents_hold_only_their_providers_mcp_tools() -> None:
     """The forwarder contract is enforced by `tools`, not by its prose.
 
@@ -204,9 +115,9 @@ def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
     launch -- so getting this wrong breaks delegation entirely rather than
     degrading it.
     """
-    servers = json.loads(
-        (ROOT / "plugins" / "swe" / ".mcp.claude.json").read_text()
-    )["mcpServers"]
+    servers = json.loads((ROOT / "plugins" / "swe" / ".mcp.claude.json").read_text())[
+        "mcpServers"
+    ]
     agents_dir = ROOT / "plugins" / "swe" / "agents"
 
     referenced = {
@@ -216,13 +127,6 @@ def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
     }
 
     assert referenced == {f"plugin_swe_{server}" for server in servers}
-
-
-def test_swe_loop_constructs_tracker_commands_from_the_tracker_arg() -> None:
-    text = SWE_LOOP.read_text()
-    assert "REQUIRED_ARGS" in text
-    assert "['linear', 'github']" in text
-    assert "tracker.py workable --tracker ${tracker}" in text
 
 
 def test_swe_hooks_register_worktree_link_script() -> None:
@@ -350,7 +254,15 @@ def test_lab_manifests_share_installation_metadata() -> None:
     claude = json.loads((lab / ".claude-plugin" / "plugin.json").read_text())
     codex = json.loads((lab / ".codex-plugin" / "plugin.json").read_text())
 
-    shared_fields = ("name", "description", "version", "homepage", "repository", "license", "keywords")
+    shared_fields = (
+        "name",
+        "description",
+        "version",
+        "homepage",
+        "repository",
+        "license",
+        "keywords",
+    )
     assert {field: claude[field] for field in shared_fields} == {
         field: codex[field] for field in shared_fields
     }
@@ -527,10 +439,10 @@ def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
         agent = agents_dir / f"{server}.md"
         assert set(OPENCODE_MODEL.findall(agent.read_text())) == {model}, agent.name
 
-    # The conductor and the skills route by role and never name a model.
-    unpinned_sources = [SWE_LOOP] + sorted(
-        (ROOT / "plugins" / "swe" / "skills").glob("*/SKILL.md")
-    )
+    # Skills mostly route by role; the one exception (start-loop's model-policy
+    # table, checked below for its bare names) still never spells out the
+    # qualified `opencode-go/...` id.
+    unpinned_sources = sorted((ROOT / "plugins" / "swe" / "skills").glob("*/SKILL.md"))
     offenders = [
         (path.name, match)
         for path in unpinned_sources
@@ -545,9 +457,36 @@ def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
     assert documented <= set(models.values())
 
 
+def test_bare_opencode_model_names_agree_with_the_mcp_manifest() -> None:
+    """start-loop's model-policy table and the README's Model policy prose name
+    OpenCode models without the `opencode-go/` prefix. Those bare names are not
+    caught by the qualified-id check above, so re-pinning a model in .mcp.json
+    must still fail here until the docs catch up."""
+    models = pinned_models()
+    bare_models = {model.split("/", 1)[1] for model in models.values()}
+    bare_model_re = re.compile(
+        "|".join(re.escape(name) for name in sorted(bare_models))
+    )
+
+    start_loop = (
+        ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
+    ).read_text()
+    readme = (ROOT / "plugins" / "swe" / "README.md").read_text()
+
+    for source_name, text in (
+        ("start-loop SKILL.md", start_loop),
+        ("swe README.md", readme),
+    ):
+        found = set(bare_model_re.findall(text))
+        assert found, f"{source_name} names no bare OpenCode model"
+        assert found <= bare_models, (
+            f"{source_name} names a bare model not pinned in .mcp.json: {found - bare_models}"
+        )
+
+
 def test_dropping_copilot_left_no_dangling_references() -> None:
     """A forwarder named in prose but absent from .mcp.json is a dead route."""
-    live = [ROOT / "README.md", ROOT / "AGENTS.md", SWE_MCP, SWE_LOOP] + [
+    live = [ROOT / "README.md", ROOT / "AGENTS.md", SWE_MCP] + [
         path
         for path in (ROOT / "plugins" / "swe").rglob("*.md")
         if path.name != "CHANGELOG.md"
@@ -593,8 +532,7 @@ def test_every_opencode_forwarder_has_a_caller() -> None:
     property worth pinning, so either entry point counts: the subagent name for
     a caller that can nest, the MCP tool for one that cannot."""
     plugin = ROOT / "plugins" / "swe"
-    callers = [plugin / "workflows" / "swe-loop.js"]
-    callers += sorted((plugin / "skills").glob("*/SKILL.md"))
+    callers = sorted((plugin / "skills").glob("*/SKILL.md"))
     callers += sorted(
         path
         for path in (plugin / "agents").glob("*.md")
@@ -612,17 +550,14 @@ def test_every_opencode_forwarder_has_a_caller() -> None:
 
 
 def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
-    """Codex has no Workflow tool or Claude forwarder agents, so its manual
-    conductor must call each plugin-delivered delegate directly and preserve
-    the role's write boundary."""
+    """Codex has no forwarder subagents, so its manual fallback must call each
+    plugin-delivered delegate directly and preserve the role's write boundary."""
     skills = ROOT / "plugins" / "swe" / "skills"
     implement = (skills / "implement" / "SKILL.md").read_text()
     to_issues = (skills / "to-issues" / "SKILL.md").read_text()
-    start_loop = (skills / "start-loop" / "SKILL.md").read_text()
 
-    assert "The conductor owns the frontier query, fan-out, and settle" in implement
+    assert "Manual fallback (no forwarder subagents)" in implement
     assert "mcp__plugin_swe_opencode-explorer__delegate" in to_issues
-    assert "manual orchestration in `/implement`" in start_loop
 
     for tool, mode in (
         ("mcp__plugin_swe_opencode-explorer__delegate", 'mode: "read-only"'),
@@ -632,3 +567,25 @@ def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
         assert tool in implement, f"{tool} missing from implement's manual fallback"
         assert mode in implement, f"{mode} missing from implement's manual fallback"
     assert "cwd" in implement
+
+
+def test_start_loop_is_the_lead_orchestrated_run_procedure() -> None:
+    """start-loop dispatches implementers and a reviewer directly and runs
+    gates itself — no Workflow tool launch, no planner or plumbing agents."""
+    start_loop = (
+        ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
+    ).read_text()
+
+    for present in (
+        "fresh session",
+        "approved: true",
+        "the lead never reads code",
+        "verification gates",
+        "git merge --no-ff",
+        "Model policy",
+        "Manual fallback (no forwarder subagents)",
+    ):
+        assert present.lower() in start_loop.lower(), f"missing: {present}"
+
+    for absent in ("scriptPath", "workableCmd", "swe:planner", "containerId"):
+        assert absent not in start_loop, f"should be gone: {absent}"

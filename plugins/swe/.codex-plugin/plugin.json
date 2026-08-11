@@ -16,7 +16,7 @@
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
-    "defaultPrompt": ["Create a spec for this feature.", "Run the swe-loop for a new feature.", "Prepare this branch for a draft PR."],
+    "defaultPrompt": ["Create a spec for this feature.", "Run /start-loop for a new feature.", "Prepare this branch for a draft PR."],
     "brandColor": "#2563EB"
   }
 }

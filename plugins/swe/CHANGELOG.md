@@ -7,6 +7,11 @@ the single `agentspec` plugin.
 
 ## Unreleased
 
+- **Delete the Workflow-tool conductor.** `workflows/swe-loop.js` and its
+  behavior tests are gone; `/start-loop` now owns the whole post-approval run
+  itself (dispatch, gates, merges, review, ship) as described in its own
+  `SKILL.md`. `README.md`, `implement/SKILL.md`, the tracker reference docs,
+  and `test_skill_drift.py` no longer promise a conductor process.
 - **Carry the spec with the run instead of naming its path.** `/start-loop` now
   passes `specText` (the spec file read verbatim) alongside `specPath`, and the
   conductor embeds it in every prompt that can be routed off-host. A routed
