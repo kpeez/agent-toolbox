@@ -99,13 +99,10 @@ echo "codex agents → $HOME/.codex/agents/"
 ################################################################################
 # Git hooks (all providers)
 ################################################################################
-# Claude sessions link a fresh worktree's shared dirs (artifacts, data,
-# docs/agents, runs) via the swe plugin's hooks.json events, but Codex and
-# plain `git worktree add` never load plugin hooks — git itself is the one
-# layer every tool passes through. Point global core.hooksPath at the plugin's
-# dispatcher, symlinked under every client-side hook name: core.hooksPath
-# hides per-repo .git/hooks wholesale (where the pre-commit framework and
-# git-lfs install), so the dispatcher re-runs the repo's own hook first.
+# `git worktree add` from any tool (Codex, plain git) links worktree shared
+# dirs via a global post-checkout hook. core.hooksPath makes git skip
+# .git/hooks entirely, so the dispatcher covers every hook name and re-runs
+# the repo's own hook first (pre-commit, git-lfs).
 GIT_HOOKS_DIR="$HOME/.config/git/hooks"
 DISPATCH="$ROOT_DIR/plugins/swe/hooks/git-hooks-dispatch.sh"
 mkdir -p "$GIT_HOOKS_DIR"
@@ -117,9 +114,9 @@ done
 current_hooks_path=$(git config --global core.hooksPath || true)
 if [[ -z "$current_hooks_path" || "$current_hooks_path" == "$GIT_HOOKS_DIR" ]]; then
     git config --global core.hooksPath "$GIT_HOOKS_DIR"
-    echo "git hooks dispatcher → $GIT_HOOKS_DIR (core.hooksPath)"
+    echo "git hooks → $GIT_HOOKS_DIR"
 else
-    echo "kept your core.hooksPath ($current_hooks_path) — for worktree links, symlink $DISPATCH there as post-checkout"
+    echo "kept core.hooksPath=$current_hooks_path"
 fi
 
 

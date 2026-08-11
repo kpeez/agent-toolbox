@@ -386,13 +386,10 @@ alongside them but installs through git:
   `data`, `docs/agents`, and `runs` into the current git worktree, so agents
   there use relative paths instead of climbing back out to the main checkout.
   Refuses to link anything git would track.
-- **`git-hooks-dispatch.sh`** — not registered in `hooks.json`: it is a git
-  hook, symlinked by `scripts/install.sh` under every client-side hook name in
-  `~/.config/git/hooks` (global `core.hooksPath`). It re-runs the repo's own
-  `.git/hooks/<name>` (pre-commit, git-lfs — hidden wholesale by
-  `core.hooksPath`), then on post-checkout runs the linker above, so worktrees
-  created outside a Claude session (Codex, plain `git worktree add`) get the
-  same links.
+- **`git-hooks-dispatch.sh`** — a git hook, not a plugin hook: installed
+  globally by `scripts/install.sh` (`core.hooksPath`) so worktrees created
+  outside a Claude session (Codex, plain `git worktree add`) get the same
+  links. Re-runs the repo's own `.git/hooks/<name>` first.
 - **`format-python.sh`** — after any Write/Edit that touches a `.py` file,
   formats and lints it. It no-ops silently unless the file lives in a uv/ruff
   project, so it stays inert for repos that have not opted into that toolchain.
