@@ -23,6 +23,25 @@ error, or lint failure is a stop, not a warning to note and continue past.
 The conductor owns the frontier query, fan-out, and settle; on a host without
 the Workflow tool, work tasks sequentially per the discipline below.
 
+### Manual fallback (no Workflow tool)
+
+On a host with no Workflow tool, call the three plugin-delivered OpenCode
+delegate tools directly instead of the conductor's fan-out. Every call names
+the absolute worktree root as `cwd`:
+
+- `mcp__plugin_swe_opencode-explorer__delegate` with `mode: "read-only"` for
+  repository exploration.
+- `mcp__plugin_swe_opencode-implementer__delegate` with `mode: "write"` for
+  exactly one bounded write assignment per changeset.
+- `mcp__plugin_swe_opencode-reviewer__delegate` with `mode: "review"` for one
+  read-only-plus-execute review of the complete assembled diff.
+
+If a requested tool is missing, fails to start, or returns non-completion,
+surface that result to whoever orchestrates you. There is no silent fallback
+to a host-native agent or an `opencode run` shell-out. The frontier query,
+fan-out loop, and settle stay conductor-owned; this subsection only replaces
+the conductor's delegate dispatch, not its scheduling.
+
 ## Implement one task
 
 The discipline an implementer agent, or a developer working a single issue

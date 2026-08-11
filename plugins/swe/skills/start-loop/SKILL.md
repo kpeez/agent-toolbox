@@ -188,9 +188,9 @@ board reads "backlog" for the whole run while agents are actively working it.
 **No Workflow tool on this host** (per ADR-0006) → say so
 and fall back to the manual orchestration in `/implement`. That manual path calls the three plugin-delivered
 OpenCode delegate tools directly for read-only exploration, one bounded write
-assignment per changeset, and final read-only assembled-diff review. Name the
-fallback; never improvise a substitute conductor or silently replace a failed
-delegation with a host-native agent or shell command.
+assignment per changeset, and a final review-mode assembled-diff review. Name
+the fallback; never improvise a substitute conductor or silently replace a
+failed delegation with a host-native agent or shell command.
 
 ## Resume (given a slug or path)
 

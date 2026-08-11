@@ -43,8 +43,10 @@ CHANGE_BRANCH_RE = re.compile(r"^(?:knack/)?(?:slice|batch|change)/(?P<slug>.+)$
 # One branch carries a whole changeset of tasks, so every identifier in the name
 # counts as merged -- not just a name that is exactly change/<identifier>.
 # slice/ and batch/ are still accepted: they are what runs started
-# before the rename use.
-IDENTIFIER_RE = re.compile(r"[A-Z][A-Z0-9]*-\d+")
+# before the rename use. GitHub issues are identified as `#<number>` (see
+# GithubBackend.fetch_container_issues), so a branch slug carrying `#11` must
+# match too, or a merged GitHub task's branch is never recognised as done.
+IDENTIFIER_RE = re.compile(r"[A-Z][A-Z0-9]*-\d+|#\d+")
 # Stack numbering is dense by construction (the conductor only opens stack/<n>
 # once stack/<n-1> landed a changeset) and each stack branch contains every one
 # below it, so the highest number IS the tip of the run's work.
@@ -197,7 +199,7 @@ class GithubBackend:
                 "inverseRelations": {"nodes": []},
                 "changeset": "",
             }
-            for blocked_number in blocked_by_numbers(issue["body"]):
+            for blocked_number in blocked_by_numbers(issue["body"], f"#{number}"):
                 blocker = by_number.get(blocked_number)
                 if blocker is None:
                     blocker = {
@@ -288,11 +290,21 @@ BLOCKED_BY_SECTION_RE = re.compile(
     re.MULTILINE | re.DOTALL,
 )
 ISSUE_NUMBER_RE = re.compile(r"#(?P<number>\d+)")
+NO_BLOCKERS_RE = re.compile(r"None", re.IGNORECASE)
 
 
-def blocked_by_numbers(body: str) -> list[str]:
+def blocked_by_numbers(body: str, issue_label: str = "issue") -> list[str]:
     match = BLOCKED_BY_SECTION_RE.search(body)
-    return ISSUE_NUMBER_RE.findall(match.group("body")) if match else []
+    if not match:
+        return []
+    section = match.group("body")
+    numbers = ISSUE_NUMBER_RE.findall(section)
+    if numbers or NO_BLOCKERS_RE.search(section):
+        return numbers
+    raise TrackerError(
+        f"{issue_label}: '## Blocked by' section has neither '#<number>' references "
+        "nor a 'None' marker; refusing to report it workable"
+    )
 
 
 def run_git(args: list[str]) -> str:
