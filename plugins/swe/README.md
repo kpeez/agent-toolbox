@@ -23,8 +23,9 @@ plugins/swe/
 │   ├── linear_tracker.py      # Linear via the `linear` CLI: workable set, container link, status sync
 │   └── validate_artifacts.py  # shape checks for specs and issues before publish
 └── hooks/
-    ├── hooks.json                       # event wiring for the two hooks below
+    ├── hooks.json                       # event wiring for the Claude-session hooks
     ├── symlink-worktree-shared-dirs.sh  # link gitignored local dirs into worktrees
+    ├── git-hooks-dispatch.sh            # global git hook: same linking for non-Claude worktrees
     └── format-python.sh                 # format + lint .py files after Write/Edit
 ```
 
@@ -377,13 +378,21 @@ into the target repo.
 
 ## Hooks
 
-`hooks/hooks.json` registers two hooks:
+`hooks/hooks.json` registers the session hooks; `git-hooks-dispatch.sh` ships
+alongside them but installs through git:
 
 - **`symlink-worktree-shared-dirs.sh`** — on SessionStart, SubagentStart, and
   PostToolUse:EnterWorktree, links the main checkout's gitignored `artifacts`,
-  `data`, and `docs/agents` into the current git worktree, so agents there use
-  relative paths instead of climbing back out to the main checkout. Refuses to
-  link anything git would track.
+  `data`, `docs/agents`, and `runs` into the current git worktree, so agents
+  there use relative paths instead of climbing back out to the main checkout.
+  Refuses to link anything git would track.
+- **`git-hooks-dispatch.sh`** — not registered in `hooks.json`: it is a git
+  hook, symlinked by `scripts/install.sh` under every client-side hook name in
+  `~/.config/git/hooks` (global `core.hooksPath`). It re-runs the repo's own
+  `.git/hooks/<name>` (pre-commit, git-lfs — hidden wholesale by
+  `core.hooksPath`), then on post-checkout runs the linker above, so worktrees
+  created outside a Claude session (Codex, plain `git worktree add`) get the
+  same links.
 - **`format-python.sh`** — after any Write/Edit that touches a `.py` file,
   formats and lints it. It no-ops silently unless the file lives in a uv/ruff
   project, so it stays inert for repos that have not opted into that toolchain.
