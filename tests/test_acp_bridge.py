@@ -393,6 +393,24 @@ def lifecycle_bridge(tmp_path: Path):
     client.close()
 
 
+@pytest.fixture
+def lifecycle_bridges(tmp_path: Path):
+    opened: list[BridgeClient] = []
+
+    def open_bridge(options: list[str]) -> BridgeClient:
+        client = BridgeClient(
+            tmp_path,
+            options=options,
+            agent_command=[sys.executable, "-u", "-c", LIFECYCLE_AGENT],
+        )
+        opened.append(client)
+        return client
+
+    yield open_bridge
+    for client in opened:
+        client.close()
+
+
 def wait_for_sessions(tmp_path: Path, count: int) -> list[Path]:
     deadline = time.monotonic() + 5
     while time.monotonic() < deadline:
@@ -557,6 +575,71 @@ def test_cancelling_a_tool_call_stops_and_forgets_its_acp_session(
         sessionId=pid_path.stem,
     )
     assert "is not open" in continuation["content"][0]["text"]
+
+
+def test_a_hung_turn_times_out_with_a_named_error(lifecycle_bridges, tmp_path: Path) -> None:
+    client = lifecycle_bridges(["--turn-timeout", "0.05"])
+    request_id = client.start_delegate(
+        task=directive(block=True), mode="read-only", cwd=str(tmp_path)
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+
+    result = client.receive(request_id)["result"]
+
+    error_text = result["content"][0]["text"]
+    assert result["isError"] is True
+    assert "TurnTimeout" in error_text
+    assert "0.05" in error_text
+    assert_process_stopped(pid_path)
+
+
+def test_a_timed_out_compliant_agent_keeps_its_session(lifecycle_bridges, tmp_path: Path) -> None:
+    client = lifecycle_bridges(["--turn-timeout", "0.05"])
+    request_id = client.start_delegate(
+        task=directive(cancellable=True, partial_reply="partial answer"),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+    wait_for_ready_session(tmp_path)
+
+    result = client.receive(request_id)["result"]
+
+    error_text = result["content"][0]["text"]
+    session_id = pid_path.stem
+    assert result["isError"] is True
+    assert "TurnTimeout" in error_text
+    assert "0.05" in error_text
+    assert session_id == pid_path.stem
+    assert session_id in error_text
+    continuation = client.delegate(
+        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+    )
+    assert continuation["content"][0]["text"] == "still alive"
+
+
+def test_the_timeout_timer_is_disarmed_when_the_turn_completes(
+    lifecycle_bridges, tmp_path: Path
+) -> None:
+    client = lifecycle_bridges(["--turn-timeout", "0.05"])
+    first = client.delegate(
+        task=directive(reply="complete"), mode="read-only", cwd=str(tmp_path)
+    )
+    session_id = first["structuredContent"]["sessionId"]
+    time.sleep(0.15)
+
+    continuation = client.delegate(
+        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+    )
+
+    assert continuation["content"][0]["text"] == "still alive"
+
+
+@pytest.mark.parametrize("value", ["not-a-number", "0", "-1"])
+def test_a_bad_turn_timeout_is_a_usage_error(value: str, capsys: pytest.CaptureFixture) -> None:
+    assert acp_bridge.main(["--turn-timeout", value]) == 2
+
+    assert "usage:" in capsys.readouterr().err
 
 
 def test_child_exit_stops_the_wait_and_forgets_the_session(
