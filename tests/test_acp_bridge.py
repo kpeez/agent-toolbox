@@ -828,15 +828,64 @@ def test_server_shutdown_stops_retained_acp_sessions(
         assert_process_stopped(pid_path)
 
 
-def test_an_unknown_session_is_an_error_the_caller_can_see(
+def test_an_unknown_session_is_loaded_when_the_agent_supports_it(
     bridge: BridgeClient, tmp_path: Path
 ) -> None:
     result = bridge.delegate(
-        task=directive(reply="hi"), mode="read-only", sessionId="never-opened"
+        task=directive(reply="loaded"), mode="read-only", sessionId="fake-session-1"
+    )
+
+    assert result["content"][0]["text"] == "loaded"
+    assert "replayed history" not in result["content"][0]["text"]
+    assert "replayed history" not in bridge.progress
+    session_id = result["structuredContent"]["sessionId"]
+    continuation = bridge.delegate(
+        task=directive(reply="continued"), mode="read-only", sessionId=session_id
+    )
+    assert continuation["content"][0]["text"] == "continued"
+
+
+def test_load_is_refused_when_the_capability_is_absent(bridges, tmp_path: Path) -> None:
+    client = bridges([], ["--no-load-session"])
+
+    result = client.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        sessionId="fake-session-1",
     )
 
     assert result["isError"] is True
-    assert "never-opened" in result["content"][0]["text"]
+    assert "fake-session-1 is not open on this bridge" in result["content"][0]["text"]
+
+
+def test_a_loaded_session_gets_the_model_pin_and_mode_selection(bridges, tmp_path: Path) -> None:
+    client = bridges(
+        ["--model", "go/luna", "--effort", "max", "--read-only-mode", "plan"],
+        OPENCODE_LIKE,
+    )
+
+    result = client.delegate(
+        task=directive(reply="", echo_config=True),
+        mode="read-only",
+        sessionId="fake-session-1",
+    )
+
+    assert result["content"][0]["text"] == "config=model=go/luna|effort=max|mode=plan"
+
+
+def test_a_failed_load_surfaces_the_agents_error(bridges, tmp_path: Path) -> None:
+    client = bridges([], OPENCODE_LIKE)
+
+    result = client.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        sessionId="never-opened",
+    )
+
+    assert result["isError"] is True
+    assert "session/load failed" in result["content"][0]["text"]
+    assert "unknown session: never-opened" in result["content"][0]["text"]
+    assert_process_stopped(tmp_path / "fake-agent.pid")
 
 
 def test_an_unknown_mode_is_rejected_before_the_agent_runs(
