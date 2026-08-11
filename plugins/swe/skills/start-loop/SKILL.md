@@ -52,9 +52,6 @@ names a resolver command, run it and act on its exit code:
   conventions, then record it on the spec (`--set <id>`, or the reference's
   equivalent) so later runs resolve it directly.
 
-Specs published before this convention resolve through a legacy body token and
-backfill their own frontmatter on first touch.
-
 ## 2. Triage — the conditional gate policy
 
 Evaluate all four criteria. The **decision** goes in the spec's frontmatter as
@@ -130,10 +127,10 @@ The conductor lives at the plugin root as `workflows/swe-loop.js`, so Claude
 Code also registers it as the named plugin workflow `/swe:swe-loop`. Launch it
 by invoking the **Workflow** tool with scriptPath
 `${CLAUDE_PLUGIN_ROOT}/workflows/swe-loop.js` and args exactly
-`{specPath, slug, containerId, baseBranch, scriptsDir, specText}` — the spec's
+`{specPath, slug, containerId, baseBranch, scriptsDir, specText, tracker}` — the spec's
 path, its slug, the container from step 1, the branch the run integrates into
 and ships from (if you are on the default branch, create the feature branch
-first and pass that), `scriptsDir`, and `specText`.
+first and pass that), `scriptsDir`, the spec's `tracker:` value, and `specText`.
 
 `specText` is the spec file's **entire text**, read verbatim. Read `specPath`
 and pass what you read; never summarise it, and never pass a path in its place.
@@ -152,15 +149,9 @@ repo does not contain them; their shells do not define `CLAUDE_PLUGIN_ROOT`,
 so passing the literal `${CLAUDE_PLUGIN_ROOT}/scripts` string fails every
 run that needs one. The conductor rejects a non-absolute value outright.
 
-Optional `workableCmd` makes the loop's workable query deterministic. You have
-already resolved the repo's tracker (step 1), so read that tracker's
-`to-issues` reference: if its "swe-loop workable set" section names a command to
-run, expand every placeholder in it with the values you are already passing
-(`scriptsDir`, `containerId`, `baseBranch`, …) and pass the finished command
-string as `workableCmd`. If the section names no command, omit the argument
-entirely — the conductor then keeps its reference-driven query, unchanged.
-Never invent a command the reference does not name, and never pass an
-unexpanded placeholder: the conductor runs the string verbatim.
+The conductor constructs the workable and settle commands from `tracker`,
+`scriptsDir`, `containerId`, and `baseBranch`; do not pass a command string or
+ask an agent to infer one from tracker documentation.
 
 Optional `roles` overrides the conductor's default provider routing. By default
 `implementer` and `reviewer` run on OpenCode Go and everything else stays on
@@ -189,8 +180,7 @@ resuming this run has no other way to recover which branch it integrates into,
 and frontmatter keeps it machine-readable instead of buried in a comment.
 
 **No Workflow tool on this host** (per ADR-0006) → say so
-and fall back to the manual orchestration in `/implement`'s "Orchestrate the
-fan-out" section. That manual path calls the three plugin-delivered
+and fall back to the manual orchestration in `/implement`. That manual path calls the three plugin-delivered
 OpenCode delegate tools directly for read-only exploration, one bounded write
 assignment per changeset, and final read-only assembled-diff review. Name the
 fallback; never improvise a substitute conductor or silently replace a failed
@@ -198,7 +188,8 @@ delegation with a host-native agent or shell command.
 
 ## Resume (given a slug or path)
 
-Read the tracker first (container marker search above), then the spec.
+Read the spec's `tracker:` and `tracker_container:` frontmatter first, then the
+matching tracker reference and the spec.
 
 **Triage is not re-run when it already has a verdict.** Read the spec's
 `execution_mode` frontmatter; if it is set, that verdict stands for the whole

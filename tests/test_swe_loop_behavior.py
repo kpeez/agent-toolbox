@@ -25,6 +25,7 @@ LAUNCH_ARGS = {
     "containerId": "container-1",
     "baseBranch": "worktree-stub",
     "scriptsDir": "/opt/swe/scripts",
+    "tracker": "linear",
     "specText": "# Stub spec\n\nB1 - the stubbed behavior.",
 }
 
@@ -346,8 +347,7 @@ def test_one_settle_agent_merges_and_marks_the_whole_round(tmp_path: Path) -> No
     assert result["summary"]["tasksCompleted"] == ["KP-1", "KP-2", "KP-3"]
 
     prompt = call_with_label(result, "settle:implement:1")["prompt"]
-    for n in (1, 2, 3):
-        assert f"change/KP-{n} → stack branch" in prompt
+    assert "tracker.py settle --tracker linear --plan -" in prompt
 
 
 def test_an_unmerged_slice_escalates_while_the_round_continues(
@@ -655,7 +655,7 @@ def test_the_run_reviews_the_assembled_work_once_not_per_task(
     assert [label for label in labels(result) if label.startswith("spec-review")] == []
 
 
-# ---- workableCmd launch arg -------------------------------------------------
+# ---- tracker command launch arg ----------------------------------------------
 
 
 SCRIPTS_DIR = "/opt/plugins/swe/scripts"
@@ -666,6 +666,7 @@ WORKABLE_CMD_ARGS = {
     "containerId": CONTAINER_ID,
     "baseBranch": "integration",
     "scriptsDir": SCRIPTS_DIR,
+    "tracker": "linear",
 }
 # A workable-query failure stops the loop after one round, which is all these tests
 # need: the prompt the conductor emitted before asking.
@@ -680,29 +681,18 @@ def workable_prompt(transcript: dict[str, Any]) -> str:
     )
 
 
-def test_workable_cmd_appears_verbatim_and_absence_keeps_reference_prompt(
+def test_workable_command_is_constructed_from_tracker_args(
     tmp_path: Path,
 ) -> None:
+    with_cmd = workable_prompt(run_loop(tmp_path, WORKABLE_FAILS, args=WORKABLE_CMD_ARGS))
     command = (
-        f"uv run {SCRIPTS_DIR}/linear_tracker.py workable --container {CONTAINER_ID}"
+        f"uv run {SCRIPTS_DIR}/tracker.py workable --tracker linear --container "
+        f"{CONTAINER_ID} --merged-into integration"
     )
-
-    with_cmd = workable_prompt(
-        run_loop(
-            tmp_path,
-            WORKABLE_FAILS,
-            args={**WORKABLE_CMD_ARGS, "workableCmd": command},
-        )
-    )
-    # Verbatim, on its own line, and the agent is forbidden to improvise.
     assert f"\n    {command}\n" in with_cmd
     assert "construct no other query" in with_cmd
-    assert "improvised tracker calls" in with_cmd
-    # The command applies the marker rules itself, so the agent returns its
-    # output rather than re-reading every issue's comments — one Bash call a
-    # round instead of a comment query per issue.
-    assert "Do not read\ntracker comments" in with_cmd
-    assert "return them unchanged" in with_cmd
+    assert "tracker comments" in with_cmd
+    assert "Return each entry unchanged" in with_cmd
 
 
 # ---- dependency stack become a stacked pull request -------------------------
@@ -772,8 +762,7 @@ def test_a_single_changeset_run_settles_and_ships_exactly_as_before(
     result = run_stack(tmp_path, 1)
 
     settle = call_with_label(result, "settle:implement:1")["prompt"]
-    assert "stack branch worktree-stub" in settle
-    assert "created from" not in settle
+    assert "tracker.py settle --tracker linear --plan -" in settle
     # One changeset is not a stack: the run must not reach for gh stack at all.
     ship = call_with_label(result, "ship:stub-run")["prompt"]
     assert "gh stack link" not in ship
@@ -788,9 +777,9 @@ def test_a_later_round_settles_onto_a_stack_branch_above_the_one_below(
     second = call_with_label(result, "settle:implement:2")["prompt"]
     # Cutting the changeset from the changeset below is what makes it contain every layer
     # underneath, which the PR base chaining depends on.
-    assert "stack branch stack/2, created from worktree-stub" in second
+    assert "tracker.py settle --tracker linear --plan -" in second
     third = call_with_label(result, "settle:implement:3")["prompt"]
-    assert "stack branch stack/3, created from stack/2" in third
+    assert "tracker.py settle --tracker linear --plan -" in third
 
 
 def test_implementers_branch_from_the_current_stack_tip(tmp_path: Path) -> None:
@@ -824,7 +813,7 @@ def test_stack_branches_left_by_an_earlier_session_are_adopted_before_settling(
     result = run_stack(tmp_path, 1, first_workable={"topStackBranch": "stack/3"}, stack=["stack/4"])
 
     settle = call_with_label(result, "settle:implement:1")["prompt"]
-    assert "stack branch stack/4, created from stack/3" in settle
+    assert "tracker.py settle --tracker linear --plan -" in settle
     ship = call_with_label(result, "ship:stub-run")["prompt"]
     assert "1. worktree-stub\n2. stack/2\n3. stack/3\n4. stack/4" in ship
 
@@ -934,8 +923,7 @@ def test_each_changeset_lands_on_its_own_stack_branch_within_one_round(
     # Two changesets unblocked at the same moment are still two stories, so one
     # round produces two stacked pull requests rather than one mixed diff.
     settle = call_with_label(result, "settle:implement:1")["prompt"]
-    assert "stack branch worktree-stub" in settle
-    assert "stack branch stack/2, created from worktree-stub" in settle
+    assert "tracker.py settle --tracker linear --plan -" in settle
     ship = call_with_label(result, "ship:stub-run")["prompt"]
     assert "1. worktree-stub\n2. stack/2" in ship
 
@@ -1217,8 +1205,7 @@ def test_the_workable_query_looks_for_the_branches_the_loop_actually_creates(
     result = run_loop(tmp_path, [{"match": "^workable:", "result": {"issues": []}}])
     prompt = prompt_for(result, "workable:")
 
-    assert "begins with change/" in prompt
-    assert "task/" not in prompt
+    assert "tracker.py workable" in prompt
 
 
 def test_a_round_spends_no_agent_on_tracker_state_before_the_merge(

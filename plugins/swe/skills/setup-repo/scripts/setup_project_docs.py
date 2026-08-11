@@ -12,9 +12,6 @@ from pathlib import Path
 
 
 AGENTS_LINK = "docs/agents"
-# Paths the pre-docs/agents layout created; each was always a symlink we now retire.
-STALE_LINKS = ("docs/specs", "docs/adrs", "specs", "adrs")
-RETIRED_IGNORES = ("specs", "adrs", "docs/specs", "docs/adrs", "docs/adr")
 
 
 @dataclass(frozen=True)
@@ -80,7 +77,7 @@ def walk(source: Path) -> list[tuple[Path, str]]:
 
 
 def desired_gitignore(original: str) -> str:
-    lines = [line for line in original.splitlines() if line not in RETIRED_IGNORES]
+    lines = original.splitlines()
     if AGENTS_LINK not in lines:
         lines.append(AGENTS_LINK)
     return "\n".join(lines) + "\n"
@@ -140,16 +137,8 @@ def preflight(
             f"{agents}: expected a symlink or an absent path, found {entry_type(agents)}"
         )
 
-    stale = [repo / path for path in STALE_LINKS]
-    for path in stale:
-        if exists(path) and not path.is_symlink():
-            collisions.append(
-                f"{path}: retired layout path must be a symlink or absent, "
-                f"found {entry_type(path)}"
-            )
-
     legacy_repo_adr = repo / "docs/adr"
-    for path in (agents, *stale, legacy_repo_adr):
+    for path in (agents, legacy_repo_adr):
         owner = linked_project(path, llmos)
         if owner and owner != project:
             collisions.append(
@@ -261,11 +250,8 @@ def establish_topology(
         for migration in migrations:
             migrate(migration.source, migration.destination)
 
-    # Retired links are unlinked, never followed: their targets may hold content
-    # that is not ours to touch.
-    for path in (repo / name for name in (*STALE_LINKS, "docs/adr")):
-        if path.is_symlink():
-            path.unlink()
+    if (repo / "docs/adr").is_symlink():
+        (repo / "docs/adr").unlink()
 
     (repo / "docs").mkdir(parents=True, exist_ok=True)
     ensure_link(repo / AGENTS_LINK, str(canonical_root))

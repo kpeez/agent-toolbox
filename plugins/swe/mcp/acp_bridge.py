@@ -48,27 +48,18 @@ SERVER_NAME = "acp-bridge"
 # unsafe.
 READ_ONLY_KINDS = frozenset({"read", "search", "fetch", "think"})
 
-MODES = ("read-only", "write")
+MODES = ("read-only", "review", "write")
 
-ACP_STDERR_OBSERVATION_BYTES = 4096
+ACP_STDERR_TAIL_BYTES = 4096
 ACP_STDERR_READ_BYTES = 1024
 CANCEL_GRACE_SECONDS = 2.0
 MESSAGE_PROGRESS_INTERVAL = 200
-ACP_STDERR_CATEGORIES: dict[str, tuple[bytes, ...]] = {
-    "authentication": (b"authentication", b"unauthorized", b"api key"),
-    "network": (b"connection", b"network", b"dns", b"timed out"),
-    "model": (b"model not found", b"unknown model", b"invalid model"),
-    "rate-limit": (b"rate limit", b"rate-limit", b"too many requests", b"429"),
-}
-ACP_STDERR_PATTERN_OVERLAP = max(
-    len(pattern) for patterns in ACP_STDERR_CATEGORIES.values() for pattern in patterns
-) - 1
 
 # Leading argv flags, ahead of the ACP agent's own command line. `--model` and
 # `--effort` pin a server to one model so the caller cannot pick another: model
 # policy then lives in the .mcp.json entry, not in a prompt some model has to
 # obey. `--read-only-mode` names the agent's own read-only session mode.
-BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode", "--turn-timeout")
+BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode", "--mode", "--turn-timeout")
 
 DELEGATE_TOOL: dict[str, Any] = {
     "name": "delegate",
@@ -244,6 +235,7 @@ def permission_outcome(
     """Answer one ACP `session/request_permission` without asking a human.
 
     read-only: only non-mutating tool kinds pass.
+    review: non-mutating tool kinds and execute pass.
     write: read-only kinds pass regardless of location; remaining kinds pass
     when every named location is inside the workspace. A tool call naming no
     location (a shell command, say) is allowed in write mode -- ACP does not
@@ -256,6 +248,8 @@ def permission_outcome(
     kind = tool_call.get("kind", "other")
     if mode == "read-only":
         return select_option(options, allow=kind in READ_ONLY_KINDS)
+    if mode == "review":
+        return select_option(options, allow=kind in READ_ONLY_KINDS or kind == "execute")
     if kind in READ_ONLY_KINDS:
         return select_option(options, allow=True)
 
@@ -315,8 +309,7 @@ class AcpSession:
         self._stderr_lock = threading.Lock()
         self._stderr_closed = threading.Event()
         self._stderr_bytes = 0
-        self._stderr_observed_bytes = 0
-        self._stderr_categories: set[str] = set()
+        self._stderr_tail = bytearray()
         self._inbox: queue.Queue[dict[str, Any]] = queue.Queue()
         self._reader = threading.Thread(target=self._read_frames, daemon=True)
         self._stderr_reader = threading.Thread(target=self._read_stderr, daemon=True)
@@ -339,31 +332,18 @@ class AcpSession:
             self._inbox.put({"__closed__": True})
 
     def _read_stderr(self) -> None:
-        """Drain stderr and retain only bounded, allowlisted accounting."""
-        overlap = bytearray()
+        """Drain stderr and retain only a bounded raw tail."""
         try:
             assert self.process.stderr is not None
             while chunk := os.read(self.process.stderr.fileno(), ACP_STDERR_READ_BYTES):
                 with self._stderr_lock:
                     self._stderr_bytes += len(chunk)
-                    remaining = max(
-                        0, ACP_STDERR_OBSERVATION_BYTES - self._stderr_observed_bytes
-                    )
-                    observed = chunk[:remaining]
-                    self._stderr_observed_bytes += len(observed)
-                    if observed:
-                        scan = bytes(overlap) + observed.lower()
-                        for category, patterns in ACP_STDERR_CATEGORIES.items():
-                            if any(pattern in scan for pattern in patterns):
-                                self._stderr_categories.add(category)
-                        overlap.clear()
-                        overlap.extend(scan[-ACP_STDERR_PATTERN_OVERLAP:])
-                    if remaining <= len(chunk):
-                        overlap.clear()
+                    self._stderr_tail.extend(chunk)
+                    if len(self._stderr_tail) > ACP_STDERR_TAIL_BYTES:
+                        del self._stderr_tail[:-ACP_STDERR_TAIL_BYTES]
         except OSError:
             pass
         finally:
-            overlap.clear()
             self._stderr_closed.set()
 
     def enrich_request_error(self, error: AcpRequestError) -> AcpRequestError:
@@ -371,13 +351,15 @@ class AcpSession:
         self._stderr_closed.wait()
         with self._stderr_lock:
             byte_count = self._stderr_bytes
-            is_truncated = self._stderr_bytes > ACP_STDERR_OBSERVATION_BYTES
-            categories = sorted(self._stderr_categories)
-        fields = [f"bytes={byte_count}", f"truncated={str(is_truncated).lower()}"]
+            stderr_tail = bytes(self._stderr_tail).decode(errors="replace")
+            is_truncated = self._stderr_bytes > ACP_STDERR_TAIL_BYTES
+        fields = [
+            f"bytes={byte_count}",
+            f"truncated={str(is_truncated).lower()}",
+            f"tail={stderr_tail}",
+        ]
         if error.exit_code is not None:
             fields.append(f"exitCode={error.exit_code}")
-        if categories:
-            fields.append(f"categories={','.join(categories)}")
         metadata = "; ".join(fields)
         return AcpRequestError(f"{error}\n\nACP stderr metadata: {metadata}", error.exit_code)
 
@@ -626,9 +608,11 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     "the run was blocked", and acts on the emptiness either way.
     """
     answer = streamed.strip()
-    if answer and (mode != "write" or not denied):
+    has_execute_denial = any(call.split(":", 1)[0] == "execute" for call in denied)
+    should_report_denials = mode == "write" or has_execute_denial
+    if answer and not (denied and should_report_denials):
         return answer
-    if denied:
+    if denied and should_report_denials:
         blocked = "; ".join(denied)
         remedy = (
             "Re-dispatch with mode='write' if this task is meant to change files."
@@ -662,12 +646,16 @@ class Bridge:
         model: str | None = None,
         effort: str | None = None,
         read_only_mode: str | None = None,
+        mode: str | None = None,
         turn_timeout: float | None = None,
     ) -> None:
+        if mode is not None and mode not in MODES:
+            raise ValueError(f"unknown mode {mode!r}; expected one of {MODES}")
         self.command = command
         self.model = model
         self.effort = effort
         self.read_only_mode = read_only_mode
+        self.mode = mode
         self.turn_timeout = turn_timeout
         self.tool = delegate_tool(model)
         self.sessions: dict[str, AcpSession] = {}
@@ -803,11 +791,34 @@ class Bridge:
             {"sessionId": session_id, "configId": "mode", "value": target},
         )
 
+    def session_for_call(
+        self, arguments: dict[str, Any], active_call: ActiveCall
+    ) -> tuple[AcpSession, str]:
+        session_id = arguments.get("sessionId")
+        if session_id:
+            with self._lock:
+                session = self.sessions.get(session_id)
+            if session is not None:
+                active_call.attach(session, session_id)
+                return session, session_id
+
+        cwd = arguments.get("cwd") or os.getcwd()
+        if not Path(cwd).is_dir():
+            raise ValueError(f"cwd {cwd!r} is not a directory")
+        session, opened_session_id = self.open_session(cwd, active_call, session_id)
+        if self.model:
+            self.select_model(session, opened_session_id, self.model, self.effort)
+        return session, opened_session_id
+
     def delegate(
         self, arguments: dict[str, Any], report: Any, active_call: ActiveCall
     ) -> dict[str, Any]:
         task = arguments["task"]
         mode = arguments["mode"]
+        if self.mode is not None and mode != self.mode:
+            raise ValueError(
+                f"this server is pinned to mode {self.mode}; requested mode was {mode}"
+            )
         if mode not in MODES:
             raise ValueError(f"unknown mode {mode!r}; expected one of {MODES}")
         if self.model and (arguments.get("model") or arguments.get("effort")):
@@ -821,25 +832,7 @@ class Bridge:
         session_id = arguments.get("sessionId")
         try:
             active_call.raise_if_cancelled()
-            if session_id:
-                with self._lock:
-                    session = self.sessions.get(session_id)
-                if session is None:
-                    cwd = arguments.get("cwd") or os.getcwd()
-                    if not Path(cwd).is_dir():
-                        raise ValueError(f"cwd {cwd!r} is not a directory")
-                    session, session_id = self.open_session(cwd, active_call, session_id)
-                    if self.model:
-                        self.select_model(session, session_id, self.model, self.effort)
-                else:
-                    active_call.attach(session, session_id)
-            else:
-                cwd = arguments.get("cwd") or os.getcwd()
-                if not Path(cwd).is_dir():
-                    raise ValueError(f"cwd {cwd!r} is not a directory")
-                session, session_id = self.open_session(cwd, active_call)
-                if self.model:
-                    self.select_model(session, session_id, self.model, self.effort)
+            session, session_id = self.session_for_call(arguments, active_call)
 
             if model := arguments.get("model"):
                 self.select_model(session, session_id, model, arguments.get("effort"))
@@ -1028,6 +1021,7 @@ def main(argv: list[str]) -> int:
             model=options.get("model"),
             effort=options.get("effort"),
             read_only_mode=options.get("read_only_mode"),
+            mode=options.get("mode"),
             turn_timeout=turn_timeout,
         )
     )

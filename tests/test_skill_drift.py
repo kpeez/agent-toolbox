@@ -218,18 +218,11 @@ def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
     assert referenced == {f"plugin_swe_{server}" for server in servers}
 
 
-def test_swe_loop_stays_tracker_agnostic() -> None:
-    # Tracker mechanics live in the to-issues tracker references
-    # (references/issue-tracker-*.md); the loop's runner skill and conductor
-    # dispatch through them at runtime and never name a tracker themselves.
-    start_loop = ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
-    offenders = [
-        (path.name, match)
-        for path in (SWE_LOOP, start_loop)
-        for match in re.findall(r"linear|github", path.read_text(), re.IGNORECASE)
-    ]
-
-    assert offenders == []
+def test_swe_loop_constructs_tracker_commands_from_the_tracker_arg() -> None:
+    text = SWE_LOOP.read_text()
+    assert "REQUIRED_ARGS" in text
+    assert "['linear', 'github']" in text
+    assert "tracker.py workable --tracker ${tracker}" in text
 
 
 def test_swe_hooks_register_worktree_link_script() -> None:
@@ -499,10 +492,12 @@ def test_opencode_runs_through_the_generic_acp_bridge() -> None:
 
 
 def test_every_opencode_server_enforces_read_only_through_opencodes_own_mode() -> None:
-    """OpenCode auto-approves in-workspace edits without asking the bridge, so a
-    server that forgets this flag serves read-only delegations that can write."""
+    """Non-review servers protect OpenCode's session; review pins bridge policy."""
     for name, args in opencode_servers().items():
-        assert args[args.index("--read-only-mode") + 1] == "plan", name
+        if name == "opencode-reviewer":
+            assert args[args.index("--mode") + 1] == "review", name
+        else:
+            assert args[args.index("--read-only-mode") + 1] == "plan", name
 
 
 def test_opencode_role_models_are_the_documented_policy() -> None:
@@ -623,16 +618,6 @@ def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
     to_issues = (skills / "to-issues" / "SKILL.md").read_text()
     start_loop = (skills / "start-loop" / "SKILL.md").read_text()
 
-    assert "mcp__plugin_swe_opencode-explorer__delegate" in implement
-    assert "mcp__plugin_swe_opencode-implementer__delegate" in implement
-    assert "mcp__plugin_swe_opencode-reviewer__delegate" in implement
+    assert "The conductor owns the frontier query, fan-out, and settle" in implement
     assert "mcp__plugin_swe_opencode-explorer__delegate" in to_issues
-    assert 'mode: "write"' in implement
-    assert implement.count('mode: "read-only"') >= 2
-    assert "cwd" in implement
     assert "manual orchestration in `/implement`" in start_loop
-
-    assert "swe:opencode-explorer" in implement
-    assert "swe:opencode-implementer" in implement
-    assert "swe:opencode-reviewer" in implement
-    assert "silent fallback" in implement

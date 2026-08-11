@@ -43,45 +43,23 @@ the MCP is absent.
   (PR bodies, commits, comments). The private side references the public side,
   never the reverse.
 
-## swe-loop workable set
+## swe-loop integration
 
-The loop's workable query is deterministic here. From the repo root run
-
-    uv run <scriptsDir>/linear_tracker.py workable --container <containerId> --merged-into <baseBranch>
-
-(the conductor's prompt supplies all three values). It prints a JSON array of
-`{id, identifier, title, labels, changeset}` and exits non-zero on a failed
-`linear` call — report a non-zero exit as a query failure, never as an empty
-result. `changeset` is the task's **project milestone** (`''` when it has none).
-File every task belonging to one reviewable story on one milestone: the loop
-hands a whole changeset to one implementer and publishes it as one pull request.
-
-**The output is final.** The script applies the workability rules itself:
-closed or already-merged issues are dropped, a merged issue counts as a
-satisfied blocker, and `ready-for-human` is excluded. Consume the array as-is;
-re-reading the tracker on top of it is wasted work.
-
-"Already merged" is read from git, not from tracker state (which does not
-advance until the run's PR lands): the script scans `git branch --merged
-<tip>` for `change/…` branches carrying issue identifiers, where `<tip>` is
-the highest-numbered `stack/<n>` branch when the run has stacked changesets
-and `<baseBranch>` otherwise — mid-stack, changesets merge onto stack
-branches, never back into the base branch.
+The conductor invokes the installed `tracker.py` script for workable queries,
+passing the resolved tracker, container, and integration branch. This reference
+defines the tracker semantics; it does not own a command string.
 
 ## Container identity
 
 A spec records its Linear project in its own YAML frontmatter
 (`tracker: linear`, `tracker_container: <project id>`). Resolve it with
 
-    uv run <scriptsDir>/linear_tracker.py container --spec <specPath>
+    uv run <scriptsDir>/tracker.py container --spec <specPath>
 
 Exit 0 prints the id; exit 2 means the spec names a project that no longer
 exists (stop — never create a second one); exit 3 means no container exists yet
-and the caller may create one, then record it with `--set <id>`. Containers
-created before this convention carry a `<!-- knack-spec: ... -->` token in their
-body; the resolver still reads it and backfills the frontmatter, but nothing
-writes new ones. Give a new project a plain `Spec: <specPath>` line in its
-description for humans — never a machine-parsed token.
+and the caller may create one, then record it with `--set <id>`. Give a new
+project a plain `Spec: <specPath>` line in its description for humans.
 
 ## State transitions
 
@@ -91,7 +69,7 @@ rather than the state work started in:
 - task merged into the integration branch: `linear issue update <identifier> --state "In Review"`
 - end of run:
 
-      uv run <scriptsDir>/linear_tracker.py sync --container <containerId> --merged-into <baseBranch>
+      uv run <scriptsDir>/tracker.py sync --tracker linear --container <containerId> --merged-into <baseBranch>
 
   promotes every issue whose `change/` branch is merged into `<baseBranch>` to
   "In Review", then promotes a project still reading backlog/planned while its
