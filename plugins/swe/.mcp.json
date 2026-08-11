@@ -24,8 +24,8 @@
         "opencode-go/gpt-5.6-luna",
         "--effort",
         "high",
-        "--read-only-mode",
-        "plan",
+        "--write-mode",
+        "build",
         "opencode",
         "acp"
       ],

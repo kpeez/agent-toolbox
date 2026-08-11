@@ -65,7 +65,10 @@ def opencode_args(role: dict[str, Any], bridge: str) -> list[str]:
         args.extend(["--read-only-mode", "plan"])
     elif pin["mode"] == "review":
         args.extend(["--mode", "review"])
-    elif pin["mode"] != "write":
+    elif pin["mode"] == "write":
+        if write_mode := pin.get("write_mode"):
+            args.extend(["--write-mode", write_mode])
+    else:
         raise ValueError(f"unknown OpenCode mode: {pin['mode']}")
     args.extend(["opencode", "acp"])
     return args

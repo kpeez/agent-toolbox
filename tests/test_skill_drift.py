@@ -491,11 +491,13 @@ def test_opencode_runs_through_the_generic_acp_bridge() -> None:
         assert args[-2:] == ["opencode", "acp"], name
 
 
-def test_every_opencode_server_enforces_read_only_through_opencodes_own_mode() -> None:
-    """Non-review servers protect OpenCode's session; review pins bridge policy."""
+def test_every_opencode_server_pins_its_open_code_session_policy() -> None:
+    """Each role pins the OpenCode session policy required by its contract."""
     for name, args in opencode_servers().items():
         if name == "opencode-reviewer":
             assert args[args.index("--mode") + 1] == "review", name
+        elif name == "opencode-implementer":
+            assert args[args.index("--write-mode") + 1] == "build", name
         else:
             assert args[args.index("--read-only-mode") + 1] == "plan", name
 
