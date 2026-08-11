@@ -38,6 +38,13 @@ ISSUE_SECTIONS = (
 )
 CHECKLIST_ITEM_RE = re.compile(r"^- \[[ xX]\]", re.MULTILINE)
 
+TASKS_HEADING = "## Tasks"
+# - [ ] T1: <title> — <one-line brief>
+# - [ ] T2: <title> — <brief> (after: T1)
+TASK_LINE_RE = re.compile(
+    r"^- \[[ xX]\] (T\d+): [^—]+ — [^(]+?(?: \(after: (T\d+(?:, T\d+)*)\))?$"
+)
+
 
 class UnclosedFrontmatter(Exception):
     pass
@@ -127,6 +134,37 @@ def validate_spec(text: str, previous_status: str | None) -> list[str]:
             violations.append(
                 f"missing {CONTAINER_KEY} for status={status}: a published spec records its tracker container"
             )
+
+    tasks_section = extract_section(_body, TASKS_HEADING)
+    if tasks_section is not None:
+        violations.extend(validate_tasks_section(tasks_section))
+
+    return violations
+
+
+def validate_tasks_section(section: str) -> list[str]:
+    violations: list[str] = []
+    lines = [line for line in section.splitlines() if line.strip()]
+
+    matches: dict[str, re.Match[str]] = {}
+    for line in lines:
+        match = TASK_LINE_RE.match(line)
+        if match is None:
+            violations.append(f"malformed task line: {line!r}")
+            continue
+        matches[match.group(1)] = match
+
+    task_ids = set(matches)
+    for task_id, match in matches.items():
+        afters = match.group(2)
+        if not afters:
+            continue
+        for ref in afters.split(", "):
+            if ref not in task_ids:
+                violations.append(
+                    f"dangling 'after' reference to unknown task {ref!r} in task line: "
+                    f"{match.string!r}"
+                )
 
     return violations
 

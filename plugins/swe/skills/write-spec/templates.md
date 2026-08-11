@@ -69,6 +69,13 @@ Two zones in one file:
 
 <!-- commands/tests that prove the goal -->
 
+## Tasks
+
+<!-- Parsed by the start-loop run procedure: one implementer subagent per task.
+     - [ ] T1: <title> — <one-line brief>
+     - [ ] T2: <title> — <brief> (after: T1)
+     Task ids are T<n>; optional "(after: Tm[, Tk])" declares dependencies. -->
+
 ---
 
 ## Design
