@@ -25,6 +25,7 @@ sent the model before the effort that depends on it.
 from __future__ import annotations
 
 import json
+import os
 import sys
 from typing import Any
 
@@ -35,6 +36,7 @@ SESSION_ID = "fake-session-1"
 CONFIG: dict[str, Any] = {"model": None, "order": []}
 ADVERTISED: dict[str, list[str]] = {}
 KNOWN_MODELS: list[str] = []
+NO_LOAD_SESSION = False
 
 
 def config_options() -> list[dict[str, Any]]:
@@ -188,6 +190,8 @@ def error(message_id: Any, text: str) -> dict[str, Any]:
 
 def main() -> int:
     argv = sys.argv[1:]
+    global NO_LOAD_SESSION
+    NO_LOAD_SESSION = "--no-load-session" in argv
     for index in range(0, len(argv) - 1, 2):
         flag, value = argv[index], argv[index + 1]
         if flag == "--models":
@@ -203,19 +207,45 @@ def main() -> int:
         method = message.get("method")
 
         if method == "initialize":
+            with open("fake-agent.pid", "w") as pid_file:
+                pid_file.write(str(os.getpid()))
+            capabilities = {} if NO_LOAD_SESSION else {"loadSession": True}
             send(
                 {
                     "jsonrpc": "2.0",
                     "id": message["id"],
                     "result": {
                         "protocolVersion": 1,
-                        "agentCapabilities": {"loadSession": True},
+                        "agentCapabilities": capabilities,
                         "agentInfo": {"name": "FakeAgent", "version": "0.0.1"},
                     },
                 }
             )
         elif method == "session/new":
             result: dict[str, Any] = {"sessionId": SESSION_ID}
+            if ADVERTISED:
+                result["configOptions"] = config_options()
+            send({"jsonrpc": "2.0", "id": message["id"], "result": result})
+        elif method == "session/load":
+            loaded_id = message["params"].get("sessionId")
+            if loaded_id != SESSION_ID:
+                send(error(message["id"], f"unknown session: {loaded_id}"))
+                continue
+            for update in (
+                {"sessionUpdate": "tool_call", "title": "replayed history"},
+                {
+                    "sessionUpdate": "agent_message_chunk",
+                    "content": {"type": "text", "text": "replayed history"},
+                },
+            ):
+                send(
+                    {
+                        "jsonrpc": "2.0",
+                        "method": "session/update",
+                        "params": {"sessionId": SESSION_ID, "update": update},
+                    }
+                )
+            result = {"sessionId": SESSION_ID}
             if ADVERTISED:
                 result["configOptions"] = config_options()
             send({"jsonrpc": "2.0", "id": message["id"], "result": result})
