@@ -5,6 +5,11 @@ docs/agents
 .autoresearch/
 *.csv
 
+# local `npx skills` installs — install.sh symlinks plugin skills into
+# ~/.agents/skills on the host instead; only .agents/plugins/ is tracked
+.agents/skills/
+skills-lock.json
+
 # IDE temp files #
 .vscode/
 .cursor/

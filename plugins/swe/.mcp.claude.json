@@ -1,12 +1,5 @@
 {
   "mcpServers": {
-    "codex": {
-      "command": "codex",
-      "args": [
-        "mcp-server"
-      ],
-      "timeout": 3600000
-    },
     "opencode-explorer": {
       "command": "python3",
       "args": [
