@@ -582,7 +582,9 @@ def run_turn(
                 while len(unreported_text) >= MESSAGE_PROGRESS_INTERVAL:
                     report(" ".join(unreported_text.split())[-MESSAGE_PROGRESS_INTERVAL:])
                     unreported_text = unreported_text[MESSAGE_PROGRESS_INTERVAL:]
-            elif kind == "tool_call":
+            elif kind in ("tool_call", "tool_call_update"):
+                if chunks:
+                    chunks.clear()
                 report(update.get("title") or update.get("kind") or "working")
         return None
 

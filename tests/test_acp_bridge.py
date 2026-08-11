@@ -494,6 +494,22 @@ def test_a_delegation_returns_the_agents_answer_and_its_session(
     assert result["structuredContent"]["stopReason"] == "end_turn"
 
 
+def test_a_delegation_returns_only_the_message_after_tool_activity(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            preamble=["Let me inspect the workspace first."],
+            attempts=[{"kind": "read", "title": "Reading files"}],
+            reply="The final answer",
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "The final answer"
+
+
 def test_read_only_denies_the_agents_edit_over_the_wire(
     bridge: BridgeClient, tmp_path: Path
 ) -> None:
