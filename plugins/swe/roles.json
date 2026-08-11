@@ -113,7 +113,8 @@
       "opencode": {
         "model": "opencode-go/gpt-5.6-luna",
         "effort": "high",
-        "mode": "plan"
+        "mode": "write",
+        "write_mode": "build"
       }
     },
     "opencode-reviewer": {

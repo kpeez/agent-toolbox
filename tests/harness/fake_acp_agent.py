@@ -118,6 +118,21 @@ def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
     directive = json.loads(text)
     granted: list[str] = []
 
+    for content in directive.get("preamble", []):
+        send(
+            {
+                "jsonrpc": "2.0",
+                "method": "session/update",
+                "params": {
+                    "sessionId": SESSION_ID,
+                    "update": {
+                        "sessionUpdate": "agent_message_chunk",
+                        "content": {"type": "text", "text": content},
+                    },
+                },
+            }
+        )
+
     for attempt in directive.get("attempts", []):
         send(
             {
