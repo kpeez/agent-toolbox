@@ -357,7 +357,7 @@ empty issues list; an empty list with no error means the run is finished.
 
 Then run \`git branch --list 'stack/*'\` and report the highest-numbered
 stack/<n> branch it lists as "topStackBranch" ('' if there are none). A session
-resuming this run has no other record of how many dependency stack branches it
+resuming this run has no other record of how many stack branches it
 already opened, and merging a new task into the wrong changeset breaks the stack.`
 
 const promptImplementer = (changeset, from) => `Execute this bounded assignment: implement ${changeset.issues.length === 1 ? 'one task' : `${changeset.issues.length} related tasks`} of ${specPath}, end to end.
@@ -391,7 +391,7 @@ const promptReview = () => `Review the assembled implementation against its spec
 does the code do what the spec asked, correctly?
 
 Under review: the complete work of this run, which lives on ${stackTip()} —
-the top of the run's dependency stack, containing every changeset below it.
+the top of the run's stack, containing every changeset below it.
 Establish the diff yourself — the task merges are on the changeset branches and
 each changeset carries a change/<identifiers> branch — and say in your first finding
 if you could not establish it rather than reviewing a guess.
@@ -427,7 +427,7 @@ ${numbered(findings)}
 Work in the main worktree at the repo root.
 ${stack.length === 1
   ? `Work directly on ${baseBranch} — the tasks are already merged there.`
-  : `This run landed in ${stack.length} dependency stack branches, bottom to top:
+  : `This run landed in ${stack.length} stack branches, bottom to top:
 ${numbered(stack)}
 Every finding opens with a file:line anchor. Fix it on the LOWEST changeset that
 contains the code it names — \`git log <changeset> -- <file>\` says which changeset
@@ -490,7 +490,7 @@ atomic commits, push ${baseBranch}, and open a DRAFT pull request. Tracker
 links, issue ids, and tracker-only content never appear in commit messages, the
 PR title, or the PR body. Return the PR URL as the one entry of prUrls.`
   : `Ship this run's work as a STACKED pull request — it landed in
-${stack.length} dependency stack branches, bottom to top:
+${stack.length} stack branches, bottom to top:
 ${numbered(stack)}
 Each changeset branch contains every changeset below it, so ${stackTip()} holds the
 complete work.
