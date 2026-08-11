@@ -514,7 +514,7 @@ per the tracker reference's container-comment convention.
 ${trackerGuide}
 
 Run: ${slug} — spec ${specPath}, integration branch ${baseBranch},
-dependency stack ${stack.join(' → ')}.
+stack ${stack.join(' → ')}.
 
 The comment body is a short "swe-loop run summary" heading followed by this
 payload verbatim in a fenced json block:
