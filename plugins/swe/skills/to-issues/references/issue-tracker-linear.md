@@ -43,10 +43,10 @@ the MCP is absent.
   (PR bodies, commits, comments). The private side references the public side,
   never the reverse.
 
-## swe-loop integration
+## Tracker script integration
 
-The conductor invokes the installed `tracker.py` script for workable queries,
-passing the resolved tracker, container, and integration branch. This reference
+`tracker.py` implements this tracker's workable query and status sync,
+taking the resolved tracker, container, and integration branch. This reference
 defines the tracker semantics; it does not own a command string.
 
 ## Container identity
