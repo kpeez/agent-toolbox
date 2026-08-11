@@ -618,11 +618,9 @@ def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
     skills = ROOT / "plugins" / "swe" / "skills"
     implement = (skills / "implement" / "SKILL.md").read_text()
     to_issues = (skills / "to-issues" / "SKILL.md").read_text()
-    start_loop = (skills / "start-loop" / "SKILL.md").read_text()
 
     assert "The conductor owns the frontier query, fan-out, and settle" in implement
     assert "mcp__plugin_swe_opencode-explorer__delegate" in to_issues
-    assert "manual orchestration in `/implement`" in start_loop
 
     for tool, mode in (
         ("mcp__plugin_swe_opencode-explorer__delegate", 'mode: "read-only"'),
@@ -632,3 +630,24 @@ def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
         assert tool in implement, f"{tool} missing from implement's manual fallback"
         assert mode in implement, f"{mode} missing from implement's manual fallback"
     assert "cwd" in implement
+
+
+def test_start_loop_is_the_lead_orchestrated_run_procedure() -> None:
+    """start-loop dispatches implementers and a reviewer directly and runs
+    gates itself — no Workflow tool launch, no planner or plumbing agents."""
+    start_loop = (
+        ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
+    ).read_text()
+
+    for present in (
+        "fresh session",
+        "approved: true",
+        "the lead never reads code",
+        "verification gates",
+        "git merge --no-ff",
+        "Model policy",
+    ):
+        assert present.lower() in start_loop.lower(), f"missing: {present}"
+
+    for absent in ("scriptPath", "workableCmd", "swe:planner", "containerId"):
+        assert absent not in start_loop, f"should be gone: {absent}"
