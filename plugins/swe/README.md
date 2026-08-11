@@ -204,7 +204,7 @@ decides what runs when.
 | `implementer`     | Executes one bounded code, test, documentation, or tracker task under caller constraints | sonnet (medium)         | gpt-5.6-sol (medium)   |
 | `reviewer`        | Read-only review of a diff or implementation against caller-provided criteria or a lens  | sonnet (high)         | gpt-5.6-terra (high)   |
 | `publisher`       | Owns git and GitHub publication: atomic commits, push, PR creation                       | sonnet (medium)       | gpt-5.6-terra (medium) |
-| `opencode-explorer` | Thin forwarder: read-only repository exploration on OpenCode Go                        | sonnet (low)          | — (Claude-side only)   |
+| `opencode-explorer` | Thin forwarder: read-only repository exploration and web research on OpenCode Go       | sonnet (low)          | — (Claude-side only)   |
 | `opencode-implementer` | Thin forwarder: one bounded write assignment on OpenCode Go                         | sonnet (low)          | — (Claude-side only)   |
 | `opencode-reviewer` | Thin forwarder: read-only review on OpenCode Go                                        | sonnet (low)          | — (Claude-side only)   |
 
@@ -240,7 +240,7 @@ absolute worktree root as `cwd`:
 
 | Phase | Tool | Mode | Boundary |
 | ----- | ---- | ---- | -------- |
-| Explore | `mcp__plugin_swe_opencode-explorer__delegate` | `read-only` | One bounded repository sweep |
+| Explore | `mcp__plugin_swe_opencode-explorer__delegate` | `read-only` | One bounded repository sweep or web-research question |
 | Implement | `mcp__plugin_swe_opencode-implementer__delegate` | `write` | One changeset with issue/spec identifiers and verification gates |
 | Review | `mcp__plugin_swe_opencode-reviewer__delegate` | `read-only` | One review of the complete assembled diff |
 
@@ -276,7 +276,12 @@ Three roles, three models, on purpose:
   agentic loop re-sends its conversation every turn, so cache reads — not the
   headline price — decide its bill. V4 Flash is the cheapest model on the plan
   on every axis, and at 0.0014 per cached token it is 5–100× cheaper there than
-  the alternatives, with a 1M-token context for the sweep.
+  the alternatives, with a 1M-token context for the sweep. Web research —
+  documentation and API lookups, current facts, error messages, through
+  OpenCode's native `websearch` and `webfetch` tools — is the same
+  high-volume read-only shape, so it rides the same forwarder rather than a
+  config-identical fourth server; the explorer's description advertises both,
+  because description text is what orchestrators route on.
 - **Implementation** is where a model error costs the most, so it gets Luna,
   the stronger agentic coding model.
 - **Review** must not share the implementer's model. Not because a fresh
@@ -302,10 +307,11 @@ fails if the two role policies or their prose disagree.
 
 The explorer is deliberately not a swe-loop role — the conductor has no
 exploration phase to spend it on. On Claude, `/implement` and `/to-issues`
-dispatch `swe:opencode-explorer`; the planner, which cannot nest subagents,
-calls its MCP tool directly. On Codex, both skills call the plugin-delivered
-MCP tool directly. Every route reaches the same bridge and returns only the
-answer, so the sweep never lands in the caller's context.
+dispatch `swe:opencode-explorer` for repository archaeology and web research
+alike; the planner, which cannot nest subagents, calls its MCP tool directly.
+On Codex, both skills call the plugin-delivered MCP tool directly. Every
+route reaches the same bridge and returns only the answer, so the sweep never
+lands in the caller's context.
 
 ### The ACP bridge
 

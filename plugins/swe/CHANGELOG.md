@@ -5,6 +5,17 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.15.1 — 2026-08-10
+
+- Broaden `opencode-explorer` to web research: its description now advertises
+  web searches, documentation and API lookups, current facts, and
+  error-message research alongside repository sweeps, so orchestrators —
+  which route on description text — send web questions to OpenCode instead of
+  answering host-side. No new server: OpenCode's native `websearch`/`webfetch`
+  already run under the explorer's read-only bridge policy, and a separate
+  researcher forwarder would have been config-identical. `/implement` names
+  the explorer as the web-research route on both hosts.
+
 ## 1.15.0 — 2026-08-10
 
 - Remove Codex as a delegation target: the `codex-delegator` agent, the `codex`
