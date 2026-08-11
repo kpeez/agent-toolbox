@@ -3,7 +3,7 @@ export const meta = {
   description:
     'Conductor for the swe workflow after spec approval and splitting: run the implement loop (implement, then merge each round) until it drains, review the assembled work against the spec once with bounded fixes, then ship a draft PR',
   whenToUse:
-    'Launched by /start-loop once a spec carries the approval marker and its tasks are published on the tracker — the launcher tasks before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir} — containerId is the tracker container holding the tasks, baseBranch is the integration branch every task merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional workableCmd is a command string that prints the container\'s workable-issue JSON array on stdout; already excluding tasks this run merged; pass it when the resolved tracker has a deterministic workable query, omit it to keep the reference-driven agent query. Optional roles maps any of planner|implementer|reviewer|publisher to a provider ("claude" or "opencode") to run that role on that provider through its forwarder agent. Unlisted roles take the default routing: implementer and reviewer run on OpenCode Go (each pinned to its own model by the plugin\'s MCP companion), planner and publisher stay on Claude. An explicit entry always beats the default, so {"implementer": "claude"} pulls implementation back host-native; "opencode" is only valid for implementer and reviewer. Returns {prUrls, tasksCompleted, escalations}; it never prompts the user mid-run.',
+    'Launched by /start-loop once a spec carries the approval marker and its tasks are published on the tracker — the launcher tasks before launching, so the conductor starts at the workable query. Requires args {specPath, slug, containerId, baseBranch, scriptsDir, tracker} — tracker is linear or github, containerId is the tracker container holding the tasks, baseBranch is the integration branch every task merges into, scriptsDir is the absolute path to the installed swe plugin\'s scripts/ dir. Optional roles maps any of planner|implementer|reviewer|publisher to a provider ("claude" or "opencode") to run that role on that provider through its forwarder agent. Unlisted roles take the default routing: implementer and reviewer run on OpenCode Go (each pinned to its own model by the plugin\'s MCP companion), planner and publisher stay on Claude. An explicit entry always beats the default, so {"implementer": "claude"} pulls implementation back host-native; "opencode" is only valid for implementer and reviewer. Returns {prUrls, tasksCompleted, escalations}; it never prompts the user mid-run.',
   phases: [
     { title: 'Implement', detail: 'rounds: implement in parallel, then one agent merges and records the round' },
     { title: 'Review', detail: 'one adherence review of the assembled work, bounded fixes, one re-entry' },
@@ -58,7 +58,7 @@ if (argsParseError) {
   )
 }
 
-const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scriptsDir', 'specText']
+const REQUIRED_ARGS = ['specPath', 'slug', 'containerId', 'baseBranch', 'scriptsDir', 'specText', 'tracker']
 const missing = REQUIRED_ARGS.filter(key => !ARGS || !ARGS[key])
 if (missing.length) {
   throw new Error(
@@ -83,15 +83,10 @@ if (!scriptsDir.startsWith('/')) {
     `swe-loop got a relative scriptsDir (${scriptsDir}). It must be the EXPANDED absolute path to the installed swe plugin's scripts/ dir — a value like "\${CLAUDE_PLUGIN_ROOT}/scripts" means the variable was passed through unexpanded, and the subagents' shells do not define it.`,
   )
 }
-// Optional, opaque: a command that prints the container's workable-issue array
-// on stdout and exits non-zero on failure. The launcher resolves the tracker
-// anyway, so it is the layer that knows whether the tracker's reference names a
-// deterministic workable query; this file only embeds the string as data.
-// Absent, the reference-driven agent query below runs unchanged.
-const workableCmd = ARGS.workableCmd || null
-if (workableCmd !== null && typeof workableCmd !== 'string') {
+const tracker = ARGS.tracker
+if (!['linear', 'github'].includes(tracker)) {
   throw new Error(
-    `swe-loop got a non-string workableCmd (${JSON.stringify(ARGS.workableCmd)}). It must be a single command string that prints the workable-issue JSON array on stdout and exits non-zero on failure.`,
+    `swe-loop got an invalid tracker (${JSON.stringify(tracker)}). It must be "linear" or "github".`,
   )
 }
 
@@ -101,6 +96,8 @@ if (workableCmd !== null && typeof workableCmd !== 'string') {
 // whichever tracker the repo pins.
 const trackerRefsDir = `${scriptsDir.replace(/\/scripts\/?$/, '')}/skills/to-issues/references`
 const trackerGuide = `Tracker: resolve this repo's tracker per the to-issues skill — an "Issue tracker:" line in the repo's AGENTS.md/CLAUDE.md wins, else the skill's selection ladder — then follow the matching reference in ${trackerRefsDir}/ for every tracker operation.`
+const trackerCommand = `uv run ${scriptsDir}/tracker.py workable --tracker ${tracker} --container ${containerId} --merged-into ${baseBranch}`
+const settleCommand = `uv run ${scriptsDir}/tracker.py settle --tracker ${tracker}`
 
 // ---- role routing -------------------------------------------------------
 // The launcher may route any capability role to another provider; every other
@@ -347,70 +344,21 @@ const adoptStack = topStackBranch => {
 }
 const numbered = items => items.map((item, i) => `${i + 1}. ${typeof item === 'string' ? item : JSON.stringify(item)}`).join('\n')
 
-// Two shapes, one contract. A workableCmd names a command that applies the
-// marker rules itself (the tracker reference that names the command is what
-// guarantees it), so the agent runs it and returns its output — no per-issue
-// comment reads, which were an API call per issue per round. Without one the
-// agent computes the same rules through the reference.
-const promptWorkable = () => workableCmd
-  ? `Report this run's workable tasks as JSON.
+const promptWorkable = () => `Report this run's workable tasks as JSON.
 
-Run EXACTLY this command with Bash and construct no other query — no
-improvised tracker calls, no edits to the command, no substitutions:
+Run EXACTLY this command with Bash and construct no other query:
 
-    ${workableCmd}
+    ${trackerCommand}
 
-Its stdout is this run's workable-issue array, already filtered: take each
-entry as {id, identifier, title} and return them unchanged. Do not read
-tracker comments and do not second-guess the list — the command has already
-dropped tasks this run finished and unblocked their dependents.
-
-Report each entry's changeset — its tracker milestone or equivalent — as "changeset",
-'' when it has none: the loop hands one implementer everything sharing a changeset
-instead of spawning one per issue.
+Its stdout is the final workable-issue array. Return each entry unchanged,
+including its changeset, and do not read tracker comments or second-guess the
+list. On a NON-ZERO exit put stderr verbatim in the "error" field and return an
+empty issues list; an empty list with no error means the run is finished.
 
 Then run \`git branch --list 'stack/*'\` and report the highest-numbered
 stack/<n> branch it lists as "topStackBranch" ('' if there are none). A session
-resuming this run has no other record of how many dependency stack it already
-opened, and merging a new task into the wrong changeset breaks the stack.
-
-On a NON-ZERO exit put stderr verbatim in the "error" field and return an
-empty issues list -- an empty list with no error means the run is finished,
-so never report a failure that way.`
-  : `Report this run's workable tasks as JSON.
-
-${trackerGuide}
-
-1. Compute the workable set of container ${containerId} per the
-   reference's "swe-loop workable set" section — issues with no ready-for-human
-   label that are not done and whose every blocker IS done, each as
-   {id, identifier, title, changeset} — "changeset" is the issue's tracker milestone
-   or equivalent, '' when it has none, and is what lets the loop hand one
-   implementer a whole changeset instead of one agent per issue.
-   Scripts the reference names live in ${scriptsDir}.
-   If the query FAILS (auth, network, missing credential, non-zero script
-   exit), put the failure text in the "error" field and return an empty issues
-   list -- an empty list with no error means the run is finished, so never
-   report a failure that way.
-2. Run \`git branch --merged ${stackTip()}\` and read every branch it lists
-   whose name begins with change/, then take EVERY issue identifier appearing
-   anywhere in those names — one branch carries a whole changeset of tasks, so
-   matching only change/<identifier> exactly under-reports what is done. Those
-   tasks are merged into this run's topmost
-   dependency changeset, which contains every changeset below it and is therefore what
-   "done in this run" means — their tracker
-   state does not advance until the run's PR lands, so never judge it from the
-   tracker alone.
-3. An issue counts as DONE when its tracker state is closed OR its identifier
-   appears in that merged list. Drop a done issue, and treat a done blocker as
-   satisfied rather than as still blocking. Skipping the second half is what
-   makes a dependency chain stall after its first task.
-4. Run \`git branch --list 'stack/*'\` and report the highest-numbered
-   stack/<n> branch it lists as "topStackBranch" ('' if there are none). A session
-   resuming this run has no other record of how many stack branches it
-   already opened, and merging a changeset onto the wrong one breaks the
-   stack.
-5. Return the surviving issues.`
+resuming this run has no other record of how many dependency stack branches it
+already opened, and merging a new task into the wrong changeset breaks the stack.`
 
 const promptImplementer = (changeset, from) => `Execute this bounded assignment: implement ${changeset.issues.length === 1 ? 'one task' : `${changeset.issues.length} related tasks`} of ${specPath}, end to end.
 
@@ -479,7 +427,7 @@ ${numbered(findings)}
 Work in the main worktree at the repo root.
 ${stack.length === 1
   ? `Work directly on ${baseBranch} — the tasks are already merged there.`
-  : `This run landed in ${stack.length} dependency stack, bottom to top:
+  : `This run landed in ${stack.length} dependency stack branches, bottom to top:
 ${numbered(stack)}
 Every finding opens with a file:line anchor. Fix it on the LOWEST changeset that
 contains the code it names — \`git log <changeset> -- <file>\` says which changeset
@@ -509,42 +457,16 @@ The comment body is exactly:
 
 Post nothing else and change no issue fields.`
 
-const promptSettle = plan => `Settle this round's finished changesets, in the main worktree at the repo root.
-Work through them IN THE ORDER GIVEN, one at a time.
+const promptSettle = plan => `Run this command in the main worktree at the repo root:
 
-${trackerGuide}
+    ${settleCommand} --plan -
 
-Each changeset lands on its OWN stack branch, stacked on the branch below it: a
-changeset is one coherent story and becomes one pull request, so putting two on one
-branch is what makes a diff unreviewable. The branches nest — each contains
-every branch below it — which is what lets each pull request base on the last.
+Pass exactly this JSON on stdin:
+${JSON.stringify(plan)}
 
-Changesets:
-${numbered(plan.map(entry => `${entry.branch} → stack branch ${entry.target}${entry.target === entry.from ? '' : `, created from ${entry.from}`} (${entry.issues.map(issue => issue.identifier).join(', ')})`))}
-
-For each changeset, in order:
-1. Check out its stack branch, creating it from the branch named above if it
-   does not exist yet (git checkout -b <target> <from>). Never cut a stack
-   branch from the default branch — it would drop every changeset below it.
-2. git merge --no-ff <the changeset branch>
-3. On conflict, resolve it per the merge-conflicts skill and complete the merge.
-   If you cannot resolve it confidently, git merge --abort, record merged:false
-   with the reason, and move on — never force a resolution you are unsure of
-   and never abandon the remaining changesets. A changeset that fails leaves its stack
-   branch uncreated, so settle the NEXT changeset onto the last stack branch that
-   did succeed (or ${plan[0].from} if none has).
-4. Only after its merge succeeds, advance each of that changeset's issues to
-   "in review" per the tracker reference's state-transition section, and post
-   one comment with its one-line summary. Record stateUpdated:true only if the
-   state write actually succeeded.
-
-Return one {identifier, merged, stateUpdated, detail, stackBranch} per TASK —
-every task of every changeset, in the order listed. "stackBranch" is the branch
-that task actually landed on, '' when it did not merge; the conductor builds
-the stack from what you report, so a branch you renamed or skipped must be
-reported as you left it. Do not push. The state write is for humans reading the
-tracker: a resumed run decides what is already merged from git, so a failed
-state write never loses or repeats work.`
+Return its final JSON verbatim. On the conflict exit code, resolve the merge per
+the merge-conflicts skill and rerun the command with --continue; if it should be
+aborted, rerun it with --skip <branch>.`
 
 const promptFileFindings = findings => `File surviving review findings as fix tasks in tracker container ${containerId}.
 
@@ -568,7 +490,7 @@ atomic commits, push ${baseBranch}, and open a DRAFT pull request. Tracker
 links, issue ids, and tracker-only content never appear in commit messages, the
 PR title, or the PR body. Return the PR URL as the one entry of prUrls.`
   : `Ship this run's work as a STACKED pull request — it landed in
-${stack.length} dependency stack, bottom to top:
+${stack.length} dependency stack branches, bottom to top:
 ${numbered(stack)}
 Each changeset branch contains every changeset below it, so ${stackTip()} holds the
 complete work.
@@ -749,7 +671,7 @@ const runImplementLoop = async passLabel => {
     // context load plus a worktree plus a merge before it edits a line, so
     // parallelising two five-line fixes costs more than doing both in one.
     const changesets = changesetsFor(pending)
-    log(`Round ${round}: ${pending.length} task(s) in ${changesets.length} changeset(es) — ${changesets.map(changeset => `${changeset.name} (${changeset.issues.length})`).join(', ')}.`)
+    log(`Round ${round}: ${pending.length} task(s) in ${changesets.length} changesets — ${changesets.map(changeset => `${changeset.name} (${changeset.issues.length})`).join(', ')}.`)
     const from = stackTip()
     const outcomes = await parallel(
       changesets.map(changeset => async () => {
