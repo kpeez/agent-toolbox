@@ -32,7 +32,7 @@ import subprocess
 import sys
 from collections.abc import Callable
 from pathlib import Path
-from typing import Protocol, runtime_checkable
+from typing import Any, Protocol, runtime_checkable
 
 CLOSED_STATE_TYPES = {"completed", "canceled"}
 READY_FOR_HUMAN_LABEL = "ready-for-human"
@@ -176,7 +176,7 @@ class GithubBackend:
                 "number,title,body,labels,state,comments",
             ]
         )
-        nodes = load_json(payload, "gh issue list")
+        nodes: list[dict[str, Any]] = load_json(payload, "gh issue list")
         by_number = {str(node["number"]): node for node in nodes}
         issues = []
         for node in nodes:
@@ -191,7 +191,7 @@ class GithubBackend:
                 "labels": {
                     "nodes": [
                         {"name": label["name"]}
-                        for label in node.get("labels", [])
+                        for label in github_labels(node.get("labels"))
                     ]
                 },
                 "inverseRelations": {"nodes": []},
@@ -222,7 +222,7 @@ class GithubBackend:
                             "labels": {
                                 "nodes": [
                                     {"name": label["name"]}
-                                    for label in blocker.get("labels", [])
+                                    for label in github_labels(blocker.get("labels"))
                                 ]
                             },
                             "inverseRelations": {"nodes": []},
@@ -270,6 +270,19 @@ class GithubBackend:
         return None
 
 
+def github_labels(value: object) -> list[dict[str, str]]:
+    if not isinstance(value, list):
+        return []
+    labels: list[dict[str, str]] = []
+    for label in value:
+        if not isinstance(label, dict):
+            continue
+        name = label.get("name")
+        if isinstance(name, str):
+            labels.append({"name": name})
+    return labels
+
+
 BLOCKED_BY_SECTION_RE = re.compile(
     r"^##\s+Blocked by\s*$\n?(?P<body>.*?)(?=^##\s|\Z)",
     re.MULTILINE | re.DOTALL,
@@ -289,7 +302,7 @@ def run_git(args: list[str]) -> str:
     return result.stdout
 
 
-def load_json(payload: str, what: str) -> dict:
+def load_json(payload: str, what: str) -> Any:
     try:
         return json.loads(payload)
     except json.JSONDecodeError as exc:
