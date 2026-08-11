@@ -5,6 +5,37 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.15.2 — 2026-08-10
+
+ACP bridge protocol fidelity, six changes shipped as one stacked series:
+
+- Graceful cancellation: cancelling a delegation now sends ACP
+  `session/cancel` and gives the agent a 2s grace window to end the turn —
+  a compliant agent returns its partial answer with
+  `stopReason: "cancelled"` and its session stays continuable by
+  `sessionId`; a non-compliant one is terminated exactly as before.
+- Opt-in `--turn-timeout SECONDS` bridge option: bounds a hung
+  `session/prompt` (permission round-trips included) and surfaces a named
+  `TurnTimeout` error through the graceful-cancel path. Absent flag =
+  unbounded, unchanged behavior; invalid values are startup usage errors.
+- Chunk-streamed progress: agent message text now flows into MCP progress
+  notifications, throttled by a deterministic 200-character interval, so
+  long generations no longer look dead to stdio idle timeouts.
+- Capability-gated session resume: an unknown `sessionId` on an agent that
+  advertises `loadSession` is resumed via ACP `session/load`, with the
+  model pin and session-mode selection reapplied and replayed history kept
+  out of the answer and progress stream.
+- Non-text content placeholders: non-text message blocks appear in the
+  answer as `[<type> omitted]` instead of vanishing, so an image-only
+  reply is no longer misreported as "The agent returned no message."
+- Write-mode read parity and denial surfacing (user-directed
+  permission-policy change): write mode now passes read-shaped tool kinds
+  (`read`/`search`/`fetch`/`think`) without the workspace-containment
+  check, matching what read-only mode always allowed — mutating kinds keep
+  full containment — and a write-mode turn that streamed an answer while
+  tool calls were denied carries an appended denial account instead of
+  hiding the denials in `deniedToolCalls`.
+
 ## 1.15.1 — 2026-08-10
 
 - Broaden `opencode-explorer` to web research: its description now advertises
