@@ -626,6 +626,8 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     "the run was blocked", and acts on the emptiness either way.
     """
     answer = streamed.strip()
+    if answer and (mode != "write" or not denied):
+        return answer
     if denied:
         blocked = "; ".join(denied)
         remedy = (
