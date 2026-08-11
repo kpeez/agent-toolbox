@@ -70,6 +70,11 @@ def test_read_only_rejects_an_unknown_kind(tmp_path: Path) -> None:
     assert not allowed(outcome("read-only", "quantum_teleport", str(tmp_path)))
 
 
+def test_review_mode_passes_execute_denies_edit(tmp_path: Path) -> None:
+    assert allowed(outcome("review", "execute", str(tmp_path)))
+    assert not allowed(outcome("review", "edit", str(tmp_path)))
+
+
 def test_write_allows_an_edit_inside_the_workspace(tmp_path: Path) -> None:
     target = tmp_path / "src" / "main.py"
     target.parent.mkdir()
@@ -163,10 +168,17 @@ def test_cancels_when_no_offered_option_matches_the_verdict(tmp_path: Path) -> N
 
 
 def test_a_blocked_run_reports_the_denials_instead_of_an_empty_answer() -> None:
-    text = acp_bridge.final_text("", ["edit: Create file"], "read-only")
+    text = acp_bridge.final_text("", ["execute: Run tests"], "read-only")
 
-    assert "edit: Create file" in text
+    assert "execute: Run tests" in text
     assert "read-only" in text
+
+
+def test_read_only_text_reports_execute_denials_only() -> None:
+    assert acp_bridge.final_text("answer", ["edit: Create file"], "read-only") == "answer"
+
+    text = acp_bridge.final_text("answer", ["execute: Run tests"], "read-only")
+    assert "The bridge denied 1 tool call(s) under mode=read-only" in text
 
 
 def test_the_agents_own_answer_is_returned_untouched() -> None:
@@ -512,6 +524,25 @@ def test_write_mode_grants_the_same_edit(bridge: BridgeClient, tmp_path: Path) -
     assert result["content"][0]["text"] == "granted=edit"
 
 
+def test_review_mode_passes_execute_denies_edit_over_the_wire(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            attempts=[
+                {"kind": "execute", "title": "Run tests"},
+                {"kind": "edit", "title": "Create file", "paths": [str(tmp_path / "x")]},
+            ],
+            echo_granted=True,
+        ),
+        mode="review",
+        cwd=str(tmp_path),
+    )
+
+    assert result["structuredContent"]["deniedToolCalls"] == ["edit: Create file"]
+    assert result["content"][0]["text"] == "granted=execute"
+
+
 def test_write_mode_grants_a_read_outside_the_workspace(
     bridge: BridgeClient, tmp_path: Path
 ) -> None:
@@ -768,12 +799,10 @@ def test_child_exit_stops_the_wait_and_forgets_the_session(
     assert "is not open" in continuation["content"][0]["text"]
 
 
-def test_unexpected_exit_reports_only_bounded_allowlisted_stderr_metadata(
+def test_unexpected_exit_reports_bounded_raw_stderr_metadata(
     lifecycle_bridge: BridgeClient, tmp_path: Path
 ) -> None:
-    private_fixture = "token=fixture-value /example/private.txt"
-    known_failures = "authentication failed; connection refused; model not found; rate limit"
-    diagnostic = f"{known_failures}; {private_fixture}; unclassified detail"
+    diagnostic = "authentication failed; connection refused; unclassified detail"
     diagnostic_lines = 1000
     expected_bytes = len((diagnostic + "\n").encode()) + sum(
         len(f"routine-diagnostic-{index:04d}\n".encode())
@@ -794,13 +823,12 @@ def test_unexpected_exit_reports_only_bounded_allowlisted_stderr_metadata(
     assert f"bytes={expected_bytes}" in error_text
     assert "truncated=true" in error_text
     assert "exitCode=7" in error_text
-    assert "categories=authentication,model,network,rate-limit" in error_text
-    assert private_fixture not in error_text
-    assert "unclassified detail" not in error_text
-    assert "routine-diagnostic" not in error_text
+    assert "categories=" not in error_text
+    assert "tail=" in error_text
+    assert "routine-diagnostic-0999" in error_text
 
 
-def test_permission_reply_send_failure_includes_safe_stderr_metadata(
+def test_permission_reply_send_failure_includes_raw_stderr_metadata(
     lifecycle_bridge: BridgeClient, tmp_path: Path
 ) -> None:
     result = lifecycle_bridge.delegate(
@@ -815,9 +843,9 @@ def test_permission_reply_send_failure_includes_safe_stderr_metadata(
 
     assert "session/prompt failed" in error_text
     assert "ACP stderr metadata:" in error_text
-    assert "categories=network" in error_text
-    assert "fixture-value" not in error_text
-    assert "/example/private.txt" not in error_text
+    assert "tail=" in error_text
+    assert "network unavailable" in error_text
+    assert "categories=" not in error_text
 
 
 def test_success_does_not_expose_stderr_metadata(
@@ -986,6 +1014,13 @@ def test_bridge_options_are_split_from_the_agent_command() -> None:
     )
 
     assert options == {"model": "go/luna", "effort": "high", "read_only_mode": "plan"}
+    assert command == ["opencode", "acp"]
+
+
+def test_bridge_mode_can_pin_the_server_policy() -> None:
+    options, command = acp_bridge.split_argv(["--mode", "review", "opencode", "acp"])
+
+    assert options == {"mode": "review"}
     assert command == ["opencode", "acp"]
 
 

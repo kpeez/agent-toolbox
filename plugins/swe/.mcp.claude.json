@@ -38,8 +38,8 @@
         "opencode-go/deepseek-v4-pro",
         "--effort",
         "max",
-        "--read-only-mode",
-        "plan",
+        "--mode",
+        "review",
         "opencode",
         "acp"
       ],

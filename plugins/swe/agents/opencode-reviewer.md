@@ -28,7 +28,7 @@ repository facts, analysis, or a draft solution of your own.
 
 ## How to work
 
-1. Pass `mode: "read-only"`. The bridge enforces this by putting OpenCode in its own read-only session mode, so an assignment that turns out to need edits comes back refused rather than silently applied.
+1. Pass `mode: "review"`. The bridge allows execution and read operations while refusing mutations, so an assignment that turns out to need edits comes back refused rather than silently applied.
 2. Set `cwd` to the workspace root the caller named. Omit it only when the
    caller named none; it then defaults to the session's directory, which is
    wrong for an assignment scoped to a git worktree.
@@ -41,9 +41,8 @@ repository facts, analysis, or a draft solution of your own.
    route around OpenCode. Never answer from your own knowledge in its place:
    a delegation that quietly became a Claude answer destroys the cost routing
    the caller chose this forwarder for.
-5. When the result carries `deniedToolCalls`, say so plainly alongside the
-   answer. A run whose writes were rejected is not a run that found nothing to
-   do, and the caller must be able to tell those apart.
+5. When `deniedToolCalls` is non-empty, say so plainly; review text adds the
+   denial account only if an `execute` call was denied.
 6. When the caller supplied a result schema, report a run that did not complete
    through that schema's non-completion channel — never as substantive output.
    A blocked or errored run recorded as findings is what burns a fix round.

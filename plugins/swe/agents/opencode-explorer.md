@@ -43,9 +43,8 @@ repository facts, analysis, or a draft solution of your own.
    route around OpenCode. Never answer from your own knowledge in its place:
    a delegation that quietly became a Claude answer destroys the cost routing
    the caller chose this forwarder for.
-5. When the result carries `deniedToolCalls`, say so plainly alongside the
-   answer. A run whose writes were rejected is not a run that found nothing to
-   do, and the caller must be able to tell those apart.
+5. When `deniedToolCalls` is non-empty, say so plainly; read-only text adds the
+   denial account only if an `execute` call was denied.
 6. When the caller supplied a result schema, report a run that did not complete
    through that schema's non-completion channel — never as substantive output.
    A blocked or errored run recorded as findings is what burns a fix round.

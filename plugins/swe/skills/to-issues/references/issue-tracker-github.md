@@ -14,17 +14,11 @@ Issues for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
-## swe-loop workable set
+## swe-loop integration
 
-The container is the parent issue; its tasks are that issue's sub-issues. List
-them with `gh issue list` (see Conventions) and report each as
-`{id, identifier, title}` with the issue number as `id` and `#<number>` as
-`identifier`. A failed `gh` call is a query failure, never an empty result.
-
-Which of those are workable is the conductor's rule, not this file's — it
-states what counts as done and blocked, including that a task merged into the
-run's integration branch is done whatever the tracker says. Do not re-derive it
-here.
+The conductor invokes the installed `tracker.py` script for workable queries.
+It passes the resolved tracker, parent issue, and integration branch; this
+reference defines the GitHub conventions rather than a command string.
 
 ## Container identity
 
