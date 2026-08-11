@@ -46,14 +46,23 @@ def issue(
 
 
 def run(
-    *issues: dict[str, Any], merged: list[str] | None = None, base: str | None = "base"
+    *issues: dict[str, Any],
+    merged: list[str] | None = None,
+    base: str | None = "base",
+    stack_branches: list[str] | None = None,
 ) -> list[str]:
-    """Identifiers reported workable, given `merged` task branches on `base`."""
+    """Identifiers reported workable, given `merged` task branches on the run's
+    tip — the highest of `stack_branches` when any exist, else `base`."""
 
     def fake_linear(args: list[str]) -> str:
         return json.dumps({"nodes": list(issues)})
 
     def fake_git(args: list[str]) -> str:
+        if args[:3] == ["branch", "--list", "stack/*"]:
+            return "\n".join(stack_branches or [])
+        assert args[:2] == ["branch", "--merged"]
+        expected_tip = stack_branches[-1] if stack_branches else base
+        assert args[2] == expected_tip, f"merged check ran against {args[2]}"
         return "\n".join([f"change/{name}" for name in merged or []] + ["main"])
 
     result = tracker.workable_issues(
@@ -110,6 +119,39 @@ def test_a_chain_advances_one_slice_per_round() -> None:
 
 def test_without_a_base_branch_nothing_counts_as_merged() -> None:
     assert run(issue("KP-1"), base=None) == ["KP-1"]
+
+
+# ---- stacked runs judge "merged" against the stack tip, not the base --------
+
+
+def test_a_blocker_merged_mid_stack_unblocks_its_dependent() -> None:
+    """The two-slice stall: mid-stack, changesets merge onto stack/<n> branches
+    and never back into the base branch, so a base-branch merge check reads
+    every later changeset as unmerged and drains the frontier. The run() fake
+    asserts the merge check runs against stack/3 here, not `base`."""
+    blocker = issue("KP-1")
+    dependent = issue("KP-2", blocked_by=[blocker])
+    assert run(
+        blocker, dependent, merged=["KP-1"], stack_branches=["stack/2", "stack/3"]
+    ) == ["KP-2"]
+
+
+def test_stack_tip_is_the_highest_numbered_stack_branch() -> None:
+    def fake_git(args: list[str]) -> str:
+        assert args[:3] == ["branch", "--list", "stack/*"]
+        return "stack/2\nstack/10\nstack/3\n"
+
+    assert tracker.stack_tip("base", fake_git) == "stack/10"
+
+
+def test_stack_tip_ignores_non_numbered_stack_branches() -> None:
+    """A stray stack/wip must not shadow the base branch or break int()."""
+
+    def fake_git(args: list[str]) -> str:
+        assert args[:3] == ["branch", "--list", "stack/*"]
+        return "stack/wip\n"
+
+    assert tracker.stack_tip("base", fake_git) == "base"
 
 
 # ---- filters that do not involve git ----------------------------------------
@@ -189,7 +231,9 @@ def test_setting_an_existing_key_replaces_it_rather_than_duplicating(
 
 
 def fake_linear_for(
-    *, existing: AbstractSet[str] = frozenset(), projects: list[dict[str, Any]] | None = None
+    *,
+    existing: AbstractSet[str] = frozenset(),
+    projects: list[dict[str, Any]] | None = None,
 ):
     """A `linear` stub: `project view` succeeds only for ids in `existing`.
 

@@ -361,9 +361,9 @@ ${trackerGuide}
    list -- an empty list with no error means the run is finished, so never
    report a failure that way.
 2. Run \`git branch --merged ${stackTip()}\` and read every branch it lists
-   whose name begins with task/, then take EVERY issue identifier appearing
+   whose name begins with change/, then take EVERY issue identifier appearing
    anywhere in those names — one branch carries a whole changeset of tasks, so
-   matching only task/<identifier> exactly under-reports what is done. Those
+   matching only change/<identifier> exactly under-reports what is done. Those
    tasks are merged into this run's topmost
    dependency changeset, which contains every changeset below it and is therefore what
    "done in this run" means — their tracker

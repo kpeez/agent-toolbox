@@ -13,8 +13,13 @@ Why a task counts as done is the subtle part. A task the loop merged has not
 changed state in Linear -- that only happens when the run's PR lands -- so
 judging by tracker state alone strands every dependent task and drains the
 frontier after the first round of a chain. The authority is git: a task whose
-branch is merged into the integration branch is done, full stop. Tracker state
-is the human-visible projection of that, never the thing correctness rests on.
+branch is merged into this run's work is done, full stop. Tracker state is the
+human-visible projection of that, never the thing correctness rests on. "This
+run's work" is the top of the run's dependency stack, not the integration
+branch: a stacked run merges each changeset onto its own stack/<n> branch --
+only the first lands on the integration branch itself -- so judging against
+the integration branch reads every later changeset as unmerged and drains the
+frontier mid-stack.
 """
 
 from __future__ import annotations
@@ -37,6 +42,10 @@ CHANGE_BRANCH_RE = re.compile(r"^(?:knack/)?(?:slice|batch|change)/(?P<slug>.+)$
 # slice/ and batch/ are still accepted: they are what runs started
 # before the rename use.
 IDENTIFIER_RE = re.compile(r"[A-Z][A-Z0-9]*-\d+")
+# Stack numbering is dense by construction (the conductor only opens stack/<n>
+# once stack/<n-1> landed a changeset) and each stack branch contains every one
+# below it, so the highest number IS the tip of the run's work.
+STACK_BRANCH_RE = re.compile(r"^stack/(?P<height>\d+)$")
 # Written into a spec's YAML frontmatter. `project:` is already taken by the
 # llmOS vault link, hence the tracker_ prefix.
 CONTAINER_KEY = "tracker_container"
@@ -93,10 +102,30 @@ def load_json(payload: str, what: str) -> dict:
 # ---- workable ---------------------------------------------------------------
 
 
+def stack_tip(base_branch: str, run_git_fn=run_git) -> str:
+    """The branch holding everything this run merged so far.
+
+    The highest-numbered stack/<n> branch when the run has stacked changesets,
+    the integration branch itself when it has none.
+    """
+    output = run_git_fn(["branch", "--list", "stack/*", "--format=%(refname:short)"])
+    heights = [
+        int(match.group("height"))
+        for line in output.splitlines()
+        if (match := STACK_BRANCH_RE.match(line.strip()))
+    ]
+    return f"stack/{max(heights)}" if heights else base_branch
+
+
 def merged_task_identifiers(base_branch: str, run_git_fn=run_git) -> set[str]:
-    """Identifiers whose task branch is already merged into `base_branch`."""
+    """Identifiers whose task branch is already merged into this run's work."""
     output = run_git_fn(
-        ["branch", "--merged", base_branch, "--format=%(refname:short)"]
+        [
+            "branch",
+            "--merged",
+            stack_tip(base_branch, run_git_fn),
+            "--format=%(refname:short)",
+        ]
     )
     identifiers = set()
     for line in output.splitlines():
@@ -387,7 +416,8 @@ def main() -> int:
     workable.add_argument(
         "--merged-into",
         metavar="BRANCH",
-        help="integration branch; tasks already merged into it count as done",
+        help="integration branch; tasks merged into it — or into the run's "
+        "topmost stack/<n> branch when one exists — count as done",
     )
 
     container = verbs.add_parser(
