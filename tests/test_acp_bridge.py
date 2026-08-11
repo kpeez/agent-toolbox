@@ -543,6 +543,35 @@ def test_a_short_answer_emits_no_message_progress(bridge: BridgeClient, tmp_path
     assert bridge.progress == []
 
 
+def test_non_text_content_becomes_a_placeholder(bridge: BridgeClient, tmp_path: Path) -> None:
+    result = bridge.delegate(
+        task=directive(
+            reply_blocks=[
+                {"type": "text", "text": "before "},
+                {"type": "image", "uri": "data:image/png;base64,fixture"},
+                {"type": "text", "text": "after"},
+            ]
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "before [image omitted]after"
+
+
+def test_an_image_only_answer_is_not_reported_as_silence(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(reply_blocks=[{"type": "image", "uri": "fixture"}]),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "[image omitted]"
+    assert "The agent returned no message" not in result["content"][0]["text"]
+
+
 def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) -> None:
     first = bridge.delegate(task=directive(reply="one"), mode="read-only", cwd=str(tmp_path))
     session_id = first["structuredContent"]["sessionId"]
