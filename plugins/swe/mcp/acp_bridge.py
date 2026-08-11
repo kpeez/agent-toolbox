@@ -35,7 +35,7 @@ import subprocess
 import sys
 import threading
 from pathlib import Path
-from typing import Any
+from typing import Any, Literal
 
 MCP_PROTOCOL_VERSION = "2025-06-18"
 ACP_PROTOCOL_VERSION = 1
@@ -67,7 +67,7 @@ ACP_STDERR_PATTERN_OVERLAP = max(
 # `--effort` pin a server to one model so the caller cannot pick another: model
 # policy then lives in the .mcp.json entry, not in a prompt some model has to
 # obey. `--read-only-mode` names the agent's own read-only session mode.
-BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode")
+BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode", "--turn-timeout")
 
 DELEGATE_TOOL: dict[str, Any] = {
     "name": "delegate",
@@ -450,6 +450,10 @@ class ToolCallCancelled(RuntimeError):
     pass
 
 
+class TurnTimeout(RuntimeError):
+    pass
+
+
 class ActiveCall:
     """The one ACP process owned by an active MCP tools/call request.
 
@@ -461,7 +465,7 @@ class ActiveCall:
         self._lock = threading.Lock()
         self._session: AcpSession | None = None
         self._session_id: str | None = None
-        self._cancelled = False
+        self._cancel_reason: Literal["cancelled", "timeout"] | None = None
         self._completed = False
         self._prompt_started = False
         self._cancel_timer: threading.Timer | None = None
@@ -470,16 +474,18 @@ class ActiveCall:
         with self._lock:
             self._session = session
             self._session_id = session_id
-            should_close = self._cancelled and not self._completed
+            should_close = self._cancel_reason is not None and not self._completed
         if should_close:
             session.close()
             raise ToolCallCancelled("tool call cancelled")
 
-    def cancel(self) -> AcpSession | None:
+    def cancel(self, reason: Literal["cancelled", "timeout"] = "cancelled") -> AcpSession | None:
         with self._lock:
             if self._completed:
                 return None
-            self._cancelled = True
+            if self._cancel_reason is not None:
+                return self._session
+            self._cancel_reason = reason
             session = self._session
             session_id = self._session_id
             if session is None:
@@ -521,19 +527,23 @@ class ActiveCall:
 
     def start_prompt(self) -> None:
         with self._lock:
-            if self._cancelled:
+            if self._cancel_reason is not None:
                 raise ToolCallCancelled("tool call cancelled")
             self._prompt_started = True
 
     def raise_if_cancelled(self) -> None:
         with self._lock:
-            cancelled = self._cancelled
-        if cancelled:
+            cancel_reason = self._cancel_reason
+        if cancel_reason is not None:
             raise ToolCallCancelled("tool call cancelled")
 
-    def is_cancelled(self) -> bool:
+    def cancel_reason(self) -> Literal["cancelled", "timeout"] | None:
         with self._lock:
-            return self._cancelled
+            return self._cancel_reason
+
+    def is_completed(self) -> bool:
+        with self._lock:
+            return self._completed
 
 
 def run_turn(
@@ -627,11 +637,13 @@ class Bridge:
         model: str | None = None,
         effort: str | None = None,
         read_only_mode: str | None = None,
+        turn_timeout: float | None = None,
     ) -> None:
         self.command = command
         self.model = model
         self.effort = effort
         self.read_only_mode = read_only_mode
+        self.turn_timeout = turn_timeout
         self.tool = delegate_tool(model)
         self.sessions: dict[str, AcpSession] = {}
         self.active_calls: dict[Any, ActiveCall] = {}
@@ -788,13 +800,40 @@ class Bridge:
             self.select_session_mode(session, session_id, mode)
 
             active_call.start_prompt()
-            turn = run_turn(session, session_id, task, mode, report)
+            timeout_timer: threading.Timer | None = None
+            if self.turn_timeout is not None:
+                timeout_timer = threading.Timer(
+                    self.turn_timeout, active_call.cancel, args=("timeout",)
+                )
+                timeout_timer.daemon = True
+                timeout_timer.start()
+            try:
+                turn = run_turn(session, session_id, task, mode, report)
+            finally:
+                if timeout_timer is not None:
+                    timeout_timer.cancel()
+
+            if active_call.cancel_reason() == "timeout":
+                active_call.complete()
+                raise TurnTimeout(
+                    f"turn timed out after {self.turn_timeout} seconds; "
+                    f"session {session_id} retained"
+                )
             active_call.complete()
             return {"sessionId": session_id, **turn}
         except Exception as error:
-            if session is not None:
+            cancel_reason = active_call.cancel_reason()
+            completed = active_call.is_completed()
+            if session is not None and not (cancel_reason == "timeout" and completed):
                 self.discard_session(session_id, session)
-            if active_call.is_cancelled() and not isinstance(error, ToolCallCancelled):
+            if cancel_reason == "timeout":
+                if isinstance(error, TurnTimeout):
+                    raise
+                retained = f"; session {session_id} retained" if completed else ""
+                raise TurnTimeout(
+                    f"turn timed out after {self.turn_timeout} seconds{retained}"
+                ) from error
+            if cancel_reason == "cancelled" and not isinstance(error, ToolCallCancelled):
                 raise ToolCallCancelled("tool call cancelled") from error
             if session is not None and isinstance(error, AcpRequestError):
                 raise session.enrich_request_error(error) from error
@@ -918,6 +957,7 @@ def _run_tool_call(
 
 USAGE = (
     "usage: acp_bridge.py [--model ID] [--effort LEVEL] [--read-only-mode MODE] "
+    "[--turn-timeout SECONDS] "
     "<agent-command> [args...]\n"
 )
 
@@ -925,13 +965,26 @@ USAGE = (
 def main(argv: list[str]) -> int:
     try:
         options, command = split_argv(argv)
+        turn_timeout = None
+        if "turn_timeout" in options:
+            turn_timeout = float(options["turn_timeout"])
+            if not turn_timeout > 0:
+                raise ValueError("--turn-timeout must be greater than 0")
     except ValueError as error:
         sys.stderr.write(f"{error}\n{USAGE}")
         return 2
     if not command:
         sys.stderr.write(USAGE)
         return 2
-    serve(Bridge(command, **options))
+    serve(
+        Bridge(
+            command,
+            model=options.get("model"),
+            effort=options.get("effort"),
+            read_only_mode=options.get("read_only_mode"),
+            turn_timeout=turn_timeout,
+        )
+    )
     return 0
 
 
