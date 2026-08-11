@@ -583,7 +583,16 @@ def run_turn(
             kind = update.get("sessionUpdate")
             if kind == "agent_message_chunk":
                 nonlocal unreported_text
-                text = update.get("content", {}).get("text", "")
+                content = update.get("content", {})
+                if content.get("type") == "text":
+                    text = content.get("text", "")
+                else:
+                    content_type = content.get("type")
+                    text = (
+                        f"[{content_type} omitted]"
+                        if content_type
+                        else "[non-text content omitted]"
+                    )
                 chunks.append(text)
                 unreported_text += text
                 while len(unreported_text) >= MESSAGE_PROGRESS_INTERVAL:
