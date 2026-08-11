@@ -801,6 +801,9 @@ def test_review_and_ship_target_the_top_of_the_stack(tmp_path: Path) -> None:
     # The conductor names the stack and their order; the host-specific commands
     # stay in ship-pr, which is what keeps this file tracker- and forge-agnostic.
     assert "1. worktree-stub\n2. stack/2" in ship
+    run_summary = call_with_label(result, "run-summary:stub-run")["prompt"]
+    assert "stack worktree-stub → stack/2." in run_summary
+    assert "dependency stack worktree-stub → stack/2." not in run_summary
     assert result["summary"]["prUrls"] == ["https://example.test/pr/1"]
 
 
