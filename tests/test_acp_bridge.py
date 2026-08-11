@@ -347,6 +347,28 @@ for line in sys.stdin:
         if directive.get("block"):
             while True:
                 time.sleep(1)
+        if directive.get("cancellable"):
+            for line in sys.stdin:
+                cancel = json.loads(line)
+                if cancel.get("method") != "session/cancel":
+                    continue
+                partial_reply = directive.get("partial_reply", "")
+                if partial_reply:
+                    send({
+                        "jsonrpc": "2.0",
+                        "method": "session/update",
+                        "params": {"sessionId": session_id, "update": {
+                            "sessionUpdate": "agent_message_chunk",
+                            "content": {"type": "text", "text": partial_reply},
+                        }},
+                    })
+                send({
+                    "jsonrpc": "2.0",
+                    "id": message["id"],
+                    "result": {"stopReason": "cancelled"},
+                })
+                break
+            continue
         reply = directive.get("reply", "")
         if reply:
             send({
@@ -486,6 +508,33 @@ def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) 
 
     assert second["structuredContent"]["sessionId"] == session_id
     assert second["content"][0]["text"] == "two"
+
+
+def test_a_compliant_agent_cancels_gracefully_and_keeps_its_session(
+    lifecycle_bridge: BridgeClient, tmp_path: Path
+) -> None:
+    request_id = lifecycle_bridge.start_delegate(
+        task=directive(cancellable=True, partial_reply="partial answer"),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+    pid_path = wait_for_sessions(tmp_path, 1)[0]
+    wait_for_ready_session(tmp_path)
+
+    lifecycle_bridge.cancel(request_id)
+    result = lifecycle_bridge.receive(request_id)["result"]
+
+    assert "isError" not in result
+    assert result["structuredContent"]["stopReason"] == "cancelled"
+    assert result["content"][0]["text"] == "partial answer"
+    session_id = result["structuredContent"]["sessionId"]
+    assert session_id == pid_path.stem
+    os.kill(int(pid_path.read_text()), 0)
+
+    continuation = lifecycle_bridge.delegate(
+        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+    )
+    assert continuation["content"][0]["text"] == "still alive"
 
 
 def test_cancelling_a_tool_call_stops_and_forgets_its_acp_session(
