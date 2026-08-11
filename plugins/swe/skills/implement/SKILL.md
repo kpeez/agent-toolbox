@@ -20,14 +20,15 @@ recorded decision rather than a test. If you catch yourself calling a goal done
 with nothing that verifies it, stop and produce the evidence; a red test, type
 error, or lint failure is a stop, not a warning to note and continue past.
 
-The conductor owns the frontier query, fan-out, and settle; on a host without
-the Workflow tool, work tasks sequentially per the discipline below.
+`/start-loop`'s run procedure owns dispatch, gating, and merging for a full
+spec run; work tasks sequentially per the discipline below when implementing
+outside that procedure, or on a host with no forwarder subagents.
 
-### Manual fallback (no Workflow tool)
+### Manual fallback (no forwarder subagents)
 
-On a host with no Workflow tool, call the three plugin-delivered OpenCode
-delegate tools directly instead of the conductor's fan-out. Every call names
-the absolute worktree root as `cwd`:
+On a host with no forwarder subagents (Codex), call the three plugin-delivered
+OpenCode delegate tools directly. Every call names the absolute worktree root
+as `cwd`:
 
 - `mcp__plugin_swe_opencode-explorer__delegate` with `mode: "read-only"` for
   repository exploration.
@@ -38,9 +39,7 @@ the absolute worktree root as `cwd`:
 
 If a requested tool is missing, fails to start, or returns non-completion,
 surface that result to whoever orchestrates you. There is no silent fallback
-to a host-native agent or an `opencode run` shell-out. The frontier query,
-fan-out loop, and settle stay conductor-owned; this subsection only replaces
-the conductor's delegate dispatch, not its scheduling.
+to a host-native agent or an `opencode run` shell-out.
 
 ## Implement one task
 
