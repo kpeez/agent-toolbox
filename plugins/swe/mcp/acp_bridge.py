@@ -52,6 +52,7 @@ MODES = ("read-only", "write")
 
 ACP_STDERR_OBSERVATION_BYTES = 4096
 ACP_STDERR_READ_BYTES = 1024
+CANCEL_GRACE_SECONDS = 2.0
 ACP_STDERR_CATEGORIES: dict[str, tuple[bytes, ...]] = {
     "authentication": (b"authentication", b"unauthorized", b"api key"),
     "network": (b"connection", b"network", b"dns", b"timed out"),
@@ -382,6 +383,10 @@ class AcpSession:
             self.process.stdin.write(json.dumps(frame) + "\n")
             self.process.stdin.flush()
 
+    def notify(self, method: str, params: dict[str, Any]) -> None:
+        """Send an id-less JSON-RPC notification alongside the request pump."""
+        self._send({"jsonrpc": "2.0", "method": method, "params": params})
+
     def request(
         self,
         method: str,
@@ -446,17 +451,25 @@ class ToolCallCancelled(RuntimeError):
 
 
 class ActiveCall:
-    """The one ACP process owned by an active MCP tools/call request."""
+    """The one ACP process owned by an active MCP tools/call request.
+
+    A session survives a cancel iff the agent ends the turn before the grace
+    timer fires.
+    """
 
     def __init__(self) -> None:
         self._lock = threading.Lock()
         self._session: AcpSession | None = None
+        self._session_id: str | None = None
         self._cancelled = False
         self._completed = False
+        self._prompt_started = False
+        self._cancel_timer: threading.Timer | None = None
 
-    def attach(self, session: AcpSession) -> None:
+    def attach(self, session: AcpSession, session_id: str | None) -> None:
         with self._lock:
             self._session = session
+            self._session_id = session_id
             should_close = self._cancelled and not self._completed
         if should_close:
             session.close()
@@ -467,12 +480,50 @@ class ActiveCall:
             if self._completed:
                 return None
             self._cancelled = True
-            return self._session
+            session = self._session
+            session_id = self._session_id
+            if session is None:
+                return None
+            if session_id is None or not self._prompt_started:
+                close_immediately = True
+            else:
+                close_immediately = False
+                timer = threading.Timer(CANCEL_GRACE_SECONDS, self._close_session)
+                timer.daemon = True
+                self._cancel_timer = timer
+                timer.start()
+        if close_immediately:
+            session.close()
+            return None
+        try:
+            session.notify("session/cancel", {"sessionId": session_id})
+        except OSError:
+            pass
+        return session
+
+    def _close_session(self) -> None:
+        with self._lock:
+            if self._completed:
+                return
+            session = self._session
+        if session is not None:
+            session.close()
 
     def complete(self) -> None:
         with self._lock:
             self._completed = True
+            timer = self._cancel_timer
+            self._cancel_timer = None
             self._session = None
+            self._session_id = None
+        if timer is not None:
+            timer.cancel()
+
+    def start_prompt(self) -> None:
+        with self._lock:
+            if self._cancelled:
+                raise ToolCallCancelled("tool call cancelled")
+            self._prompt_started = True
 
     def raise_if_cancelled(self) -> None:
         with self._lock:
@@ -589,7 +640,7 @@ class Bridge:
     def open_session(self, cwd: str, active_call: ActiveCall) -> tuple[AcpSession, str]:
         session = AcpSession(self.command, cwd)
         try:
-            active_call.attach(session)
+            active_call.attach(session, None)
             session.request(
                 "initialize",
                 {
@@ -601,6 +652,7 @@ class Bridge:
             )
             created = session.request("session/new", {"cwd": cwd, "mcpServers": []})
             session_id = created["sessionId"]
+            active_call.attach(session, session_id)
             session.default_mode = config_value(created.get("configOptions", []), "mode")
             with self._lock:
                 self.sessions[session_id] = session
@@ -629,9 +681,7 @@ class Bridge:
         with self._lock:
             active_call = self.active_calls.get(request_id)
         if active_call is not None:
-            session = active_call.cancel()
-            if session is not None:
-                session.close()
+            active_call.cancel()
 
     def finish_call(self, request_id: Any, active_call: ActiveCall) -> None:
         with self._lock:
@@ -724,7 +774,7 @@ class Bridge:
                         f"session {session_id} is not open on this bridge; "
                         "omit sessionId to start a fresh one"
                     )
-                active_call.attach(session)
+                active_call.attach(session, session_id)
             else:
                 cwd = arguments.get("cwd") or os.getcwd()
                 if not Path(cwd).is_dir():
@@ -737,8 +787,8 @@ class Bridge:
                 self.select_model(session, session_id, model, arguments.get("effort"))
             self.select_session_mode(session, session_id, mode)
 
+            active_call.start_prompt()
             turn = run_turn(session, session_id, task, mode, report)
-            active_call.raise_if_cancelled()
             active_call.complete()
             return {"sessionId": session_id, **turn}
         except Exception as error:
