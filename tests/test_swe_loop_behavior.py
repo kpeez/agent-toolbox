@@ -756,6 +756,14 @@ def run_stack(
     return run_loop(tmp_path, responses, default_result=None)
 
 
+def settle_plan(prompt: str) -> list[dict[str, Any]]:
+    """The plan JSON `promptSettle` embeds on the line after "stdin:"."""
+    marker = "Pass exactly this JSON on stdin:\n"
+    start = prompt.index(marker) + len(marker)
+    end = prompt.index("\n", start)
+    return json.loads(prompt[start:end])
+
+
 def test_a_single_changeset_run_settles_and_ships_exactly_as_before(
     tmp_path: Path,
 ) -> None:
@@ -763,6 +771,10 @@ def test_a_single_changeset_run_settles_and_ships_exactly_as_before(
 
     settle = call_with_label(result, "settle:implement:1")["prompt"]
     assert "tracker.py settle --tracker linear --plan -" in settle
+    [entry] = settle_plan(settle)
+    assert entry["branch"] == "change/KP-1"
+    assert entry["from"] == "worktree-stub"
+    assert entry["target"] == "worktree-stub"
     # One changeset is not a stack: the run must not reach for gh stack at all.
     ship = call_with_label(result, "ship:stub-run")["prompt"]
     assert "gh stack link" not in ship
@@ -778,8 +790,16 @@ def test_a_later_round_settles_onto_a_stack_branch_above_the_one_below(
     # Cutting the changeset from the changeset below is what makes it contain every layer
     # underneath, which the PR base chaining depends on.
     assert "tracker.py settle --tracker linear --plan -" in second
+    [second_entry] = settle_plan(second)
+    assert second_entry["branch"] == "change/KP-2"
+    assert second_entry["from"] == "worktree-stub"
+    assert second_entry["target"] == "stack/2"
     third = call_with_label(result, "settle:implement:3")["prompt"]
     assert "tracker.py settle --tracker linear --plan -" in third
+    [third_entry] = settle_plan(third)
+    assert third_entry["branch"] == "change/KP-3"
+    assert third_entry["from"] == "stack/2"
+    assert third_entry["target"] == "stack/3"
 
 
 def test_implementers_branch_from_the_current_stack_tip(tmp_path: Path) -> None:
