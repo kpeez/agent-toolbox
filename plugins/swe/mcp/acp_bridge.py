@@ -53,6 +53,7 @@ MODES = ("read-only", "write")
 ACP_STDERR_OBSERVATION_BYTES = 4096
 ACP_STDERR_READ_BYTES = 1024
 CANCEL_GRACE_SECONDS = 2.0
+MESSAGE_PROGRESS_INTERVAL = 200
 ACP_STDERR_CATEGORIES: dict[str, tuple[bytes, ...]] = {
     "authentication": (b"authentication", b"unauthorized", b"api key"),
     "network": (b"connection", b"network", b"dns", b"timed out"),
@@ -560,6 +561,7 @@ def run_turn(
     """
     chunks: list[str] = []
     denied: list[str] = []
+    unreported_text = ""
 
     def on_frame(frame: dict[str, Any]) -> dict[str, Any] | None:
         method = frame.get("method")
@@ -579,7 +581,13 @@ def run_turn(
             update = frame.get("params", {}).get("update", {})
             kind = update.get("sessionUpdate")
             if kind == "agent_message_chunk":
-                chunks.append(update.get("content", {}).get("text", ""))
+                nonlocal unreported_text
+                text = update.get("content", {}).get("text", "")
+                chunks.append(text)
+                unreported_text += text
+                while len(unreported_text) >= MESSAGE_PROGRESS_INTERVAL:
+                    report(" ".join(unreported_text.split())[-MESSAGE_PROGRESS_INTERVAL:])
+                    unreported_text = unreported_text[MESSAGE_PROGRESS_INTERVAL:]
             elif kind == "tool_call":
                 report(update.get("title") or update.get("kind") or "working")
         return None

@@ -143,7 +143,10 @@ def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
         reply = f"{reply}granted={','.join(granted)}"
     if directive.get("echo_config"):
         reply = f"{reply}config={'|'.join(CONFIG['order'])}"
-    if reply:
+    reply_chunks = directive.get("reply_chunks", [reply] if reply else [])
+    if directive.get("reply_blocks") is not None:
+        reply_chunks = directive["reply_blocks"]
+    for content in reply_chunks:
         send(
             {
                 "jsonrpc": "2.0",
@@ -152,7 +155,11 @@ def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
                     "sessionId": SESSION_ID,
                     "update": {
                         "sessionUpdate": "agent_message_chunk",
-                        "content": {"type": "text", "text": reply},
+                        "content": (
+                            {"type": "text", "text": content}
+                            if isinstance(content, str)
+                            else content
+                        ),
                     },
                 },
             }

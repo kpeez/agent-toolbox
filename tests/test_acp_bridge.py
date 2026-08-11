@@ -516,6 +516,33 @@ def test_tool_calls_are_reported_as_progress(bridge: BridgeClient, tmp_path: Pat
     assert "Reading files" in bridge.progress
 
 
+def test_message_chunks_stream_as_throttled_progress(bridge: BridgeClient, tmp_path: Path) -> None:
+    chunks = ["a" * 75, "b" * 75, "c" * 75, "d" * 75, "e" * 75, "f" * 75]
+
+    result = bridge.delegate(
+        task=directive(
+            attempts=[{"kind": "read", "title": "Reading files"}],
+            reply_chunks=chunks,
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert len([message for message in bridge.progress if "Reading files" not in message]) == 2
+    assert result["content"][0]["text"] == "".join(chunks)
+    assert "Reading files" in bridge.progress
+
+
+def test_a_short_answer_emits_no_message_progress(bridge: BridgeClient, tmp_path: Path) -> None:
+    bridge.delegate(
+        task=directive(reply="a" * (acp_bridge.MESSAGE_PROGRESS_INTERVAL - 1)),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert bridge.progress == []
+
+
 def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) -> None:
     first = bridge.delegate(task=directive(reply="one"), mode="read-only", cwd=str(tmp_path))
     session_id = first["structuredContent"]["sessionId"]
