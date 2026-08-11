@@ -115,9 +115,9 @@ def test_forwarder_mcp_tools_use_the_plugin_qualified_name() -> None:
     launch -- so getting this wrong breaks delegation entirely rather than
     degrading it.
     """
-    servers = json.loads(
-        (ROOT / "plugins" / "swe" / ".mcp.claude.json").read_text()
-    )["mcpServers"]
+    servers = json.loads((ROOT / "plugins" / "swe" / ".mcp.claude.json").read_text())[
+        "mcpServers"
+    ]
     agents_dir = ROOT / "plugins" / "swe" / "agents"
 
     referenced = {
@@ -254,7 +254,15 @@ def test_lab_manifests_share_installation_metadata() -> None:
     claude = json.loads((lab / ".claude-plugin" / "plugin.json").read_text())
     codex = json.loads((lab / ".codex-plugin" / "plugin.json").read_text())
 
-    shared_fields = ("name", "description", "version", "homepage", "repository", "license", "keywords")
+    shared_fields = (
+        "name",
+        "description",
+        "version",
+        "homepage",
+        "repository",
+        "license",
+        "keywords",
+    )
     assert {field: claude[field] for field in shared_fields} == {
         field: codex[field] for field in shared_fields
     }
@@ -431,7 +439,9 @@ def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
         agent = agents_dir / f"{server}.md"
         assert set(OPENCODE_MODEL.findall(agent.read_text())) == {model}, agent.name
 
-    # The skills route by role and never name a model.
+    # Skills mostly route by role; the one exception (start-loop's model-policy
+    # table, checked below for its bare names) still never spells out the
+    # qualified `opencode-go/...` id.
     unpinned_sources = sorted((ROOT / "plugins" / "swe" / "skills").glob("*/SKILL.md"))
     offenders = [
         (path.name, match)
@@ -445,6 +455,33 @@ def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
         OPENCODE_MODEL.findall((ROOT / "plugins" / "swe" / "README.md").read_text())
     )
     assert documented <= set(models.values())
+
+
+def test_bare_opencode_model_names_agree_with_the_mcp_manifest() -> None:
+    """start-loop's model-policy table and the README's Model policy prose name
+    OpenCode models without the `opencode-go/` prefix. Those bare names are not
+    caught by the qualified-id check above, so re-pinning a model in .mcp.json
+    must still fail here until the docs catch up."""
+    models = pinned_models()
+    bare_models = {model.split("/", 1)[1] for model in models.values()}
+    bare_model_re = re.compile(
+        "|".join(re.escape(name) for name in sorted(bare_models))
+    )
+
+    start_loop = (
+        ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
+    ).read_text()
+    readme = (ROOT / "plugins" / "swe" / "README.md").read_text()
+
+    for source_name, text in (
+        ("start-loop SKILL.md", start_loop),
+        ("swe README.md", readme),
+    ):
+        found = set(bare_model_re.findall(text))
+        assert found, f"{source_name} names no bare OpenCode model"
+        assert found <= bare_models, (
+            f"{source_name} names a bare model not pinned in .mcp.json: {found - bare_models}"
+        )
 
 
 def test_dropping_copilot_left_no_dangling_references() -> None:
@@ -546,6 +583,7 @@ def test_start_loop_is_the_lead_orchestrated_run_procedure() -> None:
         "verification gates",
         "git merge --no-ff",
         "Model policy",
+        "Manual fallback (no forwarder subagents)",
     ):
         assert present.lower() in start_loop.lower(), f"missing: {present}"
 

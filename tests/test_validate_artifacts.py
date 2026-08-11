@@ -8,10 +8,12 @@ present and well-formed.
 from __future__ import annotations
 
 import importlib.util
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "plugins" / "swe" / "scripts" / "validate_artifacts.py"
+TEMPLATES = ROOT / "plugins" / "swe" / "skills" / "write-spec" / "templates.md"
 
 spec_loader = importlib.util.spec_from_file_location("validate_artifacts", SCRIPT)
 assert spec_loader and spec_loader.loader
@@ -85,10 +87,7 @@ def test_an_archived_spec_is_exempt_from_approval() -> None:
 
 
 def spec_with_tasks(tasks_block: str) -> str:
-    return (
-        "---\nstatus: draft\ndesc: a spec\n---\n\n"
-        f"## Tasks\n\n{tasks_block}\n"
-    )
+    return f"---\nstatus: draft\ndesc: a spec\n---\n\n## Tasks\n\n{tasks_block}\n"
 
 
 def test_a_well_formed_tasks_section_passes() -> None:
@@ -115,3 +114,78 @@ def test_a_dangling_after_reference_is_rejected() -> None:
 
 def test_a_spec_without_a_tasks_section_still_passes() -> None:
     assert violations(status="draft") == []
+
+
+def test_a_duplicate_task_id_is_rejected() -> None:
+    tasks = (
+        "- [ ] T1: Add the widget — a brief\n"
+        "- [ ] T1: Add it again — a different brief\n"
+    )
+    found = validator.validate_spec(spec_with_tasks(tasks), None)
+    assert any("duplicate task id" in v and "T1" in v for v in found)
+
+
+def test_a_self_referential_after_is_rejected() -> None:
+    found = validator.validate_spec(
+        spec_with_tasks("- [ ] T2: Wire it up — a brief (after: T2)\n"), None
+    )
+    assert any("self-referential" in v and "T2" in v for v in found)
+
+
+def test_a_brief_with_a_parenthetical_passes() -> None:
+    tasks = "- [ ] T1: Add widget — brief (see ADR-0014)\n"
+    assert validator.validate_spec(spec_with_tasks(tasks), None) == []
+
+
+def test_a_brief_with_a_parenthetical_and_a_trailing_after_passes() -> None:
+    tasks = "- [ ] T2: Add widget — brief (see ADR-0014) (after: T1)\n"
+    found = validator.validate_spec(
+        f"---\nstatus: draft\ndesc: a spec\n---\n\n## Tasks\n\n"
+        f"- [ ] T1: First — a brief\n{tasks}\n",
+        None,
+    )
+    assert found == []
+
+
+def test_a_tasks_section_before_the_divider_with_design_after_passes() -> None:
+    """The template's actual shape: `## Tasks` sits before the `---` zone
+    divider, and a `## Design` heading follows the divider. The guidance
+    comment and the divider itself must not be mistaken for task lines."""
+    body = (
+        "---\nstatus: draft\ndesc: a spec\n---\n\n"
+        "## Validation\n\n<!-- commands/tests that prove the goal -->\n\n"
+        "## Tasks\n\n"
+        "<!-- Parsed by the start-loop run procedure: one implementer subagent per task.\n"
+        "     - [ ] T1: <title> — <one-line brief>\n"
+        "     - [ ] T2: <title> — <brief> (after: T1)\n"
+        '     Task ids are T<n>; optional "(after: Tm[, Tk])" declares dependencies. -->\n\n'
+        "---\n\n"
+        "## Design\n\n<!-- architecture, key components -->\n"
+    )
+    assert validator.validate_spec(body, None) == []
+
+
+def test_prose_mentioning_the_tasks_heading_does_not_hijack_the_section() -> None:
+    """A `## Tasks` mention inside prose (e.g. a Scope bullet in backticks)
+    must not be mistaken for the real heading, since it isn't line-anchored."""
+    body = (
+        "---\nstatus: draft\ndesc: a spec\n---\n\n"
+        "## Scope\n\n"
+        "- Parses the spec's `## Tasks` section (not this text)\n\n"
+        "## Tasks\n\n"
+        "- [ ] T1: Add the widget — a one-line brief\n"
+    )
+    assert validator.validate_spec(body, None) == []
+
+
+def test_the_actual_template_body_validates_clean() -> None:
+    """Run the validator against write-spec's own template body, not a
+    reconstructed fixture."""
+    text = TEMPLATES.read_text()
+    match = re.search(
+        r'<template file="docs/agents/specs/NNNN-<slug>\.md">\n(.*?)</template>',
+        text,
+        re.DOTALL,
+    )
+    assert match is not None
+    assert validator.validate_spec(match.group(1), None) == []

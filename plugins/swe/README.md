@@ -53,21 +53,18 @@ Two ways to run the spine:
 
 - **Skill by skill** — invoke each skill yourself. Useful for work that is
   already mid-flight or does not need the full loop.
-- **As one resumable command** — `/start-loop <idea>` owns the interactive
-  half (triage, design, approval gate, splitting) and, once the spec is
-  approved, runs the spine to completion itself: dispatch, gates, merges,
-  review, and ship, with no live prompts.
+- **As one resumable command** — `/start-loop <idea>` runs the approved-spec
+  half to completion itself: dispatch, gates, merges, review, and ship, with
+  no live prompts.
 
 ## The swe-loop
 
-`/start-loop` first triages the idea against four criteria (unambiguous
-against the repo and ADRs, ≤ 6 estimated tasks, no destructive surface, no
-new external dependencies). All four pass → the design phase runs
-autonomously and the spec is marked approved without a prompt. Any fail →
-the gated path: `/sharpen` interactively, `/write-spec`, and one explicit
-spec approval — the only prompt. Either way the approved spec authorizes the
-run; after that, problems reach the user as data (escalation reports), never
-as live prompts.
+Sharpening and spec-writing happen in a prior session, never inside the run
+itself. `/start-loop` requires the spec's frontmatter to already carry
+`approved: true` — a spec without it is a stop, pointing at `/sharpen` or
+`/write-spec` instead of proceeding. Once the approved spec authorizes the
+run, problems reach the user as data (escalation reports), never as live
+prompts.
 
 There is no conductor process and no Workflow tool: the lead session runs the
 loop directly. It dispatches one implementer subagent per unblocked task —
@@ -141,8 +138,11 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 
 Nine definitions in `agents/`: each a Claude `.md`, six with a Codex `.toml`
 twin kept in sync (the model matrix below is pinned by `tests/test_skill_drift.py`).
-They are the loop's workers; the lead session dispatching them decides what
-runs when.
+`/start-loop` dispatches `implementer` and `reviewer` directly; `explorer` and
+`architect` are dispatched by other skills (`/sharpen`, `/write-spec`,
+`/implement`, `/to-issues`). `planner` and `publisher` are standalone
+agents — callerless by the workflow skills — available for direct dispatch
+when you want their bounded behavior outside a skill.
 
 | Agent             | Purpose                                                                                  | Claude model (effort) | Codex model (effort)   |
 | ----------------- | ---------------------------------------------------------------------------------------- | --------------------- | ---------------------- |

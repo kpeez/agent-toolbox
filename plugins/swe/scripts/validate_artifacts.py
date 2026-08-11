@@ -41,9 +41,11 @@ CHECKLIST_ITEM_RE = re.compile(r"^- \[[ xX]\]", re.MULTILINE)
 TASKS_HEADING = "## Tasks"
 # - [ ] T1: <title> — <one-line brief>
 # - [ ] T2: <title> — <brief> (after: T1)
-TASK_LINE_RE = re.compile(
-    r"^- \[[ xX]\] (T\d+): [^—]+ — [^(]+?(?: \(after: (T\d+(?:, T\d+)*)\))?$"
-)
+# The brief may itself contain parentheses; only a trailing "(after: ...)"
+# group is special, so it's stripped separately before the base line is matched.
+TASK_AFTER_SUFFIX_RE = re.compile(r" \(after: (T\d+(?:, T\d+)*)\)$")
+TASK_LINE_RE = re.compile(r"^- \[[ xX]\] (T\d+): [^—]+ — .+$")
+HTML_COMMENT_RE = re.compile(r"<!--.*?-->", re.DOTALL)
 
 
 class UnclosedFrontmatter(Exception):
@@ -144,38 +146,55 @@ def validate_spec(text: str, previous_status: str | None) -> list[str]:
 
 def validate_tasks_section(section: str) -> list[str]:
     violations: list[str] = []
-    lines = [line for line in section.splitlines() if line.strip()]
+    section = HTML_COMMENT_RE.sub("", section)
+    lines = [line for line in section.splitlines() if line.strip() and line.strip() != "---"]
 
-    matches: dict[str, re.Match[str]] = {}
+    task_ids: set[str] = set()
+    parsed: list[tuple[str, str, str | None]] = []
     for line in lines:
-        match = TASK_LINE_RE.match(line)
+        afters: str | None = None
+        after_match = TASK_AFTER_SUFFIX_RE.search(line)
+        base_line = line
+        if after_match is not None:
+            afters = after_match.group(1)
+            base_line = line[: after_match.start()]
+        match = TASK_LINE_RE.match(base_line)
         if match is None:
             violations.append(f"malformed task line: {line!r}")
             continue
-        matches[match.group(1)] = match
+        task_id = match.group(1)
+        if task_id in task_ids:
+            violations.append(f"duplicate task id {task_id!r} in task line: {line!r}")
+        task_ids.add(task_id)
+        parsed.append((task_id, line, afters))
 
-    task_ids = set(matches)
-    for task_id, match in matches.items():
-        afters = match.group(2)
+    for task_id, line, afters in parsed:
         if not afters:
             continue
         for ref in afters.split(", "):
-            if ref not in task_ids:
+            if ref == task_id:
                 violations.append(
-                    f"dangling 'after' reference to unknown task {ref!r} in task line: "
-                    f"{match.string!r}"
+                    f"self-referential 'after' reference to {ref!r} in task line: {line!r}"
+                )
+            elif ref not in task_ids:
+                violations.append(
+                    f"dangling 'after' reference to unknown task {ref!r} in task line: {line!r}"
                 )
 
     return violations
 
 
+SECTION_END_RE = re.compile(r"^(?:## |---\s*$)", re.MULTILINE)
+
+
 def extract_section(text: str, heading: str) -> str | None:
-    idx = text.find(heading)
-    if idx == -1:
+    heading_re = re.compile(rf"^{re.escape(heading)}\s*$", re.MULTILINE)
+    heading_match = heading_re.search(text)
+    if heading_match is None:
         return None
-    rest = text[idx + len(heading) :]
-    next_idx = rest.find("\n## ")
-    return rest[:next_idx] if next_idx != -1 else rest
+    start = heading_match.end()
+    end_match = SECTION_END_RE.search(text, start)
+    return text[start : end_match.start()] if end_match else text[start:]
 
 
 def validate_issue(text: str) -> list[str]:

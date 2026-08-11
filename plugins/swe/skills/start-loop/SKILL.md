@@ -9,6 +9,10 @@ You (the lead) orchestrate the run directly. There is no Workflow tool, no
 conductor, no planner or plumbing agents — you dispatch implementers and a
 reviewer, run gates and merges yourself, and ship.
 
+On a host with no forwarder subagents (Codex), follow `/implement`'s
+"Manual fallback (no forwarder subagents)" section instead: call the three
+plugin-delivered OpenCode delegate tools directly per task.
+
 ## Handoff discipline
 
 Sharpening and spec-writing happen in a prior session. Start the run in a
@@ -61,7 +65,8 @@ reading belongs to the reviewer in step 4.
 | Role | Default | Escalation / notes |
 | --- | --- | --- |
 | Explorer | Haiku (repo), OpenCode flash (web) | Reports only |
-| Implementer / fixer | OpenCode (gpt-5.6-luna) when the Go subscription is flat-rate; else Sonnet, high effort | Fails gates twice → redispatch that task on Opus with the failure history |
+| Sharpen + spec | The premium model | The one place it earns its price |
+| Implementer / fixer | OpenCode (gpt-5.6-luna) when the Go subscription is flat-rate; else Sonnet, high effort | Fails gates twice → redispatch that task on Opus with the failure history. Never pre-buy Opus for tasks the spec already made bounded: ~5× the price dwarfs any thinking-token savings. |
 | Reviewer | A different family from the implementer: deepseek-v4-pro, or Sonnet/Opus | One invocation, on the assembled diff |
 | Orchestrator (you) | The fresh session's model; Opus suffices | Reads reports and runs git |
 
@@ -90,6 +95,6 @@ live worker interruption.
 
 ## Fail loud
 
-If a required skill (`/sharpen`, `/write-spec`, `/to-issues`) can't be
-activated, or the tracker can't be reached, name it and stop before changing
-state — do not improvise a substitute.
+If a required skill (`/sharpen`, `/write-spec`) can't be activated, or the
+tracker can't be reached, name it and stop before changing state — do not
+improvise a substitute.
