@@ -179,6 +179,12 @@ After launch, record the run on the spec's frontmatter as `run_id: <id>` and
 resuming this run has no other way to recover which branch it integrates into,
 and frontmatter keeps it machine-readable instead of buried in a comment.
 
+Then run
+`uv run <scriptsDir>/tracker.py sync --tracker <tracker> --container <containerId> --merged-into <baseBranch>`
+so the container's status advances to "started" the moment the run begins. The
+conductor reconciles again at run end, but without this launch-time sync the
+board reads "backlog" for the whole run while agents are actively working it.
+
 **No Workflow tool on this host** (per ADR-0006) → say so
 and fall back to the manual orchestration in `/implement`. That manual path calls the three plugin-delivered
 OpenCode delegate tools directly for read-only exploration, one bounded write
