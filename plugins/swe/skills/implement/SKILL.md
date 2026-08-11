@@ -47,14 +47,15 @@ code yourself — delegate.** Spend your context coordinating, not reading files
 and typing implementation. The delegation surface depends on what the host
 offers:
 
-- **On a host with named subagents**, explore with `swe:opencode-explorer`,
-  give one bounded changeset to `swe:opencode-implementer`, and send the final
-  assembled diff to `swe:opencode-reviewer`. Those thin forwarders make the
-  typed OpenCode calls.
+- **On a host with named subagents**, explore with `swe:opencode-explorer` —
+  repository archaeology and web questions alike (library docs, API
+  references, current facts, error messages) — give one bounded changeset to
+  `swe:opencode-implementer`, and send the final assembled diff to
+  `swe:opencode-reviewer`. Those thin forwarders make the typed OpenCode calls.
 - **On a host without them**, call the plugin-delivered tools directly. Every
   call names the absolute worktree root as `cwd`: use
   `mcp__plugin_swe_opencode-explorer__delegate` with `mode: "read-only"` for
-  repository archaeology,
+  repository archaeology and web research,
   `mcp__plugin_swe_opencode-implementer__delegate` with `mode: "write"` for
   exactly one changeset and its issue/spec identifiers and evidence gates, and
   `mcp__plugin_swe_opencode-reviewer__delegate` with `mode: "read-only"` for
