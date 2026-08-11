@@ -192,17 +192,28 @@ def config_value(config_options: list[dict[str, Any]], config_id: str) -> str | 
 
 
 def is_inside(path: str, workspace: str) -> bool:
-    """True when `path` resolves inside `workspace`.
+    """True when `path` stays inside `workspace`, lexically or after resolution.
 
-    Symlinks are resolved first: a write to a symlink pointing out of the
-    worktree is a write out of the worktree.
+    Lexical containment sanctions workspace-internal symlinks: a repo that
+    plants `docs/agents -> <vault>/projects/<repo>` means writes spelled under
+    `docs/agents/` to land there, so a path spelled inside the workspace is
+    allowed even when a symlink carries it elsewhere. A path that escapes in
+    its own spelling (`..`, an absolute path elsewhere — including a symlink's
+    resolved target) is still out. This check was never write mode's hard
+    boundary anyway — location-less execute calls pass — the OS sandbox is the
+    stronger guarantee.
     """
     try:
+        root = Path(workspace)
+        candidate = Path(os.path.normpath(root / path))
         resolved = Path(path).resolve()
-        root = Path(workspace).resolve()
+        resolved_root = root.resolve()
     except (OSError, ValueError):
         return False
-    return resolved == root or root in resolved.parents
+    if resolved.is_relative_to(resolved_root):
+        return True
+    lexical_roots = {Path(os.path.normpath(root)), resolved_root}
+    return any(candidate.is_relative_to(lexical) for lexical in lexical_roots)
 
 
 def select_option(options: list[dict[str, Any]], allow: bool) -> dict[str, Any]:
@@ -529,7 +540,7 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     """The agent's answer, or an account of why there isn't one.
 
     An agent that gets its writes rejected often stops without saying anything.
-    Returning that silence as the answer is the failure the codex delegator
+    Returning that silence as the answer is a failure earlier delegators
     already learned the hard way: a caller cannot tell "nothing to report" from
     "the run was blocked", and acts on the emptiness either way.
     """

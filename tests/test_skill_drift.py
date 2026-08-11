@@ -34,11 +34,7 @@ def plugin_skill_files() -> list[Path]:
 
 
 def all_skill_files() -> list[Path]:
-    return (
-        plugin_skill_files()
-        + sorted((ROOT / "skills").glob("*/SKILL.md"))
-        + sorted((ROOT / ".agents" / "skills").glob("*/SKILL.md"))
-    )
+    return plugin_skill_files() + sorted((ROOT / "skills").glob("*/SKILL.md"))
 
 
 def frontmatter_field(skill_file: Path, field: str) -> str | None:
@@ -119,7 +115,6 @@ def test_every_routable_provider_has_a_forwarder_agent() -> None:
     forwarders = set(re.findall(r"'(swe:[a-z0-9-]+)'", delegators_block()))
 
     assert forwarders == {
-        "swe:codex-delegator",
         "swe:opencode-implementer",
         "swe:opencode-reviewer",
     }
@@ -184,7 +179,6 @@ def test_forwarder_agents_hold_only_their_providers_mcp_tools() -> None:
     """
     agents_dir = ROOT / "plugins" / "swe" / "agents"
     expected = {
-        "codex-delegator": "mcp__plugin_swe_codex__codex, mcp__plugin_swe_codex__codex-reply",
         "opencode-explorer": "mcp__plugin_swe_opencode-explorer__delegate",
         "opencode-implementer": "mcp__plugin_swe_opencode-implementer__delegate",
         "opencode-reviewer": "mcp__plugin_swe_opencode-reviewer__delegate",
@@ -277,51 +271,6 @@ def test_frontmatter_names_match_skill_directories() -> None:
         for skill_file in all_skill_files()
         if frontmatter_name(skill_file) != skill_file.parent.name
     ]
-
-    assert mismatches == []
-
-
-def test_installed_skill_copies_mirror_their_plugin_sources() -> None:
-    """.agents/skills/ is the committed skills.sh install target, so opencode
-    loads its skills in-tree. A plugin edit forgotten from `npx skills update`
-    leaves those copies stale; every installed file must be byte-identical to
-    its plugin source, and neither side may hold files the other lacks."""
-    installed_root = ROOT / ".agents" / "skills"
-    assert installed_root.is_dir()
-
-    def plugin_source(skill_dir: Path) -> Path:
-        sources = [
-            ROOT / "plugins" / plugin.name / "skills" / skill_dir.name
-            for plugin in plugin_directories()
-            if (ROOT / "plugins" / plugin.name / "skills" / skill_dir.name).is_dir()
-        ]
-        assert len(sources) == 1, (
-            f"installed skill {skill_dir.name} has {len(sources)} plugin sources"
-        )
-        return sources[0]
-
-    mismatches: list[tuple[str, str]] = []
-    for skill_dir in sorted(installed_root.iterdir()):
-        source_dir = plugin_source(skill_dir)
-        source_files = {
-            path.relative_to(source_dir): path
-            for path in source_dir.rglob("*")
-            if path.is_file()
-        }
-        installed_files = {
-            path.relative_to(skill_dir): path
-            for path in skill_dir.rglob("*")
-            if path.is_file()
-        }
-        for rel in sorted(set(source_files) | set(installed_files)):
-            if rel not in source_files or rel not in installed_files:
-                mismatches.append(
-                    (f".agents/skills/{skill_dir.name}/{rel}", "one side only")
-                )
-            elif source_files[rel].read_bytes() != installed_files[rel].read_bytes():
-                mismatches.append(
-                    (f".agents/skills/{skill_dir.name}/{rel}", "content differs")
-                )
 
     assert mismatches == []
 
@@ -522,7 +471,7 @@ def test_codex_and_claude_package_the_same_opencode_role_contracts() -> None:
         "opencode-reviewer",
     }
 
-    assert set(claude_servers) == {"codex", *role_names}
+    assert set(claude_servers) == role_names
     assert set(codex_servers) == role_names
     for name in role_names:
         assert codex_servers[name]["cwd"] == "."

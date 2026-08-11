@@ -68,10 +68,10 @@ If you haven't already, explore so issue titles/descriptions use the project's
 own vocabulary (the `docs/agents/CONTEXT.md` glossary if present) and respect ADRs in
 `docs/agents/adrs/` for the area you're touching.
 
-Delegate the sweep rather than reading files yourself. On Claude, dispatch the
-`swe:opencode-explorer` forwarder; if that Claude caller cannot nest, call
-`mcp__plugin_swe_opencode-explorer__delegate` directly. On Codex, call that
-plugin-delivered MCP tool directly with the absolute repository root as `cwd`
+Delegate the sweep rather than reading files yourself. On a host with named
+subagents, dispatch the `swe:opencode-explorer` forwarder; if the caller
+cannot nest subagents, call `mcp__plugin_swe_opencode-explorer__delegate`
+directly with the absolute repository root as `cwd`
 and `mode: "read-only"`. A missing or failed requested tool is reported to the
 orchestrator; never silently substitute a host-native explorer or shell out to
 `opencode run`.

@@ -44,13 +44,15 @@ selection live in `/to-issues`).
 
 Unless the change is highly trivial, **don't explore the codebase or write the
 code yourself — delegate.** Spend your context coordinating, not reading files
-and typing implementation. The provider surface is host-specific:
+and typing implementation. The delegation surface depends on what the host
+offers:
 
-- **On Claude**, explore with `swe:opencode-explorer`, give one bounded
-  changeset to `swe:opencode-implementer`, and send the final assembled diff to
-  `swe:opencode-reviewer`. Those thin forwarders make the typed OpenCode calls.
-- **On Codex**, call the plugin-delivered tools directly. Every call names the
-  absolute worktree root as `cwd`: use
+- **On a host with named subagents**, explore with `swe:opencode-explorer`,
+  give one bounded changeset to `swe:opencode-implementer`, and send the final
+  assembled diff to `swe:opencode-reviewer`. Those thin forwarders make the
+  typed OpenCode calls.
+- **On a host without them**, call the plugin-delivered tools directly. Every
+  call names the absolute worktree root as `cwd`: use
   `mcp__plugin_swe_opencode-explorer__delegate` with `mode: "read-only"` for
   repository archaeology,
   `mcp__plugin_swe_opencode-implementer__delegate` with `mode: "write"` for
@@ -80,29 +82,17 @@ sequential slowness.
 
 ### Model selection
 
-Each role pins the least powerful default that still covers its full contract:
+Each role pins the least powerful model that still covers its full contract:
+cheap for bounded read-only lookup (explorer); mid-tier for constrained
+decomposition, well-specified code changes, and procedural release work
+(planner, implementer, publisher — the spec, task bounds, and review pass
+carry the quality bar); stronger reasoning only where the work is open-ended
+or correctness-sensitive (architect, reviewer).
 
-| Role        | Claude        | Codex                    | Why                                                   |
-| ----------- | ------------- | ------------------------ | ----------------------------------------------------- |
-| explorer    | haiku         | luna, medium             | Bounded read-only lookup and evidence gathering       |
-| architect   | fable, high   | sol, high                | Open-ended design resolution and specification        |
-| planner     | sonnet, medium | terra, medium           | Constrained decomposition of an approved design       |
-| implementer | sonnet, medium | sol, medium             | Well-specified code changes; the spec, task bounds, and review pass carry the quality bar |
-| reviewer    | sonnet, high  | terra, high              | Narrow but correctness-sensitive checking             |
-| publisher   | sonnet, medium | terra, medium           | Procedural release work with commit-boundary judgment |
-
-A role routed to another provider (`codex`, `opencode`) does not use this
-matrix. Codex uses its own default model unless the dispatching prompt names
-one; OpenCode is pinned to a model per role in the plugin's MCP companion and
-accepts no model argument. Claude reaches it through a forwarder agent; Codex
-reaches the same bridge through the native tools named above.
-
-Claude Haiku does not support the per-agent `effort` setting, so the explorer
-intentionally specifies only its model. The architect's `fable` pin degrades
-gracefully — where Fable 5 is unavailable, the subagent falls back to the
-session's inherited model rather than failing. Keep these role defaults in the
-provider agent definitions; do not spend frontier-model tokens on a bounded
-role by default.
+The pins themselves live in the provider agent definitions and the plugin's
+MCP companion configs, never in a skill or a dispatching prompt. A role routed
+to OpenCode is pinned to its model at the MCP layer and accepts no model
+argument. Do not spend frontier-model tokens on a bounded role by default.
 
 Always tell the worker to follow the verification discipline — cover each
 stated goal with evidence per `/tdd`, run and passing — and to report
