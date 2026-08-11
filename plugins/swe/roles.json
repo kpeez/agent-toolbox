@@ -1,0 +1,134 @@
+{
+  "roles": {
+    "architect": {
+      "description": "Read-only design and spec architect. Resolves ambiguity against code and ADRs, then returns decisions or draft spec bodies for the orchestrator to apply.",
+      "body": "agents/bodies/architect.md",
+      "claude": {
+        "model": "fable",
+        "effort": "high",
+        "tools": ["Read", "Grep", "Glob"]
+      },
+      "codex": {
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "effort": "high",
+        "sandbox": "read-only"
+      }
+    },
+    "explorer": {
+      "description": "Cheap, read-only evidence gathering. Traces code, finds symbols, and returns concise findings with cited paths.",
+      "body": "agents/bodies/explorer.md",
+      "claude": {
+        "model": "haiku",
+        "tools": ["Read", "Grep", "Glob"]
+      },
+      "codex": {
+        "model": "gpt-5.6-luna",
+        "provider": "openai",
+        "effort": "medium",
+        "sandbox": "read-only"
+      }
+    },
+    "implementer": {
+      "description": "Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker tasks.",
+      "body": "agents/bodies/implementer.md",
+      "claude": {
+        "model": "sonnet",
+        "effort": "medium",
+        "tools": ["Read", "Write", "Edit", "Grep", "Glob", "Bash"]
+      },
+      "codex": {
+        "model": "gpt-5.6-sol",
+        "provider": "openai",
+        "effort": "medium",
+        "sandbox": "workspace-write"
+      }
+    },
+    "planner": {
+      "description": "Tasks an approved spec into independently workable tracker issues and publishes native blocked-by relationships.",
+      "body": "agents/bodies/planner.md",
+      "claude": {
+        "model": "sonnet",
+        "effort": "medium"
+      },
+      "codex": {
+        "model": "gpt-5.6-terra",
+        "provider": "openai",
+        "effort": "medium",
+        "sandbox": "workspace-write"
+      }
+    },
+    "publisher": {
+      "description": "Publishes finished work through intentional commits, branch pushes, and pull-request creation or updates.",
+      "body": "agents/bodies/publisher.md",
+      "claude": {
+        "model": "sonnet",
+        "effort": "medium",
+        "tools": ["Read", "Grep", "Glob", "Bash"]
+      },
+      "codex": {
+        "model": "gpt-5.6-terra",
+        "provider": "openai",
+        "effort": "medium",
+        "sandbox": "workspace-write"
+      }
+    },
+    "reviewer": {
+      "description": "Read-only code reviewer. Evaluates a diff or implementation against caller-provided criteria or a single lens.",
+      "body": "agents/bodies/reviewer.md",
+      "claude": {
+        "model": "sonnet",
+        "effort": "high",
+        "tools": ["Read", "Grep", "Glob", "Bash"]
+      },
+      "codex": {
+        "model": "gpt-5.6-terra",
+        "provider": "openai",
+        "effort": "high",
+        "sandbox": "read-only"
+      }
+    },
+    "opencode-explorer": {
+      "description": "Cheap, high-volume read-only exploration on OpenCode Go — repository sweeps and web research alike. Delegates one bounded read-only assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/deepseek-v4-flash, and returns OpenCode's final answer verbatim.",
+      "body": "agents/bodies/opencode-explorer.md",
+      "claude": {
+        "model": "sonnet",
+        "effort": "low",
+        "tools": ["mcp__plugin_swe_opencode-explorer__delegate"]
+      },
+      "opencode": {
+        "model": "opencode-go/deepseek-v4-flash",
+        "effort": "high",
+        "mode": "plan"
+      }
+    },
+    "opencode-implementer": {
+      "description": "Executes one bounded workspace assignment on OpenCode Go. Delegates one bounded implementer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/gpt-5.6-luna, and returns OpenCode's final answer verbatim.",
+      "body": "agents/bodies/opencode-implementer.md",
+      "claude": {
+        "model": "sonnet",
+        "effort": "low",
+        "tools": ["mcp__plugin_swe_opencode-implementer__delegate"]
+      },
+      "opencode": {
+        "model": "opencode-go/gpt-5.6-luna",
+        "effort": "high",
+        "mode": "plan"
+      }
+    },
+    "opencode-reviewer": {
+      "description": "Read-only code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/deepseek-v4-pro, and returns OpenCode's final answer verbatim.",
+      "body": "agents/bodies/opencode-reviewer.md",
+      "claude": {
+        "model": "sonnet",
+        "effort": "low",
+        "tools": ["mcp__plugin_swe_opencode-reviewer__delegate"]
+      },
+      "opencode": {
+        "model": "opencode-go/deepseek-v4-pro",
+        "effort": "max",
+        "mode": "review"
+      }
+    }
+  }
+}
