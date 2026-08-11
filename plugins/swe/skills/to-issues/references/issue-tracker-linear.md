@@ -61,9 +61,12 @@ closed or already-merged issues are dropped, a merged issue counts as a
 satisfied blocker, and `ready-for-human` is excluded. Consume the array as-is;
 re-reading the tracker on top of it is wasted work.
 
-"Already merged" is read from git — `git branch --merged <baseBranch>` over
-`task/<identifier>` branches — not from tracker state, which does not advance
-until the run's PR lands.
+"Already merged" is read from git, not from tracker state (which does not
+advance until the run's PR lands): the script scans `git branch --merged
+<tip>` for `change/…` branches carrying issue identifiers, where `<tip>` is
+the highest-numbered `stack/<n>` branch when the run has stacked changesets
+and `<baseBranch>` otherwise — mid-stack, changesets merge onto stack
+branches, never back into the base branch.
 
 ## Container identity
 

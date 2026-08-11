@@ -5,6 +5,18 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## Unreleased
+
+- Fix the deterministic workable query for stacked runs: `linear_tracker.py`
+  judged "already merged" against the integration branch, which mid-stack
+  never receives changesets past the first (they land on `stack/<n>` branches),
+  so dependents stayed blocked and the implement loop drained after the first
+  changeset. The merge check now runs against the run's stack tip — the
+  highest-numbered `stack/<n>` branch, else the integration branch. The
+  swe-loop's agent-driven fallback query and the Linear reference also named
+  the pre-rename `task/` branch prefix; both now say `change/`, matching the
+  branches implementers actually create.
+
 ## 1.15.0 — 2026-08-10
 
 - Remove Codex as a delegation target: the `codex-delegator` agent, the `codex`
