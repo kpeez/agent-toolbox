@@ -48,7 +48,7 @@ SERVER_NAME = "acp-bridge"
 # unsafe.
 READ_ONLY_KINDS = frozenset({"read", "search", "fetch", "think"})
 
-MODES = ("read-only", "write")
+MODES = ("read-only", "review", "write")
 
 ACP_STDERR_OBSERVATION_BYTES = 4096
 ACP_STDERR_READ_BYTES = 1024
@@ -68,7 +68,7 @@ ACP_STDERR_PATTERN_OVERLAP = max(
 # `--effort` pin a server to one model so the caller cannot pick another: model
 # policy then lives in the .mcp.json entry, not in a prompt some model has to
 # obey. `--read-only-mode` names the agent's own read-only session mode.
-BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode", "--turn-timeout")
+BRIDGE_OPTIONS = ("--model", "--effort", "--read-only-mode", "--mode", "--turn-timeout")
 
 DELEGATE_TOOL: dict[str, Any] = {
     "name": "delegate",
@@ -244,6 +244,7 @@ def permission_outcome(
     """Answer one ACP `session/request_permission` without asking a human.
 
     read-only: only non-mutating tool kinds pass.
+    review: non-mutating tool kinds and execute pass.
     write: read-only kinds pass regardless of location; remaining kinds pass
     when every named location is inside the workspace. A tool call naming no
     location (a shell command, say) is allowed in write mode -- ACP does not
@@ -256,6 +257,8 @@ def permission_outcome(
     kind = tool_call.get("kind", "other")
     if mode == "read-only":
         return select_option(options, allow=kind in READ_ONLY_KINDS)
+    if mode == "review":
+        return select_option(options, allow=kind in READ_ONLY_KINDS or kind == "execute")
     if kind in READ_ONLY_KINDS:
         return select_option(options, allow=True)
 
@@ -626,9 +629,11 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     "the run was blocked", and acts on the emptiness either way.
     """
     answer = streamed.strip()
-    if answer and (mode != "write" or not denied):
+    has_execute_denial = any(call.split(":", 1)[0] == "execute" for call in denied)
+    should_report_denials = mode == "write" or has_execute_denial
+    if answer and not (denied and should_report_denials):
         return answer
-    if denied:
+    if denied and should_report_denials:
         blocked = "; ".join(denied)
         remedy = (
             "Re-dispatch with mode='write' if this task is meant to change files."
@@ -662,12 +667,16 @@ class Bridge:
         model: str | None = None,
         effort: str | None = None,
         read_only_mode: str | None = None,
+        mode: str | None = None,
         turn_timeout: float | None = None,
     ) -> None:
+        if mode is not None and mode not in MODES:
+            raise ValueError(f"unknown mode {mode!r}; expected one of {MODES}")
         self.command = command
         self.model = model
         self.effort = effort
         self.read_only_mode = read_only_mode
+        self.mode = mode
         self.turn_timeout = turn_timeout
         self.tool = delegate_tool(model)
         self.sessions: dict[str, AcpSession] = {}
@@ -808,6 +817,10 @@ class Bridge:
     ) -> dict[str, Any]:
         task = arguments["task"]
         mode = arguments["mode"]
+        if self.mode is not None and mode != self.mode:
+            raise ValueError(
+                f"this server is pinned to mode {self.mode}; requested mode was {mode}"
+            )
         if mode not in MODES:
             raise ValueError(f"unknown mode {mode!r}; expected one of {MODES}")
         if self.model and (arguments.get("model") or arguments.get("effort")):
@@ -1028,6 +1041,7 @@ def main(argv: list[str]) -> int:
             model=options.get("model"),
             effort=options.get("effort"),
             read_only_mode=options.get("read_only_mode"),
+            mode=options.get("mode"),
             turn_timeout=turn_timeout,
         )
     )

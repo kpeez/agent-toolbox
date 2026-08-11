@@ -499,10 +499,12 @@ def test_opencode_runs_through_the_generic_acp_bridge() -> None:
 
 
 def test_every_opencode_server_enforces_read_only_through_opencodes_own_mode() -> None:
-    """OpenCode auto-approves in-workspace edits without asking the bridge, so a
-    server that forgets this flag serves read-only delegations that can write."""
+    """Non-review servers protect OpenCode's session; review pins bridge policy."""
     for name, args in opencode_servers().items():
-        assert args[args.index("--read-only-mode") + 1] == "plan", name
+        if name == "opencode-reviewer":
+            assert args[args.index("--mode") + 1] == "review", name
+        else:
+            assert args[args.index("--read-only-mode") + 1] == "plan", name
 
 
 def test_opencode_role_models_are_the_documented_policy() -> None:
