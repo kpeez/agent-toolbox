@@ -21,7 +21,7 @@ HOOK = (
     / "symlink-worktree-shared-dirs.sh"
 )
 
-ENTRIES = ("artifacts", "data", "docs/agents")
+ENTRIES = ("artifacts", "data", "docs/agents", "runs")
 
 
 def git(cwd: Path, *args: str) -> str:
@@ -55,6 +55,8 @@ def build_repo(root: Path, *, ignored: tuple[str, ...] = ENTRIES) -> Path:
     (main / "artifacts" / "plot.png").write_text("png\n")
     (main / "data").mkdir()
     (main / "data" / "rows.csv").write_text("a,b\n")
+    (main / "runs").mkdir()
+    (main / "runs" / "run-1.log").write_text("loss=0\n")
     vault = root / "vault"
     vault.mkdir()
     (vault / "spec.md").write_text("spec\n")
