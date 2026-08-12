@@ -16,7 +16,7 @@ whole reason to own a bridge rather than shell out.
 Answering permission requests is not enough on its own, though: OpenCode
 auto-approves edits inside the session cwd and never asks, so the kind policy
 below simply never fires for them. An agent like that needs its OWN read-only
-session mode selected, which `--read-only-mode` does. Writes that escape the
+session mode selected, which the explorer profile's `session_mode` does. Writes that escape the
 cwd DO come through as permission requests, so the workspace-containment policy
 still covers the case the sandbox is really there for.
 
@@ -34,6 +34,7 @@ import queue
 import subprocess
 import sys
 import threading
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Literal
 
@@ -49,114 +50,101 @@ SERVER_NAME = "acp-bridge"
 READ_ONLY_KINDS = frozenset({"read", "search", "fetch", "think"})
 
 MODES = ("read-only", "review", "write")
+OPENCODE_TOOLS = ("explore", "implement", "review")
+DEFAULT_ROLES_PATH = Path(__file__).resolve().parents[1] / "roles.json"
 
 ACP_STDERR_TAIL_BYTES = 4096
 ACP_STDERR_READ_BYTES = 1024
 CANCEL_GRACE_SECONDS = 2.0
 MESSAGE_PROGRESS_INTERVAL = 200
 
-# Leading argv flags, ahead of the ACP agent's own command line. `--model` and
-# `--effort` pin a server to one model so the caller cannot pick another: model
-# policy then lives in the .mcp.json entry, not in a prompt some model has to
-# obey. `--read-only-mode` names the agent's own read-only session mode.
+# Leading argv flags, ahead of the ACP agent's own command line. The roles file
+# is the only profile input; callers select one of the fixed tools instead.
 BRIDGE_OPTIONS = (
-    "--model",
-    "--effort",
-    "--read-only-mode",
-    "--write-mode",
-    "--mode",
+    "--roles",
     "--turn-timeout",
 )
 
-DELEGATE_TOOL: dict[str, Any] = {
-    "name": "delegate",
-    "title": "Delegate a task to an external coding agent",
-    "description": (
-        "Run one bounded task on an external Agent Client Protocol agent and "
-        "return its final message. The agent explores the workspace itself; "
-        "pass the task as it should be worked, not a summary of your findings. "
-        "Use mode='read-only' for exploration, review, diagnosis, or planning "
-        "-- the bridge rejects every file write the agent attempts. Use "
-        "mode='write' only when the task is meant to change files. Pass "
-        "sessionId from a previous call to continue that conversation."
-    ),
-    "inputSchema": {
-        "type": "object",
-        "required": ["task", "mode"],
-        "additionalProperties": False,
-        "properties": {
-            "task": {
-                "type": "string",
-                "description": "The task text, forwarded to the agent verbatim.",
-            },
-            "mode": {
-                "type": "string",
-                "enum": list(MODES),
-                "description": (
-                    "read-only rejects the agent's file writes; write allows "
-                    "edits inside the workspace."
-                ),
-            },
-            "model": {
-                "type": "string",
-                "description": "Agent-specific model id. Omit to use its default.",
-            },
-            "effort": {
-                "type": "string",
-                "description": (
-                    "Reasoning-effort variant, applied as the agent's `effort` "
-                    "config option AFTER the model -- the set of legal values "
-                    "depends on which model is selected. Agents that expose no "
-                    "such option reject it."
-                ),
-            },
-            "cwd": {
-                "type": "string",
-                "description": (
-                    "Absolute workspace root for the agent. Defaults to this "
-                    "server's working directory; pass it explicitly when the "
-                    "task belongs to a git worktree."
-                ),
-            },
-            "sessionId": {
-                "type": "string",
-                "description": "Continue a session returned by an earlier call.",
-            },
-        },
-    },
-    "outputSchema": {
-        "type": "object",
-        "required": ["text", "sessionId", "stopReason", "deniedToolCalls"],
-        "properties": {
-            "text": {"type": "string"},
-            "sessionId": {"type": "string"},
-            "stopReason": {"type": "string"},
-            "deniedToolCalls": {"type": "array", "items": {"type": "string"}},
-            "usage": {"type": "object"},
-        },
-    },
-}
+@dataclass(frozen=True)
+class RoleProfile:
+    tool: str
+    model: str
+    effort: str
+    mode: str
+    session_mode: str | None
 
 
-def delegate_tool(model: str | None) -> dict[str, Any]:
-    """The advertised `delegate` tool, minus anything this server has pinned.
+def load_profiles(path: str | Path) -> dict[str, RoleProfile]:
+    data = json.loads(Path(path).read_text())
+    roles = data.get("roles")
+    if not isinstance(roles, dict):
+        raise ValueError("roles file must contain a roles object")
 
-    A pinned server exists precisely so the model is not negotiable, so the
-    caller is not offered the choice: dropping the fields is what keeps role
-    model policy out of a prompt and in the `.mcp.json` entry.
-    """
-    if model is None:
-        return DELEGATE_TOOL
-    schema = dict(DELEGATE_TOOL["inputSchema"])
-    schema["properties"] = {
-        name: value
-        for name, value in schema["properties"].items()
-        if name not in ("model", "effort")
-    }
+    profiles: dict[str, RoleProfile] = {}
+    for role_name, role in roles.items():
+        pin = role.get("opencode") if isinstance(role, dict) else None
+        if not isinstance(pin, dict):
+            continue
+        tool = pin.get("tool")
+        if not isinstance(tool, str) or tool not in OPENCODE_TOOLS:
+            raise ValueError(f"invalid OpenCode tool for {role_name}: {tool!r}")
+        if tool in profiles:
+            raise ValueError(f"duplicate OpenCode tool: {tool}")
+        mode = pin.get("mode")
+        if mode not in MODES:
+            raise ValueError(f"invalid OpenCode mode for {role_name}: {mode!r}")
+        model = pin.get("model")
+        effort = pin.get("effort")
+        if not isinstance(model, str) or not isinstance(effort, str):
+            raise ValueError(f"incomplete OpenCode profile for {role_name}")
+        session_mode = pin.get("session_mode")
+        if session_mode is not None and not isinstance(session_mode, str):
+            raise ValueError(f"invalid OpenCode session mode for {role_name}")
+        profiles[tool] = RoleProfile(tool, model, effort, mode, session_mode)
+
+    if set(profiles) != set(OPENCODE_TOOLS):
+        raise ValueError(f"roles file must define exactly {OPENCODE_TOOLS} OpenCode tools")
+    return profiles
+
+
+def role_tool(profile: RoleProfile) -> dict[str, Any]:
     return {
-        **DELEGATE_TOOL,
-        "description": f"{DELEGATE_TOOL['description']} This server always runs {model}.",
-        "inputSchema": schema,
+        "name": profile.tool,
+        "title": f"OpenCode {profile.tool} task",
+        "description": (
+            f"Run one bounded {profile.tool} task through the fixed OpenCode profile. "
+            "The profile is selected by this tool and cannot be changed by the caller."
+        ),
+        "inputSchema": {
+            "type": "object",
+            "required": ["task", "cwd"],
+            "additionalProperties": False,
+            "properties": {
+                "task": {
+                    "type": "string",
+                    "description": "The task text, forwarded to the agent verbatim.",
+                },
+                "cwd": {
+                    "type": "string",
+                    "description": "Absolute workspace root for this task.",
+                },
+                "sessionId": {
+                    "type": "string",
+                    "description": "Continue a session returned by this same role tool.",
+                },
+            },
+        },
+        "outputSchema": {
+            "type": "object",
+            "required": ["text", "sessionId", "stopReason", "deniedToolCalls"],
+            "properties": {
+                "text": {"type": "string"},
+                "sessionId": {"type": "string"},
+                "stopReason": {"type": "string"},
+                "deniedToolCalls": {"type": "array", "items": {"type": "string"}},
+                "usage": {"type": "object"},
+            },
+        },
     }
 
 
@@ -164,7 +152,7 @@ def split_argv(argv: list[str]) -> tuple[dict[str, str], list[str]]:
     """Split the bridge's own leading options from the ACP agent's command.
 
     Parsing stops at the first token that is not a bridge option, so an agent
-    flag that happens to share a name (`some-agent --model x`) is never claimed
+    flag that happens to share a name (`some-agent --roles x`) is never claimed
     here.
     """
     options: dict[str, str] = {}
@@ -652,23 +640,13 @@ class Bridge:
     def __init__(
         self,
         command: list[str],
-        model: str | None = None,
-        effort: str | None = None,
-        read_only_mode: str | None = None,
-        write_mode: str | None = None,
-        mode: str | None = None,
+        roles_path: str | Path = DEFAULT_ROLES_PATH,
         turn_timeout: float | None = None,
     ) -> None:
-        if mode is not None and mode not in MODES:
-            raise ValueError(f"unknown mode {mode!r}; expected one of {MODES}")
         self.command = command
-        self.model = model
-        self.effort = effort
-        self.read_only_mode = read_only_mode
-        self.write_mode = write_mode
-        self.mode = mode
+        self.profiles = load_profiles(roles_path)
+        self.tools = {tool: role_tool(profile) for tool, profile in self.profiles.items()}
         self.turn_timeout = turn_timeout
-        self.tool = delegate_tool(model)
         self.sessions: dict[str, AcpSession] = {}
         self.active_calls: dict[Any, ActiveCall] = {}
         self._lock = threading.Lock()
@@ -708,8 +686,6 @@ class Bridge:
             opened_session_id = opened["sessionId"]
             active_call.attach(session, opened_session_id)
             session.default_mode = config_value(opened.get("configOptions", []), "mode")
-            with self._lock:
-                self.sessions[opened_session_id] = session
             return session, opened_session_id
         except AcpRequestError as error:
             session.close()
@@ -756,7 +732,7 @@ class Bridge:
         for session in sessions_by_identity.values():
             session.close()
 
-    def select_model(self, session: AcpSession, session_id: str, model: str, effort: str | None) -> None:
+    def select_model(self, session: AcpSession, session_id: str, profile: RoleProfile) -> None:
         """Pin the session to one model, then to a reasoning variant of it.
 
         Order is not cosmetic: an agent's effort values are model-dependent
@@ -767,33 +743,33 @@ class Bridge:
         that silently ran a different model than the one it was routed to
         would destroy exactly the cost guarantee the routing exists for.
         """
-        session.request("session/set_model", {"sessionId": session_id, "modelId": model})
-        if effort:
+        session.request("session/set_model", {"sessionId": session_id, "modelId": profile.model})
+        if profile.effort:
             session.request(
                 "session/set_config_option",
-                {"sessionId": session_id, "configId": "effort", "value": effort},
+                {"sessionId": session_id, "configId": "effort", "value": profile.effort},
             )
 
-    def select_session_mode(self, session: AcpSession, session_id: str, mode: str) -> None:
+    def select_session_mode(
+        self, session: AcpSession, session_id: str, profile: RoleProfile
+    ) -> None:
         """Put the agent in its own read-only mode for a read-only delegation.
 
-        Only for agents configured with `--read-only-mode`: the ones that
+        Only for profiles with a `session_mode`: the ones that
         auto-approve their in-workspace writes instead of asking, where the
         permission policy alone never sees the call. Restoring the session's
         opening mode for a write delegation matters when a read-only session is
         continued by id -- otherwise the follow-up's edits are silently refused.
         """
-        target = self.read_only_mode if mode == "read-only" else self.write_mode
-        if target is None and mode != "read-only" and self.read_only_mode:
-            target = session.default_mode
+        target = profile.session_mode
         if target is None:
             return
         # No `mode` option at all means the agent never advertised one on
         # session/new -- there is nothing to select, and for a read-only
         # delegation nothing to enforce with either.
-        if mode == "read-only" and session.default_mode is None:
+        if profile.mode == "read-only" and session.default_mode is None:
             raise RuntimeError(
-                f"this server enforces read-only through the agent's {self.read_only_mode!r} "
+                f"this server enforces read-only through the agent's {profile.session_mode!r} "
                 "session mode, and the agent advertised no `mode` config option; refusing to "
                 "run a read-only delegation unprotected"
             )
@@ -802,53 +778,83 @@ class Bridge:
             {"sessionId": session_id, "configId": "mode", "value": target},
         )
 
+    def require_session_mode(self, session: AcpSession, profile: RoleProfile) -> None:
+        """Refuse an unprotected read-only session before selecting its model."""
+        if (
+            profile.mode == "read-only"
+            and profile.session_mode is not None
+            and session.default_mode is None
+        ):
+            session.close()
+            raise RuntimeError(
+                f"this server enforces read-only through the agent's {profile.session_mode!r} "
+                "session mode, and the agent advertised no `mode` config option; refusing to "
+                "run a read-only delegation unprotected"
+            )
+
     def session_for_call(
-        self, arguments: dict[str, Any], active_call: ActiveCall
-    ) -> tuple[AcpSession, str]:
+        self, profile: RoleProfile, arguments: dict[str, Any], active_call: ActiveCall
+    ) -> tuple[AcpSession, str, str]:
+        cwd = arguments.get("cwd")
+        if not isinstance(cwd, str) or not cwd:
+            raise ValueError("cwd is required")
+        if not Path(cwd).is_dir():
+            raise ValueError(f"cwd {cwd!r} is not a directory")
+
         session_id = arguments.get("sessionId")
+        raw_session_id: str | None = None
         if session_id:
+            if not isinstance(session_id, str):
+                raise ValueError("sessionId must be a string returned by this bridge")
+            session_tool, separator, raw_session_id = session_id.partition(":")
+            if not separator or session_tool not in self.profiles or not raw_session_id:
+                raise ValueError("sessionId is not a role-bound session returned by this bridge")
+            if session_tool != profile.tool:
+                raise ValueError(
+                    f"session {session_id} is bound to role {session_tool}, "
+                    f"not {profile.tool}"
+                )
             with self._lock:
                 session = self.sessions.get(session_id)
             if session is not None:
-                active_call.attach(session, session_id)
-                return session, session_id
+                assert raw_session_id is not None
+                active_call.attach(session, raw_session_id)
+                return session, session_id, raw_session_id
 
-        cwd = arguments.get("cwd") or os.getcwd()
-        if not Path(cwd).is_dir():
-            raise ValueError(f"cwd {cwd!r} is not a directory")
-        session, opened_session_id = self.open_session(cwd, active_call, session_id)
-        if self.model:
-            self.select_model(session, opened_session_id, self.model, self.effort)
-        return session, opened_session_id
+        session, opened_session_id = self.open_session(cwd, active_call, raw_session_id)
+        try:
+            self.require_session_mode(session, profile)
+            self.select_model(session, opened_session_id, profile)
+        except Exception:
+            session.close()
+            raise
+        role_session_id = f"{profile.tool}:{opened_session_id}"
+        with self._lock:
+            self.sessions[role_session_id] = session
+        return session, role_session_id, opened_session_id
 
     def delegate(
-        self, arguments: dict[str, Any], report: Any, active_call: ActiveCall
+        self,
+        profile: RoleProfile,
+        arguments: dict[str, Any],
+        report: Any,
+        active_call: ActiveCall,
     ) -> dict[str, Any]:
+        unexpected = set(arguments) - {"task", "cwd", "sessionId"}
+        if unexpected:
+            raise ValueError(
+                "caller cannot choose profile fields: " + ", ".join(sorted(unexpected))
+            )
         task = arguments["task"]
-        mode = arguments["mode"]
-        if self.mode is not None and mode != self.mode:
-            raise ValueError(
-                f"this server is pinned to mode {self.mode}; requested mode was {mode}"
-            )
-        if mode not in MODES:
-            raise ValueError(f"unknown mode {mode!r}; expected one of {MODES}")
-        if self.model and (arguments.get("model") or arguments.get("effort")):
-            raise ValueError(
-                f"this server is pinned to model {self.model}"
-                f"{f' ({self.effort} effort)' if self.effort else ''}; "
-                "drop `model`/`effort` from the call, or use a server that does not pin one"
-            )
 
         session: AcpSession | None = None
         session_id = arguments.get("sessionId")
         try:
             active_call.raise_if_cancelled()
-            session, session_id = self.session_for_call(arguments, active_call)
-
-            if model := arguments.get("model"):
-                self.select_model(session, session_id, model, arguments.get("effort"))
-            self.select_session_mode(session, session_id, mode)
-
+            session, session_id, acp_session_id = self.session_for_call(
+                profile, arguments, active_call
+            )
+            self.select_session_mode(session, acp_session_id, profile)
             active_call.start_prompt()
             timeout_timer: threading.Timer | None = None
             if self.turn_timeout is not None:
@@ -858,7 +864,7 @@ class Bridge:
                 timeout_timer.daemon = True
                 timeout_timer.start()
             try:
-                turn = run_turn(session, session_id, task, mode, report)
+                turn = run_turn(session, acp_session_id, task, profile.mode, report)
             finally:
                 if timeout_timer is not None:
                     timeout_timer.cancel()
@@ -899,8 +905,10 @@ def handle_tools_call(
     bridge: Bridge, message: dict[str, Any], active_call: ActiveCall
 ) -> dict[str, Any]:
     params = message.get("params", {})
-    if params.get("name") != bridge.tool["name"]:
-        raise ValueError(f"unknown tool {params.get('name')!r}")
+    tool_name = params.get("name")
+    profile = bridge.profiles.get(tool_name)
+    if profile is None:
+        raise ValueError(f"unknown tool {tool_name!r}")
 
     progress_token = params.get("_meta", {}).get("progressToken")
     step = 0
@@ -923,7 +931,7 @@ def handle_tools_call(
             }
         )
 
-    result = bridge.delegate(params.get("arguments", {}), report, active_call)
+    result = bridge.delegate(profile, params.get("arguments", {}), report, active_call)
     return {
         "content": [{"type": "text", "text": result["text"]}],
         "structuredContent": result,
@@ -966,7 +974,7 @@ def serve(bridge: Bridge) -> None:
                     {
                         "jsonrpc": "2.0",
                         "id": message_id,
-                        "result": {"tools": [bridge.tool]},
+                        "result": {"tools": [bridge.tools[name] for name in OPENCODE_TOOLS]},
                     }
                 )
             elif method == "tools/call":
@@ -1006,9 +1014,7 @@ def _run_tool_call(
 
 
 USAGE = (
-    "usage: acp_bridge.py [--model ID] [--effort LEVEL] [--read-only-mode MODE] "
-    "[--write-mode MODE] "
-    "[--turn-timeout SECONDS] "
+    "usage: acp_bridge.py [--roles PATH] [--turn-timeout SECONDS] "
     "<agent-command> [args...]\n"
 )
 
@@ -1030,11 +1036,7 @@ def main(argv: list[str]) -> int:
     serve(
         Bridge(
             command,
-            model=options.get("model"),
-            effort=options.get("effort"),
-            read_only_mode=options.get("read_only_mode"),
-            write_mode=options.get("write_mode"),
-            mode=options.get("mode"),
+            roles_path=options.get("roles", DEFAULT_ROLES_PATH),
             turn_timeout=turn_timeout,
         )
     )

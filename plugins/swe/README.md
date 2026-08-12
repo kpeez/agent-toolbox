@@ -12,8 +12,8 @@ publication is atomic commits behind a draft PR.
 plugins/swe/
 ├── skills/            # 14 workflow skills (SKILL.md each — the canonical contracts)
 ├── agents/            # 9 agent definitions: Claude .md + Codex .toml twins (the forwarders: .md only)
-├── .mcp.json          # the three OpenCode delegates exposed natively to Codex
-├── .mcp.claude.json   # Claude's OpenCode delegates
+├── .mcp.json          # the OpenCode server exposed natively to Codex
+├── .mcp.claude.json   # Claude's OpenCode server
 ├── mcp/
 │   └── acp_bridge.py  # Agent Client Protocol agent -> MCP, with the permission policy
 ├── scripts/
@@ -173,14 +173,14 @@ exit codes and timeout ceilings stop being the model's problem.
 | Host   | Provider surface | Caller |
 | ------ | ---------------- | ------ |
 | Claude | `opencode acp` through `mcp/acp_bridge.py` | the three `swe:opencode-*` forwarders |
-| Codex  | `opencode acp` through the same `mcp/acp_bridge.py` | `mcp__opencode_{explorer,implementer,reviewer}__delegate` directly |
+| Codex  | `opencode acp` through the same `mcp/acp_bridge.py` | `mcp__opencode__{explore,implement,review}` directly |
 
 Each Claude forwarder agent's `tools` field lists only its own provider's tools, so
 "never work the task yourself" is a property of the agent rather than a rule in
 its prompt: it holds no `Read`, no `Grep`, no `Bash`. An agent that inherited
 every tool could quietly answer from its own exploration and never call the
 provider at all. On Codex the skill contract tells the orchestrator which
-namespaced MCP tool and mode to use; the bridge remains the permission boundary.
+namespaced MCP role tool to use; the bridge remains the permission boundary.
 
 ### Native Codex calls
 
@@ -190,9 +190,9 @@ absolute worktree root as `cwd`:
 
 | Phase | Tool | Mode | Boundary |
 | ----- | ---- | ---- | -------- |
-| Explore | `mcp__opencode_explorer__delegate` | `read-only` | One bounded repository sweep or web-research question |
-| Implement | `mcp__opencode_implementer__delegate` | `write` | One changeset with issue/spec identifiers and verification gates |
-| Review | `mcp__opencode_reviewer__delegate` | `read-only` | One review of the complete assembled diff |
+| Explore | `mcp__opencode__explore` | fixed read-only | One bounded repository sweep or web-research question |
+| Implement | `mcp__opencode__implement` | fixed write | One changeset with issue/spec identifiers and verification gates |
+| Review | `mcp__opencode__review` | fixed review | One review of the complete assembled diff |
 
 A missing tool, startup/auth/model failure, denied tool call, or non-completion
 is returned to the orchestrator. The manual path never silently switches to a
@@ -201,24 +201,24 @@ existing forwarder names and direct agent dispatch.
 
 After installation or upgrade, start a **fresh Codex task**; an existing task
 cannot pick up a changed tool registry. Confirm all three exact tool names in
-the table are callable, then invoke the explorer with `task: "Return the
-repository name and root README path only."`, `mode: "read-only"`, and the
-repository's absolute path as `cwd`. A bounded answer is the runtime proof;
+the table are callable, then invoke `explore` with `task: "Return the
+repository name and root README path only."` and the repository's absolute
+path as `cwd`. A bounded answer is the runtime proof;
 manifest validation alone is not.
 
 ### OpenCode Go
 
 Requires the `opencode` CLI on PATH and an authenticated OpenCode Go
 subscription — check both with `opencode providers list`, which must list
-`OpenCode Go`. Nothing else is configured: the plugin registers three
-ACP-bridged MCP servers, one per role, in `.mcp.claude.json` for Claude and
-`.mcp.json` for Codex; both companions pin the same role policy.
+`OpenCode Go`. Nothing else is configured: the plugin registers one ACP-bridged
+`opencode` MCP server in `.mcp.claude.json` for Claude and `.mcp.json` for
+Codex. Its three tools load the same role policy from `roles.json`.
 
-| Forwarder              | Model                          | Reasoning | Mode      |
-| ---------------------- | ------------------------------ | --------- | --------- |
-| `opencode-explorer`    | `opencode-go/deepseek-v4-flash`| high      | read-only |
-| `opencode-implementer` | `opencode-go/gpt-5.6-luna`     | high      | write     |
-| `opencode-reviewer`    | `opencode-go/deepseek-v4-pro`  | max       | read-only |
+| Tool        | Model                          | Reasoning | Mode            |
+| ----------- | ------------------------------ | --------- | --------------- |
+| `explore`   | `opencode-go/deepseek-v4-flash`| high      | read-only / plan |
+| `implement` | `opencode-go/gpt-5.6-luna`     | high      | write / build   |
+| `review`    | `opencode-go/deepseek-v4-pro`  | max       | review          |
 
 Three roles, three models, on purpose:
 
@@ -246,12 +246,12 @@ a standing, workspace-level data-residency opt-in; without that opt-in every
 explorer delegation fails with a structured error rather than quietly running
 something else. The closest substitute if you would rather not grant it is
 `mimo-v2.5` on the same provider — same 1M context and, under the `2x usage`
-tag, the same effective price — but it exposes no reasoning variants, so drop
-`--effort` from that server or the bridge will reject it at session open.
+tag, the same effective price — but it exposes no reasoning variants, so a
+future role profile using it must omit an effort selection.
 
-The MCP companions are the only operative source for those ids: callers
-receive a `delegate` tool with no `model` field at all, so a model is something
-the plugin configures rather than something a subagent is asked to remember.
+`roles.json` is the operative source for those ids and profiles: callers receive
+role-specific tools with no `model`, `effort`, `mode`, or `role` field, so the
+plugin configures the profile rather than asking a caller to remember it.
 `tests/test_skill_drift.py` normalizes the host-specific transport syntax and
 fails if the two role policies or their prose disagree.
 
@@ -268,9 +268,8 @@ lands in the caller's context.
 
 [Agent Client Protocol](https://agentclientprotocol.com) is the JSON-RPC
 protocol OpenCode, Copilot, Gemini CLI and the Zed agents speak;
-`mcp/acp_bridge.py` translates one onto MCP. Adding another ACP agent is one
-`.mcp.json` entry — the bridge takes the agent's command as its argv, after its
-own optional `--model`, `--effort` and `--read-only-mode` flags.
+`mcp/acp_bridge.py` translates one onto MCP. The bridge takes the agent's
+command as its argv and loads the fixed profile set from `roles.json`.
 
 The bridge is also where `mode: read-only` becomes true. Codex has an OS-level
 sandbox (`sandbox: read-only`); an ACP agent has none, and instead asks the
@@ -293,11 +292,10 @@ guarantee when a task needs one.
 Answering permission requests is not always enough. OpenCode auto-approves
 edits *inside* the session cwd and never asks, so the kind policy above never
 sees them; writes that escape the cwd do arrive as permission requests, so the
-containment rule still holds. `--read-only-mode plan` closes the gap by putting
-OpenCode in its own read-only session mode for a read-only delegation, and
-restoring the session's opening mode for a write one. A bridge configured with
-that flag against an agent advertising no such mode refuses the delegation
-rather than running it unprotected.
+containment rule still holds. The explorer profile's `session_mode: plan`
+closes the gap by putting OpenCode in its own read-only session mode, while the
+implementer profile selects `session_mode: build`. A profile requiring a mode
+that the agent does not advertise is refused rather than run unprotected.
 
 Streamed ACP events become MCP progress notifications, which both surface live
 progress and keep a long delegation clear of the 30-minute stdio idle timeout;
