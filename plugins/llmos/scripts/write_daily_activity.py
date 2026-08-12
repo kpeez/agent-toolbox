@@ -24,14 +24,14 @@ from llmos_vault import frontmatter
 from llmos_vault.root import vault_root
 
 LOCAL_TZ = ZoneInfo("America/Los_Angeles")
-MODEL = "claude-sonnet-5"
+MODEL = "opencode-go/deepseek-v4-flash"
 MARKER_START = "<!-- llmos-activity:start"
 MARKER_END = "<!-- llmos-activity:end -->"
-DISALLOWED_TOOLS = "Bash,Read,Write,Edit,MultiEdit,Glob,Grep,Task,WebFetch,WebSearch,NotebookEdit"
-SYSTEM_PROMPT = (
+TRANSFORM_INSTRUCTIONS = (
     "You are a deterministic text transformer inside a script. You receive JSON of one "
     "day's GitHub activity grouped by project and emit only GitHub-flavored markdown. "
-    "No preamble, no code fences around the whole output, no tool use."
+    "No preamble, no code fences around the whole output, and no tool use. Do not access "
+    "the filesystem or network, and do no work beyond transforming the supplied JSON."
 )
 
 
@@ -167,9 +167,47 @@ def expected_references(grouped: dict) -> set[str]:
     return refs
 
 
-def summarize(grouped: dict, day: date, claude_bin: str = "claude") -> str:
+def parse_opencode_output(stdout: str) -> str:
+    final_texts: list[str] = []
+    for line in stdout.splitlines():
+        if not line.strip():
+            continue
+        try:
+            event = json.loads(line)
+        except json.JSONDecodeError as exc:
+            raise DigestError("opencode run emitted malformed JSON") from exc
+        if not isinstance(event, dict) or not isinstance(event.get("type"), str):
+            raise DigestError("opencode run emitted an unsupported event")
+
+        event_type = event["type"]
+        if event_type in {"step_start", "step_finish"}:
+            continue
+        if event_type != "text":
+            raise DigestError(f"opencode run emitted unsupported event type: {event_type}")
+
+        part = event.get("part")
+        if (
+            not isinstance(part, dict)
+            or part.get("type") != "text"
+            or not isinstance(part.get("text"), str)
+        ):
+            raise DigestError("opencode run emitted a malformed text event")
+        text = part["text"].strip()
+        if not text:
+            raise DigestError("opencode run emitted an empty final assistant message")
+        final_texts.append(text)
+
+    if len(final_texts) != 1:
+        raise DigestError(
+            f"opencode run emitted {len(final_texts)} final assistant messages; expected one"
+        )
+    return final_texts[0]
+
+
+def summarize(grouped: dict, day: date, opencode_bin: str = "opencode") -> str:
     required = ", ".join(sorted(expected_references(grouped)))
     prompt = (
+        f"{TRANSFORM_INSTRUCTIONS}\n\n"
         f"GitHub activity for {day.isoformat()}, grouped by project. Write one `### <Title>` "
         "section per project (use the `title` field), in the given order. Under each, write a "
         "markdown bullet list — one bullet per distinct piece of work, never one large "
@@ -181,18 +219,16 @@ def summarize(grouped: dict, day: date, claude_bin: str = "claude") -> str:
     )
     result = subprocess.run(
         [
-            claude_bin, "-p", "--model", MODEL,
-            "--system-prompt", SYSTEM_PROMPT,
-            "--disallowedTools", DISALLOWED_TOOLS,
+            opencode_bin, "run", "--format", "json", "--model", MODEL,
         ],
         input=prompt,
         capture_output=True,
         text=True,
         timeout=600,
     )
-    if result.returncode != 0 or not result.stdout.strip():
-        raise DigestError(f"claude -p failed: {result.stderr.strip()[:500]}")
-    return result.stdout.strip()
+    if result.returncode != 0:
+        raise DigestError(f"opencode run failed: {result.stderr.strip()[:500]}")
+    return parse_opencode_output(result.stdout)
 
 
 def check_completeness(prose: str, expected: set[str]) -> None:
@@ -240,7 +276,7 @@ def atomic_write(path: Path, content: str) -> None:
         raise
 
 
-def process_day(day: date, root: Path, gh=run_gh, claude_bin: str = "claude") -> str:
+def process_day(day: date, root: Path, gh=run_gh, opencode_bin: str = "opencode") -> str:
     monitored, unseen = read_projects(root)
     repos = [repo for p in monitored for repo in p.repos]
     grouped = group_by_project(fetch_activity(day, repos, gh=gh), monitored)
@@ -254,7 +290,7 @@ def process_day(day: date, root: Path, gh=run_gh, claude_bin: str = "claude") ->
     if existing_hash(text) == digest_hash:
         return "unchanged (hash match, no model call)"
 
-    prose = summarize(grouped, day, claude_bin=claude_bin)
+    prose = summarize(grouped, day, opencode_bin=opencode_bin)
     check_completeness(prose, expected_references(grouped))
     block = build_block(prose, unseen, digest_hash)
     if text:

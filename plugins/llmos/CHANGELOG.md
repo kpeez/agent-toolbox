@@ -9,8 +9,8 @@ Newest first. Versions are the `version` field shared by
   `"$CLAUDE_PLUGIN_ROOT"`, matching the swe plugin's fix — Codex runs hooks
   through the login shell, where fish rejects `${VAR}` as a syntax error.
 - Add the nightly daily-activity digest script: scans monitored projects,
-  gates on a content hash, summarizes with a single claude call, and writes
-  the digest atomically.
+  gates on a content hash, summarizes with one pinned non-interactive OpenCode
+  Go call, and writes the digest atomically.
 - Update setup tests for the renamed install script and generated
   marketplace catalogs.
 
