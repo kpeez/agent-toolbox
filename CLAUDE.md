@@ -13,9 +13,12 @@ structure out of it and in the repo's own `AGENTS.md`.
 
 ## Workflow
 
-The spine is **sharpen → spec → issues → implement → review → PR**. `/start-loop <idea>`
-runs it end to end as one resumable command; spec approval is the last user
-prompt — after it the loop runs to completion, escalating only real blockers.
+The spine is **sharpen → spec → issues → implement → review → PR**. Sharpening
+and spec-writing happen with the lead in one session; the run itself starts in
+a fresh session via `/start-loop <spec>`, which requires the spec's
+`approved: true` and executes its `## Tasks` with cheap subagents while the
+lead runs the verification gates and git itself, escalating only real
+blockers.
 
 The main agent is the orchestrator: route exploration to explorers, design
 drafting to architects, and well-specified writes to implementers — never burn
