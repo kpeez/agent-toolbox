@@ -58,40 +58,21 @@ def render_toml(name: str, role: dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def opencode_args(role: dict[str, Any], bridge: str) -> list[str]:
-    pin = role["opencode"]
-    args = [bridge, "--model", pin["model"], "--effort", pin["effort"]]
-    if pin["mode"] == "plan":
-        args.extend(["--read-only-mode", "plan"])
-    elif pin["mode"] == "review":
-        args.extend(["--mode", "review"])
-    elif pin["mode"] == "write":
-        if write_mode := pin.get("write_mode"):
-            args.extend(["--write-mode", write_mode])
-    else:
-        raise ValueError(f"unknown OpenCode mode: {pin['mode']}")
-    args.extend(["opencode", "acp"])
-    return args
-
-
 def render_mcp(roles: dict[str, dict[str, Any]], *, claude: bool) -> str:
-    servers: dict[str, dict[str, Any]] = {}
     bridge = (
         "${CLAUDE_PLUGIN_ROOT}/mcp/acp_bridge.py" if claude else "mcp/acp_bridge.py"
     )
-    for name, role in roles.items():
-        if "opencode" not in role:
-            continue
-        config: dict[str, Any] = {
-            "command": "python3",
-            "args": opencode_args(role, bridge),
-        }
-        if claude:
-            config["timeout"] = 3600000
-        else:
-            config["cwd"] = "."
-            config["tool_timeout_sec"] = 3600
-        servers[name] = config
+    roles_path = "${CLAUDE_PLUGIN_ROOT}/roles.json" if claude else "roles.json"
+    config: dict[str, Any] = {
+        "command": "python3",
+        "args": [bridge, "--roles", roles_path, "opencode", "acp"],
+    }
+    if claude:
+        config["timeout"] = 3600000
+    else:
+        config["cwd"] = "."
+        config["tool_timeout_sec"] = 3600
+    servers = {"opencode": config}
     return json.dumps({"mcpServers": servers}, indent=2) + "\n"
 
 

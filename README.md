@@ -36,9 +36,8 @@ codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
-The Codex SWE plugin delivers its skills plus three native OpenCode delegate
-tools. The Codex `.toml` capability agents still come from the manual script
-below.
+The Codex SWE plugin delivers its skills plus three native OpenCode role tools.
+The Codex `.toml` capability agents still come from the manual script below.
 
 #### Codex OpenCode smoke check
 
@@ -46,15 +45,15 @@ Tool registration is fixed when a task starts. After installing or upgrading
 the plugin, start a **fresh Codex task** in a repository and confirm its tool
 registry contains all three names:
 
-- `mcp__opencode_explorer__delegate`
-- `mcp__opencode_implementer__delegate`
-- `mcp__opencode_reviewer__delegate`
+- `mcp__opencode__explore`
+- `mcp__opencode__implement`
+- `mcp__opencode__review`
 
-Then call the explorer with `task: "Return the repository name and the path to
-its root README only."`, `mode: "read-only"`, and the repository's absolute
-path as `cwd`. The smoke check passes only when the delegate returns that
-bounded answer successfully; a missing tool, unresolved plugin-root path, ACP
-startup error, authentication error, or model error is a failed check.
+Then call `explore` with `task: "Return the repository name and the path to its
+root README only."` and the repository's absolute path as `cwd`. The smoke
+check passes only when the role tool returns that bounded answer successfully;
+a missing tool, unresolved plugin-root path, ACP startup error, authentication
+error, or model error is a failed check.
 
 ### skills.sh — any agent
 

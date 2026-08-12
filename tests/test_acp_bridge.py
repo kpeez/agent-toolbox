@@ -205,7 +205,14 @@ class BridgeClient:
                 sys.executable,
                 str(ROOT / "plugins" / "swe" / "mcp" / "acp_bridge.py"),
                 *(options or []),
-                *(agent_command or [sys.executable, str(FAKE_AGENT), *(agent_args or [])]),
+                *(
+                    agent_command
+                    or [
+                        sys.executable,
+                        str(FAKE_AGENT),
+                        *(OPENCODE_LIKE if agent_args is None else agent_args),
+                    ]
+                ),
             ],
             stdin=subprocess.PIPE,
             stdout=subprocess.PIPE,
@@ -251,10 +258,15 @@ class BridgeClient:
         request_id = self.start_call(method, params)
         return self.receive(request_id)
 
-    def start_delegate(self, **arguments) -> int:
+    def start_delegate(self, tool: str = "explore", **arguments) -> int:
+        mode = arguments.pop("mode", None)
+        if mode is not None:
+            tool = {"read-only": "explore", "write": "implement", "review": "review"}.get(
+                mode, tool
+            )
         meta = {"_meta": {"progressToken": "p1"}}
         return self.start_call(
-            "tools/call", {"name": "delegate", "arguments": arguments, **meta}
+            "tools/call", {"name": tool, "arguments": arguments, **meta}
         )
 
     def cancel(self, request_id: int) -> None:
@@ -271,10 +283,15 @@ class BridgeClient:
         )
         self.process.stdin.flush()
 
-    def delegate(self, **arguments) -> dict:
-        meta = {"_meta": {"progressToken": "p1"}}
+    def delegate(self, tool: str = "explore", **arguments) -> dict:
+        mode = arguments.pop("mode", None)
+        if mode is not None:
+            tool = {"read-only": "explore", "write": "implement", "review": "review"}.get(
+                mode, tool
+            )
         response = self.call(
-            "tools/call", {"name": "delegate", "arguments": arguments, **meta}
+            "tools/call",
+            {"name": tool, "arguments": arguments, "_meta": {"progressToken": "p1"}},
         )
         return response["result"]
 
@@ -331,7 +348,19 @@ for line in sys.stdin:
     elif method == "session/new":
         with open(f"{session_id}.pid", "w") as pid_file:
             pid_file.write(str(os.getpid()))
-        send({"jsonrpc": "2.0", "id": message["id"], "result": {"sessionId": session_id}})
+        send({
+            "jsonrpc": "2.0",
+            "id": message["id"],
+            "result": {
+                "sessionId": session_id,
+                "configOptions": [
+                    {"id": "mode", "currentValue": "plan"},
+                    {"id": "effort", "currentValue": "high"},
+                ],
+            },
+        })
+    elif method in ("session/set_model", "session/set_config_option"):
+        send({"jsonrpc": "2.0", "id": message["id"], "result": {}})
     elif method == "session/prompt":
         directive = json.loads(message["params"]["prompt"][0]["text"])
         if diagnostic := directive.get("diagnostic"):
@@ -462,12 +491,15 @@ def assert_process_stopped(pid_path: Path) -> None:
 
 
 # The OpenCode-shaped fixture: a model list it validates against, a
-# model-dependent `effort` option, and a `mode` option whose second value is
-# read-only. Mirrors what `opencode acp` advertises.
+# model-dependent `effort` option, and a `mode` option. Mirrors what
+# `opencode acp` advertises.
 OPENCODE_LIKE = [
-    "--models", "go/luna,go/flash",
-    "--efforts", "low,high,max",
-    "--modes", "build,plan",
+    "--models",
+    "opencode-go/deepseek-v4-flash,opencode-go/gpt-5.6-luna,opencode-go/deepseek-v4-pro",
+    "--efforts",
+    "high,max",
+    "--modes",
+    "build,plan",
 ]
 
 
@@ -475,11 +507,13 @@ def directive(**payload) -> str:
     return json.dumps(payload)
 
 
-def test_the_bridge_advertises_only_the_delegate_tool(bridge: BridgeClient) -> None:
+def test_the_bridge_advertises_exactly_the_three_fixed_role_tools(bridge: BridgeClient) -> None:
     listed = bridge.call("tools/list", {})["result"]["tools"]
 
-    assert [tool["name"] for tool in listed] == ["delegate"]
-    assert listed[0]["inputSchema"]["required"] == ["task", "mode"]
+    assert [tool["name"] for tool in listed] == ["explore", "implement", "review"]
+    for tool in listed:
+        assert tool["inputSchema"]["required"] == ["task", "cwd"]
+        assert set(tool["inputSchema"]["properties"]) == {"task", "cwd", "sessionId"}
 
 
 def test_a_delegation_returns_the_agents_answer_and_its_session(
@@ -490,7 +524,7 @@ def test_a_delegation_returns_the_agents_answer_and_its_session(
     )
 
     assert result["content"][0]["text"] == "the answer is 6"
-    assert result["structuredContent"]["sessionId"] == "fake-session-1"
+    assert result["structuredContent"]["sessionId"] == "explore:fake-session-1"
     assert result["structuredContent"]["stopReason"] == "end_turn"
 
 
@@ -673,7 +707,7 @@ def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) 
     session_id = first["structuredContent"]["sessionId"]
 
     second = bridge.delegate(
-        task=directive(reply="two"), mode="read-only", sessionId=session_id
+        task=directive(reply="two"), mode="read-only", cwd=str(tmp_path), sessionId=session_id
     )
 
     assert second["structuredContent"]["sessionId"] == session_id
@@ -698,11 +732,14 @@ def test_a_compliant_agent_cancels_gracefully_and_keeps_its_session(
     assert result["structuredContent"]["stopReason"] == "cancelled"
     assert result["content"][0]["text"] == "partial answer"
     session_id = result["structuredContent"]["sessionId"]
-    assert session_id == pid_path.stem
+    assert session_id == f"explore:{pid_path.stem}"
     os.kill(int(pid_path.read_text()), 0)
 
     continuation = lifecycle_bridge.delegate(
-        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+        task=directive(reply="still alive"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        sessionId=session_id,
     )
     assert continuation["content"][0]["text"] == "still alive"
 
@@ -724,7 +761,8 @@ def test_cancelling_a_tool_call_stops_and_forgets_its_acp_session(
     continuation = lifecycle_bridge.delegate(
         task=directive(reply="must not run"),
         mode="read-only",
-        sessionId=pid_path.stem,
+        cwd=str(tmp_path),
+        sessionId=f"explore:{pid_path.stem}",
     )
     assert "is not open" in continuation["content"][0]["text"]
 
@@ -758,14 +796,17 @@ def test_a_timed_out_compliant_agent_keeps_its_session(lifecycle_bridges, tmp_pa
     result = client.receive(request_id)["result"]
 
     error_text = result["content"][0]["text"]
-    session_id = pid_path.stem
+    session_id = f"explore:{pid_path.stem}"
     assert result["isError"] is True
     assert "TurnTimeout" in error_text
     assert "0.05" in error_text
-    assert session_id == pid_path.stem
+    assert session_id == f"explore:{pid_path.stem}"
     assert session_id in error_text
     continuation = client.delegate(
-        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+        task=directive(reply="still alive"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        sessionId=session_id,
     )
     assert continuation["content"][0]["text"] == "still alive"
 
@@ -781,7 +822,10 @@ def test_the_timeout_timer_is_disarmed_when_the_turn_completes(
     time.sleep(0.15)
 
     continuation = client.delegate(
-        task=directive(reply="still alive"), mode="read-only", sessionId=session_id
+        task=directive(reply="still alive"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        sessionId=session_id,
     )
 
     assert continuation["content"][0]["text"] == "still alive"
@@ -810,7 +854,8 @@ def test_child_exit_stops_the_wait_and_forgets_the_session(
     continuation = lifecycle_bridge.delegate(
         task=directive(reply="must not run"),
         mode="read-only",
-        sessionId=pid_path.stem,
+        cwd=str(tmp_path),
+        sessionId=f"explore:{pid_path.stem}",
     )
     assert "is not open" in continuation["content"][0]["text"]
 
@@ -921,11 +966,14 @@ def test_cancelling_one_concurrent_call_does_not_corrupt_the_other(
 
     assert successful["content"][0]["text"] == "independent"
     assert cancelled["isError"] is True
-    blocked_pid_path = next(path for path in pid_paths if path.stem != successful_session_id)
+    blocked_pid_path = next(
+        path for path in pid_paths if path.stem != successful_session_id.removeprefix("explore:")
+    )
     assert_process_stopped(blocked_pid_path)
     continued = lifecycle_bridge.delegate(
         task=directive(reply="still alive"),
         mode="read-only",
+        cwd=str(tmp_path),
         sessionId=successful_session_id,
     )
     assert continued["content"][0]["text"] == "still alive"
@@ -954,7 +1002,10 @@ def test_an_unknown_session_is_loaded_when_the_agent_supports_it(
     bridge: BridgeClient, tmp_path: Path
 ) -> None:
     result = bridge.delegate(
-        task=directive(reply="loaded"), mode="read-only", sessionId="fake-session-1"
+        task=directive(reply="loaded"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        sessionId="explore:fake-session-1",
     )
 
     assert result["content"][0]["text"] == "loaded"
@@ -962,7 +1013,10 @@ def test_an_unknown_session_is_loaded_when_the_agent_supports_it(
     assert "replayed history" not in bridge.progress
     session_id = result["structuredContent"]["sessionId"]
     continuation = bridge.delegate(
-        task=directive(reply="continued"), mode="read-only", sessionId=session_id
+        task=directive(reply="continued"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        sessionId=session_id,
     )
     assert continuation["content"][0]["text"] == "continued"
 
@@ -973,38 +1027,12 @@ def test_load_is_refused_when_the_capability_is_absent(bridges, tmp_path: Path) 
     result = client.delegate(
         task=directive(reply="must not run"),
         mode="read-only",
-        sessionId="fake-session-1",
+        cwd=str(tmp_path),
+        sessionId="explore:fake-session-1",
     )
 
     assert result["isError"] is True
     assert "fake-session-1 is not open on this bridge" in result["content"][0]["text"]
-
-
-def test_a_loaded_session_gets_the_model_pin_and_mode_selection(bridges, tmp_path: Path) -> None:
-    client = bridges(
-        ["--model", "go/luna", "--effort", "max", "--read-only-mode", "plan"],
-        OPENCODE_LIKE,
-    )
-
-    result = client.delegate(
-        task=directive(reply="", echo_config=True),
-        mode="read-only",
-        sessionId="fake-session-1",
-    )
-
-    assert result["content"][0]["text"] == "config=model=go/luna|effort=max|mode=plan"
-
-
-def test_write_mode_selects_the_explicit_write_session_mode(bridges, tmp_path: Path) -> None:
-    client = bridges(["--write-mode", "build"], OPENCODE_LIKE)
-
-    result = client.delegate(
-        task=directive(reply="", echo_config=True),
-        mode="write",
-        cwd=str(tmp_path),
-    )
-
-    assert result["content"][0]["text"] == "config=mode=build"
 
 
 def test_a_failed_load_surfaces_the_agents_error(bridges, tmp_path: Path) -> None:
@@ -1013,7 +1041,8 @@ def test_a_failed_load_surfaces_the_agents_error(bridges, tmp_path: Path) -> Non
     result = client.delegate(
         task=directive(reply="must not run"),
         mode="read-only",
-        sessionId="never-opened",
+        cwd=str(tmp_path),
+        sessionId="explore:never-opened",
     )
 
     assert result["isError"] is True
@@ -1022,142 +1051,62 @@ def test_a_failed_load_surfaces_the_agents_error(bridges, tmp_path: Path) -> Non
     assert_process_stopped(tmp_path / "fake-agent.pid")
 
 
-def test_an_unknown_mode_is_rejected_before_the_agent_runs(
-    bridge: BridgeClient, tmp_path: Path
-) -> None:
-    result = bridge.delegate(task=directive(reply="hi"), mode="yolo", cwd=str(tmp_path))
-
-    assert result["isError"] is True
-    assert "yolo" in result["content"][0]["text"]
-
-
-# ---------------------------------------------------------------------------
-# bridge options: model policy that lives in argv, not in a prompt
-# ---------------------------------------------------------------------------
-
-
 def test_bridge_options_are_split_from_the_agent_command() -> None:
     options, command = acp_bridge.split_argv(
         [
-            "--model",
-            "go/luna",
-            "--effort",
-            "high",
-            "--read-only-mode",
-            "plan",
-            "--write-mode",
-            "build",
+            "--roles",
+            "roles.json",
             "opencode",
             "acp",
         ]
     )
 
-    assert options == {
-        "model": "go/luna",
-        "effort": "high",
-        "read_only_mode": "plan",
-        "write_mode": "build",
-    }
-    assert command == ["opencode", "acp"]
-
-
-def test_bridge_mode_can_pin_the_server_policy() -> None:
-    options, command = acp_bridge.split_argv(["--mode", "review", "opencode", "acp"])
-
-    assert options == {"mode": "review"}
+    assert options == {"roles": "roles.json"}
     assert command == ["opencode", "acp"]
 
 
 def test_option_parsing_stops_at_the_agent_command() -> None:
     """An agent flag that looks like a bridge flag belongs to the agent."""
-    options, command = acp_bridge.split_argv(["opencode", "acp", "--model", "sneaky"])
+    options, command = acp_bridge.split_argv(["opencode", "acp", "--roles", "sneaky"])
 
     assert options == {}
-    assert command == ["opencode", "acp", "--model", "sneaky"]
+    assert command == ["opencode", "acp", "--roles", "sneaky"]
 
 
 def test_an_option_without_a_value_is_an_error() -> None:
-    with pytest.raises(ValueError, match="--model needs a value"):
-        acp_bridge.split_argv(["--model"])
+    with pytest.raises(ValueError, match="--roles needs a value"):
+        acp_bridge.split_argv(["--roles"])
 
 
-def test_a_pinned_server_does_not_offer_the_model_as_a_choice() -> None:
-    """The whole point of pinning: the caller is never asked which model to run."""
-    pinned = acp_bridge.delegate_tool("go/luna")
-
-    assert "model" not in pinned["inputSchema"]["properties"]
-    assert "effort" not in pinned["inputSchema"]["properties"]
-    assert "go/luna" in pinned["description"]
-    assert "model" in acp_bridge.delegate_tool(None)["inputSchema"]["properties"]
-
-
-def test_a_pinned_server_advertises_the_reduced_schema_over_the_wire(bridges) -> None:
-    client = bridges(["--model", "go/luna"], OPENCODE_LIKE)
-
-    listed = client.call("tools/list", {})["result"]["tools"]
-
-    assert "model" not in listed[0]["inputSchema"]["properties"]
-
-
-def test_a_pinned_server_rejects_a_caller_supplied_model(bridges, tmp_path: Path) -> None:
-    """Silently honouring it would let a role run on a model it was not routed to."""
-    client = bridges(["--model", "go/luna"], OPENCODE_LIKE)
-
-    result = client.delegate(
-        task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path), model="go/flash"
-    )
-
-    assert result["isError"] is True
-    assert "pinned to model go/luna" in result["content"][0]["text"]
+def test_callers_cannot_supply_profile_fields(bridge: BridgeClient, tmp_path: Path) -> None:
+    for field in ("model", "effort", "mode", "role"):
+        result = bridge.call(
+            "tools/call",
+            {
+                "name": "explore",
+                "arguments": {
+                    "task": directive(reply="must not run"),
+                    "cwd": str(tmp_path),
+                    field: "caller-choice",
+                },
+            },
+        )
+        result = result["result"]
+        assert result["isError"] is True
+        assert field in result["content"][0]["text"]
 
 
-def test_the_pinned_model_is_selected_before_its_effort_variant(bridges, tmp_path: Path) -> None:
-    """Effort values are model-dependent, so the order is load-bearing, not style."""
-    client = bridges(["--model", "go/luna", "--effort", "max"], OPENCODE_LIKE)
-
-    result = client.delegate(
-        task=directive(reply="", echo_config=True), mode="write", cwd=str(tmp_path)
-    )
-
-    assert result["content"][0]["text"].startswith("config=model=go/luna|effort=max")
-
-
-def test_an_unavailable_model_surfaces_instead_of_running_the_default(
-    bridges, tmp_path: Path
-) -> None:
-    """Falling through to the agent's default would break the cost routing silently."""
-    client = bridges(["--model", "go/not-a-model"], OPENCODE_LIKE)
-
-    result = client.delegate(task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path))
-
-    assert result["isError"] is True
-    assert "model not found: go/not-a-model" in result["content"][0]["text"]
-
-
-def test_an_unavailable_effort_surfaces_too(bridges, tmp_path: Path) -> None:
-    client = bridges(["--model", "go/luna", "--effort", "ludicrous"], OPENCODE_LIKE)
-
-    result = client.delegate(task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path))
-
-    assert result["isError"] is True
-    assert "effort not found: ludicrous" in result["content"][0]["text"]
-
-
-def test_a_caller_supplied_model_still_works_on_an_unpinned_server(
-    bridges, tmp_path: Path
-) -> None:
-    """Pinning is opt-in; the generic delegate contract is unchanged without it."""
-    client = bridges([], OPENCODE_LIKE)
-
-    result = client.delegate(
-        task=directive(reply="", echo_config=True),
-        mode="write",
-        cwd=str(tmp_path),
-        model="go/flash",
-        effort="low",
-    )
-
-    assert result["content"][0]["text"] == "config=model=go/flash|effort=low"
+def test_each_fixed_tool_selects_its_internal_profile(bridge: BridgeClient, tmp_path: Path) -> None:
+    expected = {
+        "explore": "config=model=opencode-go/deepseek-v4-flash|effort=high|mode=plan",
+        "implement": "config=model=opencode-go/gpt-5.6-luna|effort=high|mode=build",
+        "review": "config=model=opencode-go/deepseek-v4-pro|effort=max",
+    }
+    for tool, config in expected.items():
+        result = bridge.delegate(
+            tool=tool, task=directive(reply="", echo_config=True), cwd=str(tmp_path)
+        )
+        assert result["content"][0]["text"] == config
 
 
 # ---------------------------------------------------------------------------
@@ -1170,34 +1119,37 @@ def test_read_only_selects_the_agents_own_read_only_session_mode(
 ) -> None:
     """OpenCode auto-approves in-workspace edits, so the kind policy never sees
     them; its own read-only mode is the only thing that actually stops them."""
-    client = bridges(["--read-only-mode", "plan"], OPENCODE_LIKE)
+    client = bridges([], OPENCODE_LIKE)
 
     result = client.delegate(
         task=directive(reply="", echo_config=True), mode="read-only", cwd=str(tmp_path)
     )
 
-    assert result["content"][0]["text"] == "config=mode=plan"
+    assert result["content"][0]["text"] == (
+        "config=model=opencode-go/deepseek-v4-flash|effort=high|mode=plan"
+    )
 
 
-def test_write_restores_the_mode_the_session_opened_in(bridges, tmp_path: Path) -> None:
-    """A read-only session continued for a write would otherwise stay muzzled."""
-    client = bridges(["--read-only-mode", "plan"], OPENCODE_LIKE)
-
-    first = client.delegate(task=directive(reply="one"), mode="read-only", cwd=str(tmp_path))
-    result = client.delegate(
-        task=directive(reply="", echo_config=True),
-        mode="write",
+def test_a_session_cannot_continue_through_a_different_role(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    first = bridge.delegate(task=directive(reply="one"), tool="explore", cwd=str(tmp_path))
+    result = bridge.delegate(
+        task=directive(reply="must not run"),
+        tool="implement",
+        cwd=str(tmp_path),
         sessionId=first["structuredContent"]["sessionId"],
     )
 
-    assert result["content"][0]["text"] == "config=mode=plan|mode=build"
+    assert result["isError"] is True
+    assert "bound to role explore" in result["content"][0]["text"]
 
 
 def test_read_only_refuses_when_the_agent_has_no_read_only_mode(
     bridges, tmp_path: Path
 ) -> None:
     """Fail closed: running unprotected is the one outcome worse than erroring."""
-    client = bridges(["--read-only-mode", "plan"], [])
+    client = bridges([], [])
 
     result = client.delegate(task=directive(reply="hi"), mode="read-only", cwd=str(tmp_path))
 
@@ -1215,12 +1167,14 @@ def test_an_unconfigured_bridge_never_touches_the_session_mode(
         task=directive(reply="", echo_config=True), mode="read-only", cwd=str(tmp_path)
     )
 
-    assert result["content"][0]["text"] == "config="
+    assert result["content"][0]["text"] == (
+        "config=model=opencode-go/deepseek-v4-flash|effort=high|mode=plan"
+    )
 
 
 def test_the_permission_policy_still_guards_a_read_only_run(bridges, tmp_path: Path) -> None:
     """Both layers, not one: an agent that DOES ask is still refused its edits."""
-    client = bridges(["--read-only-mode", "plan"], OPENCODE_LIKE)
+    client = bridges([], OPENCODE_LIKE)
 
     result = client.delegate(
         task=directive(
