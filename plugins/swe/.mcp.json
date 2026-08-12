@@ -1,47 +1,11 @@
 {
   "mcpServers": {
-    "opencode-explorer": {
+    "opencode": {
       "command": "python3",
       "args": [
         "mcp/acp_bridge.py",
-        "--model",
-        "opencode-go/deepseek-v4-flash",
-        "--effort",
-        "high",
-        "--read-only-mode",
-        "plan",
-        "opencode",
-        "acp"
-      ],
-      "cwd": ".",
-      "tool_timeout_sec": 3600
-    },
-    "opencode-implementer": {
-      "command": "python3",
-      "args": [
-        "mcp/acp_bridge.py",
-        "--model",
-        "opencode-go/gpt-5.6-luna",
-        "--effort",
-        "high",
-        "--write-mode",
-        "build",
-        "opencode",
-        "acp"
-      ],
-      "cwd": ".",
-      "tool_timeout_sec": 3600
-    },
-    "opencode-reviewer": {
-      "command": "python3",
-      "args": [
-        "mcp/acp_bridge.py",
-        "--model",
-        "opencode-go/deepseek-v4-pro",
-        "--effort",
-        "max",
-        "--mode",
-        "review",
+        "--roles",
+        "roles.json",
         "opencode",
         "acp"
       ],

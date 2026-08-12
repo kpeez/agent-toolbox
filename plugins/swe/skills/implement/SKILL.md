@@ -27,15 +27,14 @@ outside that procedure, or on a host with no forwarder subagents.
 ### Manual fallback (no forwarder subagents)
 
 On a host with no forwarder subagents (Codex), call the three plugin-delivered
-OpenCode delegate tools directly. Every call names the absolute worktree root
+OpenCode role tools directly. Every call names the absolute worktree root
 as `cwd`:
 
-- `mcp__opencode_explorer__delegate` with `mode: "read-only"` for
-  repository exploration.
-- `mcp__opencode_implementer__delegate` with `mode: "write"` for
-  exactly one bounded write assignment per changeset.
-- `mcp__opencode_reviewer__delegate` with `mode: "review"` for one
-  read-only-plus-execute review of the complete assembled diff.
+- `mcp__opencode__explore` for repository exploration.
+- `mcp__opencode__implement` for exactly one bounded write assignment per
+  changeset.
+- `mcp__opencode__review` for one read-only-plus-execute review of the complete
+  assembled diff.
 
 If a requested tool is missing, fails to start, or returns non-completion,
 surface that result to whoever orchestrates you. There is no silent fallback

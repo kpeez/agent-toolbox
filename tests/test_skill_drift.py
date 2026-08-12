@@ -90,9 +90,9 @@ def test_forwarder_agents_hold_only_their_providers_mcp_tools() -> None:
     """
     agents_dir = ROOT / "plugins" / "swe" / "agents"
     expected = {
-        "opencode-explorer": "mcp__plugin_swe_opencode-explorer__delegate",
-        "opencode-implementer": "mcp__plugin_swe_opencode-implementer__delegate",
-        "opencode-reviewer": "mcp__plugin_swe_opencode-reviewer__delegate",
+        "opencode-explorer": "mcp__plugin_swe_opencode__explore",
+        "opencode-implementer": "mcp__plugin_swe_opencode__implement",
+        "opencode-reviewer": "mcp__plugin_swe_opencode__review",
     }
 
     declared = {
@@ -322,20 +322,23 @@ SWE_CLAUDE_MCP = SWE_PLUGIN / ".mcp.claude.json"
 OPENCODE_MODEL = re.compile(r"opencode-go/[\w.-]+")
 
 
-def opencode_servers() -> dict[str, list[str]]:
-    servers = json.loads(SWE_MCP.read_text())["mcpServers"]
+def opencode_servers() -> dict[str, dict[str, Any]]:
+    return json.loads(SWE_MCP.read_text())["mcpServers"]
+
+
+def opencode_profiles() -> dict[str, dict[str, Any]]:
+    roles = json.loads((SWE_PLUGIN / "roles.json").read_text())["roles"]
     return {
-        name: config["args"]
-        for name, config in servers.items()
-        if name.startswith("opencode-")
+        pin["tool"]: pin
+        for role in roles.values()
+        if (pin := role.get("opencode")) is not None
     }
 
 
 def pinned_models() -> dict[str, str]:
-    """server -> the model its `--model` flag pins, the one operative source."""
+    """tool -> model from roles.json, the operative profile source."""
     return {
-        name: args[args.index("--model") + 1]
-        for name, args in opencode_servers().items()
+        tool: profile["model"] for tool, profile in opencode_profiles().items()
     }
 
 
@@ -349,6 +352,7 @@ def normalized_opencode_contract(
         "mcp/acp_bridge.py",
     }:
         args[0] = "<plugin-root>/mcp/acp_bridge.py"
+    args[args.index("--roles") + 1] = "<plugin-root>/roles.json"
 
     return {
         "command": config["command"],
@@ -370,55 +374,64 @@ def test_codex_and_claude_package_the_same_opencode_role_contracts() -> None:
 
     claude_servers = json.loads(SWE_CLAUDE_MCP.read_text())["mcpServers"]
     codex_servers = json.loads(SWE_MCP.read_text())["mcpServers"]
-    role_names = {
-        "opencode-explorer",
-        "opencode-implementer",
-        "opencode-reviewer",
-    }
-
-    assert set(claude_servers) == role_names
-    assert set(codex_servers) == role_names
-    for name in role_names:
-        assert codex_servers[name]["cwd"] == "."
-        assert "${CLAUDE_PLUGIN_ROOT}" not in json.dumps(codex_servers[name])
-        assert normalized_opencode_contract(
-            claude_servers[name], timeout_field="timeout", timeout_scale=1
-        ) == normalized_opencode_contract(
-            codex_servers[name], timeout_field="tool_timeout_sec", timeout_scale=1000
-        )
+    assert set(claude_servers) == {"opencode"}
+    assert set(codex_servers) == {"opencode"}
+    assert codex_servers["opencode"]["cwd"] == "."
+    assert "${CLAUDE_PLUGIN_ROOT}" not in json.dumps(codex_servers["opencode"])
+    assert normalized_opencode_contract(
+        claude_servers["opencode"], timeout_field="timeout", timeout_scale=1
+    ) == normalized_opencode_contract(
+        codex_servers["opencode"], timeout_field="tool_timeout_sec", timeout_scale=1000
+    )
 
 
 def test_opencode_runs_through_the_generic_acp_bridge() -> None:
     """Not a parallel delegation path: the same bridge Copilot proved out, with
     the agent command as its argv, is what OpenCode arrives through."""
     servers = opencode_servers()
-    assert set(servers) == {
-        "opencode-explorer",
-        "opencode-implementer",
-        "opencode-reviewer",
+    assert set(servers) == {"opencode"}
+    args = servers["opencode"]["args"]
+    assert args[0].endswith("mcp/acp_bridge.py")
+    assert args[-2:] == ["opencode", "acp"]
+    assert args[args.index("--roles") + 1] == "roles.json"
+
+
+def test_roles_json_pins_each_open_code_session_policy() -> None:
+    assert {
+        tool: {
+            "model": profile["model"],
+            "effort": profile["effort"],
+            "mode": profile["mode"],
+            "session_mode": profile.get("session_mode"),
+        }
+        for tool, profile in opencode_profiles().items()
+    } == {
+        "explore": {
+            "model": "opencode-go/deepseek-v4-flash",
+            "effort": "high",
+            "mode": "read-only",
+            "session_mode": "plan",
+        },
+        "implement": {
+            "model": "opencode-go/gpt-5.6-luna",
+            "effort": "high",
+            "mode": "write",
+            "session_mode": "build",
+        },
+        "review": {
+            "model": "opencode-go/deepseek-v4-pro",
+            "effort": "max",
+            "mode": "review",
+            "session_mode": None,
+        },
     }
-
-    for name, args in servers.items():
-        assert args[0].endswith("mcp/acp_bridge.py"), name
-        assert args[-2:] == ["opencode", "acp"], name
-
-
-def test_every_opencode_server_pins_its_open_code_session_policy() -> None:
-    """Each role pins the OpenCode session policy required by its contract."""
-    for name, args in opencode_servers().items():
-        if name == "opencode-reviewer":
-            assert args[args.index("--mode") + 1] == "review", name
-        elif name == "opencode-implementer":
-            assert args[args.index("--write-mode") + 1] == "build", name
-        else:
-            assert args[args.index("--read-only-mode") + 1] == "plan", name
 
 
 def test_opencode_role_models_are_the_documented_policy() -> None:
     assert pinned_models() == {
-        "opencode-explorer": "opencode-go/deepseek-v4-flash",
-        "opencode-implementer": "opencode-go/gpt-5.6-luna",
-        "opencode-reviewer": "opencode-go/deepseek-v4-pro",
+        "explore": "opencode-go/deepseek-v4-flash",
+        "implement": "opencode-go/gpt-5.6-luna",
+        "review": "opencode-go/deepseek-v4-pro",
     }
 
 
@@ -426,7 +439,7 @@ def test_the_reviewer_never_shares_the_implementers_model() -> None:
     """Cross-model review is why review is not simply routed to the coding model."""
     models = pinned_models()
 
-    assert models["opencode-implementer"] != models["opencode-reviewer"]
+    assert models["implement"] != models["review"]
 
 
 def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
@@ -435,8 +448,13 @@ def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
     models = pinned_models()
     agents_dir = ROOT / "plugins" / "swe" / "agents"
 
-    for server, model in models.items():
-        agent = agents_dir / f"{server}.md"
+    role_names = {
+        profile["tool"]: name
+        for name, role in json.loads((SWE_PLUGIN / "roles.json").read_text())["roles"].items()
+        if (profile := role.get("opencode")) is not None
+    }
+    for tool, model in models.items():
+        agent = agents_dir / f"{role_names[tool]}.md"
         assert set(OPENCODE_MODEL.findall(agent.read_text())) == {model}, agent.name
 
     # Skills mostly route by role; the one exception (start-loop's model-policy
@@ -562,18 +580,21 @@ def test_every_opencode_forwarder_has_a_caller() -> None:
     )
     text = "\n".join(path.read_text() for path in callers)
 
+    routes = {
+        "opencode-explorer": "mcp__opencode__explore",
+        "opencode-implementer": "mcp__opencode__implement",
+        "opencode-reviewer": "mcp__opencode__review",
+    }
     uncalled = [
         name
-        for name in opencode_servers()
-        if f"swe:{name}" not in text
-        and f"mcp__plugin_swe_{name}__delegate" not in text
-        and f"mcp__{name.replace('-', '_')}__delegate" not in text
+        for name, tool in routes.items()
+        if f"swe:{name}" not in text and tool not in text
     ]
 
     assert uncalled == []
 
 
-def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
+def test_codex_manual_workflow_reaches_every_native_opencode_role_tool() -> None:
     """Codex has no forwarder subagents, so its manual fallback must call each
     plugin-delivered delegate directly and preserve the role's write boundary."""
     skills = ROOT / "plugins" / "swe" / "skills"
@@ -581,15 +602,14 @@ def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
     to_issues = (skills / "to-issues" / "SKILL.md").read_text()
 
     assert "Manual fallback (no forwarder subagents)" in implement
-    assert "mcp__opencode_explorer__delegate" in to_issues
+    assert "mcp__opencode__explore" in to_issues
 
-    for tool, mode in (
-        ("mcp__opencode_explorer__delegate", 'mode: "read-only"'),
-        ("mcp__opencode_implementer__delegate", 'mode: "write"'),
-        ("mcp__opencode_reviewer__delegate", 'mode: "review"'),
+    for tool in (
+        "mcp__opencode__explore",
+        "mcp__opencode__implement",
+        "mcp__opencode__review",
     ):
         assert tool in implement, f"{tool} missing from implement's manual fallback"
-        assert mode in implement, f"{mode} missing from implement's manual fallback"
     assert "cwd" in implement
 
 
