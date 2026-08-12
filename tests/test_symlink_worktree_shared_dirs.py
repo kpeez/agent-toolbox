@@ -8,6 +8,9 @@ paths in a new worktree, which no mock reproduces.
 from __future__ import annotations
 
 import json
+import os
+import shlex
+import shutil
 import subprocess
 from pathlib import Path
 
@@ -30,11 +33,21 @@ def git(cwd: Path, *args: str) -> str:
     ).stdout.strip()
 
 
-def run_hook(cwd: Path, *, stdin: str = "") -> subprocess.CompletedProcess[str]:
+def run_hook(
+    cwd: Path,
+    *,
+    stdin: str = "",
+    env: dict[str, str] | None = None,
+) -> subprocess.CompletedProcess[str]:
     """Run the hook as the harness does. cwd is explicit: with empty stdin the
     script falls back to the process cwd, which must never be this repo."""
     return subprocess.run(
-        [str(HOOK)], cwd=cwd, input=stdin, capture_output=True, text=True
+        [str(HOOK)],
+        cwd=cwd,
+        env=env,
+        input=stdin,
+        capture_output=True,
+        text=True,
     )
 
 
@@ -134,6 +147,34 @@ def test_hook_skips_missing_and_existing_entries(repo: tuple[Path, Path]) -> Non
     assert not (worktree / "artifacts").is_symlink()
     assert (worktree / "docs" / "agents").is_symlink()
     assert run_hook(worktree).returncode == 0  # idempotent
+
+
+def test_hook_does_not_dereference_a_racing_destination(
+    repo: tuple[Path, Path], tmp_path: Path
+) -> None:
+    main, worktree = repo
+    real_ln = shutil.which("gln") or shutil.which("ln")
+    assert real_ln is not None
+    shim_dir = tmp_path / "bin"
+    shim_dir.mkdir()
+    shim = shim_dir / "ln"
+    src = main / "data"
+    dst = worktree / "data"
+    shim.write_text(
+        "#!/bin/sh\n"
+        f"if [ \"$3\" = {shlex.quote(str(dst))} ]; then\n"
+        f"  {shlex.quote(real_ln)} -s {shlex.quote(str(src))} \"$3\"\n"
+        "fi\n"
+        f"exec {shlex.quote(real_ln)} \"$@\"\n"
+    )
+    shim.chmod(0o755)
+    env = os.environ | {"PATH": f"{shim_dir}:{os.environ['PATH']}"}
+
+    result = run_hook(worktree, env=env)
+
+    assert result.returncode == 0
+    assert dst.is_symlink()
+    assert sorted(path.name for path in src.iterdir()) == ["rows.csv"]
 
 
 def test_hook_never_links_a_non_gitignored_entry(tmp_path: Path) -> None:

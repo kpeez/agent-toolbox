@@ -5,8 +5,11 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
-## Unreleased
+## 1.15.3 — 2026-08-12
 
+- Make shared worktree directory links race-safe with atomic no-target-directory
+  creation, preventing overlapping hook invocations from writing links into
+  the shared target.
 - **Delete the Workflow-tool conductor.** `workflows/swe-loop.js` and its
   behavior tests are gone; `/start-loop` now owns the whole post-approval run
   itself (dispatch, gates, merges, review, ship) as described in its own
