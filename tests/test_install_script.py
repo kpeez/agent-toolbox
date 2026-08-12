@@ -85,6 +85,38 @@ def test_install_repairs_a_link_left_dangling_by_a_deleted_source(home: Path) ->
     assert (entry / "SKILL.md").is_file()
 
 
+def global_hooks_path(home: Path) -> str:
+    return subprocess.run(
+        ["git", "config", "--global", "core.hooksPath"],
+        env={"HOME": str(home), "PATH": os.environ["PATH"]},
+        capture_output=True,
+        text=True,
+    ).stdout.strip()
+
+
+def test_install_wires_the_global_git_hooks_dispatcher(home: Path) -> None:
+    """Codex and plain `git worktree add` load no plugin hooks, so worktree
+    linking must ride a global git post-checkout hook."""
+    run_install(home)
+
+    hooks_dir = home / ".config" / "git" / "hooks"
+    dispatch = ROOT / "plugins" / "swe" / "hooks" / "git-hooks-dispatch.sh"
+    for name in ("post-checkout", "pre-commit", "pre-push"):
+        link = hooks_dir / name
+        assert link.is_symlink(), name
+        assert link.resolve() == dispatch
+    assert global_hooks_path(home) == str(hooks_dir)
+
+
+def test_install_keeps_a_foreign_core_hookspath(home: Path) -> None:
+    """A hooksPath the user set themselves must never be clobbered."""
+    (home / ".gitconfig").write_text("[core]\n\thooksPath = /somewhere/else\n")
+
+    run_install(home)
+
+    assert global_hooks_path(home) == "/somewhere/else"
+
+
 def test_install_is_idempotent(home: Path) -> None:
     run_install(home)
     before = sorted(path.name for path in (home / ".agents" / "skills").iterdir())

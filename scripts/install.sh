@@ -97,6 +97,30 @@ echo "codex agents → $HOME/.codex/agents/"
 
 
 ################################################################################
+# Git hooks (all providers)
+################################################################################
+# `git worktree add` from any tool (Codex, plain git) links worktree shared
+# dirs via a global post-checkout hook. core.hooksPath makes git skip
+# .git/hooks entirely, so the dispatcher covers every hook name and re-runs
+# the repo's own hook first (pre-commit, git-lfs).
+GIT_HOOKS_DIR="$HOME/.config/git/hooks"
+DISPATCH="$ROOT_DIR/plugins/swe/hooks/git-hooks-dispatch.sh"
+mkdir -p "$GIT_HOOKS_DIR"
+for hook_name in applypatch-msg pre-applypatch post-applypatch pre-commit \
+    pre-merge-commit prepare-commit-msg commit-msg post-commit pre-rebase \
+    post-checkout post-merge pre-push post-rewrite pre-auto-gc; do
+    ln -sfn "$DISPATCH" "$GIT_HOOKS_DIR/$hook_name"
+done
+current_hooks_path=$(git config --global core.hooksPath || true)
+if [[ -z "$current_hooks_path" || "$current_hooks_path" == "$GIT_HOOKS_DIR" ]]; then
+    git config --global core.hooksPath "$GIT_HOOKS_DIR"
+    echo "git hooks → $GIT_HOOKS_DIR"
+else
+    echo "kept core.hooksPath=$current_hooks_path"
+fi
+
+
+################################################################################
 # Unpackaged skills (skills/ — not part of any plugin)
 ################################################################################
 # symlink each skill straight from the repo into Claude's and Codex's personal

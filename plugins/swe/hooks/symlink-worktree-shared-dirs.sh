@@ -1,6 +1,6 @@
 #!/bin/sh
 # Link the main checkout's gitignored local-resource dirs (artifacts, data,
-# docs/agents) into a git worktree. `git worktree add` never materializes
+# docs/agents, runs) into a git worktree. `git worktree add` never materializes
 # gitignored paths, so a fresh worktree is missing per-machine data and an
 # agent working there climbs back out to the main checkout for it.
 #
@@ -25,7 +25,7 @@ common_dir=$(git -C "$top" rev-parse --path-format=absolute --git-common-dir 2>/
 main=$(dirname "$common_dir")
 [ "$main" != "$top" ] || exit 0
 
-for entry in artifacts data docs/agents; do
+for entry in artifacts data docs/agents runs; do
   src="$main/$entry"
   dst="$top/$entry"
   [ -e "$src" ] || continue
