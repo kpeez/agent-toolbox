@@ -3,9 +3,11 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 from datetime import date
 from pathlib import Path
+from types import SimpleNamespace
 
 import pytest
 
@@ -59,11 +61,11 @@ def gh_with_activity(args):
     return []
 
 
-def fake_ok(grouped, day, claude_bin=""):
+def fake_ok(grouped, day, opencode_bin=""):
     return "### Alpha Project\nMerged [#7](u)."
 
 
-def fake_incomplete(grouped, day, claude_bin=""):
+def fake_incomplete(grouped, day, opencode_bin=""):
     return "### Alpha Project\nBusy day."
 
 
@@ -112,7 +114,7 @@ def test_hash_gate_skips_model_call_and_is_byte_stable(tmp_path, monkeypatch):
     root = make_vault(tmp_path)
     calls = []
 
-    def fake_summarize(g, d, claude_bin=""):
+    def fake_summarize(g, d, opencode_bin=""):
         calls.append(1)
         return "### Alpha Project\nMerged [#7](u)."
 
@@ -156,3 +158,118 @@ def test_unmapped_repo_activity_is_hard_failure(tmp_path):
 
     with pytest.raises(wda.DigestError, match="unmapped repo"):
         wda.process_day(date(2026, 7, 16), make_vault(tmp_path), gh=gh_rogue)
+
+
+def opencode_text_event(text: str) -> str:
+    return json.dumps(
+        {
+            "type": "text",
+            "part": {
+                "type": "text",
+                "text": text,
+                "metadata": {"openai": {"phase": "final_answer"}},
+            },
+        }
+    )
+
+
+def summarize_grouped() -> dict:
+    return {
+        "alpha": {
+            "title": "Alpha Project",
+            "repos": {"kpeez/alpha": {"merged_prs": [PR]}},
+        }
+    }
+
+
+def test_summarize_uses_pinned_opencode_argv_and_stdin(monkeypatch):
+    calls = []
+
+    def fake_run(argv, **kwargs):
+        calls.append((argv, kwargs))
+        return SimpleNamespace(
+            returncode=0, stdout=opencode_text_event("### Alpha Project"), stderr=""
+        )
+
+    monkeypatch.setattr(wda.subprocess, "run", fake_run)
+    assert wda.summarize(
+        summarize_grouped(), date(2026, 7, 16), opencode_bin="/bin/opencode"
+    ) == "### Alpha Project"
+
+    assert len(calls) == 1
+    argv, kwargs = calls[0]
+    assert argv == [
+        "/bin/opencode", "run", "--format", "json", "--model", "opencode-go/deepseek-v4-flash"
+    ]
+    assert kwargs["input"].startswith(wda.TRANSFORM_INSTRUCTIONS + "\n\n")
+    assert json.loads(kwargs["input"].rsplit("\n\n", 1)[1]) == summarize_grouped()
+    assert kwargs["capture_output"] is True
+    assert kwargs["text"] is True
+    assert kwargs["timeout"] == 600
+
+
+def test_summarize_extracts_one_final_assistant_text(monkeypatch):
+    output = "\n".join(
+        [
+            json.dumps({"type": "step_start"}),
+            opencode_text_event("  ### Alpha Project  "),
+            json.dumps({"type": "step_finish"}),
+        ]
+    )
+    monkeypatch.setattr(
+        wda.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=output, stderr=""),
+    )
+
+    assert wda.summarize(summarize_grouped(), date(2026, 7, 16)) == "### Alpha Project"
+
+
+def test_summarize_accepts_deepseek_final_text_without_openai_metadata(monkeypatch):
+    output = json.dumps({"type": "text", "part": {"type": "text", "text": "### Alpha Project"}})
+    monkeypatch.setattr(
+        wda.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=output, stderr=""),
+    )
+
+    assert wda.summarize(summarize_grouped(), date(2026, 7, 16)) == "### Alpha Project"
+
+
+@pytest.mark.parametrize(
+    "output, message",
+    [
+        ("", "0 final assistant messages"),
+        ("not json\n", "malformed JSON"),
+        (opencode_text_event("   "), "empty final assistant message"),
+        (
+            "\n".join([opencode_text_event("one"), opencode_text_event("two")]),
+            "2 final assistant messages",
+        ),
+        (json.dumps({"type": "message", "text": "transcript"}), "unsupported event type"),
+    ],
+)
+def test_summarize_rejects_malformed_or_non_single_final_output(
+    monkeypatch, output, message
+):
+    monkeypatch.setattr(
+        wda.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(returncode=0, stdout=output, stderr=""),
+    )
+
+    with pytest.raises(wda.DigestError, match=message):
+        wda.summarize(summarize_grouped(), date(2026, 7, 16))
+
+
+def test_summarize_rejects_nonzero_opencode_run(monkeypatch):
+    monkeypatch.setattr(
+        wda.subprocess,
+        "run",
+        lambda *args, **kwargs: SimpleNamespace(
+            returncode=1, stdout="", stderr="provider unavailable"
+        ),
+    )
+
+    with pytest.raises(wda.DigestError, match="opencode run failed: provider unavailable"):
+        wda.summarize(summarize_grouped(), date(2026, 7, 16))
