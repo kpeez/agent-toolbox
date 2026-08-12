@@ -33,7 +33,9 @@ for entry in artifacts data docs/agents runs; do
   # A link git would track leaks main-checkout paths into the next commit.
   git -C "$top" check-ignore -q "$entry" || continue
   mkdir -p "$(dirname "$dst")" || continue
-  ln -s "$src" "$dst" 2>/dev/null || true
+  ln -sT "$src" "$dst" 2>/dev/null ||
+    gln -sT "$src" "$dst" 2>/dev/null ||
+    true
 done
 
 exit 0
