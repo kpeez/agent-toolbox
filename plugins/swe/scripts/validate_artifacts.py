@@ -137,7 +137,7 @@ def validate_spec(text: str, previous_status: str | None) -> list[str]:
                 f"missing {CONTAINER_KEY} for status={status}: a published spec records its tracker container"
             )
 
-    tasks_section = extract_section(_body, TASKS_HEADING)
+    tasks_section = extract_section(_body, TASKS_HEADING, end_re=TASKS_SECTION_END_RE)
     if tasks_section is not None:
         violations.extend(validate_tasks_section(tasks_section))
 
@@ -147,7 +147,9 @@ def validate_spec(text: str, previous_status: str | None) -> list[str]:
 def validate_tasks_section(section: str) -> list[str]:
     violations: list[str] = []
     section = HTML_COMMENT_RE.sub("", section)
-    lines = [line for line in section.splitlines() if line.strip() and line.strip() != "---"]
+    lines = [
+        line for line in section.splitlines() if line.strip() and line.strip() != "---"
+    ]
 
     task_ids: set[str] = set()
     parsed: list[tuple[str, str, str | None]] = []
@@ -184,16 +186,23 @@ def validate_tasks_section(section: str) -> list[str]:
     return violations
 
 
-SECTION_END_RE = re.compile(r"^(?:## |---\s*$)", re.MULTILINE)
+SECTION_END_RE = re.compile(r"^## ", re.MULTILINE)
+# The spec template's `## Tasks` section sits before the `---` zone divider
+# that separates it from `## Design`, so only its extraction must also stop
+# at that divider. Other sections (e.g. an issue's `## Acceptance criteria`)
+# may legitimately contain a `---` horizontal rule and must not be truncated.
+TASKS_SECTION_END_RE = re.compile(r"^(?:## |---\s*$)", re.MULTILINE)
 
 
-def extract_section(text: str, heading: str) -> str | None:
+def extract_section(
+    text: str, heading: str, *, end_re: re.Pattern[str] = SECTION_END_RE
+) -> str | None:
     heading_re = re.compile(rf"^{re.escape(heading)}\s*$", re.MULTILINE)
     heading_match = heading_re.search(text)
     if heading_match is None:
         return None
     start = heading_match.end()
-    end_match = SECTION_END_RE.search(text, start)
+    end_match = end_re.search(text, start)
     return text[start : end_match.start()] if end_match else text[start:]
 
 

@@ -178,6 +178,21 @@ def test_prose_mentioning_the_tasks_heading_does_not_hijack_the_section() -> Non
     assert validator.validate_spec(body, None) == []
 
 
+def test_an_acceptance_criteria_section_with_a_divider_still_validates() -> None:
+    """`extract_section`'s shared `---` terminator is scoped to Tasks; an issue's
+    Acceptance criteria section may contain its own horizontal rule without
+    truncating the checklist that follows it."""
+    body = (
+        "## What to build\n\nA widget.\n\n"
+        "## Acceptance criteria\n\n"
+        "Some context.\n\n---\n\n"
+        "- [ ] It works\n\n"
+        "## Scope\n\nIn scope.\n\n"
+        "## Blocked by\n\nNothing.\n"
+    )
+    assert validator.validate_issue(body) == []
+
+
 def test_the_actual_template_body_validates_clean() -> None:
     """Run the validator against write-spec's own template body, not a
     reconstructed fixture."""

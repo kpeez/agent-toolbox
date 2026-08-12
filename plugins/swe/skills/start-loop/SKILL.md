@@ -64,7 +64,7 @@ reading belongs to the reviewer in step 4.
 
 | Role | Default | Escalation / notes |
 | --- | --- | --- |
-| Explorer | Haiku (repo), OpenCode flash (web) | Reports only |
+| Explorer | Haiku (repo), OpenCode (deepseek-v4-flash) (web) | Reports only |
 | Sharpen + spec | The premium model | The one place it earns its price |
 | Implementer / fixer | OpenCode (gpt-5.6-luna) when the Go subscription is flat-rate; else Sonnet, high effort | Fails gates twice → redispatch that task on Opus with the failure history. Never pre-buy Opus for tasks the spec already made bounded: ~5× the price dwarfs any thinking-token savings. |
 | Reviewer | A different family from the implementer: deepseek-v4-pro, or Sonnet/Opus | One invocation, on the assembled diff |

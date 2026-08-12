@@ -457,31 +457,53 @@ def test_model_ids_live_only_in_the_mcp_manifest_and_agree_with_it() -> None:
     assert documented <= set(models.values())
 
 
+# Shape of a bare (unprefixed) OpenCode model id, as the manifest's own pinned
+# ids demonstrate: `<family>-<version>-<tier>` (deepseek-v4-flash,
+# deepseek-v4-pro), or a `gpt-`/`deepseek-` id of any shape. Broad enough to
+# catch a bare model name docs forgot to update, without matching ordinary
+# prose words.
+BARE_MODEL_SHAPE_RE = re.compile(
+    r"[a-z]+-[a-z0-9.]+-(?:pro|flash|luna|nova)|gpt-\d[\w.-]*|deepseek-[\w.-]+"
+)
+
+
 def test_bare_opencode_model_names_agree_with_the_mcp_manifest() -> None:
-    """start-loop's model-policy table and the README's Model policy prose name
-    OpenCode models without the `opencode-go/` prefix. Those bare names are not
-    caught by the qualified-id check above, so re-pinning a model in .mcp.json
-    must still fail here until the docs catch up."""
+    """The manifest's pinned models are the one operative source; expected bare
+    names are derived FROM it, not the other way around, so repinning any one
+    model in `.mcp.json` must fail this test until the docs catch up. Each
+    pinned bare name must show up in start-loop's model table, and no other
+    model-shaped token may appear unpinned there or in the README's Model
+    policy prose."""
     models = pinned_models()
     bare_models = {model.split("/", 1)[1] for model in models.values()}
-    bare_model_re = re.compile(
-        "|".join(re.escape(name) for name in sorted(bare_models))
-    )
 
     start_loop = (
         ROOT / "plugins" / "swe" / "skills" / "start-loop" / "SKILL.md"
     ).read_text()
-    readme = (ROOT / "plugins" / "swe" / "README.md").read_text()
-
-    for source_name, text in (
-        ("start-loop SKILL.md", start_loop),
-        ("swe README.md", readme),
-    ):
-        found = set(bare_model_re.findall(text))
-        assert found, f"{source_name} names no bare OpenCode model"
-        assert found <= bare_models, (
-            f"{source_name} names a bare model not pinned in .mcp.json: {found - bare_models}"
+    for bare_name in bare_models:
+        assert bare_name in start_loop, (
+            f"start-loop's model table is missing pinned model {bare_name!r}"
         )
+    found_in_start_loop = set(BARE_MODEL_SHAPE_RE.findall(start_loop))
+    assert found_in_start_loop <= bare_models, (
+        "start-loop names a model-shaped token not pinned in .mcp.json: "
+        f"{found_in_start_loop - bare_models}"
+    )
+
+    # The README's own Model policy prose only, not any qualified `opencode-go/...`
+    # id named elsewhere in the file (e.g. the "Delegating to another provider"
+    # section), so a stale bare name outside that section can't hide.
+    readme = (ROOT / "plugins" / "swe" / "README.md").read_text()
+    policy_match = re.search(r"### Model policy\n(.*?)\n## ", readme, re.DOTALL)
+    assert policy_match is not None, "README has no Model policy section"
+    policy_prose = policy_match.group(1)
+
+    found_in_policy = set(BARE_MODEL_SHAPE_RE.findall(policy_prose))
+    assert found_in_policy, "README's Model policy prose names no bare OpenCode model"
+    assert found_in_policy <= bare_models, (
+        "README's Model policy prose names a model-shaped token not pinned in "
+        f".mcp.json: {found_in_policy - bare_models}"
+    )
 
 
 def test_dropping_copilot_left_no_dangling_references() -> None:
