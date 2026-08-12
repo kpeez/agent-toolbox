@@ -70,7 +70,7 @@ own vocabulary (the `docs/agents/CONTEXT.md` glossary if present) and respect AD
 
 Delegate the sweep rather than reading files yourself. On a host with named
 subagents, dispatch the `swe:opencode-explorer` forwarder; if the caller
-cannot nest subagents, call `mcp__plugin_swe_opencode-explorer__delegate`
+cannot nest subagents, call `mcp__opencode_explorer__delegate`
 directly with the absolute repository root as `cwd`
 and `mode: "read-only"`. A missing or failed requested tool is reported to the
 orchestrator; never silently substitute a host-native explorer or shell out to
