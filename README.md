@@ -7,8 +7,8 @@ Copilot CLI[^1].
 Three plugins, each documented in detail by its own README:
 
 - [**swe**](plugins/swe/README.md) — the core: the spec-driven workflow
-  skills, the capability agents, and the swe-loop conductor that ships an
-  approved spec end to end
+  skills and the capability agents; `/start-loop` has the lead itself dispatch
+  and ship an approved spec end to end
 - [**lab**](plugins/lab/README.md) — bounded and deep source-backed research,
   autonomous experiment loops, and data-visualization guidance
 - [**llmos**](plugins/llmos/README.md) — tooling, hooks, and the
@@ -72,10 +72,10 @@ Skills install as plain editable files (Claude Code: `.claude/skills/`, a
 symlink to the shared `.agents/skills/` copy). They live in your project and
 need no plugin harness, but re-running `add` or `update` rewrites them from
 the source, so keep customizations in your own fork rather than the installed
-copies. The install is skills-only: the swe conductor (`swe-loop.js`), the
-`swe:*` agents, hooks, and MCP servers are not copied, so `start-loop` and
-`implement` rely on one of the plugin installs above (or the manual script
-below) being present on the same machine.
+copies. The install is skills-only: the `swe:*` agents, hooks, and MCP servers
+are not copied, so `start-loop` and `implement` rely on one of the plugin
+installs above (or the manual script below) being present on the same
+machine.
 
 ### Manual install (Codex agents, opencode, Antigravity, Copilot)
 
@@ -104,7 +104,7 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 
 | Skill                           | Purpose                                                                                                 |
 | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `start-loop`                    | Run/resume the swe-loop end to end — triage, design, approval gate, then the conductor ships the spec   |
+| `start-loop`                    | Run an approved spec to a shipped PR — the lead dispatches implementers per task, gates and merges itself, then ships |
 | `sharpen`                       | Interview the user to stress-test a plan; cross-check the code, record ADRs                             |
 | `write-spec`                    | Create a feature spec — a pure-markdown design draft proven by committed tests                          |
 | `to-issues`                     | Publish a spec as vertical-slice tracker issues with blocked-by relations                               |
@@ -138,11 +138,13 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 ## Workflow
 
 The spine is **sharpen → spec → issues → implement → review → PR**.
-`/start-loop <idea>` runs it as one resumable command: after spec approval,
-Claude launches the swe-loop conductor; Codex, which has no Workflow tool,
-names `/implement` as the manual conductor and uses its native OpenCode tools.
-The [swe plugin README](plugins/swe/README.md) documents the spine, the agents,
-and the conductor in detail, with diagrams.
+`/start-loop <idea>` runs the approved-spec half as one resumable command: the
+lead dispatches one implementer subagent per spec task, runs the verification
+gates and merges itself with shell commands, then dispatches a single reviewer
+before shipping one PR — no conductor process, no Workflow tool. Sharpening
+and spec-writing happen in a prior session. The
+[swe plugin README](plugins/swe/README.md) documents the workflow and the
+agents in detail.
 
 ## Versioning
 
