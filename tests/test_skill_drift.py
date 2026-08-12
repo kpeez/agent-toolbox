@@ -538,13 +538,13 @@ def test_no_agent_declares_the_ignored_allowed_tools_key() -> None:
 
 
 def test_the_planner_reaches_the_explorer_without_nesting() -> None:
-    """A subagent cannot spawn a subagent, so the planner calls the forwarder's
-    MCP tool directly. It declares no `tools:` list on purpose: /to-issues
+    """A subagent cannot spawn a subagent, so the planner calls the available
+    explorer MCP delegate directly. It declares no `tools:` list on purpose: /to-issues
     resolves the tracker per repo at runtime, and a static list would cut off
     whichever of Linear's MCP tools, `gh`, or plain files it picks."""
     planner = (ROOT / "plugins" / "swe" / "agents" / "planner.md").read_text()
 
-    assert "mcp__plugin_swe_opencode-explorer__delegate" in planner
+    assert re.search(r"available OpenCode\s+explorer delegate tool", planner)
     assert re.search(r"^tools:", planner, re.M) is None
 
 
@@ -565,7 +565,9 @@ def test_every_opencode_forwarder_has_a_caller() -> None:
     uncalled = [
         name
         for name in opencode_servers()
-        if f"swe:{name}" not in text and f"mcp__plugin_swe_{name}__delegate" not in text
+        if f"swe:{name}" not in text
+        and f"mcp__plugin_swe_{name}__delegate" not in text
+        and f"mcp__{name.replace('-', '_')}__delegate" not in text
     ]
 
     assert uncalled == []
@@ -579,12 +581,12 @@ def test_codex_manual_workflow_reaches_every_native_opencode_delegate() -> None:
     to_issues = (skills / "to-issues" / "SKILL.md").read_text()
 
     assert "Manual fallback (no forwarder subagents)" in implement
-    assert "mcp__plugin_swe_opencode-explorer__delegate" in to_issues
+    assert "mcp__opencode_explorer__delegate" in to_issues
 
     for tool, mode in (
-        ("mcp__plugin_swe_opencode-explorer__delegate", 'mode: "read-only"'),
-        ("mcp__plugin_swe_opencode-implementer__delegate", 'mode: "write"'),
-        ("mcp__plugin_swe_opencode-reviewer__delegate", 'mode: "review"'),
+        ("mcp__opencode_explorer__delegate", 'mode: "read-only"'),
+        ("mcp__opencode_implementer__delegate", 'mode: "write"'),
+        ("mcp__opencode_reviewer__delegate", 'mode: "review"'),
     ):
         assert tool in implement, f"{tool} missing from implement's manual fallback"
         assert mode in implement, f"{mode} missing from implement's manual fallback"
