@@ -47,9 +47,9 @@ CHANGE_BRANCH_RE = re.compile(r"^(?:knack/)?(?:slice|batch|change)/(?P<slug>.+)$
 # GithubBackend.fetch_container_issues), so a branch slug carrying `#11` must
 # match too, or a merged GitHub task's branch is never recognised as done.
 IDENTIFIER_RE = re.compile(r"[A-Z][A-Z0-9]*-\d+|#\d+")
-# Stack numbering is dense by construction (the conductor only opens stack/<n>
-# once stack/<n-1> landed a changeset) and each stack branch contains every one
-# below it, so the highest number IS the tip of the run's work.
+# Stack numbering is dense by construction (the start-loop run procedure only
+# opens stack/<n> once stack/<n-1> landed a changeset) and each stack branch
+# contains every one below it, so the highest number IS the tip of the run's work.
 STACK_BRANCH_RE = re.compile(r"^stack/(?P<height>\d+)$")
 # Written into a spec's YAML frontmatter. `project:` is already taken by the
 # llmOS vault link, hence the tracker_ prefix.

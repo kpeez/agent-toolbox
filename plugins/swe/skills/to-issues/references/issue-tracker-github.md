@@ -14,10 +14,10 @@ Issues for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
-## swe-loop integration
+## Tracker script integration
 
-The conductor invokes the installed `tracker.py` script for workable queries.
-It passes the resolved tracker, parent issue, and integration branch; this
+`tracker.py` implements this tracker's workable query and status sync,
+taking the resolved tracker, parent issue, and integration branch; this
 reference defines the GitHub conventions rather than a command string.
 
 ## Container identity

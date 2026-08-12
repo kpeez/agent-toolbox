@@ -18,7 +18,7 @@ vault, so issue files and their statuses are private and never committed.
 - Comments and progress notes append to the bottom of the file under a
   `## Comments` heading
 
-## swe-loop workable set
+## Workable set
 
 The container is the spec; its tasks are the spec's `NNNN-<slug>-issue-*.md`
 files. Report each as `{id, identifier, title}` with the file path as `id`, the
@@ -26,13 +26,14 @@ files. Report each as `{id, identifier, title}` with the file path as `id`, the
 heading as `title`. An unreadable or missing spec directory is a query failure,
 never an empty result.
 
-Which of those are workable is the conductor's rule, not this file's — it states
-what counts as done and blocked, including that a task merged into the run's
-integration branch is done whatever the file says. Do not re-derive it here.
+Which of those are workable is `tracker.py`'s rule, not this file's — it
+states what counts as done and blocked, including that a task merged into the
+run's integration branch is done whatever the file says. Do not re-derive it
+here.
 
 "Blocked by" references other issue files by relative path. Reading or posting
-an issue's "tracker comments" means its `## Comments` section; the loop's
-container comment (run summary) appends under a `## Comments` heading at the
+an issue's "tracker comments" means its `## Comments` section; the run's
+container comment (summary) appends under a `## Comments` heading at the
 bottom of the spec file itself.
 
 ## Container identity
