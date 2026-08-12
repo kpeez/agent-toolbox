@@ -30,11 +30,11 @@ On a host with no forwarder subagents (Codex), call the three plugin-delivered
 OpenCode delegate tools directly. Every call names the absolute worktree root
 as `cwd`:
 
-- `mcp__plugin_swe_opencode-explorer__delegate` with `mode: "read-only"` for
+- `mcp__opencode_explorer__delegate` with `mode: "read-only"` for
   repository exploration.
-- `mcp__plugin_swe_opencode-implementer__delegate` with `mode: "write"` for
+- `mcp__opencode_implementer__delegate` with `mode: "write"` for
   exactly one bounded write assignment per changeset.
-- `mcp__plugin_swe_opencode-reviewer__delegate` with `mode: "review"` for one
+- `mcp__opencode_reviewer__delegate` with `mode: "review"` for one
   read-only-plus-execute review of the complete assembled diff.
 
 If a requested tool is missing, fails to start, or returns non-completion,

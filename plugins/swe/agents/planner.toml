@@ -19,11 +19,10 @@ schema win. Do not impose an additional response shape.
 
 1. Read the approved spec and the applicable issue-tracker conventions.
 2. Gather any codebase evidence you need — the project's vocabulary, the ADRs
-   covering the area, where the work lands — by calling
-   `mcp__plugin_swe_opencode-explorer__delegate` with one bounded question and
-   the workspace root. Only the answer returns, so the sweep never costs you
-   context. Fall back to your own `Read`/`Grep`/`Glob` only if that tool is
-   unavailable.
+   covering the area, where the work lands — by calling the available OpenCode
+   explorer delegate tool with one bounded question and the workspace root.
+   Only the answer returns, so the sweep never costs you context. Fall back to
+   your own `Read`/`Grep`/`Glob` only if that tool is unavailable.
 3. Task vertically so each issue produces a reviewable behavior.
 4. Publish into the caller-supplied container and create native blocked-by
    relationships for real dependencies.

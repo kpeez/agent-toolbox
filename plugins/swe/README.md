@@ -173,7 +173,7 @@ exit codes and timeout ceilings stop being the model's problem.
 | Host   | Provider surface | Caller |
 | ------ | ---------------- | ------ |
 | Claude | `opencode acp` through `mcp/acp_bridge.py` | the three `swe:opencode-*` forwarders |
-| Codex  | `opencode acp` through the same `mcp/acp_bridge.py` | `mcp__plugin_swe_opencode-{explorer,implementer,reviewer}__delegate` directly |
+| Codex  | `opencode acp` through the same `mcp/acp_bridge.py` | `mcp__opencode_{explorer,implementer,reviewer}__delegate` directly |
 
 Each Claude forwarder agent's `tools` field lists only its own provider's tools, so
 "never work the task yourself" is a property of the agent rather than a rule in
@@ -190,9 +190,9 @@ absolute worktree root as `cwd`:
 
 | Phase | Tool | Mode | Boundary |
 | ----- | ---- | ---- | -------- |
-| Explore | `mcp__plugin_swe_opencode-explorer__delegate` | `read-only` | One bounded repository sweep or web-research question |
-| Implement | `mcp__plugin_swe_opencode-implementer__delegate` | `write` | One changeset with issue/spec identifiers and verification gates |
-| Review | `mcp__plugin_swe_opencode-reviewer__delegate` | `read-only` | One review of the complete assembled diff |
+| Explore | `mcp__opencode_explorer__delegate` | `read-only` | One bounded repository sweep or web-research question |
+| Implement | `mcp__opencode_implementer__delegate` | `write` | One changeset with issue/spec identifiers and verification gates |
+| Review | `mcp__opencode_reviewer__delegate` | `read-only` | One review of the complete assembled diff |
 
 A missing tool, startup/auth/model failure, denied tool call, or non-completion
 is returned to the orchestrator. The manual path never silently switches to a

@@ -46,9 +46,9 @@ Tool registration is fixed when a task starts. After installing or upgrading
 the plugin, start a **fresh Codex task** in a repository and confirm its tool
 registry contains all three names:
 
-- `mcp__plugin_swe_opencode-explorer__delegate`
-- `mcp__plugin_swe_opencode-implementer__delegate`
-- `mcp__plugin_swe_opencode-reviewer__delegate`
+- `mcp__opencode_explorer__delegate`
+- `mcp__opencode_implementer__delegate`
+- `mcp__opencode_reviewer__delegate`
 
 Then call the explorer with `task: "Return the repository name and the path to
 its root README only."`, `mode: "read-only"`, and the repository's absolute
