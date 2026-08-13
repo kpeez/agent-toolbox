@@ -65,7 +65,7 @@ Written for a reviewer with no session context. Three parts:
   a suggested commit-by-commit order, and which parts are mechanical noise
   (renames, generated files, formatting).
 - **Verification** — behavioral evidence, not gate status. **Never list
-  lint/type-check/test-suite runs as verification** — those are global
+  lint/type-check/git commands/test-suite runs as verification** — those are global
   blockers; passing them is the price of admission, not proof of anything.
   Instead give the exact earned evidence for each observable claim:
   - name the committed regression, property, workflow, or static check; or
