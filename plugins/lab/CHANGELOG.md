@@ -3,6 +3,13 @@
 Newest first. Versions are the `version` field shared by
 `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`.
 
+## 1.2.1 — 2026-08-12
+
+- Guard `/autoresearch` against noise and metric overfitting: derive the
+  minimum meaningful improvement from repeated baseline runs when budget
+  allows, and re-verify the final kept commit (plus any program-named held-out
+  check) before declaring the endpoint met on long programs.
+
 ## 1.2.0 — 2026-08-09
 
 - Move bounded `/research` from SWE to Lab as an immediate breaking ownership

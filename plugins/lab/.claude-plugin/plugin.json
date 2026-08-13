@@ -1,7 +1,7 @@
 {
   "name": "lab",
   "description": "Source-backed research, reproducible experiment loops, and data visualization guidance",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",

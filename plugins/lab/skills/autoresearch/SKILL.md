@@ -161,6 +161,10 @@ parsed primary metric, guardrails, evaluator hashes, and budget consumed in
 `00-baseline/`. The evaluator must finish successfully with valid output and
 passing guardrails. Otherwise stop without starting the loop.
 
+When the per-evaluation budget allows, run the baseline evaluator more than
+once and derive the program's minimum meaningful improvement from the observed
+run-to-run spread; a threshold below the noise floor selects noise.
+
 Create `results.tsv` once with this exact header (literal tab separators):
 
 ```text
@@ -247,7 +251,10 @@ in the append-only ledger even when the branch moves away from them.
   `decision=discard`, rollback, and stop as well if the program's guardrail stop
   condition fires.
 - **Acceptance threshold:** stop immediately after a verified kept result meets
-  it; do not spend remaining budget.
+  it; do not spend remaining budget. On a long program with many kept
+  candidates, re-run the frozen evaluator on the final kept commit — plus any
+  held-out check the program names — before declaring the endpoint met;
+  repeated selection against one metric overfits that metric.
 - **Budget:** stop before an evaluation that could exceed any total limit, or
   immediately after the configured candidate count is reached.
 - **Invalid evaluator/environment or safety boundary:** preserve evidence,
