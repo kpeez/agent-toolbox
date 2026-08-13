@@ -5,6 +5,17 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.15.5 — 2026-08-12
+
+- Add `start-loop` references distilled from the agent-workflows research:
+  `references/delegation.md` (dispatch-prompt contract, evidence-not-self-report,
+  artifacts-down/summaries-up, fan-out rules, worker caps, cache-aware cost
+  discipline) and `references/review-loop.md` (why one fresh different-family
+  reviewer, gates-green entry, spec-grounded findings, neutral elicitation,
+  metadata redaction, and the two-fix-round bound). The reviewer agent body now
+  ignores quality claims in metadata and treats failing required checks as
+  blocking.
+
 ## 1.15.4 — 2026-08-12
 
 - Replace universal committed-test pressure with behavioral evidence: scratch
