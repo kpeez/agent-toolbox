@@ -1,5 +1,5 @@
 ---
-name: tdd
+name: testing-code
 description: "Behavioral testing discipline — use disposable real-code probes, then retain only the smallest stable sensor for meaningful public behavior, an actual regression, or a high-risk invariant. Use when implementing or changing behavior, or to de-risk an approach first. Triggers: 'tdd', 'blueprint this', 'prototype', 'spike', 'play with it', 'try a few designs'. Coordinated by /implement."
 ---
 

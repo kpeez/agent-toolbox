@@ -14,6 +14,9 @@ the single `agentspec` plugin.
   reports and reruns that earned evidence without requiring a test per goal. Add
   concise property-testing and targeted-mutation guidance without quotas or new
   framework dependencies.
+- Rename the `tdd` skill to `testing-code` — the contract is behavioral
+  evidence, not red/green TDD; `tdd` remains a trigger word so both invocations
+  keep working.
 - Make `ship-pr` proactive by default: open the branch's draft PR at the first
   verified checkpoint and re-run at each later verified checkpoint, instead of
   waiting for the user to invoke `/ship-pr` at the end. Finalize (ready for

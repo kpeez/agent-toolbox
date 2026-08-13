@@ -34,7 +34,7 @@ Every path through the plugin converges on the same spine:
 Work can enter anywhere — `/sharpen` for an unsettled design, `/diagnose` for
 a known bug, `/improve-codebase-architecture` when hunting refactors — and
 converges on `/write-spec`. From there `/to-issues` makes the tracker the task
-and status ledger, implementation proves behavior per `/tdd`, a host-native
+and status ledger, implementation proves behavior per `/testing-code`, a host-native
 review pass (e.g. `/code-review`) runs before `/ship-pr` publishes.
 
 ```mermaid
@@ -42,9 +42,9 @@ graph LR
   G["/sharpen"] --> A["/write-spec"]
   X["/diagnose"] -.-> A
   Y["/improve-codebase-architecture"] -.-> A
-  P["/tdd (design sketch)"] -.-> A
+  P["/testing-code (design sketch)"] -.-> A
   A --> I["/to-issues"]
-  I -->|"fresh chat / subagent per issue"| B["implement (/tdd)"]
+  I -->|"fresh chat / subagent per issue"| B["implement (/testing-code)"]
   B --> C["review (host-native)"]
   C --> D["/ship-pr"]
   X -.->|"small fix"| B
@@ -123,7 +123,7 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 | `start-loop` | Runs an approved spec to a shipped PR: the lead dispatches implementers and a reviewer, and runs gates and merges itself            |
 | `to-issues`  | Publishes a spec as vertical-task tracker issues with native blocked-by relations; the tracker becomes the status ledger           |
 | `implement`  | Orchestrates implementation for a single task or changeset outside a `/start-loop` run                                              |
-| `tdd`        | Behavioral testing: use disposable real-code probes, then retain only stable, risk-proportionate evidence at public seams            |
+| `testing-code`        | Behavioral testing: use disposable real-code probes, then retain only stable, risk-proportionate evidence at public seams            |
 | `ship-pr`    | Atomic commits, push, draft PR kept current; `finalize` re-verifies and flips it ready for review                                   |
 
 **Support**

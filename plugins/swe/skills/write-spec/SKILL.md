@@ -19,7 +19,7 @@ not the spec.
 
 ## The verification rule
 
-Behavior is proven per `/implement` and `/tdd` — read them before writing code.
+Behavior is proven per `/implement` and `/testing-code` — read them before writing code.
 The spec's Verification section names each observable claim, its independent
 oracle, and acceptable evidence mode. Do not predeclare one committed test per
 claim; exact test names are settled after exploration, and a claim may
@@ -55,10 +55,10 @@ the `---` divider, and flag the header for the user to confirm.
    - **Hand off (default when work will fan out):** run `/to-issues` to publish
      the spec into its tracker container (parent issue, or Linear project) with
      labeled task issues. Separate agents pick up
-     each issue and prove behavior per `/tdd` before review and PR. The
+     each issue and prove behavior per `/testing-code` before review and PR. The
      tracker owns status from here.
    - **Solo (single-task spec, one sitting):** prove each behavior per
-     `/tdd`, then a host-native review pass, then `/ship-pr`.
+     `/testing-code`, then a host-native review pass, then `/ship-pr`.
 
 ## /write-spec new <name>
 
@@ -78,7 +78,7 @@ A spec is **`NNNN-<slug>.md`** — pure markdown with no code files
 live under `docs/agents/specs/` (the shared specs directory may be an Obsidian vault). `/to-issues`
 may create sibling local issue files named `NNNN-<slug>-issue-<NN>-<issue-slug>.md`.
 Verification evidence lives with the work: permanent tests when they pass
-`/tdd`'s admission gate, other stable checks or reproducible demonstrations when
+`/testing-code`'s admission gate, other stable checks or reproducible demonstrations when
 appropriate, plus transient scratch probes in gitignored `tests/temp/`. Specs
 are never committed to the source repo; they live behind the gitignored
 `docs/agents/` symlink (topology per the `ensure-shared` step above).
@@ -114,7 +114,7 @@ See `/to-issues` for tracker ownership, status, blockers, and handoff rules.
 
 ## Verification evidence lives with the work
 
-See `/tdd` for choosing permanent tests, other acceptable evidence, and
+See `/testing-code` for choosing permanent tests, other acceptable evidence, and
 disposable scratch probes.
 
 ## Resuming work on an existing spec

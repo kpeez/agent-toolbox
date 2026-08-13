@@ -9,7 +9,7 @@ One verification discipline for the implementer that does one task.
 
 ## Prove behavior before you commit to it
 
-**`/tdd`** is the behavioral verification discipline. Tests are not a required
+**`/testing-code`** is the behavioral verification discipline. Tests are not a required
 output of every change: use disposable `tests/temp/` probes when useful, then
 retain only the smallest stable sensor for meaningful public behavior, an actual
 regression, or a high-risk invariant. Choose evidence by behavioral risk,
@@ -47,7 +47,7 @@ The discipline an implementer agent, or a developer working a single issue
 directly, follows for one task. Never delegate this task further.
 
 1. Read the issue body and its latest comment before acting.
-2. Prove behavior per `/tdd`, working through one behavioral risk or equivalence
+2. Prove behavior per `/testing-code`, working through one behavioral risk or equivalence
    class at a time and probing in `tests/temp/` when the design is uncertain.
 3. Run verification gates in order: lint, types, tests. A failure at any gate
    stops the task; it is not a warning to note and continue past.
