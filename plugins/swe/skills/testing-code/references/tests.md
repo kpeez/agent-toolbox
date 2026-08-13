@@ -52,7 +52,12 @@ plausible or the reference shares production code or assumptions.
 ## Property-based testing
 
 Property testing is valuable when many domain values share an invariant that can
-be stated without reading the implementation. Useful shapes include:
+be stated without reading the implementation. In Python the tool is
+[Hypothesis](https://hypothesis.readthedocs.io/) — mature, pytest-native, used
+by CPython itself, with shrinking (minimized counterexamples) and stateful
+testing built in. Property tests kill dramatically more mutants than example
+tests at the same coverage, so one good property is dense evidence. Useful
+shapes include:
 
 - round trips: decoding an encoding returns the normalized original;
 - idempotence: normalizing twice equals normalizing once;
@@ -61,7 +66,20 @@ be stated without reading the implementation. Useful shapes include:
 - permutation invariance: irrelevant ordering does not change the result;
 - model equivalence: production agrees with a smaller independently trusted
   reference; and
-- state invariants: generated action sequences preserve public rules.
+- state invariants: generated action sequences preserve public rules
+  (Hypothesis's `RuleBasedStateMachine` generates the sequences).
+
+The shape in code — one invariant, a domain-valid generator, no expected
+value computed from production:
+
+```python
+from hypothesis import given, strategies as st
+
+@given(st.lists(st.integers()))
+def test_normalize_is_idempotent(xs):
+    once = normalize(xs)
+    assert normalize(once) == once
+```
 
 Rules:
 
@@ -75,7 +93,8 @@ Rules:
   production logic.
 - Treat a minimized counterexample as diagnostic evidence. Add a fixed example
   only when that concrete case communicates lasting regression meaning beyond
-  the property.
+  the property; Hypothesis's `@example(...)` decorator keeps it attached to
+  the property instead of a separate test.
 - Delete table-driven or fixed examples that the property fully subsumes.
 
 Do not use property testing for getters, constructors, framework behavior,
@@ -101,6 +120,10 @@ Rules:
   theater just to kill them.
 - Do not target a score, add routine whole-repository mutation CI, or use line
   coverage as a proxy for mutant quality.
+- When a tool helps, the Python options are
+  [cosmic-ray](https://cosmic-ray.readthedocs.io/) (actively maintained,
+  broadest operator set, parallel execution) and `mutmut` (simpler setup).
+  Scope either to the changed files.
 - Manual mutation is acceptable: make one or two plausible changes, confirm the
   relevant sensor fails, then restore production. The information matters, not
   the framework.
