@@ -33,6 +33,9 @@ There is no quota.
 Choose the first applicable evidence:
 
 1. **Real reported defect:** one deterministic regression at the public seam.
+   For parser and boundary defects, the captured offending payload becomes the
+   fixture — real inputs, not hand-written strings you imagine the producer
+   emits.
 2. **Broad independent invariant:** one property test for the equivalence class.
 3. **Sequences or transitions:** one small stateful or model property.
 4. **Public system boundary:** one representative integration or contract
@@ -104,6 +107,9 @@ Rules:
 
 ## High-value patterns
 
+The examples below are drawn from ML, but the categories are the frame —
+translate them to your domain.
+
 ### Independent calculation oracle
 
 Compare optimized behavior with a small readable reference that shares no
@@ -129,11 +135,42 @@ def test_future_frames_cannot_affect_past_logits():
     torch.testing.assert_close(model(frames).logits[:, :8], past)
 ```
 
+Gradient flow and freezing are the same pattern: a frozen backbone that isn't
+frozen, or an adapter that never receives gradient, trains for days before
+anyone notices.
+
+```python
+def test_lora_finetune_updates_only_adapter_weights():
+    model(batch).loss.backward()
+    for name, p in model.named_parameters():
+        if "lora_" in name:
+            assert p.grad is not None and p.grad.abs().sum() > 0, name
+        else:
+            assert p.grad is None, f"frozen param received grad: {name}"
+```
+
+### Data integrity
+
+Split leakage and misalignment inflate every downstream metric silently. Same
+idea for alignment: a synthetic video where frame `i` has pixel value `i`
+proves sampled timestamps index the frames they claim.
+
+```python
+def test_splits_share_no_subjects():
+    train, val = make_splits(manifest, seed=0)
+    assert {c.subject_id for c in train}.isdisjoint(c.subject_id for c in val)
+```
+
 ### Representative workflow
 
 Drive the assembled system through its public entry point with real
 collaborators. One workflow can protect several claims. Add another only for a
 genuinely different risk, not another permutation of the same path.
+
+In ML that workflow is **one overfit run**: the full loop — model, loss,
+optimizer, collation — driving loss to ~0 on two samples. It catches sign
+errors, lr-schedule bugs, and dead gradients together. Mark it slow; run it on
+a tiny random-weight model.
 
 ## Test theater
 
@@ -147,6 +184,40 @@ Do not add tests for:
 - exact snapshots broader than the consumer contract;
 - behavior already protected by a cheaper or shared sensor; or
 - coverage improvement by itself.
+
+What theater looks like in practice — delete on sight:
+
+```python
+# THEATER: wiring restated. If the registry breaks, the first run throws
+# KeyError with a clear message. This can only fail if someone edits the
+# line it restates.
+def test_registry_resolves_model_class():
+    assert get_annotator_class("model-name") is ModelClassName
+
+# THEATER: depends on ~/.cache contents; skips on CI, "passes" locally,
+# verifies nothing anywhere.
+def test_processor_loads_from_snapshot():
+    snapshot = _cached_processor_snapshot()
+    if snapshot is None:
+        pytest.skip("no cached snapshot")
+
+# THEATER: tests the arg-parsing library, not your code. Fifty of these are
+# one equivalence class in a coverage costume.
+def test_cli_parses_batch_size_flag():
+    assert parse_args(["--batch-size", "8"]).batch_size == 8
+
+# THEATER: restates a validator that already raises loudly, one branch per
+# test. If the rule is worth pinning, pin it once at the boundary with a real
+# payload — not once per field.
+def test_negative_epochs_rejected():
+    with pytest.raises(ValueError):
+        TrainConfig(epochs=-1)
+
+# THEATER: trivial serialization. asdict() is the library's contract, not
+# yours. Round-trips earn a test when the transform does real work.
+def test_config_to_dict_has_keys():
+    assert set(asdict(cfg)) == {"lr", "epochs", "batch_size"}
+```
 
 Delete redundant examples when a clearer property or representative workflow
 protects the same behavior. Good tests assert caller-relevant values or
