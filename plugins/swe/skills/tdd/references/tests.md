@@ -1,183 +1,154 @@
-# What to Test — and What Not To
+# Choosing Behavioral Evidence
 
-The test for a test: **what silent bug does it catch?** A bug is _silent_ if the
-pipeline runs to completion and produces wrong numbers, leaked data, or broken
-invariants. A bug is _loud_ if the first real run throws a traceback that any
-agent fixes in one step. Tests exist to catch silent bugs. Loud bugs are already
-covered — by the interpreter, the import system, and the first smoke run.
+Permanent tests are sensors with maintenance cost, not required artifacts. Keep
+only the smallest stable sensor for meaningful public behavior, an actual
+regression, or a high-risk invariant.
 
-## Goals are covered by evidence, not one test each
+## Admission gate
 
-There is no quota. A stated goal needs **evidence that it works**, and evidence
-comes in three forms — pick the one the goal's failure mode calls for:
+Before committing a test, answer all five:
 
-1. **A committed test** — when the failure is silent. Wrong numbers, leaked
-   data, a broken invariant: nothing throws, so only an assertion catches it.
-   The earn-the-test bar above decides.
-2. **A shared pipeline-level test** — when several goals are exercised by one
-   end-to-end run. Those goals all cite that single test as their evidence.
-   Don't clone it per goal; a duplicate that fails for the same reason as an
-   existing test carries no new information.
-3. **A reproducible demo in the PR** — when the failure is loud on the first
-   real run. `/ship-pr` already requires a pasteable command with its observed
-   output as verification; for a loud-failure goal, that record _is_ the
-   evidence, and a committed test on top of it is theater.
+1. **Behavior:** What caller-visible promise, observed defect, or high-risk
+   invariant does it protect?
+2. **Oracle:** How is the expected result known independently of production
+   logic and incidental structure?
+3. **Uniqueness:** What plausible failure escapes the existing suite, type
+   checker, linter, assertions, and shared workflows?
+4. **Seam:** What narrow stable public boundary exposes the behavior?
+5. **Cost:** Is the sensor deterministic, legible, and proportionate to the
+   protected risk?
 
-So three goals can be covered by one pipeline test plus two demos, and that is a
-complete job — not a gap to backfill. The suite's job is to make silent failure
-impossible, not to mirror the goal list.
+Do not reduce this to silent versus loud. Wrong calculations and broken
+invariants are often silent, but a loud regression can still merit a permanent
+test when it is important, recurring, costly, or safety-relevant. Conversely, a
+silent case does not earn a test when its oracle mirrors production or another
+sensor already protects it.
 
-## Worth writing
+If the gate does not hold, use a disposable probe, reproducible demonstration,
+static check, type check, assertion, or explicit no-permanent-test decision.
+There is no quota.
 
-Four categories earn committed tests in any codebase. The examples below are
-drawn from ML, but the categories are the frame — translate them to your domain.
+## Technique ladder
 
-### Code boundaries
+Choose the first applicable evidence:
 
-Where untrusted or external input becomes structured internal data: parsers,
-deserializers, config and schema loaders, protocol and API edges. The boundary
-is the one place input legality is decided, which concentrates all the input
-risk there. Test valid _and_ invalid input; interior code then trusts its types
-and needs no re-checks (and no tests of those re-checks).
+1. **Real reported defect:** one deterministic regression at the public seam.
+2. **Broad independent invariant:** one property test for the equivalence class.
+3. **Sequences or transitions:** one small stateful or model property.
+4. **Public system boundary:** one representative integration or contract
+   workflow, using the real client where practical.
+5. **Uncertain changed core logic:** a targeted mutation audit; strengthen the
+   suite only for a credible surviving product fault.
+6. **None:** no permanent test.
 
-Parsers are tested against **captured real inputs** — every parser bugfix adds
-the offending payload as a fixture first (red), then fixes the parse (green).
-In ML that means real model outputs, not hand-written strings you imagine the
-model produces.
+Conditional tools also fit when justified: a metamorphic relation can supply an
+oracle when transformations have known relations, and a trusted simpler model
+can supply a differential oracle. Do not use either when the relation is merely
+plausible or the reference shares production code or assumptions.
 
-### Calculation correctness
+## Property-based testing
 
-Any computation with an independent oracle you can check against: a reference
-implementation, a known-good result, a mathematical identity, or a round-trip.
-This is the highest-value test in numerical code, because the failure is always
-silent — plausible-but-wrong numbers.
+Property testing is valuable when many domain values share an invariant that can
+be stated without reading the implementation. Useful shapes include:
 
-**Parity with a reference implementation.** The optimized path must match the
-naive path you can read and trust. Catches chunking, masking, and broadcasting
-bugs.
+- round trips: decoding an encoding returns the normalized original;
+- idempotence: normalizing twice equals normalizing once;
+- conservation: totals, membership, or mass are not created or lost;
+- monotonicity and bounds: changed inputs preserve promised order or range;
+- permutation invariance: irrelevant ordering does not change the result;
+- model equivalence: production agrees with a smaller independently trusted
+  reference; and
+- state invariants: generated action sequences preserve public rules.
+
+Rules:
+
+- Write the invariant in plain language first. If it is unclear, do not use
+  property testing.
+- Generate domain-valid values and meaningful invalid classes, not arbitrary
+  noise for case count.
+- Use one property per distinct invariant. Add another only for a different
+  failure class.
+- Never derive expected values by calling, copying, or algebraically restating
+  production logic.
+- Treat a minimized counterexample as diagnostic evidence. Add a fixed example
+  only when that concrete case communicates lasting regression meaning beyond
+  the property.
+- Delete table-driven or fixed examples that the property fully subsumes.
+
+Do not use property testing for getters, constructors, framework behavior,
+ordinary wiring, a handful of discrete business examples, or domains whose
+generator is harder to understand than the implementation.
+
+## Mutation audits
+
+Mutation asks whether existing evidence notices a plausible mistake. Use it
+occasionally for changed or high-risk core logic such as parsers, calculations,
+authorization, normalization, branching business rules, or state transitions.
+It is not a routine release gate.
+
+Rules:
+
+- Scope the audit to changed or high-risk core logic, never the whole repository.
+- Sample a few plausible faults: inverted comparisons, off-by-one boundaries,
+  omitted branches, swapped arithmetic operators, removed normalization, or an
+  invalid state transition.
+- A surviving mutant earns a stronger behavioral test only when it represents a
+  credible product bug.
+- Record equivalent, impossible, or irrelevant mutants and move on. Do not add
+  theater just to kill them.
+- Do not target a score, add routine whole-repository mutation CI, or use line
+  coverage as a proxy for mutant quality.
+- Manual mutation is acceptable: make one or two plausible changes, confirm the
+  relevant sensor fails, then restore production. The information matters, not
+  the framework.
+
+## High-value patterns
+
+### Independent calculation oracle
+
+Compare optimized behavior with a small readable reference that shares no
+implementation:
 
 ```python
 def test_chunked_attention_matches_naive():
     q, k, v = (torch.randn(2, 8, 64, 32, generator=gen) for _ in range(3))
-    naive = naive_attention(q, k, v)          # readable einsum, O(n^2) memory
-    chunked = chunked_attention(q, k, v, chunk_size=16)
-    torch.testing.assert_close(chunked, naive, rtol=1e-4, atol=1e-5)
+    expected = naive_attention(q, k, v)
+    actual = chunked_attention(q, k, v, chunk_size=16)
+    torch.testing.assert_close(actual, expected, rtol=1e-4, atol=1e-5)
 ```
 
-**Round-trips.** Encode/decode, serialize/parse, checkpoint save/load must
-reproduce the original exactly. One round-trip property beats a pile of
-per-field examples — but only when the transform is real work, not a dataclass
-handed to a library serializer.
+### Behavioral invariant
 
-### Behavior invariants
-
-Properties that must hold for every input, which break silently while everything
-still appears to run. Assert the relation, not one sampled output.
-
-**Invariants the math demands.** Causality, masking, permutation invariance,
-equivariance. The model still trains — just on leaked information.
+Assert a relation the domain demands rather than a sampled output:
 
 ```python
 def test_future_frames_cannot_affect_past_logits():
     frames = torch.randn(1, 16, 3, 224, 224)
     past = model(frames).logits[:, :8]
-    frames[:, 8:] = torch.randn_like(frames[:, 8:])  # perturb the future
+    frames[:, 8:] = torch.randn_like(frames[:, 8:])
     torch.testing.assert_close(model(frames).logits[:, :8], past)
 ```
 
-**Gradient flow and freezing.** A frozen backbone that isn't frozen, or an
-adapter that never receives gradient, trains for days before anyone notices.
+### Representative workflow
 
-```python
-def test_lora_finetune_updates_only_adapter_weights():
-    model(batch).loss.backward()
-    for name, p in model.named_parameters():
-        if "lora_" in name:
-            assert p.grad is not None and p.grad.abs().sum() > 0, name
-        else:
-            assert p.grad is None, f"frozen param received grad: {name}"
-```
+Drive the assembled system through its public entry point with real
+collaborators. One workflow can protect several claims. Add another only for a
+genuinely different risk, not another permutation of the same path.
 
-**Data integrity.** Split leakage and misalignment inflate every downstream
-metric. Same idea for alignment: a synthetic video where frame `i` has pixel
-value `i` proves sampled timestamps index the frames they claim.
+## Test theater
 
-```python
-def test_splits_share_no_subjects():
-    train, val = make_splits(manifest, seed=0)
-    assert {c.subject_id for c in train}.isdisjoint(c.subject_id for c in val)
-```
+Do not add tests for:
 
-### One end-to-end pipeline test
+- implementation-method parity, private methods, or mock call order;
+- framework or library behavior;
+- constants, registries, validation branches, or wiring restated from source;
+- every permutation of one equivalence class;
+- shape or non-crash checks when a value or invariant oracle exists;
+- exact snapshots broader than the consumer contract;
+- behavior already protected by a cheaper or shared sensor; or
+- coverage improvement by itself.
 
-A single test that drives the assembled system through its real path with real
-collaborators — the shared evidence several goals cite at once. One is usually
-enough; a second only earns its place if it covers a genuinely different path.
-
-In ML that test is **one overfit run**: the full loop — model, loss, optimizer,
-collation — driving loss to ~0 on two samples. Catches sign errors,
-lr-schedule bugs, and dead gradients together. Mark it slow; run it on the tiny
-random-weight model.
-
-## Not worth writing — test theater
-
-These look like coverage and catch nothing. Delete on sight:
-
-```python
-# THEATER: wiring restated. If the registry breaks, the first run throws
-# KeyError with a clear message. This can only fail if someone edits the
-# line it restates.
-def test_registry_resolves_model_class():
-    assert get_annotator_class("model-name") is ModelClassName
-
-# THEATER: depends on ~/.cache contents; skips on CI, "passes" locally,
-# verifies nothing anywhere.
-def test_processor_loads_from_snapshot():
-    snapshot = _cached_processor_snapshot()
-    if snapshot is None:
-        pytest.skip("no cached snapshot")
-
-# THEATER: tests the arg-parsing library, not your code. A broken flag fails
-# loudly on the first invocation. Fifty of these are one equivalence class in
-# a coverage costume.
-def test_cli_parses_batch_size_flag():
-    assert parse_args(["--batch-size", "8"]).batch_size == 8
-
-# THEATER: restates a validator that already raises loudly, one branch per
-# test. If the rule is worth pinning, pin it once at the boundary with a real
-# payload — not once per field.
-def test_negative_epochs_rejected():
-    with pytest.raises(ValueError):
-        TrainConfig(epochs=-1)
-
-# THEATER: trivial serialization. asdict() is the library's contract, not
-# yours. Round-trips earn a test when the transform does real work.
-def test_config_to_dict_has_keys():
-    assert set(asdict(cfg)) == {"lr", "epochs", "batch_size"}
-```
-
-The shared pattern: the test can only fail loudly, immediately, and with an
-obvious fix — which means the first real run already covers it. Same goes for:
-
-- Constructor/config smoke tests (`build_config(...)` returns a config)
-- Testing the language, framework, or a library (an ABC raises `TypeError`)
-- Asserting a mock was called with the arguments you just passed
-- Shape-only tests on your own code (`out.shape == (B, T, D)`) when a parity or
-  invariant test would assert the _values_
-- Deriving the expected value by re-implementing (or calling) the code under
-  test — the test passes even if you delete the implementation
-- A behavior already pinned by a lower-level or pipeline test; the duplicate
-  fails for the same reason and tells you nothing new
-
-**Test count is not a progress metric.** Five tests that pin invariants beat
-fifty that restate the source. When inheriting a suite, deleting theater is as
-valuable as adding coverage.
-
-## Characteristics of a good test
-
-- Asserts on values and invariants callers depend on, not shapes or wiring
-- Uses the public interface; survives a full internal rewrite
-- Runs on CPU with tiny tensors in milliseconds (see
-  [mocking.md](mocking.md) for tiny-model substitution)
-- Deterministic: seeds passed explicitly, no network, no cache-dir dependence
-- Fails for exactly one reason, and that reason is a real bug
+Delete redundant examples when a clearer property or representative workflow
+protects the same behavior. Good tests assert caller-relevant values or
+invariants at public seams, run deterministically without network or cache
+state, and fail for one credible product reason.

@@ -48,9 +48,9 @@ Two modes:
   Squash merge by default.
 - **Reviewable Markdown.** PR bodies and optional PR markdown artifacts must be
   easy to review as plain Markdown.
-- **Verify before you commit.** Lint, types, and tests (including the tests
-  named in the spec's Verification section) must pass first; a failing check is
-  a stop, not a warning.
+- **Verify before you commit.** Lint, types, the existing test suite, every
+  committed test, and all runnable evidence named in the spec's Verification
+  section must pass first; a failing check is a stop, not a warning.
 
 ## PR body
 
@@ -64,11 +64,11 @@ Written for a reviewer with no session context. Three parts:
 - **Verification** — behavioral evidence, not gate status. **Never list
   lint/type-check/test-suite runs as verification** — those are global
   blockers; passing them is the price of admission, not proof of anything.
-  Instead demonstrate the stated goals working:
-  - a reproducible command a reviewer can paste, with the actual observed
-    output (or a before → after comparison);
-  - the specific committed tests that pin each goal, by name — not "pytest
-    passed";
+  Instead give the exact earned evidence for each observable claim:
+  - name the committed regression, property, workflow, or static check; or
+  - give a reproducible command a reviewer can paste, with the actual observed
+    output (or a before → after comparison), including the no-permanent-test
+    rationale when that was the settled evidence;
   - known gaps and pre-existing failures, stated explicitly.
 
   If you cannot produce a single reproducible demonstration of the change,
@@ -142,8 +142,9 @@ skill — it stays a human action.
    one if nothing resolves.
 2. **Sync** — ensure the local branch is pushed; commit and push any pending
    work via the default workflow first.
-3. **Verify** — re-run lint, types, and tests (including the spec's
-   Verification tests). Any failure is a stop, not a warning.
+3. **Verify** — re-run lint, types, the existing test suite, every committed
+   test, and all runnable evidence named in the spec's Verification section.
+   Any failure is a stop, not a warning.
 4. **Ready** — `gh pr ready <number>`.
 5. **Link** — comment on the tracker issue(s) and move them to review/done per
    the tracker's states.

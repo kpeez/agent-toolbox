@@ -1,177 +1,160 @@
 ---
 name: tdd
-description: "Functional-test discipline — sketch the intended workflow as scratch scripts in tests/temp/, then refactor the exact scripts that hold up into committed pytest tests that prove the stated goals. Use when implementing or changing behavior, or to de-risk an approach first. Triggers: 'tdd', 'blueprint this', 'prototype', 'spike', 'play with it', 'try a few designs'. Coordinated by /implement."
+description: "Behavioral testing discipline — use disposable real-code probes, then retain only the smallest stable sensor for meaningful public behavior, an actual regression, or a high-risk invariant. Use when implementing or changing behavior, or to de-risk an approach first. Triggers: 'tdd', 'blueprint this', 'prototype', 'spike', 'play with it', 'try a few designs'. Coordinated by /implement."
 ---
 
-# Functional tests, sketch-first
+# Behavioral testing, sketch-first
 
-**Sketch the workflow as scratch scripts → refactor the survivors into committed
-tests. Goals are covered by evidence, not one test each; trivia gets none.**
+**Use scratch probes to learn, then retain only the smallest stable evidence
+that uniquely protects meaningful behavior.**
 
-This is not strict TDD. There is no red/green choreography and no requirement
-that a test exist before the code. The contract is simpler: by the time the
-work is published, each stated goal — the behaviors the spec or issue actually
-promises — is backed by evidence that it works. Evidence is a committed test
-exercising the real code path when the failure is silent, one shared
-pipeline-level test when several goals run through it, or a reproducible demo
-recorded in the PR when the failure is loud on the first real run. There is no
-quota; see [references/tests.md](references/tests.md) for which form fits.
+Tests are not a required output of every change. There is no red/green
+choreography, test-per-goal rule, coverage quota, or mutation-score target.
+Every promised behavior still needs evidence, but that evidence may be a
+committed test, a shared workflow, a static check, a reproducible demonstration,
+or an explicit decision that no permanent test is warranted.
 
-## The rule
+## The contract
 
-Test the stated goals through public interfaces, not implementation details.
-The code can be rewritten entirely and the tests shouldn't have to change. A
-good test reads like a specification — "future frames cannot affect past
-logits" tells you what invariant holds, not how it's enforced. Don't test
-config loading, wiring, or trivial code, and don't mock for the sake of it —
-test what the feature claims to do.
+Work through public behavior and independently justified oracles, not source
+structure. A test should survive an internal rewrite because it protects a
+caller-visible outcome, a real defect, or a high-risk invariant at a stable
+public seam. Scratch scripts may use whatever route helps exploration; when one
+earns permanence, preserve the demonstrated behavior, independent oracle, and
+stable public boundary — not the exact script, import, or call path.
+
+Work through one **behavioral risk or equivalence class** at a time. One property
+or representative workflow may protect several examples or spec claims. Test
+count is not progress.
 
 ## The loop
 
-### 1. Sketch
+### 1. Name the risk and oracle
 
-Write runnable scratch scripts under `tests/temp/` (ensure it's gitignored —
-add the entry if missing). This is where you play: real imports, real types,
-real call sites — never a toy reconstruction. Print statements, ad-hoc
-drivers, side-by-side variants are all fine. The more of the actual codebase a
-script exercises, the more its result means.
+Before choosing a test style, state:
 
-Scratch script rules:
+- the promised behavior, observed defect, or high-risk invariant;
+- the independent oracle — how the expected result is known without copying or
+  calling production logic; and
+- the narrowest stable public seam that exposes the behavior.
 
-1. **Named for the behavior it probes** (`verify_replay_buffer_sampling.py`),
-   not `example.py` or `test.py`. Exits 0/non-zero and prints what it checks.
-2. **One command to run** (`python <path>`, `uv run <path>`, `pnpm <name>`).
-3. **Surface the state.** Print/render the full relevant state on every action
-   or variant switch.
-4. **No polish.** No abstractions, no persistence — if the question needs a
-   store, hit a scratch one named "SCRATCH — wipe me".
+If any of those remain unclear, explore before committing a test.
 
-Identify the question each script answers — from the prompt, the surrounding
-code, or by asking:
+### 2. Probe when useful
 
-- **"Will this implementation actually work?"** → drive the planned code path
-  with real inputs.
-- **"Does this logic / state model feel right?"** → tiny interactive script;
-  surface the full state after every action. Usually verdict-only.
-- **"What should this look like?"** → a few radically different variations on
-  one entry point, switchable with a flag, compared side by side.
+Use runnable scratch scripts under `tests/temp/` when the behavior, interface,
+or oracle is uncertain (ensure the directory is gitignored). Exercise real
+imports, types, and call sites rather than a toy reconstruction. Prints,
+ad-hoc drivers, and side-by-side variants are welcome during diagnosis.
 
-While a script is in flight, the script is the record — rerun it; don't keep a
-separate run log. For tracker-linked work, paste the run result into the issue
-comment.
+Scratch probes are disposable:
 
-### 2. Refine
+1. Name the behavior or question (`verify_replay_buffer_sampling.py`).
+2. Give the probe one command to run and a meaningful exit status.
+3. Surface enough state to diagnose the result; permanent tests later assert
+   only the smallest behavior that matters.
+4. Do not polish, persist, or treat the probe's structure as a contract.
 
-As the implementation stabilizes, **refactor those exact scripts — don't
-rewrite them.** Prints become asserts, ad-hoc drivers become fixtures, and the
-file moves from `tests/temp/` into the project's test suite as a proper pytest
-test. The graduated test must exercise the same real imports and call path the
-scratch script did — never a polished test that quietly checks something
-easier than what you actually verified. The earn-the-test bar below applies.
+A probe may answer whether a path works, whether a state model is coherent, or
+which interface is clearest. While it is active, rerun it rather than keeping a
+separate run log. For tracker-linked work, record the relevant result on the
+issue.
 
-### 3. Settle
+### 3. Select the evidence
 
-By PR time:
+Use the first applicable technique:
 
-- Every stated goal carries its evidence: a committed test, a shared
-  pipeline-level test it cites alongside other goals, or a reproducible demo
-  in the PR for a loud failure. The spec's Verification section names the
-  committed tests — those are the record for everything a test covers.
-- `tests/temp/` is empty. Each script either **graduated** into the suite or
-  reached one of these ends:
-  - **Verdict** — it only answered a design question. Capture the question,
-    result, evidence, and next action in plain Markdown: an ADR in `docs/agents/adrs/`
-    (see `sharpen`'s `ADR-FORMAT.md`) for durable decisions, otherwise the
-    spec's `NNNN-<slug>.md` Decisions section or the tracker issue. Then
-    delete the script.
-  - **Can't run in CI** (real weights, GPU, paid API, human judgment) — first
-    substitute small real things per
-    [references/mocking.md](references/mocking.md); if that genuinely fails,
-    graduate the checkable subset and delete the rest. The Verification
-    section names only committed tests.
+1. **A real bug occurred** — keep one deterministic regression through a public
+   boundary.
+2. **Many inputs share a broad independent invariant** — keep one property test
+   for that equivalence class.
+3. **Sequences or state transitions are the behavior** — use a small stateful
+   or model-based property test.
+4. **Risk crosses a public system boundary** — keep one representative
+   integration or contract workflow using the real client where practical.
+5. **The suite may be weak around uncertain changed core logic** — run a
+   targeted mutation audit; add a test only for a credible surviving fault.
+6. **None applies** — add no permanent test. Use the probe, a type or static
+   check, an assertion, or a reproducible PR demonstration as the evidence.
 
-Scaffolding never lingers. Run lint/types/tests before calling it done.
+See [references/tests.md](references/tests.md) for the admission gate and the
+property and mutation rules.
 
-## Earn the test
+### 4. Settle
 
-Before graduating (or writing) any test, answer: **what silent bug does this
-catch?** A silent bug runs to completion and produces wrong numbers, leaked
-data, or a broken invariant. A loud bug throws a traceback on the first real
-run — the interpreter already tests for those, and re-testing them is theater:
+By publication time:
 
-- Constructor/config smoke tests, registry/wiring assertions
-  (`assert cls is FooAnnotator`)
-- Restating constants from the source (`assert m.model_id == "org/Model-2B"`)
-- Testing the language or framework (an ABC raises `TypeError`)
-- Asserting a mock was called with the arguments you just passed
-- Tests that `pytest.skip` when weights, GPUs, or caches are absent
+- Each observable claim names its oracle and evidence mode. Exact committed
+  test names are recorded after exploration, when tests actually earned a
+  place.
+- `tests/temp/` is empty. A probe either became stable evidence or ended in a
+  recorded verdict and was deleted.
+- Verdict-only probes record the question, result, evidence, and next action in
+  an ADR for a durable decision, otherwise in the spec Decisions section or
+  tracker issue.
+- Checks that cannot run in CI first substitute small real things per
+  [references/mocking.md](references/mocking.md). If that fails, retain the
+  checkable subset and use an explicit demonstration for the rest.
 
-If you can't name the silent bug, don't graduate the script — record the
-verdict and delete it. **Test count is not a progress metric** — five tests
-that pin invariants beat fifty that restate the source, and deleting theater
-is as valuable as adding coverage. See
-[references/tests.md](references/tests.md) for what earns its place (parity
-with a reference implementation, mathematical invariants, gradient flow, data
-integrity, round-trips) with worked examples.
+Run lint, types, the existing suite, and the behavior-specific verification
+before calling the work done. A failing required gate is a stop.
 
-## One goal at a time
+Once the evidence is green, look for
+[refactor candidates](references/refactoring.md) — extract duplication, deepen
+modules, move logic to where its data lives — and re-run the evidence after
+each step.
 
-The failure mode — and the one agents fall into most — is bulk-writing tests
-for every goal up front. Bulk-written tests verify _imagined_ behavior and
-assert on shape (signatures, data structures) instead of what callers actually
-care about. Work vertically instead: sketch one goal, refine it, graduate it,
-then move to the next. Each cycle responds to what the previous one taught
-you.
+## Earn permanent tests
 
-## Plan before sketching
+A committed test earns its maintenance cost only when all five answers are
+strong:
 
-When exploring the codebase, use the project's domain glossary so test names
-and interface vocabulary match the project's language, and respect ADRs in the
-area you're touching. Before writing code:
+1. **Behavior** — What caller-visible behavior, actual defect, or high-risk
+   invariant does it protect?
+2. **Oracle** — Is the expected result independent of production and incidental
+   structure?
+3. **Uniqueness** — What plausible failure does it catch that the existing
+   suite, type checker, linter, assertion, or shared workflow does not?
+4. **Seam** — Does it exercise the narrowest stable public boundary and survive
+   an internal rewrite?
+5. **Cost** — Is it deterministic, legible, and proportionate to the protected
+   risk?
 
-- [ ] List the stated goals to prove (not implementation steps), and name the
-      silent bug each guards against ([references/tests.md](references/tests.md))
-- [ ] Confirm what interface changes are needed — ask the user directly in an
-      interactive session. In a workflow run (or any other non-interactive
-      session), an unresolved interface question is not a user prompt: report
-      NEEDS_CONTEXT with the specific question to your orchestrator and stop
-      that task; do not guess the interface.
-- [ ] Identify opportunities for deep modules — small interface, deep
-      implementation (vocabulary and key tests in the `codebase-design`
-      skill: [../codebase-design/SKILL.md](../codebase-design/SKILL.md))
-- [ ] Design interfaces for testability — inject boundaries, return results
-      ([references/mocking.md](references/mocking.md))
+Loudness alone does not decide. A loud but costly, recurring, important, or
+safety-relevant failure may deserve a regression. A silent failure with a
+circular oracle or duplicate sensor does not. If the five-part case is weak,
+keep the evidence disposable or record why no permanent test is appropriate.
 
-You can't test everything — concentrate on the promised behaviors and complex
-logic, not every edge case. Once graduated tests are green, look for
-[refactor candidates](references/refactoring.md): extract duplication, deepen
-modules, move logic to where its data lives. Re-run tests after each refactor
-step.
+## Plan before probing
 
-## Test quality — kill mock-slop
+Before writing code:
 
-Bad tests ("mock-slop") couple to internal structure. Delete or rewrite them on
-sight. Red flags:
+- [ ] List the behavioral risks or equivalence classes, observable claims, and
+      independent oracles.
+- [ ] Identify the stable public seams and the cheapest acceptable evidence
+      modes.
+- [ ] Confirm unresolved interface changes with the user. In a non-interactive
+      workflow, report `NEEDS_CONTEXT` with the specific question to the
+      orchestrator instead of guessing.
+- [ ] Respect the project's glossary and ADRs; use its domain language in claims
+      and tests.
+- [ ] Look for deep modules and testable boundaries (see
+      [../codebase-design/SKILL.md](../codebase-design/SKILL.md) and
+      [references/mocking.md](references/mocking.md)).
 
-- Mocking your own classes/modules or internal collaborators
-- Testing private methods, or asserting on call counts/order
-- Verifying through a side channel (querying the DB directly) instead of the
-  interface
-- The test breaks when you refactor but behavior didn't change
-- The test name describes HOW, not WHAT
+## Kill mock-slop
 
-**Mock only at system boundaries** — model hubs, trackers, paid APIs,
-schedulers. Never mock anything you control: substitute small real things
-instead (a tiny random-weight model, a synthetic video, CPU tensors). If a
-boundary is hard to mock, that's a design signal: inject the dependency and
-prefer specific ports over one generic fetcher. See
-[references/mocking.md](references/mocking.md) for the substitution patterns.
+Test public behavior, not interactions among your own objects. Delete or rewrite
+tests that mock internal collaborators, call private methods, assert call counts
+or order, query side channels instead of the public interface, or break under an
+internal refactor that preserves behavior.
 
-For a _long-running, autonomous_ exploration with a metric target and many
-experiments, use `lab:autoresearch` instead — it manages worktrees, named
-experiment groups, and result logging. A scratch script is for a question you
-resolve in one sitting.
+Mock only true external boundaries — model hubs, trackers, paid APIs, schedulers.
+Prefer small real substitutes for code you control: tiny random-weight models,
+synthetic media, CPU tensors, or scratch stores. At a service or message boundary,
+exercise the consumer's real client and assert only facts that matter to that
+consumer; avoid broad exact payload matching and permutation grids.
 
-> Delegate substantial reads and writes to subagents — explore with a fast
-> model, draft code with a medium one, and review the diff. Don't burn your own
-> context.
+For a long-running autonomous exploration with a metric target and many
+experiments, use `lab:autoresearch`. A scratch probe answers a bounded question
+in one sitting.
