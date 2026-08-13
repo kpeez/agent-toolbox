@@ -291,7 +291,12 @@ def test_backtick_skill_references_are_live() -> None:
         skill_file.parent.name for skill_file in all_skill_files()
     } | ALLOWED_HOST_COMMANDS
     targets = [ROOT / "README.md", ROOT / "AGENTS.md"]
-    targets.extend(sorted((ROOT / "plugins").rglob("*.md")))
+    # Changelogs describe history and may name renamed or removed skills.
+    targets.extend(
+        path
+        for path in sorted((ROOT / "plugins").rglob("*.md"))
+        if path.name != "CHANGELOG.md"
+    )
     dead_references = [
         (markdown.relative_to(ROOT), reference)
         for markdown in targets
