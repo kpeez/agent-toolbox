@@ -1,6 +1,6 @@
 ---
 name: ship-pr
-description: Publish branch work as atomic commits, a push, and a draft PR. Use when the user runs /ship-pr, or proactively when branch changes reach a stable verified state (lint, types, tests green) with no more edits in flight — commit and keep a draft PR current without being asked. `/ship-pr finalize` (user-triggered only) re-verifies and flips the draft PR to ready for review.
+description: Publish branch work as atomic commits, a push, and a draft PR. Runs proactively by default — open the branch's draft PR at the first verified checkpoint (lint, types, tests green) and re-run at every later verified checkpoint so the draft PR always reflects the work; never wait for the user to ask. Also use when the user runs /ship-pr. `/ship-pr finalize` (user-triggered only) re-verifies and flips the draft PR to ready for review.
 ---
 
 # /ship-pr — Group, Commit, Push, Draft PR
@@ -11,11 +11,14 @@ commits, push, and ensure a draft PR exists.
 Two modes:
 
 - **Default** (`/ship-pr [spec]`) — the workflow below: verify, group, commit,
-  push, draft PR. May run **quasi-autonomously**: when the work on the branch
-  reaches a stable verified state, run this mode without being asked. Its
-  outputs are all reversible or draft-gated — commits on a branch, a push, a
-  draft PR — so autonomous invocation is safe; flipping to ready is not part
-  of it.
+  push, draft PR. Runs **autonomously by default**: at the first verified
+  checkpoint (lint, types, tests green) commit, push, and open the draft PR;
+  re-run at each later verified checkpoint so the draft PR tracks the work.
+  Do not batch the whole task for one end-of-session ship or wait to be asked —
+  the draft PR is the working surface, not the deliverable ceremony. Its
+  outputs are all reversible or draft-gated — commits on a feature branch, a
+  push, a draft PR — so autonomous invocation is safe; flipping to ready is not
+  part of it. Only red gates or missing publication access defer a checkpoint.
 - **Finalize** (`/ship-pr finalize`) — closing step, see
   [Finalize](#finalize-ship-pr-finalize). Only the user triggers this mode.
   Merging stays a human action.
