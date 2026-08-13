@@ -34,7 +34,10 @@ stop — say so and point at `/write-spec` or `/sharpen` instead of proceeding.
    its own isolated worktree. The prompt carries the spec text verbatim
    (worktrees can't see `docs/agents`) and the contract: create branch
    `change/Tn-<slug>`, implement, test, commit, and report
-   `{status, branch, summary}`.
+   `{status, branch, summary}`. Give every worker a hard turn/effort cap; one
+   that stalls or exceeds it is a failed dispatch to redispatch or escalate,
+   never something to wait on. Prompt contract and cost discipline:
+   [references/delegation.md](references/delegation.md).
 3. **Gate and merge, yourself.** On each completion report, run the
    verification gates (lint, types, tests) on the task branch with shell
    commands — zero model invocations — then `git merge --no-ff` it into the
@@ -43,8 +46,10 @@ stop — say so and point at `/write-spec` or `/sharpen` instead of proceeding.
    and continue the rest of the frontier.
 4. **Review once.** When the frontier is drained, dispatch **one** reviewer
    subagent — a different model family from the implementers — with the
-   assembled diff and the spec text. Findings get one fixer round, then a
-   re-review. At most two fix rounds total.
+   assembled diff and the spec text, redacting PR metadata and any claims
+   about the code's quality. Findings get one fixer round, then a re-review.
+   At most two fix rounds total. Rationale for these constants:
+   [references/review-loop.md](references/review-loop.md).
 5. **Ship.** Write the PR body yourself from the reports you've held and run
    `gh pr create` (draft). One PR; only stack when the task graph is a
    declared chain and the spec asks for it.
