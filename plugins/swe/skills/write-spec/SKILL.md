@@ -1,6 +1,6 @@
 ---
 name: write-spec
-description: Create a feature spec — a local, pure-markdown design draft whose behaviors are verified by committed tests. Use when starting a new feature, when the task requires design thinking, touches multiple files, or spans sessions.
+description: Create a feature spec — a local, pure-markdown design draft whose observable behaviors name independent oracles and acceptable evidence. Use when starting a new feature, when the task requires design thinking, touches multiple files, or spans sessions.
 ---
 
 # /write-spec - Feature Spec Management
@@ -19,8 +19,12 @@ not the spec.
 
 ## The verification rule
 
-Behavior is proven per `/implement` and `/tdd` — read them before writing code.
-The spec's Verification section (below) names the tests that hold you to it.
+Behavior is proven per `/implement` and `/testing-code` — read them before writing code.
+The spec's Verification section names each observable claim, its independent
+oracle, and acceptable evidence mode. Do not predeclare one committed test per
+claim; exact test names are settled after exploration, and a claim may
+legitimately cite a representative workflow, static check, reproducible demo, or
+explicit no-permanent-test decision.
 
 ## When to use a spec
 
@@ -51,10 +55,10 @@ the `---` divider, and flag the header for the user to confirm.
    - **Hand off (default when work will fan out):** run `/to-issues` to publish
      the spec into its tracker container (parent issue, or Linear project) with
      labeled task issues. Separate agents pick up
-     each issue and run its own test → implement → review → PR loop. The
+     each issue and prove behavior per `/testing-code` before review and PR. The
      tracker owns status from here.
    - **Solo (single-task spec, one sitting):** prove each behavior per
-     `/tdd`, then a host-native review pass, then `/ship-pr`.
+     `/testing-code`, then a host-native review pass, then `/ship-pr`.
 
 ## /write-spec new <name>
 
@@ -65,7 +69,7 @@ Creates a feature spec file `docs/agents/specs/NNNN-<slug>.md`.
 <step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/agents` must be a symlink pointing directly at `$LLMOS_ROOT/projects/<repo>`; never create `docs/agents` as a real committed directory in the source repo</step>
 <step action="allocate-number">if an existing `docs/agents/specs/NNNN-<slug>.md` already matches this slug, reuse its number. Otherwise scan `docs/agents/specs/` for files matching `^[0-9]{4}-`, take the highest number, add 1, and zero-pad to 4 digits (start at `0001` if none exist) -> `<NNNN>`. Do this immediately before writing the file</step>
 <step action="create-files">read `templates.md` and write `NNNN-<slug>.md` to `docs/agents/specs/`; never overwrite an existing spec file for this slug — a present goal/scope header is settled and authoritative</step>
-<step action="populate">fill the goal/scope header from the sharpened plan (or approved plan-mode plan) and flag it for the user to confirm; if `NNNN-<slug>.md` already exists, leave its header alone. Then expand the design body below the `---` divider and name in the Verification section the behavior-level tests that will prove each behavior</step>
+<step action="populate">fill the goal/scope header from the sharpened plan (or approved plan-mode plan) and flag it for the user to confirm; if `NNNN-<slug>.md` already exists, leave its header alone. Then expand the design body below the `---` divider and map each observable claim in Verification to its independent oracle and acceptable evidence mode; settle exact committed test names only after exploration</step>
 </steps>
 
 ## Spec structure
@@ -73,8 +77,9 @@ Creates a feature spec file `docs/agents/specs/NNNN-<slug>.md`.
 A spec is **`NNNN-<slug>.md`** — pure markdown with no code files
 live under `docs/agents/specs/` (the shared specs directory may be an Obsidian vault). `/to-issues`
 may create sibling local issue files named `NNNN-<slug>-issue-<NN>-<issue-slug>.md`.
-Verification code lives in the repo — committed tests in the project's suite,
-plus transient scratch scripts (per `/tdd`) in gitignored `tests/temp/`. Specs
+Verification evidence lives with the work: permanent tests when they pass
+`/testing-code`'s admission gate, other stable checks or reproducible demonstrations when
+appropriate, plus transient scratch probes in gitignored `tests/temp/`. Specs
 are never committed to the source repo; they live behind the gitignored
 `docs/agents/` symlink (topology per the `ensure-shared` step above).
 
@@ -107,14 +112,16 @@ Two semantics worth knowing beyond the template:
 
 See `/to-issues` for tracker ownership, status, blockers, and handoff rules.
 
-## Verification lives in the test suite
+## Verification evidence lives with the work
 
-See `/tdd` for committed functional-test and scratch-script rules.
+See `/testing-code` for choosing permanent tests, other acceptable evidence, and
+disposable scratch probes.
 
 ## Resuming work on an existing spec
 
 1. Read the tracker first — issue states, blocked-by links, latest progress comment
 2. Read `NNNN-<slug>.md` for intent and design context
-3. Run the tests named in the Verification section to see current state
+3. Run the verification evidence named in the Verification section to see
+   current state
 4. Pick up the next unblocked `ready-for-agent` issue
 5. Comment progress on the active issue before you hit a context limit

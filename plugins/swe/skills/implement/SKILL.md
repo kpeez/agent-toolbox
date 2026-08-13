@@ -9,16 +9,17 @@ One verification discipline for the implementer that does one task.
 
 ## Prove behavior before you commit to it
 
-**`/tdd`** is the discipline (the sketch -> graduate -> settle loop lives
-there): goals are covered by evidence, not one test each. Silent failures earn
-a committed test at caller altitude, written directly when the behavior is
-known or graduated from a `tests/temp/` scratch script when it isn't; several
-goals running through one end-to-end path share that pipeline-level test; a
-goal whose failure is loud on the first real run is proven by the reproducible
-demo `/ship-pr` already requires in the PR. A verdict-only script ends in a
-recorded decision rather than a test. If you catch yourself calling a goal done
-with nothing that verifies it, stop and produce the evidence; a red test, type
-error, or lint failure is a stop, not a warning to note and continue past.
+**`/testing-code`** is the behavioral verification discipline. Tests are not a required
+output of every change: use disposable `tests/temp/` probes when useful, then
+retain only the smallest stable sensor for meaningful public behavior, an actual
+regression, or a high-risk invariant. Choose evidence by behavioral risk,
+independent oracle, uniqueness, stable public seam, and proportional cost. One
+property or representative workflow may protect several claims; a static check,
+reproducible demonstration, or explicit no-permanent-test decision may be the
+right evidence for another. A verdict-only probe ends in a recorded decision.
+If you catch yourself calling a promised behavior done with no evidence, stop
+and produce it; a failing required test, type check, or lint gate is a stop, not
+a warning to continue past.
 
 `/start-loop`'s run procedure owns dispatch, gating, and merging for a full
 spec run; work tasks sequentially per the discipline below when implementing
@@ -46,8 +47,8 @@ The discipline an implementer agent, or a developer working a single issue
 directly, follows for one task. Never delegate this task further.
 
 1. Read the issue body and its latest comment before acting.
-2. Prove behavior per `/tdd`, sketching in `tests/temp/` when the design is
-   uncertain.
+2. Prove behavior per `/testing-code`, working through one behavioral risk or equivalence
+   class at a time and probing in `tests/temp/` when the design is uncertain.
 3. Run verification gates in order: lint, types, tests. A failure at any gate
    stops the task; it is not a warning to note and continue past.
 4. Comment tracker progress on the issue before you finish or run out of
@@ -64,4 +65,5 @@ directly, follows for one task. Never delegate this task further.
 ## Cross-references
 
 - `/sharpen` - stress-test a plan before writing tests or scratch scripts.
-- `/write-spec new <name>` - scaffold a pure-markdown spec whose Verification section names the tests.
+- `/write-spec new <name>` - scaffold a pure-markdown spec whose Verification
+  section names observable claims, oracles, and acceptable evidence modes.
