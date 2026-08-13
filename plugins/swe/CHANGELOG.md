@@ -5,6 +5,23 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.15.4 — 2026-08-12
+
+- Replace universal committed-test pressure with behavioral evidence: scratch
+  probes stay disposable, permanent tests must protect meaningful public
+  behavior through an independent oracle and stable seam, and specs name claims,
+  oracles, and acceptable evidence modes before exact tests. PR publication now
+  reports and reruns that earned evidence without requiring a test per goal. Add
+  concise property-testing and targeted-mutation guidance without quotas or new
+  framework dependencies.
+- Rename the `tdd` skill to `testing-code` — the contract is behavioral
+  evidence, not red/green TDD; `tdd` remains a trigger word so both invocations
+  keep working.
+- Make `ship-pr` proactive by default: open the branch's draft PR at the first
+  verified checkpoint and re-run at each later verified checkpoint, instead of
+  waiting for the user to invoke `/ship-pr` at the end. Finalize (ready for
+  review) stays user-triggered.
+
 ## 1.15.3 — 2026-08-12
 
 - Make shared worktree directory links race-safe with atomic no-target-directory

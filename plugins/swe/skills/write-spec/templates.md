@@ -3,8 +3,10 @@
 File templates for `/write-spec new`. Write each to its target path under `docs/agents/specs/`.
 
 A spec is **`NNNN-<slug>.md`** (human goal + agent design) — pure markdown, no
-code files. Verification lives in the project's committed test suite. Task and
-status truth live on the issue tracker, not in a local file.
+code files. Its Verification section names observable claims, independent
+oracles, and acceptable evidence modes; exact committed test names are settled
+after exploration. Task and status truth live on the issue tracker, not in a
+local file.
 
 ## Frontmatter
 
@@ -67,7 +69,8 @@ Two zones in one file:
 
 ## Validation
 
-<!-- commands/tests that prove the goal -->
+<!-- observable claims, independent oracles, and acceptable evidence modes;
+     exact runnable commands and committed test names settle after exploration -->
 
 ## Tasks
 
@@ -84,8 +87,9 @@ Two zones in one file:
 
 ## Behavior
 
-<!-- how does it work? inputs? outputs? each behavior names its evidence:
-     a committed test, a shared pipeline test, or a reproducible PR demo -->
+<!-- how does it work? inputs? outputs? state observable claims, independent
+     oracles, and acceptable evidence modes rather than predeclaring one test
+     per behavior -->
 
 ## Decisions
 
@@ -100,9 +104,12 @@ Two zones in one file:
 
 ## Verification
 
-<!-- maps committed tests to the behaviors they pin -->
-<!-- - `tests/test_pipeline.py::test_pipeline_assembles_from_config` -->
-<!-- - `tests/test_pipeline.py::test_happy_path_run_produces_output` -->
+<!-- maps observable claims to independent oracles and acceptable evidence:
+     a regression/property/workflow test, static check, reproducible demo, or
+     explicit no-permanent-test decision. Add exact test names after exploration. -->
+<!-- - Claim: <caller-visible behavior or high-risk invariant>
+       Oracle: <how the expected result is known independently>
+       Evidence: <acceptable mode; exact test name after it earns permanence> -->
 </template>
 
 </templates>

@@ -3,8 +3,8 @@
 The core of agent-toolbox: a spec-driven software-engineering workflow packaged
 as skills, capability agents, and a formatting hook. The premise is that agents ship reliable work when the
 process is explicit — designs get stress-tested before they become specs,
-specs are proven by committed tests, status lives on the issue tracker, and
-publication is atomic commits behind a draft PR.
+observable claims name independent oracles and proportionate evidence, status
+lives on the issue tracker, and publication is atomic commits behind a draft PR.
 
 ## Contents
 
@@ -34,7 +34,7 @@ Every path through the plugin converges on the same spine:
 Work can enter anywhere — `/sharpen` for an unsettled design, `/diagnose` for
 a known bug, `/improve-codebase-architecture` when hunting refactors — and
 converges on `/write-spec`. From there `/to-issues` makes the tracker the task
-and status ledger, implementation proves behavior per `/tdd`, a host-native
+and status ledger, implementation proves behavior per `/testing-code`, a host-native
 review pass (e.g. `/code-review`) runs before `/ship-pr` publishes.
 
 ```mermaid
@@ -42,9 +42,9 @@ graph LR
   G["/sharpen"] --> A["/write-spec"]
   X["/diagnose"] -.-> A
   Y["/improve-codebase-architecture"] -.-> A
-  P["/tdd (design sketch)"] -.-> A
+  P["/testing-code (design sketch)"] -.-> A
   A --> I["/to-issues"]
-  I -->|"fresh chat / subagent per issue"| B["implement (/tdd)"]
+  I -->|"fresh chat / subagent per issue"| B["implement (/testing-code)"]
   B --> C["review (host-native)"]
   C --> D["/ship-pr"]
   X -.->|"small fix"| B
@@ -112,7 +112,7 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 | Skill        | What it does                                                                                                                                              |
 | ------------ | --------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `sharpen`    | Interviews the user until every branch of a design's decision tree is resolved; cross-checks claims against the code; records durable decisions as ADRs   |
-| `write-spec` | Produces the feature spec — a pure-markdown `NNNN-<slug>.md` in `docs/agents/specs/` whose behaviors are proven by committed tests; carries the approval field |
+| `write-spec` | Produces the feature spec — a pure-markdown `NNNN-<slug>.md` whose observable claims name independent oracles and acceptable evidence; carries approval |
 | `codebase-design` | Shared vocabulary for deep modules — depth, seams, adapters, the deletion test; loaded by other skills when designing interfaces                      |
 | `improve-codebase-architecture` | Hunts deepening refactors: shallow modules that should absorb their callers' complexity                                                     |
 
@@ -123,7 +123,7 @@ Each `SKILL.md` is the canonical contract; summaries here are orientation.
 | `start-loop` | Runs an approved spec to a shipped PR: the lead dispatches implementers and a reviewer, and runs gates and merges itself            |
 | `to-issues`  | Publishes a spec as vertical-task tracker issues with native blocked-by relations; the tracker becomes the status ledger           |
 | `implement`  | Orchestrates implementation for a single task or changeset outside a `/start-loop` run                                              |
-| `tdd`        | Functional-test discipline: sketch intended behavior as `tests/temp/` scratch scripts, refactor survivors into committed tests      |
+| `testing-code`        | Behavioral testing: use disposable real-code probes, then retain only stable, risk-proportionate evidence at public seams            |
 | `ship-pr`    | Atomic commits, push, draft PR kept current; `finalize` re-verifies and flips it ready for review                                   |
 
 **Support**

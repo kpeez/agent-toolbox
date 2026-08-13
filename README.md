@@ -105,10 +105,10 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 | ------------------------------- | ------------------------------------------------------------------------------------------------------- |
 | `start-loop`                    | Run an approved spec to a shipped PR — the lead dispatches implementers per task, gates and merges itself, then ships |
 | `sharpen`                       | Interview the user to stress-test a plan; cross-check the code, record ADRs                             |
-| `write-spec`                    | Create a feature spec — a pure-markdown design draft proven by committed tests                          |
+| `write-spec`                    | Create a feature spec — observable claims with independent oracles and acceptable evidence              |
 | `to-issues`                     | Publish a spec as vertical-slice tracker issues with blocked-by relations                               |
-| `implement`                     | Orchestrate implementing a spec — prove behavior with `/tdd`, fan work out to agents                    |
-| `tdd`                           | Functional-test discipline — scratch scripts in `tests/temp/`, survivors become committed tests         |
+| `implement`                     | Orchestrate implementing a spec — prove behavior with `/testing-code`, fan work out to agents                    |
+| `testing-code`                           | Behavioral testing — disposable probes, then the smallest stable sensor justified by product risk       |
 | `ship-pr`                       | Commit stable verified work as atomic commits, push, keep a draft PR current; `finalize` flips it ready |
 | `diagnose`                      | Disciplined debugging — build a feedback loop, reproduce, hypothesize, instrument, fix                  |
 | `codebase-design`               | Shared deep-module vocabulary — depth, seams, adapters, the deletion test                               |
