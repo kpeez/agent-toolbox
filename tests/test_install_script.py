@@ -70,6 +70,16 @@ def test_install_leaves_skills_owned_by_other_installers_alone(home: Path) -> No
     assert lock.read_text() == '{"version": 3, "skills": {}}\n'
 
 
+def test_install_updates_codex_global_instructions(home: Path) -> None:
+    instructions = home / ".codex" / "AGENTS.md"
+    instructions.parent.mkdir(parents=True)
+    instructions.write_text("stale\n")
+
+    run_install(home)
+
+    assert instructions.read_bytes() == (ROOT / "AGENTS.md").read_bytes()
+
+
 def test_install_repairs_a_link_left_dangling_by_a_deleted_source(home: Path) -> None:
     """A stale ~/.agents/skills/maintain-llmos pointing into the removed llmOS
     tree is silently skipped by opencode; re-running must heal it."""
