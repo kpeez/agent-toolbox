@@ -25,7 +25,8 @@ approved.
    - **Goal**: the single primary metric and its direction (minimize or
      maximize).
    - **Evaluator**: the exact command to run, and the exact command that
-     extracts the metrics from its output (e.g. a grep of `run.log`).
+     extracts the metrics from its output (e.g. a grep of the experiment
+     log).
    - **Editable paths / read-only paths**.
    - **Per-experiment budget**: expected wall-clock per evaluation and the
      kill threshold (default: kill at twice the expected time).
@@ -74,11 +75,13 @@ worth keeping; an equal result from deleting code is a great outcome.
 ## Output format
 
 Run the evaluator exactly as the program states, redirecting everything:
-`<evaluator command> > run.log 2>&1`. Never tee or stream evaluator output
-into your context. `run.log` lives in the worktree root and is overwritten
-every experiment. Extract metrics with the program's extraction command.
-Empty extraction output means the run crashed — read `tail -n 50 run.log`
-for the reason.
+`<evaluator command> > logs/<id>.log 2>&1`, where `<id>` is the experiment
+number. Never tee or stream evaluator output into your context. `logs/` lives
+in the worktree root, untracked — it survives every reset and lasts as long
+as the worktree, so near-misses keep their raw output for later mining.
+Extract metrics with the program's extraction command. Empty extraction
+output means the run crashed — read `tail -n 50 logs/<id>.log` for the
+reason.
 
 ## Logging results
 
