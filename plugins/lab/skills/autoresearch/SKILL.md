@@ -1,296 +1,131 @@
 ---
 name: autoresearch
-description: Run an autonomous experiment loop for open-ended engineering or research work with a defined endpoint. Use when the user asks Codex to autoresearch, explore alternatives, improve toward a target metric, run repeated experiments, or compare outcomes. The skill coauthors an approved immutable program, isolates changes in a worktree, freezes the evaluator, records a baseline and append-only ledger, and keeps only verified improvements within explicit budgets.
+description: Run an autonomous experiment loop that optimizes one metric through repeated small changes. Use when the user asks to autoresearch, run experiments overnight, iterate toward a target metric, or compare alternatives empirically. Co-authors a per-run program, runs a linear keep/discard loop in a dedicated worktree, and appends every result to a JSONL ledger.
 ---
 
 # Autoresearch
 
-Run a bounded experiment loop: approve the rules, freeze the evaluator, measure
-a baseline, test one committed hypothesis at a time, and preserve enough
-evidence to reproduce every decision. This is a portable workflow, not an
-experiment framework or provider integration.
+You are an autonomous researcher. One linear loop: make a small change, commit
+it, run the evaluator, keep the change if the metric improves, reset if it
+does not. The rules that vary per run live in that run's `program.md`; this
+skill defines the loop that never varies. The workflow follows
+[Karpathy's autoresearch prompt](references/karpathy-program.md), generalized
+to any repo and metric.
 
-## Approval gates
+## Setup
 
-Do not create artifacts, create a worktree, run commands that may write, or
-change code on implied consent.
+Work with the user to set up the run. Create nothing until the program is
+approved.
 
-1. Inspect the repository and proposed evaluator read-only. Coauthor a draft
-   `program.md` in chat, including the setup actions and permission boundary.
-2. Ask the user to approve setup. Only after explicit approval, create the
-   private artifact directory and dedicated worktree, hash the evaluator, and
-   run the baseline within the approved setup boundary.
-3. Put the measured baseline and all final run boundaries into `program.md` and
-   show the exact file to the user. Ask for explicit run approval.
-4. After approval, compute the program SHA-256, record it in the group
-   `README.md`, and make no candidate mutation until both the program and
-   evaluator hashes match their approved values.
+1. **Agree on a run tag**: propose a short date-based tag (e.g. `aug17`). The
+   branch `autoresearch/<tag>` must not already exist — every run is fresh.
+2. **Read the in-scope files** and agree on which paths are editable and which
+   are read-only. The evaluator is always read-only.
+3. **Co-author `program.md`** in chat, with exactly these fields:
+   - **Goal**: the single primary metric and its direction (minimize or
+     maximize).
+   - **Evaluator**: the exact command to run, and the exact command that
+     extracts the metrics from its output (e.g. a grep of `run.log`).
+   - **Editable paths / read-only paths**.
+   - **Per-experiment budget**: expected wall-clock per evaluation and the
+     kill threshold (default: kill at twice the expected time).
+   - **Soft constraints**: limits that may flex for a meaningful gain but must
+     not blow up (e.g. memory).
+   - **Stop condition**: a target metric value, an experiment count, or a
+     wall-clock limit. The user may instead explicitly choose "run until
+     interrupted" — write that choice down; never assume it.
+   - **Run identity**: tag, branch, absolute worktree path, absolute record
+     directory.
+   - **Ledger record shape**: the run-specific keys inside `metrics` (see
+     Logging results).
+4. **Get explicit approval** of `program.md` in chat. Changing the program
+   mid-run is not allowed; new rules mean a new approved program.
+5. **Create the branch and its single worktree**:
+   `git worktree add ../<repo>-autoresearch-<tag> -b autoresearch/<tag>`.
+   The entire run happens in that one worktree. The user's checkout is never
+   touched.
+6. **Create the record directory** `docs/agents/autoresearch/<tag>/` via the
+   primary repo and resolve its absolute path (the worktree has no
+   `docs/agents` symlink). Write `program.md` there and create an empty
+   `results.jsonl`. If the repo has no `docs/agents` symlink, use
+   `<worktree>/.autoresearch/<tag>/` instead (untracked) and tell the user.
+   The loop writes to the record directory and the worktree, nowhere else.
+7. **Run the baseline**: experiment 0 is always the unmodified code. Its
+   result is the first ledger line and the first best. If the baseline
+   crashes, stop and report; there is nothing to improve against.
 
-Approval covers only the written program. Changed requirements, evaluator,
-metric parser, protected data, mutable paths, budgets, thresholds, or stop
-conditions end the run and require a new program and approval. Never edit an
-approved `program.md` in place.
+## Experimentation
 
-## Private isolated run
+Everything inside the editable paths is fair game: architecture,
+hyperparameters, algorithms, data handling, sizes, the training or serving
+loop itself.
 
-Before setup, inspect the current branch, base commit, and working tree. Refuse
-to overwrite or incorporate unrelated user changes.
+You cannot:
 
-- Use a URL-safe group name such as `api-latency` and a branch named
-  `autoresearch/<group>`.
-- Create a dedicated sibling worktree for the branch. If an isolated worktree
-  or the approved sandbox/permission boundary is unavailable, stop.
-- Use the user's artifacts root when specified; otherwise use the absolute path
-  to `.autoresearch/` in the primary repository. The default is gitignored and
-  private. Do not commit run artifacts unless the user explicitly changes that
-  boundary in a newly approved program.
-- Run every candidate in the dedicated worktree. Resolve and record the
-  absolute worktree and artifact paths before any destructive rollback.
+- modify the evaluator or any read-only path — its parsed output is the
+  ground truth, and only it decides keep or discard;
+- add dependencies, unless the program allows it;
+- exceed a soft constraint dramatically, even for a better metric.
 
-Create this structure after setup approval:
+**Simplicity criterion**: all else equal, simpler wins. Weigh complexity cost
+against improvement size. A tiny gain that adds twenty ugly lines is not
+worth keeping; an equal result from deleting code is a great outcome.
 
-```text
-<artifacts-root>/<group>/
-├── program.md
-├── README.md
-├── results.tsv
-└── YYYY_MM_DD-expt-<NN>-<slug>/
-    ├── README.md
-    ├── LOG.md
-    ├── logs/
-    └── scripts/
+## Output format
+
+Run the evaluator exactly as the program states, redirecting everything:
+`<evaluator command> > run.log 2>&1`. Never tee or stream evaluator output
+into your context. `run.log` lives in the worktree root and is overwritten
+every experiment. Extract metrics with the program's extraction command.
+Empty extraction output means the run crashed — read `tail -n 50 run.log`
+for the reason.
+
+## Logging results
+
+Append exactly one line per experiment to `results.jsonl` — crashes included —
+and never rewrite, reorder, or delete existing lines. Core keys are fixed;
+run-specific measurements go inside `metrics` under the keys the program
+names (`null` when a crash produced no measurement):
+
+```json
+{"id": 0, "commit": "a1b2c3d", "status": "keep", "description": "baseline", "metrics": {"val_bpb": 0.9979, "peak_vram_gb": 44.0}}
 ```
 
-Use monotonically increasing two-digit experiment numbers;
-`YYYY_MM_DD-expt-00-baseline` is first. The group `README.md` records the
-program hash, worktree, branch, current best commit and metric, consumed
-budgets, terminal state, and concise experiment summary. It may change during
-the run; `program.md` may not.
+`status` is `keep`, `discard`, or `crash`. After each append, regenerate
+`summary.md` next to the ledger: a markdown table of every experiment plus
+the current best. Write a small run-specific render script during setup if
+that helps; the skill ships none. The ledger, not the summary, is the source
+of truth.
 
-## The frozen program
+## The experiment loop
 
-The final `program.md` is complete only when it records all of these fields:
+LOOP:
 
-- problem statement and desired outcome;
-- baseline commit, evaluator result, primary metric, and guardrail results;
-- primary metric direction (`maximize` or `minimize`);
-- guardrail names, limits, and comparison rules;
-- evaluator command, machine-readable output contract, protected evaluator and
-  data paths, exact hash algorithm/command, and aggregate evaluator SHA-256;
-- exact mutable paths and forbidden paths;
-- per-evaluation timeout and compute/cost limits;
-- total candidate-count, evaluator-time, and compute/cost budgets, with units;
-- minimum meaningful improvement or deterministic retest rule;
-- acceptance threshold;
-- keep, discard, inconclusive, crash, timeout, evaluator-tamper, and rollback
-  rules;
-- stop conditions, including threshold, budget, repeated failure/no-progress,
-  evaluator/environment invalidity, guardrail, and safety stops;
-- approved sandbox, network, dependency, credential, and external-action
-  boundaries;
-- environment identity, dependency lock, seeds, and other reproducibility
-  inputs the evaluator needs;
-- the ledger header and artifact-record format below.
+1. Start from the last best commit with a clean worktree.
+2. Pick one idea and make the smallest change that tests it.
+3. Commit. The commit hash is the experiment's identity — one idea per
+   commit, no bundling.
+4. Run the evaluator (see Output format).
+5. Extract the metrics. On a crash: if the cause is trivial (a typo, a
+   missing import), fix and re-run; if the idea itself is broken, log
+   `crash`, reset, and move on. Give up on an idea after a few fix attempts.
+6. Append the ledger line and regenerate `summary.md`.
+7. Improved → `keep`: the branch simply advances. Equal or worse →
+   `discard`: `git reset --hard` back to the last best commit. Discarded
+   commits survive as hashes in the ledger.
+8. Check the stop condition. Unmet → go to 1.
 
-Record that contract with these exact nonempty labels so it can be validated:
+If an evaluation exceeds the kill threshold, kill it and log it as a crash.
+Do not pause mid-loop to ask whether to continue — the user may be asleep and
+expects you to run until the stop condition fires (or indefinitely, when the
+program says run until interrupted). Out of ideas means think harder: re-read
+the in-scope files, revisit near-misses, combine partial wins, try something
+structural.
 
-```text
-Problem:
-Desired outcome:
-Baseline commit:
-Baseline result:
-Primary metric:
-Metric direction: maximize | minimize
-Guardrails:
-Evaluator command:
-Evaluator output contract:
-Protected paths:
-Evaluator hash command:
-Evaluator SHA-256:
-Mutable paths:
-Forbidden paths:
-Per-evaluation timeout seconds:
-Per-evaluation compute cost limit:
-Candidate budget:
-Evaluator-time budget seconds:
-Compute-cost budget:
-Meaningful improvement or retest rule:
-Acceptance threshold:
-Keep rule:
-Discard rule:
-Inconclusive rule:
-Crash rule:
-Timeout rule:
-Evaluator-tamper rule:
-Rollback rule:
-Stop conditions:
-Approval record:
-Sandbox/network/dependency/credential boundaries:
-Environment identity:
-Dependency lock:
-Seeds:
-Ledger header:
-Artifact record format:
-```
+## Wrap-up
 
-The evaluator output contract must be machine-readable and include both the
-primary metric and every guardrail result; ledger and experiment records come
-from that parsed output rather than coordinator-supplied values.
-
-List protected paths relative to the worktree, separated by semicolons. The
-aggregate evaluator digest is SHA-256 over the bytewise-sorted records
-`<relative-path><TAB><file-sha256><LF>`.
-
-Hash every protected evaluator/parser/data file before baseline evaluation.
-Define the aggregate deterministically as the SHA-256 of the bytewise-sorted
-relative path plus file-SHA-256 pairs, and record the exact commands used. Hash
-again after baseline, before and after every candidate evaluation, and on
-resume. The evaluator's output—not the agent's judgment—is the measurement.
-
-If the evaluator hash differs at any check, do not accept its result. Capture
-the mismatch, mark the attempt `evaluator_tamper` and `inconclusive`, restore
-the dedicated worktree to the last verified best commit under the approved
-rollback policy, verify restoration, and stop. An evaluator change requires a
-new approved program even when the change seems beneficial.
-
-## Baseline and ledger
-
-Run the frozen evaluator on the baseline commit before any candidate. Save its
-command, environment identity, start/end time, exit status, stdout, stderr,
-parsed primary metric, guardrails, evaluator hashes, and budget consumed in
-`00-baseline/`. The evaluator must finish successfully with valid output and
-passing guardrails. Otherwise stop without starting the loop.
-
-When the per-evaluation budget allows, run the baseline evaluator more than
-once and derive the program's minimum meaningful improvement from the observed
-run-to-run spread; a threshold below the noise floor selects noise.
-
-Create `results.tsv` once with this exact header (literal tab separators):
-
-```text
-experiment	commit	evaluator_sha256	primary_metric	guardrails	outcome	decision	elapsed_seconds	artifact_dir	summary
-```
-
-Append the baseline row first, with `outcome=completed` and
-`decision=baseline`. Then follow these rules:
-
-- append exactly one physical row for every attempted committed candidate;
-- never rewrite, truncate, reorder, or delete the header or existing rows;
-- replace tabs, carriage returns, and newlines inside values with spaces;
-- serialize guardrails in program order as `name=value;name=value`; use `NA`
-  for an unavailable metric;
-- use the full commit hash, approved evaluator hash, experiment-relative
-  artifact path, and elapsed evaluator seconds on every row;
-- set outcome to `completed`, `invalid`, `crash`, `timeout`, or
-  `evaluator_tamper`, and decision to `keep`, `discard`, or `inconclusive` for
-  every candidate;
-- append only after the detailed record and logs are durable, then verify the
-  row has exactly ten tab-separated fields and references an existing commit
-  and artifact directory.
-
-Detailed evidence, not the TSV, holds multiline output and complex results.
-Each experiment `README.md` records the falsifiable hypothesis, planned
-smallest change, parent best commit, candidate commit, evaluator hash, primary
-and guardrail results, budget used, decision and reason, and rollback proof.
-`LOG.md` records timestamped commands and exit statuses; `logs/` and `scripts/`
-retain raw outputs and exact one-off evaluation helpers.
-
-Use these exact nonempty experiment `README.md` labels: `Hypothesis`, `Planned
-change`, `Parent best commit`, `Candidate commit`, `Evaluator SHA-256`, `Primary
-metric`, `Guardrails`, `Outcome`, `Elapsed seconds`, `Compute cost`, `Decision`,
-`Decision reason`, and `Rollback proof`. Baseline-only fields use `N/A`. Every
-ledger artifact directory must also contain a nonempty `LOG.md` and the `logs/`
-and `scripts/` directories.
-
-## Candidate loop
-
-Start each iteration from the verified best commit with a clean dedicated
-worktree.
-
-1. Verify the program hash, evaluator hash, branch, best commit, ledger shape,
-   artifact links, and remaining budgets.
-2. Stop before starting if the maximum allowed next evaluation could exceed a
-   total budget. Never silently raise a budget.
-3. Create the next experiment record with one falsifiable hypothesis and the
-   smallest change that tests it. Touch only mutable paths; a forbidden-path
-   change is an invalid candidate.
-4. Commit exactly that candidate before evaluation. The full commit hash is
-   its identity; do not bundle hypotheses.
-5. Verify evaluator integrity, run its exact command under the per-evaluation
-   timeout and resource boundary, retain stdout/stderr and resource use, then
-   verify evaluator integrity again.
-6. Parse the declared output, write detailed evidence, and append one TSV row.
-7. Keep only a completed candidate that passes every guardrail and improves by
-   the program's meaningful threshold or retest rule. Update the verified best
-   commit only after the row and evidence are durable.
-8. Discard a regression, unchanged result, invalid output, forbidden-path
-   change, or guardrail failure. Use `inconclusive` for a crash, timeout, or
-   genuinely unresolved measurement. In all non-kept cases, return the
-   dedicated branch/worktree to the prior verified best commit, verify both
-   commit and clean status, and record that proof without touching any other
-   worktree or user work.
-9. After a keep or rollback, update the mutable group `README.md`, account for
-   all consumed budget, and evaluate terminal conditions before proposing the
-   next hypothesis.
-
-Rollback may use a destructive Git operation only inside the resolved
-dedicated worktree, only to the exact recorded best commit, and only when the
-program and host approval policy authorize it. Candidate commits remain named
-in the append-only ledger even when the branch moves away from them.
-
-## Failures, terminal states, and resume
-
-- **Crash:** capture the exit and logs, append `outcome=crash` with
-  `decision=inconclusive`, rollback, account for budget, then apply the
-  configured repeated-failure stop rule.
-- **Timeout:** terminate only the evaluator processes within the approved
-  boundary, capture partial logs, append `outcome=timeout` with
-  `decision=inconclusive`, rollback, charge the full elapsed budget, then apply
-  the timeout/failure stop rule.
-- **Guardrail regression:** append the completed measurements with
-  `decision=discard`, rollback, and stop as well if the program's guardrail stop
-  condition fires.
-- **Acceptance threshold:** stop immediately after a verified kept result meets
-  it; do not spend remaining budget. On a long program with many kept
-  candidates, re-run the frozen evaluator on the final kept commit — plus any
-  held-out check the program names — before declaring the endpoint met;
-  repeated selection against one metric overfits that metric.
-- **Budget:** stop before an evaluation that could exceed any total limit, or
-  immediately after the configured candidate count is reached.
-- **Invalid evaluator/environment or safety boundary:** preserve evidence,
-  rollback any candidate, and stop; do not improvise around the boundary.
-
-On resume, perform no candidate mutation until all of these checks pass:
-
-1. Re-read the approved program and verify its recorded hash from the group
-   `README.md`; verify the evaluator and environment identity.
-2. Validate the fixed TSV header and every row's field count, commit, evaluator
-   hash, and artifact directory. Never repair history by rewriting it.
-3. Recompute consumed budgets from the ledger and detailed records. Find the
-   last verified `baseline` or `keep` row; that commit is the only resume base.
-4. Reconcile an interrupted experiment. If durable evidence proves a completed
-   evaluation, append its missing row exactly once. If a candidate commit
-   exists but evaluation evidence is incomplete, record it as a
-   crash/inconclusive attempt, append one row, and rollback. If interruption
-   happened before a candidate commit, mark the artifact abandoned and append
-   no row. Never invent a metric from partial output.
-5. Verify the dedicated worktree is clean at the best commit. If not, preserve
-   diagnostic evidence and apply only the approved rollback; otherwise stop.
-6. If a terminal condition was already reached, record it and do not resume the
-   loop. Otherwise continue with the next unused experiment number.
-
-End with exactly one group terminal state: `threshold_met`, `budget_exhausted`,
-`stop_condition`, `evaluator_invalid`, `environment_invalid`, `safety_stop`, or
-`user_stopped`. Report the best verified commit and metrics, attempts/keeps,
-budgets consumed, terminal reason, and artifact path. A crash of the agent or
-host is not itself permission to exceed the approved program on resume.
-
-For mechanical validation, record `Evaluator SHA-256: <digest>` in `program.md`
-and `Program SHA-256: <digest>`, `Worktree: <path>`, `Best commit: <commit>`,
-`Candidates consumed: <count>`, `Evaluator seconds consumed: <number>`,
-`Compute cost consumed: <number>`, and `Terminal state: <state>` in the group
-`README.md`. These totals are recomputed from the fixed ledger and experiment
-records and must remain within every per-evaluation and total program budget.
-Before reporting completion or resuming mutation, run
-`python scripts/validate_run.py <group-directory>` from this skill directory
-and fix every reported artifact-integrity error.
+When the stop condition fires or the user interrupts, regenerate `summary.md`,
+then report: best commit and its metrics versus baseline, experiments
+attempted and kept, branch name, worktree path, and record directory. Leave
+the branch and worktree in place — merging, publishing, or discarding the
+result is the user's call, never yours.
