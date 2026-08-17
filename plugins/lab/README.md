@@ -57,7 +57,9 @@ The run iterates in a single dedicated git worktree on branch
 baseline first, crashes included — appends one line to an append-only
 `results.jsonl` ledger in `docs/agents/autoresearch/<tag>/` (fallback:
 untracked `.autoresearch/<tag>/` in the worktree), with a regenerated
-`summary.md` table beside it.
+`summary.md` table beside it. Logging goes through the skill's
+`scripts/ledger.py`, whose only verbs are `append` and `render` — the ledger
+cannot be updated or overwritten.
 
 ### `data-viz`
 

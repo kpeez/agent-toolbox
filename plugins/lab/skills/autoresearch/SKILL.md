@@ -36,7 +36,7 @@ approved.
      wall-clock limit. The user may instead explicitly choose "run until
      interrupted" — write that choice down; never assume it.
    - **Run identity**: tag, branch, absolute worktree path, absolute record
-     directory.
+     directory, and the absolute path of this skill's `scripts/ledger.py`.
    - **Ledger record shape**: the run-specific keys inside `metrics` (see
      Logging results).
 4. **Get explicit approval** of `program.md` in chat. Changing the program
@@ -85,20 +85,25 @@ reason.
 
 ## Logging results
 
-Append exactly one line per experiment to `results.jsonl` — crashes included —
-and never rewrite, reorder, or delete existing lines. Core keys are fixed;
-run-specific measurements go inside `metrics` under the keys the program
-names (`null` when a crash produced no measurement):
+Log exactly one record per experiment — crashes included — with this skill's
+ledger script, using the path recorded in the program:
 
-```json
-{"id": 0, "commit": "a1b2c3d", "status": "keep", "description": "baseline", "metrics": {"val_bpb": 0.9979, "peak_vram_gb": 44.0}}
+```bash
+python3 <ledger.py> append <record-dir> \
+  --commit a1b2c3d --status keep --description "baseline" \
+  --metric val_bpb=0.9979 --metric peak_vram_gb=44.0
 ```
 
-`status` is `keep`, `discard`, or `crash`. After each append, regenerate
-`summary.md` next to the ledger: a markdown table of every experiment plus
-the current best. Write a small run-specific render script during setup if
-that helps; the skill ships none. The ledger, not the summary, is the source
-of truth.
+One command assigns the next id, appends one JSON line to `results.jsonl`,
+and regenerates `summary.md` (a markdown table of every experiment with the
+current best marked). `status` is `keep`, `discard`, or `crash`. Core keys
+are fixed; run-specific measurements are `--metric key=value` pairs under the
+keys the program names (`key=null` when a crash produced no measurement).
+The ledger is append-only — the script has no update or delete verb, and you
+must never rewrite, reorder, or delete its lines by hand. A wrong record is
+corrected by appending a superseding one. The ledger, not the summary, is
+the source of truth; `ledger.py render <record-dir>` rebuilds the summary
+alone.
 
 ## The experiment loop
 
@@ -112,7 +117,8 @@ LOOP:
 5. Extract the metrics. On a crash: if the cause is trivial (a typo, a
    missing import), fix and re-run; if the idea itself is broken, log
    `crash`, reset, and move on. Give up on an idea after a few fix attempts.
-6. Append the ledger line and regenerate `summary.md`.
+6. Log the experiment with one `ledger.py append` command (see Logging
+   results).
 7. Improved → `keep`: the branch simply advances. Equal or worse →
    `discard`: `git reset --hard` back to the last best commit. Discarded
    commits survive as hashes in the ledger.
@@ -127,8 +133,8 @@ structural.
 
 ## Wrap-up
 
-When the stop condition fires or the user interrupts, regenerate `summary.md`,
-then report: best commit and its metrics versus baseline, experiments
+When the stop condition fires or the user interrupts, regenerate `summary.md`
+(`ledger.py render`), then report: best commit and its metrics versus baseline, experiments
 attempted and kept, branch name, worktree path, and record directory. Leave
 the branch and worktree in place — merging, publishing, or discarding the
 result is the user's call, never yours.

@@ -17,6 +17,11 @@ Newest first. Versions are the `version` field shared by
 - Default every run to a declared stop condition; "run until interrupted" is
   an explicit per-program opt-in. Retain Karpathy's original prompt under the
   skill's `references/`.
+- Ship `scripts/ledger.py`, the skill's only script: a semantics-free
+  append-only ledger primitive (`append` and `render` verbs, no update or
+  delete) that assigns experiment ids, JSON-escapes records, hard-codes
+  append mode so the ledger cannot be overwritten, and regenerates
+  `summary.md`.
 
 ## 1.2.1 — 2026-08-12
 
