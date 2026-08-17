@@ -3,6 +3,21 @@
 Newest first. Versions are the `version` field shared by
 `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`.
 
+## 1.3.0 — 2026-08-17
+
+- Rewrite `/autoresearch` as a karpathy-minimal loop (ADR 0016): a short
+  co-authored `program.md` approved in chat replaces the 30-label frozen
+  contract; evaluator hashing, the resume protocol, and
+  `scripts/validate_run.py` are deleted. The loop is linear — one worktree,
+  one branch, keep advances, worse resets to the last best commit.
+- Replace the TSV ledger with an append-only `results.jsonl` (fixed core keys
+  plus per-run `metrics`) and a regenerated `summary.md`; the run record lives
+  in `docs/agents/autoresearch/<tag>/` from setup onward (ADR 0017), with
+  untracked `.autoresearch/<tag>/` in the worktree as the fallback.
+- Default every run to a declared stop condition; "run until interrupted" is
+  an explicit per-program opt-in. Retain Karpathy's original prompt under the
+  skill's `references/`.
+
 ## 1.2.1 — 2026-08-12
 
 - Guard `/autoresearch` against noise and metric overfitting: derive the
