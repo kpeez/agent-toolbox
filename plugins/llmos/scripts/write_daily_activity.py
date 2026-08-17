@@ -265,6 +265,12 @@ def replace_block(text: str, block: str) -> str:
     return text.rstrip("\n") + f"\n\n{heading}\n\n{block}\n"
 
 
+def new_note_text(day: date, root: Path, block: str) -> str:
+    template = (root / "templates" / "daily-note.md").read_text(encoding="utf-8")
+    template = template.replace("{{date:YYYY-MM-DD}}", day.isoformat())
+    return replace_block(template, block)
+
+
 def atomic_write(path: Path, content: str) -> None:
     fd, tmp = tempfile.mkstemp(dir=path.parent, prefix=f".{path.name}.")
     try:
@@ -297,7 +303,7 @@ def process_day(day: date, root: Path, gh=run_gh, opencode_bin: str = "opencode"
         atomic_write(note_path, replace_block(text, block))
         return "updated"
     note_path.parent.mkdir(parents=True, exist_ok=True)
-    atomic_write(note_path, f"# {day.isoformat()}\n\n## Projects\n\n{block}\n\n## Thoughts\n")
+    atomic_write(note_path, new_note_text(day, root, block))
     return "created"
 
 
