@@ -34,7 +34,8 @@ import queue
 import subprocess
 import sys
 import threading
-from dataclasses import dataclass
+import time
+from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Any, Literal
 
@@ -57,6 +58,12 @@ ACP_STDERR_TAIL_BYTES = 4096
 ACP_STDERR_READ_BYTES = 1024
 CANCEL_GRACE_SECONDS = 2.0
 MESSAGE_PROGRESS_INTERVAL = 200
+LIVENESS_TIMEOUT_SECONDS = 30.0
+RECOVERY_PROMPT = (
+    "The completed task needs its final answer. Return that answer now without "
+    "repeating any work."
+)
+_MCP_WRITE_LOCK = threading.Lock()
 
 # Leading argv flags, ahead of the ACP agent's own command line. The roles file
 # is the only profile input; callers select one of the fixed tools instead.
@@ -435,6 +442,117 @@ class TurnTimeout(RuntimeError):
     pass
 
 
+@dataclass
+class TurnObservation:
+    """Safe accounting for one or more ACP prompt turns."""
+
+    event_counts: dict[str, int]
+    last_activity: str | None = None
+    last_activity_at: float | None = None
+    non_text_content_types: dict[str, int] = field(default_factory=dict)
+
+    @classmethod
+    def create(cls) -> TurnObservation:
+        return cls(event_counts={})
+
+    def record(self, kind: str) -> None:
+        self.event_counts[kind] = self.event_counts.get(kind, 0) + 1
+        self.last_activity = kind
+        self.last_activity_at = time.time()
+
+    def record_non_text(self, content_type: str | None) -> None:
+        kind = content_type if content_type else "unknown"
+        self.non_text_content_types[kind] = self.non_text_content_types.get(kind, 0) + 1
+
+    def merge(self, other: TurnObservation) -> None:
+        for kind, count in other.event_counts.items():
+            self.event_counts[kind] = self.event_counts.get(kind, 0) + count
+        if other.last_activity_at is not None and (
+            self.last_activity_at is None or other.last_activity_at >= self.last_activity_at
+        ):
+            self.last_activity = other.last_activity
+            self.last_activity_at = other.last_activity_at
+        for kind, count in other.non_text_content_types.items():
+            self.non_text_content_types[kind] = self.non_text_content_types.get(kind, 0) + count
+
+    def metadata(self) -> dict[str, Any]:
+        metadata: dict[str, Any] = {
+            "eventCounts": dict(self.event_counts),
+            "lastActivity": self.last_activity,
+            "lastActivityAt": self.last_activity_at,
+        }
+        if self.non_text_content_types:
+            metadata["nonTextContentTypes"] = dict(self.non_text_content_types)
+        return metadata
+
+
+class TurnActivity:
+    """Serialize real ACP activity and one honest inactivity notice."""
+
+    LABELS = {
+        "agent_message_chunk": "agent message",
+        "tool_call": "tool call",
+        "tool_call_update": "tool call update",
+        "permission_request": "permission request",
+    }
+
+    def __init__(
+        self,
+        session: AcpSession,
+        report: Any,
+        observation: TurnObservation,
+        timeout: float = LIVENESS_TIMEOUT_SECONDS,
+    ) -> None:
+        self.session = session
+        self.report = report
+        self.observation = observation
+        self.timeout = timeout
+        self._lock = threading.Lock()
+        self._last_event = time.monotonic()
+        self._timer: threading.Timer | None = None
+        self._stopped = False
+        self._liveness_sent = False
+
+    def start(self) -> None:
+        with self._lock:
+            self._schedule_locked(self.timeout)
+
+    def event(self, kind: str) -> None:
+        with self._lock:
+            if self._stopped:
+                return
+            self.observation.record(kind)
+            self._last_event = time.monotonic()
+            self._schedule_locked(self.timeout)
+            self.report(self.LABELS.get(kind, "ACP event"))
+
+    def stop(self) -> None:
+        with self._lock:
+            self._stopped = True
+            if self._timer is not None:
+                self._timer.cancel()
+                self._timer = None
+
+    def _schedule_locked(self, delay: float) -> None:
+        if self._timer is not None:
+            self._timer.cancel()
+        self._timer = threading.Timer(max(delay, 0.001), self._check_liveness)
+        self._timer.daemon = True
+        self._timer.start()
+
+    def _check_liveness(self) -> None:
+        with self._lock:
+            self._timer = None
+            if self._stopped or self._liveness_sent or self.session.process.poll() is not None:
+                return
+            elapsed = time.monotonic() - self._last_event
+            if elapsed < self.timeout:
+                self._schedule_locked(self.timeout - elapsed)
+                return
+            self._liveness_sent = True
+            self.report("liveness: child process is alive; no ACP event arrived for 30 seconds")
+
+
 class ActiveCall:
     """The one ACP process owned by an active MCP tools/call request.
 
@@ -533,6 +651,7 @@ def run_turn(
     task: str,
     mode: str,
     report: Any,
+    liveness_timeout: float = LIVENESS_TIMEOUT_SECONDS,
 ) -> dict[str, Any]:
     """Prompt the agent once and collect its answer.
 
@@ -540,12 +659,15 @@ def run_turn(
     the answer itself is assembled from the streamed message chunks.
     """
     chunks: list[str] = []
+    text_chunks: list[str] = []
     denied: list[str] = []
-    unreported_text = ""
+    observation = TurnObservation.create()
+    activity = TurnActivity(session, report, observation, timeout=liveness_timeout)
 
     def on_frame(frame: dict[str, Any]) -> dict[str, Any] | None:
         method = frame.get("method")
         if method == "session/request_permission" and "id" in frame:
+            activity.event("permission_request")
             params = frame.get("params", {})
             tool_call = params.get("toolCall", {})
             outcome = permission_outcome(
@@ -560,39 +682,49 @@ def run_turn(
         if method == "session/update":
             update = frame.get("params", {}).get("update", {})
             kind = update.get("sessionUpdate")
+            if not isinstance(kind, str):
+                kind = "unknown_update"
+            activity.event(kind)
             if kind == "agent_message_chunk":
-                nonlocal unreported_text
                 content = update.get("content", {})
                 if content.get("type") == "text":
                     text = content.get("text", "")
+                    text_chunks.append(text)
                 else:
                     content_type = content.get("type")
+                    observation.record_non_text(content_type)
                     text = (
                         f"[{content_type} omitted]"
                         if content_type
                         else "[non-text content omitted]"
                     )
                 chunks.append(text)
-                unreported_text += text
-                while len(unreported_text) >= MESSAGE_PROGRESS_INTERVAL:
-                    report(" ".join(unreported_text.split())[-MESSAGE_PROGRESS_INTERVAL:])
-                    unreported_text = unreported_text[MESSAGE_PROGRESS_INTERVAL:]
-            elif kind in ("tool_call", "tool_call_update"):
+            elif kind == "tool_call":
                 if chunks:
                     chunks.clear()
-                report(update.get("title") or update.get("kind") or "working")
+                if text_chunks:
+                    text_chunks.clear()
         return None
 
-    result = session.request(
-        "session/prompt",
-        {"sessionId": session_id, "prompt": [{"type": "text", "text": task}]},
-        on_frame=on_frame,
-    )
+    activity.start()
+    try:
+        result = session.request(
+            "session/prompt",
+            {"sessionId": session_id, "prompt": [{"type": "text", "text": task}]},
+            on_frame=on_frame,
+        )
+    finally:
+        activity.stop()
+
+    streamed = "".join(chunks)
+    has_final_text = bool("".join(text_chunks).strip())
     return {
-        "text": final_text("".join(chunks), denied, mode),
+        "text": final_text(streamed, denied, mode) if has_final_text else None,
+        "hasFinalText": has_final_text,
         "stopReason": result.get("stopReason", "unknown"),
         "usage": result.get("usage", {}),
         "deniedToolCalls": denied,
+        "observation": observation,
     }
 
 
@@ -629,6 +761,31 @@ def final_text(streamed: str, denied: list[str], mode: str) -> str:
     if answer:
         return answer
     return "The agent returned no message."
+
+
+def missing_final_result(
+    session_id: str,
+    turn: dict[str, Any],
+    observation: TurnObservation,
+    recovery_attempted: bool,
+) -> dict[str, Any]:
+    """Build a safe typed result for a completed turn with no final text."""
+    error = {
+        "type": "missing_final_message",
+        "sessionId": session_id,
+        "recovered": False,
+        "recoveryAttempted": recovery_attempted,
+        **observation.metadata(),
+    }
+    return {
+        "sessionId": session_id,
+        "text": "missing_final_message: ACP ended without a final textual message",
+        "stopReason": turn["stopReason"],
+        "usage": turn["usage"],
+        "deniedToolCalls": turn["deniedToolCalls"],
+        "recovered": False,
+        "error": error,
+    }
 
 
 # ---------------------------------------------------------------------------
@@ -865,18 +1022,60 @@ class Bridge:
                 timeout_timer.start()
             try:
                 turn = run_turn(session, acp_session_id, task, profile.mode, report)
+                if active_call.cancel_reason() == "timeout":
+                    active_call.complete()
+                    raise TurnTimeout(
+                        f"turn timed out after {self.turn_timeout} seconds; "
+                        f"session {session_id} retained"
+                    )
+
+                recovered = False
+                if turn["stopReason"] == "end_turn" and not turn["hasFinalText"]:
+                    if profile.tool == "explore":
+                        recovery = run_turn(
+                            session,
+                            acp_session_id,
+                            RECOVERY_PROMPT,
+                            profile.mode,
+                            report,
+                        )
+                        if active_call.cancel_reason() == "timeout":
+                            active_call.complete()
+                            raise TurnTimeout(
+                                f"turn timed out after {self.turn_timeout} seconds; "
+                                f"session {session_id} retained"
+                            )
+                        observation = turn["observation"]
+                        observation.merge(recovery["observation"])
+                        if recovery["hasFinalText"]:
+                            turn = recovery
+                            turn["observation"] = observation
+                            recovered = True
+                        else:
+                            active_call.complete()
+                            return missing_final_result(
+                                session_id, recovery, observation, recovery_attempted=True
+                            )
+                    else:
+                        active_call.complete()
+                        return missing_final_result(
+                            session_id, turn, turn["observation"], recovery_attempted=False
+                        )
+
+                if not turn["hasFinalText"]:
+                    turn["text"] = final_text("", turn["deniedToolCalls"], profile.mode)
+                active_call.complete()
+                return {
+                    "sessionId": session_id,
+                    "text": turn["text"],
+                    "stopReason": turn["stopReason"],
+                    "usage": turn["usage"],
+                    "deniedToolCalls": turn["deniedToolCalls"],
+                    "recovered": recovered,
+                }
             finally:
                 if timeout_timer is not None:
                     timeout_timer.cancel()
-
-            if active_call.cancel_reason() == "timeout":
-                active_call.complete()
-                raise TurnTimeout(
-                    f"turn timed out after {self.turn_timeout} seconds; "
-                    f"session {session_id} retained"
-                )
-            active_call.complete()
-            return {"sessionId": session_id, **turn}
         except Exception as error:
             cancel_reason = active_call.cancel_reason()
             completed = active_call.is_completed()
@@ -897,8 +1096,9 @@ class Bridge:
 
 
 def send_mcp(frame: dict[str, Any]) -> None:
-    sys.stdout.write(json.dumps(frame) + "\n")
-    sys.stdout.flush()
+    with _MCP_WRITE_LOCK:
+        sys.stdout.write(json.dumps(frame) + "\n")
+        sys.stdout.flush()
 
 
 def handle_tools_call(
@@ -932,10 +1132,13 @@ def handle_tools_call(
         )
 
     result = bridge.delegate(profile, params.get("arguments", {}), report, active_call)
-    return {
+    response = {
         "content": [{"type": "text", "text": result["text"]}],
         "structuredContent": result,
     }
+    if "error" in result:
+        response["isError"] = True
+    return response
 
 
 def serve(bridge: Bridge) -> None:
