@@ -34,6 +34,15 @@ def make_vault(tmp_path: Path) -> Path:
             encoding="utf-8",
         )
     (root / "reviews" / "daily").mkdir(parents=True)
+    template = root / "templates" / "daily-note.md"
+    template.parent.mkdir(parents=True)
+    template.write_text(
+        "---\nstatus: active\ncreated: \"{{date:YYYY-MM-DD}}\"\n"
+        "updated: \"{{date:YYYY-MM-DD}}\"\ncategories:\n  - \"[[Reviews]]\"\n"
+        "---\n\n# {{date:YYYY-MM-DD}}\n\n## Thoughts\n\n## Projects\n\n"
+        "<!-- llmos-activity:start -->\n<!-- llmos-activity:end -->\n",
+        encoding="utf-8",
+    )
     return root
 
 
@@ -104,7 +113,15 @@ def test_activity_creates_note_with_block_and_unseen(tmp_path, monkeypatch):
     monkeypatch.setattr(wda, "summarize", fake_ok)
     assert wda.process_day(date(2026, 7, 16), root, gh=gh_with_activity) == "created"
     text = (root / "reviews" / "daily" / "2026-07-16.md").read_text()
-    assert "#7" in text and wda.MARKER_START in text and wda.MARKER_END in text
+    assert (
+        'created: "2026-07-16"' in text
+        and 'updated: "2026-07-16"' in text
+        and '  - "[[Reviews]]"' in text
+        and "# 2026-07-16" in text
+        and "#7" in text
+        and wda.MARKER_START in text
+        and wda.MARKER_END in text
+    )
     assert "Norepo Project" in text  # active-without-repo named as unseen
     assert "archived" not in text.lower()
     assert "## Thoughts" in text
