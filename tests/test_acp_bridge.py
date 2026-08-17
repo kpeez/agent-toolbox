@@ -15,6 +15,8 @@ import subprocess
 import sys
 import time
 from pathlib import Path
+from types import SimpleNamespace
+from typing import cast
 
 import pytest
 
@@ -223,6 +225,7 @@ class BridgeClient:
         )
         self._next_id = 0
         self.progress: list[str] = []
+        self.progress_numbers: list[int] = []
         self._responses: dict[int, dict] = {}
 
     def start_call(self, method: str, params: dict) -> int:
@@ -247,6 +250,7 @@ class BridgeClient:
             frame = json.loads(line)
             if frame.get("method") == "notifications/progress":
                 self.progress.append(frame["params"]["message"])
+                self.progress_numbers.append(frame["params"]["progress"])
                 continue
             response_id = frame.get("id")
             if response_id == request_id:
@@ -544,6 +548,90 @@ def test_a_delegation_returns_only_the_message_after_tool_activity(
     assert result["content"][0]["text"] == "The final answer"
 
 
+def test_final_text_survives_a_trailing_tool_call_update(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(reply="The final answer", trailing_tool_updates=[{}]),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "The final answer"
+    assert bridge.progress == ["agent message", "tool call update"]
+
+
+def test_explorer_recovers_once_in_the_same_session(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            reply_blocks=[{"type": "image", "uri": "fixture"}],
+            recovery={"reply": "recovered final answer"},
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    assert result["content"][0]["text"] == "recovered final answer"
+    assert result["structuredContent"]["recovered"] is True
+    assert result["structuredContent"]["sessionId"] == "explore:fake-session-1"
+    assert (tmp_path / "fake-agent.prompt-count").read_text() == "2"
+
+
+def test_explorer_recovery_exhaustion_is_a_typed_safe_error(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    result = bridge.delegate(
+        task=directive(
+            attempts=[{"kind": "read", "title": "Initial read"}],
+            reply_blocks=[{"type": "image", "uri": "initial"}],
+            recovery={
+                "attempts": [{"kind": "read", "title": "Recovery read"}],
+                "reply_blocks": [{"type": "image", "uri": "recovery"}],
+            },
+        ),
+        mode="read-only",
+        cwd=str(tmp_path),
+    )
+
+    structured = result["structuredContent"]
+    assert result["isError"] is True
+    assert structured["error"]["type"] == "missing_final_message"
+    assert structured["error"]["recoveryAttempted"] is True
+    assert structured["error"]["sessionId"] == "explore:fake-session-1"
+    assert structured["error"]["eventCounts"] == {
+        "tool_call": 2,
+        "permission_request": 2,
+        "agent_message_chunk": 2,
+    }
+    assert structured["error"]["lastActivity"] == "agent_message_chunk"
+    assert isinstance(structured["error"]["lastActivityAt"], float)
+    assert structured["error"]["nonTextContentTypes"] == {"image": 2}
+    assert "missing_final_message" in result["content"][0]["text"]
+    assert (tmp_path / "fake-agent.prompt-count").read_text() == "2"
+
+
+@pytest.mark.parametrize("tool", ["implement", "review"])
+def test_non_explorer_roles_never_replay_missing_final_text(
+    bridge: BridgeClient, tmp_path: Path, tool: str
+) -> None:
+    result = bridge.delegate(
+        tool=tool,
+        task=directive(
+            reply_blocks=[{"type": "image", "uri": "fixture"}],
+            recovery={"reply": "must not be replayed"},
+        ),
+        cwd=str(tmp_path),
+    )
+
+    structured = result["structuredContent"]
+    assert result["isError"] is True
+    assert structured["error"]["type"] == "missing_final_message"
+    assert structured["error"]["recoveryAttempted"] is False
+    assert (tmp_path / "fake-agent.prompt-count").read_text() == "1"
+
+
 def test_read_only_denies_the_agents_edit_over_the_wire(
     bridge: BridgeClient, tmp_path: Path
 ) -> None:
@@ -643,10 +731,11 @@ def test_tool_calls_are_reported_as_progress(bridge: BridgeClient, tmp_path: Pat
         cwd=str(tmp_path),
     )
 
-    assert "Reading files" in bridge.progress
+    assert bridge.progress == ["tool call", "permission request", "agent message"]
+    assert bridge.progress_numbers == [1, 2, 3]
 
 
-def test_message_chunks_stream_as_throttled_progress(bridge: BridgeClient, tmp_path: Path) -> None:
+def test_each_message_chunk_streams_as_activity_progress(bridge: BridgeClient, tmp_path: Path) -> None:
     chunks = ["a" * 75, "b" * 75, "c" * 75, "d" * 75, "e" * 75, "f" * 75]
 
     result = bridge.delegate(
@@ -658,19 +747,59 @@ def test_message_chunks_stream_as_throttled_progress(bridge: BridgeClient, tmp_p
         cwd=str(tmp_path),
     )
 
-    assert len([message for message in bridge.progress if "Reading files" not in message]) == 2
+    assert bridge.progress == [
+        "tool call",
+        "permission request",
+        "agent message",
+        "agent message",
+        "agent message",
+        "agent message",
+        "agent message",
+        "agent message",
+    ]
+    assert bridge.progress_numbers == list(range(1, 9))
     assert result["content"][0]["text"] == "".join(chunks)
-    assert "Reading files" in bridge.progress
 
 
-def test_a_short_answer_emits_no_message_progress(bridge: BridgeClient, tmp_path: Path) -> None:
+def test_a_short_answer_emits_one_message_progress(bridge: BridgeClient, tmp_path: Path) -> None:
     bridge.delegate(
         task=directive(reply="a" * (acp_bridge.MESSAGE_PROGRESS_INTERVAL - 1)),
         mode="read-only",
         cwd=str(tmp_path),
     )
 
-    assert bridge.progress == []
+    assert bridge.progress == ["agent message"]
+
+
+def test_liveness_notice_is_deterministic_and_stops_after_completion() -> None:
+    reports: list[str] = []
+
+    class QuietSession:
+        cwd = "."
+        process = SimpleNamespace(poll=lambda: None)
+
+        def request(self, method, params, on_frame=None):
+            time.sleep(0.04)
+            return {"stopReason": "end_turn"}
+
+    turn = acp_bridge.run_turn(
+        cast(acp_bridge.AcpSession, QuietSession()),
+        "quiet-session",
+        "task",
+        "read-only",
+        reports.append,
+        liveness_timeout=0.01,
+    )
+
+    assert reports == ["liveness: child process is alive; no ACP event arrived for 30 seconds"]
+    assert turn["text"] is None
+    assert turn["observation"].metadata() == {
+        "eventCounts": {},
+        "lastActivity": None,
+        "lastActivityAt": None,
+    }
+    time.sleep(0.02)
+    assert reports == ["liveness: child process is alive; no ACP event arrived for 30 seconds"]
 
 
 def test_non_text_content_becomes_a_placeholder(bridge: BridgeClient, tmp_path: Path) -> None:
@@ -689,17 +818,22 @@ def test_non_text_content_becomes_a_placeholder(bridge: BridgeClient, tmp_path: 
     assert result["content"][0]["text"] == "before [image omitted]after"
 
 
-def test_an_image_only_answer_is_not_reported_as_silence(
+def test_an_image_only_answer_is_a_missing_final_message(
     bridge: BridgeClient, tmp_path: Path
 ) -> None:
     result = bridge.delegate(
-        task=directive(reply_blocks=[{"type": "image", "uri": "fixture"}]),
+        task=directive(
+            reply_blocks=[{"type": "image", "uri": "fixture"}],
+            recovery={"reply_blocks": [{"type": "image", "uri": "recovery"}]},
+        ),
         mode="read-only",
         cwd=str(tmp_path),
     )
 
-    assert result["content"][0]["text"] == "[image omitted]"
-    assert "The agent returned no message" not in result["content"][0]["text"]
+    assert result["isError"] is True
+    assert result["structuredContent"]["error"]["type"] == "missing_final_message"
+    assert result["structuredContent"]["error"]["nonTextContentTypes"] == {"image": 2}
+    assert (tmp_path / "fake-agent.prompt-count").read_text() == "2"
 
 
 def test_a_session_can_be_continued_by_id(bridge: BridgeClient, tmp_path: Path) -> None:
@@ -977,6 +1111,25 @@ def test_cancelling_one_concurrent_call_does_not_corrupt_the_other(
         sessionId=successful_session_id,
     )
     assert continued["content"][0]["text"] == "still alive"
+
+
+def test_concurrent_tool_calls_return_complete_json_frames(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    first_id = bridge.start_delegate(
+        task=directive(reply="first"), mode="read-only", cwd=str(tmp_path)
+    )
+    second_id = bridge.start_delegate(
+        task=directive(reply="second"), mode="read-only", cwd=str(tmp_path)
+    )
+
+    first = bridge.receive(first_id)
+    second = bridge.receive(second_id)
+
+    assert first["id"] == first_id
+    assert second["id"] == second_id
+    assert first["result"]["content"][0]["text"] == "first"
+    assert second["result"]["content"][0]["text"] == "second"
 
 
 def test_server_shutdown_stops_retained_acp_sessions(
