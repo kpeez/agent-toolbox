@@ -44,23 +44,22 @@ not ship a provider router or agent bridge.
 
 ### `autoresearch`
 
-Runs a bounded autonomous experiment loop around an explicitly approved,
-immutable `program.md`. Before candidate changes, the program and measured
-baseline pin down:
+Runs an autonomous experiment loop modeled on Karpathy's autoresearch prompt:
+make one small change, commit, evaluate, keep it if the metric improves,
+`git reset --hard` back to the last best if it does not. A short per-run
+`program.md`, co-authored with the user and approved in chat, pins the goal
+metric, evaluator command, editable/read-only paths, per-experiment budget,
+and stop condition (a defined endpoint by default; "run until interrupted" is
+an explicit opt-in).
 
-- **primary metric** — what improves, and in which direction
-- **guardrail metrics** — what must not regress
-- **frozen evaluator** — the command and hash used for every measurement
-- **acceptance threshold** — when a result is good enough
-- **mutation boundary** — mutable paths, forbidden paths, and guardrails
-- **budgets** — per-evaluation and total limits
-- **stop conditions** — when to stop and ask instead of continuing
-
-Runs are isolated in a dedicated git worktree. The baseline and every
-one-hypothesis candidate are recorded in an append-only TSV ledger with detailed
-private artifacts under `.autoresearch/<group>/`. Verified improvements are
-kept; discarded or guardrail-regressing candidates return to the last verified
-best commit without touching unrelated user work.
+The run iterates in a single dedicated git worktree on branch
+`autoresearch/<tag>`; the user's checkout is never touched. Every experiment —
+baseline first, crashes included — appends one line to an append-only
+`results.jsonl` ledger in `docs/agents/autoresearch/<tag>/` (fallback:
+untracked `.autoresearch/<tag>/` in the worktree), with a regenerated
+`summary.md` table beside it. Logging goes through the skill's
+`scripts/ledger.py`, whose only verbs are `append` and `render` — the ledger
+cannot be updated or overwritten.
 
 ### `data-viz`
 

@@ -107,7 +107,7 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 | --------------- | -------------------------------------------------------------------------------------------- |
 | `research`      | Investigate one bounded question against high-trust sources; write one cited private memo    |
 | `deep-research` | Coordinate read-only evidence lanes; retain packets and produce one citation-audited synthesis |
-| `autoresearch`  | Run reproducible experiment loops under an approved program and frozen evaluator             |
+| `autoresearch`  | Run a linear keep/discard experiment loop under a short approved per-run program             |
 | `data-viz`      | Research-backed guidance for designing and critiquing charts and figures                     |
 
 ### llmos
