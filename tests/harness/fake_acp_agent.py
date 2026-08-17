@@ -27,6 +27,7 @@ from __future__ import annotations
 import json
 import os
 import sys
+import time
 from typing import Any
 
 SESSION_ID = "fake-session-1"
@@ -37,6 +38,8 @@ CONFIG: dict[str, Any] = {"model": None, "order": []}
 ADVERTISED: dict[str, list[str]] = {}
 KNOWN_MODELS: list[str] = []
 NO_LOAD_SESSION = False
+LAST_DIRECTIVE: dict[str, Any] = {}
+PROMPT_COUNT = 0
 
 
 def config_options() -> list[dict[str, Any]]:
@@ -114,8 +117,17 @@ def request_permission(request_id: int, attempt: dict[str, Any]) -> dict[str, An
 
 
 def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
+    global LAST_DIRECTIVE, PROMPT_COUNT
     text = message["params"]["prompt"][0]["text"]
-    directive = json.loads(text)
+    try:
+        directive = json.loads(text)
+        LAST_DIRECTIVE = directive
+    except json.JSONDecodeError:
+        recovery = LAST_DIRECTIVE.get("recovery", {})
+        directive = recovery if isinstance(recovery, dict) else {"reply": recovery}
+    PROMPT_COUNT += 1
+    with open("fake-agent.prompt-count", "w") as prompt_file:
+        prompt_file.write(str(PROMPT_COUNT))
     granted: list[str] = []
 
     for content in directive.get("preamble", []):
@@ -155,6 +167,8 @@ def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
         if outcome.get("outcome") == "selected" and "allow" in outcome.get("optionId", ""):
             granted.append(attempt.get("kind", "other"))
 
+    if delay := directive.get("delay"):
+        time.sleep(delay)
     reply = directive.get("reply", "")
     if directive.get("echo_granted"):
         reply = f"{reply}granted={','.join(granted)}"
@@ -177,6 +191,21 @@ def handle_prompt(message: dict[str, Any], permission_id: list[int]) -> None:
                             if isinstance(content, str)
                             else content
                         ),
+                    },
+                },
+            }
+        )
+
+    for update in directive.get("trailing_tool_updates", []):
+        send(
+            {
+                "jsonrpc": "2.0",
+                "method": "session/update",
+                "params": {
+                    "sessionId": SESSION_ID,
+                    "update": {
+                        "sessionUpdate": "tool_call_update",
+                        "status": update.get("status", "completed"),
                     },
                 },
             }
