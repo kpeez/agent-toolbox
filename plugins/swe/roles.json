@@ -92,8 +92,7 @@
       "description": "Cheap, high-volume read-only exploration on OpenCode Go — repository sweeps and web research alike. Delegates one bounded read-only assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/deepseek-v4-flash, and returns OpenCode's final answer verbatim.",
       "body": "agents/bodies/opencode-explorer.md",
       "claude": {
-        "model": "sonnet",
-        "effort": "low",
+        "model": "haiku",
         "tools": ["mcp__plugin_swe_opencode__explore"]
       },
       "opencode": {
@@ -108,8 +107,7 @@
       "description": "Executes one bounded workspace assignment on OpenCode Go. Delegates one bounded implementer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/gpt-5.6-luna, and returns OpenCode's final answer verbatim.",
       "body": "agents/bodies/opencode-implementer.md",
       "claude": {
-        "model": "sonnet",
-        "effort": "low",
+        "model": "haiku",
         "tools": ["mcp__plugin_swe_opencode__implement"]
       },
       "opencode": {
@@ -124,8 +122,7 @@
       "description": "Code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge in review mode -- non-mutating tools plus execute (for running tests/lints), no file writes -- on opencode-go/deepseek-v4-pro, and returns OpenCode's final answer verbatim.",
       "body": "agents/bodies/opencode-reviewer.md",
       "claude": {
-        "model": "sonnet",
-        "effort": "low",
+        "model": "haiku",
         "tools": ["mcp__plugin_swe_opencode__review"]
       },
       "opencode": {
