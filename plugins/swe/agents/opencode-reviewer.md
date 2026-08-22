@@ -1,6 +1,6 @@
 ---
 name: opencode-reviewer
-description: Code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge in review mode -- non-mutating tools plus execute (for running tests/lints), no file writes -- on opencode-go/deepseek-v4-pro, and returns OpenCode's final answer verbatim.
+description: Code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge in review mode -- non-mutating tools plus execute (for running tests/lints), no file writes -- with the model defaulting to opencode-go/deepseek-v4-pro (overridable per call), and returns OpenCode's final answer verbatim.
 model: haiku
 tools: mcp__plugin_swe_opencode__review
 ---
