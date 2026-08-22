@@ -101,7 +101,9 @@ same task. The reviewer always runs on a different model family from the
 implementer — deepseek-v4-pro, or Sonnet/Opus — one invocation, on the
 assembled diff. A routed provider that is missing, unauthenticated, or fails
 ACP startup surfaces as a delegation failure and then an escalation; nothing
-ever falls back to another provider on its own.
+ever falls back to another provider on its own. When usage limits force a
+change, a delegation can override its role's `model` and `effort` per call —
+see `opencode-delegation`.
 
 ## Skills
 
@@ -214,11 +216,14 @@ subscription — check both with `opencode providers list`, which must list
 `opencode` MCP server in `.mcp.claude.json` for Claude and `.mcp.json` for
 Codex. Its three tools load the same role policy from `roles.json`.
 
-| Tool        | Model                          | Reasoning | Mode            |
+| Tool        | Default model                  | Reasoning | Mode            |
 | ----------- | ------------------------------ | --------- | --------------- |
 | `explore`   | `opencode-go/deepseek-v4-flash`| high      | read-only / plan |
 | `implement` | `opencode-go/gpt-5.6-luna`     | high      | write / build   |
 | `review`    | `opencode-go/deepseek-v4-pro`  | max       | review          |
+
+The model and reasoning columns are defaults: any delegation may override
+either per call, and an unknown id fails loudly instead of rerouting.
 
 Three roles, three models, on purpose:
 
@@ -249,9 +254,11 @@ something else. The closest substitute if you would rather not grant it is
 tag, the same effective price — but it exposes no reasoning variants, so a
 future role profile using it must omit an effort selection.
 
-`roles.json` is the operative source for those ids and profiles: callers receive
-role-specific tools with no `model`, `effort`, `mode`, or `role` field, so the
-plugin configures the profile rather than asking a caller to remember it.
+`roles.json` is the operative source for those ids and profiles: each role
+tool fixes its own `mode` and session mode, while `model` and `effort` are
+role defaults a caller may override per call — so the plugin configures the
+read/write policy rather than asking a caller to remember it, and the model
+choice follows usage instead of waiting on a plugin release.
 `tests/test_skill_drift.py` normalizes the host-specific transport syntax and
 fails if the two role policies or their prose disagree.
 
@@ -269,7 +276,8 @@ lands in the caller's context.
 [Agent Client Protocol](https://agentclientprotocol.com) is the JSON-RPC
 protocol OpenCode, Copilot, Gemini CLI and the Zed agents speak;
 `mcp/acp_bridge.py` translates one onto MCP. The bridge takes the agent's
-command as its argv and loads the fixed profile set from `roles.json`.
+command as its argv and loads the role profiles — fixed modes, default
+models with per-call overrides — from `roles.json`.
 
 The bridge is also where `mode: read-only` becomes true. Codex has an OS-level
 sandbox (`sandbox: read-only`); an ACP agent has none, and instead asks the
