@@ -92,6 +92,7 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 | `write-spec`                    | Create a feature spec — observable claims with independent oracles and acceptable evidence              |
 | `to-issues`                     | Publish a spec as vertical-slice tracker issues with blocked-by relations                               |
 | `implement`                     | Orchestrate implementing a spec — prove behavior with `/testing-code`, fan work out to agents                    |
+| `opencode-delegation`           | Route work to the OpenCode delegate tools and pick each delegation's model — role defaults, per-call overrides    |
 | `testing-code`                           | Behavioral testing — disposable probes, then the smallest stable sensor justified by product risk       |
 | `ship-pr`                       | Commit stable verified work as atomic commits, push, keep a draft PR current; `finalize` flips it ready |
 | `diagnose`                      | Disciplined debugging — build a feedback loop, reproduce, hypothesize, instrument, fix                  |
