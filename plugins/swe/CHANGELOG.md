@@ -5,6 +5,18 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.16.0 — 2026-08-22
+
+- Let callers override each OpenCode delegation's `model` and `effort` per
+  call; omitted fields keep the role defaults in `roles.json`, so re-pinning
+  a model no longer waits on a plugin release. The read/write boundary and
+  session mode stay profile-owned, and an unknown model id still fails loudly
+  instead of rerouting. Overrides apply at session establishment and re-pin a
+  continued session when passed.
+- Add the `opencode-delegation` skill: how to route work to the delegate
+  tools, the override convention, and how to choose a model per call without
+  duplicating the pinned ids.
+
 ## 1.15.5 — 2026-08-12
 
 - Add `start-loop` references distilled from the agent-workflows research:
