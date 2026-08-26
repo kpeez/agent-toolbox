@@ -517,7 +517,13 @@ def test_the_bridge_advertises_exactly_the_three_fixed_role_tools(bridge: Bridge
     assert [tool["name"] for tool in listed] == ["explore", "implement", "review"]
     for tool in listed:
         assert tool["inputSchema"]["required"] == ["task", "cwd"]
-        assert set(tool["inputSchema"]["properties"]) == {"task", "cwd", "sessionId"}
+        assert set(tool["inputSchema"]["properties"]) == {
+            "task",
+            "cwd",
+            "sessionId",
+            "model",
+            "effort",
+        }
 
 
 def test_a_delegation_returns_the_agents_answer_and_its_session(
@@ -1231,8 +1237,8 @@ def test_an_option_without_a_value_is_an_error() -> None:
         acp_bridge.split_argv(["--roles"])
 
 
-def test_callers_cannot_supply_profile_fields(bridge: BridgeClient, tmp_path: Path) -> None:
-    for field in ("model", "effort", "mode", "role"):
+def test_callers_cannot_supply_policy_fields(bridge: BridgeClient, tmp_path: Path) -> None:
+    for field in ("mode", "role"):
         result = bridge.call(
             "tools/call",
             {
@@ -1260,6 +1266,110 @@ def test_each_fixed_tool_selects_its_internal_profile(bridge: BridgeClient, tmp_
             tool=tool, task=directive(reply="", echo_config=True), cwd=str(tmp_path)
         )
         assert result["content"][0]["text"] == config
+
+
+def test_a_model_override_reaches_the_agent(bridge: BridgeClient, tmp_path: Path) -> None:
+    result = bridge.delegate(
+        task=directive(reply="", echo_config=True),
+        mode="read-only",
+        cwd=str(tmp_path),
+        model="opencode-go/gpt-5.6-luna",
+    )
+
+    assert result["content"][0]["text"] == (
+        "config=model=opencode-go/gpt-5.6-luna|effort=high|mode=plan"
+    )
+
+
+def test_an_effort_override_keeps_the_role_default_model(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    """Effort enums are model-dependent, so a model-only override keeps the
+    role's default effort and an effort-only override keeps the default model."""
+    result = bridge.delegate(
+        task=directive(reply="", echo_config=True),
+        mode="read-only",
+        cwd=str(tmp_path),
+        effort="max",
+    )
+
+    assert result["content"][0]["text"] == (
+        "config=model=opencode-go/deepseek-v4-flash|effort=max|mode=plan"
+    )
+
+
+def test_an_override_repins_a_continued_session(bridge: BridgeClient, tmp_path: Path) -> None:
+    """The config log accumulates across a continued session, so the assertion
+    reads the trailing selections this turn actually applied."""
+    first = bridge.delegate(task=directive(reply="one"), mode="read-only", cwd=str(tmp_path))
+    session_id = first["structuredContent"]["sessionId"]
+
+    second = bridge.delegate(
+        task=directive(reply="two", echo_config=True),
+        mode="read-only",
+        cwd=str(tmp_path),
+        sessionId=session_id,
+        model="opencode-go/gpt-5.6-luna",
+        effort="max",
+    )
+
+    selections = second["content"][0]["text"].removeprefix("config=").split("|")
+    assert selections[-3:] == [
+        "model=opencode-go/gpt-5.6-luna",
+        "effort=max",
+        "mode=plan",
+    ]
+
+
+def test_a_continuation_without_an_override_keeps_its_selection(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    first = bridge.delegate(
+        task=directive(reply="one"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        model="opencode-go/gpt-5.6-luna",
+    )
+    session_id = first["structuredContent"]["sessionId"]
+
+    second = bridge.delegate(
+        task=directive(reply="two", echo_config=True),
+        mode="read-only",
+        cwd=str(tmp_path),
+        sessionId=session_id,
+    )
+
+    selections = second["content"][0]["text"].split("config=", 1)[1]
+    assert selections.startswith("model=opencode-go/gpt-5.6-luna")
+    assert "|model=" not in selections
+
+
+def test_a_non_string_override_is_a_caller_error(bridge: BridgeClient, tmp_path: Path) -> None:
+    result = bridge.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        model=123,
+    )
+
+    assert result["isError"] is True
+    assert "model must be a string" in result["content"][0]["text"]
+
+
+def test_an_unknown_model_fails_instead_of_rerouting(
+    bridge: BridgeClient, tmp_path: Path
+) -> None:
+    """The fake agent rejects unknown ids the way OpenCode does; the delegation
+    must surface that rejection rather than quietly run the role default."""
+    result = bridge.delegate(
+        task=directive(reply="must not run"),
+        mode="read-only",
+        cwd=str(tmp_path),
+        model="opencode-go/nonexistent",
+    )
+
+    assert result["isError"] is True
+    assert "model not found" in result["content"][0]["text"]
 
 
 # ---------------------------------------------------------------------------

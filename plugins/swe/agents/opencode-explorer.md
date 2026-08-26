@@ -1,6 +1,6 @@
 ---
 name: opencode-explorer
-description: Cheap, high-volume read-only exploration on OpenCode Go — repository sweeps and web research alike. Delegates one bounded read-only assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/deepseek-v4-flash, and returns OpenCode's final answer verbatim.
+description: Cheap, high-volume read-only exploration on OpenCode Go — repository sweeps and web research alike. Delegates one bounded read-only assignment to the local OpenCode CLI through the ACP bridge — model defaults to opencode-go/deepseek-v4-flash and may be overridden per call — and returns OpenCode's final answer verbatim.
 model: haiku
 tools: mcp__plugin_swe_opencode__explore
 ---

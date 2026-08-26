@@ -66,7 +66,8 @@ RECOVERY_PROMPT = (
 _MCP_WRITE_LOCK = threading.Lock()
 
 # Leading argv flags, ahead of the ACP agent's own command line. The roles file
-# is the only profile input; callers select one of the fixed tools instead.
+# is the only startup profile input; callers pick one of the fixed tools and may
+# override that role's model and effort per call.
 BRIDGE_OPTIONS = (
     "--roles",
     "--turn-timeout",
@@ -119,8 +120,10 @@ def role_tool(profile: RoleProfile) -> dict[str, Any]:
         "name": profile.tool,
         "title": f"OpenCode {profile.tool} task",
         "description": (
-            f"Run one bounded {profile.tool} task through the fixed OpenCode profile. "
-            "The profile is selected by this tool and cannot be changed by the caller."
+            f"Run one bounded {profile.tool} task through the fixed OpenCode role "
+            "profile. The read/write boundary and session mode are chosen by this "
+            "tool and cannot be changed by the caller; `model` and `effort` may be "
+            "overridden per call, and omitted fields fall back to the role defaults."
         ),
         "inputSchema": {
             "type": "object",
@@ -139,6 +142,19 @@ def role_tool(profile: RoleProfile) -> dict[str, Any]:
                     "type": "string",
                     "description": "Continue a session returned by this same role tool.",
                 },
+                "model": {
+                    "type": "string",
+                    "description":
+                        "Provider/model id for this delegation, overriding the role "
+                        "default. An unknown id fails the call; it is never silently "
+                        "rerouted.",
+                },
+                "effort": {
+                    "type": "string",
+                    "description":
+                        "Reasoning-effort variant for this delegation, overriding the "
+                        "role default.",
+                },
             },
         },
         "outputSchema": {
@@ -153,6 +169,23 @@ def role_tool(profile: RoleProfile) -> dict[str, Any]:
             },
         },
     }
+
+
+def effective_selection(
+    profile: RoleProfile, arguments: dict[str, Any]
+) -> tuple[str, str]:
+    """The model and effort this delegation runs on.
+
+    Callers may override either per call; an omitted field keeps the role
+    default from roles.json. Type-checking here keeps a malformed argument a
+    caller error instead of a confusing agent-side rejection.
+    """
+    model = arguments.get("model", profile.model)
+    effort = arguments.get("effort", profile.effort)
+    for name, value in (("model", model), ("effort", effort)):
+        if not isinstance(value, str):
+            raise ValueError(f"{name} must be a string")
+    return model, effort
 
 
 def split_argv(argv: list[str]) -> tuple[dict[str, str], list[str]]:
@@ -889,7 +922,9 @@ class Bridge:
         for session in sessions_by_identity.values():
             session.close()
 
-    def select_model(self, session: AcpSession, session_id: str, profile: RoleProfile) -> None:
+    def select_model(
+        self, session: AcpSession, session_id: str, model: str, effort: str
+    ) -> None:
         """Pin the session to one model, then to a reasoning variant of it.
 
         Order is not cosmetic: an agent's effort values are model-dependent
@@ -900,11 +935,11 @@ class Bridge:
         that silently ran a different model than the one it was routed to
         would destroy exactly the cost guarantee the routing exists for.
         """
-        session.request("session/set_model", {"sessionId": session_id, "modelId": profile.model})
-        if profile.effort:
+        session.request("session/set_model", {"sessionId": session_id, "modelId": model})
+        if effort:
             session.request(
                 "session/set_config_option",
-                {"sessionId": session_id, "configId": "effort", "value": profile.effort},
+                {"sessionId": session_id, "configId": "effort", "value": effort},
             )
 
     def select_session_mode(
@@ -958,6 +993,9 @@ class Bridge:
         if not Path(cwd).is_dir():
             raise ValueError(f"cwd {cwd!r} is not a directory")
 
+        model, effort = effective_selection(profile, arguments)
+        override = "model" in arguments or "effort" in arguments
+
         session_id = arguments.get("sessionId")
         raw_session_id: str | None = None
         if session_id:
@@ -976,12 +1014,16 @@ class Bridge:
             if session is not None:
                 assert raw_session_id is not None
                 active_call.attach(session, raw_session_id)
+                # A live session keeps its model unless this call overrides it;
+                # re-pinning an unchanged continuation would only burn requests.
+                if override:
+                    self.select_model(session, raw_session_id, model, effort)
                 return session, session_id, raw_session_id
 
         session, opened_session_id = self.open_session(cwd, active_call, raw_session_id)
         try:
             self.require_session_mode(session, profile)
-            self.select_model(session, opened_session_id, profile)
+            self.select_model(session, opened_session_id, model, effort)
         except Exception:
             session.close()
             raise
@@ -997,10 +1039,10 @@ class Bridge:
         report: Any,
         active_call: ActiveCall,
     ) -> dict[str, Any]:
-        unexpected = set(arguments) - {"task", "cwd", "sessionId"}
+        unexpected = set(arguments) - {"task", "cwd", "sessionId", "model", "effort"}
         if unexpected:
             raise ValueError(
-                "caller cannot choose profile fields: " + ", ".join(sorted(unexpected))
+                "caller cannot choose policy fields: " + ", ".join(sorted(unexpected))
             )
         task = arguments["task"]
 

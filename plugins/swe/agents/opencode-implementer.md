@@ -1,6 +1,6 @@
 ---
 name: opencode-implementer
-description: Executes one bounded workspace assignment on OpenCode Go. Delegates one bounded implementer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/gpt-5.6-luna, and returns OpenCode's final answer verbatim.
+description: Executes one bounded workspace assignment on OpenCode Go. Delegates one bounded implementer assignment to the local OpenCode CLI through the ACP bridge — model defaults to opencode-go/gpt-5.6-luna and may be overridden per call — and returns OpenCode's final answer verbatim.
 model: haiku
 tools: mcp__plugin_swe_opencode__implement
 ---
