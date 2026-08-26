@@ -89,7 +89,7 @@
       }
     },
     "opencode-explorer": {
-      "description": "Cheap, high-volume read-only exploration on OpenCode Go — repository sweeps and web research alike. Delegates one bounded read-only assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/deepseek-v4-flash, and returns OpenCode's final answer verbatim.",
+      "description": "Cheap, high-volume read-only exploration on OpenCode Go — repository sweeps and web research alike. Delegates one bounded read-only assignment to the local OpenCode CLI through the ACP bridge — model defaults to opencode-go/deepseek-v4-flash and may be overridden per call — and returns OpenCode's final answer verbatim.",
       "body": "agents/bodies/opencode-explorer.md",
       "claude": {
         "model": "haiku",
@@ -104,7 +104,7 @@
       }
     },
     "opencode-implementer": {
-      "description": "Executes one bounded workspace assignment on OpenCode Go. Delegates one bounded implementer assignment to the local OpenCode CLI through the ACP bridge, on opencode-go/gpt-5.6-luna, and returns OpenCode's final answer verbatim.",
+      "description": "Executes one bounded workspace assignment on OpenCode Go. Delegates one bounded implementer assignment to the local OpenCode CLI through the ACP bridge — model defaults to opencode-go/gpt-5.6-luna and may be overridden per call — and returns OpenCode's final answer verbatim.",
       "body": "agents/bodies/opencode-implementer.md",
       "claude": {
         "model": "haiku",
@@ -119,7 +119,7 @@
       }
     },
     "opencode-reviewer": {
-      "description": "Code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge in review mode -- non-mutating tools plus execute (for running tests/lints), no file writes -- on opencode-go/deepseek-v4-pro, and returns OpenCode's final answer verbatim.",
+      "description": "Code review on OpenCode Go, on a model deliberately different from the implementer's. Delegates one bounded reviewer assignment to the local OpenCode CLI through the ACP bridge in review mode -- non-mutating tools plus execute (for running tests/lints), no file writes -- with the model defaulting to opencode-go/deepseek-v4-pro (overridable per call), and returns OpenCode's final answer verbatim.",
       "body": "agents/bodies/opencode-reviewer.md",
       "claude": {
         "model": "haiku",
