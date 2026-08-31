@@ -212,7 +212,8 @@ manifest validation alone is not.
 
 Requires the `opencode` CLI on PATH and an authenticated OpenCode Go
 subscription — check both with `opencode providers list`, which must list
-`OpenCode Go`. Nothing else is configured: the plugin registers one ACP-bridged
+`OpenCode Go`. GitHub Copilot CLI authentication is separate and does not
+provide OpenCode Go access. Nothing else is configured: the plugin registers one ACP-bridged
 `opencode` MCP server in `.mcp.claude.json` for Claude and `.mcp.json` for
 Codex. Its three tools load the same role policy from `roles.json`.
 

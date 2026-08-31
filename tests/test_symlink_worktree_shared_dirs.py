@@ -149,23 +149,29 @@ def test_hook_skips_missing_and_existing_entries(repo: tuple[Path, Path]) -> Non
     assert run_hook(worktree).returncode == 0  # idempotent
 
 
-def test_hook_does_not_dereference_a_racing_destination(
-    repo: tuple[Path, Path], tmp_path: Path
+@pytest.mark.parametrize("destination_kind", ["symlink", "directory"])
+def test_hook_does_not_write_inside_a_racing_destination(
+    repo: tuple[Path, Path], tmp_path: Path, destination_kind: str
 ) -> None:
     main, worktree = repo
-    real_ln = shutil.which("gln") or shutil.which("ln")
-    assert real_ln is not None
+    real_python = shutil.which("python3")
+    assert real_python is not None
     shim_dir = tmp_path / "bin"
     shim_dir.mkdir()
-    shim = shim_dir / "ln"
+    shim = shim_dir / "python3"
     src = main / "data"
     dst = worktree / "data"
+    race_command = (
+        f"ln -s {shlex.quote(str(src))} {shlex.quote(str(dst))}"
+        if destination_kind == "symlink"
+        else f"mkdir {shlex.quote(str(dst))}"
+    )
     shim.write_text(
         "#!/bin/sh\n"
-        f"if [ \"$3\" = {shlex.quote(str(dst))} ]; then\n"
-        f"  {shlex.quote(real_ln)} -s {shlex.quote(str(src))} \"$3\"\n"
+        f"if [ \"$4\" = {shlex.quote(str(dst))} ]; then\n"
+        f"  {race_command}\n"
         "fi\n"
-        f"exec {shlex.quote(real_ln)} \"$@\"\n"
+        f'exec "{real_python}" "$@"\n'
     )
     shim.chmod(0o755)
     env = os.environ | {"PATH": f"{shim_dir}:{os.environ['PATH']}"}
@@ -173,7 +179,8 @@ def test_hook_does_not_dereference_a_racing_destination(
     result = run_hook(worktree, env=env)
 
     assert result.returncode == 0
-    assert dst.is_symlink()
+    assert dst.is_symlink() is (destination_kind == "symlink")
+    assert not (dst / src.name).exists()
     assert sorted(path.name for path in src.iterdir()) == ["rows.csv"]
 
 

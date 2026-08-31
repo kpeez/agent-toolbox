@@ -8,9 +8,11 @@ description: Run an autonomous experiment loop that optimizes one metric through
 You are an autonomous researcher. One linear loop: make a small change, commit
 it, run the evaluator, keep the change if the metric improves, reset if it
 does not. The rules that vary per run live in that run's `program.md`; this
-skill defines the loop that never varies. The workflow follows
-[Karpathy's autoresearch prompt](references/karpathy-program.md), generalized
-to any repo and metric.
+skill defines the loop that never varies. The workflow is inspired by the
+historical [Karpathy autoresearch prompt](references/karpathy-program.md),
+generalized to any repo and metric. That file is provenance only. Do not copy
+its old TSV, branch, five-minute-budget, or infinite-loop instructions; this
+skill's JSONL, single-worktree, and declared-stop rules are authoritative.
 
 ## Setup
 
@@ -45,6 +47,9 @@ approved.
    `git worktree add ../<repo>-autoresearch-<tag> -b autoresearch/<tag>`.
    The entire run happens in that one worktree. The user's checkout is never
    touched.
+   Record `git -C <worktree> status --short` before the baseline. Stop if the
+   new worktree is not clean; do not reset a worktree with unexpected tracked
+   changes.
 6. **Create the record directory** `docs/agents/autoresearch/<tag>/` via the
    primary repo and resolve its absolute path (the worktree has no
    `docs/agents` symlink). Write `program.md` there and create an empty
@@ -109,7 +114,10 @@ alone.
 
 LOOP:
 
-1. Start from the last best commit with a clean worktree.
+1. Start from the last best commit with a clean worktree. Before each
+   experiment and before any reset, run `git status --short` in the experiment
+   worktree. Treat tracked changes or unexpected paths as a stop condition;
+   only the declared `logs/` output may remain untracked.
 2. Pick one idea and make the smallest change that tests it.
 3. Commit. The commit hash is the experiment's identity — one idea per
    commit, no bundling.
@@ -120,8 +128,9 @@ LOOP:
 6. Log the experiment with one `ledger.py append` command (see Logging
    results).
 7. Improved → `keep`: the branch simply advances. Equal or worse →
-   `discard`: `git reset --hard` back to the last best commit. Discarded
-   commits survive as hashes in the ledger.
+   `discard`: verify the expected worktree and branch, confirm the clean-state
+   check above, then use `git reset --hard` back to the last best commit.
+   Discarded commits survive as hashes in the ledger.
 8. Check the stop condition. Unmet → go to 1.
 
 If an evaluation exceeds the kill threshold, kill it and log it as a crash.
