@@ -80,19 +80,37 @@ def test_install_updates_codex_global_instructions(home: Path) -> None:
     assert instructions.read_bytes() == (ROOT / "AGENTS.md").read_bytes()
 
 
-def test_install_repairs_a_link_left_dangling_by_a_deleted_source(home: Path) -> None:
-    """A stale ~/.agents/skills/maintain-llmos pointing into the removed llmOS
-    tree is silently skipped by opencode; re-running must heal it."""
+def test_install_removes_only_llmos_links_owned_by_the_old_bundle(home: Path) -> None:
+    """Cleanup must preserve a resolving link owned by the standalone plugin."""
     linked = home / ".agents" / "skills"
     linked.mkdir(parents=True)
-    (linked / "maintain-llmos").symlink_to(home / "gone" / "maintain-llmos")
-    assert not (linked / "maintain-llmos").exists()
+    skill_names = ("maintain-llmos", "setup-llmos", "vault-cli")
+    for skill_name in skill_names:
+        (linked / skill_name).symlink_to(home / "gone" / skill_name)
+        assert not (linked / skill_name).exists()
+    standalone = home / "standalone" / "maintain-llmos"
+    standalone.mkdir(parents=True)
+    active_link = home / ".claude" / "skills" / "maintain-llmos"
+    active_link.parent.mkdir(parents=True)
+    active_link.symlink_to(standalone)
+    standalone_hook = home / "standalone" / "hooks" / "llmos_hook.py"
+    standalone_hook.parent.mkdir(parents=True)
+    standalone_hook.write_text("# active\n")
+    active_hook = home / ".claude" / "hooks" / "llmos_hook.py"
+    active_hook.parent.mkdir(parents=True)
+    active_hook.symlink_to(standalone_hook)
+    retired = home / "agent-toolbox" / "plugins" / "llmos" / "skills" / "setup-llmos"
+    retired.mkdir(parents=True)
+    retired_link = home / ".claude" / "skills" / "setup-llmos"
+    retired_link.symlink_to(retired)
 
     run_install(home)
 
-    entry = linked / "maintain-llmos"
-    assert entry.is_symlink()
-    assert (entry / "SKILL.md").is_file()
+    for skill_name in skill_names:
+        assert not (linked / skill_name).is_symlink()
+    assert active_link.resolve() == standalone.resolve()
+    assert active_hook.resolve() == standalone_hook.resolve()
+    assert not retired_link.is_symlink()
 
 
 def global_hooks_path(home: Path) -> str:

@@ -5,6 +5,11 @@ Newest first. Versions are the `version` field shared by
 Before 1.9.3 the plugin was named `knack`; before 1.0.0 its contents lived in
 the single `agentspec` plugin.
 
+## 1.16.1 — 2026-08-30
+
+- Make shared worktree links portable on macOS and GNU hosts with native
+  no-dereference symlink creation, and strengthen the racing-destination test.
+
 ## 1.16.0 — 2026-08-22
 
 - Let callers override each OpenCode delegation's `model` and `effort` per

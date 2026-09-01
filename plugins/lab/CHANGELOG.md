@@ -3,6 +3,14 @@
 Newest first. Versions are the `version` field shared by
 `.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`.
 
+## 1.3.1 — 2026-08-29
+
+- Mark the retained Karpathy prompt as historical provenance and make the
+  active autoresearch contract explicit about JSONL, clean worktrees, and safe
+  resets.
+- Keep the Codex starter prompts within its three-prompt ingestion limit and
+  add first-run prerequisite guidance.
+
 ## 1.3.0 — 2026-08-17
 
 - Rewrite `/autoresearch` as a karpathy-minimal loop (ADR 0016): a short

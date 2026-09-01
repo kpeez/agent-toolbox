@@ -4,6 +4,14 @@ Source-backed research, reproducible autonomous experiments, and
 research-backed data-visualization guidance. Lab is four portable instruction
 skills with no agents, hooks, runtime framework, or provider configuration.
 
+## First run
+
+Install the Lab plugin, then invoke one of the four skills by its name. Research
+and deep-research need the host's web or repository access. Autoresearch also
+needs Git, an executable evaluator, Python, and an approved per-run
+`program.md`; it creates one dedicated worktree and a JSONL record directory.
+Data-viz is guidance-only and needs no runtime setup.
+
 ## Contents
 
 ```text

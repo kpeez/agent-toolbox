@@ -17,18 +17,6 @@
       "category": "Productivity"
     },
     {
-      "name": "llmos",
-      "source": {
-        "source": "local",
-        "path": "./plugins/llmos"
-      },
-      "policy": {
-        "installation": "AVAILABLE",
-        "authentication": "ON_USE"
-      },
-      "category": "Productivity"
-    },
-    {
       "name": "swe",
       "source": {
         "source": "local",
