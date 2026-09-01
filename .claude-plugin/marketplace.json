@@ -11,10 +11,6 @@
       "source": "./plugins/lab"
     },
     {
-      "name": "llmos",
-      "source": "./plugins/llmos"
-    },
-    {
       "name": "swe",
       "source": "./plugins/swe"
     }

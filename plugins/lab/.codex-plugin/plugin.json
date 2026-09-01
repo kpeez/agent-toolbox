@@ -1,7 +1,7 @@
 {
   "name": "lab",
   "description": "Source-backed research, reproducible experiment loops, and data visualization guidance",
-  "version": "1.3.0",
+  "version": "1.3.1",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
@@ -15,7 +15,7 @@
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Automation", "Review"],
-    "defaultPrompt": ["Research this bounded question against primary sources.", "Run deep research with independent evidence lanes.", "Autoresearch this optimization with a defined metric.", "Critique this figure for clarity and honesty."],
+    "defaultPrompt": ["Research or deep-research this question with primary sources.", "Autoresearch this optimization with a defined metric.", "Critique this figure for clarity and honesty."],
     "brandColor": "#7C3AED"
   }
 }

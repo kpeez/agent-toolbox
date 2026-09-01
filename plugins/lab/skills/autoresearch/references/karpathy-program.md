@@ -1,3 +1,11 @@
+# Historical reference only
+
+This is Karpathy's original nanoGPT autoresearch prompt, retained for
+provenance. It is superseded by the repository-wide `autoresearch` skill.
+Ignore the TSV ledger, branch-from-master, fixed five-minute budget, and
+infinite-loop instructions below; use the active skill's JSONL, dedicated
+worktree, and declared stop-condition contract instead.
+
 # autoresearch
 
 This is an experiment to have the LLM do its own research.

@@ -4,15 +4,16 @@ A portable, spec-driven workflow and skill set for AI coding agents — one
 source of truth across Claude Code, Codex CLI, Antigravity CLI, and GitHub
 Copilot CLI[^1].
 
-Three plugins, each documented in detail by its own README:
+Two plugins, each documented in detail by its own README:
 
 - [**swe**](plugins/swe/README.md) — the core: the spec-driven workflow
   skills and the capability agents; `/start-loop` has the lead itself dispatch
   and ship an approved spec end to end
 - [**lab**](plugins/lab/README.md) — bounded and deep source-backed research,
   autonomous experiment loops, and data-visualization guidance
-- [**llmos**](plugins/llmos/README.md) — tooling, hooks, and the
-  `llmos-vault` CLI for the shared llmOS Obsidian vault
+
+The llmOS plugin and `llmos-vault` CLI now live in the standalone
+[llmos-vault repository](https://github.com/kpeez/llmos-vault).
 
 Shared provider-neutral instructions live in [AGENTS.md](AGENTS.md);
 `scripts/install.sh` is the manual path for non-plugin providers.
@@ -25,7 +26,6 @@ Shared provider-neutral instructions live in [AGENTS.md](AGENTS.md);
 /plugin marketplace add kpeez/agent-toolbox
 /plugin install swe@agent-toolbox
 /plugin install lab@agent-toolbox      # optional: research machines
-/plugin install llmos@agent-toolbox    # optional: machines with the llmOS vault
 ```
 
 ### Codex CLI
@@ -35,6 +35,9 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
+
+Install llmOS separately from `kpeez/llmos-vault` on machines that use the
+shared vault.
 
 The Codex SWE plugin delivers its skills plus three native OpenCode role tools.
 The Codex `.toml` capability agents still come from the manual script below.
@@ -110,14 +113,6 @@ The per-plugin READMEs explain how the skills fit together. Skills follow the
 | `deep-research` | Coordinate read-only evidence lanes; retain packets and produce one citation-audited synthesis |
 | `autoresearch`  | Run a linear keep/discard experiment loop under a short approved per-run program             |
 | `data-viz`      | Research-backed guidance for designing and critiquing charts and figures                     |
-
-### llmos
-
-| Skill            | Purpose                                                          |
-| ---------------- | ---------------------------------------------------------------- |
-| `maintain-llmos` | Maintain the shared llmOS Obsidian vault through its conventions |
-| `setup-llmos`    | Diagnose and configure machine access to the llmOS vault         |
-| `vault-cli`      | Route deterministic vault operations through the llmos-vault CLI |
 
 ## Workflow
 

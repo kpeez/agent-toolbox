@@ -3,23 +3,15 @@ name = "agent-toolbox"
 version = "0.0.0"
 description = "Workspace root for agent-toolbox's Python packages"
 requires-python = ">=3.11"
-dependencies = ["llmos-vault"]
+dependencies = []
 
 [tool.uv]
 package = false
-
-[tool.uv.sources]
-llmos-vault = { workspace = true }
-
-[tool.uv.workspace]
-members = ["plugins/llmos"]
 
 [dependency-groups]
 dev = ["pytest>=8", "ruff>=0.6", "ty>=0.0.1a1"]
 
 [tool.ty.environment]
-# `hooks/llmos_hook.py` puts this directory on `sys.path` at import time, so
-# `vault_root` really is importable by name there; tell ty the same thing.
-# `tests/test_acp_bridge.py` does the same for the MCP bridge, which ships as a
-# plugin-root script rather than a package.
-extra-paths = ["plugins/llmos/scripts", "plugins/swe/mcp"]
+# `tests/test_acp_bridge.py` puts the SWE MCP directory on `sys.path`; the
+# bridge ships as a plugin-root script rather than a package.
+extra-paths = ["plugins/swe/mcp"]

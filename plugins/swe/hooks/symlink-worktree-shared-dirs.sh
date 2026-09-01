@@ -33,9 +33,10 @@ for entry in artifacts data docs/agents runs; do
   # A link git would track leaks main-checkout paths into the next commit.
   git -C "$top" check-ignore -q "$entry" || continue
   mkdir -p "$(dirname "$dst")" || continue
-  ln -sT "$src" "$dst" 2>/dev/null ||
-    gln -sT "$src" "$dst" 2>/dev/null ||
-    true
+  # os.symlink is one atomic create: if another hook creates any destination
+  # after the guard above, it fails instead of nesting a link inside it.
+  python3 -c 'import os, sys; os.symlink(sys.argv[1], sys.argv[2])' \
+    "$src" "$dst" 2>/dev/null || true
 done
 
 exit 0

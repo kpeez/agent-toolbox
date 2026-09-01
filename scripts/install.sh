@@ -5,11 +5,11 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 
 
 ################################################################################
-# Retire stale llmOS symlinks (superseded by the llmos plugin)
+# Retire stale llmOS symlinks (superseded by the standalone llmos plugin)
 ################################################################################
-# maintain-llmos is dissolved and setup-llmos now ships in plugins/llmos,
-# installed via the plugin marketplace -- left in place these symlinks would
-# double-list the skill or resurrect deleted vault code.
+# llmOS now ships from the standalone kpeez/llmos-vault marketplace. Left in
+# place, these old agent-toolbox symlinks would double-list a skill or resurrect
+# deleted vault code.
 #
 # Both hook symlinks are now dead and are removed here (issue #16). An earlier
 # note here said ~/.codex/hooks.json must never be removed because it was "the
@@ -18,14 +18,22 @@ ROOT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 # when the vault's agents/ tree went away, so the link dangles and Codex has
 # been running with zero hooks. ~/.claude/hooks/llmos_hook.py resolves, but
 # nothing invokes it since the settings.json SessionStart block that named it
-# was removed; the llmos plugin now provides that hook via ${CLAUDE_PLUGIN_ROOT}.
-for stale in \
+# was removed; the standalone llmos plugin now provides that hook via
+# ${CLAUDE_PLUGIN_ROOT}.
+for stale_link in \
     "$HOME/.claude/skills/maintain-llmos" \
     "$HOME/.claude/skills/setup-llmos" \
     "$HOME/.codex/skills/setup-llmos" \
+    "$HOME/.agents/skills/maintain-llmos" \
+    "$HOME/.agents/skills/setup-llmos" \
+    "$HOME/.agents/skills/vault-cli" \
     "$HOME/.codex/hooks.json" \
     "$HOME/.claude/hooks/llmos_hook.py"; do
-    [[ -L "$stale" ]] && rm "$stale"
+    [[ -L "$stale_link" ]] || continue
+    target=$(readlink "$stale_link")
+    if [[ ! -e "$stale_link" || "$target" == *"/agent-toolbox/plugins/llmos/"* ]]; then
+        rm "$stale_link"
+    fi
 done
 echo "removed stale llmOS symlinks (if present)"
 

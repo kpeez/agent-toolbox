@@ -269,6 +269,15 @@ def test_lab_manifests_share_installation_metadata() -> None:
     assert codex["skills"] == "./skills/"
 
 
+def test_codex_default_prompts_respect_ingestion_limits() -> None:
+    """Codex renders at most three starter prompts, each capped at 128 chars."""
+    for manifest in sorted((ROOT / "plugins").glob("*/.codex-plugin/plugin.json")):
+        interface = json.loads(manifest.read_text()).get("interface", {})
+        prompts = interface.get("defaultPrompt", [])
+        assert len(prompts) <= 3, manifest
+        assert all(isinstance(prompt, str) and len(prompt) <= 128 for prompt in prompts), manifest
+
+
 def test_autoresearch_default_artifact_root_is_gitignored() -> None:
     """Private run artifacts must not become publishable repository changes."""
     result = subprocess.run(
