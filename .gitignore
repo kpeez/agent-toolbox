@@ -1,77 +1,25 @@
-# datasets/docs
+artifacts/
 data/
 datasets/
 docs/agents
+runs/
 .autoresearch/
-*.csv
-
-# local `npx skills` installs — install.sh symlinks plugin skills into
-# ~/.agents/skills on the host instead; only .agents/plugins/ is tracked
 .agents/skills/
 skills-lock.json
 
-# IDE temp files #
+# Editor noise
 .vscode/
 .cursor/
+.idea/
 .claude/
-.ipynb_checkpoints
-*.egg-info
+.ipynb_checkpoints/
 
-# C extensions
-*.so
-
-# Python files #
-.venv
-.mypy_cache
-.ruff_cache
-dist
-build
-*.whl
-*.pytest_cache
-__pycache__
-
-# mkdocs documentation
-/site
-
-# OS generated files #
-######################
+# OS noise
 .directory
 .DS_Store
 Icon?
 Thumbs.db
 
-# Distribution / packaging
-.Python
-build/
-develop-eggs/
-dist/
-downloads/
-eggs/
-.eggs/
-lib/
-lib64/
-parts/
-sdist/
-var/
-wheels/
-share/python-wheels/
-*.egg-info/
-.installed.cfg
-*.egg
-MANIFEST
-
-
-# Unit test / coverage reports
-htmlcov/
-.tox/
-.nox/
-.coverage
-.coverage.*
-.cache
-nosetests.xml
-coverage.xml
-*.cover
-*.py,cover
-.hypothesis/
-.pytest_cache/
-cover/
+# Python bytecode
+__pycache__/
+*.py[cod]

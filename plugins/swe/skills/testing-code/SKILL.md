@@ -42,7 +42,7 @@ If any of those remain unclear, explore before committing a test.
 
 ### 2. Probe when useful
 
-Use runnable scratch scripts under `tests/temp/` when the behavior, interface,
+Use runnable scratch scripts under `artifacts/temp/` when the behavior, interface,
 or oracle is uncertain (ensure the directory is gitignored). Exercise real
 imports, types, and call sites rather than a toy reconstruction. Prints,
 ad-hoc drivers, and side-by-side variants are welcome during diagnosis.
@@ -87,7 +87,7 @@ By publication time:
 - Each observable claim names its oracle and evidence mode. Exact committed
   test names are recorded after exploration, when tests actually earned a
   place.
-- `tests/temp/` is empty. A probe either became stable evidence or ended in a
+- `artifacts/temp/` is empty. A probe either became stable evidence or ended in a
   recorded verdict and was deleted.
 - Verdict-only probes record the question, result, evidence, and next action in
   an ADR for a durable decision, otherwise in the spec Decisions section or
@@ -96,8 +96,8 @@ By publication time:
   [references/mocking.md](references/mocking.md). If that fails, retain the
   checkable subset and use an explicit demonstration for the rest.
 
-Run lint, types, the existing suite, and the behavior-specific verification
-before calling the work done. A failing required gate is a stop.
+Run available direct checks and the behavior-specific verification before
+calling the work done. A failing required gate is a stop.
 
 Once the evidence is green, look for
 [refactor candidates](references/refactoring.md) — extract duplication, deepen

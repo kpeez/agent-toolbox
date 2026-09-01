@@ -1,142 +1,53 @@
 # agent-toolbox
 
-A portable, spec-driven workflow and skill set for AI coding agents — one
-source of truth across Claude Code, Codex CLI, Antigravity CLI, and GitHub
-Copilot CLI[^1].
+`agent-toolbox` provides two portable plugins for AI coding agents:
 
-Two plugins, each documented in detail by its own README:
+- **SWE** — spec-driven workflows and skills for sharpening, writing specs,
+  tracking implementation work, reviewing changes, and shipping.
+- **Lab** — source-backed research, reproducible experiment loops, and
+  data-visualization guidance.
 
-- [**swe**](plugins/swe/README.md) — the core: the spec-driven workflow
-  skills and the capability agents; `/start-loop` has the lead itself dispatch
-  and ship an approved spec end to end
-- [**lab**](plugins/lab/README.md) — bounded and deep source-backed research,
-  autonomous experiment loops, and data-visualization guidance
-
-The llmOS plugin and `llmos-vault` CLI now live in the standalone
-[llmos-vault repository](https://github.com/kpeez/llmos-vault).
-
-Shared provider-neutral instructions live in [AGENTS.md](AGENTS.md);
-`scripts/install.sh` is the manual path for non-plugin providers.
-
-## Installation
+## Install
 
 ### Claude Code
 
-```bash
+```text
 /plugin marketplace add kpeez/agent-toolbox
 /plugin install swe@agent-toolbox
-/plugin install lab@agent-toolbox      # optional: research machines
+/plugin install lab@agent-toolbox
 ```
 
 ### Codex CLI
 
-```bash
+```text
 codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
-Install llmOS separately from `kpeez/llmos-vault` on machines that use the
-shared vault.
-
-The Codex SWE plugin delivers its skills plus three native OpenCode role tools.
-The Codex `.toml` capability agents still come from the manual script below.
-
-### skills.sh — any agent
-
-The [skills.sh](https://skills.sh) installer copies editable skill files into
-your project, no plugin harness required:
+### Optional skills.sh skill-only install
 
 ```bash
-npx skills@latest add kpeez/agent-toolbox                     # pick skills and target agent
-npx skills@latest add kpeez/agent-toolbox --skill start-loop
-npx skills@latest add kpeez/agent-toolbox/plugins/swe      # one plugin's skills
-npx skills@latest update                                    # refresh installed skills
+npx skills@latest add kpeez/agent-toolbox
 ```
 
-Skills install as plain editable files (Claude Code: `.claude/skills/`, a
-symlink to the shared `.agents/skills/` copy). They live in your project and
-need no plugin harness, but re-running `add` or `update` rewrites them from
-the source, so keep customizations in your own fork rather than the installed
-copies. The install is skills-only: the `swe:*` agents, hooks, and MCP servers
-are not copied, so `start-loop` and `implement` rely on one of the plugin
-installs above (or the manual script below) being present on the same
-machine.
+This installs editable skills only. Plugin agents and hooks still require a
+plugin installation.
 
-### Manual install (Codex agents, opencode, Antigravity, Copilot)
+llmOS is maintained separately in
+[kpeez/llmos-vault](https://github.com/kpeez/llmos-vault).
 
-```bash
-./scripts/install.sh
-```
+## Layout
 
-| Target            | Installed to                                           |
-| ----------------- | ------------------------------------------------------ |
-| Codex agents      | `~/.codex/agents/*.toml`                               |
-| opencode          | `~/.agents/skills/*` — plugin skills symlinked          |
-| Antigravity CLI   | `~/.gemini/AGENTS.md` + skills symlinked from the repo |
-| Copilot CLI       | `~/.copilot/copilot-instructions.md`                   |
-| Claude statusline | `~/.claude/cc_statusline.py`                           |
-
-Re-run after updating agent-toolbox. Skill scripts need no install — skills run
-them in place with `uv run`.
-
-## Skills
-
-Each skill's `SKILL.md` is the canonical contract; this table is just the map.
-The per-plugin READMEs explain how the skills fit together. Skills follow the
-[agentskills.io specification](https://agentskills.io/specification).
-
-### swe
-
-| Skill                           | Purpose                                                                                                 |
-| ------------------------------- | ------------------------------------------------------------------------------------------------------- |
-| `start-loop`                    | Run an approved spec to a shipped PR — the lead dispatches implementers per task, gates and merges itself, then ships |
-| `sharpen`                       | Interview the user to stress-test a plan; cross-check the code, record ADRs                             |
-| `write-spec`                    | Create a feature spec — observable claims with independent oracles and acceptable evidence              |
-| `to-issues`                     | Publish a spec as vertical-slice tracker issues with blocked-by relations                               |
-| `implement`                     | Orchestrate implementing a spec — prove behavior with `/testing-code`, fan work out to agents                    |
-| `opencode-delegation`           | Route work to the OpenCode delegate tools and pick each delegation's model — role defaults, per-call overrides    |
-| `testing-code`                           | Behavioral testing — disposable probes, then the smallest stable sensor justified by product risk       |
-| `ship-pr`                       | Commit stable verified work as atomic commits, push, keep a draft PR current; `finalize` flips it ready |
-| `diagnose`                      | Disciplined debugging — build a feedback loop, reproduce, hypothesize, instrument, fix                  |
-| `codebase-design`               | Shared deep-module vocabulary — depth, seams, adapters, the deletion test                               |
-| `improve-codebase-architecture` | Find deepening refactors — turn shallow modules into deep ones                                          |
-| `merge-conflicts`               | Resolve conflicts by tracing each side's intent; verify with the project's checks                       |
-| `qmd`                           | Search local markdown knowledge bases with the `qmd` CLI                                                |
-| `setup-repo`                    | Interview-driven repo setup — thin `AGENTS.md`, `CLAUDE.md` symlink, `docs/agents/` topology            |
-
-### lab
-
-| Skill           | Purpose                                                                                      |
-| --------------- | -------------------------------------------------------------------------------------------- |
-| `research`      | Investigate one bounded question against high-trust sources; write one cited private memo    |
-| `deep-research` | Coordinate read-only evidence lanes; retain packets and produce one citation-audited synthesis |
-| `autoresearch`  | Run a linear keep/discard experiment loop under a short approved per-run program             |
-| `data-viz`      | Research-backed guidance for designing and critiquing charts and figures                     |
-
-## Workflow
-
-The spine is **sharpen → spec → issues → implement → review → PR**.
-`/start-loop <idea>` runs the approved-spec half as one resumable command: the
-lead dispatches one implementer subagent per spec task, runs the verification
-gates and merges itself with shell commands, then dispatches a single reviewer
-before shipping one PR — no conductor process, no Workflow tool. Sharpening
-and spec-writing happen in a prior session. The
-[swe plugin README](plugins/swe/README.md) documents the workflow and the
-agents in detail.
+- `plugins/swe/` — SWE skills, agents, hooks, and optional native tracker workflows.
+- `plugins/lab/` — Lab skills and their runtime scripts and references.
+- `.claude-plugin/marketplace.json` — Claude marketplace catalog.
+- `.agents/plugins/marketplace.json` — Codex marketplace catalog.
 
 ## Versioning
 
-Each plugin's version lives in exactly two files, kept identical: its
-`.claude-plugin/plugin.json` and `.codex-plugin/plugin.json`. The marketplace
-catalogs carry only names and paths — regenerate them with
-`scripts/gen-marketplaces.py`, never hand-edit. Bump both manifests at once:
+Update each plugin's version manually in both manifests, and keep the values
+identical:
 
-```bash
-scripts/bump-plugin-version.sh swe 1.14.0
-```
-
-A bump is inert until it lands on master — both providers install from GitHub,
-not the working copy.
-
-[^1]: Inspired by Matt Pocock's [skills repo](https://github.com/mattpocock/skills)
+- `plugins/<plugin>/.claude-plugin/plugin.json`
+- `plugins/<plugin>/.codex-plugin/plugin.json`

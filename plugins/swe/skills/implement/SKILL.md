@@ -10,7 +10,7 @@ One verification discipline for the implementer that does one task.
 ## Prove behavior before you commit to it
 
 **`/testing-code`** is the behavioral verification discipline. Tests are not a required
-output of every change: use disposable `tests/temp/` probes when useful, then
+output of every change: use disposable `artifacts/temp/` probes when useful, then
 retain only the smallest stable sensor for meaningful public behavior, an actual
 regression, or a high-risk invariant. Choose evidence by behavioral risk,
 independent oracle, uniqueness, stable public seam, and proportional cost. One
@@ -22,24 +22,9 @@ and produce it; a failing required test, type check, or lint gate is a stop, not
 a warning to continue past.
 
 `/start-loop`'s run procedure owns dispatch, gating, and merging for a full
-spec run; work tasks sequentially per the discipline below when implementing
-outside that procedure, or on a host with no forwarder subagents.
-
-### Manual fallback (no forwarder subagents)
-
-On a host with no forwarder subagents (Codex), call the three plugin-delivered
-OpenCode role tools directly. Every call names the absolute worktree root
-as `cwd`:
-
-- `mcp__opencode__explore` for repository exploration.
-- `mcp__opencode__implement` for exactly one bounded write assignment per
-  changeset.
-- `mcp__opencode__review` for one read-only-plus-execute review of the complete
-  assembled diff.
-
-If a requested tool is missing, fails to start, or returns non-completion,
-surface that result to whoever orchestrates you. There is no silent fallback
-to a host-native agent or an `opencode run` shell-out.
+spec run; work tasks sequentially per the discipline below. Ordinary host
+subagents remain preferred. If a local CLI delegation to an external provider
+is explicitly authorized, follow `/external-subagents`'s contract.
 
 ## Implement one task
 
@@ -48,9 +33,10 @@ directly, follows for one task. Never delegate this task further.
 
 1. Read the issue body and its latest comment before acting.
 2. Prove behavior per `/testing-code`, working through one behavioral risk or equivalence
-   class at a time and probing in `tests/temp/` when the design is uncertain.
-3. Run verification gates in order: lint, types, tests. A failure at any gate
-   stops the task; it is not a warning to note and continue past.
+   class at a time and probing in `artifacts/temp/` when the design is uncertain.
+3. Run the repository's available verification gates and behavior-specific
+   checks. A failure at any required gate stops the task; it is not a warning
+   to note and continue past.
 4. Comment tracker progress on the issue before you finish or run out of
    context. Write only the residue the session holds, leading with Resume:
    - **Resume** - the concrete next action.
