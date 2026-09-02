@@ -5,13 +5,13 @@ description: Run an approved spec to a shipped PR — the lead dispatches one im
 
 # /start-loop — run an approved spec
 
-You (the lead) orchestrate the run directly. There is no Workflow tool, no
-conductor, no planner or plumbing agents — you dispatch implementers and a
-reviewer, run gates and merges yourself, and ship.
+You (the lead) orchestrate the run directly. There is no Workflow tool or
+conductor agent — you dispatch implementers and a reviewer, run gates and
+merges yourself, and ship.
 
-On a host with no forwarder subagents (Codex), follow `/implement`'s
-"Manual fallback (no forwarder subagents)" section instead: call the three
-plugin-delivered OpenCode delegate tools directly per task.
+Ordinary host subagents remain preferred. If a local CLI delegation to an
+external provider is explicitly authorized, follow `/external-subagents`'s
+contract.
 
 ## Handoff discipline
 
@@ -54,10 +54,12 @@ stop — say so and point at `/write-spec` or `/sharpen` instead of proceeding.
    `gh pr create` (draft). One PR; only stack when the task graph is a
    declared chain and the spec asks for it.
 6. **Tracker, minimally.** If the spec's frontmatter names a tracker
-   container: exactly one `tracker.py sync` plus one summary comment, at run
-   end. Nothing else touches the tracker.
+   container, use the host-native tracker tools for one end-of-run
+   reconciliation plus one summary comment. Host-native tools own container
+   lookup, status reads, comments, and updates. Nothing else touches the
+   tracker.
 7. **Final report.** Tasks landed, escalations, PR URL, and agent accounting
-   — which agents ran. The accounting must show zero plumbing invocations.
+   — which agents and optional provider routes ran.
 
 ## The lead never reads code
 
@@ -69,10 +71,10 @@ reading belongs to the reviewer in step 4.
 
 | Role | Default | Escalation / notes |
 | --- | --- | --- |
-| Explorer | Haiku (repo), OpenCode (deepseek-v4-flash) (web) | Reports only |
+| Explorer | Host-native read-only subagent | Reports only |
 | Sharpen + spec | The premium model | The one place it earns its price |
-| Implementer / fixer | OpenCode (gpt-5.6-luna) when the Go subscription is flat-rate; else Sonnet, high effort | Fails gates twice → redispatch that task on Opus with the failure history. Never pre-buy Opus for tasks the spec already made bounded: ~5× the price dwarfs any thinking-token savings. |
-| Reviewer | A different family from the implementer: deepseek-v4-pro, or Sonnet/Opus | One invocation, on the assembled diff |
+| Implementer / fixer | Host-native implementer subagent | Fails gates twice → redispatch that task on a stronger host-native model with the failure history. |
+| Reviewer | A different host-native model family from the implementer | One invocation, on the assembled diff |
 | Orchestrator (you) | The fresh session's model; Opus suffices | Reads reports and runs git |
 
 ## Resume

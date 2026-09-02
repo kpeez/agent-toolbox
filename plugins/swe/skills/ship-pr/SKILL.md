@@ -41,9 +41,7 @@ Two modes:
 - **Never add agent attribution.** No `Co-authored-by` trailer naming Claude or
   Anthropic, no `Generated with …` footer, no 🤖, and above all **no session
   URL** — a `claude.ai`/`claude.com` link in a commit message is unrewritable
-  once pushed. The `block-agent-attribution` hook rejects the commit or
-  `gh` call outright; when it fires, rewrite the text rather than working
-  around the guard.
+  once pushed.
 - **Draft PRs by default.** Never flip an existing PR's draft/ready state; mark
   ready only in finalize mode or when the user asks.
 - **Never force-push** — except when rebasing a published stack, where
@@ -51,9 +49,7 @@ Two modes:
   Squash merge by default.
 - **Reviewable Markdown.** PR bodies and optional PR markdown artifacts must be
   easy to review as plain Markdown.
-- **Verify before you commit.** Lint, types, the existing test suite, every
-  committed test, and all runnable evidence named in the spec's Verification
-  section must pass first; a failing check is a stop, not a warning.
+- **Verify before you commit.** All repository-declared checks and all runnable evidence named in the spec Verification section must pass first; a failing required check is a stop.
 
 ## PR body
 

@@ -26,10 +26,10 @@ files. Report each as `{id, identifier, title}` with the file path as `id`, the
 heading as `title`. An unreadable or missing spec directory is a query failure,
 never an empty result.
 
-Which of those are workable is `tracker.py`'s rule, not this file's — it
-states what counts as done and blocked, including that a task merged into the
-run's integration branch is done whatever the file says. Do not re-derive it
-here.
+Which of those are workable is the run coordinator's rule, not this file's —
+it states what counts as done and blocked, including that a task merged into
+the run's integration branch is done whatever the file says. Do not re-derive
+it here.
 
 "Blocked by" references other issue files by relative path. Reading or posting
 an issue's "tracker comments" means its `## Comments` section; the run's

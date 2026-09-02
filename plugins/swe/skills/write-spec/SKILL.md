@@ -79,7 +79,7 @@ live under `docs/agents/specs/` (the shared specs directory may be an Obsidian v
 may create sibling local issue files named `NNNN-<slug>-issue-<NN>-<issue-slug>.md`.
 Verification evidence lives with the work: permanent tests when they pass
 `/testing-code`'s admission gate, other stable checks or reproducible demonstrations when
-appropriate, plus transient scratch probes in gitignored `tests/temp/`. Specs
+appropriate, plus transient scratch probes in gitignored `artifacts/temp/`. Specs
 are never committed to the source repo; they live behind the gitignored
 `docs/agents/` symlink (topology per the `ensure-shared` step above).
 

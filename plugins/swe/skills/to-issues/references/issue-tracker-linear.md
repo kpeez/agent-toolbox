@@ -43,23 +43,21 @@ the MCP is absent.
   (PR bodies, commits, comments). The private side references the public side,
   never the reverse.
 
-## Tracker script integration
+## Tracker operations
 
-`tracker.py` implements this tracker's workable query and status sync,
-taking the resolved tracker, container, and integration branch. This reference
-defines the tracker semantics; it does not own a command string.
+Host-native Linear tracker tools own container lookup, status reads, comments,
+and updates. Use the Linear MCP tools listed above, or the authenticated
+GraphQL API when the auth guidance permits it. This reference defines tracker
+semantics and state transitions, not a repository script.
 
 ## Container identity
 
 A spec records its Linear project in its own YAML frontmatter
-(`tracker: linear`, `tracker_container: <project id>`). Resolve it with
-
-    uv run <scriptsDir>/tracker.py container --spec <specPath>
-
-Exit 0 prints the id; exit 2 means the spec names a project that no longer
-exists (stop — never create a second one); exit 3 means no container exists yet
-and the caller may create one, then record it with `--set <id>`. Give a new
-project a plain `Spec: <specPath>` line in its description for humans.
+(`tracker: linear`, `tracker_container: <project id>`). Use native project
+lookup to verify a recorded project id. If it no longer exists, stop — never
+create a second one. If no container exists yet, create one with the native
+project operation, record its id in the spec, and give it a plain
+`Spec: <specPath>` line in its description for humans.
 
 ## State transitions
 
@@ -69,11 +67,10 @@ rather than the state work started in:
 - task merged into the integration branch: `linear issue update <identifier> --state "In Review"`
 - end of run:
 
-      uv run <scriptsDir>/tracker.py sync --tracker linear --container <containerId> --merged-into <baseBranch>
-
-  promotes every issue whose `change/` branch is merged into `<baseBranch>` to
-  "In Review", then promotes a project still reading backlog/planned while its
-  issues are underway.
+  use native Linear issue and project reads and updates to promote every issue
+  whose `change/` branch is merged into `<baseBranch>` to "In Review", then
+  promote a project still reading backlog/planned while its issues are
+  underway.
 
 Nothing moves before its work merges. There is deliberately no "picked up"
 transition: a write made when work starts is the one nothing can repair, because

@@ -212,6 +212,4 @@ coordinator-owned final output exists, the citation audit passed for every
 claim left in it, and the report names the terminal stop state.
 
 Use `### E1`-style normalized evidence IDs and cite them as `[E1]` in final
-outputs. Before reporting completion, run
-`python scripts/validate_run.py docs/agents/research/<slug>` from this skill
-directory and fix every reported artifact-integrity error.
+outputs.
