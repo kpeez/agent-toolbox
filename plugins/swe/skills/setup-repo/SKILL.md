@@ -81,33 +81,29 @@ exit 0
    skills filled in. If `AGENTS.md` already exists, update the
    `## Agent skills` block in place and append missing sections — never
    overwrite or reorder what's there.
-6. **Link and agent docs.** Resolve `<setup-repo-skill-dir>` to the directory
-   containing this `SKILL.md`, then run the reusable operation. It points
-   `docs/agents` at the project's vault docs tree, preflights every collision
-   before mutation, migrates legacy content losslessly, retires the superseded
-   `docs/specs`/`docs/adrs`/`specs`/`adrs` links, and is idempotent:
+6. **Link and agent docs.** After the project mapping is confirmed, use a
+   manual, non-migrating setup. Preflight all paths before changing anything:
 
-   ```bash
-   : "${LLMOS_ROOT:?Set LLMOS_ROOT to the llmOS checkout}"
-   python3 "<setup-repo-skill-dir>/scripts/setup_project_docs.py" \
-     --repo-root "$(git rev-parse --show-toplevel)" \
-     --llmos-root "$LLMOS_ROOT" \
-     --project "<confirmed-project>"
-   ln -sfn AGENTS.md CLAUDE.md
-   ```
+   - `<project-dir>` is `<llmos-root>/projects/<confirmed-project>`. It must be
+     absent or an existing real directory. Create it only when absent; leave an
+     existing directory and its contents untouched.
+   - `<agents-link>` is `<repo-root>/docs/agents`. Create the symlink only when
+     absent. An existing symlink is already correct only when it resolves
+     exactly to `<project-dir>`.
+   - The llmOS `projects` parent and repository `docs` parent must be real
+     directories when present. Create a missing parent only when doing so cannot
+     replace anything.
+   - `CLAUDE.md` must be absent or already symlinked to `AGENTS.md`.
+   - Any other file, real directory, broken or wrong symlink, legacy content,
+     or collision is a stop: report the path and do not migrate, overwrite,
+     remove, or partially repair anything. Do not migrate `docs/adr`,
+     `docs/specs`, `specs`, or `adrs`.
 
-   If the facts show a real (non-symlink) `CLAUDE.md`, ask before replacing it.
-   On collision, report the complete preflight output and do not improvise a
-   partial migration.
+   Once every path passes the preflight, create only the missing project
+   directory, `docs/agents` symlink, and `CLAUDE.md` symlink. Do not install or
+   update a post-checkout hook.
 
-7. **Linked worktrees.** When the repository uses linked worktrees, install or
-   update its `post-checkout` hook to invoke the same script with `--worktree`
-   after confirming this is a branch checkout in a linked worktree. Embed the
-   resolved absolute script path, llmOS root, and confirmed project name in the
-   hook. Worktree mode repairs safe symlinks but refuses real directories or
-   files that require migration and directs the operator back to `/setup-repo`.
-
-8. **Report** what was written, skipped, and decided.
+7. **Report** what was written, skipped, and decided.
 
 ## Template (appended after the resolved header)
 

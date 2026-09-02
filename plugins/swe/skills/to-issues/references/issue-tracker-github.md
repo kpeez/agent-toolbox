@@ -14,11 +14,12 @@ Issues for this repo live as GitHub issues. Use the `gh` CLI for all operations.
 
 Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
 
-## Tracker script integration
+## Tracker operations
 
-`tracker.py` implements this tracker's workable query and status sync,
-taking the resolved tracker, parent issue, and integration branch; this
-reference defines the GitHub conventions rather than a command string.
+Host-native GitHub tracker tools own container lookup, status reads, comments,
+and updates. Use the `gh` CLI and GitHub issue APIs described here; this
+reference defines the conventions and state transitions, not a repository
+script.
 
 ## Container identity
 

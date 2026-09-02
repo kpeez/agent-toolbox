@@ -1,11 +1,10 @@
 {
   "name": "swe",
   "description": "SWE workflow and skills for AI coding agents: sharpening, specs, behavioral verification, atomic PR grouping, and more",
-  "version": "1.16.1",
+  "version": "1.16.2",
   "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
   "license": "MIT",
-  "mcpServers": "./.mcp.claude.json",
   "keywords": ["spec", "workflow", "skills", "tdd", "pr", "code-review"]
 }

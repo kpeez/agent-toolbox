@@ -68,13 +68,11 @@ If you haven't already, explore so issue titles/descriptions use the project's
 own vocabulary (the `docs/agents/CONTEXT.md` glossary if present) and respect ADRs in
 `docs/agents/adrs/` for the area you're touching.
 
-Delegate the sweep rather than reading files yourself. On a host with named
-subagents, dispatch the `swe:opencode-explorer` forwarder; if the caller
-cannot nest subagents, call `mcp__opencode__explore`
-directly with the absolute repository root as `cwd`. The tool fixes its
-read-only profile. A missing or failed requested tool is reported to the
-orchestrator; never silently substitute a host-native explorer or shell out to
-`opencode run`.
+Delegate the sweep to a host-native explorer rather than reading files
+yourself. If no host subagent is available and a local CLI for an external
+provider is explicitly authorized, follow `/external-subagents`'s contract for
+the read-only assignment. Report a missing or failed requested route to the
+orchestrator; never silently substitute a different provider.
 
 ### 3. Draft tasks as vertical cuts
 
