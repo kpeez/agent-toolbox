@@ -40,15 +40,19 @@ codex plugin add lab@agent-toolbox
 npx skills@latest add kpeez/agent-toolbox
 ```
 
-This installs editable skills only. Plugin agents and hooks still require a
+This installs editable skills only. Plugin agents still require a
 plugin installation.
 
-llmOS is maintained separately in
-[kpeez/llmos-vault](https://github.com/kpeez/llmos-vault).
+## Project documents
+
+Specs, ADRs, notes, and research default to `docs/agents/`. Follow an explicit
+project or user override. Create subdirectories as needed; the location may be
+a regular directory or symlink, tracked or ignored. No setup step, vault, or
+generated `AGENTS.md`/`CLAUDE.md` is required.
 
 ## Layout
 
-- `plugins/swe/` — SWE skills, agents, hooks, and optional native tracker workflows.
+- `plugins/swe/` — SWE skills, agents, and optional native tracker workflows.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
 - `.claude-plugin/marketplace.json` — Claude marketplace catalog.
 - `.agents/plugins/marketplace.json` — Codex marketplace catalog.

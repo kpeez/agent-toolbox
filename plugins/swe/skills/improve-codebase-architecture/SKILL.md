@@ -20,7 +20,8 @@ project's established terms where they are clearer.
 This skill is *informed* by the project's domain model: the `docs/agents/CONTEXT.md`
 glossary (if present) gives names to good seams; `docs/agents/adrs/` records
 decision rationale. Check whether an ADR still applies to the current code and
-request before relying on it.
+request before relying on it. Follow an explicit project or user override of
+the `docs/agents/` location.
 
 ## Process
 

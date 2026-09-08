@@ -9,7 +9,8 @@ A discipline for hard bugs. Skip phases only when explicitly justified.
 
 When exploring, use the project's own vocabulary (the `docs/agents/CONTEXT.md`
 glossary if present) to build a clear mental model, and check `docs/agents/adrs/`
-for decisions in the area you're touching.
+for decisions in the area you're touching. Follow an explicit project or user
+override of the `docs/agents/` location.
 
 ## Phase 1 — Build a feedback loop
 

@@ -2,8 +2,9 @@
 
 `docs/agents/CONTEXT.md` holds the small amount of reusable project knowledge
 that a new session needs: purpose, terminology, non-obvious constraints, useful
-quirks, and links to canonical documents. It lives behind the project's existing
-gitignored `docs/agents/` symlink. Create it only when useful context exists.
+quirks, and links to canonical documents. Follow an explicit project or user
+override of this default location. Create it only when useful context exists,
+whether tracked or ignored, in a directory or through an existing symlink.
 
 Keep each fact in one home:
 
