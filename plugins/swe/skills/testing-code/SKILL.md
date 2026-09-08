@@ -82,27 +82,23 @@ property and mutation rules.
 
 ### 4. Settle
 
-By publication time:
+Before calling the work complete:
 
 - Each observable claim names its oracle and evidence mode. Exact committed
   test names are recorded after exploration, when tests actually earned a
   place.
-- `artifacts/temp/` is empty. A probe either became stable evidence or ended in a
-  recorded verdict and was deleted.
-- Verdict-only probes record the question, result, evidence, and next action in
-  an ADR for a durable decision, otherwise in the spec Decisions section or
-  tracker issue.
+- Scratch probes owned by the task are removed. A probe either became stable
+  evidence or ended in a recorded verdict and was deleted. Do not remove
+  unrelated artifacts from a shared scratch directory.
+- Record a verdict-only probe only when its result affects a durable decision or
+  future resumption. Use an ADR for a significant decision, otherwise the spec
+  Decisions section or tracker issue.
 - Checks that cannot run in CI first substitute small real things per
   [references/mocking.md](references/mocking.md). If that fails, retain the
   checkable subset and use an explicit demonstration for the rest.
 
 Run available direct checks and the behavior-specific verification before
 calling the work done. A failing required gate is a stop.
-
-Once the evidence is green, look for
-[refactor candidates](references/refactoring.md) — extract duplication, deepen
-modules, move logic to where its data lives — and re-run the evidence after
-each step.
 
 ## Earn permanent tests
 
@@ -133,21 +129,22 @@ Before writing code:
       independent oracles.
 - [ ] Identify the stable public seams and the cheapest acceptable evidence
       modes.
-- [ ] Confirm unresolved interface changes with the user. In a non-interactive
-      workflow, report `NEEDS_CONTEXT` with the specific question to the
-      orchestrator instead of guessing.
-- [ ] Respect the project's glossary and ADRs; use its domain language in claims
-      and tests.
+- [ ] Resolve interface choices against the approved scope and current code.
+      Ask only for a material unresolved requirement or scope decision. A
+      bounded worker sends that question to its caller.
+- [ ] Use the project's domain language in claims and tests. Check whether
+      relevant ADRs still apply to the current code and request.
 - [ ] Look for deep modules and testable boundaries (see
       [../codebase-design/SKILL.md](../codebase-design/SKILL.md) and
       [references/mocking.md](references/mocking.md)).
 
 ## Kill mock-slop
 
-Test public behavior, not interactions among your own objects. Delete or rewrite
-tests that mock internal collaborators, call private methods, assert call counts
-or order, query side channels instead of the public interface, or break under an
-internal refactor that preserves behavior.
+Test public behavior, not interactions among your own objects. Replace tests
+that only mirror internal structure when their useful behavioral coverage is
+already preserved by a stable sensor. Tests that mock internal collaborators,
+call private methods, assert call counts or order, or query side channels are
+signals to inspect, not an automatic deletion rule.
 
 Mock only true external boundaries — model hubs, trackers, paid APIs, schedulers.
 Prefer small real substitutes for code you control: tiny random-weight models,

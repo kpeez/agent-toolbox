@@ -1,9 +1,8 @@
 # Interface Design — Design It Twice
 
-When the user wants to explore alternative interfaces for a chosen deepening
-candidate, use this parallel sub-agent pattern. Based on **"Design It Twice"**
-(Ousterhout): your first idea is unlikely to be the best, so design several
-radically different interfaces in parallel and compare.
+When a chosen deepening candidate has a consequential, non-obvious interface,
+compare materially different designs before committing. Parallel subagents can
+help with a broad design, but are not required.
 
 Uses the vocabulary in `SKILL.md` — **module**, **interface**, **seam**,
 **adapter**, **depth/leverage** — and the dependency categories in `DEEPENING.md`.
@@ -12,8 +11,8 @@ Uses the vocabulary in `SKILL.md` — **module**, **interface**, **seam**,
 
 ### 1. Frame the problem space
 
-Before spawning sub-agents, write a short user-facing explanation of the problem
-space for the chosen candidate:
+Before generating alternatives, write a short explanation of the problem space
+for the chosen candidate:
 
 - The constraints any new interface must satisfy (invariants, ordering, error
   modes, performance — e.g. "must stay differentiable", "must run on one GPU",
@@ -22,27 +21,26 @@ space for the chosen candidate:
 - A rough illustrative code sketch to ground the constraints — not a proposal,
   just a way to make them concrete.
 
-Show this to the user, then immediately proceed. The user reads and thinks while
-the sub-agents work.
+In an interactive standalone task, show this to the user when their feedback
+could materially change the design. A bounded worker reports the frame to its
+caller.
 
-### 2. Spawn sub-agents
+### 2. Generate alternatives
 
-Spawn 3+ sub-agents **in parallel** with the Agent tool. Each must produce a
-**radically different** interface for the deepened module. Give each a separate
-technical brief (file paths, coupling details, dependency category, what sits
-behind the seam) and a different design constraint:
+Generate the smallest useful set of materially different interfaces. Do this
+directly for a bounded design, or delegate independent alternatives when the
+codebase breadth or decision cost justifies it. Useful design constraints
+include:
 
-- Agent 1: **Minimize the interface** — 1–3 entry points max, maximum leverage per
-  entry point.
-- Agent 2: **Maximize flexibility** — support many use cases and extension points.
-- Agent 3: **Optimize for the most common caller** — make the default case trivial.
-- Agent 4 (if cross-seam deps): **Design around ports & adapters** for the
-  remote-owned / true-external dependencies.
+- **Minimize the interface** — the smallest caller surface that meets the goal.
+- **Support known variation** — accommodate the required use cases without
+  hypothetical extension points.
+- **Optimize for the most common caller** — make the default case trivial.
+- **Design around ports & adapters** when cross-seam dependencies justify it.
 
-Include both the `SKILL.md` architecture vocabulary and the project's
-`docs/agents/CONTEXT.md` domain vocabulary in each brief so agents name things
-consistently. Each sub-agent
-outputs:
+When delegating, include relevant file paths, coupling details, dependency
+categories, what sits behind the seam, and the project's established domain
+language. Each alternative covers:
 
 1. Interface — types, methods, params, plus invariants, ordering, error modes
 2. A usage example showing how callers use it

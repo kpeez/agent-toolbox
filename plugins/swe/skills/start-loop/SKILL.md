@@ -1,107 +1,103 @@
 ---
 name: start-loop
-description: Run an approved spec to a shipped PR — the lead dispatches one implementer subagent per unblocked task, runs the verification gates and merges itself, then dispatches a single reviewer before shipping. Use only when the user explicitly invokes /start-loop.
+description: Run the workable tasks for an approved spec through implementation, integration, verification, and independent review. Use only when the user explicitly invokes /start-loop.
 ---
 
-# /start-loop — run an approved spec
+# /start-loop — execute an approved spec
 
-You (the lead) orchestrate the run directly. There is no Workflow tool or
-conductor agent — you dispatch implementers and a reviewer, run gates and
-merges yourself, and ship.
+The spec defines approved intent, scope, design, and acceptance criteria. The
+selected tracker owns executable tasks, dependencies, assignments, blockers,
+and progress. Read both before changing code. Do not create a second task list
+in the spec or derive task state from branch names.
 
-Ordinary host subagents remain preferred. If a local CLI delegation to an
-external provider is explicitly authorized, follow `/external-subagents`'s
-contract.
+Use ordinary host subagents when delegation helps. If local CLI delegation to
+an external provider is explicitly authorized, follow `/external-subagents`.
 
-## Handoff discipline
+## Authority
 
-Sharpening and spec-writing happen in a prior session. Start the run in a
-**fresh session** (a new session, or `/clear`) — never compact into a run.
-The spec is the distilled handoff; if the run needs something the spec
-lacks, fix the spec, don't carry stray context forward.
+Proceed when the spec records `approved: true` or the current conversation
+contains explicit approval for that spec. Record approval only when it was
+actually given. Material changes to approved intent need user approval;
+routine implementation choices do not.
 
-The spec's frontmatter must carry `approved: true`. A spec without it is a
-stop — say so and point at `/write-spec` or `/sharpen` instead of proceeding.
+Approval to implement does not itself authorize commits, pushes, pull
+requests, deployments, external tracker writes, or other external mutations.
+Use authority already present in the user's request or approved execution
+scope. If publication is not authorized, finish and verify the local work.
+
+## Host roles
+
+- A **standalone Codex task** is user-owned. Its brief includes the approved
+  scope, canonical document links, authority limits, and coordinator task ID.
+  It may use temporary subagents and reports consequential blockers through
+  the host's task-messaging route.
+- A **Claude Code session** may start fresh or resume in a fresh session. It
+  reads the same spec, tracker, and project documents. Write a short handoff
+  only for unfinished work or information that cannot be reconstructed
+  cheaply.
+- A **temporary worker** owns one bounded assignment and reports to its caller.
+  It does not contact a standalone coordinator independently.
+
+Compaction or a fresh session does not invalidate approved work.
 
 ## Run procedure
 
-1. **Read the spec.** Parse its `## Tasks` section: lines of the form
-   `- [ ] Tn: title — brief`, optionally suffixed `(after: Tm[, Tk])`. A
-   malformed task line is a stop. Create the integration branch (the spec's
-   slug) from the default branch.
-2. **Dispatch implementers.** One implementer subagent per unblocked task —
-   parallel when tasks are independent, in `after:` order otherwise — each in
-   its own isolated worktree. The prompt carries the spec text verbatim
-   (worktrees can't see `docs/agents`) and the contract: create branch
-   `change/Tn-<slug>`, implement, test, commit, and report
-   `{status, branch, summary}`. Give every worker a hard turn/effort cap; one
-   that stalls or exceeds it is a failed dispatch to redispatch or escalate,
-   never something to wait on. Prompt contract and cost discipline:
+1. **Resolve intent and work.** Read the approved spec, its tracker selection,
+   and its linked task container. Reuse existing tasks. Respect human holds,
+   assignments, and native dependency relationships. If the configured
+   tracker is unavailable, report that limitation; absence of a response is
+   not an empty backlog. Continue only work whose ownership, dependencies, and
+   authority can be established from available evidence.
+2. **Inspect the workspace.** Check the current checkout, worktrees, dirty
+   changes, relevant diffs and commits, and any linked delivery state. Preserve
+   unrelated work. Follow repository and host branch conventions. Create a
+   branch or worktree only when the run needs one and authority permits it.
+3. **Claim workable tasks.** Give each task one owner for tracker updates.
+   Write transitions only within existing tracker-write authority: started,
+   blocked, verified, awaiting review, and delivered as supported. If that
+   authority or capability is missing, report the limitation and continue only
+   work whose ownership and dependencies are established. Keep updates concise
+   and useful for resumption. A failed update does not erase observed work.
+4. **Implement bounded assignments.** Work directly when the task is small or
+   delegation would add no value. Otherwise delegate bounded exploration or
+   implementation to an appropriately inexpensive available agent. Follow
+   `/implement`, including its deletion and simplification step before final
+   verification. Prompts
+   carry the relevant approved requirements, useful paths, constraints,
+   ownership, evidence expectations, and blocker route. See
    [references/delegation.md](references/delegation.md).
-3. **Gate and merge, yourself.** On each completion report, run the
-   verification gates (lint, types, tests) on the task branch with shell
-   commands — zero model invocations — then `git merge --no-ff` it into the
-   integration branch. This step is serial. Gates red → redispatch that task
-   once with the failure output appended. Red again → escalate to the user
-   and continue the rest of the frontier.
-4. **Review once.** When the frontier is drained, dispatch **one** reviewer
-   subagent — a different model family from the implementers — with the
-   assembled diff and the spec text, redacting PR metadata and any claims
-   about the code's quality. Findings get one fixer round, then a re-review.
-   At most two fix rounds total. Rationale for these constants:
-   [references/review-loop.md](references/review-loop.md).
-5. **Ship.** Write the PR body yourself from the reports you've held and run
-   `gh pr create` (draft). One PR; only stack when the task graph is a
-   declared chain and the spec asks for it.
-6. **Tracker, minimally.** If the spec's frontmatter names a tracker
-   container, use the host-native tracker tools for one end-of-run
-   reconciliation plus one summary comment. Host-native tools own container
-   lookup, status reads, comments, and updates. Nothing else touches the
-   tracker.
-7. **Final report.** Tasks landed, escalations, PR URL, and agent accounting
-   — which agents and optional provider routes ran.
-
-## The lead never reads code
-
-Reports, gate output, and merge results are your whole context diet. Never
-open an implementer's diff yourself — anything that needs human-grade diff
-reading belongs to the reviewer in step 4.
-
-## Model policy
-
-| Role | Default | Escalation / notes |
-| --- | --- | --- |
-| Explorer | Host-native read-only subagent | Reports only |
-| Sharpen + spec | The premium model | The one place it earns its price |
-| Implementer / fixer | Host-native implementer subagent | Fails gates twice → redispatch that task on a stronger host-native model with the failure history. |
-| Reviewer | A different host-native model family from the implementer | One invocation, on the assembled diff |
-| Orchestrator (you) | The fresh session's model; Opus suffices | Reads reports and runs git |
+5. **Integrate and verify.** Keep concurrent writes isolated by worktree or
+   disjoint ownership. Inspect completed diffs, resolve interactions, and run
+   the repository's applicable checks plus behavior-specific evidence. Do not
+   call failing or unrun required checks successful.
+6. **Review independently.** After the assembled change is verifiable, use one
+   reviewer who did not implement the reviewed change. Model-family diversity
+   is optional. Ask for concrete correctness, requirement, verification, and
+   unnecessary-complexity findings grounded in the diff and approved intent.
+   Fix supported findings and re-review when changed risk justifies it. Stop a
+   loop that produces no new evidence; escalate an unresolved consequential
+   decision.
+7. **Publish when authorized.** Invoke `/ship-pr` only when existing authority
+   covers commits, push, and pull-request creation. Otherwise leave verified
+   local work for review. A draft or ready pull request is not proof of
+   delivery.
+8. **Report.** State tasks completed, tracker transitions attempted, local and
+   external state changed, verification results, review findings, unresolved
+   concerns, and publication or delivery state.
 
 ## Resume
 
-If the run session dies, a fresh session re-derives state from
-`git branch --list 'change/*'` plus the spec's task list: merged branches are
-done, everything else redispatches.
+Reconcile the tracker with current evidence: checkout and worktree contents,
+dirty diffs, commits, reviews, pull requests, and delivery state where
+applicable. Inspect unfinished work before assigning it again. A branch name,
+missing branch, tracker label, or prior self-report alone proves neither
+completion nor abandonment.
 
-Warn the user when a spec exceeds ~10-12 tasks — that's the context-growth
-trigger for the deferred supervisor (see ADR-0014).
+## Escalation
 
-## Escalation, not gates
-
-Once the spec is approved, the run proceeds to completion without prompting.
-Problems reach you as data, from implementer and reviewer reports — never a
-live worker interruption.
-
-1. Read each report's findings when it lands; check them against the spec's
-   Scope before trusting the task is covered.
-2. **Resolve** anything answerable from the spec, ADRs, or the codebase; log
-   the decision as an issue comment (when a tracker is in play) and
-   redispatch. A logged judgment call beats a stalled run.
-3. **Interrupt the user only for**: a scope change, a spec contradiction, a
-   blocking `ready-for-human` task, or a destructive/irreversible action.
-
-## Fail loud
-
-If a required skill (`/sharpen`, `/write-spec`) can't be activated, or the
-tracker can't be reached, name it and stop before changing state — do not
-improvise a substitute.
+Continue while new evidence supports a plausible in-scope next step. Diagnose
+repeated failure before redispatching. Ask the user only when progress requires
+a material scope or preference decision, unavailable authority or capability,
+destructive action, or resolution of contradictory approved requirements.
+Workers report these conditions to their caller rather than prompting the user
+directly.

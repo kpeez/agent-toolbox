@@ -7,6 +7,15 @@
 - **Lab** — source-backed research, reproducible experiment loops, and
   data-visualization guidance.
 
+SWE keeps approved intent in the spec and executable work in the chosen tracker.
+Its [implementation discipline](plugins/swe/skills/implement/SKILL.md) challenges
+unnecessary code and simplifies the completed change before final verification.
+Sound work can stay unchanged. Publication follows the user's authorization.
+
+Lab keeps source checks and experiment boundaries while scaling research
+artifacts and delegation to the question. Neither plugin requires a scheduler
+or a separate workflow service.
+
 ## Install
 
 ### Claude Code

@@ -1,63 +1,33 @@
-# Issue tracker: Local Markdown
+# Issue tracker: local Markdown
 
-Issues for this repo live as markdown files under `docs/agents/specs/`, beside the
-spec they implement. `docs/agents/` is a gitignored symlink into the shared llmOS
-vault, so issue files and their statuses are private and never committed.
+Store tasks beside their spec as
+`NNNN-<slug>-issue-<NN>-<issue-slug>.md`. The spec is the container; do not
+duplicate its intent in a parent issue file.
 
-## Conventions
+## Task files
 
-- Implementation issues for spec `docs/agents/specs/NNNN-<slug>.md` are
-  `docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md`, numbered from `01`
-- The parent issue is the spec itself — `NNNN-<slug>.md`'s goal/scope header; do not
-  duplicate it as an issue file
-- Triage and workflow state live in the issue file's YAML frontmatter as
-  `status:`, using the strings from `SKILL.md` plus `in-progress` and
-  `in-review`; done is `status: done`. Frontmatter, not a prose line, so it is
-  machine-readable without a model in the loop
-- "Blocked by" references other issue files by relative path
-- Comments and progress notes append to the bottom of the file under a
-  `## Comments` heading
+Use YAML frontmatter for machine-readable status. Follow established local
+states when present; otherwise use `ready-for-agent`, `ready-for-human`,
+`in-progress`, `blocked`, `in-review`, and `done`. Record native local
+dependencies as relative paths. Append only concise, useful resume information
+under `## Comments` or `## Resume`; do not create a repetitive journal.
 
-## Workable set
+Use the issue path as its stable identifier and the first heading as its title.
+An unreadable spec directory or malformed issue is a query failure, never an
+empty workable set. Reuse existing issue files.
 
-The container is the spec; its tasks are the spec's `NNNN-<slug>-issue-*.md`
-files. Report each as `{id, identifier, title}` with the file path as `id`, the
-`issue-<NN>-<issue-slug>` filename segment as `identifier`, and the file's first
-heading as `title`. An unreadable or missing spec directory is a query failure,
-never an empty result.
+## State and resume
 
-Which of those are workable is the run coordinator's rule, not this file's —
-it states what counts as done and blocked, including that a task merged into
-the run's integration branch is done whatever the file says. Do not re-derive
-it here.
+Give one task owner responsibility for status updates. Record meaningful
+transitions while work proceeds. Preserve human holds and assignments.
 
-"Blocked by" references other issue files by relative path. Reading or posting
-an issue's "tracker comments" means its `## Comments` section; the run's
-container comment (summary) appends under a `## Comments` heading at the
-bottom of the spec file itself.
+Before changing state on resume, compare the file with current checkout,
+worktree, diff, commit, review, pull-request, and delivery evidence. A filename,
+branch name, or frontmatter value alone does not prove completion or
+abandonment. Do not mark `done` merely because work is verified locally,
+integrated, or in a draft or ready pull request; use the project's delivery
+condition.
 
-## Container identity
-
-The spec is its own container, so no lookup is needed; a spec may still record
-`tracker: local` in its frontmatter for symmetry with the other trackers.
-
-## State transitions
-
-Set the issue file's frontmatter `status:` as the loop works:
-
-- task picked up: `status: in-progress`
-- task merged into the integration branch: `status: in-review`
-- end of run: nothing to reconcile — the spec has no separate status of its own
-  beyond its own lifecycle field
-
-Never write `status: done`: the run ends at a draft PR, so nothing is delivered
-yet. A failed write is logged and the run continues.
-
-## When a skill says "publish to the issue tracker"
-
-Create a new file `docs/agents/specs/NNNN-<slug>-issue-<NN>-<issue-slug>.md` next to the spec.
-
-## When a skill says "fetch the relevant ticket"
-
-Read the file at the referenced path. The user will normally pass the path or the
-issue number directly.
+When a skill says to publish a local task, create the sibling issue file only
+within the authorized workspace. When it says to fetch a ticket, read the
+referenced path and its latest useful resume note.

@@ -1,127 +1,90 @@
 ---
 name: write-spec
-description: Create a feature spec — a local, pure-markdown design draft whose observable behaviors name independent oracles and acceptable evidence. Use when starting a new feature, when the task requires design thinking, touches multiple files, or spans sessions.
+description: Create a durable Markdown feature spec whose approved intent and observable behaviors guide tracked implementation work.
 ---
 
-# /write-spec - Feature Spec Management
+# /write-spec — feature spec management
 
-A spec is a **local, transient, pure-markdown design draft**. It exists to
-force design thinking before code and to give the human a review gate. It is NOT a
-status ledger: task and status truth live on the issue tracker (see `/to-issues`).
-Once the design is settled and split into issues, the tracker is authoritative —
-the local spec is authoring residue.
+A spec records intended outcomes, scope, design, acceptance criteria, and
+verification expectations. The selected tracker owns executable tasks,
+dependencies, assignments, blockers, and progress. Do not duplicate that state
+as a task checklist in the spec.
 
-Specs are not user-written. A spec is the product of a `/sharpen` session (or an
-approved plan-mode plan): the agent distills the sharpened plan into the `NNNN-<slug>.md`
-goal/scope header and the user confirms it at the review gate. Durable decisions
-surfaced by the sharpen go to the shared vault as ADRs under `docs/agents/adrs/`,
-not the spec.
+Specs are normally produced from `/sharpen` or an approved plan. Significant
+decisions that apply beyond one feature belong in `docs/agents/adrs/` and link
+back to the spec. The spec remains useful after tasks are created; it is not
+authoring residue or an action journal.
 
-## The verification rule
+## Approval and authority
 
-Behavior is proven per `/implement` and `/testing-code` — read them before writing code.
-The spec's Verification section names each observable claim, its independent
-oracle, and acceptable evidence mode. Do not predeclare one committed test per
-claim; exact test names are settled after exploration, and a claim may
-legitimately cite a representative workflow, static check, reproducible demo, or
-explicit no-permanent-test decision.
+The user approves the complete proposal before implementation. Set
+`approved: true` only after explicit approval or when existing conversation
+authority clearly covers the complete spec. An ADR, task size, or agent judgment
+does not confer approval. Material changes to approved intent require renewed
+approval; routine implementation choices do not.
+
+Spec approval and tracker selection do not independently authorize external
+tracker writes, commits, pushes, pull requests, deployment, or other external
+mutations. Record applicable authority in the spec when it will matter across
+sessions.
+
+## Verification rule
+
+The Verification section names each observable claim, its independent oracle,
+and acceptable evidence. Do not require one committed test per claim. A stable
+test, representative workflow, static check, reproducible demonstration, or an
+explicit no-permanent-test decision may be proportionate evidence.
 
 ## When to use a spec
 
-Use a spec when any of these are true:
-
-- The task requires design thinking or choosing between approaches
-- The change touches multiple files or modules
-- The work will span more than one session
-- You're unfamiliar with the area of the codebase being modified
-- The user explicitly asks for a plan or spec
-
-Skip specs for trivial changes — typo fixes, single-line config changes, log line
-additions, renames.
-
-## If you're already in plan mode
-
-Don't double-dip. Your approved plan **is** the sharpened input. Write it straight
-to `docs/agents/specs/NNNN-<slug>.md` as the goal/scope header, expand the design body below
-the `---` divider, and flag the header for the user to confirm.
+Use a spec when the work needs design choices, crosses files or modules, will
+span sessions, enters unfamiliar code, or the user requests a plan or spec.
+Skip it for a trivial, fully understood edit.
 
 ## Workflow
 
-1. **Sharpen**: stress-test the plan with `/sharpen`; record durable decisions as ADRs
-2. **Goal**: distill the sharpened plan into the `NNNN-<slug>.md` goal/scope header; the
-   user confirms it
-3. **Design**: expand the `NNNN-<slug>.md` design body after inspecting the repo
-4. **Fork** — hand off or implement solo:
-   - **Hand off (default when work will fan out):** run `/to-issues` to publish
-     the spec into its tracker container (parent issue, or Linear project) with
-     labeled task issues. Separate agents pick up
-     each issue and prove behavior per `/testing-code` before review and PR. The
-     tracker owns status from here.
-   - **Solo (single-task spec, one sitting):** prove each behavior per
-     `/testing-code`, then a host-native review pass, then `/ship-pr`.
+1. **Sharpen.** Resolve material ambiguity and record broadly durable decisions
+   as ADRs.
+2. **Draft.** Write the goal, scope, design, observable success criteria, and
+   verification expectations after inspecting current project evidence.
+3. **Approve.** Present the complete proposal unless existing explicit approval
+   already covers it. Record that approval without asking for it again.
+4. **Plan tasks.** Reuse linked tasks or invoke `/to-issues` for the approved
+   scope. One task is sufficient when no split is useful. The selected tracker
+   becomes the task and progress authority.
+5. **Execute.** Read the spec for intent and the tracker for current work. A
+   single bounded task may be implemented directly; a multi-task run may use
+   `/start-loop` when explicitly invoked.
 
 ## /write-spec new <name>
 
-Creates a feature spec file `docs/agents/specs/NNNN-<slug>.md`.
+Create `docs/agents/specs/NNNN-<slug>.md`:
 
-<steps>
-<step action="slugify">lowercase name, replace spaces with hyphens -> `<slug>`</step>
-<step action="ensure-shared">run `/setup-repo` when the approved project-docs topology is missing; `docs/agents` must be a symlink pointing directly at `$LLMOS_ROOT/projects/<repo>`; never create `docs/agents` as a real committed directory in the source repo</step>
-<step action="allocate-number">if an existing `docs/agents/specs/NNNN-<slug>.md` already matches this slug, reuse its number. Otherwise scan `docs/agents/specs/` for files matching `^[0-9]{4}-`, take the highest number, add 1, and zero-pad to 4 digits (start at `0001` if none exist) -> `<NNNN>`. Do this immediately before writing the file</step>
-<step action="create-files">read `templates.md` and write `NNNN-<slug>.md` to `docs/agents/specs/`; never overwrite an existing spec file for this slug — a present goal/scope header is settled and authoritative</step>
-<step action="populate">fill the goal/scope header from the sharpened plan (or approved plan-mode plan) and flag it for the user to confirm; if `NNNN-<slug>.md` already exists, leave its header alone. Then expand the design body below the `---` divider and map each observable claim in Verification to its independent oracle and acceptable evidence mode; settle exact committed test names only after exploration</step>
-</steps>
+1. Lowercase the name and replace spaces with hyphens.
+2. If the approved project-docs topology is absent, run `/setup-repo`.
+   `docs/agents` must be the repository's configured shared-docs link; do not
+   replace an existing mapping without confirming ownership.
+3. Reuse the number of an existing matching slug. Otherwise scan files matching
+   `^[0-9]{4}-`, allocate the next zero-padded number, and do so immediately
+   before writing.
+4. Read `templates.md`. Create the file without overwriting a settled spec.
+5. Populate it from the sharpened or approved plan. Map observable claims to
+   independent oracles and acceptable evidence. Exact retained tests can be
+   chosen during implementation.
 
-## Spec structure
+Specs are pure Markdown. Project conventions and canonical links live in
+`docs/agents/CONTEXT.md`; executable tasks may be remote tracker items or local
+sibling issue files. Do not add a generated navigation index.
 
-A spec is **`NNNN-<slug>.md`** — pure markdown with no code files
-live under `docs/agents/specs/` (the shared specs directory may be an Obsidian vault). `/to-issues`
-may create sibling local issue files named `NNNN-<slug>-issue-<NN>-<issue-slug>.md`.
-Verification evidence lives with the work: permanent tests when they pass
-`/testing-code`'s admission gate, other stable checks or reproducible demonstrations when
-appropriate, plus transient scratch probes in gitignored `artifacts/temp/`. Specs
-are never committed to the source repo; they live behind the gitignored
-`docs/agents/` symlink (topology per the `ensure-shared` step above).
+## Resuming a spec
 
-```
-docs/agents/specs/
-├── 0001-<slug>.md # Goal/scope header + agent-expanded design
-└── 0002-<slug>.md
-```
+1. Read the spec for approved intent and the tracker for task state,
+   dependencies, holds, assignments, and latest useful handoff.
+2. Inspect the actual checkout, worktrees, diffs, commits, verification, and
+   delivery state relevant to the next task.
+3. Reconcile contradictions before acting. Tracker unavailability is a reported
+   limitation, not evidence that no work remains.
+4. Continue the next task whose ownership, dependencies, and authority can be
+   established. Preserve unfinished and unrelated work.
 
-The numbering is the index — `ls` sorts it, the highest number is the newest.
-Do not add a navigation or index file; it only drifts from the directory.
-
-`NNNN-<slug>.md` is one file, two zones split by a `---` divider: a short goal/scope
-header (settled by the sharpen, confirmed by the user — preserve it, never
-overwrite) and the agent-expanded design body. The sections and their meanings
-are defined once, in `templates.md` — follow the template, don't improvise
-structure.
-
-Two semantics worth knowing beyond the template:
-
-- **Execution mode**: `review-gated` (user reviews the design body before
-  implementation — the default) or `autonomous` (the agent proceeds after writing
-  the design, e.g. driven by `/goal`), plus stop conditions.
-- **Durable decisions** (architecture, provider policy, storage model, security
-  posture) go in the shared vault as ADRs under `docs/agents/adrs/` (see
-  `sharpen`'s `ADR-FORMAT.md`) and are linked from the Decisions section. The
-  optional domain glossary is `docs/agents/CONTEXT.md`, in that same vault.
-
-## Status lives on the tracker
-
-See `/to-issues` for tracker ownership, status, blockers, and handoff rules.
-
-## Verification evidence lives with the work
-
-See `/testing-code` for choosing permanent tests, other acceptable evidence, and
-disposable scratch probes.
-
-## Resuming work on an existing spec
-
-1. Read the tracker first — issue states, blocked-by links, latest progress comment
-2. Read `NNNN-<slug>.md` for intent and design context
-3. Run the verification evidence named in the Verification section to see
-   current state
-4. Pick up the next unblocked `ready-for-agent` issue
-5. Comment progress on the active issue before you hit a context limit
+See `/testing-code` and `/implement` for choosing and producing evidence.

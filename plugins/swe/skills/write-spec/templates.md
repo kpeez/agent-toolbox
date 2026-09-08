@@ -1,115 +1,77 @@
-# Spec Templates
+# Spec template
 
-File templates for `/write-spec new`. Write each to its target path under `docs/agents/specs/`.
-
-A spec is **`NNNN-<slug>.md`** (human goal + agent design) — pure markdown, no
-code files. Its Verification section names observable claims, independent
-oracles, and acceptable evidence modes; exact committed test names are settled
-after exploration. Task and status truth live on the issue tracker, not in a
-local file.
+Create specs under `docs/agents/specs/`. A spec records durable approved intent;
+the selected tracker records executable task state.
 
 ## Frontmatter
 
-Every spec opens with frontmatter. Keep it to these fields — they are the ones
-this plugin's own commands read and write:
+- `status`: `draft`, `active`, `review`, `done`, or `archived`.
+- `approved`: `false` until the complete proposal receives explicit approval.
+- `desc`: one or two sentences for directory triage.
+- `tracker`: `linear`, `github`, `local`, or another supported tracker.
+- `tracker_container`: omit until a container exists; then record its stable id.
+- `blocked` and `blocked_reason`: omit unless the spec itself is blocked.
+- `created` and `updated`: ISO dates. Preserve `created`.
 
-- `status` — `draft` on creation. `/to-issues` advances it to `active`,
-  `/ship-pr` to `review`, and `/ship-pr finalize` closes it at `done`. Use
-  `archived` for abandoned or superseded specs. This is the spec's lifecycle,
-  not its task list.
-- `desc` — one or two sentences on what the spec does. Written at creation so a
-  reader can triage a directory of specs without opening them.
-- `blocked` / `blocked_reason` — omit unless actually blocked. Blocking is
-  orthogonal to `status`: a spec is blocked *at* a phase, so record both.
-- `created` / `updated` — ISO dates. Preserve `created`; bump `updated` on
-  meaningful edits.
-
-Do not add fields for a note system here. A vault that indexes these specs owns
-its own properties and stamps them itself.
+Optional authority or host-specific handoff details belong in prose when they
+must survive a session. Do not use frontmatter as an action ledger.
 
 <templates>
 
 <template file="docs/agents/specs/NNNN-<slug>.md">
 ---
 status: draft
+approved: false
 desc: <one or two sentences on what this spec does>
+tracker: <linear | github | local | supported tracker>
 created: <YYYY-MM-DD>
 updated: <YYYY-MM-DD>
 ---
 
 # <Title>
 
-<!--
-Two zones in one file:
-- Goal/Scope/Non-goals/Success/Validation = the settled plan from the sharpen
-  session, confirmed by the user. Preserve it; never overwrite an existing header.
-- Design and below = agent-expanded after inspecting the repo.
--->
-
 ## Goal
 
-<!-- what problem are we solving and why -->
+<!-- What outcome are we trying to achieve, and why? -->
 
 ## Scope
 
-<!-- what is included -->
+<!-- What is included? Name useful components or paths when they clarify scope. -->
 
 ## Non-goals
 
-<!-- what is explicitly out of scope -->
+<!-- What adjacent work is excluded? -->
 
 ## Success criteria
 
-<!-- observable outcomes that define done -->
-
-## Execution mode
-
-- **Mode**: review-gated
-- **Stop and ask before**: destructive commands, production/shared infrastructure changes, credentials, broad rewrites, or scope changes
-
-## Validation
-
-<!-- observable claims, independent oracles, and acceptable evidence modes;
-     exact runnable commands and committed test names settle after exploration -->
-
-## Tasks
-
-<!-- Parsed by the start-loop run procedure: one implementer subagent per task.
-     - [ ] T1: <title> — <one-line brief>
-     - [ ] T2: <title> — <brief> (after: T1)
-     Task ids are T<n>; optional "(after: Tm[, Tk])" declares dependencies. -->
-
----
+<!-- Observable outcomes that define success. -->
 
 ## Design
 
-<!-- architecture, key components, patterns used (agent-expanded) -->
-
-## Behavior
-
-<!-- how does it work? inputs? outputs? state observable claims, independent
-     oracles, and acceptable evidence modes rather than predeclaring one test
-     per behavior -->
+<!-- The proposed behavior and load-bearing implementation decisions. -->
 
 ## Decisions
 
-<!-- non-obvious choices: what we chose, why, alternatives considered.
-     If a decision is durable beyond this feature (architecture, storage model,
-     provider policy, framework choice), record it in docs/agents/adrs/ instead and
-     link it here. -->
+<!-- Non-obvious feature choices and rationale. Link broadly durable decisions
+     to docs/agents/adrs/ and assess whether existing ADRs still apply. -->
 
 ## Risks
 
-<!-- what could break or needs careful verification -->
+<!-- Material failure modes, assumptions, and compatibility concerns. -->
 
 ## Verification
 
-<!-- maps observable claims to independent oracles and acceptable evidence:
-     a regression/property/workflow test, static check, reproducible demo, or
-     explicit no-permanent-test decision. Add exact test names after exploration. -->
+<!-- Map observable claims to independent oracles and proportionate evidence. -->
 <!-- - Claim: <caller-visible behavior or high-risk invariant>
        Oracle: <how the expected result is known independently>
-       Evidence: <acceptable mode; exact test name after it earns permanence> -->
+       Evidence: <test, workflow, static check, reproducible demonstration,
+                  or explicit no-permanent-test decision> -->
+
+## Execution and authority
+
+- **Tracker container**: <link or identifier once created>
+- **Authorized external actions**: <none, or the explicit authorized actions>
+- **Stop for user input before**: <material scope decisions or actions lacking authority>
 </template>
 
 </templates>

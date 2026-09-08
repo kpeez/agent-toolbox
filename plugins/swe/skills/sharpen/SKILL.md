@@ -1,11 +1,12 @@
 ---
 name: sharpen
-description: Interview the user relentlessly about a plan or design until reaching shared understanding, resolving each branch of the decision tree. Cross-checks claims against the code, sharpens terminology, and records durable decisions as ADRs. Use when the user wants to stress-test, pressure-test, or harden a plan or design, or mentions "sharpen", /sharpen, or "grill me".
+description: Resolve material ambiguity in a plan or design through focused questions and code evidence. Sharpen terminology and record significant decisions. Use when the user wants to stress-test, pressure-test, or harden a plan or design, or mentions "sharpen", /sharpen, or "grill me".
 ---
 
-Interview me relentlessly about every aspect of this plan until
-we reach a shared understanding. Walk down each branch of the design
-tree resolving dependencies between decisions one by one. Ask the questions one at a time, waiting for feedback on each question before continuing.
+Resolve the questions that could materially change the goal, scope, design, or
+acceptance criteria. Ask one question at a time and wait for its answer before
+making dependent decisions. Reuse decisions and approval already given; do not
+repeat an interview when the requested work is clear.
 
 If a question can be answered by exploring the codebase, explore
 the codebase instead.
@@ -23,20 +24,23 @@ is right?"
 **Sharpen fuzzy language.** When I use a vague or overloaded term, propose a
 precise canonical one. "You're saying 'account' — do you mean the Customer or the
 User? Those are different things." If a `docs/agents/CONTEXT.md` glossary exists,
-challenge any term that conflicts with it. When a term gets pinned down, capture
+check whether a conflicting term reflects a real change. When a term gets pinned down, capture
 it in `CONTEXT.md` right there — see [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
-Create the file lazily, only when the first term is resolved.
+Create the file only when there is reusable project context to retain.
 
 **Discuss concrete scenarios.** Stress-test domain relationships with specific
 edge-case scenarios that force precision about the boundaries between concepts.
 
-**Deliberate close calls.** When a decision reduces to two named options or a
-yes/no, build the strongest case for each side *independently* — spawn parallel
-explorers when the evidence needs gathering, and never let one case see the
-other while it's being built. Then synthesize: weigh evidence quality, not
-volume; don't split the difference; "both cases are weak" is a valid outcome
-(say so and recommend gathering data instead). Fold the recommendation back
-into the interview and record load-bearing outcomes as ADRs (below).
+**Deliberate close calls.** Compare the plausible alternatives against concrete
+requirements and evidence. Delegate bounded evidence gathering when substantial
+reads would crowd the lead's context. Do not manufacture competing cases or
+extra agents for a decision the available evidence already resolves. Explain
+the trade-off and recommend an option; insufficient evidence is a valid result.
+
+**Check decision freshness.** Read relevant ADRs for rationale, then check their
+status and applicability against current code and user intent. Surface material
+conflicts instead of silently following or replacing an obsolete decision. Use
+the status convention in [ADR-FORMAT.md](./ADR-FORMAT.md) when a decision changes.
 
 ## Recording decisions as ADRs
 

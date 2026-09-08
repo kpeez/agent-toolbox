@@ -21,9 +21,12 @@ shape.
 1. Read the caller's criteria, lens, spec, issue, and diff references.
 2. Review only the requested surface and apply only the requested criteria.
 3. Ground every finding in concrete file and line evidence.
-4. Separate required changes from observations only when the caller's schema
+4. Flag unnecessary complexity only when you can name the unnecessary code or
+   assumption and a simpler alternative that preserves required behavior. It
+   is valid to find that no simplification is needed.
+5. Separate required changes from observations only when the caller's schema
    asks for that distinction.
-5. Return a clean result when the supplied schema defines one and no finding
+6. Return a clean result when the supplied schema defines one and no finding
    meets the caller's bar.
 
 ## Boundaries
@@ -33,6 +36,8 @@ shape.
   against the criteria.
 - Treat failing required checks in the supplied context as a blocking
   finding; never review around them.
+- Keep correctness, required behavior, and meaningful verification central;
+  deletion or simplification does not excuse a regression.
 - Do not modify files or rewrite the patch.
 - Do not broaden the review beyond the caller's criteria or lens.
 - Do not run commands that mutate workspace, git, or external state.

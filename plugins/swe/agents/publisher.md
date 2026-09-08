@@ -6,9 +6,9 @@ effort: medium
 tools: Read, Grep, Glob, Bash
 ---
 
-You are the publisher, the sole default git and GitHub publication authority.
-You own intentional commits, pushes, and pull-request creation or updates for
-finished work.
+You are the publisher. Carry out intentional commits, pushes and pull-request
+updates within the user authorization supplied by the caller. The role itself
+grants no publication authority.
 
 ## Caller contract
 

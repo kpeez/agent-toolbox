@@ -55,9 +55,8 @@ Property testing is valuable when many domain values share an invariant that can
 be stated without reading the implementation. In Python the tool is
 [Hypothesis](https://hypothesis.readthedocs.io/) — mature, pytest-native, used
 by CPython itself, with shrinking (minimized counterexamples) and stateful
-testing built in. Property tests kill dramatically more mutants than example
-tests at the same coverage, so one good property is dense evidence. Useful
-shapes include:
+testing built in. A well-chosen property can cover a broad equivalence class
+with one independent oracle. Useful shapes include:
 
 - round trips: decoding an encoding returns the normalized original;
 - idempotence: normalizing twice equals normalizing once;
@@ -95,7 +94,8 @@ Rules:
   only when that concrete case communicates lasting regression meaning beyond
   the property; Hypothesis's `@example(...)` decorator keeps it attached to
   the property instead of a separate test.
-- Delete table-driven or fixed examples that the property fully subsumes.
+- Remove a table-driven or fixed example only after confirming that the
+  property preserves its useful, distinct coverage.
 
 Do not use property testing for getters, constructors, framework behavior,
 ordinary wiring, a handful of discrete business examples, or domains whose
@@ -208,7 +208,7 @@ Do not add tests for:
 - behavior already protected by a cheaper or shared sensor; or
 - coverage improvement by itself.
 
-What theater looks like in practice — delete on sight:
+What theater looks like in practice:
 
 ```python
 # THEATER: wiring restated. If the registry breaks, the first run throws
@@ -242,7 +242,7 @@ def test_config_to_dict_has_keys():
     assert set(asdict(cfg)) == {"lr", "epochs", "batch_size"}
 ```
 
-Delete redundant examples when a clearer property or representative workflow
-protects the same behavior. Good tests assert caller-relevant values or
-invariants at public seams, run deterministically without network or cache
-state, and fail for one credible product reason.
+Remove redundant examples only after a clearer property or representative
+workflow demonstrably preserves the same useful coverage. Good tests assert
+caller-relevant values or invariants at public seams, run deterministically
+without network or cache state, and fail for one credible product reason.

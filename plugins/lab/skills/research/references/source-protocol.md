@@ -82,9 +82,11 @@ Never fill an evidence gap from memory. Record:
 
 An unavailable source may be mentioned as a lead but cannot verify a claim.
 
-## Memo record
+## Bounded research memo
 
-Write exactly one private Markdown memo with this minimum shape:
+For `/research`, write one private Markdown memo with this minimum content;
+adapt headings when the same information remains easy to find. `/deep-research`
+uses its own brief, retained lanes and final-report structure.
 
 ```markdown
 # <Question or memo title>

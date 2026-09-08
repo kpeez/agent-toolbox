@@ -64,7 +64,8 @@ Load `references/tufte-perception.md` when you need the rationale.
 ### 4. Apply the plotting rules
 
 - Bars on linear scales start at `0`.
-- Bars on log scales start at `1`.
+- Log-scaled bars need a meaningful, explicitly labeled baseline. If no such
+  baseline exists, use points or another encoding that does not imply one.
 - Use lines only for ordered axes.
 - Avoid dual axes by default.
 - Avoid 3D effects, shadows, gradients, and decorative textures.
