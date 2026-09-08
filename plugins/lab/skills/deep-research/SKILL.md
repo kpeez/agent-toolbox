@@ -10,6 +10,10 @@ is a portable instruction workflow, not a provider router or research
 framework. The coordinator owns every artifact and the final judgment; lane
 workers return evidence in chat.
 
+Use `docs/agents/` for project documents unless the project or user specifies
+another location. Create subdirectories as needed, whether tracked or ignored,
+in an ordinary directory or through an existing symlink.
+
 Load the shared
 [source protocol](../research/references/source-protocol.md) and the
 [evidence-packet guide](references/evidence-packet.md) before framing the work.
@@ -21,8 +25,8 @@ user authorization for that disclosure.
 
 ## 1. Write the brief before dispatch
 
-Create `docs/agents/research/<slug>/brief.md` through the repository's
-gitignored `docs/agents` symlink. Do not dispatch until the brief states:
+Create `docs/agents/research/<slug>/brief.md` (or use the chosen location).
+Do not dispatch until the brief states:
 
 - the exact research question and the decision or deliverable it informs;
 - scope, exclusions, required freshness, and source-quality standard;

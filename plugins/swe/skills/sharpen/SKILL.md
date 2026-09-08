@@ -14,6 +14,10 @@ the codebase instead.
 When recording glossary entries or ADRs, lead with the decision or term, keep
 evidence close, and make consequences explicit.
 
+Use `docs/agents/` for project documents unless the project or user specifies
+another location. Create subdirectories as needed, whether tracked or ignored,
+in an ordinary directory or through an existing symlink.
+
 ## During the session
 
 **Cross-check against the code.** When I state how something works, verify the
@@ -52,6 +56,4 @@ Record an ADR only when **all three** are true:
 
 If any of the three is missing, skip it. When all three hold, record it
 under `docs/agents/adrs/` using [ADR-FORMAT.md](./ADR-FORMAT.md), then tell me you did
-and why. ADRs live in the shared llmOS vault, not the repo; if the `docs/agents/`
-symlink is missing, run `/setup-repo` to establish the approved project-docs
-topology first.
+and why.

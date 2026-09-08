@@ -25,8 +25,8 @@ approved.
    - **Evaluator:** exact evaluation and metric-extraction commands.
    - **Editable paths / read-only paths.**
    - **Output paths:** absolute record and log directories plus every path the
-     evaluator may create. Prefer outputs outside the worktree or paths already
-     ignored by the target repository. If a new in-worktree path is needed,
+     evaluator may create. Prefer evaluator outputs outside the worktree or paths
+     already ignored by the target repository. If a new in-worktree evaluator path is needed,
      make the ignore-file change explicit and keep it within approved editable
      scope; do not silently change repository or shared Git ignore settings.
    - **Per-attempt budget:** expected duration and kill threshold. Twice the
@@ -49,12 +49,13 @@ approved.
    `git worktree add ../<repo>-autoresearch-<tag> -b autoresearch/<tag>`.
    Record `git -C <worktree> status --short --untracked-files=all` before the
    baseline. Stop if it contains unexpected state.
-6. **Create the approved records.** Prefer the resolved primary checkout's
-   `docs/agents/autoresearch/<tag>/` when available; an ignored
-   `.autoresearch/<tag>/` or outside-worktree directory is also valid when
-   chosen in the approved program. Do not assume a linked worktree lacks or
-   shares `docs/agents`. Recheck the approved paths, write the approved
-   `program.md`, and create an empty `results.jsonl` and log directory without
+6. **Create the approved records.** Default to the resolved primary checkout's
+   `docs/agents/autoresearch/<tag>/` unless the project or user specifies another
+   location. This may be tracked, ignored, or reached through an existing symlink.
+   Preserve the output paths chosen in the approved program. Do not assume a
+   linked worktree lacks or shares `docs/agents`. Recheck the approved paths,
+   create directories as needed, write the approved `program.md`, and create
+   an empty `results.jsonl` and log directory without
    overwriting existing records.
 7. **Run the baseline.** Attempt 0 evaluates unmodified code. Commit identity,
    log, and ledger record follow the same rules as every later attempt. The

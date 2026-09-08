@@ -1,7 +1,8 @@
 # Spec template
 
-Create specs under `docs/agents/specs/`. A spec records durable approved intent;
-the selected tracker records executable task state.
+Create specs under `docs/agents/specs/` unless the project or user specifies
+another location; adjust the paths below accordingly. A spec records durable
+approved intent; the selected tracker records executable task state.
 
 ## Frontmatter
 
