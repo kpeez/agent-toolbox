@@ -1,46 +1,37 @@
 # Issue tracker: GitHub
 
-Issues for this repo live as GitHub issues. Use the `gh` CLI for all operations.
+Use host-native GitHub tools or `gh` for issue reads and writes. Follow the
+repository's existing labels, project fields, and status conventions where they
+exist; create workflow labels only when the approved scope calls for them.
 
-## Conventions
+## Container and tasks
 
-- **Create an issue**: `gh issue create --title "..." --body "..."`. Use a heredoc for multi-line bodies.
-- **Read an issue**: `gh issue view <number> --comments`, filtering comments by `jq` and also fetching labels.
-- **List issues**: `gh issue list --state open --json number,title,body,labels,comments --jq '[.[] | {number, title, body, labels: [.labels[].name], comments: [.comments[].body]}]'` with appropriate `--label` and `--state` filters.
-- **Comment on an issue**: `gh issue comment <number> --body "..."`
-- **Apply / remove triage labels**: `gh issue edit <number> --add-label "..."` / `--remove-label "..."`. Create missing labels with `gh label create` before applying.
-- **Parent/sub-issues**: GitHub supports native sub-issues — link each child to the parent via the sub-issues REST API or the GitHub MCP `sub_issue_write` tool; don't hand-maintain a `- [ ]` task list in the parent body. Each task's body still links back to the parent.
-- **Close**: `gh issue close <number> --comment "..."`
+A spec records `tracker: github` and `tracker_container: <issue number>`.
+Verify a recorded parent issue before use. If no container exists and creation
+is authorized, create one and record its number. Link task issues through
+GitHub's native sub-issue relationship rather than a duplicated checklist.
+Reuse matching existing tasks.
 
-Infer the repo from `git remote -v` — `gh` does this automatically when run inside a clone.
+Issue bodies may include a plain `Spec: <specPath>` reference for humans. Do not
+depend on hidden body tokens for identity.
 
-## Tracker operations
+## State and resume
 
-Host-native GitHub tracker tools own container lookup, status reads, comments,
-and updates. Use the `gh` CLI and GitHub issue APIs described here; this
-reference defines the conventions and state transitions, not a repository
-script.
+Use repository-native states or labels to record meaningful transitions such
+as started, blocked, awaiting review, and delivered. Give one task owner
+responsibility for updates. Preserve human holds and assignments.
 
-## Container identity
+Before changing status on resume, compare the issue with current checkout,
+worktree, diff, commit, review, and pull-request evidence. A branch name or
+label alone does not prove completion. Report failed tracker writes accurately.
 
-A spec records its parent issue in its own YAML frontmatter (`tracker: github`,
-`tracker_container: <issue number>`). Read it from the spec; if absent, create
-the parent issue and record it there. Never write a machine-parsed token into
-an issue body — a plain `Spec: <specPath>` line for humans is fine.
+Do not close a task merely because code was verified locally or a pull request
+was opened or marked ready. Close it when the repository's delivery condition
+is met.
 
-## State transitions
+## Publication boundary
 
-- task picked up: `gh issue edit <number> --add-label in-progress`
-- task merged into the integration branch: `gh issue edit <number> --remove-label in-progress --add-label in-review`
-- end of run: nothing to reconcile — GitHub has no project-level status here
-
-Create missing labels with `gh label create` first. Never close an issue: the
-run ends at a draft PR. A failed label write is logged and the run continues.
-
-## When a skill says "publish to the issue tracker"
-
-Create a GitHub issue.
-
-## When a skill says "fetch the relevant ticket"
-
-Run `gh issue view <number> --comments`.
+Creating issues, comments, labels, relationships, or status updates changes
+external state and requires existing authority. Reading does not. When a skill
+says to publish or fetch a ticket, apply this reference and the user's current
+authority.

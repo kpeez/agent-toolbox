@@ -5,145 +5,168 @@ description: Run an autonomous experiment loop that optimizes one metric through
 
 # Autoresearch
 
-You are an autonomous researcher. One linear loop: make a small change, commit
-it, run the evaluator, keep the change if the metric improves, reset if it
-does not. The rules that vary per run live in that run's `program.md`; this
-skill defines the loop that never varies. The workflow is inspired by the
-historical [Karpathy autoresearch prompt](references/karpathy-program.md),
-generalized to any repo and metric. That file is provenance only. Do not copy
-its old TSV, branch, five-minute-budget, or infinite-loop instructions; this
-skill's JSONL, single-worktree, and declared-stop rules are authoritative.
+Run one linear experiment loop: make a small change, commit it, evaluate that
+exact commit, then keep or discard it according to the approved program. Rules
+that vary live in the run's `program.md`; this skill defines the stable loop.
+The historical [Karpathy prompt](references/karpathy-program.md) is provenance
+only. Its TSV, branch, fixed budget, and infinite-loop rules are not active.
 
 ## Setup
 
-Work with the user to set up the run. Create nothing until the program is
+Work with the user to define the run. Create nothing until the program is
 approved.
 
-1. **Agree on a run tag**: propose a short date-based tag (e.g. `aug17`). The
-   branch `autoresearch/<tag>` must not already exist — every run is fresh.
-2. **Read the in-scope files** and agree on which paths are editable and which
-   are read-only. The evaluator is always read-only.
-3. **Co-author `program.md`** in chat, with exactly these fields:
-   - **Goal**: the single primary metric and its direction (minimize or
-     maximize).
-   - **Evaluator**: the exact command to run, and the exact command that
-     extracts the metrics from its output (e.g. a grep of the experiment
-     log).
-   - **Editable paths / read-only paths**.
-   - **Per-experiment budget**: expected wall-clock per evaluation and the
-     kill threshold (default: kill at twice the expected time).
-   - **Soft constraints**: limits that may flex for a meaningful gain but must
-     not blow up (e.g. memory).
-   - **Stop condition**: a target metric value, an experiment count, or a
-     wall-clock limit. The user may instead explicitly choose "run until
-     interrupted" — write that choice down; never assume it.
-   - **Run identity**: tag, branch, absolute worktree path, absolute record
-     directory, and the absolute path of this skill's `scripts/ledger.py`.
-   - **Ledger record shape**: the run-specific keys inside `metrics` (see
-     Logging results).
-4. **Get explicit approval** of `program.md` in chat. Changing the program
-   mid-run is not allowed; new rules mean a new approved program.
-5. **Create the branch and its single worktree**:
+1. **Agree on a run tag.** Use a short date-based tag. Verify that the new
+   `autoresearch/<tag>` branch and dedicated worktree do not already exist.
+2. **Read the in-scope files.** Agree on editable and read-only paths. The
+   evaluator and metric extraction are always read-only.
+3. **Co-author `program.md`** with:
+   - **Goal:** one primary metric and whether to minimize or maximize it.
+   - **Evaluator:** exact evaluation and metric-extraction commands.
+   - **Editable paths / read-only paths.**
+   - **Output paths:** absolute record and log directories plus every path the
+     evaluator may create. Prefer outputs outside the worktree or paths already
+     ignored by the target repository. If a new in-worktree path is needed,
+     make the ignore-file change explicit and keep it within approved editable
+     scope; do not silently change repository or shared Git ignore settings.
+   - **Per-attempt budget:** expected duration and kill threshold. Twice the
+     expected duration is a reasonable default.
+   - **Soft constraints:** limits that may flex for a meaningful gain.
+   - **Tie policy:** normally discard equal primary metrics. Allow an equal
+     result for a simpler implementation only when the program explicitly says
+     how to judge that tradeoff.
+   - **Stop condition:** target value, attempt count, wall-clock limit, or an
+     explicit `run until interrupted`. Never assume an indefinite run.
+   - **Run identity:** tag, branch, absolute worktree path, primary checkout,
+     record directory, log directory, and absolute path to `scripts/ledger.py`.
+   - **Ledger metrics:** the run-specific keys stored under `metrics`.
+   Resolve the proposed record and log locations from actual filesystem state
+   before approval; a missing or unwritable path is not permission to pick an
+   unapproved fallback later.
+4. **Get explicit approval** of `program.md`. New rules require a new approved
+   program; do not revise an active run in place.
+5. **Create the branch and single worktree:**
    `git worktree add ../<repo>-autoresearch-<tag> -b autoresearch/<tag>`.
-   The entire run happens in that one worktree. The user's checkout is never
-   touched.
-   Record `git -C <worktree> status --short` before the baseline. Stop if the
-   new worktree is not clean; do not reset a worktree with unexpected tracked
-   changes.
-6. **Create the record directory** `docs/agents/autoresearch/<tag>/` via the
-   primary repo and resolve its absolute path (the worktree has no
-   `docs/agents` symlink). Write `program.md` there and create an empty
-   `results.jsonl`. If the repo has no `docs/agents` symlink, use
-   `<worktree>/.autoresearch/<tag>/` instead (untracked) and tell the user.
-   The loop writes to the record directory and the worktree, nowhere else.
-7. **Run the baseline**: experiment 0 is always the unmodified code. Its
-   result is the first ledger line and the first best. If the baseline
-   crashes, stop and report; there is nothing to improve against.
+   Record `git -C <worktree> status --short --untracked-files=all` before the
+   baseline. Stop if it contains unexpected state.
+6. **Create the approved records.** Prefer the resolved primary checkout's
+   `docs/agents/autoresearch/<tag>/` when available; an ignored
+   `.autoresearch/<tag>/` or outside-worktree directory is also valid when
+   chosen in the approved program. Do not assume a linked worktree lacks or
+   shares `docs/agents`. Recheck the approved paths, write the approved
+   `program.md`, and create an empty `results.jsonl` and log directory without
+   overwriting existing records.
+7. **Run the baseline.** Attempt 0 evaluates unmodified code. Commit identity,
+   log, and ledger record follow the same rules as every later attempt. The
+   baseline is the first `keep`. If it crashes, record the crash and stop.
 
-## Experimentation
+## Resume an approved run
 
-Everything inside the editable paths is fair game: architecture,
-hyperparameters, algorithms, data handling, sizes, the training or serving
-loop itself.
+Resume from observed state, not from an assumed ledger position.
 
-You cannot:
+1. Read the approved program and ledger. Verify the recorded worktree exists,
+   `git worktree list --porcelain` associates it with the recorded branch, and
+   the record and log directories resolve to the recorded locations.
+2. Inspect the branch, `HEAD`, full worktree status, ledger, and logs. Permit
+   only declared evaluator outputs. Unexpected tracked changes, undeclared
+   untracked paths, a different branch, or an unexplained `HEAD` is a stop
+   condition.
+3. Find the latest kept commit in the ledger and verify that both it and every
+   commit needed to interpret unfinished work exist with
+   `git cat-file -e <sha>^{commit}`. A missing object is a stop condition.
+4. Reconcile an interrupted attempt before starting another:
+   - A completed log without a ledger record belongs to the commit named in its
+     filename. Verify that object and append the attempt's result.
+   - An incomplete log without a record is a `crash` for that named commit once
+     no evaluator process is running. Preserve the log and record the
+     interruption.
+   - A clean committed `HEAD` with no log is unevaluated work. Evaluate it as
+     the next attempt only when its origin and scope are clear.
+   - If a recorded discard or crash was not reset before interruption, reset
+     only after the identity and clean-state checks below pass.
+5. If the state cannot be reconciled without guessing, stop and report the
+   exact mismatch. Never reset merely because a ledger entry names an older
+   commit.
+6. Check the original stop condition and remaining budget before another
+   evaluation. Resuming a session does not restart the run's budget.
 
-- modify the evaluator or any read-only path — its parsed output is the
-  ground truth, and only it decides keep or discard;
-- add dependencies, unless the program allows it;
+## Experiment boundaries
+
+Everything inside the editable paths is available for experiments. Do not:
+
+- modify the evaluator or another read-only path;
+- add dependencies unless the program allows it;
+- write evaluator output outside declared output paths;
 - exceed a soft constraint dramatically, even for a better metric.
 
-**Simplicity criterion**: all else equal, simpler wins. Weigh complexity cost
-against improvement size. A tiny gain that adds twenty ugly lines is not
-worth keeping; an equal result from deleting code is a great outcome.
+All else equal, simpler wins only under the approved tie policy. Prefer deleting
+over simplifying, simplifying over optimizing, and optimizing over automating.
+Do not keep an equal metric for subjective simplicity unless the program
+authorized that judgment.
 
-## Output format
+## Evaluate and record attempts
 
-Run the evaluator exactly as the program states, redirecting everything:
-`<evaluator command> > logs/<id>.log 2>&1`, where `<id>` is the experiment
-number. Never tee or stream evaluator output into your context. `logs/` lives
-in the worktree root, untracked — it survives every reset and lasts as long
-as the worktree, so near-misses keep their raw output for later mining.
-Extract metrics with the program's extraction command. Empty extraction
-output means the run crashed — read `tail -n 50 logs/<id>.log` for the
-reason.
+Every evaluator invocation is one attempt with one committed code state, one
+log, and one ledger record, including crashes and retries.
 
-## Logging results
+1. Determine the next ledger ID before invoking the evaluator. Use one loop
+   writer; do not reserve IDs concurrently.
+2. Record the full `HEAD` commit and write output to
+   `<log-dir>/<id>-<full-sha>.log`. Never reuse or overwrite a log.
+3. Run the evaluator exactly as approved, redirecting stdout and stderr to that
+   log. Do not stream evaluator output into context.
+4. Check the evaluator's exit status and extract metrics with the approved
+   command. A nonzero exit, unusable metrics, or a killed process is a crash.
+   Inspect only the bounded tail needed to diagnose it.
+5. Append exactly one ledger record for this invocation. The record's commit
+   must be the commit named by the log and actually evaluated.
 
-Log exactly one record per experiment — crashes included — with this skill's
-ledger script, using the path recorded in the program:
+If a crash has a trivial code fix, record the failed attempt first. Make the
+fix, commit it, then evaluate the new commit under a new ID and log. Never reuse
+the previous commit, ID, or log for a retry. If the idea itself is broken,
+record the crash and discard it.
+
+Use the recorded ledger script:
 
 ```bash
 python3 <ledger.py> append <record-dir> \
-  --commit a1b2c3d --status keep --description "baseline" \
+  --commit <full-sha> --status keep --description "baseline" \
   --metric val_bpb=0.9979 --metric peak_vram_gb=44.0
 ```
 
-One command assigns the next id, appends one JSON line to `results.jsonl`,
-and regenerates `summary.md` (a markdown table of every experiment with the
-current best marked). `status` is `keep`, `discard`, or `crash`. Core keys
-are fixed; run-specific measurements are `--metric key=value` pairs under the
-keys the program names (`key=null` when a crash produced no measurement).
-The ledger is append-only — the script has no update or delete verb, and you
-must never rewrite, reorder, or delete its lines by hand. A wrong record is
-corrected by appending a superseding one. The ledger, not the summary, is
-the source of truth; `ledger.py render <record-dir>` rebuilds the summary
-alone.
+`status` is `keep`, `discard`, or `crash`. Use `key=null` when a crash produced
+no measurement. The ledger is append-only. Never rewrite, reorder, or delete
+its lines. If a record is wrong, stop and report the discrepancy; a later line
+does not silently change the earlier record. `ledger.py render <record-dir>`
+rebuilds the summary from the ledger.
 
-## The experiment loop
+## The loop
 
-LOOP:
-
-1. Start from the last best commit with a clean worktree. Before each
-   experiment and before any reset, run `git status --short` in the experiment
-   worktree. Treat tracked changes or unexpected paths as a stop condition;
-   only the declared `logs/` output may remain untracked.
+1. Start from the latest kept commit with a clean worktree. Before editing or
+   resetting, inspect `git status --short --untracked-files=all`. Declared,
+   ignored evaluator outputs may remain; anything else stops the loop.
 2. Pick one idea and make the smallest change that tests it.
-3. Commit. The commit hash is the experiment's identity — one idea per
-   commit, no bundling.
-4. Run the evaluator (see Output format).
-5. Extract the metrics. On a crash: if the cause is trivial (a typo, a
-   missing import), fix and re-run; if the idea itself is broken, log
-   `crash`, reset, and move on. Give up on an idea after a few fix attempts.
-6. Log the experiment with one `ledger.py append` command (see Logging
-   results).
-7. Improved → `keep`: the branch simply advances. Equal or worse →
-   `discard`: verify the expected worktree and branch, confirm the clean-state
-   check above, then use `git reset --hard` back to the last best commit.
-   Discarded commits survive as hashes in the ledger.
-8. Check the stop condition. Unmet → go to 1.
+3. Commit the code that will be evaluated. The commit is the experiment's
+   identity.
+4. Evaluate and record the attempt as described above.
+5. Keep an improved metric. Keep an equal metric only when the approved tie
+   policy allows the demonstrated simplification. Otherwise discard it.
+6. After a discard or a crash that will not be retried, verify the expected
+   worktree and branch, confirm the status contains no unexpected paths, and
+   verify the target kept commit with `git cat-file -e <sha>^{commit}`. Only then
+   reset the experiment branch to that commit. Never start the next idea from
+   an abandoned crashed candidate. The attempt remains identified in the ledger.
+7. Check the stop condition. If it is unmet, continue.
 
-If an evaluation exceeds the kill threshold, kill it and log it as a crash.
-Do not pause mid-loop to ask whether to continue — the user may be asleep and
-expects you to run until the stop condition fires (or indefinitely, when the
-program says run until interrupted). Out of ideas means think harder: re-read
-the in-scope files, revisit near-misses, combine partial wins, try something
-structural.
+When an evaluation exceeds the kill threshold, terminate it and record a crash.
+Do not pause mid-loop merely to ask whether to continue. Stop for the approved
+condition, user interruption, unsafe or unreconciled state, or a missing
+required capability. When ideas run thin, revisit in-scope code and retained
+results within the remaining budget; do not broaden scope.
 
 ## Wrap-up
 
-When the stop condition fires or the user interrupts, regenerate `summary.md`
-(`ledger.py render`), then report: best commit and its metrics versus baseline, experiments
-attempted and kept, branch name, worktree path, and record directory. Leave
-the branch and worktree in place — merging, publishing, or discarding the
-result is the user's call, never yours.
+When the run stops, render `summary.md` and report the latest kept commit and
+metrics versus baseline, attempts and keeps, stop reason, branch, worktree,
+record directory, and any unreconciled state. Leave the branch and worktree in
+place. Merging, publishing, or discarding the result remains the user's choice.

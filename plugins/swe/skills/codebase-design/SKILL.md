@@ -6,8 +6,8 @@ description: Shared vocabulary and principles for designing deep modules — sub
 # Codebase Design — deep modules
 
 The goal of module design is **depth**: a lot of behavior behind a small
-interface. Use this vocabulary exactly — don't drift into "component,"
-"service," "API," or "boundary."
+interface. The vocabulary below supports precise reasoning; use the project's
+established terms when they communicate the design more clearly.
 
 ## Vocabulary
 
@@ -21,7 +21,7 @@ interface. Use this vocabulary exactly — don't drift into "component,"
   can exercise per unit of interface they must learn. **Deep** = high leverage.
   **Shallow** = interface nearly as complex as the implementation.
 - **Seam** — where an interface lives; a place behavior can be altered without
-  editing in place. (Use this, not "boundary.")
+  editing in place.
 - **Adapter** — a concrete thing satisfying an interface at a seam.
 - **Leverage** — the caller's benefit from depth; **locality** — the
   maintainer's: changes, bugs, and knowledge concentrated in one place.
@@ -42,8 +42,11 @@ interface. Use this vocabulary exactly — don't drift into "component,"
   was a pass-through. If complexity reappears across N callers, it was earning
   its keep.
 - **The interface is the test surface.** Callers and tests cross the same seam;
-  if a test must bypass the interface to verify behavior, reshape the module.
-- **One adapter = hypothetical seam. Two adapters = real seam.**
+  if a test bypasses it, check whether the test protects a real contract before
+  deciding that the module needs reshaping.
+- **Adapter count is evidence, not a rule.** Multiple justified adapters make a
+  seam concrete; one adapter can still be warranted by a real external contract
+  or a test substitute.
 
 For restructuring *existing* shallow modules — dependency categories, seam
 selection, interface alternatives — use `/improve-codebase-architecture`; this

@@ -1,46 +1,45 @@
-# CONTEXT.md Format
+# Project context
 
-`docs/agents/CONTEXT.md` is a domain glossary — and nothing else. Not a spec, not
-a scratch pad, not a place for implementation decisions (those go in
-`docs/agents/adrs/`). It pins down the project's vocabulary so terminology doesn't
-drift across sessions. Like everything under `docs/agents/`, it is uncommitted:
-it lives in the shared vault, not the repo. Create it lazily, only when the first
-term needs resolving.
+`docs/agents/CONTEXT.md` holds the small amount of reusable project knowledge
+that a new session needs: purpose, terminology, non-obvious constraints, useful
+quirks, and links to canonical documents. It lives behind the project's existing
+gitignored `docs/agents/` symlink. Create it only when useful context exists.
 
-It is optional. Most small changes never touch it. It earns its place when a
-project has overloaded or ambiguous domain terms — common in ML/research work
-(episode vs rollout vs trajectory, run vs experiment vs sweep, reward vs return,
-eval split vs holdout).
+Keep each fact in one home:
 
-## Structure
+- `AGENTS.md`: verified repository commands and recurring work conventions.
+- `CONTEXT.md`: project context and glossary; the tracker pin may live here when
+  `AGENTS.md` is shared across repositories.
+- Spec: approved intent, scope, design and acceptance criteria.
+- Tracker: tasks, dependencies, ownership, progress and current blockers.
+- ADR: a significant decision and the rationale needed to revisit it.
+
+Link to those records instead of copying them. Personal preferences and agent
+memory belong with the agent, not in project context. Do not keep an action
+ledger, session transcript, or duplicate task status here.
+
+## Optional shape
 
 ```md
-# {Project / Context Name}
+# Project context
 
-{One or two sentence description of what this project is about.}
+<Purpose and links to the relevant specs, tracker and decisions.>
+
+## Constraints and quirks
+
+<Only facts a future contributor cannot cheaply infer from the code.>
 
 ## Language
 
-**Run**:
-A single training or evaluation invocation with one config.
-_Avoid_: job, trial
-
-**Experiment**:
-A named group of runs that together answer one question.
-_Avoid_: sweep (a sweep is one kind of experiment), study
-
-**Return**:
-The discounted sum of rewards over an episode.
-_Avoid_: reward (reward is per-step), score
+**Experiment**: One candidate evaluation with its own result record.
 ```
 
-## Rules
+Use only sections the project needs. Define overloaded project terms briefly;
+prefer the project's established names over a skill's generic vocabulary.
+Update stale facts when encountered. Promote an encountered issue into this
+file only when it is a recurring constraint; a transient blocker stays with the
+task. One short handoff may retain unfinished work that cannot be reconstructed
+cheaply, but it must not become a parallel journal.
 
-- **Be opinionated.** When multiple words exist for one concept, pick the best and list the rest under `_Avoid_`.
-- **Keep definitions tight.** One or two sentences. Define what it IS, not what it does.
-- **Only project-specific terms.** General programming concepts (timeouts, error types, caching) don't belong even if used heavily. Ask: is this unique to this project's domain, or general? Only the former.
-- **Group under subheadings** when natural clusters emerge; a flat list is fine otherwise.
-
-This repo uses a **single** `docs/agents/CONTEXT.md` — the multi-context
-`CONTEXT-MAP.md` pattern (one glossary per package in a monorepo) is
-intentionally not adopted.
+Preserve an existing multi-context layout and its `CONTEXT-MAP.md`; do not
+introduce one merely to follow this template.

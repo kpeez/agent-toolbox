@@ -15,6 +15,10 @@ source repo.
 ## Template
 
 ```md
+---
+status: accepted
+---
+
 # {Short title of the decision}
 
 {1-3 sentences: what's the context, what did we decide, and why.}
@@ -26,9 +30,22 @@ That's it. An ADR can be a single paragraph. The value is in recording _that_ a 
 
 Only include these when they add genuine value. Most ADRs won't need them.
 
-- **Status** frontmatter (`proposed | accepted | deprecated | superseded by ADR-NNNN`) — useful when decisions are revisited
 - **Considered Options** — only when the rejected alternatives are worth remembering
 - **Consequences** — only when non-obvious downstream effects need to be called out
+
+## Status and applicability
+
+Use one `status` field: `proposed`, `accepted`, `deprecated`, or `superseded`.
+When a decision is replaced, set `status: superseded`, add `superseded_by` with
+the replacement document's relative path, and add a short dated note explaining
+what changed. Use `deprecated` when the decision no longer applies and has no
+replacement. Preserve the original context, alternatives and reasoning.
+
+An accepted ADR is rationale to evaluate, not authority over current user
+intent. Check its scope and assumptions against the current code before relying
+on it. A missing status on an older record does not establish current authority.
+For a partial replacement, say which portion is superseded and which remains
+applicable. Do not rewrite unrelated records or silently erase old decisions.
 
 ## Numbering
 
