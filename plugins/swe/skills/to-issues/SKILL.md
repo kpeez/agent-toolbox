@@ -5,6 +5,9 @@ description: Break an approved plan or spec into independently workable tasks on
 
 # /to-issues
 
+Project document paths below default to `docs/agents/`; follow an explicit
+project or user override.
+
 Turn approved intent into the smallest independently verifiable tasks that
 cover the scope. Prefer complete behavioral slices where they help, but do not
 force every task through schema, API, UI, and tests. Documentation,

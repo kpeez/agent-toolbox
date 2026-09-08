@@ -10,6 +10,10 @@ Markdown memo under `docs/agents/research/`. This is the small research path:
 use `deep-research` when the request needs independent lanes, broad coverage,
 or contradiction-focused coordination.
 
+Use `docs/agents/` for project documents unless the project or user specifies
+another location. Create subdirectories as needed, whether tracked or ignored,
+in an ordinary directory or through an existing symlink.
+
 Load [references/source-protocol.md](references/source-protocol.md) before
 research begins. Give a delegated researcher the parts of that contract needed
 for its lane. A host-native researcher with workspace access may read the
@@ -72,10 +76,9 @@ map in chat. Do not ask it to write the memo.
 ## Write the single memo
 
 The host session writes exactly one requested memo at
-`docs/agents/research/<filename>.md`, reached through the repository's
-gitignored `docs/agents` symlink. Do not create a project directory, evidence
-ledger, raw-log archive, proposal, or second summary artifact for bounded
-research.
+`docs/agents/research/<filename>.md` (or the chosen location). Do not create an
+evidence ledger, raw-log archive, proposal, or second summary artifact for
+bounded research.
 
 Synthesize only from checked source records. Follow the memo record in the
 source protocol, cite every material externally checkable claim next to the

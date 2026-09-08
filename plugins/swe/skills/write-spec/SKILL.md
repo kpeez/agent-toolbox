@@ -5,6 +5,10 @@ description: Create a durable Markdown feature spec whose approved intent and ob
 
 # /write-spec — feature spec management
 
+Use `docs/agents/` for project documents unless the project or user specifies
+another location. Create subdirectories as needed, whether tracked or ignored,
+in an ordinary directory or through an existing symlink.
+
 A spec records intended outcomes, scope, design, acceptance criteria, and
 verification expectations. The selected tracker owns executable tasks,
 dependencies, assignments, blockers, and progress. Do not duplicate that state
@@ -61,9 +65,7 @@ Skip it for a trivial, fully understood edit.
 Create `docs/agents/specs/NNNN-<slug>.md`:
 
 1. Lowercase the name and replace spaces with hyphens.
-2. If the approved project-docs topology is absent, run `/setup-repo`.
-   `docs/agents` must be the repository's configured shared-docs link; do not
-   replace an existing mapping without confirming ownership.
+2. Create the specs directory if needed.
 3. Reuse the number of an existing matching slug. Otherwise scan files matching
    `^[0-9]{4}-`, allocate the next zero-padded number, and do so immediately
    before writing.

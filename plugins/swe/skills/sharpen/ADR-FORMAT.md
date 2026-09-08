@@ -1,16 +1,11 @@
 # ADR Format
 
-ADRs are **not committed to the source repo** — like specs, they live in the
-shared llmOS vault at `$LLMOS_ROOT/projects/<repo>/adrs`, reached through the
-gitignored `docs/agents/` symlink that `/setup-repo` creates.
+Store ADRs under `docs/agents/adrs/` unless the project or user specifies another
+location. Create the directory as needed; it may be tracked, ignored, or reached
+through an existing symlink.
 
 Within `docs/agents/adrs/`, ADRs use sequential numbering: `0001-slug.md`,
 `0002-slug.md`, etc.
-
-If `docs/agents/` is missing (setup-repo hasn't run), run
-`/setup-repo` to establish the full project-docs topology before writing the
-first ADR — never create `docs/agents/adrs/` as a real committed directory in the
-source repo.
 
 ## Template
 
