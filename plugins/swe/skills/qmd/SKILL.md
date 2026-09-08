@@ -144,8 +144,8 @@ qmd get "#abc123" --from 120 -l 40     # equivalent, using flags
 - `<path>:<from>` — start at `<from>`, read to end.
 - `--from <line>` / `-l <lines>` — flag equivalents (override the suffix).
 
-Search hits include a `:line` anchor — feed it straight in:
-`qmd get path:line:<n>` reads a window around the match.
+Search hits include a numeric line anchor. Use that line as `<from>` and choose
+a useful count, for example `qmd get path:120:40`.
 
 Wrong: `qmd get "#abc123" | sed -n '120,160p'`
 Right: `qmd get "#abc123:120:40"`

@@ -1,6 +1,6 @@
 ---
 name: diagnose
-description: Disciplined diagnosis loop for hard bugs and performance regressions. Build a feedback loop, reproduce, hypothesize, instrument, fix, regression-test. Use when the user says "diagnose this" / "debug this", reports a bug, says something is broken/throwing/failing, or describes a performance regression.
+description: Disciplined diagnosis loop for hard bugs and performance regressions. Build a feedback loop, reproduce, hypothesize, instrument, fix, and verify. Use when the user says "diagnose this" / "debug this", reports a bug, says something is broken/throwing/failing, or describes a performance regression.
 ---
 
 # Diagnose
@@ -59,14 +59,15 @@ Run the loop. Watch the bug appear. Confirm:
 
 ## Phase 3 — Hypothesise
 
-Generate **3–5 ranked, falsifiable hypotheses** before testing any. Single-
-hypothesis generation anchors on the first plausible idea.
+Generate the smallest useful set of ranked, falsifiable hypotheses before
+testing. Include alternatives when they guard against anchoring; do not add
+hypotheses to meet a quota.
 
 > Format: "If <X> is the cause, then <changing Y> makes the bug disappear / <changing Z> makes it worse."
 
-If you can't state the prediction, it's a vibe — sharpen or discard it. Show the
-ranked list to the user before testing — they often re-rank instantly ("we just
-deployed a change to #3"). Don't block on it if they're AFK.
+If you cannot state the prediction, sharpen or discard it. A standalone
+developer may show the ranked list to the user when their context could change
+the order. A bounded worker reports consequential uncertainty to its caller.
 
 ## Phase 4 — Instrument
 
@@ -81,33 +82,34 @@ single grep. For performance regressions, logs are usually wrong: establish a
 baseline measurement (timing harness, profiler, query plan), then bisect. Measure
 first, fix second.
 
-## Phase 5 — Fix + regression test
+## Phase 5 — Fix + lasting evidence
 
-Write the regression test **before the fix** — but only if there's a **correct
-seam** for it: one where the test exercises the real bug pattern as it occurs at
-the call site. If the only available seam is too shallow (a single-caller test
-when the bug needs multiple callers), a test there gives false confidence.
+Before the fix, decide whether the minimized reproduction earns a permanent
+regression test using `/testing-code`'s admission gate. If it does, write the
+test at a correct seam where it exercises the real bug pattern as it occurs at
+the call site, then watch it fail. If it does not, retain proportionate evidence
+such as the reproducible diagnostic loop or a behavior-specific check.
 
 **If no correct seam exists, that itself is the finding.** Note it — the
 architecture is preventing the bug from being locked down. Flag it for Phase 6.
 
-If a correct seam exists: turn the minimised repro into a failing test, watch it
-fail, apply the fix, watch it pass, then re-run the Phase 1 loop against the
-original (un-minimised) scenario.
+Apply the fix, re-run the chosen lasting evidence, then re-run the Phase 1 loop
+against the original (un-minimised) scenario.
 
 ## Phase 6 — Cleanup + post-mortem
 
 - [ ] Original repro no longer reproduces (re-run the Phase 1 loop)
-- [ ] Regression test passes (or absence of a seam is documented)
+- [ ] The admitted regression test or other chosen evidence passes
 - [ ] All `[DEBUG-...]` instrumentation removed (grep the prefix)
-- [ ] Throwaway harnesses deleted
-- [ ] The hypothesis that turned out correct is stated in the commit / PR message — so the next debugger learns
+- [ ] Throwaway harnesses owned by the task deleted
+- [ ] The confirmed cause and evidence are reported with the fix where the next
+      debugger can find them
 
 **Then ask: what would have prevented this bug?** If the answer is architectural
 (no good test seam, tangled callers, hidden coupling), hand off to
 `/improve-codebase-architecture` with the specifics. Make that recommendation
 **after** the fix is in — you know more now than when you started.
 
-> Delegate substantial reads and writes to subagents — explore with a fast
-> model, draft code with a medium one, and review the diff. Don't burn your own
-> context.
+> A standalone developer may delegate substantial bounded reads or writes to
+> suitable available agents. A bounded worker reports to its caller rather
+> than creating an uncontrolled delegation chain.

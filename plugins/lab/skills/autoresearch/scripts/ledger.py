@@ -64,10 +64,10 @@ def render(run_dir: Path) -> None:
         for key in record.get("metrics") or {}:
             if key not in metric_keys:
                 metric_keys.append(key)
-    best_id = None
+    latest_keep_id = None
     for record in records:
         if record.get("status") == "keep":
-            best_id = record.get("id")
+            latest_keep_id = record.get("id")
     header = ["id", "commit", "status", *metric_keys, "description"]
     lines = [
         "# Autoresearch results",
@@ -79,7 +79,7 @@ def render(run_dir: Path) -> None:
     ]
     for record in records:
         metrics = record.get("metrics") or {}
-        marker = " ← best" if record.get("id") == best_id else ""
+        marker = " ← latest keep" if record.get("id") == latest_keep_id else ""
         row = [
             f"{record.get('id')}{marker}",
             cell(record.get("commit")),

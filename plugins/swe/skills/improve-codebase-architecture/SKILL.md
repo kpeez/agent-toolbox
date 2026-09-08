@@ -14,21 +14,21 @@ AI-navigability.
 Read the `codebase-design` skill
 ([../codebase-design/SKILL.md](../codebase-design/SKILL.md)) first — its
 glossary (module, interface, depth, seam, adapter) and key tests (deletion
-test, interface-as-test-surface, one-vs-two adapters) are the language of every
-suggestion below. Use those terms exactly; don't drift into "component,"
-"service," "API," or "boundary." Consistent language is the point.
+test and interface-as-test-surface) provide a shared reasoning frame. Use the
+project's established terms where they are clearer.
 
 This skill is *informed* by the project's domain model: the `docs/agents/CONTEXT.md`
-glossary (if present) gives names to good seams; `docs/agents/adrs/` records decisions
-the skill should not re-litigate.
+glossary (if present) gives names to good seams; `docs/agents/adrs/` records
+decision rationale. Check whether an ADR still applies to the current code and
+request before relying on it.
 
 ## Process
 
 ### 1. Explore
 
-Read `docs/agents/CONTEXT.md` and any `docs/agents/adrs/` in the area first. Then walk the codebase
-(use the `Explore` subagent for breadth). Don't follow rigid heuristics — note
-where you experience friction:
+Read `docs/agents/CONTEXT.md` and any `docs/agents/adrs/` in the area first. Then
+walk the codebase, delegating bounded breadth when useful. Don't follow rigid
+heuristics — note where you experience friction:
 
 - Where does understanding one concept require bouncing between many small modules?
 - Where are modules **shallow** — interface nearly as complex as the implementation?
@@ -57,8 +57,9 @@ the friction is real enough to warrant reopening the ADR, and mark it clearly
 (_"contradicts ADR-0007 — but worth reopening because…"_). Don't list every
 refactor an ADR forbids.
 
-End with a **Top recommendation**: which you'd tackle first and why. Then ask the
-user which to explore. Do NOT propose interfaces yet.
+End with a **Top recommendation**: which you'd tackle first and why. In a
+standalone task, ask the user which to explore. A bounded worker reports the
+choice to its caller. Do NOT propose interfaces yet.
 
 > Optional: if the user asks for something more visual, render the same content as
 > a self-contained HTML file in the OS temp dir (Tailwind + Mermaid via CDN) and
@@ -78,16 +79,15 @@ module, what sits behind the seam, what tests survive. Side effects happen inlin
 
 When you commit to deepening a candidate, classify its dependencies and pick the
 test seam with **`DEEPENING.md`** (in-process / local-substitutable / remote-owned
-ports-&-adapters / true-external) — it decides what you mock and what you merge.
+ports-&-adapters / true-external). Treat the categories as heuristics for what
+to merge, substitute, or mock.
 
-### 4. Design it twice (optional)
+### 4. Compare alternatives when useful
 
-If the right interface for a chosen candidate is non-obvious, don't settle on your
-first idea. Use **`INTERFACE-DESIGN.md`**: frame the constraints, then spawn
-parallel sub-agents that each design a radically different interface (minimize /
-maximize-flexibility / optimize-common-caller / ports-&-adapters), and compare
-them on depth, locality, and seam placement before recommending one.
+If the right interface for a chosen candidate is non-obvious, use
+**`INTERFACE-DESIGN.md`** to frame constraints and compare materially different
+interfaces. Generate alternatives directly for a bounded design or delegate
+independent alternatives when the added breadth is worth the cost.
 
-> Delegate the heavy exploration here — map unfamiliar code with a fast-model
-> worker rather than loading it into your own context, and review what comes
-> back.
+> In a standalone task, delegate heavy exploration when useful, then review the
+> evidence and recommendation. A bounded worker reports to its caller.

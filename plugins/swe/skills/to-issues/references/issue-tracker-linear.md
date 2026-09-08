@@ -1,94 +1,44 @@
 # Issue tracker: Linear
 
-Issues for this repo live in Linear. Use the Linear MCP tools for all operations
-(`save_issue`, `get_issue`, `list_issues`, `save_comment`, `list_comments`,
-`create_issue_label`, `list_issue_statuses`, `save_project`, `list_projects`,
-`save_document`).
+Use the installed Linear connection or another explicitly authorized Linear
+route. Do not expose credentials in prompts or output. A missing connection is
+a reported limitation; do not silently fall through to another tracker.
 
-## Auth
+## Container and tasks
 
-If the environment carries a Linear token (`LINEAR_API_KEY` or an app-actor
-OAuth token), prefer it over the interactive MCP connection: call the GraphQL
-API directly (`https://api.linear.app/graphql`, token in the `Authorization`
-header). Headless runs then work without interactive auth, and app-actor writes
-are attributed to the agent identity rather than the user. Fall back to the
-Linear MCP tools otherwise; never fall through to another tracker just because
-the MCP is absent.
+A spec records `tracker: linear` and `tracker_container: <project id>`. Verify
+the recorded project. If it no longer exists, stop rather than creating a
+duplicate. If none exists and creation is authorized, create a project, record
+its stable id, and optionally mirror the spec as a project document while the
+local spec remains canonical.
 
-## Conventions
+Create tasks as issues in the project. Reuse matching issues and native
+blocked-by relationships. Follow the team's established statuses and labels.
 
-- **Spec container**: a spec publishes as a Linear **project** (`save_project`),
-  under the initiative named in the repo's `Issue tracker:` extras when given.
-  Record the project id in the spec's frontmatter (see Container identity) and
-  mirror the spec as a project document (`save_document`) — the local spec file
-  stays canonical; the project copy is for browsing. Tasks are
-  issues **in that project**, not sub-issues of a parent issue.
-- **Create an issue**: `save_issue` with team, title, markdown body, and the
-  spec's project.
-- **Read an issue**: `get_issue` plus `list_comments` — read both before acting;
-  the latest progress comment is the handoff.
-- **List issues**: `list_issues` filtered by team/project/label/state.
-- **Comment**: `save_comment`. Comment progress on the active issue before you
-  run out of context — what's done, what's next, the one gotcha.
-- **Triage labels**: apply the label strings from `SKILL.md` via `save_issue`;
-  create missing labels with `create_issue_label` first.
-- **Status**: see State transitions below — the loop writes these itself
-  rather than relying on Linear's GitHub integration firing, which is what left
-  a merged, shipped task sitting in Backlog on an observed run.
-- **Blocked by**: use Linear's native blocked-by relations, not prose.
-- **PRs**: attach the PR link to the issue when publishing branch work, unless
-  the GitHub integration already linked it.
-- **No leakage to GitHub**: Linear is the private side. Never put Linear URLs,
-  issue identifiers-as-links, or issue/spec content into GitHub-side text
-  (PR bodies, commits, comments). The private side references the public side,
-  never the reverse.
+## State and resume
 
-## Tracker operations
+Give one task owner responsibility for tracker updates. Record meaningful
+transitions such as started, blocked, verified, awaiting review, and delivered.
+Keep comments concise: current result, next action, and any non-obvious blocker.
+Preserve human holds, assignments, and later changes to an approved task.
 
-Host-native Linear tracker tools own container lookup, status reads, comments,
-and updates. Use the Linear MCP tools listed above, or the authenticated
-GraphQL API when the auth guidance permits it. This reference defines tracker
-semantics and state transitions, not a repository script.
+On resume, reconcile Linear with current checkout, worktree, diff, commit,
+review, pull-request, and delivery evidence. A branch name, issue state, or
+self-report alone is insufficient. A failed write is reported accurately and
+retried only when useful; it does not rewrite observed code state.
 
-## Container identity
+Do not mark an issue delivered merely because work is verified locally,
+integrated, or attached to a draft or ready pull request.
 
-A spec records its Linear project in its own YAML frontmatter
-(`tracker: linear`, `tracker_container: <project id>`). Use native project
-lookup to verify a recorded project id. If it no longer exists, stop — never
-create a second one. If no container exists yet, create one with the native
-project operation, record its id in the spec, and give it a plain
-`Spec: <specPath>` line in its description for humans.
+## Private tracker boundary
 
-## State transitions
+Linear may reference public GitHub work. Do not put Linear URLs, linked issue
+content, or private identifiers into public pull-request bodies, commits, or
+comments unless the user explicitly makes that information public.
 
-The loop advances issue state as it works, so the tracker reflects reality
-rather than the state work started in:
+## Publication boundary
 
-- task merged into the integration branch: `linear issue update <identifier> --state "In Review"`
-- end of run:
-
-  use native Linear issue and project reads and updates to promote every issue
-  whose `change/` branch is merged into `<baseBranch>` to "In Review", then
-  promote a project still reading backlog/planned while its issues are
-  underway.
-
-Nothing moves before its work merges. There is deliberately no "picked up"
-transition: a write made when work starts is the one nothing can repair, because
-a task that then fails would sit at "In Progress" forever.
-
-Both writes are promote-only and neither is verified in the moment — a failed
-state write is logged and the run continues, because git, not the tracker,
-decides what is merged. The end-of-run reconcile is what repairs them, and it
-reads git rather than the run's own history, so it corrects the same way whether
-the run finished, escalated, or died halfway. Never set an issue or project to a
-completed state: the run ends at a draft PR, so nothing it touched is delivered
-yet.
-
-## When a skill says "publish to the issue tracker"
-
-Create a Linear issue with `save_issue` inside the spec's project (standalone
-when the work has no spec).
-
-## When a skill says "fetch the relevant ticket"
-
-`get_issue` + `list_comments` for the referenced ID (e.g. `ABC-123`).
+Creating or updating projects, documents, issues, comments, relations, labels,
+or statuses changes external state and requires existing authority. Reading
+does not. When a skill says to publish or fetch a ticket, apply this reference
+and the user's current authority.

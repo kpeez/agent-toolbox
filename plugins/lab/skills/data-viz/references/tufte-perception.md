@@ -34,7 +34,8 @@ reader's decoding error.
 ## Honesty rules
 
 - Bars on linear scales start at 0.
-- Bars on log scales start at 1 because they show ratios.
+- Log-scaled bars need a meaningful, explicitly labeled baseline; otherwise use
+  points or another encoding that does not imply one.
 - If value is encoded by area, scale the area, not the radius.
 - Keep graphical effect proportional to numeric effect.
 - Avoid design choices that manufacture drama from small differences.
