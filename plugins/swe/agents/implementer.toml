@@ -1,8 +1,8 @@
 name = "implementer"
 description = "Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker tasks."
-model = "gpt-5.6-sol"
+model = "gpt-5.6-luna"
 model_provider = "openai"
-model_reasoning_effort = "medium"
+model_reasoning_effort = "xhigh"
 sandbox_mode = "workspace-write"
 
 developer_instructions = """
