@@ -21,7 +21,7 @@ a durable decision or future resumption. If you catch yourself calling a
 promised behavior done with no evidence, stop and produce it; a failing required
 test, type check, or lint gate is a stop, not a warning to continue past.
 
-`/start-loop` coordinates a full spec run. A standalone developer may delegate
+`/execute-spec` coordinates a full spec run. A standalone developer may delegate
 bounded exploration or implementation when useful and remains responsible for
 decisions, review, and final verification. A bounded worker reports to its
 caller and does not create an uncontrolled delegation chain. If local CLI
