@@ -58,7 +58,7 @@ Skip it for a trivial, fully understood edit.
    becomes the task and progress authority.
 5. **Execute.** Read the spec for intent and the tracker for current work. A
    single bounded task may be implemented directly; a multi-task run may use
-   `/start-loop` when explicitly invoked.
+   `/execute-spec` when the user requests execution.
 
 ## /write-spec new <name>
 
