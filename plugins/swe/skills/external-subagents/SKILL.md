@@ -1,14 +1,20 @@
 ---
 name: external-subagents
-description: "Delegate one bounded assignment through a local external-provider CLI when the caller explicitly requests OpenCode, GitHub Copilot, or another non-host provider."
+description: "Delegate bounded work when the caller explicitly requests OpenCode, GitHub Copilot, or another non-host provider. Use direct ACP/MCP session controls for OpenCode when configured, or a local CLI for individual assignments."
 ---
 
 # External subagents
 
-Prefer host-native subagents. Use direct local CLI delegation to an external
-provider such as OpenCode or GitHub Copilot only when that provider is
-explicitly authorized. Before sending private repository content, require
-provider-specific explicit authorization.
+Prefer host-native subagents unless an external provider is explicitly
+authorized. Before sending private repository content, require provider-specific
+explicit authorization.
+
+For parallel or ongoing OpenCode work, use the direct ACP bridge when its MCP
+tools are configured. Read [the bridge guide](references/opencode-acp.md) for
+session controls, permission configuration, and limits. Call those tools
+directly; do not add a host-agent forwarding layer. Bridge agent IDs belong to
+the bridge, not the host's native subagent tools. Use the CLI below for an
+individual assignment when the bridge is unavailable.
 
 Give the provider exactly one bounded assignment and the absolute worktree
 path. Host sandbox and approval policy still apply, and the external CLI has
