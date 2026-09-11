@@ -19,12 +19,14 @@ individual assignment when the bridge is unavailable.
 Give the provider exactly one bounded assignment and the absolute worktree
 path. Host sandbox and approval policy still apply, and the external CLI has
 its own tool, path, and URL permissions. Inspect its installed help/config,
-then choose only scoped permissions the user approved; never auto-select broad
-bypass permissions. Prompt wording alone does not enforce read-only behavior,
+then scope permissions to the approved assignment. `opencode run --auto` is
+appropriate: it auto-approves only permissions the host has not explicitly
+denied, while the host sandbox and approval policy still bound the provider.
+Prompt wording alone does not enforce read-only behavior,
 and a deny-write flag does not prevent shell commands from writing. Do not
 silently change providers or retry with broader scope.
 
 ```sh
-opencode run --dir /abs/worktree "..."
+opencode run --auto --dir /abs/worktree "..."
 copilot -C /abs/worktree -p "..." <authorized-permission-flags>
 ```
