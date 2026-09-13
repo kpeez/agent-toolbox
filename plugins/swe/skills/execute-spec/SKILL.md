@@ -1,6 +1,6 @@
 ---
 name: execute-spec
-description: Execute or resume an approved spec across tracked tasks. Use when asked to carry out an approved spec or continue its implementation; not for drafting specs, status-only requests, or isolated code changes.
+description: Execute or resume an approved spec across tracked tasks. Not for drafting specs, status checks, or isolated edits.
 ---
 
 # Execute an approved spec
@@ -28,6 +28,9 @@ publish, deploy, or write to an external tracker; use only authority already giv
 - Verify the assembled work against the approved acceptance criteria and
   applicable repository checks. Obtain independent review for substantive
   changes, following the orchestration guidance.
+- Continue authorized work through applicable verification. A failed required
+  check blocks completion or publication, while an in-scope correction may
+  continue when the task authorizes it.
 - Publish only when authorized, using [ship-pr](../ship-pr/SKILL.md) when that
   authority covers its commit, push, and pull-request workflow. Otherwise
   finish verified local work.
