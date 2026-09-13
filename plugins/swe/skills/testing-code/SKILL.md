@@ -1,156 +1,62 @@
 ---
 name: testing-code
-description: "Behavioral testing discipline — use disposable real-code probes, then retain only the smallest stable sensor for meaningful public behavior, an actual regression, or a high-risk invariant. Use when implementing or changing behavior, or to de-risk an approach first. Triggers: 'tdd', 'blueprint this', 'prototype', 'spike', 'play with it', 'try a few designs'. Coordinated by /implement."
+description: "Design behavioral tests or disposable probes for uncertain code. Use for testing strategy, regression coverage, TDD, or spikes."
 ---
 
-# Behavioral testing, sketch-first
+# Behavioral testing
 
-**Use scratch probes to learn, then retain only the smallest stable evidence
-that uniquely protects meaningful behavior.**
+Use scratch probes to learn, then retain only the smallest stable evidence that
+uniquely protects meaningful behavior. Tests are not required for every change:
+the evidence may be a committed test, shared workflow, static check,
+reproducible demonstration, or explicit no-permanent-test decision. There is no
+red/green choreography, test-per-goal rule, coverage quota, or mutation-score
+target.
 
-Tests are not a required output of every change. There is no red/green
-choreography, test-per-goal rule, coverage quota, or mutation-score target.
-Every promised behavior still needs evidence, but that evidence may be a
-committed test, a shared workflow, a static check, a reproducible demonstration,
-or an explicit decision that no permanent test is warranted.
+## Contract
 
-## The contract
+Test public behavior and independently justified oracles, not source structure.
+Work through one behavioral risk or equivalence class at a time. Before choosing
+an evidence mode, name the promised behavior or invariant, the independent
+oracle, and the narrowest stable public seam. If any remain unclear, explore
+before committing a test.
 
-Work through public behavior and independently justified oracles, not source
-structure. A test should survive an internal rewrite because it protects a
-caller-visible outcome, a real defect, or a high-risk invariant at a stable
-public seam. Scratch scripts may use whatever route helps exploration; when one
-earns permanence, preserve the demonstrated behavior, independent oracle, and
-stable public boundary — not the exact script, import, or call path.
+## Probe when useful
 
-Work through one **behavioral risk or equivalence class** at a time. One property
-or representative workflow may protect several examples or spec claims. Test
-count is not progress.
+Use a safe available scratch location, such as `artifacts/temp/`, when the
+behavior, interface, or oracle is uncertain. Do not require an ignore-file edit
+just to run a probe. Exercise real imports, types, and call sites. Give the
+probe one command, a meaningful exit status, and enough output to distinguish
+the result. Delete task-owned probes after they become stable evidence or their
+verdict is recorded; do not remove unrelated shared artifacts.
 
-## The loop
+## Choose and settle evidence
 
-### 1. Name the risk and oracle
+Choose the smallest evidence mode that distinguishes the risk: a regression,
+property or state invariant, representative boundary workflow, targeted
+mutation audit, disposable probe, static check, or an explicit no-permanent-test
+decision. Read [references/tests.md](references/tests.md) when choosing
+permanent evidence, property tests, mutation audits, or representative
+workflows; it contains the admission gate and technique guidance.
 
-Before choosing a test style, state:
+When evidence crosses a dependency boundary, prefer a small faithful real
+substitute before a mock. Read [references/mocking.md](references/mocking.md)
+when choosing a substitute or mock, especially for ML and external services.
 
-- the promised behavior, observed defect, or high-risk invariant;
-- the independent oracle — how the expected result is known without copying or
-  calling production logic; and
-- the narrowest stable public seam that exposes the behavior.
+Before completion, tie each observable claim to its oracle and evidence mode,
+remove task-owned scratch work, and run direct and behavior-specific checks. A
+failing required gate blocks completion; investigate an in-scope failure before
+claiming success and report unrelated baseline failures. Record a verdict-only
+probe or durable decision only when it affects future work and the established
+project workflow calls for a record.
 
-If any of those remain unclear, explore before committing a test.
+## Avoid mock-slop
 
-### 2. Probe when useful
-
-Use runnable scratch scripts under `artifacts/temp/` when the behavior, interface,
-or oracle is uncertain (ensure the directory is gitignored). Exercise real
-imports, types, and call sites rather than a toy reconstruction. Prints,
-ad-hoc drivers, and side-by-side variants are welcome during diagnosis.
-
-Scratch probes are disposable:
-
-1. Name the behavior or question (`verify_replay_buffer_sampling.py`).
-2. Give the probe one command to run and a meaningful exit status.
-3. Surface enough state to diagnose the result; permanent tests later assert
-   only the smallest behavior that matters.
-4. Do not polish, persist, or treat the probe's structure as a contract.
-
-A probe may answer whether a path works, whether a state model is coherent, or
-which interface is clearest. While it is active, rerun it rather than keeping a
-separate run log. For tracker-linked work, record the relevant result on the
-issue.
-
-### 3. Select the evidence
-
-Use the first applicable technique:
-
-1. **A real bug occurred** — keep one deterministic regression through a public
-   boundary.
-2. **Many inputs share a broad independent invariant** — keep one property test
-   for that equivalence class.
-3. **Sequences or state transitions are the behavior** — use a small stateful
-   or model-based property test.
-4. **Risk crosses a public system boundary** — keep one representative
-   integration or contract workflow using the real client where practical.
-5. **The suite may be weak around uncertain changed core logic** — run a
-   targeted mutation audit; add a test only for a credible surviving fault.
-6. **None applies** — add no permanent test. Use the probe, a type or static
-   check, an assertion, or a reproducible PR demonstration as the evidence.
-
-See [references/tests.md](references/tests.md) for the admission gate and the
-property and mutation rules.
-
-### 4. Settle
-
-Before calling the work complete:
-
-- Each observable claim names its oracle and evidence mode. Exact committed
-  test names are recorded after exploration, when tests actually earned a
-  place.
-- Scratch probes owned by the task are removed. A probe either became stable
-  evidence or ended in a recorded verdict and was deleted. Do not remove
-  unrelated artifacts from a shared scratch directory.
-- Record a verdict-only probe only when its result affects a durable decision or
-  future resumption. Use an ADR for a significant decision, otherwise the spec
-  Decisions section or tracker issue.
-- Checks that cannot run in CI first substitute small real things per
-  [references/mocking.md](references/mocking.md). If that fails, retain the
-  checkable subset and use an explicit demonstration for the rest.
-
-Run available direct checks and the behavior-specific verification before
-calling the work done. A failing required gate is a stop.
-
-## Earn permanent tests
-
-A committed test earns its maintenance cost only when all five answers are
-strong:
-
-1. **Behavior** — What caller-visible behavior, actual defect, or high-risk
-   invariant does it protect?
-2. **Oracle** — Is the expected result independent of production and incidental
-   structure?
-3. **Uniqueness** — What plausible failure does it catch that the existing
-   suite, type checker, linter, assertion, or shared workflow does not?
-4. **Seam** — Does it exercise the narrowest stable public boundary and survive
-   an internal rewrite?
-5. **Cost** — Is it deterministic, legible, and proportionate to the protected
-   risk?
-
-Loudness alone does not decide. A loud but costly, recurring, important, or
-safety-relevant failure may deserve a regression. A silent failure with a
-circular oracle or duplicate sensor does not. If the five-part case is weak,
-keep the evidence disposable or record why no permanent test is appropriate.
-
-## Plan before probing
-
-Before writing code:
-
-- [ ] List the behavioral risks or equivalence classes, observable claims, and
-      independent oracles.
-- [ ] Identify the stable public seams and the cheapest acceptable evidence
-      modes.
-- [ ] Resolve interface choices against the approved scope and current code.
-      Ask only for a material unresolved requirement or scope decision. A
-      bounded worker sends that question to its caller.
-- [ ] Use the project's domain language in claims and tests. Check whether
-      relevant ADRs still apply to the current code and request.
-- [ ] Look for deep modules and testable boundaries (see
-      [../codebase-design/SKILL.md](../codebase-design/SKILL.md) and
-      [references/mocking.md](references/mocking.md)).
-
-## Kill mock-slop
-
-Test public behavior, not interactions among your own objects. Replace tests
-that only mirror internal structure when their useful behavioral coverage is
-already preserved by a stable sensor. Tests that mock internal collaborators,
-call private methods, assert call counts or order, or query side channels are
-signals to inspect, not an automatic deletion rule.
-
-Mock only true external boundaries — model hubs, trackers, paid APIs, schedulers.
-Prefer small real substitutes for code you control: tiny random-weight models,
-synthetic media, CPU tensors, or scratch stores. At a service or message boundary,
-exercise the consumer's real client and assert only facts that matter to that
-consumer; avoid broad exact payload matching and permutation grids.
+Test outcomes at stable public boundaries. Internal call counts, private methods,
+mock interactions, framework behavior, and duplicate wiring checks are signals
+to inspect, not automatic tests or deletion targets. Mock only true external
+boundaries; use real code or faithful local substitutes for dependencies you
+control. At service or message boundaries, exercise the consumer's real client
+and assert only facts that matter to that consumer.
 
 For a long-running autonomous exploration with a metric target and many
 experiments, use `lab:autoresearch`. A scratch probe answers a bounded question

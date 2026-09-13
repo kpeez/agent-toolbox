@@ -1,6 +1,6 @@
 ---
 name: merge-conflicts
-description: Resolve an in-progress git merge, rebase, or cherry-pick conflict by tracing each side's intent, preserving both where possible, and verifying with the project's checks. Use when git reports conflicts or the user asks to resolve a merge/rebase.
+description: Resolve conflicts in an active Git merge, rebase, or cherry-pick while preserving intended behavior.
 user-invocable: false
 ---
 
@@ -19,7 +19,13 @@ trace intent before touching a hunk, and verify behavior after.
    incompatible, pick the side matching the merge's stated goal and note the
    trade-off. Do **not** invent new behavior. Prefer resolving; abort only when
    the calling workflow explicitly authorizes it.
-4. **Verify.** Run the project's checks — typecheck, tests, lint/format — and
-   fix anything the merge broke. This is what catches semantic conflicts.
-5. **Finish.** Stage everything and commit; if rebasing, `--continue` until all
-   commits are replayed.
+4. **Verify.** Run applicable project checks and fix anything the merge broke.
+   Distinguish failures introduced by the resolution from pre-existing or
+   unavailable checks.
+5. **Finish when authorized.** Stage only reviewed conflict-resolution paths,
+   preserving unrelated staged and unstaged work. Commit a merge or continue a
+   rebase/cherry-pick only when the requested operation authorizes that finish;
+   otherwise leave the reviewed resolution ready for the caller.
+   Before committing or continuing, inspect the entire index: these operations
+   can include unrelated staged changes. If finishing would include them, stop
+   and ask for direction without unstaging, stashing, or resetting user work.

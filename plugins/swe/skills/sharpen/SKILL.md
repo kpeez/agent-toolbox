@@ -1,12 +1,13 @@
 ---
 name: sharpen
-description: Resolve material ambiguity in a plan or design through focused questions and code evidence. Sharpen terminology and record significant decisions. Use when the user wants to stress-test, pressure-test, or harden a plan or design, or mentions "sharpen", /sharpen, or "grill me".
+description: Stress-test a plan or design to resolve material ambiguity in scope, terminology, and acceptance criteria.
 ---
 
 Resolve the questions that could materially change the goal, scope, design, or
 acceptance criteria. Ask one question at a time and wait for its answer before
-making dependent decisions. Reuse decisions and approval already given; do not
-repeat an interview when the requested work is clear.
+making dependent decisions; batch a small set of independent questions when
+that reduces friction. Reuse decisions and approval already given; do not repeat
+an interview when the requested work is clear.
 
 If a question can be answered by exploring the codebase, explore
 the codebase instead.
@@ -14,26 +15,26 @@ the codebase instead.
 When recording glossary entries or ADRs, lead with the decision or term, keep
 evidence close, and make consequences explicit.
 
-Use `docs/agents/` for project documents unless the project or user specifies
-another location. Create subdirectories as needed, whether tracked or ignored,
-in an ordinary directory or through an existing symlink.
+When project-document updates are part of the request or established workflow,
+use `docs/agents/` unless the project or user specifies another location. Create
+subdirectories as needed, whether tracked or ignored, in an ordinary directory
+or through an existing symlink.
 
 ## During the session
 
-**Cross-check against the code.** When I state how something works, verify the
-code agrees. If you find a contradiction, surface it immediately: "Your code
-cancels entire Orders, but you just said partial cancellation is possible — which
-is right?"
+**Cross-check against the code.** Verify claims about behavior against the code.
+Surface contradictions immediately and resolve which description is authoritative.
 
-**Sharpen fuzzy language.** When I use a vague or overloaded term, propose a
-precise canonical one. "You're saying 'account' — do you mean the Customer or the
-User? Those are different things." If a `docs/agents/CONTEXT.md` glossary exists,
-check whether a conflicting term reflects a real change. When a term gets pinned down, capture
-it in `CONTEXT.md` right there — see [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
-Create the file only when there is reusable project context to retain.
+**Sharpen fuzzy language.** When a term is vague or overloaded, propose a precise
+canonical one. If a `docs/agents/CONTEXT.md` glossary exists, check whether a
+conflicting term reflects a real change. Record a pinned term in `CONTEXT.md`
+only when it is reusable and the document update is within the request or
+established workflow; otherwise keep it in the conversation or requested
+artifact. See [CONTEXT-FORMAT.md](./CONTEXT-FORMAT.md).
 
-**Discuss concrete scenarios.** Stress-test domain relationships with specific
-edge-case scenarios that force precision about the boundaries between concepts.
+**Discuss concrete scenarios when useful.** Use a specific edge case when it
+forces precision about a material boundary; do not add examples when the code
+and requirements already resolve the question.
 
 **Deliberate close calls.** Compare the plausible alternatives against concrete
 requirements and evidence. Delegate bounded evidence gathering when substantial
@@ -48,7 +49,8 @@ the status convention in [ADR-FORMAT.md](./ADR-FORMAT.md) when a decision change
 
 ## Recording decisions as ADRs
 
-Record an ADR only when **all three** are true:
+Record an ADR only when **all three** conditions below are true and the request
+or established workflow authorizes the document update:
 
 1. **Hard to reverse** — the cost of changing your mind later is meaningful
 2. **Surprising without context** — a future reader will wonder "why did they do it this way?"

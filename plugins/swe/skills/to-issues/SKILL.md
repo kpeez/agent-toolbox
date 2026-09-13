@@ -1,6 +1,6 @@
 ---
 name: to-issues
-description: Break an approved plan or spec into independently workable tasks on the selected tracker, with native dependencies and proportionate acceptance evidence.
+description: Turn an approved plan into independently verifiable tasks and dependencies on the selected tracker.
 ---
 
 # /to-issues
@@ -31,9 +31,14 @@ Use this evidence in order:
    explicitly intended.
 6. Local Markdown sibling issue files otherwise.
 
-Read the matching reference before writing. An inaccessible configured tracker
-is a limitation to report, not a reason to silently select another tracker or
-declare an empty backlog.
+Read the applicable route reference before writing:
+
+- [GitHub](references/issue-tracker-github.md)
+- [Linear](references/issue-tracker-linear.md)
+- [local Markdown](references/issue-tracker-local.md)
+
+An inaccessible configured tracker is a limitation to report, not a reason to
+silently select another tracker or declare an empty backlog.
 
 ## Authority
 
@@ -57,24 +62,19 @@ Create one task when one task is enough. Split work when tasks can be owned,
 verified, or sequenced independently. Do not add a mandatory changeset layer or
 invent grouping that the tracker and review workflow do not need.
 
-Reuse the tracker's existing states and labels. When no convention exists,
-these optional triage labels provide a starting point:
-
-| Label | Meaning |
-| --- | --- |
-| `needs-triage` | Needs evaluation before work |
-| `needs-info` | Waiting for information |
-| `ready-for-agent` | Fully specified for an agent |
-| `ready-for-human` | Needs a human decision or implementation |
-| `wontfix` | Will not be actioned |
+Reuse the tracker's existing states and labels. When the selected tracker has no
+established body or label convention, use the optional
+[task format reference](references/task-format.md). Do not introduce its
+defaults when the tracker already has a convention.
 
 An approved task can still be held, reassigned, superseded, or blocked later.
 Respect current tracker state and human ownership.
 
 ## Process
 
-1. Read the full approved input, current project context, applicable ADRs, and
-   existing tracker container. Check whether older decisions still apply.
+1. Read the full approved input and current project context. Read applicable
+   ADRs and the existing tracker container when they affect task boundaries or
+   terms; check whether those decisions still apply.
 2. Inspect enough current code or documentation to use accurate terms and paths.
    Delegate a bounded evidence-gathering question when that saves bulk context;
    direct targeted reads are also valid.
@@ -90,35 +90,6 @@ Respect current tracker state and human ownership.
    its stable identifier in the spec.
 6. Set the spec to `status: active` after executable tasks exist. Keep task
    state only in the tracker.
-
-Use this issue body as a starting point, adapting it to the tracker:
-
-```md
-## Outcome
-
-<The behavior, artifact, or decision this task must produce.>
-
-## Context and starting points
-
-- <Relevant requirement, path, component, or prior decision.>
-
-## Acceptance criteria
-
-- [ ] <Observable, checkable criterion and acceptable evidence.>
-
-## Scope
-
-- In: <owned work>
-- Out: <adjacent work>
-
-## Blocked by
-
-- <Native dependency reference, or none>
-
-## Authority and escalation
-
-<External-action limits and consequential blocker route, when applicable.>
-```
 
 Tracker updates should record meaningful transitions and concise resume
 information. Do not create repetitive journals.

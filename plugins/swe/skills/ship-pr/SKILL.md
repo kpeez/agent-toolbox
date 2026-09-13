@@ -1,6 +1,6 @@
 ---
 name: ship-pr
-description: Verify and publish authorized branch work as intentional commits, a push, and a draft pull request. Use when the user asks to ship or invokes /ship-pr; finalize only when explicitly requested.
+description: Commit, push, and open a draft PR for authorized work. Use when asked to ship; finalize only on explicit request.
 ---
 
 # /ship-pr — publish verified work
@@ -12,17 +12,19 @@ workflow for the named work. Do not invoke this skill automatically at a green
 checkpoint. If publication is not authorized, leave verified local work intact
 and report its state.
 
-Two modes:
+Default and explicit finalize modes:
 
-- `/ship-pr [spec or task]`: verify, group, commit, push, and ensure a draft pull
-  request exists.
-- `/ship-pr finalize`: re-verify and mark the existing draft ready. Only an
-  explicit user request triggers this mode. Merging remains separate.
+- `/ship-pr [spec or task]`: verify, group, commit, push, and ensure a draft
+  pull request exists.
+- `/ship-pr finalize`: re-verify and mark the existing draft ready. Read
+  [finalize](references/finalize.md) for this explicit mode. Merging remains
+  separate.
 
 ## Rules
 
 - Preserve unrelated and user-owned changes. Stage intentional groups and
-  inspect status between commits.
+  inspect the full staged diff before every commit. If unrelated staged work
+  would be included, stop for direction without altering its staged state.
 - Write imperative, informative commit subjects. Each commit carries one
   coherent intent and leaves the branch in a usable state where practical.
 - Follow repository and host branch conventions. Do not rename an established
@@ -90,29 +92,12 @@ Keep the text self-contained. A private tracker may link to the public pull
 request; public text does not reveal private tracker URLs, issue content, or
 internal workflow commentary.
 
-## Stacked pull requests
+## Secondary modes
 
-Use stack tooling only when the user or established task design calls for a
-dependent branch chain. Confirm the branch order and base relationships from
-current evidence. Each pull request must stand alone for its own diff. Put a
-fix on the lowest branch that owns the code, then replay branches above it.
-Follow the stack tool's documented publication and merge behavior; do not
-convert ordinary tasks into a stack merely to create a grouping layer.
-
-## Finalize
-
-`/ship-pr finalize` marks an existing draft ready for review:
-
-1. Locate the pull request for the current branch and resolve its linked work
-   from explicit evidence. Stop if none exists.
-2. Account for pending authorized local changes through the default workflow.
-3. Re-run applicable repository checks and behavior-specific evidence. Stop on
-   a required failure.
-4. Mark the draft ready.
-5. When authorized, update linked tracker tasks to awaiting review and the spec
-   lifecycle to `review`. Do not mark tasks delivered or the spec done solely
-   because the pull request is ready.
-6. Report the pull request, verification, and state changes.
+Use [stacked pull requests](references/stacked.md) only when the user or
+established task design calls for a dependent branch chain. Read the
+[finalize workflow](references/finalize.md) only for an explicit
+`/ship-pr finalize` request.
 
 ## Markdown artifact
 

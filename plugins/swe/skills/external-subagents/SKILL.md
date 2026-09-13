@@ -1,6 +1,6 @@
 ---
 name: external-subagents
-description: "Delegate bounded work when the caller explicitly requests OpenCode, GitHub Copilot, or another non-host provider. Use direct ACP/MCP session controls for OpenCode when configured, or a local CLI for individual assignments."
+description: Delegate bounded work to an explicitly requested external provider such as OpenCode or GitHub Copilot.
 ---
 
 # External subagents
