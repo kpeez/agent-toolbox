@@ -1,6 +1,6 @@
 ---
 name: write-spec
-description: Create a durable Markdown feature spec whose approved intent and observable behaviors guide tracked implementation work.
+description: Draft or revise a durable feature spec with scope, design decisions, and observable acceptance criteria.
 ---
 
 # /write-spec — feature spec management
@@ -41,9 +41,9 @@ explicit no-permanent-test decision may be proportionate evidence.
 
 ## When to use a spec
 
-Use a spec when the work needs design choices, crosses files or modules, will
-span sessions, enters unfamiliar code, or the user requests a plan or spec.
-Skip it for a trivial, fully understood edit.
+Use a spec when the user requests a plan or spec, or when durable design
+decisions and acceptance criteria are needed across sessions. Skip it for a
+trivial, fully understood edit.
 
 ## Workflow
 
@@ -53,12 +53,10 @@ Skip it for a trivial, fully understood edit.
    verification expectations after inspecting current project evidence.
 3. **Approve.** Present the complete proposal unless existing explicit approval
    already covers it. Record that approval without asking for it again.
-4. **Plan tasks.** Reuse linked tasks or invoke `/to-issues` for the approved
-   scope. One task is sufficient when no split is useful. The selected tracker
-   becomes the task and progress authority.
-5. **Execute.** Read the spec for intent and the tracker for current work. A
-   single bounded task may be implemented directly; a multi-task run may use
-   `/execute-spec` when the user requests execution.
+4. **Deliver the requested planning artifact.** Finish with the spec, its
+   approval state, and any unresolved decisions. Do not create tracker tasks or
+   implement the spec in this workflow. If the user separately requests task
+   creation or execution, use `/to-issues` or `/execute-spec` then.
 
 ## /write-spec new <name>
 
@@ -78,15 +76,13 @@ Specs are pure Markdown. Project conventions and canonical links live in
 `docs/agents/CONTEXT.md`; executable tasks may be remote tracker items or local
 sibling issue files. Do not add a generated navigation index.
 
-## Resuming a spec
+## Revising an existing spec
 
-1. Read the spec for approved intent and the tracker for task state,
-   dependencies, holds, assignments, and latest useful handoff.
-2. Inspect the actual checkout, worktrees, diffs, commits, verification, and
-   delivery state relevant to the next task.
-3. Reconcile contradictions before acting. Tracker unavailability is a reported
-   limitation, not evidence that no work remains.
-4. Continue the next task whose ownership, dependencies, and authority can be
-   established. Preserve unfinished and unrelated work.
+1. Read the spec, current project context, and relevant decisions. Inspect only
+   the files needed to keep scope, design, and acceptance criteria accurate.
+2. Preserve settled approved intent unless the user authorizes a material
+   change. Record unresolved contradictions instead of silently choosing one.
+3. Return the revised spec and its approval state. Do not resume tracker tasks
+   or implementation here; use `/execute-spec` for authorized execution.
 
 See `/testing-code` and `/implement` for choosing and producing evidence.
