@@ -1,12 +1,12 @@
 {
   "name": "lab",
   "description": "Source-backed research, reproducible experiment loops, and data visualization guidance",
-  "version": "1.4.1",
+  "version": "1.4.2",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
   "license": "MIT",
-  "keywords": ["research", "deep-research", "experiments", "autoresearch", "data-viz", "visualization"],
+  "keywords": ["research", "deep-research", "experiments", "autoresearch", "data-viz", "making-plots", "visualization"],
   "skills": "./skills/",
   "interface": {
     "displayName": "lab",
