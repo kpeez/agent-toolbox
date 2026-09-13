@@ -1,6 +1,6 @@
 ---
 name: codebase-design
-description: Shared vocabulary and principles for designing deep modules — substantial behavior behind small interfaces, positioned at clean seams. Use when designing a new module or interface, choosing where a seam or test surface goes, or judging whether a module is deep or shallow.
+description: Evaluate module boundaries and interfaces using depth, information hiding, and caller complexity. Use for substantive interface design.
 ---
 
 # Codebase Design — deep modules
@@ -30,11 +30,16 @@ established terms when they communicate the design more clearly.
 
 ## Design for testability
 
-1. Accept dependencies as parameters rather than creating them internally.
-2. Return computed results instead of performing side effects.
-3. Minimize surface area: fewer methods, simpler parameters, more complexity
-   hidden inside (retries, device placement, tokenization — callers shouldn't
-   see any of it).
+Consider, rather than assume, whether the design should:
+
+- accept dependencies at the boundary instead of creating them internally;
+- return computed results where that makes the behavior easier to observe; and
+- hide incidental complexity such as retries, device placement, or tokenization
+  behind a small interface.
+
+Choose these trade-offs from the real callers, side effects, and external
+contracts. A pure function or injected dependency is not automatically a better
+seam.
 
 ## Key tests
 

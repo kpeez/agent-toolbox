@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Coordinate multiple agents for substantial implementation, research, diagnosis, or review when bounded delegation or independent parallel work would help. Use for worker briefs, ownership, integration, and follow-up; not for small tasks best handled directly.
+description: Coordinate bounded agents for substantial parallel work or independent review.
 ---
 
 # Orchestrate
