@@ -13,6 +13,8 @@ its TSV, branch, fixed-budget, and infinite-loop rules are not active.
 
 For a new run, read [setup and program approval](references/setup-program.md).
 When resuming, read [interrupted-run reconciliation](references/resume-reconciliation.md).
+For the standard single-objective progress plot, read
+[progress plotting](references/trial-plots.md).
 Read only the phase reference needed for the current state. An approved program
 must define the iteration unit before candidate optimization. If existing
 evidence or a simple bounded pilot cannot establish it, the setup reference
@@ -78,7 +80,10 @@ python3 <ledger.py> append <record-dir> \
 no measurement. The ledger is append-only. Never rewrite, reorder, or delete
 its lines. If a record is wrong, stop and report the discrepancy; a later line
 does not silently change the earlier record. `ledger.py render <record-dir>`
-rebuilds the summary from the ledger.
+rebuilds the summary from the ledger. The shared `scripts/plot_trials.py` reads
+that same ledger directly. Refresh the declared progress plot at reporting
+checkpoints after recording the attempt; plotting never controls keep/discard
+decisions or causes an evaluator retry. Additional figures remain run-local.
 
 ## The loop
 
@@ -120,9 +125,11 @@ results within the remaining budget; do not broaden scope.
 
 ## Wrap-up
 
-When the run stops, render the candidate and calibration summaries and report
-the latest kept candidate commit and metrics versus the comparable baseline,
-the selected unit and calibration result and budget, candidate attempts and
-keeps, stop reason, branch, worktree, both record directories when used, and
-any unreconciled state. Leave the branch and worktree in place. Merging,
+When the run stops, render the candidate and calibration summaries. When the
+program declared a figure, draw it with `scripts/plot_trials.py` and look at
+the PNG before reporting. Report the latest kept candidate commit and metrics
+versus the comparable baseline, the selected unit and calibration result and
+budget, candidate attempts and keeps, stop reason, branch, worktree, both
+record directories when used, the figure path when one was drawn, and any
+unreconciled state. Leave the branch and worktree in place. Merging,
 publishing, or discarding the result remains the user's choice.

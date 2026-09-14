@@ -127,7 +127,10 @@ def main() -> None:
     if args.verb == "append":
         append(args)
     else:
-        render(Path(args.run_dir))
+        run_dir = Path(args.run_dir)
+        if not run_dir.is_dir():
+            raise SystemExit(f"run directory not found: {run_dir}")
+        render(run_dir)
 
 
 if __name__ == "__main__":
