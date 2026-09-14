@@ -11,7 +11,7 @@ authorized run; do not repeat the interview or revise its rules in place.
 
 Agree on:
 
-- a short date-based run tag, and that the `autoresearch/<tag>` branch and
+- a run tag `YYYY-MM-DD-{project-slug}`, and that the `autoresearch/<tag>` branch and
   dedicated worktree do not already exist;
 - the editable and read-only paths. The evaluator and metric extraction are
   always read-only;
@@ -30,6 +30,13 @@ Agree on:
   candidate and (when needed) calibration record and log directories, and
   absolute path to `scripts/ledger.py`;
 - the run-specific keys stored under `metrics`.
+
+Use the run's start date and a descriptive lowercase, hyphen-separated project
+slug, for example `2026-09-14-training-throughput`. Keep that tag when resuming,
+including across dates. Never overwrite an existing run. For a separate run of
+the same project on the same day, add a descriptive suffix to the project slug
+and verify that the resulting tag is unused. Use the tag as the run directory
+name under the approved records location.
 
 Resolve record and log locations from actual filesystem state before approval. A
 missing or unwritable path is not permission to choose an unapproved fallback.
@@ -64,7 +71,10 @@ before the comparable optimization baseline. The approved program must state:
 Change only the workload horizon during calibration. Do not tune the evaluator
 to favor a unit or candidate. Record each invocation with the existing
 `scripts/ledger.py` in the approved calibration record directory, with a
-distinct log and a description prefixed `calibration:`. Use the existing ledger
+distinct log using the root skill's experiment naming rule and a description
+prefixed `calibration: exp{NNN}-{slug}`. Number calibration experiments from their
+own ledger; their separate directories distinguish them from candidate names.
+Use the existing ledger
 metric keys for elapsed cost, objective, variability, or related evidence; do
 not extend the ledger runtime merely to add a phase field. A successful
 measurement may use status `keep`, which means the measurement completed, not

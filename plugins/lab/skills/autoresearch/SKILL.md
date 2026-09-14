@@ -41,9 +41,15 @@ retries. Calibration, when needed, has its own record and log directories so tha
 candidate ledger starts with the comparable baseline; see the setup reference.
 
 1. Determine the next ledger ID before invoking the evaluator. Use one loop
-   writer; do not reserve IDs concurrently.
+   writer; do not reserve IDs concurrently. Reconcile any unfinished invocation
+   before allocating another ID.
+   Name the experiment `exp{NNN}-{slug}`, using the ledger ID zero-padded to at
+   least three digits: `exp000-baseline`, `exp001-reduce-learning-rate`.
+   Use a descriptive lowercase, hyphen-separated slug for the change or
+   hypothesis, not its outcome. Never truncate IDs above 999.
 2. Record the full `HEAD` commit and write output to
-   `<log-dir>/<id>-<full-sha>.log`. Never reuse or overwrite a log.
+   `<log-dir>/exp{NNN}-{slug}-<full-sha>.log`. Use the same experiment name for
+   any experiment-specific artifact directories. Never reuse or overwrite a log.
 3. Run the evaluator exactly as approved, redirecting stdout and stderr to that
    log. Do not stream evaluator output into context.
 4. Check the evaluator's exit status and extract metrics with the approved
@@ -51,6 +57,9 @@ candidate ledger starts with the comparable baseline; see the setup reference.
    Inspect only the bounded tail needed to diagnose it.
 5. Append exactly one ledger record for this invocation. The record's commit
    must be the commit named by the log and actually evaluated.
+   Include `exp{NNN}-{slug}` in its description. Preserve names, logs, and
+   records for kept, discarded, and crashed attempts; never rename or renumber
+   them. Calibration and candidate names belong to their separate ledgers.
 
 If a crash has a trivial code fix, record the failed attempt first. Make the
 fix, commit it, then evaluate the new commit under a new ID and log. Never
@@ -61,7 +70,7 @@ Use the recorded ledger script:
 
 ```bash
 python3 <ledger.py> append <record-dir> \
-  --commit <full-sha> --status keep --description "baseline" \
+  --commit <full-sha> --status keep --description "exp000-baseline" \
   --metric val_bpb=0.9979 --metric peak_vram_gb=44.0
 ```
 

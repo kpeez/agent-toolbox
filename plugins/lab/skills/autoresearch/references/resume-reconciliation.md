@@ -4,6 +4,12 @@ Use this reference only when resuming an approved run. Resume from observed
 state, not from an assumed ledger position. The root skill owns the loop and
 stop condition.
 
+Preserve the recorded run tag, experiment names, and log paths, including older
+naming formats. Resuming on another date does not create a new run. Do not
+rename or renumber existing artifacts to apply the current convention. Reconcile
+unfinished invocations before assigning the next ledger ID; new experiments use
+the current naming rule without overwriting earlier artifacts.
+
 ## Verify recorded state
 
 Read the approved `program.md` and ledger. Verify that:
