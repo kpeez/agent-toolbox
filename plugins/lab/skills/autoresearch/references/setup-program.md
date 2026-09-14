@@ -31,12 +31,12 @@ Agree on:
   absolute paths to `scripts/ledger.py` and, when the run draws a figure,
   `scripts/plot_trials.py`;
 - the run-specific keys stored under `metrics`;
-- whether the run draws a figure of its attempts, and if so the metric keys it
-  plots with their display labels and direction, the acceptance margin, the
-  data scope, and the replication unit. These are the `trial-plot.json` fields
-  in [trial figures](trial-plots.md). Declare the summary statistics the
-  figure needs as ordinary metric keys now; they cannot be recovered later
-  from the ledger.
+- the standard single-objective progress plot: use the primary metric and
+  direction already agreed above, its display label/unit, a title, and any
+  scope note needed for interpretation. Record these in `trial-plot.json`,
+  declare the output path and reporting checkpoints, and use the shared
+  renderer described in [progress plotting](trial-plots.md). If plotting is
+  unavailable, record that limitation rather than inventing a fallback.
 
 Use the run's start date and a descriptive lowercase, hyphen-separated project
 slug, for example `2026-09-14-training-throughput`. Keep that tag when resuming,

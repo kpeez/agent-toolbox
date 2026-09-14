@@ -13,8 +13,8 @@ its TSV, branch, fixed-budget, and infinite-loop rules are not active.
 
 For a new run, read [setup and program approval](references/setup-program.md).
 When resuming, read [interrupted-run reconciliation](references/resume-reconciliation.md).
-When the run should produce a figure of its attempts, read
-[trial figures](references/trial-plots.md).
+For the standard single-objective progress plot, read
+[progress plotting](references/trial-plots.md).
 Read only the phase reference needed for the current state. An approved program
 must define the iteration unit before candidate optimization. If existing
 evidence or a simple bounded pilot cannot establish it, the setup reference
@@ -80,10 +80,10 @@ python3 <ledger.py> append <record-dir> \
 no measurement. The ledger is append-only. Never rewrite, reorder, or delete
 its lines. If a record is wrong, stop and report the discrepancy; a later line
 does not silently change the earlier record. `ledger.py render <record-dir>`
-rebuilds the summary from the ledger. When the record directory declares
-`trial-plot.json`, `append` and `render` also regenerate the derived plot input
-described in [trial figures](references/trial-plots.md); a problem there warns
-on stderr and never blocks the record.
+rebuilds the summary from the ledger. The shared `scripts/plot_trials.py` reads
+that same ledger directly. Refresh the declared progress plot at reporting
+checkpoints after recording the attempt; plotting never controls keep/discard
+decisions or causes an evaluator retry. Additional figures remain run-local.
 
 ## The loop
 

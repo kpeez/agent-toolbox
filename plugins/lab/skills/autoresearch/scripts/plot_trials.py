@@ -3,23 +3,16 @@
 # requires-python = ">=3.10"
 # dependencies = ["matplotlib>=3.8"]
 # ///
-"""Plot one autoresearch run from its trial-runs file.
+"""Draw the standard single-objective progress plot for an autoresearch run.
 
-  plot_trials.py TRIALS_JSONL --out FIGURE.png [--panel METRIC ...] [--commits]
-  plot_trials.py TRIALS_JSONL --validate
+    plot_trials.py RUN_DIR [--out PROGRESS.png] [--width INCHES]
+    plot_trials.py RUN_DIR --validate
 
-The input is `<run>-trial-runs.jsonl`, written by `ledger.py trials`: one
-`record: metadata` line followed by one `record: trial` line per attempt. The
-metadata line carries every run-specific plotting decision -- display labels,
-metric direction, bounded domains, the acceptance delta, the data scope -- so
-one command draws any run and only the flags below change between figures.
-
-Panels are drawn top to bottom in `--panel` order; the default is the run's
-primary metric alone. The primary metric's panel also carries the incumbent
-step line and, when the metadata declares `accept_delta`, the acceptance bar.
-
-Colour carries one bit -- accepted vs not -- so a run may set its own `accent`
-and stay in the colour system of the figures beside it.
+The run directory contains the append-only ``results.jsonl`` ledger and a
+small ``trial-plot.json`` declaration. The declaration chooses the one metric
+that the run is optimizing; this renderer owns the shared visual language.
+Matplotlib is imported only when a figure is requested, so validation works in
+a minimal Python environment.
 """
 
 from __future__ import annotations
@@ -27,236 +20,204 @@ from __future__ import annotations
 import argparse
 import json
 import math
-import textwrap
+import re
+import sys
 from pathlib import Path
 from typing import Any
 
-# House style, mirrored from the making-plots skill's style module so this
-# script runs standalone. Nothing else here sets rcParams.
-NEUTRAL = "#6b7280"
-ACCENT = "#d9541e"
-TEXT_PRIMARY = "#0b0b0b"
-TEXT_SECONDARY = "#52514e"
-RULE_GRAY = "#d9d8d3"
+# Keep the standard plot's visual language here. Run-specific figures may add
+# their own views, but should not need to fork this renderer.
+GREEN = "#4fbd7a"
+GREEN_DARK = "#31885a"
+DISCARD = "#cfd3d1"
+CRASH = "#a76b6b"
+TEXT_PRIMARY = "#101313"
+TEXT_SECONDARY = "#555c59"
+RULE_GRAY = "#d9ddda"
 SURFACE = "#fcfcfb"
 
 STATUSES = ("keep", "discard", "crash")
 DIRECTIONS = ("maximize", "minimize")
-METADATA_FIELDS = ("run", "title", "scope", "replication_unit", "primary_metric")
-
-KEEP_SIZE = 7.0
-OTHER_SIZE = 5.2
-# Footnote characters per inch of figure width; 120 at the 9 in house default.
-FOOTNOTE_CHARS_PER_INCH = 13
-AXIS_LABEL_CHARS = 22
-FOOTNOTE_LINE_INCHES = 0.17
+CONFIG_FIELDS = {"metric", "label", "direction", "title", "scope"}
+REQUIRED_CONFIG_FIELDS = ("metric", "label", "direction", "title")
+OLD_CONFIG_FIELDS = {"metrics", "primary_metric"}
 
 
 def fail(message: str) -> None:
     raise SystemExit(f"plot_trials: {message}")
 
 
+def require_nonempty_string(value: Any, where: str) -> str:
+    if not isinstance(value, str) or not value.strip():
+        fail(f"{where}: expected a non-empty string")
+    return value.strip()
+
+
 def require_number(value: Any, where: str) -> float:
     if isinstance(value, bool) or not isinstance(value, (int, float)):
-        fail(f"{where}: expected a number, got {value!r}")
-    if not math.isfinite(float(value)):
-        fail(f"{where}: {value!r} is not finite; record null for a missing measurement")
-    return float(value)
+        fail(f"{where}: expected a finite number, got {value!r}")
+    result = float(value)
+    if not math.isfinite(result):
+        fail(f"{where}: expected a finite number, got {value!r}")
+    return result
 
 
-def check_metadata(metadata: dict[str, Any], where: str) -> None:
-    for field in METADATA_FIELDS:
-        if not isinstance(metadata.get(field), str) or not metadata[field].strip():
-            fail(f"{where}: metadata needs a non-empty {field!r}")
-    metrics = metadata.get("metrics")
-    if not isinstance(metrics, dict) or not metrics:
-        fail(f"{where}: metadata needs a non-empty 'metrics' object")
-    for key, spec in metrics.items():
-        if not isinstance(spec, dict):
-            fail(f"{where}: metrics[{key!r}] must be an object")
-        if not isinstance(spec.get("label"), str) or not spec["label"].strip():
-            fail(f"{where}: metrics[{key!r}] needs a non-empty 'label'")
-        if spec.get("direction") not in DIRECTIONS:
-            fail(f"{where}: metrics[{key!r}].direction must be one of {', '.join(DIRECTIONS)}")
-        limits = spec.get("limits")
-        if limits is not None:
-            if not isinstance(limits, list) or len(limits) != 2:
-                fail(f"{where}: metrics[{key!r}].limits must be [low, high]")
-            low = require_number(limits[0], f"{where}: metrics[{key!r}].limits[0]")
-            high = require_number(limits[1], f"{where}: metrics[{key!r}].limits[1]")
-            if low >= high:
-                fail(f"{where}: metrics[{key!r}].limits must increase, got {limits}")
-        spread = spec.get("spread")
-        if spread is not None and not isinstance(spread, str):
-            fail(f"{where}: metrics[{key!r}].spread must be the metric key holding the spread")
-        precision = spec.get("precision")
-        if precision is not None and (
-            isinstance(precision, bool) or not isinstance(precision, int) or precision < 0
-        ):
-            fail(f"{where}: metrics[{key!r}].precision must be a non-negative integer")
-    if metadata["primary_metric"] not in metrics:
-        fail(f"{where}: primary_metric {metadata['primary_metric']!r} is not in 'metrics'")
-    if metadata.get("accept_delta") is not None:
-        require_number(metadata["accept_delta"], f"{where}: accept_delta")
-    units = metadata.get("units_per_trial")
-    if units is not None and (isinstance(units, bool) or not isinstance(units, int)):
-        fail(f"{where}: units_per_trial must be an integer count of {metadata['replication_unit']}s")
-    for field in ("accent", "note"):
-        if metadata.get(field) is not None and not isinstance(metadata[field], str):
-            fail(f"{where}: {field!r} must be a string")
+def load_config(run_dir: Path) -> dict[str, Any]:
+    path = run_dir / "trial-plot.json"
+    if not path.is_file():
+        fail(f"plot declaration not found: {path}")
+    try:
+        config = json.loads(path.read_text(encoding="utf-8"))
+    except json.JSONDecodeError as error:
+        fail(f"{path}: invalid JSON: {error}")
+    except OSError as error:
+        fail(f"cannot read {path}: {error}")
+    if not isinstance(config, dict):
+        fail(f"{path}: expected a JSON object")
+
+    old = sorted(OLD_CONFIG_FIELDS & set(config))
+    if old:
+        fail(
+            f"{path}: old plot schema {', '.join(repr(field) for field in old)} "
+            "is unsupported; use metric, label, direction, and title"
+        )
+    unknown = sorted(set(config) - CONFIG_FIELDS)
+    if unknown:
+        fail(f"{path}: unsupported field(s): {', '.join(unknown)}")
+    for field in REQUIRED_CONFIG_FIELDS:
+        require_nonempty_string(config.get(field), f"{path}: {field!r}")
+    if config["direction"] not in DIRECTIONS:
+        fail(f"{path}: direction must be one of {', '.join(DIRECTIONS)}")
+    if "scope" in config:
+        require_nonempty_string(config["scope"], f"{path}: 'scope'")
+    return config
 
 
-def check_trial(trial: dict[str, Any], metadata: dict[str, Any], where: str) -> None:
-    if not isinstance(trial.get("id"), int) or isinstance(trial["id"], bool):
-        fail(f"{where}: trial needs an integer 'id'")
-    if trial.get("status") not in STATUSES:
+def is_calibration_record(record: dict[str, Any]) -> bool:
+    """Calibration belongs to its own ledger and must not make a best line."""
+    phase = record.get("phase")
+    if isinstance(phase, str) and phase.strip().lower() == "calibration":
+        return True
+    for key in ("description", "experiment"):
+        value = record.get(key)
+        if isinstance(value, str) and re.match(r"^\s*calibration\s*:", value, re.IGNORECASE):
+            return True
+    return False
+
+
+def validate_record(record: Any, line: int, metric: str) -> dict[str, Any]:
+    where = f"results.jsonl:{line}"
+    if not isinstance(record, dict):
+        fail(f"{where}: each line must be a JSON object")
+    if is_calibration_record(record):
+        fail(f"{where}: calibration records cannot be plotted with candidate attempts")
+
+    identifier = record.get("id")
+    if isinstance(identifier, bool) or not isinstance(identifier, int) or identifier < 0:
+        fail(f"{where}: id must be a non-negative integer")
+    status = record.get("status")
+    if status not in STATUSES:
         fail(f"{where}: status must be one of {', '.join(STATUSES)}")
-    metrics = trial.get("metrics") or {}
+    require_nonempty_string(record.get("description"), f"{where}: 'description'")
+    metrics = record.get("metrics")
+    if metrics is None:
+        metrics = {}
     if not isinstance(metrics, dict):
         fail(f"{where}: 'metrics' must be an object")
-    # Only declared keys are plotted, so only they must be numeric; the ledger
-    # may carry other keys of any type.
-    declared = set(metadata["metrics"])
-    declared |= {
-        spec["spread"] for spec in metadata["metrics"].values() if spec.get("spread")
-    }
-    for key in declared & set(metrics):
-        if metrics[key] is not None:
-            require_number(metrics[key], f"{where}: metrics[{key!r}]")
+
+    if metric not in metrics:
+        if status != "crash":
+            fail(f"{where}: non-crash record must contain metric {metric!r}")
+    elif metrics[metric] is None:
+        if status != "crash":
+            fail(f"{where}: only a crash may record metric {metric!r} as null")
+    else:
+        require_number(metrics[metric], f"{where}: metrics[{metric!r}]")
+    return record
 
 
-def load(path: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
-    """Read and validate the trial-runs file. Every error names its line."""
+def load_run(run_dir: Path) -> tuple[dict[str, Any], list[dict[str, Any]]]:
+    if not run_dir.is_dir():
+        fail(f"run directory not found: {run_dir}")
+    config = load_config(run_dir)
+    path = run_dir / "results.jsonl"
     if not path.is_file():
-        fail(f"trial-runs file not found: {path}")
-    numbered = [
-        (number, line)
-        for number, line in enumerate(path.read_text().splitlines(), start=1)
-        if line.strip()
-    ]
-    if not numbered:
-        fail(f"{path} is empty")
-    records = []
-    for number, line in numbered:
+        fail(f"results ledger not found: {path}")
+    try:
+        lines = path.read_text(encoding="utf-8").splitlines()
+    except OSError as error:
+        fail(f"cannot read {path}: {error}")
+
+    records: list[dict[str, Any]] = []
+    previous_id: int | None = None
+    for line, raw in enumerate(lines, start=1):
+        if not raw.strip():
+            continue
         try:
-            records.append((number, json.loads(line)))
+            record = json.loads(raw)
         except json.JSONDecodeError as error:
-            fail(f"{path}:{number}: {error}")
-    for number, record in records:
-        if not isinstance(record, dict):
-            fail(f"{path}:{number}: each line must be a JSON object")
-    first_line, metadata = records[0]
-    if metadata.get("record") != "metadata":
-        fail(f"{path}:{first_line}: the first line must be the 'metadata' record")
-    check_metadata(metadata, f"{path}:{first_line}")
-    trials: list[dict[str, Any]] = []
-    for number, record in records[1:]:
-        if record.get("record") != "trial":
-            fail(f"{path}:{number}: expected a 'trial' record after the metadata line")
-        check_trial(record, metadata, f"{path}:{number}")
-        if trials and record["id"] <= trials[-1]["id"]:
-            fail(f"{path}:{number}: trial ids must increase, got {record['id']}")
-        trials.append(record)
-    return metadata, trials
+            fail(f"{path}:{line}: invalid JSON: {error}")
+        record = validate_record(record, line, config["metric"])
+        identifier = record["id"]
+        if previous_id is not None and identifier <= previous_id:
+            fail(f"{path}:{line}: ids must increase strictly ({identifier} follows {previous_id})")
+        if record["status"] == "keep":
+            value = metric_value(record, config["metric"])
+            previous_keep = next(
+                (metric_value(item, config["metric"]) for item in reversed(records) if item["status"] == "keep"),
+                None,
+            )
+            if previous_keep is not None and value is not None:
+                regressed = value < previous_keep if config["direction"] == "maximize" else value > previous_keep
+                if regressed:
+                    fail(f"{path}:{line}: keep metric regresses from {previous_keep:g} to {value:g}")
+        previous_id = identifier
+        records.append(record)
+    return config, records
 
 
-def value_of(trial: dict[str, Any], key: str) -> float | None:
-    raw = (trial.get("metrics") or {}).get(key)
-    return None if raw is None else float(raw)
+def metric_value(record: dict[str, Any], metric: str) -> float | None:
+    value = (record.get("metrics") or {}).get(metric)
+    return None if value is None else float(value)
 
 
-def drawn(trials: list[dict[str, Any]], panels: list[str], status: str) -> bool:
-    """Whether a mark of this status actually appears on a drawn panel."""
-    return any(
-        value_of(trial, key) is not None
-        for trial in trials
-        if trial["status"] == status
-        for key in panels
-    )
-
-
-def incumbent_series(
-    trials: list[dict[str, Any]], key: str, direction: str
-) -> list[tuple[int, float]]:
-    """Best value among accepted attempts, as of each attempt."""
-    better = max if direction == "maximize" else min
-    best: float | None = None
-    series = []
-    for trial in trials:
-        current = value_of(trial, key)
-        if trial["status"] == "keep" and current is not None:
-            best = current if best is None else better(best, current)
-        if best is not None:
-            series.append((trial["id"], best))
-    return series
-
-
-def panel_points(
-    trials: list[dict[str, Any]], key: str, spread_key: str | None
-) -> list[tuple[dict[str, Any], float, float]]:
-    """(trial, value, spread) for every attempt with a value on this metric."""
-    points = []
-    for trial in trials:
-        current = value_of(trial, key)
-        if current is None:
-            continue
-        spread = value_of(trial, spread_key) if spread_key else None
-        points.append((trial, current, abs(spread) if spread is not None else 0.0))
-    return points
-
-
-def decimals(trials: list[dict[str, Any]], key: str, spec: dict[str, Any]) -> int:
-    """Decimals for value labels: the run's choice, else the most any value uses."""
-    if spec.get("precision") is not None:
-        return int(spec["precision"])
-    most = 0
-    for trial in trials:
-        current = value_of(trial, key)
-        if current is None:
-            continue
-        text = repr(current)
-        if "e" in text or "E" in text:
-            return 6
-        most = max(most, len(text.partition(".")[2].rstrip("0")))
-    return min(most, 6)
+def experiment_name(record: dict[str, Any]) -> str:
+    """Return an explicit experiment name or preserve a legacy description."""
+    identifier = record["id"]
+    description = record["description"].strip()
+    match = re.search(r"(?<![a-z0-9])exp(\d{3,})-[a-z0-9][a-z0-9-]*[a-z0-9]?(?![a-z0-9-])", description)
+    if match and int(match.group(1)) == identifier:
+        return match.group(0)
+    return description
 
 
 def apply_style() -> None:
     import matplotlib
 
+    # The requested Karpathy-style progress view uses keyed green labels and
+    # a faint lookup grid; its wider canvas needs slightly larger typography.
     matplotlib.rcParams.update(
         {
             "font.family": "sans-serif",
-            "font.size": 9,
+            "font.size": 10,
             "text.color": TEXT_PRIMARY,
             "axes.labelcolor": TEXT_SECONDARY,
-            "axes.labelsize": 9,
+            "axes.labelsize": 10,
             "xtick.color": TEXT_SECONDARY,
             "ytick.color": TEXT_SECONDARY,
-            "xtick.labelsize": 8,
-            "ytick.labelsize": 8,
-            "xtick.major.size": 3,
-            "ytick.major.size": 3,
-            "xtick.major.width": 0.8,
-            "ytick.major.width": 0.8,
-            "axes.edgecolor": RULE_GRAY,
+            "xtick.labelsize": 9,
+            "ytick.labelsize": 9,
+            "axes.edgecolor": TEXT_PRIMARY,
             "axes.linewidth": 0.8,
             "axes.spines.top": False,
             "axes.spines.right": False,
-            "axes.grid": False,
+            "axes.grid": True,
             "axes.axisbelow": True,
-            "axes.titlesize": 10,
-            "axes.titleweight": "bold",
-            "axes.titlelocation": "left",
-            "axes.titlepad": 6,
-            "figure.titlesize": 11,
-            "figure.titleweight": "bold",
+            "figure.titlesize": 16,
+            "figure.titleweight": "normal",
             "figure.facecolor": SURFACE,
             "axes.facecolor": SURFACE,
             "savefig.facecolor": SURFACE,
-            "legend.frameon": False,
-            "legend.fontsize": 8,
-            "lines.linewidth": 1.4,
             "savefig.dpi": 300,
             "figure.dpi": 100,
             "savefig.bbox": "tight",
@@ -264,161 +225,97 @@ def apply_style() -> None:
     )
 
 
-def axis_label(spec: dict[str, Any], replication_unit: str, n_units: int | None) -> str:
-    label = spec["label"]
-    if spec["direction"] == "minimize":
-        label += " (lower is better)"
-    # Wrapped: a y label longer than its panel is tall runs into the panel above.
-    lines = textwrap.wrap(label, width=AXIS_LABEL_CHARS) or [label]
-    if n_units:
-        lines.append(f"({n_units} {replication_unit}s)")
-    return "\n".join(lines)
+def running_best(keeps: list[tuple[dict[str, Any], float]], direction: str) -> list[tuple[int, float]]:
+    better = max if direction == "maximize" else min
+    best: float | None = None
+    result: list[tuple[int, float]] = []
+    for record, value in keeps:
+        best = value if best is None else better(best, value)
+        result.append((record["id"], best))
+    return result
 
 
-def draw_panel(
-    ax,
-    trials: list[dict[str, Any]],
-    key: str,
-    spec: dict[str, Any],
-    accent: str,
-    extra_values: list[float],
-) -> None:
-    """One dot per attempt: accepted filled in the accent, otherwise open in neutral."""
-    spread_key = spec.get("spread")
-    points = panel_points(trials, key, spread_key)
-    if not points:
-        fail(f"no attempt recorded a value for {key!r}")
-    for trial, current, spread in points:
-        kept = trial["status"] == "keep"
-        crashed = trial["status"] == "crash"
-        colour = accent if kept else NEUTRAL
-        if spread:
-            ax.plot(
-                [trial["id"], trial["id"]],
-                [current - spread, current + spread],
-                color=colour,
-                linewidth=1.0,
-                alpha=0.75,
-                zorder=2,
-            )
-        ax.plot(
-            trial["id"],
-            current,
-            marker="x" if crashed else "o",
-            markersize=KEEP_SIZE if kept else OTHER_SIZE,
-            markerfacecolor=colour if kept else SURFACE,
-            markeredgecolor=colour,
-            markeredgewidth=1.3,
-            linestyle="none",
-            zorder=3,
+def figure_size(width: float, kept_names: list[str]) -> tuple[float, float]:
+    """Give long runs room for labels while respecting --width as a floor."""
+    total_chars = sum(len(name) for name in kept_names)
+    automatic = max(8.0 + len(kept_names) * 0.12, 8.0 + total_chars / 48.0)
+    width = max(width, min(automatic, 32.0))
+    height = min(14.0, max(6.5, 6.2 + len(kept_names) * 0.025))
+    return width, height
+
+
+def label_polygon(annotation, renderer):
+    """Rotated text rectangle; axis-aligned bounds overestimate diagonal labels."""
+    from matplotlib.text import Text
+
+    angle = annotation.get_rotation()
+    annotation.set_rotation(0)
+    box = Text.get_window_extent(annotation, renderer).padded(2)
+    annotation.set_rotation(angle)
+    x, y = annotation.get_transform().transform(annotation.get_position())
+    cosine, sine = math.cos(math.radians(angle)), math.sin(math.radians(angle))
+    return [(x + (a - x) * cosine - (b - y) * sine,
+             y + (a - x) * sine + (b - y) * cosine)
+            for a, b in ((box.x0, box.y0), (box.x1, box.y0),
+                         (box.x1, box.y1), (box.x0, box.y1))]
+
+
+def labels_overlap(first, second):
+    """Separating-axis test for the two rotated text rectangles."""
+    for polygon in (first, second):
+        for a, b in zip(polygon, polygon[1:] + polygon[:1]):
+            normal = (a[1] - b[1], b[0] - a[0])
+            one = [x * normal[0] + y * normal[1] for x, y in first]
+            two = [x * normal[0] + y * normal[1] for x, y in second]
+            if max(one) < min(two) or max(two) < min(one):
+                return False
+    return True
+
+
+def add_keep_labels(ax, keeps: list[tuple[dict[str, Any], float]], names: list[str]) -> None:
+    """Keep every name legible; leaders retain its association when displaced."""
+    canvas = ax.figure.canvas
+    canvas.draw()
+    renderer = canvas.get_renderer()
+    boundary = ax.get_window_extent(renderer)
+    placed = []
+    rotation = 90 if len(keeps) > 25 else 32
+    for (record, value), name in zip(keeps, names):
+        annotation = ax.annotate(
+            name, (record["id"], value), xytext=(4, 9),
+            textcoords="offset points", rotation=rotation, rotation_mode="anchor",
+            ha="left", va="bottom", fontsize=8.5, color=GREEN_DARK,
+            arrowprops={"arrowstyle": "-", "color": RULE_GRAY, "lw": 0.65,
+                        "shrinkA": 2, "shrinkB": 5},
+            annotation_clip=False, zorder=5,
         )
-    low = min(current - spread for _, current, spread in points)
-    high = max(current + spread for _, current, spread in points)
-    low, high = min([low, *extra_values]), max([high, *extra_values])
-    span = (high - low) or abs(high) or 1.0
-    bottom, top = low - 0.12 * span, high + 0.18 * span
-    limits = spec.get("limits")
-    if limits:
-        # A bounded metric never gets padding outside its domain.
-        bottom, top = max(bottom, float(limits[0])), min(top, float(limits[1]))
-    ax.set_ylim(bottom, top)
+        candidates = [(4, 9)]
+        for distance in range(18, 300, 12):
+            candidates.extend([(4, distance), (4, -distance)])
+        for x_offset, y_offset in candidates:
+            annotation.set_position((x_offset, y_offset))
+            annotation.update_positions(renderer)
+            polygon = label_polygon(annotation, renderer)
+            if (all(boundary.x0 <= x <= boundary.x1 and boundary.y0 <= y <= boundary.y1
+                    for x, y in polygon)
+                    and not any(labels_overlap(polygon, previous) for previous in placed)):
+                break
+        else:
+            # Keep the label rather than silently omitting it. The caller can
+            # widen an unusually crowded figure and must inspect the PNG.
+            print("warning: crowded kept labels; increase --width", file=sys.stderr)
+        placed.append(polygon)
+        if annotation.get_position() == (4, 9):
+            annotation.arrow_patch.set_visible(False)
 
 
-def draw_guide(ax, trials: list[dict[str, Any]], key: str) -> None:
-    """Faint line joining the values; broken where an attempt has no value."""
-    xs = [trial["id"] for trial in trials]
-    ys = [value_of(trial, key) for trial in trials]
-    ys = [math.nan if y is None else y for y in ys]
-    ax.plot(xs, ys, color=NEUTRAL, linewidth=0.9, alpha=0.45, zorder=1)
+def save_figure(fig, output: Path) -> Path:
+    output.parent.mkdir(parents=True, exist_ok=True)
+    fig.savefig(output)
+    return output
 
 
-def draw_objective(ax, trials, metadata, key, spec, accent) -> list[float]:
-    """Incumbent step line and, when declared, the acceptance bar."""
-    series = incumbent_series(trials, key, spec["direction"])
-    if not series:
-        return []
-    xs = [trial_id for trial_id, _ in series]
-    ys = [best for _, best in series]
-    ax.step(xs, ys, where="post", color=accent, linewidth=1.5, alpha=0.95, zorder=1)
-    delta = metadata.get("accept_delta")
-    if delta is None:
-        return ys
-    signed = float(delta) if spec["direction"] == "maximize" else -float(delta)
-    bar = [best + signed for best in ys]
-    ax.step(
-        xs,
-        bar,
-        where="post",
-        color=TEXT_SECONDARY,
-        linewidth=0.9,
-        linestyle=(0, (4, 3)),
-        alpha=0.8,
-        zorder=1,
-    )
-    return ys + bar
-
-
-def label_values(ax, trials, key, spec, which: str) -> None:
-    places = decimals(trials, key, spec)
-    for trial, current, spread in panel_points(trials, key, spec.get("spread")):
-        kept = trial["status"] == "keep"
-        if which == "keeps" and not kept:
-            continue
-        ax.annotate(
-            f"{current:.{places}f}",
-            (trial["id"], current + spread),
-            textcoords="offset points",
-            xytext=(0, 11),
-            ha="center",
-            fontsize=8.5,
-            fontweight="bold" if kept else "normal",
-            color=TEXT_PRIMARY,
-        )
-
-
-def footnote_text(metadata, trials, panels, accent_used, commits: bool) -> str:
-    primary = metadata["primary_metric"]
-    spec = metadata["metrics"][primary]
-    crashes = [t for t in trials if t["status"] == "crash"]
-    parts = [
-        metadata["scope"].rstrip(". ") + ".",
-        f"Unit of replication: {metadata['replication_unit']}.",
-        "Filled accent: the run accepted the attempt and made it the incumbent;"
-        " open: not accepted.",
-    ]
-    # The incumbent and the acceptance bar are drawn on the primary metric's
-    # panel alone, so they are described only when that panel is shown.
-    delta = metadata.get("accept_delta")
-    if primary in panels:
-        parts.append(f"Step line: best {spec['label']} among accepted attempts.")
-        if delta is not None:
-            sign = "+" if spec["direction"] == "maximize" else "-"
-            parts.append(f"Dashed: acceptance bar (incumbent {sign}{float(delta):g}).")
-    spreads = {
-        metadata["metrics"][key]["spread"]
-        for key in panels
-        if metadata["metrics"][key].get("spread")
-    }
-    for spread_key in sorted(spreads):
-        label = metadata["metrics"].get(spread_key, {}).get("label", spread_key)
-        parts.append(f"Whisker: ±{label}.")
-    if crashes:
-        ids = ", ".join(f"{trial['id']:03d}" for trial in crashes)
-        parts.append(f"Dotted rule: the attempt crashed ({ids}).")
-        if any(value_of(trial, key) is not None for trial in crashes for key in panels):
-            parts.append("×: a crashed attempt that still produced a measurement.")
-    if commits:
-        parts.append("Monospace text under each mark is the commit evaluated.")
-    if len(panels) > 1:
-        parts.append("Panels are different metrics and share no axis.")
-    if metadata.get("note"):
-        parts.append(metadata["note"].strip())
-    if not accent_used:
-        parts.append("No attempt was accepted.")
-    return " ".join(parts)
-
-
-def render(metadata, trials, panels, args) -> Path:
+def render(run_dir: Path, config: dict[str, Any], records: list[dict[str, Any]], output: Path, width: float) -> Path:
     import matplotlib
 
     matplotlib.use("Agg")
@@ -426,186 +323,120 @@ def render(metadata, trials, panels, args) -> Path:
     from matplotlib.lines import Line2D
 
     apply_style()
-    accent = args.accent or metadata.get("accent") or ACCENT
-    primary = metadata["primary_metric"]
-    ids = [trial["id"] for trial in trials]
-    crashes = [trial for trial in trials if trial["status"] == "crash"]
-    accent_used = any(trial["status"] == "keep" for trial in trials)
+    metric = config["metric"]
+    measured = [(record, metric_value(record, metric)) for record in records]
+    measured = [(record, value) for record, value in measured if value is not None]
+    keeps = [(record, value) for record, value in measured if record["status"] == "keep"]
+    discards = [(record, value) for record, value in measured if record["status"] == "discard"]
+    measured_crashes = [(record, value) for record, value in measured if record["status"] == "crash"]
+    unmeasured_crashes = [record for record in records if record["status"] == "crash" and metric_value(record, metric) is None]
+    names = [experiment_name(record) for record, _ in keeps]
 
-    footnote = footnote_text(metadata, trials, panels, accent_used, args.commits)
-    wrapped = textwrap.fill(footnote, width=int(FOOTNOTE_CHARS_PER_INCH * args.width))
-    # Reserve inches for the furniture tight_layout cannot see -- the suptitle,
-    # the legend, the footnote -- so the layout holds for any panel count and
-    # any footnote length. Ticks, the commit rail and the x label sit inside the
-    # rect, because the rail's room comes from the x label's pad.
-    top_reserve = 0.78
-    bottom_reserve = 0.12 + FOOTNOTE_LINE_INCHES * (wrapped.count("\n") + 1)
-    ratios = [2.6] + [1.6] * (len(panels) - 1)
-    height = sum(ratios) + top_reserve + bottom_reserve
-    fig, axes = plt.subplots(
-        len(panels),
-        1,
-        figsize=(args.width, height),
-        sharex=True,
-        height_ratios=ratios,
-        squeeze=False,
-    )
-    axes = [row[0] for row in axes]
+    fig, ax = plt.subplots(figsize=figure_size(width, names))
+    fig.subplots_adjust(left=0.09, right=0.98, top=0.83, bottom=0.13)
+    ax.grid(color=RULE_GRAY, linewidth=0.8, alpha=0.55)
+    if discards:
+        ax.scatter([record["id"] for record, _ in discards], [value for _, value in discards], s=22, color=DISCARD, edgecolors="none", alpha=0.85, zorder=2)
+    if measured_crashes:
+        ax.scatter([record["id"] for record, _ in measured_crashes], [value for _, value in measured_crashes], marker="x", s=38, color=CRASH, linewidths=1.5, zorder=3)
+    if keeps:
+        ax.scatter([record["id"] for record, _ in keeps], [value for _, value in keeps], s=58, marker="o", color=GREEN, edgecolors=GREEN_DARK, linewidths=0.8, zorder=4)
+        best = running_best(keeps, config["direction"])
+        if records and records[-1]["id"] > best[-1][0]:
+            best.append((records[-1]["id"], best[-1][1]))
+        ax.step([identifier for identifier, _ in best], [value for _, value in best], where="post", color=GREEN, linewidth=2.2, alpha=0.95, zorder=1)
 
-    n_units = metadata.get("units_per_trial")
-    for ax, key in zip(axes, panels):
-        spec = metadata["metrics"][key]
-        extra: list[float] = []
-        if key == primary:
-            extra = draw_objective(ax, trials, metadata, key, spec, accent)
-        else:
-            draw_guide(ax, trials, key)
-        draw_panel(ax, trials, key, spec, accent, extra)
-        if args.labels != "none" and key == primary:
-            label_values(ax, trials, key, spec, args.labels)
-        ax.set_ylabel(axis_label(spec, metadata["replication_unit"], n_units))
-        for trial in crashes:
-            ax.axvline(
-                trial["id"],
-                color=RULE_GRAY,
-                linewidth=1.0,
-                linestyle=(0, (1, 3)),
-                zorder=0,
-            )
+    ids = [record["id"] for record in records]
+    if ids:
+        lower, upper = min(ids) - 1, max(ids) + 1
+        if lower == upper:
+            lower, upper = lower - 1, upper + 1
+        ax.set_xlim(lower, upper + (upper - lower) * 0.10)
+        ax.set_xticks(ids if len(ids) <= 30 else thin_ticks(ids))
+    else:
+        ax.set_xlim(-0.5, 0.5)
+        ax.set_xticks([])
+    ax.set_xlabel("Experiment #")
 
-    bottom = axes[-1]
-    step = max(1, math.ceil(len(ids) / 30))
-    bottom.set_xticks(ids)
-    bottom.set_xticklabels(
-        [f"{i:03d}" if index % step == 0 else "" for index, i in enumerate(ids)],
-        fontsize=7.5,
-    )
-    bottom.set_xlim(min(ids) - 0.75, max(ids) + 0.75)
-    # The commit rail hangs below the tick labels, so the axis label moves down.
-    bottom.set_xlabel("experiment id, in run order", labelpad=44 if args.commits else 4)
-    if args.commits:
-        for trial in trials:
-            bottom.annotate(
-                str(trial.get("commit", ""))[:7],
-                (trial["id"], 0),
-                xycoords=("data", "axes fraction"),
-                textcoords="offset points",
-                xytext=(0, -26),
-                rotation=90,
-                ha="center",
-                va="top",
-                fontsize=6.4,
-                color=TEXT_SECONDARY,
-                family="monospace",
-            )
+    if measured:
+        raw_values = [value for _, value in measured]
+        low, high = min(raw_values), max(raw_values)
+        span = high - low or max(abs(low) * 0.05, 1.0)
+        ax.set_ylim(low - span * 0.15, high + span * (0.65 if len(keeps) > 25 else 0.35))
+        direction_hint = "higher is better" if config["direction"] == "maximize" else "lower is better"
+        ax.set_ylabel(f"{config['label']} ({direction_hint})")
+    else:
+        ax.set_yticks([])
+        ax.set_ylabel(f"{config['label']} (no measurements)")
+        ax.text(0.5, 0.5, "No measured objective values", transform=ax.transAxes, ha="center", va="center", color=TEXT_SECONDARY, fontsize=12)
 
-    # The key lists only marks the figure actually carries.
-    key_marks = []
-    if drawn(trials, panels, "keep"):
-        key_marks.append(
-            Line2D([], [], marker="o", linestyle="none", markersize=KEEP_SIZE,
-                   color=accent, label="accepted — new incumbent")
-        )
-    if drawn(trials, panels, "discard"):
-        key_marks.append(
-            Line2D([], [], marker="o", linestyle="none", markersize=OTHER_SIZE,
-                   markerfacecolor=SURFACE, markeredgecolor=NEUTRAL, markeredgewidth=1.3,
-                   color=NEUTRAL, label="not accepted")
-        )
-    delta = metadata.get("accept_delta")
-    if primary in panels:
-        if accent_used:
-            key_marks.append(
-                Line2D([], [], color=accent, linewidth=1.5, label="incumbent")
-            )
-        if delta is not None:
-            spec = metadata["metrics"][primary]
-            sign = "+" if spec["direction"] == "maximize" else "-"
-            key_marks.append(
-                Line2D([], [], color=TEXT_SECONDARY, linewidth=0.9, linestyle=(0, (4, 3)),
-                       label=f"acceptance bar (incumbent {sign}{float(delta):g})")
-            )
+    for record in unmeasured_crashes:
+        # Axes-fraction rug: it marks a failed attempt without inventing y data.
+        ax.plot([record["id"], record["id"]], [0.0, 0.035], transform=ax.get_xaxis_transform(), color=CRASH, linewidth=2.0, solid_capstyle="butt", zorder=5)
 
-    fig.align_ylabels(axes)
-    fig.suptitle(metadata["title"], x=0.006, ha="left", y=1 - 0.12 / height)
-    fig.legend(
-        handles=key_marks,
-        loc="upper left",
-        bbox_to_anchor=(0.006, 1 - 0.52 / height),
-        ncol=len(key_marks),
-        fontsize=8,
-        handletextpad=0.6,
-        columnspacing=2.4,
-    )
-    fig.tight_layout(
-        rect=(0, bottom_reserve / height, 1, 1 - top_reserve / height), h_pad=1.1
-    )
-    fig.text(
-        0.006,
-        0.012,
-        wrapped,
-        fontsize=7.6,
-        color=TEXT_SECONDARY,
-        ha="left",
-        va="bottom",
-        linespacing=1.55,
-    )
-    out = Path(args.out)
-    out.parent.mkdir(parents=True, exist_ok=True)
-    fig.savefig(out)
+    handles = []
+    if discards:
+        handles.append(Line2D([], [], marker="o", linestyle="none", markersize=4.5, color=DISCARD, label="Discarded"))
+    if keeps:
+        handles.extend([Line2D([], [], marker="o", linestyle="none", markersize=7, color=GREEN, label="Kept"), Line2D([], [], color=GREEN, linewidth=2.2, label="Running best")])
+    if measured_crashes:
+        handles.append(Line2D([], [], marker="x", linestyle="none", markersize=6,
+                              color=CRASH, label="Crash (measured)"))
+    if unmeasured_crashes:
+        handles.append(Line2D([], [], marker="|", linestyle="none", markersize=8,
+                              color=CRASH, label="Crash (no metric)"))
+    if handles:
+        ax.legend(handles=handles, loc="lower right", bbox_to_anchor=(1, 1.02),
+                  ncol=len(handles), frameon=False)
+
+    fig.suptitle(config["title"], x=0.09, y=0.96, ha="left")
+    noun = "experiment" if len(records) == 1 else "experiments"
+    fig.text(0.09, 0.91, f"{len(records)} {noun}, {len(keeps)} kept", color=TEXT_SECONDARY, fontsize=10, ha="left")
+    if config.get("scope"):
+        fig.text(0.09, 0.02, config["scope"], color=TEXT_SECONDARY, fontsize=8.5, ha="left")
+    # Add labels after all figure furniture exists. Collision bounds otherwise
+    # change when the legend or title is laid out.
+    if keeps:
+        add_keep_labels(ax, keeps, names)
+    result = save_figure(fig, output)
     plt.close(fig)
-    return out
+    return result
+
+
+def thin_ticks(ids: list[int], maximum: int = 12) -> list[int]:
+    if len(ids) <= maximum:
+        return ids
+    step = math.ceil(len(ids) / maximum)
+    ticks = ids[::step]
+    if ticks[-1] != ids[-1]:
+        if len(ids) - 1 - ((len(ids) - 1) // step) * step < step / 2:
+            ticks[-1] = ids[-1]
+        else:
+            ticks.append(ids[-1])
+    return ticks
 
 
 def main() -> None:
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("trials", help="path to <run>-trial-runs.jsonl")
-    parser.add_argument("--out", help="output PNG path")
-    parser.add_argument(
-        "--panel",
-        action="append",
-        default=[],
-        metavar="METRIC",
-        help="metric key for one panel, top to bottom; repeatable "
-        "(default: the run's primary metric)",
-    )
-    parser.add_argument("--commits", action="store_true",
-                        help="draw the evaluated commit under each attempt")
-    parser.add_argument("--labels", choices=("keeps", "all", "none"), default="keeps",
-                        help="value labels on the primary panel (default: keeps)")
-    parser.add_argument("--accent", help="hex colour for accepted attempts")
-    parser.add_argument("--width", type=float, default=12.0, help="figure width in inches")
-    parser.add_argument("--validate", action="store_true",
-                        help="check the file against the schema and exit")
+    parser.add_argument("run_dir", help="autoresearch run directory")
+    parser.add_argument("--out", help="output PNG path (default: RUN_DIR/progress.png)")
+    parser.add_argument("--width", type=float, default=12.0, help="minimum figure width in inches (default: 12)")
+    parser.add_argument("--validate", action="store_true", help="validate inputs and print a JSON summary without importing matplotlib")
     args = parser.parse_args()
+    if not math.isfinite(args.width) or args.width <= 0:
+        fail("--width must be a positive finite number")
 
-    metadata, trials = load(Path(args.trials))
-    panels = args.panel or [metadata["primary_metric"]]
-    for key in panels:
-        if key not in metadata["metrics"]:
-            fail(f"panel metric {key!r} is not declared in the metadata record")
+    run_dir = Path(args.run_dir)
+    config, records = load_run(run_dir)
     if args.validate:
-        statuses = {status: 0 for status in STATUSES}
-        for trial in trials:
-            statuses[trial["status"]] += 1
-        print(
-            json.dumps(
-                {
-                    "run": metadata["run"],
-                    "trials": len(trials),
-                    **statuses,
-                    "metrics": sorted(metadata["metrics"]),
-                }
-            )
-        )
+        counts = {status: sum(record["status"] == status for record in records) for status in STATUSES}
+        print(json.dumps({"metric": config["metric"], "experiments": len(records), **counts}))
         return
-    if not trials:
-        fail(f"{args.trials} has no trial records to plot")
-    if not args.out:
-        fail("--out is required unless --validate is given")
-    if Path(args.out).suffix != ".png":
-        fail(f"--out must end in .png, got {args.out}")
-    print(render(metadata, trials, panels, args))
+
+    output = Path(args.out) if args.out else run_dir / "progress.png"
+    if output.suffix.lower() != ".png":
+        fail(f"--out must end in .png, got {output}")
+    print(render(run_dir, config, records, output, args.width))
 
 
 if __name__ == "__main__":
