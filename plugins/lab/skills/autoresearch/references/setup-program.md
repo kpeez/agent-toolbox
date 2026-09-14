@@ -28,8 +28,15 @@ Agree on:
   wall-clock limit, or an explicitly approved `run until interrupted`);
 - the run identity: tag, branch, absolute worktree path, primary checkout,
   candidate and (when needed) calibration record and log directories, and
-  absolute path to `scripts/ledger.py`;
-- the run-specific keys stored under `metrics`.
+  absolute paths to `scripts/ledger.py` and, when the run draws a figure,
+  `scripts/plot_trials.py`;
+- the run-specific keys stored under `metrics`;
+- whether the run draws a figure of its attempts, and if so the metric keys it
+  plots with their display labels and direction, the acceptance margin, the
+  data scope, and the replication unit. These are the `trial-plot.json` fields
+  in [trial figures](trial-plots.md). Declare the summary statistics the
+  figure needs as ordinary metric keys now; they cannot be recovered later
+  from the ledger.
 
 Use the run's start date and a descriptive lowercase, hyphen-separated project
 slug, for example `2026-09-14-training-throughput`. Keep that tag when resuming,
@@ -107,7 +114,9 @@ plan when one is needed. New rules require a new approved program. Then:
    approved `program.md`, and create an empty candidate `results.jsonl` and log
    directory. When required, create a separate empty calibration
    `results.jsonl`, log directory, and (after selection) `calibration-decision.md`.
-   Never overwrite existing records.
+   When the program declares a figure, write `trial-plot.json` in the record
+   directory and check it with `plot_trials.py --validate` before the first
+   evaluation. Never overwrite existing records.
 4. Run calibration first when the program requires it. Use its declared
    selection rule and record the selected unit before running the unmodified
    baseline. Otherwise run the baseline at the approved unit. If the baseline
