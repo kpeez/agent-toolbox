@@ -1,6 +1,6 @@
 ---
 name: write-spec
-description: Draft or revise a durable feature spec with scope, design decisions, and observable acceptance criteria.
+description: Draft or revise a durable feature spec with scope, design decisions, and observable acceptance criteria. Not for tracker task creation, implementation, or publication.
 ---
 
 # /write-spec — feature spec management
@@ -19,18 +19,31 @@ decisions that apply beyond one feature belong in `docs/agents/adrs/` and link
 back to the spec. The spec remains useful after tasks are created; it is not
 authoring residue or an action journal.
 
-## Approval and authority
+## Approval, identity, and authority
 
-The user approves the complete proposal before implementation. Set
-`approved: true` only after explicit approval or when existing conversation
-authority clearly covers the complete spec. An ADR, task size, or agent judgment
-does not confer approval. Material changes to approved intent require renewed
-approval; routine implementation choices do not.
+Content approval, publication authorization, and execution permission are
+distinct. A spec may be approved as content while publication and execution
+remain separately authorized or withheld.
+
+Keep the spec's identity stable with a UUID4 `spec_id`. For the configured Linear
+workflow, bind approval to a semantic revision digest. Its runtime recomputes the digest from the spec
+markdown and meaningful metadata, context references, and task requirements; it
+excludes generated mappings, timestamps, `run_id`, status, and `approved`. A
+material change to approved intent needs renewed approval. Bookkeeping, tracker
+mappings, status, and run identifiers do not revoke content approval.
+
+Set `approved: true` only after explicit approval, and treat it as
+agent-editable bookkeeping rather than authority. Approval evidence is a
+`spec_id`, semantic digest, approver, source, and date that the model checks
+against the actual approval; other tracker routes retain their existing
+explicit user-approval mechanisms. An ADR, task size, agent judgment, or generic
+permission policy confers neither approval nor authority.
 
 Spec approval and tracker selection do not independently authorize external
 tracker writes, commits, pushes, pull requests, deployment, or other external
 mutations. Record applicable authority in the spec when it will matter across
-sessions.
+sessions, and preserve meaningful legacy fields and existing tracker mappings
+unchanged rather than rewriting them.
 
 ## Verification rule
 
@@ -49,10 +62,17 @@ trivial, fully understood edit.
 
 1. **Sharpen.** Resolve material ambiguity and record broadly durable decisions
    as ADRs.
-2. **Draft.** Write the goal, scope, design, observable success criteria, and
-   verification expectations after inspecting current project evidence.
+2. **Draft.** Read [the spec template](templates.md) for the identity, metadata
+   and context fields. Write the goal, scope, design, a curated context index, the
+   observable success criteria, and verification expectations after inspecting
+   current project evidence. Index only relevant references; never scan or index
+   a whole vault. Check each entry against the template: documentation root or
+   code repository, path/link, relevance, revision/knowledge date, standing and
+   verified access. Preserve unknown values as explicit gaps; missing essential
+   context metadata blocks approval instead of disappearing from the draft.
 3. **Approve.** Present the complete proposal unless existing explicit approval
-   already covers it. Record that approval without asking for it again.
+   already covers it. Record `spec_id` and the approved revision without asking
+   for approval again.
 4. **Deliver the requested planning artifact.** Finish with the spec, its
    approval state, and any unresolved decisions. Do not create tracker tasks or
    implement the spec in this workflow. If the user separately requests task

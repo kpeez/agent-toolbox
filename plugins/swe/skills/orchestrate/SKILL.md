@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Coordinate bounded agents for substantial parallel work or independent review.
+description: Coordinate bounded agents for substantial parallel work or independent review. Not for single-agent scoped edits or spec drafting.
 ---
 
 # Orchestrate
@@ -8,7 +8,8 @@ description: Coordinate bounded agents for substantial parallel work or independ
 Keep requirements, decisions, synthesis, and final acceptance with the lead.
 Use the host's available delegation facilities and configured roles, choosing
 the smallest capable agent. Delegation does not expand the user's scope or
-authority and does not require a spec or tracker.
+authority and does not require a spec or tracker. This skill's job is bounded
+coordination plus independent review.
 
 ## Assign bounded work
 
@@ -22,6 +23,20 @@ Delegate independent work in parallel only with isolated worktrees or disjoint
 write ownership. Tell workers they are not alone and must preserve others'
 changes. Do not make workers rediscover known context or return bulk logs when
 stable paths and focused evidence suffice.
+
+## Tracked coordination checklist
+
+- Confirm the approved revision and explicit scope using the selected tracker
+  route's approval mechanism. Todo status is distinct from permission.
+- Respect holds, dependencies, and one owner per task; a worker reports to its
+  caller and holds no cross-host claim.
+- For configured Linear work, record `start`, `progress`, `handoff`, `review`, and `evidence` notes via
+  `record` during the work (see
+  [operations](../to-issues/references/workflow-operations.md)).
+- Put handoff in the selected tracker issue (privately for Linear): state, verified evidence, next
+  action, worktree and uncommitted work, jobs, and what not to repeat.
+- Run independent review before human review; no PR, draft, or merge marks Done
+  automatically.
 
 ## Integrate and follow up
 

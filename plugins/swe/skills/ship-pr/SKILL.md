@@ -1,16 +1,18 @@
 ---
 name: ship-pr
-description: Commit, push, and open a draft PR for authorized work. Use when asked to ship; finalize only on explicit request.
+description: Commit, push, and open a draft PR for authorized work. Use when asked to ship; not for planning or local-only edits. Finalize only on explicit request.
 ---
 
 # /ship-pr — publish verified work
 
 Commit, push, and create or update a pull request only when the current request
-or established approved execution scope authorizes those actions. A user
-invocation of `/ship-pr` authorizes its default commit, push, and draft-PR
-workflow for the named work. Do not invoke this skill automatically at a green
-checkpoint. If publication is not authorized, leave verified local work intact
-and report its state.
+or established approved execution scope authorizes those actions. Respect any
+existing local-only boundary and explicit publication permission; publication
+authority does not authorize putting private identifiers or content into public
+output. A user invocation of `/ship-pr` authorizes its default commit, push, and
+draft-PR workflow for the named work. Do not invoke this skill automatically at
+a green checkpoint. If publication is not authorized, leave verified local work
+intact and report its state.
 
 Default and explicit finalize modes:
 
@@ -35,12 +37,15 @@ Default and explicit finalize modes:
   documented workflow requires it.
 - Draft pull requests are the default. Do not change an existing draft/ready
   state unless the user requested that transition.
-- Do not add agent attribution, generated-by footers, session links, or private
-  tracker content to commits or public pull-request text.
+- Never put private identifiers, URLs, or content into a public branch, commit,
+  pull-request body, or bot output. Do not add agent attribution, generated-by
+  footers, or session links.
 - Run all applicable repository checks and runnable behavior-specific evidence
   before committing. Report failures as failures.
-- A draft or ready pull request is awaiting review, not delivered. Update a task
-  to delivered only when its repository or tracker delivery condition is met.
+- Creating a pull request is not completion, and a draft is not
+  human-review-ready. A task is delivered only when its repository or tracker
+  delivery condition is satisfied by the required pull requests, checks, exact
+  revisions, reviews, and integration branch.
 
 ## Resolve context
 
@@ -62,15 +67,20 @@ any stack relationship from repository evidence or the caller's instruction.
 2. **Verify.** Run repository-declared checks that exist and apply, plus the
    behavior-specific evidence named by the work. Do not invent a generic lint,
    type-check, or test stack. A required failure stops publication.
-3. **Group and commit.** Build the smallest coherent commit groups. Stage and
-   commit one group at a time, checking status between groups.
+3. **Group and commit.** For configured Linear work, run `check-public` over
+   proposed public branch/commit/PR text (see
+   [operations](../to-issues/references/workflow-operations.md)). Review
+   generated bot text separately. Build the smallest coherent commit groups.
+   Stage and commit one group at a time, checking status between groups.
 4. **Push.** Push the current branch without force. Confirm the intended remote
    and upstream when they are ambiguous.
 5. **Draft pull request.** Reuse the branch's existing pull request. Otherwise
    create one draft against the confirmed base.
-6. **Tracker.** When tracker writes are authorized, attach the public pull
-   request from the private tracker side and mark affected tasks awaiting
-   review. Preserve human holds and assignments. Report failed writes.
+6. **Tracker.** When tracker writes are authorized, use the selected tracker
+   route. For configured Linear work, record the public pull request privately
+   via `record` with `kind: evidence`. A draft remains
+   delivery-incomplete. Preserve human holds and assignments. Report failed
+   writes. A draft, ready PR, or merge never marks Done automatically.
 7. **Spec.** When a linked spec exists, set its lifecycle to `review` after the
    pull request exists. This does not replace task state or prove delivery.
 8. **Report.** Give the branch, base, commits, pull-request URL and state,
@@ -105,3 +115,10 @@ Create a local PR markdown artifact only when the user requests one or the
 authorized publication route is unavailable. Keep it under the project's
 private agent-docs area, and include the proposed title, body, commit grouping,
 and relevant diff references without leaking private tracker content.
+
+For configured Linear work, record publication evidence and any needed
+handoff via `record` during the work (see
+[operations](../to-issues/references/workflow-operations.md)). Authority is
+explained in [authorization](../to-issues/references/workflow-authorization.md).
+Load only the selected tracker route. This skill's job is verified delivery to
+a draft PR.

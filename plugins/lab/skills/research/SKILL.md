@@ -1,6 +1,6 @@
 ---
 name: research
-description: Produce one retained, cited memo for a bounded research question or explicit source audit.
+description: Produce one retained, cited memo for a bounded research question or explicit source audit. Not for multi-lane programs or experiment loops.
 ---
 
 # Research
@@ -71,6 +71,17 @@ Synthesize only from checked source records. Cite every material externally
 checkable claim next to the claim it supports, and distinguish source-backed
 fact from inference. Preserve contradictions, failed searches, unavailable
 evidence, and uncertainty rather than filling gaps from memory.
+
+## Tracked runs
+
+When the run is explicitly part of a tracked workflow, record the work packet
+before starting, including the question and hypothesis, stopping rule, budget,
+code revision, configuration, dataset, seeds, compute envelope, artifacts, and a
+distinct `experiment_run_id`. Record `start`, `progress`, `handoff`, and
+`result` notes via `record` during the work, with the analysis and review each
+phase requires. Read [the work packet](references/work-packet.md). A packet
+records provenance; it never authorizes a launch. Local, untracked research
+keeps the single-memo behavior above.
 
 ## Complete the citation audit
 

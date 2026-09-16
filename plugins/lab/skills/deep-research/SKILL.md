@@ -1,6 +1,6 @@
 ---
 name: deep-research
-description: Produce repository-retained research briefs, lane evidence, and an audited Markdown report. Use for multi-lane project research requiring those artifacts.
+description: Produce repository-retained research briefs, lane evidence, and an audited Markdown report. Use for multi-lane project research requiring those artifacts; not for a single bounded question or an experiment loop.
 ---
 
 # Deep research
@@ -21,6 +21,8 @@ Read supporting references only when their phase needs them:
   dispatching lanes or retaining their packets.
 - Read [the source protocol](../research/references/source-protocol.md) while
   recording sources, writing the report, or auditing citations.
+- Read [the work packet](../research/references/work-packet.md) only when the run
+  is explicitly part of a tracked workflow.
 
 ## Frame the work
 
@@ -76,6 +78,15 @@ question. Repeated failed searches count against the budget and remain visible.
 Each worker returns one compact packet following the evidence-packet guide.
 Preserve its claim support, gaps, contradictions, and stop reason. Do not ask a
 lane worker to write the memo or final report.
+
+## Tracked runs
+
+When the run is explicitly part of a tracked workflow, record the work packet
+before dispatch: question and hypothesis, stopping rule, budget, code revision,
+configuration, dataset, seeds, compute envelope, artifacts, and a distinct
+`experiment_run_id`. Record `start`, `progress`, `handoff`, and `result` notes
+via `record`. A packet records provenance; it never authorizes a launch. Do not
+start a duplicate because a prior response was missing; reconcile state first.
 
 ## Retain and reconcile evidence
 
