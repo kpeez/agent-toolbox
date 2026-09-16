@@ -39,8 +39,9 @@ Use only sections the project needs. Define overloaded project terms briefly;
 prefer the project's established names over a skill's generic vocabulary.
 Update stale facts when encountered. Promote an encountered issue into this
 file only when it is a recurring constraint; a transient blocker stays with the
-task. One short handoff may retain unfinished work that cannot be reconstructed
-cheaply, but it must not become a parallel journal.
+task. Prefer the Linear issue for operational handoff and resume information.
+When no tracker write is authorized, retain at most one compact local handoff
+for facts that cannot be reconstructed cheaply; never create per-attempt notes.
 
 Preserve an existing multi-context layout and its `CONTEXT-MAP.md`; do not
 introduce one merely to follow this template.
