@@ -13,7 +13,12 @@ Keep each fact in one home:
   `AGENTS.md` is shared across repositories.
 - Spec: approved intent, scope, design and acceptance criteria.
 - Tracker: tasks, dependencies, ownership, progress and current blockers.
-- ADR: a significant decision and the rationale needed to revisit it.
+- ADR: a historical choice, its assumptions, and the rationale for comparing
+  alternatives. It is not a current requirement or permission grant.
+
+For a binding constraint, link to its current source (such as an explicit user
+requirement or contract), not just the ADR that once mentioned it. Uncertain
+applicability is a question to resolve, not permission to ignore the constraint.
 
 Link to those records instead of copying them. Personal preferences and agent
 memory belong with the agent, not in project context. Do not keep an action

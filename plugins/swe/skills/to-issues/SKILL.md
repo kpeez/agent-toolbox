@@ -107,9 +107,10 @@ Respect current tracker state and human ownership.
 
 ## Process
 
-1. Read the full approved input and current project context. Read applicable
-   ADRs and the existing tracker container when they affect task boundaries or
-   terms; check whether those decisions still apply.
+1. Read the full approved input and current project context. Consult relevant
+   decision history for rationale and the existing tracker container for task
+   boundaries or terms. Verify current constraints at their source; an ADR
+   neither overrides approved input nor authorizes changing it.
 2. Inspect enough current code or documentation to use accurate terms and paths.
    Delegate a bounded evidence-gathering question when that saves bulk context;
    direct targeted reads are also valid.

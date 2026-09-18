@@ -10,6 +10,20 @@ verification. Read the task and relevant current state before acting. Preserve
 unrelated work and the user's authority boundaries. This skill's job is the
 smallest justified code change with evidence.
 
+## Past decisions and current authority
+
+Use relevant decision records to understand earlier trade-offs, not to veto
+better solutions. Evaluate current evidence, constraints, and switching costs;
+the old assumptions need not have changed. Verify any binding requirement at
+its current source instead of treating an ADR's status as authority.
+
+Within an authorized task, replace a past choice when justified and explain why
+in the result; the ADR alone does not require another approval. Changes to an
+explicit requirement or approved spec design, or work outside the task's scope,
+still need the applicable approval. Preserve the earlier rationale and record
+the replacement when project-document updates are in scope, using
+[decision history](../sharpen/ADR-FORMAT.md).
+
 ## Contract
 
 1. Make the smallest justified change. Challenge the result against the

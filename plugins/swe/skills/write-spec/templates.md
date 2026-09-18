@@ -82,7 +82,8 @@ updated: <YYYY-MM-DD>
 ## Decisions
 
 <!-- Non-obvious feature choices and rationale. Link broadly durable decisions
-     to docs/agents/adrs/ and assess whether existing ADRs still apply. -->
+     to docs/agents/adrs/. Use prior rationale to compare options, not to veto
+     alternatives; distinguish historical choices from current requirements. -->
 
 ## Risks
 

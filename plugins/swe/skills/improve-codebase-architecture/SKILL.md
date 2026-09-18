@@ -19,8 +19,8 @@ clearer. Read that skill only when the distinction matters to the review.
 
 This skill can be informed by the project's domain model: consult a
 `docs/agents/CONTEXT.md` glossary or relevant `docs/agents/adrs/` when it bears
-on the friction or recommendation. Check whether an ADR still applies before
-relying on it. Follow an explicit project or user override of the
+on the friction or recommendation. Use its rationale to compare options and
+verify any current constraints at their source. Follow an explicit project or user override of the
 `docs/agents/` location.
 
 ## Process
@@ -56,10 +56,12 @@ each candidate:
 - **Strength** — `Strong` | `Worth exploring` | `Speculative`
 
 Use `CONTEXT.md` vocabulary for the domain and the terms above for the
-architecture. If a candidate contradicts an existing ADR, only surface it when
-the friction is real enough to warrant reopening the ADR, and mark it clearly
-(_"contradicts ADR-0007 — but worth reopening because…"_). Don't list every
-refactor an ADR forbids.
+architecture. Decision records explain earlier choices; they do not forbid
+alternatives. Rank candidates by current goals, evidence, constraints, and
+switching costs, without penalizing disagreement with an ADR. Explain the
+earlier rationale and why a different choice would be better; its assumptions
+need not have changed. Verify any claimed constraint at its current source.
+Recommending a change does not authorize implementing it.
 
 End with a **Top recommendation**: which you'd tackle first and why. If the
 choice is genuinely unresolved, ask which candidate to explore; otherwise follow
