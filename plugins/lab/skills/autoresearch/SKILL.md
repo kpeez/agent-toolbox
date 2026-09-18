@@ -1,6 +1,6 @@
 ---
 name: autoresearch
-description: Run a bounded autonomous experiment loop against an approved metric and evaluator, or clean up a completed run into a verified archive. Use for autoresearch, repeated optimization runs, or autoresearch cleanup.
+description: Run a bounded autonomous experiment loop against an approved metric and evaluator, or clean up a completed run into a verified archive. Use for autoresearch, repeated optimization runs, or autoresearch cleanup; not for one-off research memos or multi-lane reviews.
 ---
 
 # Autoresearch
@@ -27,6 +27,22 @@ must define the iteration unit before candidate optimization. If existing
 evidence or a simple bounded pilot cannot establish it, the setup reference
 requires a bounded calibration as the first experiment, followed by a
 comparable baseline at the selected unit.
+
+## Tracked runs
+
+Check existing record permission before preparing any tracked note, including
+handoff. If authority is absent, use only authorized local preparation and
+read-only previews, then report what is missing. A run that never started has
+no experiment wrap-up to perform.
+
+When the loop is explicitly part of a tracked workflow, record the work packet
+before the baseline: question and hypothesis, stopping rule, budget, exact code
+revision, configuration, dataset, seeds, compute envelope, artifacts, and an
+`experiment_run_id` distinct from any trial `run_id`. Record `start`,
+`progress`, `handoff`, and `result` notes via `record` with the required
+analysis and review. Read [the work packet](../research/references/work-packet.md).
+A packet records provenance; it never authorizes a launch. Do not start a
+duplicate because a prior response was missing; reconcile state first.
 
 ## Experiment boundaries
 

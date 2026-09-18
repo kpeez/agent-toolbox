@@ -13,7 +13,12 @@ Keep each fact in one home:
   `AGENTS.md` is shared across repositories.
 - Spec: approved intent, scope, design and acceptance criteria.
 - Tracker: tasks, dependencies, ownership, progress and current blockers.
-- ADR: a significant decision and the rationale needed to revisit it.
+- ADR: a historical choice, its assumptions, and the rationale for comparing
+  alternatives. It is not a current requirement or permission grant.
+
+For a binding constraint, link to its current source (such as an explicit user
+requirement or contract), not just the ADR that once mentioned it. Uncertain
+applicability is a question to resolve, not permission to ignore the constraint.
 
 Link to those records instead of copying them. Personal preferences and agent
 memory belong with the agent, not in project context. Do not keep an action
@@ -39,8 +44,9 @@ Use only sections the project needs. Define overloaded project terms briefly;
 prefer the project's established names over a skill's generic vocabulary.
 Update stale facts when encountered. Promote an encountered issue into this
 file only when it is a recurring constraint; a transient blocker stays with the
-task. One short handoff may retain unfinished work that cannot be reconstructed
-cheaply, but it must not become a parallel journal.
+task. Prefer the Linear issue for operational handoff and resume information.
+When no tracker write is authorized, retain at most one compact local handoff
+for facts that cannot be reconstructed cheaply; never create per-attempt notes.
 
 Preserve an existing multi-context layout and its `CONTEXT-MAP.md`; do not
 introduce one merely to follow this template.

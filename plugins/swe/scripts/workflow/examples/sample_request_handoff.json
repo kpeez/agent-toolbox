@@ -1,0 +1,19 @@
+{
+  "request_id": "396629e6-63b3-4ea6-9007-6e6f2c27de64",
+  "task_id": "22222222-2222-4222-8222-222222222222",
+  "kind": "handoff",
+  "observed_at": "REQUIRED_OBSERVATION_TIME",
+  "summary": "REQUIRED_OBSERVED_RESULT",
+  "facts": {
+    "owner": "example-agent",
+    "worktree": "operator-selected worktree",
+    "revision": "REQUIRED_REVISION",
+    "uncommitted_work": [],
+    "running_jobs": [],
+    "condition": "awaiting_input",
+    "delivery": "not_delivered",
+    "evidence": [],
+    "what_not_repeat": "Already completed work recorded in the issue"
+  },
+  "next_action": "Read the current issue and inspect code before resuming."
+}

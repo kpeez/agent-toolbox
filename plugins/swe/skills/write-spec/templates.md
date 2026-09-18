@@ -6,21 +6,28 @@ approved intent; the selected tracker records executable task state.
 
 ## Frontmatter
 
+- `spec_id`: stable UUID4 for this spec; keep it unchanged across revisions.
 - `status`: `draft`, `active`, `review`, `done`, or `archived`.
 - `approved`: `false` until the complete proposal receives explicit approval.
+  This flag is bookkeeping, not authority.
+- `approved_revision`: the semantic revision digest of the approved content,
+  recorded by the runtime; omit until approved.
 - `desc`: one or two sentences for directory triage.
 - `tracker`: `linear`, `github`, `local`, or another supported tracker.
 - `tracker_container`: omit until a container exists; then record its stable id.
 - `blocked` and `blocked_reason`: omit unless the spec itself is blocked.
 - `created` and `updated`: ISO dates. Preserve `created`.
 
-Optional authority or host-specific handoff details belong in prose when they
-must survive a session. Do not use frontmatter as an action ledger.
+Operational handoff and resume state belongs in the private tracker issue packet
+or current-state comment, not the spec. Use prose only for lasting decisions or
+authority that must survive a session; do not use frontmatter as an action
+ledger.
 
 <templates>
 
 <template file="docs/agents/specs/NNNN-<slug>.md">
 ---
+spec_id: <uuid4>
 status: draft
 approved: false
 desc: <one or two sentences on what this spec does>
@@ -43,6 +50,27 @@ updated: <YYYY-MM-DD>
 
 <!-- What adjacent work is excluded? -->
 
+## Context index
+
+<!-- Curated references the plan depends on. Include only what is relevant; do
+     not index a whole vault. Separate the documentation root from the code
+     repository, host, or artifact. Prefer a relative path or an approved link. -->
+<!-- - id: <stable short id>
+       title: <what it is>
+       role: <spec | context | code | research | reference | policy>
+       relevance: <the claim or decision it supports>
+       documentation_root: <external configured documentation root identity>
+       host: <host or service holding the documentation>
+       path: <path relative to the declared documentation/code root>
+                                      # or url: <approved usable link>
+       revision: <commit or version>    # when known
+       content_hash: <SHA256>           # required for local context
+       knowledge_date: <YYYY-MM-DD>     # when the content was known current
+       standing: <current | superseded | unknown>
+       access: <local | remote | inaccessible | unchecked>
+       disclosure: <public | internal | private>
+       essential: <true | false> -->
+
 ## Success criteria
 
 <!-- Observable outcomes that define success. -->
@@ -54,7 +82,8 @@ updated: <YYYY-MM-DD>
 ## Decisions
 
 <!-- Non-obvious feature choices and rationale. Link broadly durable decisions
-     to docs/agents/adrs/ and assess whether existing ADRs still apply. -->
+     to docs/agents/adrs/. Use prior rationale to compare options, not to veto
+     alternatives; distinguish historical choices from current requirements. -->
 
 ## Risks
 
@@ -71,6 +100,10 @@ updated: <YYYY-MM-DD>
 ## Execution and authority
 
 - **Tracker container**: <link or identifier once created>
+- **Approval source**: <durable source of the human decision; keep the computed
+  digest in external approval bookkeeping, not inside the hashed Markdown>
+- **Documentation roots / code roots**: <configured identities; relative paths below>
+- **Meaningful legacy metadata**: <preserve; bookkeeping excluded from digest>
 - **Authorized external actions**: <none, or the explicit authorized actions>
 - **Stop for user input before**: <material scope decisions or actions lacking authority>
 </template>
