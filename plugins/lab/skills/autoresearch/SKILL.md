@@ -1,9 +1,16 @@
 ---
 name: autoresearch
-description: Run a bounded autonomous experiment loop against an approved metric and evaluator. Use for autoresearch or repeated optimization runs.
+description: Run a bounded autonomous experiment loop against an approved metric and evaluator, or clean up a completed run into a verified archive. Use for autoresearch, repeated optimization runs, or autoresearch cleanup.
 ---
 
 # Autoresearch
+
+For `/autoresearch cleanup [run-directory]`, read [run cleanup](references/cleanup.md)
+and follow that workflow instead of starting or resuming experiments. Cleanup
+preserves the original program, evidence, summary, and objective progress plot
+before replacing the run's contents with a verified archive and two readable
+artifacts. A request to implement or inspect cleanup does not authorize applying
+it to an existing run.
 
 Run one linear experiment loop: make a small change, commit it, evaluate that
 exact commit, then keep or discard it according to the approved program. Rules
