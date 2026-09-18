@@ -19,6 +19,13 @@ decisions that apply beyond one feature belong in `docs/agents/adrs/` and link
 back to the spec. The spec remains useful after tasks are created; it is not
 authoring residue or an action journal.
 
+Use those records as decision history, not restrictions on proposed designs.
+Compare options on current goals, evidence, constraints, and switching costs;
+disagreement with an ADR is not a reason to down-rank an option. Explain why a
+replacement is better and verify any real constraint at its current source.
+Revisiting a historical choice does not itself require approval; changing
+approved spec intent or exceeding the requested scope still does.
+
 ## Approval, identity, and authority
 
 Content approval, publication authorization, and execution permission are
@@ -60,8 +67,8 @@ trivial, fully understood edit.
 
 ## Workflow
 
-1. **Sharpen.** Resolve material ambiguity and record broadly durable decisions
-   as ADRs.
+1. **Sharpen.** Resolve material ambiguity. Record significant trade-offs only
+   when they meet [the decision-record criteria](../sharpen/ADR-FORMAT.md).
 2. **Draft.** Read [the spec template](templates.md) for the identity, metadata
    and context fields. Write the goal, scope, design, a curated context index, the
    observable success criteria, and verification expectations after inspecting

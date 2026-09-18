@@ -42,10 +42,15 @@ reads would crowd the lead's context. Do not manufacture competing cases or
 extra agents for a decision the available evidence already resolves. Explain
 the trade-off and recommend an option; insufficient evidence is a valid result.
 
-**Check decision freshness.** Read relevant ADRs for rationale, then check their
-status and applicability against current code and user intent. Surface material
-conflicts instead of silently following or replacing an obsolete decision. Use
-the status convention in [ADR-FORMAT.md](./ADR-FORMAT.md) when a decision changes.
+**Use decision history.** Read relevant ADRs for the earlier trade-offs and
+assumptions, not as rules. Compare alternatives against current goals, evidence,
+constraints, and switching costs without penalizing disagreement with a past
+choice. Better alternatives do not require changed assumptions. Verify a claimed
+constraint at its current source; distinguish it from a historical preference.
+Explain a recommended replacement and use [ADR-FORMAT.md](./ADR-FORMAT.md) when
+recording a decision change. Disagreement with an ADR alone needs no approval;
+changing explicit requirements, approved spec intent, or exceeding task
+authorization does (see Approval scope below).
 
 ## Approval scope
 
