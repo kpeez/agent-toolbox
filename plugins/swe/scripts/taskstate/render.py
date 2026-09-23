@@ -212,6 +212,15 @@ def _authorization(value):
     }
 
 
+def _sync_model(value):
+    value = value if isinstance(value, dict) else {}
+    return {
+        "label": _single_line(value.get("label") or "local"),
+        "last_sync_at": _single_line(value.get("last_sync_at")),
+        "home_copy": _boolean_display(value.get("home_copy")),
+    }
+
+
 def _task_model(task, include_hold_reason=False):
     result = {
         "ref": _single_line(task.get("ref")),
@@ -220,6 +229,10 @@ def _task_model(task, include_hold_reason=False):
         "lifecycle": _single_line(task.get("lifecycle")),
         "hold": _boolean_display(task.get("hold")),
         "spec_id": _single_line(task.get("spec_id")),
+        "authority_host": _single_line(task.get("authority_host") or "local/home"),
+        "delegation_epoch": _single_line(task.get("delegation_epoch") or 0),
+        "revoke_pending": _boolean_display(task.get("revoke_pending")),
+        "sync": _sync_model(task.get("sync")),
     }
     if include_hold_reason:
         result["hold_reason"] = _single_line(task.get("hold_reason"))
@@ -326,6 +339,13 @@ def _header(view, project, db_seq, missing):
     }
 
 
+def _task_with_sync(raw):
+    value = dict(raw.get("task") or {})
+    if raw.get("sync") is not None:
+        value["sync"] = raw["sync"]
+    return value
+
+
 def _context_read_model(conn, project, task, db_seq):
     raw = taskstate.build_context(conn, project, task, facts.collect())
     handoff = _handoff_item((raw.get("latest_handoff") or [None])[0])
@@ -339,7 +359,7 @@ def _context_read_model(conn, project, task, db_seq):
         missing.append("handoff")
     model = _header("context", project, db_seq, missing)
     model.update({
-        "task": _task_model(raw.get("task") or task),
+        "task": _task_model(_task_with_sync(raw) or task),
         "derived": _derived_model(raw.get("derived"), handoff),
         "criteria": criteria,
         "decisions": _collection(_journal_item(item) for item in (raw.get("decisions", {}).get("items") or [])),
@@ -372,7 +392,7 @@ def _handoff_read_model(conn, project, task, db_seq):
         missing.append("evidence")
     model = _header("handoff", project, db_seq, missing)
     model.update({
-        "task": _task_model(raw.get("task") or task),
+        "task": _task_model(_task_with_sync(raw) or task),
         "derived": _derived_model(raw.get("derived"), handoff),
         "handoff": handoff,
         "criteria": criteria,
@@ -395,8 +415,8 @@ def _handoff_read_model(conn, project, task, db_seq):
 
 
 def _task_read_model(conn, project, task, db_seq):
-    raw = taskstate.task_view(conn, task, facts.collect())
-    task_data = _task_model(raw.get("task") or task, include_hold_reason=True)
+    raw = taskstate.task_view(conn, task, facts.collect(), project)
+    task_data = _task_model(_task_with_sync(raw) or task, include_hold_reason=True)
     criteria = _task_evidence(raw.get("criteria"), (raw.get("derived") or {}).get("evidence"))
     missing = []
     if not criteria:
@@ -437,6 +457,7 @@ def _attention_all(db_seq):
     items = []
     max_seq = 0
     missing = []
+    sync_values = []
     databases = sorted(root.glob("*.db"))
     if not databases:
         missing.append("projects")
@@ -447,6 +468,7 @@ def _attention_all(db_seq):
             conn, _ = store_mod.open_project_db(slug, create=False)
             seq = store_mod.db_seq(conn)
             max_seq = max(max_seq, seq)
+            sync_values.append(taskstate._sync_info(slug, conn))
             items.extend(_attention_item(item) for item in taskstate.attention_for_conn(conn, slug))
         except Exception as exc:
             items.append(_attention_item({
@@ -463,6 +485,9 @@ def _attention_all(db_seq):
         missing.append("attention_items")
     model = _header("attention", "all", max(max_seq, db_seq), missing)
     model["items"] = _collection(items)
+    selected_sync = next((value for value in sync_values if value.get("home_copy")),
+                         {"label": "local", "last_sync_at": None, "home_copy": False})
+    model["sync"] = _sync_model(selected_sync)
     return model
 
 
@@ -470,16 +495,19 @@ def _attention_read_model(project, db_seq, all_projects=False):
     if all_projects:
         return _attention_all(db_seq)
     conn = None
+    sync_raw = None
     try:
         conn, _ = store_mod.open_project_db(project, create=False)
         seq = store_mod.db_seq(conn)
         raw_items = taskstate.attention_for_conn(conn, project)
+        sync_raw = taskstate._sync_info(project, conn)
     finally:
         if conn is not None:
             conn.close()
     missing = ["attention_items"] if not raw_items else []
     model = _header("attention", project, max(seq, db_seq), missing)
     model["items"] = _collection(_attention_item(item) for item in raw_items)
+    model["sync"] = _sync_model(sync_raw)
     return model
 
 
@@ -573,6 +601,14 @@ def _authorization_schema():
     }
 
 
+def _sync_schema():
+    return {
+        "label": ("string", None),
+        "last_sync_at": ("string", None),
+        "home_copy": ("string", YES_NO),
+    }
+
+
 def _task_schema(include_hold_reason=False):
     schema = {
         "ref": ("string", None),
@@ -581,6 +617,10 @@ def _task_schema(include_hold_reason=False):
         "lifecycle": ("string", LIFECYCLES),
         "hold": ("string", YES_NO),
         "spec_id": ("string", None),
+        "authority_host": ("string", None),
+        "delegation_epoch": ("string", None),
+        "revoke_pending": ("string", YES_NO),
+        "sync": ("object", None),
     }
     if include_hold_reason:
         schema["hold_reason"] = ("string", None)
@@ -727,12 +767,13 @@ def _view_keys():
         "context": {"task", "derived", "criteria", "decisions", "failed_approaches", "open_questions_blockers", "latest_handoff", "deps"},
         "handoff": {"task", "derived", "handoff", "criteria", "verified_current", "evidence_gaps", "decisions", "failed_approaches", "open_questions_blockers"},
         "task": {"task", "lifecycle", "execution_health", "authorization", "reported_progress", "verified_evidence"},
-        "attention": {"items"},
+        "attention": {"items", "sync"},
     }
 
 
 def _check_context(model):
     _check_object(model["task"], "task", _task_schema())
+    _check_object(model["task"]["sync"], "task.sync", _sync_schema())
     _check_derived(model["derived"], "derived")
     _check_string_list(model["derived"]["authorization"]["via"], "derived.authorization.via")
     _check_array(model["criteria"], "criteria")
@@ -752,6 +793,7 @@ def _check_context(model):
 
 def _check_handoff_view(model):
     _check_object(model["task"], "task", _task_schema())
+    _check_object(model["task"]["sync"], "task.sync", _sync_schema())
     _check_derived(model["derived"], "derived")
     _check_authorization(model["derived"]["authorization"], "derived.authorization")
     _check_handoff(model["handoff"], "handoff")
@@ -773,6 +815,7 @@ def _check_handoff_view(model):
 
 def _check_task(model):
     _check_object(model["task"], "task", _task_schema(include_hold_reason=True))
+    _check_object(model["task"]["sync"], "task.sync", _sync_schema())
     _check_array(model["verified_evidence"], "verified_evidence")
     _check_object(model["lifecycle"], "lifecycle", {
         "state": ("string", LIFECYCLES),
@@ -791,6 +834,7 @@ def _check_task(model):
 
 def _check_attention(model):
     _check_collection(model["items"], "items")
+    _check_object(model["sync"], "sync", _sync_schema())
     for index, item in enumerate(model["items"]["items"]):
         _check_object(item, "items.items[%d]" % index, {
             "type": ("string", None),

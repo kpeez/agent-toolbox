@@ -12,6 +12,7 @@ import socket
 import sqlite3
 import sys
 import uuid
+from pathlib import Path
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 import domain
@@ -87,6 +88,86 @@ def current_host():
         return socket.gethostname()
     except Exception:
         return "unknown"
+
+
+def authority_context(project):
+    import registry
+    try:
+        role = registry.project_role(project)
+    except registry.RegistryError as exc:
+        raise TaskStateError("registry_invalid", str(exc))
+    if not role.get("configured"):
+        return {"configured": False, "self": current_host(), "home": current_host(),
+                "is_home": True, "satellites": [], "config": None}
+    return role
+
+
+def is_authoritative(task, self_host=None, is_home=None, project=None):
+    if is_home is None:
+        if project is not None:
+            role = authority_context(project)
+            is_home = role.get("is_home", True)
+            if self_host is None:
+                self_host = role.get("self") or current_host()
+        else:
+            is_home = True
+    if self_host is None:
+        self_host = current_host()
+    authority = task.get("authority_host") if isinstance(task, dict) else None
+    if is_home:
+        return authority is None or authority == self_host
+    return authority == self_host
+
+
+def _require_authority(project, task, operation):
+    role = authority_context(project)
+    if not is_authoritative(task, role.get("self"), role.get("is_home", True)):
+        raise TaskStateError("not_authoritative",
+                             "%s is not authoritative on this machine" % operation,
+                             details=[{"authority_host": task.get("authority_host")}])
+
+
+def _require_home(project, operation):
+    role = authority_context(project)
+    if not role.get("is_home", True):
+        raise TaskStateError("home_only", "%s is home-only" % operation)
+
+
+def _origin_host(project):
+    role = authority_context(project)
+    if not role.get("configured") or role.get("is_home", True):
+        return None
+    return role.get("self")
+
+
+def _machine_host(project, fallback=None):
+    role = authority_context(project)
+    if role.get("configured"):
+        return role.get("self") or fallback
+    return fallback or current_host()
+
+
+def _sync_info(project, conn=None):
+    try:
+        import sync
+        return sync.freshness(project, conn)
+    except Exception as exc:
+        if getattr(exc, "code", None) == "registry_invalid":
+            raise TaskStateError("registry_invalid", str(exc))
+        return {"configured": False, "home_copy": False, "last_sync_at": None,
+                "label": "local"}
+
+
+def _allocate_ref(conn, project, role=None):
+    role = role or authority_context(project)
+    row = conn.execute("SELECT value FROM meta WHERE key='next_ref_n'").fetchone()
+    try:
+        number = int(row["value"]) if row is not None else 1
+    except (TypeError, ValueError):
+        number = 1
+    if role.get("configured") and not role.get("is_home", True):
+        return "%s-%s-%d" % (project, role.get("self"), number), number + 1
+    return "%s-%d" % (project, number), number + 1
 
 
 def is_human_allowed(human_override=None):
@@ -385,6 +466,23 @@ def caller_match(task, attempt_id, epoch):
     return True
 
 
+def _advance_journal_status(conn, entry_id, status, superseded_by=None):
+    ranks = {"open": 0, "resolved": 1, "superseded": 2}
+    row = conn.execute("SELECT status, superseded_by FROM journal WHERE entry_id=?",
+                       (entry_id,)).fetchone()
+    if row is None:
+        return False
+    old = row["status"] or "open"
+    if ranks.get(status, -1) < ranks.get(old, -1):
+        return False
+    value = row["superseded_by"] or superseded_by
+    if ranks.get(status, -1) == ranks.get(old, -1) and not value:
+        return False
+    conn.execute("UPDATE journal SET status=?, superseded_by=? WHERE entry_id=?",
+                 (status, value, entry_id))
+    return True
+
+
 # --- mutation wrapper ----------------------------------------------------------
 
 def do_mutation(conn, command, request_id_in, payload, actor, task_id, effect):
@@ -432,7 +530,7 @@ def do_mutation(conn, command, request_id_in, payload, actor, task_id, effect):
 
 do_mutation.last_replay = False
 
-def task_view(conn, task, live=None):
+def task_view(conn, task, live=None, slug=None):
     criteria = task_criteria(conn, task["task_id"])
     deps = task_dep_refs(conn, task["task_id"])
     grants = all_grants(conn)
@@ -467,6 +565,10 @@ def task_view(conn, task, live=None):
                               "freshness": fresh,
                               "evidence_id": latest.get("evidence_id")})
     return {"task": task, "criteria": criteria, "deps": deps,
+            "sync": _sync_info(slug, conn) if slug else {"configured": False,
+                                                            "home_copy": False,
+                                                            "last_sync_at": None,
+                                                            "label": "local"},
             "derived": {"ready": domain.is_ready(task, dep_lifecycles(conn, task["task_id"])),
                         "health": domain.health(task),
                         "authorization": auth,
@@ -559,7 +661,8 @@ def build_context(conn, slug, task, live=None):
     model = {"contract_version": 1, "view": "context", "generated_at": now_iso(),
              "source": {"project": slug, "db_seq": store_mod.db_seq(conn)},
              "task": {k: (domain.truncate(v) if k in ("title", "hold_reason") and v else v)
-                      for k, v in task.items()},
+                       for k, v in task.items()},
+             "sync": _sync_info(slug, conn),
              "derived": {"ready": domain.is_ready(task, dep_lifecycles(conn, task["task_id"])),
                          "health": domain.health(task),
                          "authorization": domain.authorization(task, grants),
@@ -610,12 +713,27 @@ def attention_for_conn(conn, slug, live=None):
                           "WHERE j.kind IN ('question','blocker') AND j.status='open'").fetchall():
         items.append({"type": "open_%s" % r["kind"], "project": slug, "ref": r["ref"],
                       "since": r["recorded_at"], "detail": (r["body"] or "")[:300]})
+    import reconcile
+    items.extend(reconcile.attention_items(conn, slug))
+    try:
+        import sync
+        items.extend(sync.attention_items(conn, slug))
+        label = _sync_info(slug, conn).get("label")
+        if label and label != "local":
+            for item in items:
+                if label not in (item.get("detail") or ""):
+                    item["detail"] = (item.get("detail") or "") + "; " + label
+    except TaskStateError:
+        raise
+    except Exception:
+        pass
     return items
 
 
 # --- command handlers -----------------------------------------------------------
 
 def cmd_project_init(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "project init")
     require_human(args_human)
     disclosure = args.disclosure or "internal"
     if disclosure not in ("public", "internal", "restricted"):
@@ -660,12 +778,15 @@ def cmd_task_add(conn, slug, args, actor, observed_at, fact, host):
                 continue
             dep_ids.append(ref_to_id(conn, ref))
         task_id = new_uuid4()
-        n = int(conn.execute("SELECT value FROM meta WHERE key='next_ref_n'").fetchone()["value"])
-        ref = "%s-%d" % (slug, n)
+        ref, next_ref = _allocate_ref(conn, slug)
         created = now_iso()
+        origin = _origin_host(slug)
+        role = authority_context(slug)
+        authority = role.get("self") if origin is not None else None
         conn.execute("INSERT INTO task(task_id, ref, title, kind, spec_id, lifecycle, hold, version, "
-                     "claim_epoch, created_at, updated_at) VALUES(?,?,?,?,?,'open',0,1,0,?,?)",
-                     (task_id, ref, title, kind, spec_id, created, created))
+                     "claim_epoch, created_at, updated_at, authority_host, delegation_epoch, "
+                     "origin_host, revoke_pending, revoke_force) VALUES(?,?,?,?,?,'open',0,1,0,?,?,?,0,?,0,0)",
+                     (task_id, ref, title, kind, spec_id, created, created, authority, origin))
         for c in crits:
             conn.execute("INSERT INTO criterion(task_id, ac_id, text) VALUES(?,?,?)",
                          (task_id, c["ac_id"], c["text"]))
@@ -674,12 +795,13 @@ def cmd_task_add(conn, slug, args, actor, observed_at, fact, host):
                 raise TaskStateError("self_dependency", "Task depends on itself")
             conn.execute("INSERT INTO task_dep(task_id, depends_on) VALUES(?,?)", (task_id, did))
         check_cycle(conn, task_id, dep_ids)
-        conn.execute("UPDATE meta SET value=? WHERE key='next_ref_n'", (str(n + 1),))
+        conn.execute("UPDATE meta SET value=? WHERE key='next_ref_n'", (str(next_ref),))
         return {"ref": ref, "task_id": task_id, "version": 1}
     return do_mutation(conn, "task.add", args.request_id, payload, actor, None, effect)
 
 
 def cmd_grant_add(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "grant add")
     require_human(args_human)
     kind = args.kind
     if kind not in ("execute", "publish"):
@@ -696,7 +818,8 @@ def cmd_grant_add(conn, slug, args, actor, observed_at, fact, host):
     if not task_refs and not scope_project:
         raise TaskStateError("validation_failed", "grant add needs --task REF ... or --scope-project")
     for ref in task_refs:
-        fetch_task(conn, ref)
+        task = fetch_task(conn, ref)
+        _require_authority(slug, task, "grant add")
     try:
         user = getpass.getuser()
     except Exception:
@@ -715,6 +838,7 @@ def cmd_grant_add(conn, slug, args, actor, observed_at, fact, host):
 
 
 def _claim_effect(conn, slug, task, actor, observed_at, fact, host, cache_op=None):
+    _require_authority(slug, task, "claim")
     if task.get("owner_attempt"):
         row = conn.execute("SELECT actor, host, lease_expires_at FROM task t LEFT JOIN attempt a "
                            "ON a.attempt_id=t.owner_attempt WHERE t.task_id=?",
@@ -753,11 +877,11 @@ def _claim_effect(conn, slug, task, actor, observed_at, fact, host, cache_op=Non
                              details=[{"owner_attempt": row["owner_attempt"] if row else None,
                                        "claim_epoch": row["claim_epoch"] if row else None}])
     conn.execute("INSERT INTO attempt(attempt_id, task_id, claim_epoch, actor, host, worktree, branch, "
-                 "start_head, start_diff_hash, last_head, last_diff_hash, facts_observed_at, started_at) "
-                 "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                 "start_head, start_diff_hash, last_head, last_diff_hash, facts_observed_at, started_at, origin_host) "
+                 "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                  (attempt_id, task["task_id"], new_epoch, actor, host, fact.get("worktree"),
                   fact.get("branch"), fact.get("head"), fact.get("diff_hash"), fact.get("head"),
-                  fact.get("diff_hash"), observed_at, recorded))
+                  fact.get("diff_hash"), observed_at, recorded, _origin_host(slug)))
     version = conn.execute("SELECT version FROM task WHERE task_id=?",
                            (task["task_id"],)).fetchone()["version"]
     if cache_op is not None:
@@ -785,16 +909,19 @@ def cmd_claim(conn, slug, args, actor, observed_at, fact, host):
         cache_op = {}
         def effect():
             task_id = new_uuid4()
-            n = int(conn.execute("SELECT value FROM meta WHERE key='next_ref_n'").fetchone()["value"])
-            ref = "%s-%d" % (slug, n)
+            ref, next_ref = _allocate_ref(conn, slug)
             created = now_iso()
+            origin = _origin_host(slug)
+            role = authority_context(slug)
+            authority = role.get("self") if origin is not None else None
             conn.execute("INSERT INTO task(task_id, ref, title, kind, lifecycle, hold, version, "
-                         "claim_epoch, created_at, updated_at) VALUES(?,?,?,?,'open',0,1,0,?,?)",
-                         (task_id, ref, title, kind, created, created))
+                         "claim_epoch, created_at, updated_at, authority_host, delegation_epoch, "
+                         "origin_host, revoke_pending, revoke_force) VALUES(?,?,?,?,'open',0,1,0,?,?,?,0,?,0,0)",
+                         (task_id, ref, title, kind, created, created, authority, origin))
             for c in crits:
                 conn.execute("INSERT INTO criterion(task_id, ac_id, text) VALUES(?,?,?)",
                              (task_id, c["ac_id"], c["text"]))
-            conn.execute("UPDATE meta SET value=? WHERE key='next_ref_n'", (str(n + 1),))
+            conn.execute("UPDATE meta SET value=? WHERE key='next_ref_n'", (str(next_ref),))
             task = _row_dict(conn.execute("SELECT * FROM task WHERE task_id=?", (task_id,)).fetchone())
             res = _claim_effect(conn, slug, task, actor, observed_at, fact, host, cache_op)
             res["task_id"] = task_id
@@ -839,12 +966,14 @@ def cmd_heartbeat(conn, slug, args, actor, observed_at, fact, host):
     _p, ref, attempt_id, epoch = _resolve_owner(conn, slug, args)
     if not ref:
         raise TaskStateError("validation_failed", "heartbeat needs --task or cached claim")
+    _require_authority(slug, fetch_task(conn, ref), "heartbeat")
     if attempt_id is None or epoch is None:
         raise TaskStateError("stale_claim", "No claim context for heartbeat")
     payload = {"command": "heartbeat", "project": slug, "ref": ref,
                "attempt": attempt_id, "epoch": int(epoch)}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "heartbeat")
         if not caller_match(task, attempt_id, epoch):
             raise TaskStateError("stale_claim", "Claim epoch/attempt does not match %s" % ref)
         update_attempt_facts(conn, attempt_id, fact, observed_at)
@@ -865,6 +994,7 @@ def cmd_release(conn, slug, args, actor, observed_at, fact, host):
     _p, ref, attempt_id, epoch = _resolve_owner(conn, slug, args)
     if not ref:
         raise TaskStateError("validation_failed", "release needs --task or cached claim")
+    _require_authority(slug, fetch_task(conn, ref), "release")
     if attempt_id is None or epoch is None:
         raise TaskStateError("stale_claim", "No claim context for release")
     reason = getattr(args, "reason", None)
@@ -873,6 +1003,7 @@ def cmd_release(conn, slug, args, actor, observed_at, fact, host):
     cache_op = {}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "release")
         if not caller_match(task, attempt_id, epoch):
             raise TaskStateError("stale_claim", "Claim epoch/attempt does not match %s" % ref)
         update_attempt_facts(conn, attempt_id, fact, observed_at)
@@ -883,9 +1014,10 @@ def cmd_release(conn, slug, args, actor, observed_at, fact, host):
                      "updated_at=? WHERE task_id=?", (recorded, task["task_id"]))
         if reason:
             conn.execute("INSERT INTO journal(entry_id, task_id, attempt_id, kind, body, status, late, actor, "
-                         "host, observed_at, recorded_at) VALUES(?,?,?,?,?,'resolved',0,?,?,?,?)",
+                         "host, observed_at, recorded_at, origin_host) VALUES(?,?,?,?,?,'resolved',0,?,?,?,?,?)",
                          (new_uuid4(), task["task_id"], attempt_id, "note",
-                          "release: " + str(reason), actor, host, observed_at, recorded))
+                          "release: " + str(reason), actor, host, observed_at, recorded,
+                          _origin_host(slug)))
         version = conn.execute("SELECT version FROM task WHERE task_id=?",
                                (task["task_id"],)).fetchone()["version"]
         cache_op["clear"] = True
@@ -909,6 +1041,7 @@ def cmd_takeover(conn, slug, args, actor, observed_at, fact, host):
     cache_op = {}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "takeover")
         if not task.get("owner_attempt"):
             raise TaskStateError("takeover_not_needed", "Task %s is not claimed" % ref)
         if task.get("hold"):
@@ -936,16 +1069,16 @@ def cmd_takeover(conn, slug, args, actor, observed_at, fact, host):
                      "lease_expires_at=?, version=version+1, updated_at=? WHERE task_id=?",
                      (new_epoch, new_attempt, lease_new, recorded, task["task_id"]))
         conn.execute("INSERT INTO attempt(attempt_id, task_id, claim_epoch, actor, host, worktree, branch, "
-                     "start_head, start_diff_hash, last_head, last_diff_hash, facts_observed_at, started_at) "
-                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                     "start_head, start_diff_hash, last_head, last_diff_hash, facts_observed_at, started_at, origin_host) "
+                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                      (new_attempt, task["task_id"], new_epoch, actor, host, fact.get("worktree"),
                       fact.get("branch"), fact.get("head"), fact.get("diff_hash"), fact.get("head"),
-                      fact.get("diff_hash"), observed_at, recorded))
+                      fact.get("diff_hash"), observed_at, recorded, _origin_host(slug)))
         # Record the reason as a note-less journal? Keep takeover reason in result + journal note.
         conn.execute("INSERT INTO journal(entry_id, task_id, attempt_id, kind, body, status, late, actor, "
-                     "host, observed_at, recorded_at) VALUES(?,?,?,?,?,'resolved',0,?,?,?,?)",
+                     "host, observed_at, recorded_at, origin_host) VALUES(?,?,?,?,?,'resolved',0,?,?,?,?,?)",
                      (new_uuid4(), task["task_id"], new_attempt, "note",
-                      "takeover: " + reason, actor, host, observed_at, recorded))
+                      "takeover: " + reason, actor, host, observed_at, recorded, _origin_host(slug)))
         cache_op["write"] = (slug, ref, new_attempt, new_epoch)
         version = conn.execute("SELECT version FROM task WHERE task_id=?",
                                (task["task_id"],)).fetchone()["version"]
@@ -984,7 +1117,12 @@ def cmd_note(conn, slug, args, actor, observed_at, fact, host):
                "attempt": attempt_id, "epoch": epoch}
     def effect():
         task = fetch_task(conn, ref)
-        if attempt_id is None:
+        role = authority_context(slug)
+        authoritative = is_authoritative(task, role.get("self"), role.get("is_home", True))
+        if not authoritative:
+            late = 0
+            eff_attempt = None
+        elif attempt_id is None:
             late = 0
             eff_attempt = None
         elif caller_match(task, attempt_id, epoch):
@@ -1002,10 +1140,11 @@ def cmd_note(conn, slug, args, actor, observed_at, fact, host):
         entry_id = new_uuid4()
         recorded = now_iso()
         conn.execute("INSERT INTO journal(entry_id, task_id, attempt_id, kind, body, data_json, status, "
-                     "late, actor, host, observed_at, recorded_at, request_id) "
-                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                     "late, actor, host, observed_at, recorded_at, request_id, origin_host) "
+                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                       (entry_id, task["task_id"], eff_attempt, kind, body, data_json, status,
-                       late, actor, host, observed_at, recorded, args.request_id))
+                       late, actor, host, observed_at, recorded, args.request_id,
+                       _origin_host(slug)))
         applied = {"superseded": False, "resolved": False}
         if not late:
             if supersedes:
@@ -1013,15 +1152,14 @@ def cmd_note(conn, slug, args, actor, observed_at, fact, host):
                                    (supersedes,)).fetchone()
                 if tgt is None or tgt["task_id"] != task["task_id"]:
                     raise TaskStateError("validation_failed", "Unknown --supersedes entry")
-                conn.execute("UPDATE journal SET status='superseded', superseded_by=? WHERE entry_id=?",
-                             (entry_id, supersedes))
+                _advance_journal_status(conn, supersedes, "superseded", entry_id)
                 applied["superseded"] = True
             if resolves:
                 tgt = conn.execute("SELECT entry_id, task_id FROM journal WHERE entry_id=?",
                                    (resolves,)).fetchone()
                 if tgt is None or tgt["task_id"] != task["task_id"]:
                     raise TaskStateError("validation_failed", "Unknown --resolves entry")
-                conn.execute("UPDATE journal SET status='resolved' WHERE entry_id=?", (resolves,))
+                _advance_journal_status(conn, resolves, "resolved")
                 applied["resolved"] = True
         return {"entry_id": entry_id, "late": late, "status": status, "applied": applied}
     return do_mutation(conn, "note", args.request_id, payload, actor, None, effect)
@@ -1054,7 +1192,12 @@ def cmd_evidence(conn, slug, args, actor, observed_at, fact, host):
         for ac in ac_list:
             if ac not in known:
                 raise TaskStateError("validation_failed", "Unknown criterion %s for %s" % (ac, ref))
-        if attempt_id is None:
+        role = authority_context(slug)
+        authoritative = is_authoritative(task, role.get("self"), role.get("is_home", True))
+        if not authoritative:
+            late = 0
+            eff_attempt = None
+        elif attempt_id is None:
             late = 0
             eff_attempt = None
         elif caller_match(task, attempt_id, epoch):
@@ -1071,11 +1214,12 @@ def cmd_evidence(conn, slug, args, actor, observed_at, fact, host):
                   "branch": fact.get("branch"), "worktree": fact.get("worktree")}
         conn.execute("INSERT INTO evidence(evidence_id, task_id, attempt_id, criteria_json, kind, result, "
                      "command, summary, inputs_json, artifact_refs_json, late, actor, host, observed_at, "
-                     "recorded_at, request_id) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                     "recorded_at, request_id, origin_host) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
                       (eid, task["task_id"], eff_attempt, json.dumps(sorted(ac_list)),
                        kind, result, getattr(args, "command", None), getattr(args, "summary", None),
                        json.dumps(inputs, sort_keys=True), json.dumps(artifacts, sort_keys=True),
-                       late, actor, host, observed_at, recorded, args.request_id))
+                       late, actor, host, observed_at, recorded, args.request_id,
+                       _origin_host(slug)))
         return {"evidence_id": eid, "late": late}
     return do_mutation(conn, "evidence", args.request_id, payload, actor, None, effect)
 
@@ -1084,6 +1228,7 @@ def cmd_verify(conn, slug, args, actor, observed_at, fact, host):
     _p, ref, attempt_id, epoch = _resolve_owner(conn, slug, args)
     if not ref:
         raise TaskStateError("validation_failed", "verify needs --task or cached claim")
+    _require_authority(slug, fetch_task(conn, ref), "verify")
     if attempt_id is None or epoch is None:
         raise TaskStateError("stale_claim", "No claim context for verify")
     payload = {"command": "verify", "project": slug, "ref": ref,
@@ -1091,6 +1236,7 @@ def cmd_verify(conn, slug, args, actor, observed_at, fact, host):
     cache_op = {}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "verify")
         if not caller_match(task, attempt_id, epoch):
             raise TaskStateError("stale_claim", "Claim epoch/attempt does not match %s" % ref)
         update_attempt_facts(conn, attempt_id, fact, observed_at)
@@ -1155,12 +1301,14 @@ def _expect_version_check(task, expect):
 
 
 def cmd_task_hold(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "task hold")
     require_human(args_human)
     ref = getattr(args, "ref", None) or getattr(args, "task", None)
     payload = {"command": "task.hold", "project": slug, "ref": ref,
                "reason": args.reason, "expect_version": getattr(args, "expect_version", None)}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "task hold")
         _expect_version_check(task, getattr(args, "expect_version", None))
         recorded = now_iso()
         conn.execute("UPDATE task SET hold=1, hold_reason=?, version=version+1, updated_at=? WHERE task_id=?",
@@ -1172,12 +1320,14 @@ def cmd_task_hold(conn, slug, args, actor, observed_at, fact, host):
 
 
 def cmd_task_unhold(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "task unhold")
     require_human(args_human)
     ref = getattr(args, "ref", None) or getattr(args, "task", None)
     payload = {"command": "task.unhold", "project": slug, "ref": ref,
                "expect_version": getattr(args, "expect_version", None)}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "task unhold")
         _expect_version_check(task, getattr(args, "expect_version", None))
         recorded = now_iso()
         conn.execute("UPDATE task SET hold=0, hold_reason=NULL, version=version+1, updated_at=? "
@@ -1189,12 +1339,14 @@ def cmd_task_unhold(conn, slug, args, actor, observed_at, fact, host):
 
 
 def cmd_task_cancel(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "task cancel")
     require_human(args_human)
     ref = getattr(args, "ref", None) or getattr(args, "task", None)
     payload = {"command": "task.cancel", "project": slug, "ref": ref,
                "expect_version": getattr(args, "expect_version", None)}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "task cancel")
         _expect_version_check(task, getattr(args, "expect_version", None))
         if task["lifecycle"] in ("accepted", "cancelled", "superseded"):
             raise TaskStateError("invalid_lifecycle", "Cannot cancel task in %s" % task["lifecycle"])
@@ -1215,12 +1367,14 @@ def cmd_task_cancel(conn, slug, args, actor, observed_at, fact, host):
 
 
 def cmd_accept(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "accept")
     require_human(args_human)
     ref = getattr(args, "ref", None) or getattr(args, "task", None)
     payload = {"command": "accept", "project": slug, "ref": ref,
                "expect_version": getattr(args, "expect_version", None)}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "accept")
         _expect_version_check(task, getattr(args, "expect_version", None))
         if task["lifecycle"] != "verified":
             raise TaskStateError("invalid_lifecycle", "Only verified tasks can be accepted")
@@ -1234,12 +1388,14 @@ def cmd_accept(conn, slug, args, actor, observed_at, fact, host):
 
 
 def cmd_reopen(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "reopen")
     require_human(args_human)
     ref = getattr(args, "ref", None) or getattr(args, "task", None)
     payload = {"command": "reopen", "project": slug, "ref": ref,
                "expect_version": getattr(args, "expect_version", None)}
     def effect():
         task = fetch_task(conn, ref)
+        _require_authority(slug, task, "reopen")
         _expect_version_check(task, getattr(args, "expect_version", None))
         if task["lifecycle"] not in ("verified", "accepted"):
             raise TaskStateError("invalid_lifecycle", "Only verified/accepted tasks can be reopened")
@@ -1269,7 +1425,17 @@ def cmd_handoff(conn, slug, args, actor, observed_at, fact, host):
     cache_op = {}
     def effect():
         task = fetch_task(conn, ref)
-        if attempt_id is None:
+        role = authority_context(slug)
+        authoritative = is_authoritative(task, role.get("self"), role.get("is_home", True))
+        if not authoritative:
+            if release:
+                raise TaskStateError("not_authoritative",
+                                     "handoff --release is not authoritative on this machine",
+                                     details=[{"authority_host": task.get("authority_host")}])
+            late = 0
+            eff_attempt = None
+            owner_match = False
+        elif attempt_id is None:
             late = 0
             eff_attempt = None
             owner_match = False
@@ -1304,11 +1470,12 @@ def cmd_handoff(conn, slug, args, actor, observed_at, fact, host):
         entry_id = new_uuid4()
         recorded = now_iso()
         conn.execute("INSERT INTO journal(entry_id, task_id, attempt_id, kind, body, data_json, status, "
-                     "late, actor, host, observed_at, recorded_at, request_id) "
-                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)",
-                     (entry_id, task["task_id"], eff_attempt, "handoff",
-                      summary or next_action, json.dumps(data, sort_keys=True), "resolved",
-                      late, actor, host, observed_at, recorded, args.request_id))
+                     "late, actor, host, observed_at, recorded_at, request_id, origin_host) "
+                     "VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)",
+                      (entry_id, task["task_id"], eff_attempt, "handoff",
+                       summary or next_action, json.dumps(data, sort_keys=True), "resolved",
+                       late, actor, host, observed_at, recorded, args.request_id,
+                       _origin_host(slug)))
         released = False
         if release and not late and owner_match and eff_attempt is not None:
             conn.execute("UPDATE attempt SET ended_at=?, end='handed_off' WHERE attempt_id=?",
@@ -1322,6 +1489,152 @@ def cmd_handoff(conn, slug, args, actor, observed_at, fact, host):
     if cache_op.get("clear") and not getattr(do_mutation, "last_replay", False):
         clear_cache(slug, ref, attempt_id, epoch)
     return result
+
+
+def cmd_delegate(conn, slug, args, actor, observed_at, fact, host):
+    role = authority_context(slug)
+    _require_home(slug, "delegate")
+    if not role.get("configured"):
+        raise TaskStateError("registry_invalid", "delegate requires a configured project registry")
+    target = getattr(args, "host", None)
+    if not target or target not in role.get("satellites", []):
+        raise TaskStateError("validation_failed", "--host must name a configured satellite")
+    refs = list(getattr(args, "refs", None) or [])
+    all_open = bool(getattr(args, "all_open", False))
+    spec_id = getattr(args, "spec_id", None)
+    if all_open and refs:
+        raise TaskStateError("validation_failed", "delegate accepts refs or --all-open, not both")
+    if not all_open and not refs:
+        raise TaskStateError("validation_failed", "delegate needs REF or --all-open")
+    if spec_id is not None and not is_uuid4(spec_id):
+        raise TaskStateError("validation_failed", "Bad --spec-id (need UUID4)")
+    payload = {"command": "delegate", "project": slug, "host": target,
+               "refs": sorted(refs), "all_open": all_open, "spec_id": spec_id}
+    def effect():
+        selected = list(refs)
+        if all_open:
+            # --all-open selects only tasks this machine can hand over; explicit
+            # refs still fail loudly when a task is not delegable.
+            query = ("SELECT ref FROM task WHERE lifecycle='open' AND authority_host IS NULL "
+                     "AND owner_attempt IS NULL AND hold=0")
+            params = []
+            if spec_id is not None:
+                query += " AND spec_id=?"
+                params.append(spec_id)
+            query += " ORDER BY ref"
+            selected = [row["ref"] for row in conn.execute(query, params).fetchall()]
+        delegated = []
+        stamp = now_iso()
+        for ref in selected:
+            task = fetch_task(conn, ref)
+            _require_authority(slug, task, "delegate")
+            if task.get("owner_attempt") is not None:
+                raise TaskStateError("already_claimed", "Task %s is claimed" % ref)
+            if task.get("hold"):
+                raise TaskStateError("on_hold", "Task %s is on hold" % ref)
+            if task.get("lifecycle") != "open":
+                raise TaskStateError("not_claimable", "Task %s is not open" % ref)
+            epoch = int(task.get("delegation_epoch") or 0) + 1
+            conn.execute("UPDATE task SET authority_host=?, delegation_epoch=?, version=version+1, "
+                         "updated_at=? WHERE task_id=?",
+                         (target, epoch, stamp, task["task_id"]))
+            delegated.append({"ref": ref, "authority_host": target,
+                              "delegation_epoch": epoch})
+        return {"host": target, "delegated": delegated}
+    return do_mutation(conn, "delegate", args.request_id, payload, actor, None, effect)
+
+
+def cmd_revoke(conn, slug, args, actor, observed_at, fact, host):
+    _require_home(slug, "revoke")
+    if bool(getattr(args, "force", False)):
+        require_human(args_human)
+    ref = getattr(args, "ref", None) or getattr(args, "task", None)
+    if not ref:
+        raise TaskStateError("validation_failed", "revoke needs a REF")
+    force = bool(getattr(args, "force", False))
+    payload = {"command": "revoke", "project": slug, "ref": ref, "force": force}
+    def effect():
+        task = fetch_task(conn, ref)
+        authority = task.get("authority_host")
+        if not authority:
+            raise TaskStateError("not_delegated", "Task %s is not delegated" % ref)
+        conn.execute("UPDATE task SET revoke_pending=1, revoke_force=?, version=version+1, "
+                     "updated_at=? WHERE task_id=?",
+                     (1 if force else 0, now_iso(), task["task_id"]))
+        return {"ref": ref, "authority_host": authority,
+                "revoke_pending": 1, "revoke_force": 1 if force else 0}
+    return do_mutation(conn, "revoke", args.request_id, payload, actor, None, effect)
+
+
+def cmd_sync(conn, slug, args, actor, observed_at, fact, host):
+    try:
+        import sync as sync_mod
+        import registry as registry_mod
+        data = registry_mod.load()
+    except Exception as exc:
+        if exc.__class__.__name__ == "RegistryError":
+            raise TaskStateError("registry_invalid", str(exc))
+        raise
+    if data is None:
+        return {"projects": [], "synced": 0}
+    requested = getattr(args, "project", None)
+    if requested:
+        projects = [requested]
+    elif slug:
+        projects = [slug]
+    else:
+        projects = [name for name, config in data["projects"].items()
+                    if config["home"] == data["self"]]
+    results = []
+    for project in projects:
+        role = authority_context(project)
+        if not role.get("configured"):
+            results.append({"project": project, "hosts": [], "synced": 0})
+            continue
+        if not role.get("is_home"):
+            raise TaskStateError("home_only", "sync runs on the project home only")
+        results.append(sync_mod.sync_project(project, role, getattr(args, "host", None),
+                                              actor, observed_at))
+    return {"projects": results, "synced": sum(item.get("synced", 0) for item in results)}
+
+
+def cmd_launchd_plist(args):
+    try:
+        interval = int(getattr(args, "interval", 120))
+    except (TypeError, ValueError):
+        raise TaskStateError("validation_failed", "--interval must be an integer")
+    if interval <= 0:
+        raise TaskStateError("validation_failed", "--interval must be positive")
+    import plistlib
+    taskstate_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "taskstate.py"))
+    log_dir = Path(os.path.expanduser("~/Library/Logs/taskstate"))
+    payload = {
+        "Label": "com.taskstate.sync",
+        "ProgramArguments": [sys.executable, taskstate_path, "sync"],
+        "RunAtLoad": True,
+        "StartInterval": interval,
+        "StandardOutPath": str(log_dir / "taskstate-sync.out.log"),
+        "StandardErrorPath": str(log_dir / "taskstate-sync.err.log"),
+    }
+    text = plistlib.dumps(payload, sort_keys=True).decode("utf-8")
+    return {"plist": text,
+            "install_help": "launchctl bootstrap gui/$(id -u) <plist>"}
+
+
+def cmd_rpc(_conn, _slug, _args, _actor, _observed_at, _fact, _host):
+    try:
+        raw = sys.stdin.read()
+        request = json.loads(raw)
+        import sync
+        result = sync.rpc_dispatch(request)
+        return {"rpc": result}
+    except Exception as exc:
+        code = getattr(exc, "code", None)
+        if code is None and exc.__class__.__name__ == "RegistryError":
+            code = "registry_invalid"
+        if code is None:
+            code = "rpc_error"
+        raise TaskStateError(code, getattr(exc, "message", str(exc)))
 
 
 # --- read commands ----------------------------------------------------------------
@@ -1371,7 +1684,11 @@ def cmd_attention(root, slug, args, live=None):
         raise TaskStateError("validation_failed", "attention needs --project or --all")
     conn, _ = store_mod.open_project_db(slug, root=root)
     try:
-        return {"items": attention_for_conn(conn, slug, live)}
+        result = {"items": attention_for_conn(conn, slug, live)}
+        sync_info = _sync_info(slug, conn)
+        if sync_info.get("configured"):
+            result["sync"] = sync_info
+        return result
     finally:
         conn.close()
 
@@ -1468,6 +1785,29 @@ def build_parser():
     add_common(at)
     b = sub.add_parser("backup"); add_common(b)
     ex = sub.add_parser("export"); ex.add_argument("--out", required=True); add_common(ex)
+    d = sub.add_parser("delegate")
+    d.add_argument("refs", nargs="*")
+    d.add_argument("--host", required=True)
+    d.add_argument("--all-open", action="store_true", dest="all_open")
+    d.add_argument("--spec-id", default=None, dest="spec_id")
+    add_common(d)
+    rv = sub.add_parser("revoke")
+    rv.add_argument("ref", nargs="?")
+    rv.add_argument("--force", action="store_true")
+    add_common(rv)
+    sy = sub.add_parser("sync")
+    sy.add_argument("--host", default=None)
+    add_common(sy)
+    lp = sub.add_parser(
+        "launchd-plist",
+        help="Print a macOS LaunchAgent",
+        description="Print a macOS LaunchAgent without installing it.",
+        epilog="Install with: launchctl bootstrap gui/$(id -u) <plist>")
+    lp.add_argument("--interval", default=120, type=int)
+    lp.add_argument("--json", action="store_true")
+    rp = sub.add_parser("rpc")
+    import reconcile
+    reconcile.add_subparsers(sub)
     hp = sub.add_parser("hook")
     hp.add_argument("event", choices=["session-start", "stop", "pre-tool-use", "session-end", "replay", "guard"])
     hp.add_argument("--runtime", required=True, choices=["claude", "codex"])
@@ -1484,17 +1824,27 @@ def require_project_row(conn, slug):
 
 
 def _resolve_slug(args):
+    try:
+        import registry
+        data = registry.load()
+    except Exception as exc:
+        if exc.__class__.__name__ == "RegistryError":
+            raise TaskStateError("registry_invalid", str(exc))
+        raise
     slug = getattr(args, "project", None)
     if slug:
         return slug
     cache = read_cache()
     if cache.get("project"):
         return cache["project"]
-    # project init/show path: slug may come from --slug
     if getattr(args, "slug", None):
         return args.slug
-    # attention --all / backup / export without project handled by caller
-    return None
+    try:
+        return registry.resolve_project(cwd=os.getcwd(), data=data)
+    except Exception as exc:
+        if exc.__class__.__name__ == "RegistryError":
+            raise TaskStateError("registry_invalid", str(exc))
+        raise
 
 
 def _requires_human(args):
@@ -1504,6 +1854,8 @@ def _requires_human(args):
     if cmd == "grant" and getattr(args, "sub", None) == "add":
         return True
     if cmd == "takeover" and getattr(args, "force", False):
+        return True
+    if cmd == "revoke" and getattr(args, "force", False):
         return True
     if cmd in {"accept", "reopen"}:
         return True
@@ -1535,6 +1887,27 @@ def run(argv=None, human=None):
         if output is None:
             return code, {"ok": True, "result": {"event": event, "runtime": args.runtime}}
         return code, output
+    if cmd == "launchd-plist":
+        try:
+            result = cmd_launchd_plist(args)
+            return 0, {"ok": True, "result": result, "db_seq": 0}
+        except TaskStateError as exc:
+            return 2, {"ok": False, "error": {"code": exc.code, "message": exc.message}}
+    if cmd == "rpc":
+        try:
+            raw = sys.stdin.read()
+            request = json.loads(raw)
+            import sync
+            result = sync.rpc_dispatch(request)
+            return 0, {"ok": True, "result": result, "db_seq": 0}
+        except Exception as exc:
+            code = getattr(exc, "code", None)
+            if code is None and exc.__class__.__name__ == "RegistryError":
+                code = "registry_invalid"
+            if code is None:
+                code = "rpc_error"
+            return 2, {"ok": False, "error": {"code": code,
+                                               "message": getattr(exc, "message", str(exc))}}
     actor = current_actor(getattr(args, "actor", None))
     host = current_host()
     if hasattr(args, "request_id") and not getattr(args, "request_id", None):
@@ -1543,6 +1916,11 @@ def run(argv=None, human=None):
     fact = facts.collect()
     root = store_mod.state_root()
     try:
+        if cmd == "sync":
+            sync_slug = getattr(args, "project", None)
+            result = cmd_sync(None, sync_slug, args, actor,
+                              observed_at, fact, host)
+            return 0, {"ok": True, "result": result, "db_seq": 0}
         if cmd == "project" and args.sub == "init":
             slug = args.slug
             conn, _ = store_mod.open_project_db(slug, root=root)
@@ -1628,6 +2006,7 @@ def run(argv=None, human=None):
         slug = _resolve_slug(args)
         if not slug:
             raise TaskStateError("validation_failed", "This command needs --project (or cached project)")
+        host = _machine_host(slug, host)
         conn, _ = store_mod.open_project_db(slug, root=root)
         try:
             require_project_row(conn, slug)
@@ -1637,7 +2016,7 @@ def run(argv=None, human=None):
                 ref = args.ref or args.task or read_cache().get("ref")
                 if not ref:
                     raise TaskStateError("validation_failed", "task show needs a REF")
-                result = task_view(conn, fetch_task(conn, ref), fact)
+                result = task_view(conn, fetch_task(conn, ref), fact, slug)
             elif cmd == "task" and args.sub == "hold":
                 result = cmd_task_hold(conn, slug, args, actor, observed_at, fact, host)
             elif cmd == "task" and args.sub == "unhold":
@@ -1666,6 +2045,13 @@ def run(argv=None, human=None):
                 result = cmd_reopen(conn, slug, args, actor, observed_at, fact, host)
             elif cmd == "handoff":
                 result = cmd_handoff(conn, slug, args, actor, observed_at, fact, host)
+            elif cmd == "delegate":
+                result = cmd_delegate(conn, slug, args, actor, observed_at, fact, host)
+            elif cmd == "revoke":
+                result = cmd_revoke(conn, slug, args, actor, observed_at, fact, host)
+            elif cmd in ("job", "reconcile"):
+                import reconcile
+                result = reconcile.dispatch(conn, slug, args, actor, observed_at, fact, host, args_human)
             elif cmd == "context":
                 result = cmd_context(conn, slug, args, fact)
                 seq = store_mod.db_seq(conn)
@@ -1685,9 +2071,18 @@ def run(argv=None, human=None):
         payload = {"ok": False, "error": {"code": exc.code, "message": exc.message}}
         if exc.details:
             payload["error"]["details"] = exc.details
+            if exc.code == "not_authoritative" and isinstance(exc.details[0], dict):
+                payload["error"]["authority_host"] = exc.details[0].get("authority_host")
         return 2, payload
     except store_mod.StoreError as exc:
         return 2, {"ok": False, "error": {"code": exc.code, "message": exc.message}}
+    except Exception as exc:
+        if exc.__class__.__name__ == "SyncError":
+            payload = {"ok": False, "error": {"code": exc.code, "message": exc.message}}
+            if getattr(exc, "details", None):
+                payload["error"]["details"] = exc.details
+            return 2, payload
+        raise
 
 
 def main():
@@ -1712,8 +2107,12 @@ def main():
             event = "pre-tool-use"
         sys.exit(hooks.main([event, "--runtime", runtime]))
     code, payload = run(sys.argv[1:], human=None)
-    sys.stdout.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
-    sys.stdout.flush()
+    if len(sys.argv) > 1 and sys.argv[1] == "launchd-plist" and payload.get("ok"):
+        sys.stdout.write(payload["result"]["plist"])
+        sys.stdout.flush()
+    else:
+        sys.stdout.write(json.dumps(payload, ensure_ascii=False, sort_keys=True) + "\n")
+        sys.stdout.flush()
     # Map validation/domain (2) vs ok (0); unexpected handled below.
     sys.exit(code)
 
