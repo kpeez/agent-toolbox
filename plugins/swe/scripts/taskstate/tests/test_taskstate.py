@@ -379,6 +379,31 @@ class TaskStateTest(unittest.TestCase):
         self.ok(["task", "hold", "--project", slug, ref, "--reason", "pause",
                  "--expect-version", str(ver)], human=True)
 
+    def test_store_backup_and_export_files_are_owner_only(self):
+        slug = self.new_project()
+        self.add_task(slug, "Perm")
+        db = Path(self.home, slug + ".db")
+        self.assertEqual(db.stat().st_mode & 0o777, 0o600)
+        os.chmod(db, 0o644)
+        self.ok(["task", "show", "--project", slug, slug + "-1"])
+        self.assertEqual(db.stat().st_mode & 0o777, 0o600)
+        for path in self.ok(["backup", "--project", slug])["backups"]:
+            self.assertEqual(os.stat(path).st_mode & 0o777, 0o600)
+        out = os.path.join(self.tmp.name, "exp-perm")
+        for path in self.ok(["export", "--project", slug, "--out", out])["files"].values():
+            self.assertEqual(os.stat(path).st_mode & 0o777, 0o600)
+
+    def test_launchd_plist_uses_given_stable_path(self):
+        launcher = Path(self.tmp.name, "bin", "taskstate")
+        launcher.parent.mkdir()
+        launcher.write_text("#!/usr/bin/env python3\n")
+        code, out = self.tcall(["launchd-plist", "--interval", "120", "--taskstate", str(launcher)])
+        self.assertEqual(code, 0, msg=json.dumps(out))
+        self.assertIn(str(launcher), out["result"]["plist"])
+        self.assertNotIn("scripts/taskstate/taskstate.py", out["result"]["plist"])
+        code, out = self.tcall(["launchd-plist", "--taskstate", "relative/path"])
+        self.assertEqual(code, 2)
+
     # 9. backup/export/migration
     def test_9_backup_export_migration(self):
         slug = self.new_project()
