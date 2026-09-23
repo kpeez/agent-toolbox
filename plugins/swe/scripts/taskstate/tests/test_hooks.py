@@ -281,7 +281,7 @@ class HookTest(unittest.TestCase):
         conn, _ = store.open_project_db(slug, root=self.home)
         try:
             version = conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()[0]
-            self.assertEqual(version, "2")
+            self.assertEqual(version, str(store.SCHEMA_VERSION))
             columns = {row[1] for row in conn.execute("PRAGMA table_info(attempt)")}
             self.assertTrue({"checkpoint_head", "checkpoint_diff_hash", "checkpoint_at"} <= columns)
             self.assertIsNotNone(conn.execute("SELECT 1 FROM sqlite_master WHERE type='table' AND name='session'").fetchone())

@@ -256,7 +256,7 @@ def _has_journal(conn, task):
 
 
 def _write_session_facts(conn, runtime, session_id, task, cache, current, data, fact, cwd,
-                         observed_at):
+                         project, observed_at):
     attempt_id = cache.get("attempt_id") if current and isinstance(cache, dict) else None
     task_id = task.get("task_id") if isinstance(task, dict) else None
     existing = conn.execute(
@@ -289,20 +289,27 @@ def _write_session_facts(conn, runtime, session_id, task, cache, current, data, 
     else:
         head = existing["head"] if existing is not None else None
         diff_hash = existing["diff_hash"] if existing is not None else None
+    origin_host = None
+    try:
+        import taskstate as _taskstate
+        origin_host = _taskstate._origin_host(project)
+    except BaseException:
+        origin_host = None
     if existing is None:
         conn.execute(
             "INSERT INTO session(runtime, session_id, attempt_id, task_id, host, cwd, source, "
             "started_at, last_seen_at, head, diff_hash, end_reason, end_observed, reminded_head, "
-            "reminded_diff_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
+            "reminded_diff_hash, origin_host) VALUES(?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL,?)",
             (runtime, session_id, attempt_id, task_id, _safe_text(host, 512), _safe_text(cwd, 4096),
-             _safe_text(source, 256) if source else None, observed_at, observed_at, head, diff_hash))
+             _safe_text(source, 256) if source else None, observed_at, observed_at, head, diff_hash,
+             origin_host))
     else:
         conn.execute(
             "UPDATE session SET attempt_id=?, task_id=?, host=?, cwd=?, source=?, last_seen_at=?, "
-            "head=?, diff_hash=? WHERE runtime=? AND session_id=?",
+            "head=?, diff_hash=?, origin_host=? WHERE runtime=? AND session_id=?",
             (attempt_id, task_id, _safe_text(host, 512), _safe_text(cwd, 4096),
              _safe_text(source, 256) if source else None, observed_at, head, diff_hash,
-             runtime, session_id))
+             origin_host, runtime, session_id))
     return True
 
 
@@ -358,11 +365,19 @@ def _context_text(model, project, ref, stale):
         lines.append("- none recorded")
     if stale:
         lines.append("WARNING: cached claim is superseded; do not write as owner without takeover.")
-    pointer = "Full context: taskstate context %s --project %s" % (
+    sync_info = model.get("sync") or {}
+    if sync_info.get("home_copy"):
+        lines.append(_safe_text(sync_info.get("label") or "home copy as of unknown", 300))
+    taskstate_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "taskstate.py"))
+    pointer = 'Full context: python3 "%s" context %s --project %s' % (
+        taskstate_path, _safe_text(ref, 160), _safe_text(project, 160))
+    legacy = "Full context: taskstate context %s --project %s" % (
         _safe_text(ref, 160), _safe_text(project, 160))
-    available = max(0, CONTEXT_LIMIT - len(pointer) - 1)
+    available = max(0, CONTEXT_LIMIT - len(pointer) - len(legacy) - 2)
     body = _truncate("\n".join(lines), available).rstrip()
-    return body + "\n" + pointer
+    if sync_info.get("configured"):
+        return body + "\n" + pointer
+    return body + "\n" + pointer + "\n" + legacy
 
 
 def _session_start(data, runtime, deadline):
@@ -393,7 +408,7 @@ def _session_start(data, runtime, deadline):
             current = _claim_is_current(task, cache)
             journal = _has_journal(conn, task)
             if not _write_session_facts(conn, runtime, session_id, task, cache, current, data,
-                                       fact, cwd, observed_at):
+                                       fact, cwd, project, observed_at):
                 conn.execute("ROLLBACK;")
                 return None
             conn.execute("COMMIT;")
@@ -481,7 +496,7 @@ def _session_stop(data, runtime, deadline):
             if _facts_usable(fact, bool(attempt["worktree"])):
                 taskstate.update_attempt_facts(conn, attempt_id, fact, observed_at)
             if not _write_session_facts(conn, runtime, session_id, task, cache, True, data,
-                                       fact, cwd, observed_at):
+                                       fact, cwd, project, observed_at):
                 conn.execute("ROLLBACK;")
                 return None
             checkpoint_at = attempt["checkpoint_at"]
@@ -522,10 +537,12 @@ def _session_stop(data, runtime, deadline):
             raise
         if not block:
             return None
+        taskstate_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "taskstate.py"))
         return {"decision": "block",
-                "reason": ("Record a taskstate checkpoint before stopping: run taskstate note "
-                           "--kind progress|decision|failed_approach ..., taskstate evidence ..., "
-                           "or taskstate handoff ...; continue if this turn was trivial.")}
+                "reason": ('Record a taskstate checkpoint before stopping: run python3 "%s" note '
+                           '--kind progress|decision|failed_approach ..., python3 "%s" evidence ..., '
+                           'or python3 "%s" handoff ...; continue if this turn was trivial.'
+                           % (taskstate_path, taskstate_path, taskstate_path))}
     except BaseException:
         if not committed:
             _spool_session_facts(project, ref, cache, data, fact, runtime, session_id, "stop")
@@ -609,7 +626,8 @@ def _strip_global_options(tokens):
         "--epoch", "--slug", "--disclosure", "--source", "--reason", "--expect-version",
         "--ref", "--kind", "--body", "--data", "--supersedes", "--resolves", "--result",
         "--criteria", "--command", "--summary", "--artifact", "--next-action", "--risk",
-        "--do-not-repeat", "--out", "--depends-on", "--criterion",
+        "--do-not-repeat", "--out", "--depends-on", "--criterion", "--host",
+        "--all-open", "--spec-id", "--force", "--interval",
     }
     tokens = list(tokens)
     while tokens and re.match(r"^[A-Za-z_][A-Za-z0-9_]*=", tokens[0]):
@@ -652,7 +670,7 @@ def _human_only(args):
     if not args:
         return False
     first = args[0]
-    if first == "takeover":
+    if first in {"takeover", "revoke"}:
         return "--force" in args[1:]
     pair = (first, args[1]) if len(args) > 1 else (first,)
     return pair in HUMAN_SUBCOMMANDS or (first,) in HUMAN_SUBCOMMANDS
@@ -682,7 +700,8 @@ def _pre_tool_use(data, _runtime, deadline):
             return {"hookSpecificOutput": {
                 "hookEventName": "PreToolUse",
                 "permissionDecision": "deny",
-                "permissionDecisionReason": "Human-only taskstate command; run it from an interactive human terminal."}}
+                "permissionDecisionReason": ('Human-only taskstate command; run python3 "%s" from an interactive human terminal.'
+                                             % os.path.abspath(os.path.join(os.path.dirname(__file__), "taskstate.py")))}}
     return None
 
 
@@ -742,9 +761,16 @@ def _append_spool_line(project, line):
 def _spool_session_facts(project, ref, cache, data, fact, runtime, session_id, event):
     if not _valid_project(project) or not isinstance(ref, str) or not ref:
         return
+    origin_host = None
+    try:
+        import taskstate as _taskstate
+        origin_host = _taskstate._origin_host(project)
+    except BaseException:
+        origin_host = None
     line = {"request_id": str(uuid.uuid4()), "type": "session_facts", "event": event,
             "runtime": runtime, "session_id": session_id, "project": project, "ref": ref,
             "attempt_id": cache.get("attempt_id"), "epoch": cache.get("epoch"),
+            "origin_host": origin_host,
             "host": data.get("host") if isinstance(data, dict) else None,
             "cwd": _input_cwd(data), "source": data.get("source") if isinstance(data, dict) else None,
             "observed_at": _now_iso(), "head": fact.get("head") if isinstance(fact, dict) else None,
@@ -764,9 +790,15 @@ def _session_end(data, runtime, deadline):
     project = cache.get("project")
     if not _valid_project(project):
         return None
+    origin_host = None
+    try:
+        import taskstate as _taskstate
+        origin_host = _taskstate._origin_host(project)
+    except BaseException:
+        origin_host = None
     line = {"request_id": str(uuid.uuid4()), "type": "session_end", "runtime": runtime,
             "session_id": session_id, "reason": _runtime_reason(data.get("reason")),
-            "observed_at": _now_iso(), "project": project}
+            "observed_at": _now_iso(), "project": project, "origin_host": origin_host}
     try:
         _remaining(deadline)
         _append_spool_line(project, line)
@@ -816,7 +848,8 @@ def _apply_session_facts(project, line, deadline):
                "session_id": session_id, "ref": ref, "attempt_id": line.get("attempt_id"),
                "epoch": line.get("epoch"), "host": line.get("host"), "cwd": line.get("cwd"),
                "source": line.get("source"), "observed_at": observed_at,
-               "head": line.get("head"), "diff_hash": line.get("diff_hash"), "event": line.get("event")}
+               "head": line.get("head"), "diff_hash": line.get("diff_hash"),
+               "origin_host": line.get("origin_host"), "event": line.get("event")}
     try:
         def effect():
             task = _fetch_task(conn, taskstate, ref) if isinstance(ref, str) else None
@@ -845,10 +878,11 @@ def _apply_session_facts(project, line, deadline):
                 conn.execute(
                     "INSERT INTO session(runtime, session_id, attempt_id, task_id, host, cwd, source, "
                     "started_at, last_seen_at, head, diff_hash, end_reason, end_observed, reminded_head, "
-                    "reminded_diff_hash) VALUES(?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL)",
+                    "reminded_diff_hash, origin_host) VALUES(?,?,?,?,?,?,?,?,?,?,?,NULL,0,NULL,NULL,?)",
                     (runtime, session_id, attempt_id, task_id, _safe_text(line.get("host"), 512),
                      _safe_text(line.get("cwd"), 4096), _safe_text(line.get("source"), 256),
-                     observed_at, observed_at, line.get("head"), line.get("diff_hash")))
+                     observed_at, observed_at, line.get("head"), line.get("diff_hash"),
+                     line.get("origin_host")))
             elif _observed_after(observed_at, existing["last_seen_at"]):
                 head = line.get("head") if line.get("head") is not None else existing["head"]
                 diff_hash = (line.get("diff_hash") if line.get("diff_hash") is not None
@@ -895,8 +929,9 @@ def _apply_session_end(project, line, deadline):
                 conn.execute(
                     "INSERT INTO session(runtime, session_id, attempt_id, task_id, host, cwd, source, "
                     "started_at, last_seen_at, head, diff_hash, end_reason, end_observed, reminded_head, "
-                    "reminded_diff_hash) VALUES(?,?,NULL,NULL,NULL,NULL,NULL,?,?,NULL,NULL,?,1,NULL,NULL)",
-                    (runtime, session_id, observed_at, observed_at, _safe_text(reason, 256)))
+                    "reminded_diff_hash, origin_host) VALUES(?,?,NULL,NULL,NULL,NULL,NULL,?,?,NULL,NULL,?,1,NULL,NULL,?)",
+                    (runtime, session_id, observed_at, observed_at, _safe_text(reason, 256),
+                     taskstate._origin_host(project)))
             elif not row["end_observed"] or _observed_after(observed_at, row["last_seen_at"]):
                 last_seen = (observed_at if _observed_after(observed_at, row["last_seen_at"])
                              else row["last_seen_at"])
