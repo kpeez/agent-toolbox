@@ -8,7 +8,7 @@ import re
 import sqlite3
 from pathlib import Path
 
-SCHEMA_VERSION = 2
+SCHEMA_VERSION = 4
 
 SLUG_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_.-]*$")
 
@@ -136,7 +136,41 @@ CREATE TABLE IF NOT EXISTS session(
 );
 """
 
-MIGRATIONS = [(1, MIGRATION_1), (2, MIGRATION_2)]
+MIGRATION_3 = """
+ALTER TABLE session ADD COLUMN end_inferred INTEGER NOT NULL DEFAULT 0;
+CREATE TABLE IF NOT EXISTS job(
+  cluster TEXT NOT NULL,
+  job_id TEXT NOT NULL,
+  task_id TEXT NOT NULL REFERENCES task(task_id),
+  attempt_id TEXT REFERENCES attempt(attempt_id),
+  submitted_by TEXT NOT NULL,
+  host TEXT NOT NULL,
+  last_state TEXT,
+  last_state_at TEXT,
+  exit_code TEXT,
+  acknowledged INTEGER NOT NULL DEFAULT 0,
+  observed_at TEXT NOT NULL,
+  recorded_at TEXT NOT NULL,
+  request_id TEXT,
+  PRIMARY KEY(cluster, job_id)
+);
+"""
+
+MIGRATION_4 = """
+ALTER TABLE task ADD COLUMN authority_host TEXT;
+ALTER TABLE task ADD COLUMN delegation_epoch INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE task ADD COLUMN origin_host TEXT;
+ALTER TABLE task ADD COLUMN revoke_pending INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE task ADD COLUMN revoke_force INTEGER NOT NULL DEFAULT 0;
+ALTER TABLE task ADD COLUMN synced_at TEXT;
+ALTER TABLE attempt ADD COLUMN origin_host TEXT;
+ALTER TABLE journal ADD COLUMN origin_host TEXT;
+ALTER TABLE evidence ADD COLUMN origin_host TEXT;
+ALTER TABLE session ADD COLUMN origin_host TEXT;
+ALTER TABLE job ADD COLUMN origin_host TEXT;
+"""
+
+MIGRATIONS = [(1, MIGRATION_1), (2, MIGRATION_2), (3, MIGRATION_3), (4, MIGRATION_4)]
 
 
 def _get_meta(conn, key, default=None):
@@ -151,6 +185,14 @@ def _set_meta(conn, key, value):
     conn.execute("INSERT OR REPLACE INTO meta(key, value) VALUES(?, ?)", (key, value))
 
 
+def get_meta(conn, key, default=None):
+    return _get_meta(conn, key, default)
+
+
+def set_meta(conn, key, value):
+    _set_meta(conn, key, str(value))
+
+
 def _has_tables(conn):
     row = conn.execute(
         "SELECT COUNT(*) AS n FROM sqlite_master WHERE type='table' AND name='meta'").fetchone()
@@ -158,18 +200,20 @@ def _has_tables(conn):
 
 
 def _prepare_migration_sql(conn, version, sql):
-    if version != 2:
-        return sql
-    try:
-        existing = {row[1] for row in conn.execute("PRAGMA table_info(attempt)")}
-    except sqlite3.Error:
+    if version not in (2, 3, 4):
         return sql
     kept = []
     for line in sql.splitlines():
         stripped = line.strip()
-        if stripped.startswith("ALTER TABLE attempt ADD COLUMN "):
-            parts = stripped.split()
-            if len(parts) >= 6 and parts[5] in existing:
+        match = re.match(r"^ALTER TABLE ([A-Za-z_][A-Za-z0-9_]*) ADD COLUMN ([A-Za-z_][A-Za-z0-9_]*)\b",
+                         stripped)
+        if match:
+            table, column = match.groups()
+            try:
+                existing = {row[1] for row in conn.execute("PRAGMA table_info(%s)" % table)}
+            except sqlite3.Error:
+                existing = set()
+            if column in existing:
                 continue
         kept.append(line)
     return "\n".join(kept)
@@ -293,7 +337,7 @@ def maybe_daily_backup(conn, slug, root=None):
 
 
 EXPORT_TABLES = ("project", "task", "criterion", "task_dep", "grant_",
-                 "attempt", "session", "journal", "evidence", "mutation", "meta")
+                 "attempt", "session", "job", "journal", "evidence", "mutation", "meta")
 
 
 def export_db(conn, out_dir):

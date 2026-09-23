@@ -404,7 +404,7 @@ class TaskStateTest(unittest.TestCase):
         conn, _ = store_mod.open_project_db(slug, root=Path(self.home))
         try:
             row = conn.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
-            self.assertEqual(row["value"], "2")
+            self.assertEqual(row["value"], str(store_mod.SCHEMA_VERSION))
         finally:
             conn.close()
 
@@ -749,7 +749,7 @@ class TaskStateTest(unittest.TestCase):
         try:
             row = conn2.execute("SELECT value FROM meta WHERE key='schema_version'").fetchone()
             self.assertIsNotNone(row)
-            self.assertEqual(row["value"], "2")
+            self.assertEqual(row["value"], str(store_mod.SCHEMA_VERSION))
             row2 = conn2.execute("SELECT value FROM meta WHERE key='next_ref_n'").fetchone()
             self.assertEqual(row2["value"], "1")
         finally:
