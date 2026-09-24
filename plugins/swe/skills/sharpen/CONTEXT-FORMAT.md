@@ -1,6 +1,6 @@
 # Project context
 
-`docs/agents/CONTEXT.md` holds the small amount of reusable project knowledge
+`.agents/docs/CONTEXT.md` holds the small amount of reusable project knowledge
 that a new session needs: purpose, terminology, non-obvious constraints, useful
 quirks, and links to canonical documents. Follow an explicit project or user
 override of this default location. Create it only when useful context exists,

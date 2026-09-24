@@ -5,7 +5,7 @@ description: Turn an approved plan into independently verifiable tasks and depen
 
 # /to-issues
 
-Project document paths below default to `docs/agents/`; follow an explicit
+Project document paths below default to `.agents/docs/`; follow an explicit
 project or user override.
 
 Turn approved intent into the smallest independently verifiable tasks that
@@ -24,7 +24,7 @@ Use this evidence in order:
 1. The current user's explicit choice, or the current spec's confirmed tracker
    and established container linkage. Do not redirect existing tasks silently.
 2. A confirmed repository default in `AGENTS.md`, `CLAUDE.md`, or
-   `docs/agents/CONTEXT.md` when this work has no established tracker.
+   `.agents/docs/CONTEXT.md` when this work has no established tracker.
 3. Prior specs only when their configuration is consistent and still applies.
 4. An available Linear connection.
 5. GitHub when the repository uses it and public issue publication is

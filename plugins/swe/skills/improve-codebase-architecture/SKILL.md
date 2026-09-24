@@ -18,10 +18,10 @@ interface-as-test-surface. Use the project's established terms where they are
 clearer. Read that skill only when the distinction matters to the review.
 
 This skill can be informed by the project's domain model: consult a
-`docs/agents/CONTEXT.md` glossary or relevant `docs/agents/adrs/` when it bears
+`.agents/docs/CONTEXT.md` glossary or relevant `.agents/docs/adrs/` when it bears
 on the friction or recommendation. Use its rationale to compare options and
 verify any current constraints at their source. Follow an explicit project or user override of the
-`docs/agents/` location.
+`.agents/docs/` location.
 
 ## Process
 

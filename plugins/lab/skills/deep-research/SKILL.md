@@ -11,7 +11,7 @@ The coordinator owns artifacts and final judgment; lane workers return evidence
 in chat. A bare request for “deep research” must not load this workflow and the
 installed Work Deep Research skill solely because their names match.
 
-Use `docs/agents/` for project documents unless the project or user specifies
+Use `.agents/docs/` for project documents unless the project or user specifies
 another location. Create subdirectories as needed, whether tracked, ignored, or
 reached through an existing symlink.
 
@@ -26,7 +26,7 @@ Read supporting references only when their phase needs them:
 
 ## Frame the work
 
-Create `docs/agents/research/<slug>/brief.md` (or the chosen location) before
+Create `.agents/docs/research/<slug>/brief.md` (or the chosen location) before
 dispatch. State:
 
 - the exact question and decision or deliverable it informs;
@@ -91,7 +91,7 @@ start a duplicate because a prior response was missing; reconcile state first.
 ## Retain and reconcile evidence
 
 After each lane returns, validate its packet and write it to
-`docs/agents/research/<slug>/lanes/<lane-slug>.md`. Preserve incomplete and
+`.agents/docs/research/<slug>/lanes/<lane-slug>.md`. Preserve incomplete and
 contradictory packets; do not silently repair missing evidence.
 
 Build the evidence used for the report from a deduplicated source list and

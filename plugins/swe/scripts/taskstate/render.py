@@ -998,19 +998,19 @@ def render_read_model(view, model):
     return render_model(view, validated)
 
 
-def _is_docs_agents(path):
+def _is_agent_docs(path):
     parts = path.parts
-    return any(parts[index] == "docs" and index + 1 < len(parts) and parts[index + 1] == "agents"
+    return any(parts[index] == ".agents" and index + 1 < len(parts) and parts[index + 1] == "docs"
                for index in range(len(parts)))
 
 
 def _atomic_write(path, text):
-    # Check the path as given too: docs/agents is usually a symlink into the
+    # Check the path as given too: .agents/docs is usually a symlink into the
     # vault, so the resolved path alone would not reveal it.
     given = Path(os.path.abspath(os.path.expanduser(path)))
     destination = given.resolve()
-    if _is_docs_agents(given) or _is_docs_agents(destination):
-        raise RenderError("output_forbidden", "Rendered output must not be written into docs/agents")
+    if _is_agent_docs(given) or _is_agent_docs(destination):
+        raise RenderError("output_forbidden", "Rendered output must not be written into .agents/docs")
     try:
         destination.parent.mkdir(parents=True, exist_ok=True)
         descriptor, temporary = tempfile.mkstemp(prefix=".%s." % destination.name, dir=str(destination.parent))

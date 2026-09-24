@@ -2,11 +2,11 @@
 
 An ADR records what was chosen and why, not what future work must choose.
 
-Store ADRs under `docs/agents/adrs/` unless the project or user specifies another
+Store ADRs under `.agents/docs/adrs/` unless the project or user specifies another
 location. Create the directory as needed; it may be tracked, ignored, or reached
 through an existing symlink.
 
-Within `docs/agents/adrs/`, ADRs use sequential numbering: `0001-slug.md`,
+Within `.agents/docs/adrs/`, ADRs use sequential numbering: `0001-slug.md`,
 `0002-slug.md`, etc.
 
 ## Template
@@ -62,7 +62,7 @@ applicable. Do not rewrite unrelated records or silently erase old decisions.
 
 ## Numbering
 
-Scan `docs/agents/adrs/` for the highest existing number and increment by one.
+Scan `.agents/docs/adrs/` for the highest existing number and increment by one.
 
 ## When to offer an ADR
 

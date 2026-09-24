@@ -45,7 +45,7 @@ plugin installation.
 
 ## Project documents
 
-Specs, ADRs, notes, and research default to `docs/agents/`. Follow an explicit
+Specs, ADRs, notes, and research default to `.agents/docs/`. Follow an explicit
 project or user override. Create subdirectories as needed; the location may be
 a regular directory or symlink, tracked or ignored. No setup step, vault, or
 generated `AGENTS.md`/`CLAUDE.md` is required.

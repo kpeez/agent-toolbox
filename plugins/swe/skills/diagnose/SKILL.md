@@ -11,9 +11,9 @@ explain does not authorize implementation edits. When repair is authorized,
 continue in-scope investigation and correction through relevant verification.
 
 Use the project's vocabulary when it clarifies the diagnosis. Consult a
-`docs/agents/CONTEXT.md` glossary or relevant `docs/agents/adrs/` only when they
+`.agents/docs/CONTEXT.md` glossary or relevant `.agents/docs/adrs/` only when they
 bear on the behavior or decision under investigation. Follow an explicit
-project or user override of the `docs/agents/` location.
+project or user override of the `.agents/docs/` location.
 
 ## Establish evidence
 

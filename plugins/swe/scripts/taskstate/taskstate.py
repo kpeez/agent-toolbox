@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""taskstate Phase 1 local core. Stdlib only. See docs/agents/specs/0029-taskstate.md."""
+"""taskstate Phase 1 local core. Stdlib only. See .agents/docs/specs/0029-taskstate.md."""
 from __future__ import annotations
 
 import argparse
