@@ -267,26 +267,26 @@ class RenderTest(unittest.TestCase):
         self.assertTrue(any(item["type"] == "store_error" and item["project"] == "broken"
                             for item in items))
 
-    def test_10_docs_agents_output_is_refused(self):
+    def test_10_agent_docs_output_is_refused(self):
         self.require_knap()
         slug = self.new_project("private")
         ref = self.add_task(slug)
-        forbidden = Path(self.tmp.name, "docs", "agents", "snapshot.md")
+        forbidden = Path(self.tmp.name, ".agents", "docs", "snapshot.md")
         code, output = self.render("context", slug, ref, ["--out", str(forbidden)])
         self.assertEqual(code, 2)
         self.assertEqual(json.loads(output)["error"]["code"], "output_forbidden")
         self.assertFalse(forbidden.exists())
 
-    def test_11_docs_agents_symlink_into_vault_is_refused(self):
+    def test_11_agent_docs_symlink_into_vault_is_refused(self):
         self.require_knap()
         slug = self.new_project("vaultlink")
         ref = self.add_task(slug)
         vault = Path(self.tmp.name, "vault", "project")
         vault.mkdir(parents=True)
-        docs = Path(self.tmp.name, "repo2", "docs")
-        docs.mkdir(parents=True)
-        (docs / "agents").symlink_to(vault)
-        target = docs / "agents" / "snapshot.md"
+        agents = Path(self.tmp.name, "repo2", ".agents")
+        agents.mkdir(parents=True)
+        (agents / "docs").symlink_to(vault)
+        target = agents / "docs" / "snapshot.md"
         code, output = self.render("context", slug, ref, ["--out", str(target)])
         self.assertEqual(code, 2)
         self.assertEqual(json.loads(output)["error"]["code"], "output_forbidden")

@@ -1,6 +1,6 @@
 # Spec template
 
-Create specs under `docs/agents/specs/` unless the project or user specifies
+Create specs under `.agents/docs/specs/` unless the project or user specifies
 another location; adjust the paths below accordingly. A spec records durable
 approved intent; the selected tracker records executable task state.
 
@@ -25,7 +25,7 @@ ledger.
 
 <templates>
 
-<template file="docs/agents/specs/NNNN-<slug>.md">
+<template file=".agents/docs/specs/NNNN-<slug>.md">
 ---
 spec_id: <uuid4>
 status: draft
@@ -82,7 +82,7 @@ updated: <YYYY-MM-DD>
 ## Decisions
 
 <!-- Non-obvious feature choices and rationale. Link broadly durable decisions
-     to docs/agents/adrs/. Use prior rationale to compare options, not to veto
+     to .agents/docs/adrs/. Use prior rationale to compare options, not to veto
      alternatives; distinguish historical choices from current requirements. -->
 
 ## Risks

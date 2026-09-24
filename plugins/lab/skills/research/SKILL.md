@@ -10,7 +10,7 @@ cited Markdown memo. Use `deep-research` when the request needs independent
 lanes, broad coverage, or contradiction-focused coordination. Ordinary quick
 factual answers do not need this skill or a saved memo.
 
-Write the memo under `docs/agents/research/` unless the project or user
+Write the memo under `.agents/docs/research/` unless the project or user
 specifies another location. Create subdirectories as needed, whether tracked,
 ignored, or reached through an existing symlink.
 
@@ -63,7 +63,7 @@ ask the researcher to write the memo.
 ## Write the single memo
 
 The host writes exactly one requested memo at
-`docs/agents/research/<filename>.md` (or the chosen location). Do not create an
+`.agents/docs/research/<filename>.md` (or the chosen location). Do not create an
 evidence ledger, raw-log archive, proposal, or second summary artifact for
 bounded research.
 

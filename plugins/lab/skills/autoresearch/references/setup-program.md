@@ -123,6 +123,6 @@ plan when one is needed. New rules require a new approved program. Then:
    crashes, record it and stop.
 
 Default records live at the resolved primary checkout's
-`docs/agents/autoresearch/<tag>/` unless the project or user specifies another
+`.agents/docs/autoresearch/<tag>/` unless the project or user specifies another
 location. This may be tracked, ignored, or reached through an existing symlink.
-Do not assume a linked worktree lacks or shares `docs/agents`.
+Do not assume a linked worktree lacks or shares `.agents/docs`.

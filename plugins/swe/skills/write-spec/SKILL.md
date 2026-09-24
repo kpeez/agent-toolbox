@@ -5,7 +5,7 @@ description: Draft or revise a durable feature spec with scope, design decisions
 
 # /write-spec — feature spec management
 
-Use `docs/agents/` for project documents unless the project or user specifies
+Use `.agents/docs/` for project documents unless the project or user specifies
 another location. Create subdirectories as needed, whether tracked or ignored,
 in an ordinary directory or through an existing symlink.
 
@@ -15,7 +15,7 @@ dependencies, assignments, blockers, and progress. Do not duplicate that state
 as a task checklist in the spec.
 
 Specs are normally produced from `/sharpen` or an approved plan. Significant
-decisions that apply beyond one feature belong in `docs/agents/adrs/` and link
+decisions that apply beyond one feature belong in `.agents/docs/adrs/` and link
 back to the spec. The spec remains useful after tasks are created; it is not
 authoring residue or an action journal.
 
@@ -87,7 +87,7 @@ trivial, fully understood edit.
 
 ## /write-spec new <name>
 
-Create `docs/agents/specs/NNNN-<slug>.md`:
+Create `.agents/docs/specs/NNNN-<slug>.md`:
 
 1. Lowercase the name and replace spaces with hyphens.
 2. Create the specs directory if needed.
@@ -100,7 +100,7 @@ Create `docs/agents/specs/NNNN-<slug>.md`:
    chosen during implementation.
 
 Specs are pure Markdown. Project conventions and canonical links live in
-`docs/agents/CONTEXT.md`; executable tasks may be remote tracker items or local
+`.agents/docs/CONTEXT.md`; executable tasks may be remote tracker items or local
 sibling issue files. Do not add a generated navigation index.
 
 ## Revising an existing spec

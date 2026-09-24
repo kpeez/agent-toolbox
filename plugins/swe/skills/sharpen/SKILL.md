@@ -16,7 +16,7 @@ When recording glossary entries or ADRs, lead with the decision or term, keep
 evidence close, and make consequences explicit.
 
 When project-document updates are part of the request or established workflow,
-use `docs/agents/` unless the project or user specifies another location. Create
+use `.agents/docs/` unless the project or user specifies another location. Create
 subdirectories as needed, whether tracked or ignored, in an ordinary directory
 or through an existing symlink.
 
@@ -26,7 +26,7 @@ or through an existing symlink.
 Surface contradictions immediately and resolve which description is authoritative.
 
 **Sharpen fuzzy language.** When a term is vague or overloaded, propose a precise
-canonical one. If a `docs/agents/CONTEXT.md` glossary exists, check whether a
+canonical one. If a `.agents/docs/CONTEXT.md` glossary exists, check whether a
 conflicting term reflects a real change. Record a pinned term in `CONTEXT.md`
 only when it is reusable and the document update is within the request or
 established workflow; otherwise keep it in the conversation or requested
@@ -77,5 +77,5 @@ or established workflow authorizes the document update:
 3. **The result of a real trade-off** — there were genuine alternatives and you picked one for specific reasons
 
 If any of the three is missing, skip it. When all three hold, record it
-under `docs/agents/adrs/` using [ADR-FORMAT.md](./ADR-FORMAT.md), then tell me you did
+under `.agents/docs/adrs/` using [ADR-FORMAT.md](./ADR-FORMAT.md), then tell me you did
 and why.
