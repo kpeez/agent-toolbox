@@ -938,8 +938,7 @@ def validate(view, model):
 
 
 def _knap_binary():
-    configured = os.environ.get("TASKSTATE_KNAP")
-    binary = configured or shutil.which("knap")
+    binary = shutil.which("knap")
     if not binary:
         raise RenderError("knap_missing", "Knap is required for Markdown rendering; use --json to print the validated read model without Node")
     return binary
