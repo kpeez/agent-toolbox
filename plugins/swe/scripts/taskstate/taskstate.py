@@ -1606,7 +1606,13 @@ def cmd_launchd_plist(args):
     if interval <= 0:
         raise TaskStateError("validation_failed", "--interval must be positive")
     import plistlib
-    taskstate_path = os.path.abspath(os.path.join(os.path.dirname(__file__), "taskstate.py"))
+    # --taskstate lets the plist name a stable launcher; the default path is
+    # versioned by the plugin install and changes on every update.
+    taskstate_path = getattr(args, "taskstate", None) or \
+        os.path.abspath(os.path.join(os.path.dirname(__file__), "taskstate.py"))
+    taskstate_path = os.path.expanduser(taskstate_path)
+    if not os.path.isabs(taskstate_path) or not os.path.isfile(taskstate_path):
+        raise TaskStateError("validation_failed", "--taskstate must be an existing absolute path")
     log_dir = Path(os.path.expanduser("~/Library/Logs/taskstate"))
     payload = {
         "Label": "com.taskstate.sync",
@@ -1802,8 +1808,11 @@ def build_parser():
         "launchd-plist",
         help="Print a macOS LaunchAgent",
         description="Print a macOS LaunchAgent without installing it.",
-        epilog="Install with: launchctl bootstrap gui/$(id -u) <plist>")
+        epilog="Install with: mkdir -p ~/Library/Logs/taskstate && "
+               "launchctl bootstrap gui/$(id -u) <plist>")
     lp.add_argument("--interval", default=120, type=int)
+    lp.add_argument("--taskstate", default=None,
+                    help="Absolute path the plist should run (e.g. a stable launcher)")
     lp.add_argument("--json", action="store_true")
     rp = sub.add_parser("rpc")
     import reconcile

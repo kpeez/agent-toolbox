@@ -42,7 +42,24 @@ def db_path_for_slug(slug, root=None):
     return path
 
 
+def _owner_only(path):
+    """Create path owner-only (0600), or tighten it if it is broader.
+
+    Stores hold private notes; SQLite gives -wal/-shm files the main file's
+    mode, so fixing the main file covers them when they are created."""
+    path = str(path)
+    if not os.path.exists(path):
+        os.close(os.open(path, os.O_CREAT | os.O_WRONLY, 0o600))
+    for candidate in (path, path + "-wal", path + "-shm"):
+        try:
+            if os.stat(candidate).st_mode & 0o077:
+                os.chmod(candidate, 0o600)
+        except OSError:
+            pass
+
+
 def connect(path, timeout=5.0, busy_timeout_ms=5000):
+    _owner_only(path)
     conn = sqlite3.connect(str(path), timeout=timeout, isolation_level=None,
                            detect_types=sqlite3.PARSE_DECLTYPES)
     conn.row_factory = sqlite3.Row
@@ -306,6 +323,7 @@ def backup_db(conn, slug, root=None):
     dest_dir.mkdir(parents=True, exist_ok=True)
     stamp = datetime.datetime.now(datetime.timezone.utc).strftime("%Y%m%dT%H%M%S%fZ")
     dest = dest_dir / ("%s-%s.db" % (slug, stamp))
+    _owner_only(dest)
     target = sqlite3.connect(str(dest), timeout=5.0)
     try:
         conn.backup(target)
@@ -352,7 +370,8 @@ def export_db(conn, out_dir):
                 if True else []
         except sqlite3.Error:
             rows, cols = [], []
-        with open(dest, "w", encoding="utf-8") as fh:
+        with open(os.open(str(dest), os.O_CREAT | os.O_WRONLY | os.O_TRUNC, 0o600),
+                  "w", encoding="utf-8") as fh:
             for r in rows:
                 fh.write(json.dumps({c: r[c] for c in cols},
                                     ensure_ascii=False, sort_keys=True) + "\n")
