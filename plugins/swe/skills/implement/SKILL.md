@@ -29,10 +29,11 @@ the replacement when project-document updates are in scope, using
 1. Make the smallest justified change. Challenge the result against the
    intended outcome and remove unnecessary code, abstractions, or special cases.
    A no-change result is valid when the requested behavior already holds.
-2. Choose evidence by behavioral risk. Use `/testing-code` only when test
-   design, an uncertain behavior, or an explicit probe warrants it; otherwise a
+2. Choose evidence by behavioral risk. Default to no new permanent test; a
    static check, reproducible demonstration, existing workflow, or explicit
-   no-permanent-test decision may be enough.
+   no-permanent-test decision is often enough. Before adding or rewriting a
+   permanent test, or when behavior is uncertain or a probe is requested, use
+   `/testing-code` and pass its admission gate.
 3. Run relevant repository gates and behavior-specific checks. A failing
    required gate blocks completion and publication, but continue authorized
    diagnosis and correction when that can resolve the failure. Report unrelated

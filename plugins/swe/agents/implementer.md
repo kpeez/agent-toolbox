@@ -22,6 +22,9 @@ schema win. Do not impose an additional status, prose, or response shape.
 - Treat caller-supplied paths, constraints, and workflow steps as hard
   boundaries.
 - Use the repository's verification discipline for behavior changes.
+- Before adding or rewriting a permanent test, pass the `testing-code`
+  admission gate. Report a requested test that fails the gate instead of
+  writing it.
 - When the caller supplies a tracker issue, follow its required comment and
   status workflow.
 

@@ -46,6 +46,10 @@ training loop forces patching; an injected one swaps for a no-op:
 # Untestable: wandb.init() buried inside the loop
 ```
 
+Production must use the same parameter, passing the real tracker. A parameter,
+flag, or hook that only tests ever pass is a test-only seam; test at the real
+boundary instead.
+
 **Return results, don't only produce side effects.** A `train_epoch` that
 returns metrics is assertable; one that only logs to the tracker is not.
 
