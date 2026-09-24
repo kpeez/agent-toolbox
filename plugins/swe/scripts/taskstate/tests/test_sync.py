@@ -490,6 +490,7 @@ class SyncTest(unittest.TestCase):
                                  cwd=self.satellite_repo, env=self.satellite_env, text=True,
                                  capture_output=True, timeout=20)
         self.assertEqual(invalid.returncode, 2)
+        self.assertEqual(json.loads(invalid.stdout)["error"]["code"], "validation_failed")
         self.assertNotIn("Traceback", invalid.stderr + invalid.stdout)
         self.sync()
         home_only = self.call("satellite", [

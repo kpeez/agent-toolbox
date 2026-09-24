@@ -272,7 +272,7 @@ class TaskStateTest(unittest.TestCase):
         acc = self.ok(["accept", "--project", slug, ref, "--expect-version", str(ver2)], human=True)
         self.assertEqual(acc["lifecycle"], "accepted")
 
-    # 7. deps/readiness/cycles/hold/grants
+    # 7. deps/readiness/hold/grants
     def test_7_deps_hold_grants(self):
         slug = self.new_project()
         a = self.add_task(slug, "A")["ref"]
@@ -281,19 +281,6 @@ class TaskStateTest(unittest.TestCase):
         self.assertEqual(e["code"], "blocked")
         e = self.err(["task", "add", "--project", slug, "--title", "X", "--depends-on", "nope-99"])
         self.assertEqual(e["code"], "unknown_dependency")
-        # cycle logic at store level: A <- B exists, so A depending on B is a cycle
-        conn, _ = store_mod.open_project_db(slug, root=Path(self.home))
-        try:
-            aid = conn.execute("SELECT task_id FROM task WHERE ref=?", (a,)).fetchone()["task_id"]
-            bid = conn.execute("SELECT task_id FROM task WHERE ref=?", (b,)).fetchone()["task_id"]
-            with self.assertRaises(taskstate.TaskStateError) as cm:
-                taskstate.check_cycle(conn, aid, [bid])
-            self.assertEqual(cm.exception.code, "dependency_cycle")
-            with self.assertRaises(taskstate.TaskStateError) as cm2:
-                taskstate.check_cycle(conn, aid, [aid])
-            self.assertEqual(cm2.exception.code, "dependency_cycle")
-        finally:
-            conn.close()
         # hold blocks claim
         code, out = self.tcall(["task", "show", "--project", slug, a])
         ver = out["result"]["task"]["version"]

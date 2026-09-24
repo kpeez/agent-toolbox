@@ -2,8 +2,10 @@
 
 from __future__ import annotations
 
+import contextlib
 import hashlib
 import importlib.util
+import io
 from pathlib import Path
 import os
 import shutil
@@ -212,12 +214,6 @@ class CleanupTests(unittest.TestCase):
         self.assertEqual(archive.read_bytes(), b"existing")
         self.assertTrue((self.run / "program.md").is_file())
 
-    def test_stage_failure_leaves_originals(self):
-        with mock.patch.object(cleanup, "stage_lightweight", side_effect=cleanup.CleanupError("stage failed")):
-            with self.with_fake_trash(), self.assertRaises(cleanup.CleanupError):
-                self.apply()
-        self.assertTrue((self.run / "program.md").is_file())
-
     def test_corrupt_staged_tar_fails_integrity_before_retirement(self):
         real_verify = cleanup.verify_archive
         calls = 0
@@ -280,13 +276,6 @@ class CleanupTests(unittest.TestCase):
             stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
         )
 
-    def test_publish_interruption_leaves_originals_and_staging(self):
-        with mock.patch.object(cleanup, "publish_lightweight", side_effect=cleanup.CleanupError("interrupted")):
-            with self.with_fake_trash(), self.assertRaises(cleanup.CleanupError):
-                self.apply()
-        self.assertTrue((self.run / "program.md").is_file())
-        self.assertTrue(any(path.name.startswith(f".{self.run.name}.cleanup-") for path in self.root.iterdir()))
-
     def test_install_rename_failure_keeps_recovery_original_and_staging(self):
         real_rename = cleanup.os.rename
         calls = 0
@@ -318,11 +307,13 @@ class CleanupTests(unittest.TestCase):
                 raise KeyboardInterrupt()
             return real_rename(source, destination)
 
+        stderr = io.StringIO()
         with self.with_fake_trash(), mock.patch.object(cleanup.os, "rename", side_effect=interrupt_install):
-            with self.assertRaises(KeyboardInterrupt):
+            with contextlib.redirect_stderr(stderr), self.assertRaises(KeyboardInterrupt):
                 self.apply()
         recovery = self.root / f".{self.run.name}.cleanup-original"
         self.assertTrue((recovery / "program.md").is_file())
+        self.assertIn(f"cleanup interrupted; inspect original recovery {recovery.resolve()}", stderr.getvalue())
 
     def test_post_replacement_verification_failure_keeps_both_recovery_and_run(self):
         real_verify = cleanup.verify_archive

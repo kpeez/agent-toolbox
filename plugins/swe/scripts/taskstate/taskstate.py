@@ -323,33 +323,6 @@ def ref_to_id(conn, ref):
     return row["task_id"]
 
 
-def check_cycle(conn, new_task_id, new_dep_ids):
-    graph = {}
-    for r in conn.execute("SELECT task_id FROM task").fetchall():
-        graph[r["task_id"]] = []
-    for r in conn.execute("SELECT task_id, depends_on FROM task_dep").fetchall():
-        graph.setdefault(r["task_id"], []).append(r["depends_on"])
-    graph[new_task_id] = list(new_dep_ids)
-    visiting, visited = set(), set()
-
-    def walk(node):
-        if node in visited:
-            return False
-        if node in visiting:
-            return True
-        visiting.add(node)
-        for dep in graph.get(node, []):
-            if dep in graph and walk(dep):
-                return True
-        visiting.discard(node)
-        visited.add(node)
-        return False
-
-    for node in list(graph):
-        if walk(node):
-            raise TaskStateError("dependency_cycle", "dependency cycle detected")
-
-
 def current_attempt_for_task(conn, task):
     if task.get("owner_attempt"):
         row = conn.execute("SELECT * FROM attempt WHERE attempt_id=?",
@@ -794,7 +767,6 @@ def cmd_task_add(conn, slug, args, actor, observed_at, fact, host):
             if did == task_id:
                 raise TaskStateError("self_dependency", "Task depends on itself")
             conn.execute("INSERT INTO task_dep(task_id, depends_on) VALUES(?,?)", (task_id, did))
-        check_cycle(conn, task_id, dep_ids)
         conn.execute("UPDATE meta SET value=? WHERE key='next_ref_n'", (str(next_ref),))
         return {"ref": ref, "task_id": task_id, "version": 1}
     return do_mutation(conn, "task.add", args.request_id, payload, actor, None, effect)

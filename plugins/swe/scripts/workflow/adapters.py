@@ -414,19 +414,18 @@ _CREATE_META = (
     ("comment", "commentCreate", "CommentCreateInput"),
 )
 
+# Keys are the wire values of ``extensions.type`` (the Linear SDK's errorMap),
+# not its LinearErrorType enum names.
 _GRAPHQL_ERROR_CODES = {
-    "AuthenticationError": "authentication_error",
-    "Forbidden": "permission_denied",
-    "PermissionDenied": "permission_denied",
-    "FeatureNotAccessible": "feature_not_accessible",
-    "InvalidInput": "invalid_input",
-    "Ratelimited": "rate_limited",
-    "NetworkError": "network_error",
-    "InternalError": "internal_error",
-    "GraphQLError": "graphql_error",
-    "GraphqlError": "graphql_error",
-    "UserError": "user_error",
-    "NotFound": "not_found",
+    "authentication error": "authentication_error",
+    "forbidden": "permission_denied",
+    "feature not accessible": "feature_not_accessible",
+    "invalid input": "invalid_input",
+    "ratelimited": "rate_limited",
+    "network error": "network_error",
+    "internal error": "internal_error",
+    "graphql error": "graphql_error",
+    "user error": "user_error",
 }
 
 _REPO_PART = re.compile(r"^[A-Za-z0-9_.-]+$")

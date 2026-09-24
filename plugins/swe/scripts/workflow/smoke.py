@@ -174,10 +174,13 @@ class WorkflowSmoke(unittest.TestCase):
         self.assertEqual(len(self.adapter.data['comment']), 1)
 
     def test_real_adapter_denial_and_malformed_read(self):
-        for envelope in ({'errors': [{'extensions': {'type': 'FORBIDDEN'}}]}, {'data': {}}):
+        cases = (({'errors': [{'extensions': {'type': 'forbidden'}}]}, 'permission_denied'),
+                 ({'data': {}}, 'malformed_response'))
+        for envelope, code in cases:
             adapter = adapters.LinearAdapter('synthetic', transport=lambda q, v: envelope)
-            with self.assertRaises(adapters.AdapterError):
+            with self.assertRaises(adapters.AdapterError) as caught:
                 adapter.get('issue', core.new_uuid4())
+            self.assertEqual(caught.exception.code, code)
 
     def test_public_text_gate(self):
         for text in ('https://linear.app/example/issue/ABC-123', 'ABC-123', '/Users/example/private.md', 'token=private-value'):
@@ -206,6 +209,9 @@ class WorkflowSmoke(unittest.TestCase):
         before = copy.deepcopy(self.adapter.data)
         result = audit.audit(self.packet, self.config, evidence, store=self.store, adapter=self.adapter)
         self.assertFalse(result['applied'])
+        self.assertTrue(result['ok'])
+        self.assertEqual(result['findings'], [])
+        self.assertTrue(result['tasks'][0]['code_delivery_evidence_satisfied'])
         self.assertEqual(before, self.adapter.data)
         for mutation in ('branch', 'draft', 'checks', 'reviews', 'head', 'extra_pr'):
             with self.subTest(mutation=mutation):

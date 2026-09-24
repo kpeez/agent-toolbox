@@ -35,13 +35,12 @@ class RenderTest(unittest.TestCase):
         self.addCleanup(os.chdir, self.old_cwd)
         self.old_env = {key: os.environ.get(key) for key in (
             "TASKSTATE_HOME", "TASKSTATE_ACTOR", "TASKSTATE_LEASE_SECONDS",
-            "TASKSTATE_KNAP", "CLAUDECODE",
+            "PATH", "CLAUDECODE",
         )}
         self.addCleanup(self._restore_env)
         os.environ["TASKSTATE_HOME"] = self.home
         os.environ["TASKSTATE_ACTOR"] = "test:session"
         os.environ["TASKSTATE_LEASE_SECONDS"] = "7200"
-        os.environ.pop("TASKSTATE_KNAP", None)
         os.environ.pop("CLAUDECODE", None)
         self._git("init", "-q")
         self._git("config", "user.email", "test@example.invalid")
@@ -235,7 +234,10 @@ class RenderTest(unittest.TestCase):
     def test_8_missing_knap_allows_json_fallback(self):
         slug = self.new_project("noknap")
         ref = self.add_task(slug)
-        os.environ["TASKSTATE_KNAP"] = "/nonexistent/taskstate-knap"
+        bin_dir = Path(self.tmp.name, "bin-without-knap")
+        bin_dir.mkdir()
+        (bin_dir / "git").symlink_to(shutil.which("git"))
+        os.environ["PATH"] = str(bin_dir)
         code, output = render_mod.main(["context", ref, "--project", slug])
         payload = json.loads(output)
         self.assertEqual(code, 2)
