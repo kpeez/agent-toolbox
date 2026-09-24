@@ -1,11 +1,8 @@
 artifacts/
 data/
 datasets/
-docs/agents
-runs/
-.autoresearch/
+.agents/docs
 .agents/skills/
-skills-lock.json
 
 # Editor noise
 .vscode/
