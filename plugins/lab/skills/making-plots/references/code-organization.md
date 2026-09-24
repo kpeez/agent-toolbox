@@ -45,14 +45,17 @@ file; never hand-edit a figure. Move superseded outputs to the trash, not `rm`.
 
 ## Tests
 
-- One test per primitive, on synthetic rows, asserting the invariant it protects
-  (the accent row is the focal one, rows keep one order across panels, exactly
-  one outlined cell per row, no PDF written, paths land under the population
-  folder).
-- Adapter tests on synthetic summary files in `tmp_path`, never on real data
-  and never with real subject identifiers.
-- Guard tests: mixed populations raise, unknown entities raise, oracle rows
-  reach no figure, nonfinite values raise.
+Add a test only when it passes the admission gate in `swe:testing-code`: a
+credible plotting bug would break it and nothing cheaper catches it.
+
+- The strongest candidates are guards on the results a figure shows: mixed
+  populations raise, unknown entities raise, oracle rows reach no figure,
+  nonfinite values raise.
+- A primitive earns a test only for an invariant a reader would misread if it
+  broke, such as the accent row being the focal one, rows keeping one order
+  across panels, or exactly one outlined cell per row.
+- Run tests on synthetic rows or summary files in `tmp_path`, never on real
+  data and never with real subject identifiers.
 - After a refactor that must not change output, assert byte-identical PNGs for
   that change only; do not keep the assertion as a permanent test, since
   rendering libraries legitimately change bytes.
