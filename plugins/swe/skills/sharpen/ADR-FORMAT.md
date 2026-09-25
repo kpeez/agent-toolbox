@@ -52,7 +52,7 @@ Verify a claimed requirement at its current source, such as an explicit user
 instruction or compatibility contract. If its applicability is uncertain and
 material, resolve that uncertainty rather than silently dropping it.
 Within an authorized task, a justified replacement needs no approval merely
-because an ADR exists. Changing explicit requirements or approved spec intent,
+because an ADR exists. Changing explicit requirements or approved plan intent,
 or exceeding the task's scope, still needs the applicable approval. Explain
 what the earlier choice optimized for and why the replacement is better.
 

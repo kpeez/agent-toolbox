@@ -16,7 +16,7 @@ intact and report its state.
 
 Default and explicit finalize modes:
 
-- `/ship-pr [spec or task]`: verify, group, commit, push, and ensure a draft
+- `/ship-pr [plan or issue]`: verify, group, commit, push, and ensure a draft
   pull request exists.
 - `/ship-pr finalize`: re-verify and mark the existing draft ready. Read
   [finalize](references/finalize.md) for this explicit mode. Merging remains
@@ -38,24 +38,23 @@ Default and explicit finalize modes:
 - Draft pull requests are the default. Do not change an existing draft/ready
   state unless the user requested that transition.
 - Never put private identifiers, URLs, or content into a public branch, commit,
-  pull-request body, or bot output. Do not add agent attribution, generated-by
-  footers, or session links.
+  pull-request body, or bot output. The one exception is an issue key (such as
+  `ABC-123`) in the branch name and a `Fixes ABC-123` line, which link the
+  tracker; never add tracker URLs or issue content. Do not add agent
+  attribution, generated-by footers, or session links.
 - Run all applicable repository checks and runnable behavior-specific evidence
   before committing. Report failures as failures.
 - Creating a pull request is not completion, and a draft is not
-  human-review-ready. A task is delivered only when its repository or tracker
-  delivery condition is satisfied by the required pull requests, checks, exact
-  revisions, reviews, and integration branch.
+  human-review-ready. Work is delivered when its pull request merges.
 
 ## Resolve context
 
-Use the spec or task named by the caller. Otherwise use an explicit linkage in
-the current task, tracker item, branch metadata, or established session context.
-Do not select the most recently modified spec or infer a spec solely from the
-default branch. Proceed without a spec when the work is clearly bounded by the
-current request.
+Use the plan or issue named by the caller, otherwise the issue key in the
+branch name or an explicit linkage in the session. Do not pick the most
+recently modified plan. Proceed without a plan when the work is clearly bounded
+by the current request.
 
-Read the approved intent, current task state, and actual diff. Confirm that
+Read the intended outcome and the actual diff. Confirm that
 publication authority covers the changes present. Resolve the base branch and
 any stack relationship from repository evidence or the caller's instruction.
 
@@ -67,24 +66,19 @@ any stack relationship from repository evidence or the caller's instruction.
 2. **Verify.** Run repository-declared checks that exist and apply, plus the
    behavior-specific evidence named by the work. Do not invent a generic lint,
    type-check, or test stack. A required failure stops publication.
-3. **Group and commit.** For configured Linear work, run `check-public` over
-   proposed public branch/commit/PR text (see
-   [operations](../to-issues/references/workflow-operations.md)). Review
-   generated bot text separately. Build the smallest coherent commit groups.
+3. **Group and commit.** Check proposed public branch, commit, and PR text
+   against the privacy rule above. Build the smallest coherent commit groups.
    Stage and commit one group at a time, checking status between groups.
 4. **Push.** Push the current branch without force. Confirm the intended remote
    and upstream when they are ambiguous.
 5. **Draft pull request.** Reuse the branch's existing pull request. Otherwise
    create one draft against the confirmed base.
-6. **Tracker.** When tracker writes are authorized, use the selected tracker
-   route. For configured Linear work, record the public pull request privately
-   via `record` with `kind: evidence`. A draft remains
-   delivery-incomplete. Preserve human holds and assignments. Report failed
-   writes. A draft, ready PR, or merge never marks Done automatically.
-7. **Spec.** When a linked spec exists, set its lifecycle to `review` after the
-   pull request exists. This does not replace task state or prove delivery.
-8. **Report.** Give the branch, base, commits, pull-request URL and state,
-   tracker/spec updates, checks run, behavior evidence, and known gaps.
+6. **Issue link.** When the work has an issue, end the pull-request body with
+   `Fixes ABC-123` (or `Fixes #123` on GitHub) so the tracker's GitHub
+   integration moves the issue on merge. Use `Part of ABC-123` when this pull
+   request does not finish the issue. Do not hand-edit status that git moves.
+7. **Report.** Give the branch, base, commits, pull-request URL and state, the
+   linked issue, checks run, behavior evidence, and known gaps.
 
 ## Pull-request description
 
@@ -98,9 +92,9 @@ Write for a reviewer without session context:
   behavior-specific evidence and known gaps. Distinguish recorded prior results
   from checks run in the current workspace.
 
-Keep the text self-contained. A private tracker may link to the public pull
-request; public text does not reveal private tracker URLs, issue content, or
-internal workflow commentary.
+Keep the text self-contained. Beyond the closing `Fixes` line, public text
+does not reveal tracker URLs, issue or plan content, or internal workflow
+commentary.
 
 ## Secondary modes
 
@@ -112,13 +106,7 @@ established task design calls for a dependent branch chain. Read the
 ## Markdown artifact
 
 Create a local PR markdown artifact only when the user requests one or the
-authorized publication route is unavailable. Keep it under the project's
-private agent-docs area, and include the proposed title, body, commit grouping,
-and relevant diff references without leaking private tracker content.
-
-For configured Linear work, record publication evidence and any needed
-handoff via `record` during the work (see
-[operations](../to-issues/references/workflow-operations.md)). Authority is
-explained in [authorization](../to-issues/references/workflow-authorization.md).
-Load only the selected tracker route. This skill's job is verified delivery to
-a draft PR.
+authorized publication route is unavailable. Write it to the plans directory
+(`python3 ../../scripts/plan_sync.py dir`) under a name without an issue key,
+such as `pr-<branch>.md`, so it stays local, and include the proposed title, body, commit grouping, and relevant diff
+references. This skill's job is verified delivery to a draft PR.

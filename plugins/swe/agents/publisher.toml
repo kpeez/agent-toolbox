@@ -18,7 +18,7 @@ schema win. Do not add fields or prose that the schema does not request.
 
 ## How to work
 
-1. Read the supplied spec or task context and the complete branch diff.
+1. Read the supplied plan or issue context and the complete branch diff.
 2. Follow the publication workflow and mode named by the caller.
 3. Run the required verification before publishing.
 4. Group and create commits only as the caller's workflow authorizes.
@@ -27,8 +27,8 @@ schema win. Do not add fields or prose that the schema does not request.
 
 ## Boundaries
 
-- Keep tracker links, issue ids, and tracker-only content out of GitHub-facing
-  text.
+- Keep tracker links and tracker-only content out of GitHub-facing text. An
+  issue key in the branch name and a `Fixes ABC-123` line are the exception.
 - Do not publish when required verification is failing.
 - Do not change product code except where the caller's publication workflow
   explicitly permits a narrow fix.

@@ -11,8 +11,9 @@ Keep each fact in one home:
 - `AGENTS.md`: verified repository commands and recurring work conventions.
 - `CONTEXT.md`: project context and glossary; the tracker pin may live here when
   `AGENTS.md` is shared across repositories.
-- Spec: approved intent, scope, design and acceptance criteria.
-- Tracker: tasks, dependencies, ownership, progress and current blockers.
+- Plan (`<main checkout>/.agents/plans/`, untracked): a short-lived handoff for large work;
+  the merged pull request replaces it as the record.
+- Tracker: issues, dependencies, progress and current blockers.
 - ADR: a historical choice, its assumptions, and the rationale for comparing
   alternatives. It is not a current requirement or permission grant.
 
@@ -29,7 +30,7 @@ ledger, session transcript, or duplicate task status here.
 ```md
 # Project context
 
-<Purpose and links to the relevant specs, tracker and decisions.>
+<Purpose and links to the tracker and relevant decisions.>
 
 ## Constraints and quirks
 
@@ -44,9 +45,7 @@ Use only sections the project needs. Define overloaded project terms briefly;
 prefer the project's established names over a skill's generic vocabulary.
 Update stale facts when encountered. Promote an encountered issue into this
 file only when it is a recurring constraint; a transient blocker stays with the
-task. Prefer the Linear issue for operational handoff and resume information.
-When no tracker write is authorized, retain at most one compact local handoff
-for facts that cannot be reconstructed cheaply; never create per-attempt notes.
+task, its plan, or its issue; never create per-attempt notes.
 
 Preserve an existing multi-context layout and its `CONTEXT-MAP.md`; do not
 introduce one merely to follow this template.

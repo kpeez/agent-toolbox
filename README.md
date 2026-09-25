@@ -2,13 +2,15 @@
 
 `agent-toolbox` provides two portable plugins for AI coding agents:
 
-- **SWE** — spec-driven workflows and skills for sharpening, writing specs,
-  tracking implementation work, reviewing changes, and shipping.
+- **SWE** — skills for sharpening and planning work, implementing and
+  reviewing changes, and shipping pull requests.
 - **Lab** — source-backed research, reproducible experiment loops, and
   data-visualization guidance.
 
-SWE keeps approved intent in the spec and executable work in the chosen tracker.
-Its [implementation discipline](plugins/swe/skills/implement/SKILL.md) challenges
+SWE treats the merged pull request and the code as the record. Large work can
+start from a short [plan](plugins/swe/skills/write-plan/SKILL.md) that hands off
+to a fresh session and is mirrored to its Linear issue. Its
+[implementation discipline](plugins/swe/skills/implement/SKILL.md) challenges
 unnecessary code and simplifies the completed change before final verification.
 Sound work can stay unchanged. Publication follows the user's authorization.
 
@@ -45,14 +47,25 @@ plugin installation.
 
 ## Project documents
 
-Specs, ADRs, notes, and research default to `.agents/docs/`. Follow an explicit
+ADRs, notes, and research default to `.agents/docs/`. Follow an explicit
 project or user override. Create subdirectories as needed; the location may be
 a regular directory or symlink, tracked or ignored. No setup step, vault, or
 generated `AGENTS.md`/`CLAUDE.md` is required.
 
+## Plans
+
+Plans live in `<main checkout>/.agents/plans/`, shared by all worktrees. The
+directory keeps itself out of git with its own `.gitignore`.
+
+A plan named `ABC-123-short-slug.md` is mirrored one way to a document on
+Linear issue ABC-123 by SWE's Stop hook
+([`plan_sync.py`](plugins/swe/scripts/plan_sync.py)) when `LINEAR_API_KEY` holds
+a Linear personal API key. Without a key, or without an issue key in the name,
+plans stay local and nothing is blocked.
+
 ## Layout
 
-- `plugins/swe/` — SWE skills, agents, and optional native tracker workflows.
+- `plugins/swe/` — SWE skills, agents, and the plan-sync hook.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
 - `.claude-plugin/marketplace.json` — Claude marketplace catalog.
 - `.agents/plugins/marketplace.json` — Codex marketplace catalog.
