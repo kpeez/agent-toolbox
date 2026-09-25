@@ -59,9 +59,11 @@ directory keeps itself out of git with its own `.gitignore`.
 
 A plan named `ABC-123-short-slug.md` is mirrored one way to a document on
 Linear issue ABC-123 by SWE's Stop hook
-([`plan_sync.py`](plugins/swe/scripts/plan_sync.py)) when `LINEAR_API_KEY` holds
-a Linear personal API key. Without a key, or without an issue key in the name,
-plans stay local and nothing is blocked.
+([`plan_sync.py`](plugins/swe/scripts/plan_sync.py)). It reads a Linear personal
+API key from `LINEAR_API_KEY`, or else from `~/.config/swe/linear-api-key`
+(mode 0600, honoring `XDG_CONFIG_HOME`), so no shell configuration is needed.
+Without a key, or without an issue key in the name, plans stay local and nothing
+is blocked.
 
 ## Layout
 
