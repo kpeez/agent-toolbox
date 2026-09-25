@@ -14,7 +14,9 @@ Behavioral rules:
   on success and one ``systemMessage`` JSON line when a sync fails, repeating a
   failure only after the plan changes or the failure changes. It stops starting
   new pushes after HOOK_BUDGET seconds; the rest retry on the next turn.
-- Requires ``LINEAR_API_KEY`` (a Linear personal API key). Sync state lives in
+- Needs a Linear personal API key: ``LINEAR_API_KEY`` if set, otherwise the
+  file ``$XDG_CONFIG_HOME/swe/linear-api-key`` (default ``~/.config``), so hooks
+  find the key whatever shell or environment launched them. Sync state lives in
   one file per plan under ``.agents/plans/.sync/``, so concurrent sessions
   syncing different plans never overwrite each other's state.
 
@@ -117,10 +119,25 @@ def plans(directory):
         yield (path, match.group(1), match.group(2)) if match else (path, None, path.stem)
 
 
+def key_file():
+    return Path(os.environ.get("XDG_CONFIG_HOME") or Path.home() / ".config") / "swe" / "linear-api-key"
+
+
+def api_key():
+    """Return the Linear API key from LINEAR_API_KEY, else the key file, else ""."""
+    key = os.environ.get("LINEAR_API_KEY", "").strip()
+    if key:
+        return key
+    try:
+        return key_file().read_text(encoding="utf-8").strip()
+    except (OSError, UnicodeError):
+        return ""
+
+
 def graphql(query, variables):
-    key = os.environ.get("LINEAR_API_KEY")
+    key = api_key()
     if not key:
-        raise SyncError("LINEAR_API_KEY is not set")
+        raise SyncError(f"no Linear API key (set LINEAR_API_KEY or write it to {key_file()})")
     request = urllib.request.Request(
         API_URL, json.dumps({"query": query, "variables": variables}).encode("utf-8"),
         {"Authorization": key, "Content-Type": "application/json"})
