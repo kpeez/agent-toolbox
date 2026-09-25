@@ -11,7 +11,6 @@ deploying.
 3. Re-run applicable repository checks and behavior-specific evidence. Stop on
    a required failure.
 4. Mark the draft ready.
-5. When authorized, update linked tracker tasks to awaiting review and the spec
-   lifecycle to `review`. Do not mark tasks delivered or the spec done solely
-   because the pull request is ready.
+5. Leave issue status to the tracker's GitHub integration; a ready pull request
+   does not mark work delivered.
 6. Report the pull request, verification, and state changes.
