@@ -1,21 +1,21 @@
 {
   "name": "swe",
-  "description": "SWE workflow and skills for AI coding agents: sharpening, specs, behavioral verification, atomic PR grouping, and more",
-  "version": "1.18.0",
+  "description": "SWE skills for AI coding agents: sharpening, short handoff plans, behavioral verification, atomic PR grouping, and more",
+  "version": "1.19.0",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
   "license": "MIT",
-  "keywords": ["spec", "workflow", "skills", "tdd", "pr", "code-review"],
+  "keywords": ["plan", "workflow", "skills", "tdd", "pr", "code-review"],
   "skills": "./skills/",
   "interface": {
     "displayName": "swe",
-    "shortDescription": "Spec-driven workflows and skills for coding agents.",
-    "longDescription": "Portable spec-driven development workflows, shared skills, and focused agent definitions for planning, implementing, reviewing, and publishing code changes.",
+    "shortDescription": "Planning, implementation, review, and PR skills for coding agents.",
+    "longDescription": "Portable skills and focused agent definitions for planning, implementing, reviewing, and publishing code changes, with short handoff plans mirrored to Linear.",
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
-    "defaultPrompt": ["Create a spec for this feature.", "Execute this approved spec.", "Prepare this branch for a draft PR."],
+    "defaultPrompt": ["Write a plan for this feature.", "Implement the plan I just approved.", "Prepare this branch for a draft PR."],
     "brandColor": "#2563EB"
   }
 }

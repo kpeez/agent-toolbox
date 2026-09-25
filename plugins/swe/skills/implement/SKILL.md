@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "Implement an authorized feature or fix through relevant verification. Use for scoped code changes; not for specs, tracker publication, or PR delivery."
+description: "Implement an authorized feature or fix through relevant verification. Use for scoped code changes; not for writing plans, creating issues, or PR delivery."
 ---
 
 # Implement
@@ -19,7 +19,7 @@ its current source instead of treating an ADR's status as authority.
 
 Within an authorized task, replace a past choice when justified and explain why
 in the result; the ADR alone does not require another approval. Changes to an
-explicit requirement or approved spec design, or work outside the task's scope,
+explicit requirement or approved plan design, or work outside the task's scope,
 still need the applicable approval. Preserve the earlier rationale and record
 the replacement when project-document updates are in scope, using
 [decision history](../sharpen/ADR-FORMAT.md).
@@ -40,22 +40,17 @@ the replacement when project-document updates are in scope, using
    baseline failures without silently fixing unrelated code.
 4. Report the change, evidence, verification, and unresolved concerns.
 
-## Tracked work checklist
+## Plans and issues
 
-- Confirm the approved revision and explicit scope using the selected tracker
-  route's approval mechanism. Treat Todo status as readiness, separately from
-  execution permission.
-- Respect holds, dependencies, and one supervised owner; check the fresh
-  checkout, PRs, and jobs before editing.
-- For configured Linear work, record `start`, `progress`, `handoff`, `review`, and `evidence` notes via
-  `record` during the work, not as a separate ritual (see
-  [operations](../to-issues/references/workflow-operations.md)).
-- Put handoff in the selected tracker issue (privately for Linear): state, verified evidence, next
-  action, worktree and uncommitted work, jobs, and what not to repeat.
-- Get independent review for substantive changes; no PR, draft, or merge marks
-  Done automatically.
+- When the caller names a plan (for example `ABC-123-slug.md`), read it first
+  and work to it. Plans live in the main checkout, not in a worktree: find the
+  directory with `python3 ../../scripts/plan_sync.py dir`. If a material
+  design choice changes during the work, update the plan's Decisions section.
+- For work with an issue, include its key in the branch name. Git and the pull
+  request move the issue's status; comment on the issue only for a blocker or
+  a decision that needs the user.
+- Get independent review for substantive changes.
 
-`/execute-spec` coordinates a full approved spec run. A standalone developer
-may delegate bounded work when useful and remains responsible for decisions,
-review, and final verification. A bounded worker reports to its caller and does
-not create an uncontrolled delegation chain.
+A developer may delegate bounded work when useful and remains responsible for
+decisions, review, and final verification. A bounded worker reports to its
+caller and does not create an uncontrolled delegation chain.

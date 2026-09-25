@@ -49,23 +49,15 @@ choice. Better alternatives do not require changed assumptions. Verify a claimed
 constraint at its current source; distinguish it from a historical preference.
 Explain a recommended replacement and use [ADR-FORMAT.md](./ADR-FORMAT.md) when
 recording a decision change. Disagreement with an ADR alone needs no approval;
-changing explicit requirements, approved spec intent, or exceeding task
+changing explicit requirements, an approved plan's intent, or exceeding task
 authorization does (see Approval scope below).
 
 ## Approval scope
 
-Content approval, publication authorization, and execution permission are
-distinct. Sharpening resolves intent; it neither publishes nor executes.
-
-A change is material when it alters the goal, scope, design, acceptance
-criteria, or the context and tasks the plan requires. A material change
-invalidates the semantic revision digest and needs renewed content approval.
-Unchanged intent, bookkeeping, tracker mappings, status, and run identifiers are
-not material and do not revoke an existing approval.
-
-The agent-editable `approved` flag, an ADR, or a generic permission policy is
-not authority. Approval evidence (`spec_id`, digest, approver, source, date) is
-checked by the model against the actual approval.
+Sharpening resolves intent; it neither publishes nor executes. A change is
+material when it alters the goal, scope, design, or acceptance criteria. A
+material change to an approved plan needs the user's renewed approval; an ADR
+or a generic permission policy is not approval.
 
 ## Recording decisions as ADRs
 

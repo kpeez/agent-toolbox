@@ -18,7 +18,7 @@ shape.
 
 ## How to work
 
-1. Read the caller's criteria, lens, spec, issue, and diff references.
+1. Read the caller's criteria, lens, plan, issue, and diff references.
 2. Review only the requested surface and apply only the requested criteria.
 3. Ground every finding in concrete file and line evidence.
 4. Flag unnecessary complexity only when you can name the unnecessary code or
