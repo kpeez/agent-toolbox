@@ -45,4 +45,6 @@ existing states and labels.
 Status comes from git: a branch name containing the issue key and a
 `Fixes ABC-123` line in the pull request let the tracker's GitHub integration
 move the issue. Update status by hand only for what git cannot show, such as
-blocked.
+blocked. On Linear, project status follows its issues through
+`../../scripts/project_status.py`, run at session start; set it by hand only
+to pause or cancel a project.

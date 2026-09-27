@@ -65,9 +65,19 @@ API key from `LINEAR_API_KEY`, or else from `~/.config/swe/linear-api-key`
 Without a key, or without an issue key in the name, plans stay local and nothing
 is blocked.
 
+## Project status
+
+Linear moves issues but not the projects that hold them. At session start,
+SWE's hook ([`project_status.py`](plugins/swe/scripts/project_status.py)) moves
+a Backlog or Planned project to In Progress once any of its issues has started,
+and moves an open project to Completed once all of its issues are closed and at
+least one is done. Paused, Completed, and Canceled projects are left alone. It
+uses the same API key as plan sync and does nothing without one. Run
+`python3 plugins/swe/scripts/project_status.py sync --dry-run` to preview.
+
 ## Layout
 
-- `plugins/swe/` — SWE skills, agents, and the plan-sync hook.
+- `plugins/swe/` — SWE skills, agents, and the plan-sync and project-status hooks.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
 - `.claude-plugin/marketplace.json` — Claude marketplace catalog.
 - `.agents/plugins/marketplace.json` — Codex marketplace catalog.
