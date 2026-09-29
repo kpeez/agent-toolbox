@@ -30,8 +30,7 @@ import time
 
 from plan_sync import SyncError, api_key, graphql
 
-HOOK_BUDGET = 10
-CLOSED = ("completed", "canceled", "duplicate")
+HOOK_BUDGET = 8  # a request started at the deadline adds up to TIMEOUT (5s); hooks.json allows 15s
 
 STATUSES = """{ projectStatuses { nodes { id name type position team { id } } } }"""
 PROJECTS = """query($after: String) {

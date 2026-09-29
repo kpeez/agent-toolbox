@@ -69,9 +69,9 @@ is blocked.
 
 Linear moves issues but not the projects that hold them. At session start,
 SWE's hook ([`project_status.py`](plugins/swe/scripts/project_status.py)) moves
-a Backlog or Planned project to In Progress once any of its issues has started,
-and moves an open project to Completed once all of its issues are closed and at
-least one is done. Paused, Completed, and Canceled projects are left alone. It
+a Backlog or Planned project to In Progress once any of its issues has started
+or is done, and moves an open project to Completed once all of its issues are
+closed and at least one is done. Paused, Completed, and Canceled projects are left alone. It
 uses the same API key as plan sync and does nothing without one. Run
 `python3 plugins/swe/scripts/project_status.py sync --dry-run` to preview.
 
