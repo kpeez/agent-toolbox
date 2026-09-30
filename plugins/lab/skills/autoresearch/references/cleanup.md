@@ -5,6 +5,12 @@ exact run and the user's authorization to apply cleanup. Inspect-only requests
 stay read-only. Do not start evaluations, change experiment decisions, or
 discard branches as part of cleanup.
 
+For a new run, the default directory is the primary checkout's
+`artifacts/autoresearch/<tag>/`, with `program.md` and all run output inside it.
+For an existing run, use its recorded directory and paths; do not migrate it to
+the new default as part of cleanup. Keep the human closeout and only embedded
+reference figures in the configured vault.
+
 ## Recover the evidence first
 
 Inspect the run, its original worktree and Git history, and the relevant agent

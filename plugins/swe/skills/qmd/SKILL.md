@@ -44,8 +44,9 @@ filters. Choose the least expensive mode that can answer the discovery need.
 
 ## Maintenance and authority
 
-Search, retrieval, and read-only diagnostics do not mutate the index. Read
-[maintenance and diagnostics](references/maintenance.md) when a model-backed
-query fails, index health is relevant, or setup and index maintenance are
-requested. Never update, embed, add, clean up, or pull an index unless the user
-explicitly asked for that maintenance.
+Search and retrieval are not requests for index maintenance. Diagnostics may
+need write access to open the index even when they make no intended changes.
+Read [maintenance and diagnostics](references/maintenance.md) when a
+model-backed query fails, index health is relevant, or setup and index
+maintenance are requested. Never update, embed, add, clean up, or pull an index
+unless the user explicitly asked for that maintenance.

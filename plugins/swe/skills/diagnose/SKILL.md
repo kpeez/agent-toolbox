@@ -34,7 +34,10 @@ If no complete loop can be built, do not stop all useful investigation. List
 what was tried, gather the available logs, traces, static evidence, or other
 partial signals, and limit the diagnosis to what they distinguish. Request a
 reproducing environment, captured artifact, or permission for temporary
-instrumentation only when it would change the conclusion.
+source instrumentation only when it would change the conclusion. For a
+diagnosis-only request, use logs or task-owned scratch probes without changing
+production source; if a source edit is necessary and not authorized, state the
+limitation or ask for that specific access.
 
 ## Test hypotheses
 
@@ -52,7 +55,9 @@ order. A bounded worker reports consequential uncertainty to its caller.
 ## Diagnose or repair
 
 For a diagnosis-only or explanation request, report the confirmed or
-most-supported cause, evidence, and uncertainty. Do not edit the implementation.
+most-supported cause, evidence, and uncertainty. Say whether the failure was
+reproduced, inferred from the evidence, or remains unresolved. Do not edit the
+implementation.
 
 For an authorized repair, decide whether the minimized reproduction earns a
 permanent regression test using `/testing-code`'s admission gate. If it does,

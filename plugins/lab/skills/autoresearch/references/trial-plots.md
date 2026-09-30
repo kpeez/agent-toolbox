@@ -41,8 +41,10 @@ Validation needs no plotting dependencies. Rendering uses matplotlib, supplied
 by the script's inline dependency metadata when using `uv run`. Reuse the run's
 environment when matplotlib is already available. Declare the renderer and
 output path in the approved program. The default output is `progress.png` in
-the candidate record directory; `--out <path>.png` selects another approved
-location and `--width <inches>` adjusts the layout.
+the candidate record directory, under `artifacts/autoresearch/<tag>/` for a
+new run; `--out <path>.png` selects another approved location and
+`--width <inches>` adjusts the layout. For an existing run, keep its recorded
+output path.
 
 The single plot shows experiment number against the optimization metric, muted
 discarded points, prominent kept points, and the running best among kept

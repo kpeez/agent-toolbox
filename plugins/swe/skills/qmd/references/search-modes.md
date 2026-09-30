@@ -36,8 +36,14 @@ qmd query "how does the metrics-as-instruments idea work"
 When the goal and domain vocabulary are known, structured fields give more
 control over ranking:
 
-```bash
-qmd query $'intent: Find the note on metrics as instruments without letting OKRs replace judgment.\nlex: cockpit instruments OKR Goodhart metrics judgment\nvec: data informed not metric driven product judgment\nhyde: A note argues metrics are useful like cockpit instruments, but leaders should stay data-informed rather than metric-driven.'
+```nu
+let query = ([
+  'intent: Find the note on metrics as instruments without letting OKRs replace judgment.'
+  'lex: cockpit instruments OKR Goodhart metrics judgment'
+  'vec: data informed not metric driven product judgment'
+  'hyde: A note argues metrics are useful like cockpit instruments, but leaders should stay data-informed rather than metric-driven.'
+] | str join (char nl))
+^qmd query $query
 ```
 
 - `intent:` states what to find and what to avoid.

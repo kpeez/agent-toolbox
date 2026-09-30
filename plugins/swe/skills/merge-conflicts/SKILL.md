@@ -13,11 +13,14 @@ trace intent before touching a hunk, and verify behavior after.
 1. **See the state.** `git status`, the in-progress operation (merge / rebase /
    cherry-pick), and every conflicting file.
 2. **Trace each side's intent.** For each conflict, find *why* each side made
-   its change — commit messages, linked PRs, issues. Never resolve a hunk whose
-   intent you can't state in one sentence for both sides.
+   its change using commit messages, linked PRs, issues, callers, tests, and
+   observable behavior. State each side's intent in one sentence; label an
+   intent inferred from code when no rationale was recorded. Stop when an
+   observable product choice remains unjustified.
 3. **Resolve.** Preserve both intents where possible. Where they're genuinely
    incompatible, pick the side matching the merge's stated goal and note the
-   trade-off. Do **not** invent new behavior. Prefer resolving; abort only when
+   trade-off. Minimal integration code may preserve both existing contracts;
+   do **not** invent new product behavior. Prefer resolving; abort only when
    the calling workflow explicitly authorizes it.
 4. **Verify.** Run applicable project checks and fix anything the merge broke.
    Distinguish failures introduced by the resolution from pre-existing or

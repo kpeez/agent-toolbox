@@ -1,11 +1,12 @@
 # The shared style module
 
-Every plotting module in a project imports one `style.py`. It holds the entity
-order, the entity colors and display names, the ink and surface constants, the
-rcParams recipe, and the I/O helpers. Nothing else sets rcParams. Two figure
-families that draw from the same module cannot drift apart. The recipe below is
-matplotlib; the roles (fixed order, fixed colors, one setter, one saver) carry
-to any library.
+For a set of related publication figures, a shared `style.py` can prevent
+drift. It holds the entity order, colors and display names, ink and surface
+constants, rcParams recipe, and I/O helpers. Figure families that draw from
+the same module stay consistent. A one-off figure or an established coherent
+renderer does not need a new module; keep its style in one place. The recipe
+below is matplotlib; the roles (fixed order, fixed colors, one setter, one
+saver) carry to any library.
 
 ## Constants
 

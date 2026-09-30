@@ -4,6 +4,10 @@ Use this reference only when resuming an approved run. Resume from observed
 state, not from an assumed ledger position. The root skill owns the loop and
 stop condition.
 
+The approved program's absolute record, log, and output paths are authoritative,
+including for runs created before the `artifacts/autoresearch/<tag>/` default.
+Do not relocate an existing run into that new default while resuming it.
+
 Preserve the recorded run tag, experiment names, and log paths, including older
 naming formats. Resuming on another date does not create a new run. Do not
 rename or renumber existing artifacts to apply the current convention. Reconcile

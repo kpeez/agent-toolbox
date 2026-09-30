@@ -11,8 +11,10 @@ probes to learn, then retain only the smallest stable evidence that uniquely
 protects meaningful behavior: a committed test, shared workflow, static check,
 reproducible demonstration, or explicit no-permanent-test decision. There is
 no TDD ritual, test-per-goal rule, coverage quota, or suite-wide
-mutation-score target, but every retained test must have been seen failing,
-often through one deliberate mutation.
+mutation-score target, but every new or rewritten permanent test must have
+been seen failing, often through one deliberate mutation.
+Keeping an existing valuable test during an audit does not itself require a
+new mutation exercise.
 
 ## Contract
 
@@ -87,7 +89,9 @@ Choose the smallest mode that distinguishes the risk:
   credible surviving product fault. Read
   [references/mutation-audits.md](references/mutation-audits.md).
 - **None:** no permanent test. Keep the probe, static check, or reproducible
-  demonstration as evidence.
+  demonstration's verdict or reproducible command as evidence. Retain a probe
+  file only when it is an intentional durable artifact; otherwise remove it as
+  described above.
 
 A metamorphic relation or trusted simpler model can supply an oracle when its
 relation is known independently. Do not use one that merely seems plausible or

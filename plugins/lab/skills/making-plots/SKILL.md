@@ -1,6 +1,6 @@
 ---
 name: making-plots
-description: House rules for making publication- or report-quality scientific result figures with matplotlib or any plotting library. Use whenever the user asks to plot, chart, graph, visualize, compare, or tabulate results, metrics, benchmarks, training curves, distributions, or evaluation outputs, and whenever you are about to write or edit plotting code, choose axis limits, colors, markers, legends, or figure layout, even if the user does not say "plot". For a throwaway exploratory plot apply only the honesty rules. Encodes Tufte-style minimalism, data-scaled axes, honest baselines, one-job color, direct labels, and a shared style module.
+description: Create or revise publication- or report-quality scientific result figures and their plotting code. Use for benchmark, training, and evaluation figures; not ordinary tabulation, general dashboard critique, or UI mockups.
 ---
 
 # Making plots
@@ -24,27 +24,28 @@ rules do not depend on them.
    replication in another. If the question needs two sentences, it is two
    figures.
 2. Pick the figure type from the catalog below. A table is a valid answer.
-3. Load `references/style-module.md` and draw through the project's shared
-   style module. Never set rcParams inside a plot function.
+3. For a set of related figures, load `references/style-module.md` and use a
+   shared style module when it prevents drift. For one figure or an established
+   coherent renderer, keep its existing style rather than adding scaffolding.
+   Keep rcParams in one place within that renderer.
 4. Validate inputs (finite, no duplicate keys, positive on log axes), then
    draw. Scale axes to the data unless the mark encodes magnitude as length or
    area from a baseline (`references/axes-and-scales.md`).
 5. Render the PNG and look at it. Fix collisions, clipped marks, and empty
    space before calling the work done.
-6. Run `references/review-checklist.md`.
+6. Apply the general [plot review checklist](../visualizing-data/references/review-checklist.md)
+   and the scientific checks in `references/review-checklist.md`.
 
 ## Universal rules
 
-- Do not start an axis at zero by default. Zero is mandatory only when a mark
-  encodes magnitude as a length or area from a baseline: bars, stems, stacked
-  segments, filled histograms and densities. A band that shows an interval is
-  not such a mark.
-- Never truncate a bar. If the interesting range starts above zero, draw dots.
+Apply the shared chart-honesty and accessibility rules in
+`../visualizing-data/references/review-checklist.md`. The rules below add
+scientific-result conventions; `references/axes-and-scales.md` gives the
+detailed baseline and scale treatment.
+
 - Never put incomparable numbers on one axis: different populations, chance
   rates, denominators, scorers, or protocols. Filter before drawing so the
   mixed axis is unreachable. A footnote documents; a filter guarantees.
-- Every axis label carries the unit or the metric definition, and names any
-  transformation (log, percent, normalized). Lower-is-better metrics say so.
 - Color does one job per figure. Either it identifies entities with fixed
   colors that never change across figures, or it carries one bit (focal vs
   context) as neutral gray plus one accent. Never both. Never a rainbow.
@@ -68,7 +69,8 @@ rules do not depend on them.
   unit of replication (for example `20 enrolled / 5 distractor subjects, 25
   partitions`), what the mark and interval mean, and any convention such as
   underline or outline. Wrap the footnote at about 120 characters.
-- One PNG at 300 dpi per figure through the shared `save()` helper. No PDF
+- One PNG at 300 dpi per figure through the existing renderer or shared `save()`
+  helper. No PDF
   unless the venue or the user asks. Figures specific to one population or
   condition go in a sub-folder per population.
 - Show variability when repeats exist. House default: dot at the mean, whisker

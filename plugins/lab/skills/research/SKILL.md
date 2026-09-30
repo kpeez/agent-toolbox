@@ -31,20 +31,20 @@ Confirm or state:
 Ask only when a missing choice would materially change the answer. Otherwise
 state the assumption in the memo.
 
-## Choose one research boundary
+## Set a boundary for each researcher
 
-Use exactly one mode:
+Give each researcher one boundary:
 
 - **Web-only:** public sources without repository access or local workspace
   context.
-- **Repository:** only the bounded local paths needed for the question; use the
-  web separately only when the question requires external evidence.
+- **Repository:** only the bounded local paths needed for the question.
 
 An external provider must not receive repository text, paths, user data,
 credentials, private source excerpts, or other local workspace context unless
 the user explicitly authorizes that disclosure within the repository boundary.
-If both private repository evidence and public-web evidence are needed, keep
-web research public-only and reconcile it in the host session.
+If the question needs both repository and public-web evidence, gather them
+under separate boundaries and reconcile them in the single host-written memo.
+Never give a web-only researcher private workspace context.
 
 ## Run one read-only researcher
 
