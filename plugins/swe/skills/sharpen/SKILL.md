@@ -12,6 +12,11 @@ an interview when the requested work is clear.
 If a question can be answered by exploring the codebase, explore
 the codebase instead.
 
+Close with the chosen scope or design, the material alternatives rejected and
+why, observable acceptance criteria, and any unresolved decision with its
+owner. Update an in-scope plan or requested artifact; otherwise keep the result
+in the conversation. Stop questioning once the material boundary is clear.
+
 When recording glossary entries or ADRs, lead with the decision or term, keep
 evidence close, and make consequences explicit.
 

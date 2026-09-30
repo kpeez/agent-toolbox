@@ -12,10 +12,12 @@ goal: do not delete a test that still names a contract with no verified keeper.
 
 Two modes share one value bar:
 
-- **Audit:** a focused sweep that lands one coherent batch of deletions,
-  consolidations, and repairs per PR. Continue broad audits as follow-up PRs.
+- **Audit:** a focused sweep that prepares one coherent batch of deletions,
+  consolidations, and repairs for review. Continue broad audits as follow-up
+  batches or PRs when publication is authorized.
 - **Campaign:** prune one subsystem's whole test surface, every test file a
-  package or area owns, in one PR. Read [CAMPAIGN.md](CAMPAIGN.md) first.
+  package or area owns, in one reviewable change. Read [CAMPAIGN.md](CAMPAIGN.md)
+  first.
 
 Any test added or rewritten during an audit must pass the
 [testing-code](../testing-code/SKILL.md) admission gate, including being seen
@@ -96,13 +98,15 @@ Do not edit source or tests while a test runner is watching the checkout.
    from tests and test support.
 7. Get an independent preservation review of the final diff: compare deleted
    coverage against keepers for contracts that lost their only proof, and look
-   for new assertions that cannot fail.
+   for new assertions that cannot fail. Report an unavailable review as a
+   verification gap; a second pass by the implementer is not independent review.
 
 ## Landing and continuation
 
-Publish through `/ship-pr`. Land one coherent PR at a time; after it lands,
-refresh from the default branch and rerun read-only discovery for the next
-high-confidence batch.
+If publication is authorized, use `/ship-pr` for one coherent PR at a time.
+Otherwise report the reviewed local diff and validation without publishing.
+After a PR lands, refresh from the default branch and rerun read-only discovery
+for the next high-confidence batch.
 
 ## Handoff
 

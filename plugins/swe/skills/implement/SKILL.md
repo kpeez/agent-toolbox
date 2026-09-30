@@ -43,13 +43,16 @@ the replacement when project-document updates are in scope, using
 ## Plans and issues
 
 - When the caller names a plan (for example `ABC-123-slug.md`), read it first
-  and work to it. Plans live in the main checkout, not in a worktree: find the
-  directory with `python3 ../../scripts/plan_sync.py dir`. If a material
-  design choice changes during the work, update the plan's Decisions section.
-- For work with an issue, include its key in the branch name. Git and the pull
-  request move the issue's status; comment on the issue only for a blocker or
-  a decision that needs the user.
-- Get independent review for substantive changes.
+  and work to it. Follow [plan storage](../write-plan/references/plan-storage.md)
+  to find plans in the main checkout; resolve `../../scripts/plan_sync.py` from
+  this skill's directory, not the current working directory, when running `dir`.
+  If a material design choice changes during the work, update the plan's
+  Decisions section.
+- For work with an issue, include its key when creating a branch; preserve an
+  established branch name. Git and the pull request move the issue's status;
+  comment on the issue only for a blocker or a decision that needs the user.
+- For substantive changes, use [review](../review/SKILL.md) to frame an
+  independent review of the actual diff.
 
 A developer may delegate bounded work when useful and remains responsible for
 decisions, review, and final verification. A bounded worker reports to its

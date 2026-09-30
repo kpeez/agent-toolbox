@@ -42,10 +42,12 @@ Default and explicit finalize modes:
   `ABC-123`) in the branch name and a `Fixes ABC-123` line, which link the
   tracker; never add tracker URLs or issue content. Do not add agent
   attribution, generated-by footers, or session links.
-- Run all applicable repository checks and runnable behavior-specific evidence
-  before committing. Report failures as failures.
-- Creating a pull request is not completion, and a draft is not
-  human-review-ready. Work is delivered when its pull request merges.
+- Before committing, confirm applicable repository checks and runnable
+  behavior-specific evidence pass under the verification rule below. Report
+  failures as failures.
+- The authorized PR-publication task is complete when the new draft exists or
+  the existing PR is updated, and its state is reported. A draft is not
+  human-review-ready; product delivery and merge remain separate outcomes.
 
 ## Resolve context
 
@@ -64,8 +66,11 @@ any stack relationship from repository evidence or the caller's instruction.
    committed, uncommitted, and untracked work. Identify unrelated changes and
    leave them untouched.
 2. **Verify.** Run repository-declared checks that exist and apply, plus the
-   behavior-specific evidence named by the work. Do not invent a generic lint,
-   type-check, or test stack. A required failure stops publication.
+   behavior-specific evidence named by the work. Reuse prior results only when
+   the revision, relevant uncommitted content, environment, and coverage still
+   match; identify them as recorded results, not checks rerun here. Do not
+   invent a generic lint, type-check, or test stack. A required failure stops
+   publication.
 3. **Group and commit.** Check proposed public branch, commit, and PR text
    against the privacy rule above. Build the smallest coherent commit groups.
    Stage and commit one group at a time, checking status between groups.
@@ -106,7 +111,10 @@ established task design calls for a dependent branch chain. Read the
 ## Markdown artifact
 
 Create a local PR markdown artifact only when the user requests one or the
-authorized publication route is unavailable. Write it to the plans directory
-(`python3 ../../scripts/plan_sync.py dir`) under a name without an issue key,
-such as `pr-<branch>.md`, so it stays local, and include the proposed title, body, commit grouping, and relevant diff
-references. This skill's job is verified delivery to a draft PR.
+authorized publication route is unavailable. Follow
+[plan storage](../write-plan/references/plan-storage.md) to find the plans
+directory; resolve `../../scripts/plan_sync.py` from this skill's directory,
+not the current working directory, when running `dir`. Use a name without an
+issue key, such as `pr-<branch>.md`, so it stays local. Include the proposed
+title, body, commit grouping, and relevant diff references. This skill's job is
+verified delivery to a draft PR.

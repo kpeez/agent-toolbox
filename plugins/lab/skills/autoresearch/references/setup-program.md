@@ -17,8 +17,8 @@ Agree on:
   always read-only;
 - one primary metric and whether to minimize or maximize it;
 - exact evaluator and metric-extraction commands;
-- absolute candidate record and log directories plus every path the evaluator
-  may create;
+- absolute candidate record and log directories under the new run's
+  `artifacts/autoresearch/<tag>/`, plus every path the evaluator may create;
 - separate absolute calibration record and log directories when calibration is
   required. Calibration must not share `results.jsonl` with candidate records,
   so the candidate ledger starts with the comparable baseline and its latest
@@ -122,7 +122,12 @@ plan when one is needed. New rules require a new approved program. Then:
    baseline. Otherwise run the baseline at the approved unit. If the baseline
    crashes, record it and stop.
 
-Default records live at the resolved primary checkout's
-`.agents/docs/autoresearch/<tag>/` unless the project or user specifies another
-location. This may be tracked, ignored, or reached through an existing symlink.
-Do not assume a linked worktree lacks or shares `.agents/docs`.
+For new runs, the default run root is the resolved primary checkout's
+`artifacts/autoresearch/<tag>/` unless the project or user specifies another
+location. Keep `program.md`, candidate and calibration ledgers, logs, launch and
+plot configuration, generated summaries, and progress figures under this root.
+Honor the repository's artifacts convention: if `artifacts/` is missing, create
+`~/artifacts/<repo>` and link the repository's `artifacts/` to it, keeping the
+link out of Git. Resolve and approve all absolute paths before writing. Put
+only the human closeout and any figures it embeds as references in the
+configured vault. An already approved run retains its recorded locations.

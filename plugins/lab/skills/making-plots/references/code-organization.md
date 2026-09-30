@@ -1,7 +1,9 @@
 # Code organization
 
-This is the house architecture for a project with several related figures.
-Adapt names to the project; keep the layering.
+This is an option for a project with several related publication figures when
+shared layers reduce drift. Adapt names to the project. Do not add these
+layers for one figure or replace an established coherent renderer solely to
+match this layout.
 
 ## Three layers
 
@@ -12,8 +14,8 @@ Adapt names to the project; keep the layering.
    emphasis) and returning a `Figure`. They know nothing about the evaluation
    schema.
 3. **Adapters** (`plots.py`, `compare.py`): read the summary file, validate,
-   filter and order rows, map them to primitive inputs, write PNGs. Thin,
-   schema-aware, one CLI entry point via `typer` or `tyro`.
+   filter and order rows, map them to primitive inputs, write PNGs. Keep them
+   thin and schema-aware; use a CLI only when it serves repeated rendering.
 
 Project-specific mappings (which first-stage pairs with which second-stage,
 label offsets, output names) live in the adapter or a benchmark script, never

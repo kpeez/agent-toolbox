@@ -28,6 +28,13 @@ evidence or a simple bounded pilot cannot establish it, the setup reference
 requires a bounded calibration as the first experiment, followed by a
 comparable baseline at the selected unit.
 
+For new runs, keep `program.md`, ledgers, logs, launch and plot configuration,
+and generated figures under the primary checkout's
+`artifacts/autoresearch/<tag>/`. Honor that repository's `artifacts/` symlink
+convention. Existing runs keep the absolute paths recorded in their approved
+program; resuming does not move their files. The configured vault receives the
+human closeout and only figures embedded there as references.
+
 ## Experiment boundaries
 
 Everything inside the editable paths is available for experiments. Do not:

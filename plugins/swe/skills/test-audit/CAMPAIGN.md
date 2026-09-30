@@ -1,8 +1,8 @@
 # Test-pruning campaign
 
-Campaign mode prunes one subsystem's whole test surface in one PR: a package,
-plugin, service, or core area. The value bar, candidate evidence, and
-validation in [SKILL.md](SKILL.md) apply to every lane. This file adds the order
+Campaign mode prunes one subsystem's whole test surface in one reviewable
+change: a package, plugin, service, or core area. The value bar, candidate
+evidence, and validation in [SKILL.md](SKILL.md) apply to every lane. This file adds the order
 of work and lessons from a full campaign. Each step ends on its completion
 criterion; do not start the next step early.
 
@@ -28,11 +28,12 @@ one lane.
 
 ## 3. Read-only ledger per lane
 
-Give each lane to its own read-only agent. The agent reads every assigned test
-in full, including parameter tables, plus the production owners and their entry
-points, callers, history, and CI configuration. Each test declaration goes into
-a written **ledger** with one `R`, `F`, `C`, or `D` mark from
-[SKILL.md](SKILL.md) and an evidence line. A parameterized test is one
+When delegation is available and authorized, give each lane to its own
+read-only agent. Otherwise inspect the lanes serially. For every lane, read
+each assigned test in full, including parameter tables, plus the production
+owners and their entry points, callers, history, and CI configuration. Each
+test declaration goes into a written **ledger** with one `R`, `F`, `C`, or `D`
+mark from [SKILL.md](SKILL.md) and an evidence line. A parameterized test is one
 declaration unless its rows need different marks; then mark each row. A
 retained test that only moves to a better-named file stays `R` with the move
 noted.
@@ -69,8 +70,10 @@ Done when every lane plan is applied and each lane's keepers pass.
 ## 6. Preservation review
 
 Before claiming completion, have independent reviewers compare deleted
-coverage against the keepers, one reviewer per boundary group. They look for
-contracts that lost their only proof and for new assertions that cannot fail,
+coverage against the keepers, covering every boundary group. Review groups
+serially when parallel delegation is unavailable. Report an unavailable
+independent review as a verification gap. Look for contracts that lost their
+only proof and for new assertions that cannot fail,
 such as a rejection row the production code never reaches. One campaign's
 review found nine real gaps and one unreachable assertion.
 

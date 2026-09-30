@@ -11,6 +11,11 @@ the smallest capable agent. Delegation does not expand the user's scope or
 authority and does not require a plan or tracker. This skill's job is bounded
 coordination plus independent review.
 
+Before dispatch, apply the [delegation preflight](../external-subagents/references/delegation-contract.md):
+check the effective model, provider, role, tools, write scope, and host
+capability against current user and project constraints. Do not infer these
+from a role name or silently fall back when a permitted route is unavailable.
+
 ## Assign bounded work
 
 Give each worker the smallest complete brief: objective and acceptance
@@ -31,6 +36,10 @@ A worker report is an input, not final verification. For substantive changes,
 use a reviewer who did not implement them; ask for concrete correctness,
 requirement, verification, and unnecessary-complexity findings. Fix supported
 findings and re-review when the changed risk warrants it.
+
+For one direct PR or diff review, use [review](../review/SKILL.md) to resolve
+the target and criteria; orchestration is useful when coordination itself adds
+value.
 
 Continue while evidence supports a useful in-scope next step. Diagnose repeated
 failure before redispatching and stop loops that produce no new evidence.

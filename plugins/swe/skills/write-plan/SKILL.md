@@ -16,21 +16,21 @@ keeping beyond the PR becomes an ADR when it meets
 
 ## Where the plan lives
 
-Run `python3 ../../scripts/plan_sync.py dir`, resolved relative to this skill,
-to create and print the plans directory: `<main checkout>/.agents/plans/`. It
-is shared by every worktree of the repository and ignores itself in git. Never
-write a plan into `.agents/docs/` or a notes vault.
+Use [plan storage](references/plan-storage.md) to locate the shared plans
+directory and choose the appropriate sync path. Never write a plan into
+`.agents/docs/` or a notes vault.
 
-- `ABC-123-short-slug.md`: linked to issue ABC-123. The plan is mirrored to a
-  document on that Linear issue at the end of each agent turn, or on demand
-  with `plan_sync.py sync`. Use `plan_sync.py status` to check it.
-- `short-slug.md`: local only.
+- `ABC-123-short-slug.md`: eligible to mirror to a document on Linear issue
+  ABC-123 through a configured host Stop hook or explicit sync. Confirm the
+  recorded sync state before reporting delivery.
+- `short-slug.md`: local only, including plans linked to GitHub issues.
 
 When the user wants the work tracked and no issue exists, create one issue for
 the plan on the tracker chosen as in [`/to-issues`](../to-issues/SKILL.md)
-(title: the goal; body: the outcome in a sentence or two) and use its key in
-the file name. One issue per plan is the
-default; use `/to-issues` only when the work needs several pull requests.
+(title: the goal; body: the outcome in a sentence or two). Use a Linear key in
+the filename for an eligible mirror; keep a GitHub-linked plan unkeyed and link
+it from the issue. One issue per plan is the default; use `/to-issues` only
+when the work needs several pull requests.
 
 ## Process
 

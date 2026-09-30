@@ -41,6 +41,13 @@ Choose these trade-offs from the real callers, side effects, and external
 contracts. A pure function or injected dependency is not automatically a better
 seam.
 
+For a consequential new interface, map representative callers and the behavior
+they need. Specify invariants, ordering, error modes, defaults, and costs before
+choosing the surface. Show at least one caller use and explain what complexity
+the implementation hides. Compare materially different interfaces only when a
+real trade-off exists; use [interface design](INTERFACE-DESIGN.md) for that
+comparison. Do not manufacture alternatives to an obvious interface.
+
 ## Key tests
 
 - **Deletion test** — imagine deleting the module. If complexity vanishes, it

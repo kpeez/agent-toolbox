@@ -9,7 +9,7 @@
 
 SWE treats the merged pull request and the code as the record. Large work can
 start from a short [plan](plugins/swe/skills/write-plan/SKILL.md) that hands off
-to a fresh session and is mirrored to its Linear issue. Its
+to a fresh session, with configured mirroring for Linear-linked plans. Its
 [implementation discipline](plugins/swe/skills/implement/SKILL.md) challenges
 unnecessary code and simplifies the completed change before final verification.
 Sound work can stay unchanged. Publication follows the user's authorization.
@@ -57,13 +57,19 @@ generated `AGENTS.md`/`CLAUDE.md` is required.
 Plans live in `<main checkout>/.agents/plans/`, shared by all worktrees. The
 directory keeps itself out of git with its own `.gitignore`.
 
-A plan named `ABC-123-short-slug.md` is mirrored one way to a document on
-Linear issue ABC-123 by SWE's Stop hook
+A plan named `ABC-123-short-slug.md` can be mirrored one way to a document on
+Linear issue ABC-123 by a configured host Stop hook
 ([`plan_sync.py`](plugins/swe/scripts/plan_sync.py)). It reads a Linear personal
 API key from `LINEAR_API_KEY`, or else from `~/.config/swe/linear-api-key`
 (mode 0600, honoring `XDG_CONFIG_HOME`), so no shell configuration is needed.
 Without a key, or without an issue key in the name, plans stay local and nothing
-is blocked.
+is blocked. Hook delivery varies by host; confirm sync state when it matters.
+GitHub-linked plans remain local unless a separate publication route is configured.
+
+New autoresearch runs keep their program, ledgers, logs, configuration, and
+generated figures under `artifacts/autoresearch/<tag>/`. Existing runs retain
+their recorded paths. A configured vault receives closeout notes and only the
+reference figures those notes embed.
 
 ## Layout
 

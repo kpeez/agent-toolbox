@@ -10,6 +10,10 @@ clear, statistically honest, self-contained, and accessible. This skill is for
 statistical plots, dashboards, and scientific figures. It is not for
 conversational diagrams, simulations, or UI mockups.
 
+For production of publication- or report-quality scientific result figures,
+use `making-plots` for its replication, comparability, and figure-family rules.
+Do not load its full style workflow for a general chart review.
+
 ## Frame the task
 
 Before choosing or changing a chart, identify the exact question, audience,
@@ -36,8 +40,9 @@ Keep scales, baselines, and transformations meaningful and explicit:
 - use lines only for ordered axes;
 - avoid dual axes, 3D effects, shadows, gradients, and decorative textures by
   default;
-- prefer aligned comparisons, direct labels, sorted categories, and small
-  multiples when they improve reading.
+- prefer aligned comparisons, direct labels, and small multiples when they
+  improve reading; sort categories when rank is the question, but preserve
+  semantic or matched order across related panels.
 
 ## Make it honest and accessible
 

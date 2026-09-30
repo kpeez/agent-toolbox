@@ -83,8 +83,9 @@ After each lane returns, validate its packet and write it to
 `.agents/docs/research/<slug>/lanes/<lane-slug>.md`. Preserve incomplete and
 contradictory packets; do not silently repair missing evidence.
 
-Build the evidence used for the report from a deduplicated source list and
-claim map. Deduplicate by stable URL or repository path plus version. Preserve
+Build the report's evidence section from a deduplicated source list and claim
+map. Do not create a separate evidence ledger unless the user requests one.
+Deduplicate by stable URL or repository path plus version. Preserve
 claim mappings, status, caveats, failed searches, unavailable evidence, and
 material untrusted-content records. Mark equivalent claims, contradictions,
 unsupported claims, and coordinator inferences. A source cited by several
@@ -99,7 +100,8 @@ sufficient, the budget is spent, or searches reach diminishing returns.
 
 Write `report.md` from checked lane evidence. Make the direct answer, material
 findings, scope, claim-level citations, reconciled disagreements, unresolved
-gaps, unavailable evidence, confidence limits, deduplicated sources, and
+gaps, unavailable evidence, confidence limits, the deduplicated source list
+and claim map, and
 concrete stop reason easy to find. Write `proposal.md` only when specifically
 requested, and separate recommendations and trade-offs from source-backed
 facts. A lane worker never drafts, edits, or approves a final output.
@@ -117,5 +119,5 @@ Finish with one explicit stop state:
 - **Diminishing returns:** the latest bounded search produced no material new
   evidence or only repeated failures or duplicates; identify the boundary.
 
-Completion means the brief, lane packets, deduplicated evidence, coordinator
-output, and citation audit are retained. Coverage is not a claim of certainty.
+Completion means the brief, lane packets, report with deduplicated evidence,
+and citation audit are retained. Coverage is not a claim of certainty.

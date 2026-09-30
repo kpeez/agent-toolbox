@@ -63,15 +63,12 @@ earlier rationale and why a different choice would be better; its assumptions
 need not have changed. Verify any claimed constraint at its current source.
 Recommending a change does not authorize implementing it.
 
-End with a **Top recommendation**: which you'd tackle first and why. If the
-choice is genuinely unresolved, ask which candidate to explore; otherwise follow
-the requested depth. Keep a review-only request at the report, and propose
-interfaces only when the user asks for design or has chosen a candidate. A
-bounded worker reports the choice to its caller.
-
-> Optional: if the user asks for something more visual, render the same content as
-> a self-contained HTML file in the OS temp dir (Tailwind + Mermaid via CDN) and
-> open it — but markdown is the default; don't reach for HTML unless asked.
+End with a **Top recommendation**: which you'd tackle first and why. If no
+candidate shows real caller friction and a net gain, say that no refactor is
+recommended. If the choice is genuinely unresolved, ask which candidate to
+explore; otherwise follow the requested depth. Keep a review-only request at
+the report, and propose interfaces only when the user asks for design or has
+chosen a candidate. A bounded worker reports the choice to its caller.
 
 ### 3. Sharpen chosen designs
 
@@ -85,8 +82,10 @@ design workflow:
   the term only when project-document updates are in scope (see `sharpen`'s
   `CONTEXT-FORMAT.md`).
 - If the user rejects a candidate for a load-bearing reason a future review would
-  re-suggest, offer an ADR (see `sharpen`'s `ADR-FORMAT.md`). Skip ephemeral
-  ("not worth it right now") and self-evident reasons.
+  re-suggest, consider an ADR only when all three of `sharpen`'s
+  [decision-record criteria](../sharpen/ADR-FORMAT.md) hold and the document
+  update is in scope. Skip ephemeral ("not worth it right now") and
+  self-evident reasons.
 
 When a candidate is chosen for design, classify its dependencies and pick the
 test seam with **`DEEPENING.md`** (in-process / local-substitutable / remote-owned
@@ -97,9 +96,10 @@ is separately authorized.
 ### 4. Compare alternatives when useful
 
 If the right interface for a chosen candidate is non-obvious, use
-**`INTERFACE-DESIGN.md`** to frame constraints and compare materially different
-interfaces. Generate alternatives directly for a bounded design or delegate
-independent alternatives when the added breadth is worth the cost.
+the shared [interface-design procedure](../codebase-design/INTERFACE-DESIGN.md)
+to frame constraints and compare materially different interfaces. Generate
+alternatives directly for a bounded design or delegate independent alternatives
+when the added breadth is worth the cost.
 
 > In a standalone task, delegate heavy exploration when useful, then review the
 > evidence and recommendation. A bounded worker reports to its caller.
