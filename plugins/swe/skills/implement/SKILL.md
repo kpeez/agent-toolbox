@@ -51,8 +51,8 @@ the replacement when project-document updates are in scope, using
 - For work with an issue, include its key when creating a branch; preserve an
   established branch name. Git and the pull request move the issue's status;
   comment on the issue only for a blocker or a decision that needs the user.
-- For substantive changes, use [review](../review/SKILL.md) to frame an
-  independent review of the actual diff.
+- For substantive changes, give an independent reviewer the actual diff,
+  accepted requirements, and relevant verification evidence.
 
 A developer may delegate bounded work when useful and remains responsible for
 decisions, review, and final verification. A bounded worker reports to its
