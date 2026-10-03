@@ -45,6 +45,18 @@ npx skills@latest add kpeez/agent-toolbox
 This installs editable skills only. Plugin agents still require a
 plugin installation.
 
+### Standalone teaching skill
+
+[`teach`](skills/teach/SKILL.md) is an editable, standalone skill, not part of
+SWE or Lab. It retains the teaching workflow and four format templates from
+the earlier unpackaged skill, with [upstream attribution](skills/teach/NOTICE).
+
+For a new Codex installation, link `skills/teach` from this checkout into
+`~/.agents/skills/teach`. Existing `~/.codex/skills/teach` links to this checkout
+also work. Invoke it explicitly with `$teach` in the workspace where you want
+to learn. It does not activate implicitly. If it does not appear in the skill
+selector after restoring or linking it, start a fresh Codex session.
+
 ## Delegation
 
 The implementation skill routes substantial work with independent parts to
@@ -88,6 +100,7 @@ reference figures those notes embed.
 
 - `plugins/swe/` — SWE skills, agents, and the plan-sync hook.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
+- `skills/teach/` — standalone teaching workflow and format templates.
 - `.claude-plugin/marketplace.json` — Claude marketplace catalog.
 - `.agents/plugins/marketplace.json` — Codex marketplace catalog.
 
