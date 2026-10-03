@@ -54,6 +54,9 @@ the replacement when project-document updates are in scope, using
 - For substantive changes, give an independent reviewer the actual diff,
   accepted requirements, and relevant verification evidence.
 
-A developer may delegate bounded work when useful and remains responsible for
-decisions, review, and final verification. A bounded worker reports to its
-caller and does not create an uncontrolled delegation chain.
+For substantial work with independently executable parts, use
+[orchestrate](../orchestrate/SKILL.md) to delegate them before implementation.
+Keep tightly coupled changes with one agent, and send a single independent
+review directly to the reviewer. The lead remains responsible for decisions,
+integration, and final verification. A bounded worker reports to its caller
+rather than dispatching more agents unless its assignment authorizes that.

@@ -1,6 +1,6 @@
 ---
 name: orchestrate
-description: Coordinate bounded agents for substantial parallel work or independent review. Not for single-agent scoped edits or plan drafting.
+description: Split substantial work across subagents and integrate their results. Use for independent implementation tasks, parallel investigations, or multiple reviewers. Not for a single edit or one direct review.
 ---
 
 # Orchestrate
@@ -10,6 +10,10 @@ Use the host's available delegation facilities and configured roles, choosing
 the smallest capable agent. Delegation does not expand the user's scope or
 authority and does not require a plan or tracker. This skill's job is bounded
 coordination plus independent review.
+
+Choose work that can proceed independently and gives each worker a complete
+result to deliver. Keep tightly coupled changes with one agent. Do not split
+work merely to increase the agent count.
 
 Before dispatch, apply the [delegation preflight](../external-subagents/references/delegation-contract.md):
 check the effective model, provider, role, tools, write scope, and host

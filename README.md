@@ -45,6 +45,19 @@ npx skills@latest add kpeez/agent-toolbox
 This installs editable skills only. Plugin agents still require a
 plugin installation.
 
+## Delegation
+
+The implementation skill routes substantial work with independent parts to
+`swe:orchestrate`. To make the same decision before skill selection, add this
+rule to your user-level `AGENTS.md` (Codex) or `CLAUDE.md` (Claude):
+
+> For substantial work with independently executable parts, use
+> `swe:orchestrate` to delegate them. Keep tightly coupled work with one agent.
+> Send a single independent review directly to the reviewer.
+
+The plugin does not edit user instructions. Existing sessions may retain prior
+instructions; use a fresh session after updating.
+
 ## Project documents
 
 ADRs, notes, and research default to `.agents/docs/`. Follow an explicit
