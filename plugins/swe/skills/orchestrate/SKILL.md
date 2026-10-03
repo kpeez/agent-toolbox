@@ -37,9 +37,8 @@ use a reviewer who did not implement them; ask for concrete correctness,
 requirement, verification, and unnecessary-complexity findings. Fix supported
 findings and re-review when the changed risk warrants it.
 
-For one direct PR or diff review, use [review](../review/SKILL.md) to resolve
-the target and criteria; orchestration is useful when coordination itself adds
-value.
+For one direct PR or diff review, give the reviewer the exact target and
+criteria directly; orchestration is useful when coordination itself adds value.
 
 Continue while evidence supports a useful in-scope next step. Diagnose repeated
 failure before redispatching and stop loops that produce no new evidence.
