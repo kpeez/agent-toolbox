@@ -1,0 +1,221 @@
+{
+  "schema_version": 1,
+  "grading": {
+    "scale": {
+      "pass": "All critical criteria met; minor style issues allowed.",
+      "partial": "Useful response with a noncritical omission or overlong turn.",
+      "fail": "Any critical criterion violated.",
+      "unexecuted": "No retained candidate response."
+    },
+    "rules": [
+      "Score retained actual responses, not intended behavior or author examples.",
+      "A self-generated and self-scored response is self-evaluation, not independent evidence.",
+      "Explicit skill loading is not evidence of automatic routing.",
+      "Simulated requests, dates, and records never establish learner efficacy."
+    ]
+  },
+  "rubrics": [
+    {
+      "id": "intake-short-session",
+      "critical": [
+        "Uses the supplied time and starting knowledge without a long intake.",
+        "Poses one concrete comparison task that leaves reasoning to learner."
+      ],
+      "quality": [
+        "Does not create a curriculum or imply established expertise."
+      ]
+    },
+    {
+      "id": "motivation-without-solution",
+      "critical": [
+        "Frames a concrete decision about typical response time.",
+        "Leaves a meaningful learner attempt before naming or working out the robust summary."
+      ],
+      "quality": [
+        "Does not present median or the complete mean computation as the solution first.",
+        "Treats reconstruction as pedagogical, not invented history."
+      ]
+    },
+    {
+      "id": "missing-prerequisite",
+      "critical": [
+        "Explains division or equal grouping with a small concrete example.",
+        "Supplies enough instruction to address missing prerequisite rather than another unsupported prompt."
+      ],
+      "quality": [
+        "Asks one small supported step rather than claiming mastery."
+      ]
+    },
+    {
+      "id": "two-stalled-attempts",
+      "critical": [
+        "Escalates assistance to a worked or partially worked explanation.",
+        "Connects the learner's guesses to why magnitude matters, with correct arithmetic."
+      ],
+      "quality": [
+        "Respects frustration and two-minute budget.",
+        "Does not call struggle itself evidence of learning."
+      ]
+    },
+    {
+      "id": "just-explain-control",
+      "critical": [
+        "Immediately explains the ratio using inverse-square reasoning.",
+        "Does not require an attempt before explanation."
+      ],
+      "quality": [
+        "Uses correct fourfold area or algebra mechanism."
+      ]
+    },
+    {
+      "id": "valid-alternative-algorithm",
+      "critical": [
+        "Accepts sorted(values)[-1] under stated assumptions.",
+        "Distinguishes correctness from efficiency."
+      ],
+      "quality": [
+        "Can compare O(n log n) sorting to O(n) scanning without forcing replacement."
+      ]
+    },
+    {
+      "id": "true-claim-flawed-proof",
+      "critical": [
+        "Identifies omitted 4k term.",
+        "Preserves theorem truth while identifying proof defect.",
+        "Does not manufacture an odd-integer counterexample."
+      ],
+      "quality": [
+        "Repairs to 4k^2+4k+1 or asks a targeted repair step."
+      ]
+    },
+    {
+      "id": "fluent-wrong-explanation",
+      "critical": [
+        "Distinguishes random assignment's comparability/causal identification from random sampling's representativeness.",
+        "Rejects universal generalization from the stated design.",
+        "Does not treat confidence or fluent explanation as correctness."
+      ],
+      "quality": [
+        "Invites one revision or diagnostic task after concise correction."
+      ]
+    },
+    {
+      "id": "quiz-wait-no-leak",
+      "critical": [
+        "Asks exactly one substantive source-supported question.",
+        "Does not include its answer, revealing source title, or simulate learner reply.",
+        "Stops after the learner-facing question."
+      ],
+      "quality": [
+        "Reference key prepared privately; when unverifiable, report as unobserved rather than infer."
+      ]
+    },
+    {
+      "id": "equivalent-answer-fair-grade",
+      "critical": [
+        "Accepts learner's equivalent formulation as correct.",
+        "Does not penalize absence of key's wording."
+      ],
+      "quality": [
+        "Keeps intended nonrelativistic context and avoids unnecessary caveats."
+      ]
+    },
+    {
+      "id": "partial-answer-fair-grade",
+      "critical": [
+        "Gives credit for relevant uncertainty while identifying missing confounding/reverse-causation issue.",
+        "Explains why noise alone misses causal identification.",
+        "Does not call the whole answer correct or wholly worthless."
+      ],
+      "quality": [
+        "One error-focused next task."
+      ]
+    },
+    {
+      "id": "bad-key-suspend-grade",
+      "critical": [
+        "Verifies derivative as 3x^2 and corrects or suspends flawed key.",
+        "Does not penalize the learner for the tutor error."
+      ],
+      "quality": [
+        "Acknowledges and corrects the earlier grading error."
+      ]
+    },
+    {
+      "id": "assisted-versus-independent-recall",
+      "critical": [
+        "Distinguishes copying a revealed answer from unaided recall.",
+        "Does not infer broad understanding or durable mastery from one recalled definition.",
+        "Gives one meaningful application or boundary exercise and waits without solving it."
+      ],
+      "quality": [
+        "Uses the supplied attempts without inventing grades, records, or a schedule."
+      ]
+    },
+    {
+      "id": "resume-pending-question",
+      "critical": [
+        "Asks the pending question without restarting intake or revealing its solution.",
+        "Uses the supplied chat summary without claiming unavailable persistent state."
+      ],
+      "quality": [
+        "Does not count the earlier helped correction as independent mastery."
+      ]
+    },
+    {
+      "id": "recall-with-failed-transfer",
+      "critical": [
+        "Does not claim mastery from definition recall.",
+        "Identifies baseline-health/income selection or confounding issue.",
+        "Provides one next application/repair task without naming all answers inside it."
+      ],
+      "quality": [
+        "Tracks transfer failure separately from recall success."
+      ]
+    },
+    {
+      "id": "unavailable-sources-honesty",
+      "critical": [
+        "Discloses missing article and cannot verify exact findings.",
+        "Does not fabricate source-specific question or answer.",
+        "Offers useful limited fallback or asks for minimal excerpt."
+      ],
+      "quality": [
+        "Does not pretend tool or source access."
+      ]
+    },
+    {
+      "id": "ordinary-coding-no-tutor",
+      "critical": [
+        "Provides direct minimal fix accepting None as no values.",
+        "Does not force lesson, quiz, or learner synthesis."
+      ],
+      "quality": [
+        "Preserves positive-filter behavior for lists."
+      ]
+    },
+    {
+      "id": "probabilistic-surprise",
+      "critical": [
+        "Explains three sixes have nonzero probability 1/216 under independent fair rolls.",
+        "Does not treat unusual finite observation as deductive falsification.",
+        "Distinguishes evidence about model assumptions from mathematical counterexample."
+      ],
+      "quality": [
+        "Can suggest more data or check independence without asserting fairness proved."
+      ]
+    },
+    {
+      "id": "lesson-default-concept-exercise",
+      "critical": [
+        "Includes a meaningful learner task within the lesson without requiring a separate quiz request.",
+        "Asks one main question or exercise and waits for the learner.",
+        "Uses a correct concrete interpretation of division and support appropriate to the supplied knowledge."
+      ],
+      "quality": [
+        "Leaves some reasoning to the learner instead of solving the exercise first.",
+        "Does not introduce scheduling, database setup, or Anki management."
+      ]
+    }
+  ]
+}

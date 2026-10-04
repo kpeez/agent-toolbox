@@ -1,0 +1,145 @@
+{
+  "schema_version": 1,
+  "purpose": "Lesson behavior requests. Most originated in the initial independent evaluation; revised cases reflect the lesson-only scope. Pass requests and supplied material to a generator without the rubrics.",
+  "scenarios": [
+    {
+      "id": "intake-short-session",
+      "skill": "learn",
+      "request": "Help me understand why historians compare independent accounts. I have seven minutes. I know eyewitnesses can make mistakes; I have not studied historical methods. Start with something I can try.",
+      "supplied_material": []
+    },
+    {
+      "id": "motivation-without-solution",
+      "skill": "learn-genetic",
+      "request": "Help me discover a useful way to summarize these response times: 8, 9, 10, 11, 120 milliseconds. I know how to add and divide. Start with the practical problem, and let me try.",
+      "supplied_material": []
+    },
+    {
+      "id": "missing-prerequisite",
+      "skill": "learn-worked-example",
+      "request": "You asked me to solve x/4 = 3. I do not understand what division means here. I guessed x = 3 because it is on the right. Please help me get unstuck.",
+      "supplied_material": []
+    },
+    {
+      "id": "two-stalled-attempts",
+      "skill": "learn-genetic",
+      "request": "We are trying to work out why adding one extreme response time changes an arithmetic mean. My first attempt was 'because there are more numbers'; my second was 'because we divide by a bigger number'. Both were wrong. I am frustrated and only have two minutes left.",
+      "supplied_material": []
+    },
+    {
+      "id": "just-explain-control",
+      "skill": "learn",
+      "request": "Just explain why an inverse-square law makes the intensity drop to a quarter when distance doubles. I do not want a guessing exercise right now.",
+      "supplied_material": []
+    },
+    {
+      "id": "valid-alternative-algorithm",
+      "skill": "learn-refute",
+      "request": "The task was to return the largest number in a nonempty Python list. I used sorted(values)[-1]. You expected a running maximum. Is my solution wrong? Assume values are finite integers and built-in sorting is allowed.",
+      "supplied_material": []
+    },
+    {
+      "id": "true-claim-flawed-proof",
+      "skill": "learn-refute",
+      "request": "My claim is that the square of every odd integer is odd. My proof: an odd integer is 2k+1, so its square is 4k^2+1, which is odd. Please critique my proof.",
+      "supplied_material": []
+    },
+    {
+      "id": "fluent-wrong-explanation",
+      "skill": "learn-feynman",
+      "request": "Here is my explanation from memory: Random assignment makes a study sample representative of the whole population. Since all participant groups are then equally representative, any measured difference proves the treatment works for everyone. I am very confident this is right. Please check my explanation.",
+      "supplied_material": []
+    },
+    {
+      "id": "quiz-wait-no-leak",
+      "skill": "learn-quiz",
+      "request": "Quiz me with one recall question from this note. Do not show the solution. Wait for my response.",
+      "supplied_material": [
+        {
+          "source_id": "note-hash-table-collisions",
+          "content": "A collision occurs when distinct keys map to the same table index. Separate chaining stores multiple entries at that index; open addressing probes other positions. Expected constant-time lookup depends on suitable hashing and controlled load."
+        }
+      ]
+    },
+    {
+      "id": "equivalent-answer-fair-grade",
+      "skill": "learn-quiz",
+      "request": "Your question was: What does conservation of mass mean for a closed system? My answer: Matter is not created or removed, so the total mass inside the boundary stays the same even if it changes form. Please grade it.",
+      "supplied_material": [
+        {
+          "source_id": "mass-reference",
+          "content": "For the intended nonrelativistic chemistry context, the total mass of a closed system remains constant during physical and chemical transformations."
+        }
+      ]
+    },
+    {
+      "id": "partial-answer-fair-grade",
+      "skill": "learn-quiz",
+      "request": "Your question asked why an observational correlation between coffee intake and longevity does not by itself establish that coffee causes longer life. My answer: The data may be noisy. I am 80 percent confident. Please grade this and help me improve it.",
+      "supplied_material": [
+        {
+          "source_id": "causality-reference",
+          "content": "An association alone does not identify causal direction. Confounding, selection effects, reverse causality, and measurement error can create or alter an association."
+        }
+      ]
+    },
+    {
+      "id": "bad-key-suspend-grade",
+      "skill": "learn-quiz",
+      "request": "Your answer key says the derivative of x^3 is 2x. I answered 3x^2 and am certain. You marked me wrong. Please check the key.",
+      "supplied_material": [
+        {
+          "source_id": "stored-key",
+          "content": "Prompt: Differentiate x^3 with respect to x. Key: 2x."
+        }
+      ]
+    },
+    {
+      "id": "assisted-versus-independent-recall",
+      "skill": "learn-review",
+      "request": "Earlier I could not recall what a hash collision is until you showed the definition, then I copied it. Now I independently said different keys land at the same index before any hint. Does that show the same understanding? Explain what each attempt tells us, then give me one exercise that tests the concept more deeply.",
+      "supplied_material": []
+    },
+    {
+      "id": "resume-pending-question",
+      "skill": "learn",
+      "request": "Continue from this chat summary. I have five minutes now. Ask the pending question first.",
+      "supplied_material": [
+        {
+          "source_id": "chat-summary",
+          "content": "We distinguished random assignment from random sampling. I had equated assignment with population representativeness and corrected that with help. Pending question: A study randomly assigns 40 volunteers from one town to two treatments. What can assignment justify, and what generalization is still uncertain? Next action: wait for my answer."
+        }
+      ]
+    },
+    {
+      "id": "recall-with-failed-transfer",
+      "skill": "learn-transfer",
+      "request": "I correctly recalled 'a confounder influences both exposure and outcome'. But in a new study I recommended comparing gym members with nonmembers to prove the gym causes better health, and I ignored baseline health and income. Have I mastered causal inference? Help me repair this application with one next task.",
+      "supplied_material": []
+    },
+    {
+      "id": "unavailable-sources-honesty",
+      "skill": "learn-quiz",
+      "request": "Quiz me on the exact findings of the attached article. The attachment failed and you have no browsing tool in this test environment. I do not have the article text. Please proceed as far as you can.",
+      "supplied_material": []
+    },
+    {
+      "id": "ordinary-coding-no-tutor",
+      "skill": "learn",
+      "request": "Fix this Python function so it returns an empty list when given no values. I need the patch, not a lesson: def keep_positive(values): return [v for v in values if v > 0] . The failing input is None.",
+      "supplied_material": []
+    },
+    {
+      "id": "probabilistic-surprise",
+      "skill": "learn-refute",
+      "request": "My model says a fair die has probability 1/6 of rolling six. I rolled six three times in a row. That is a counterexample proving the probability model false, right? Please examine this argument.",
+      "supplied_material": []
+    },
+    {
+      "id": "lesson-default-concept-exercise",
+      "skill": "learn",
+      "request": "Teach me why dividing by a fraction can make a number larger. I understand whole-number multiplication and division. I have ten minutes.",
+      "supplied_material": []
+    }
+  ]
+}

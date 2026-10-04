@@ -27,6 +27,18 @@
         "authentication": "ON_USE"
       },
       "category": "Productivity"
+    },
+    {
+      "name": "uni",
+      "source": {
+        "source": "local",
+        "path": "./plugins/uni"
+      },
+      "policy": {
+        "installation": "AVAILABLE",
+        "authentication": "ON_USE"
+      },
+      "category": "Productivity"
     }
   ]
 }

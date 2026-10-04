@@ -1,11 +1,13 @@
 # agent-toolbox
 
-`agent-toolbox` provides two portable plugins for AI coding agents:
+`agent-toolbox` provides three portable plugins for AI coding agents:
 
 - **SWE** — skills for sharpening and planning work, implementing and
   reviewing changes, and shipping pull requests.
 - **Lab** — source-backed research, reproducible experiment loops, and
   data-visualization guidance.
+- **Uni** — interactive lessons with questions, active recall, and exercises
+  that deepen understanding. See [Uni installation and usage](plugins/uni/README.md).
 
 SWE treats the merged pull request and the code as the record. Large work can
 start from a short [plan](plugins/swe/skills/write-plan/SKILL.md) that hands off
@@ -18,6 +20,11 @@ Lab keeps source checks and experiment boundaries while scaling research
 artifacts and delegation to the question. Neither plugin requires a scheduler
 or a separate workflow service.
 
+Uni keeps the learner's attempts, explanations, and review outcomes central.
+It combines guided reconstruction, criticism, examples, retrieval, and transfer
+as needed. Reviews run when invoked. Anki or another external tool can handle
+long-term scheduling.
+
 ## Install
 
 ### Claude Code
@@ -26,6 +33,7 @@ or a separate workflow service.
 /plugin marketplace add kpeez/agent-toolbox
 /plugin install swe@agent-toolbox
 /plugin install lab@agent-toolbox
+/plugin install uni@agent-toolbox
 ```
 
 ### Codex CLI
@@ -34,6 +42,7 @@ or a separate workflow service.
 codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
+codex plugin add uni@agent-toolbox
 ```
 
 ### Optional skills.sh skill-only install
@@ -100,6 +109,7 @@ reference figures those notes embed.
 
 - `plugins/swe/` — SWE skills, agents, and the plan-sync hook.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
+- `plugins/uni/` — tutoring skills, concept exercises, and research notes.
 - `skills/teach/` — standalone teaching workflow and format templates.
 - `.claude-plugin/marketplace.json` — Claude marketplace catalog.
 - `.agents/plugins/marketplace.json` — Codex marketplace catalog.
