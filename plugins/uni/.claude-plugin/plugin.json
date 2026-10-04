@@ -1,7 +1,7 @@
 {
   "name": "uni",
   "description": "Interactive lessons with questions, active recall, and concept exercises",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
