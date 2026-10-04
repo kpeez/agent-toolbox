@@ -654,7 +654,7 @@
       "local_notes": "research-notes.md#skill-integration",
       "design_decisions": [
         "Use repository .agents/skills and valid SKILL.md frontmatter",
-        "Copy all sibling skills together; plugins preferred for distribution",
+        "Install the complete sibling bundle through native plugin managers",
         "Use explicit $skill invocation"
       ],
       "provenance": "Integration research lane; findings relayed by coordinator; packaging lane verification"

@@ -1,7 +1,7 @@
 Uni learning suite
 Copyright (c) 2026 Kyle Puhger
 
-Original Uni instructions, reference summaries, installation code, and checks are
+Original Uni instructions and reference summaries are
 provided under the MIT License:
 
 Permission is hereby granted, free of charge, to any person obtaining a copy
@@ -29,5 +29,6 @@ No copyrighted book, paper, or full web-documentation text is bundled.
 Historical inspiration and practitioner protocols are identified as such;
 Feynman's What Is Science? is not attributed a standardized four-step method.
 
-The standalone skills/teach package has its own upstream NOTICE and was not
-copied into Uni.
+The bundled skills/teach workflow and templates are derived from Matt Pocock's
+skills repository under the MIT License. Its separate copyright and permission
+notice are preserved in skills/teach/NOTICE and apply to that material.

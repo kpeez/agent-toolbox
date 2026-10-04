@@ -60,17 +60,19 @@ npx skills@latest add kpeez/agent-toolbox
 This installs editable skills only. Plugin agents still require a
 plugin installation.
 
-### Standalone teaching skill
+### Teaching workspace
 
-[`teach`](skills/teach/SKILL.md) is an editable, standalone skill, not part of
-SWE or Lab. It retains the teaching workflow and four format templates from
-the earlier unpackaged skill, with [upstream attribution](skills/teach/NOTICE).
+Uni includes [`teach`](plugins/uni/skills/teach/SKILL.md) for a persistent
+learning workspace with HTML lessons, references, a mission, and learning
+records. It preserves the original workflow and four format templates, with
+[upstream attribution](plugins/uni/skills/teach/NOTICE). Use `learn` for
+conversational tutoring and explicitly invoke `teach` to author a learning
+workspace: `$uni:teach` in Codex or `/uni:teach` in Claude Code.
 
-For a new Codex installation, link `skills/teach` from this checkout into
-`~/.agents/skills/teach`. Existing `~/.codex/skills/teach` links to this checkout
-also work. Invoke it explicitly with `$teach` in the workspace where you want
-to learn. It does not activate implicitly. If it does not appear in the skill
-selector after restoring or linking it, start a fresh Codex session.
+An earlier installation may have a `~/.codex/skills/teach` or
+`~/.agents/skills/teach` symlink to this repository's former `skills/teach`
+directory. After updating Uni, remove that legacy symlink to avoid duplicate
+discovery. Preserve any independently edited skill directory.
 
 ## Delegation
 
@@ -115,8 +117,8 @@ reference figures those notes embed.
 
 - `plugins/swe/` — SWE skills, agents, and the plan-sync hook.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
-- `plugins/uni/` — tutoring skills, concept exercises, and research notes.
-- `skills/teach/` — standalone teaching workflow and format templates.
+- `plugins/uni/` — tutoring skills, the teaching workspace workflow, templates,
+  concept exercises, and research notes.
 - `claude-mods/<mod>/` — Claude Code function-hook mods, one plugin per mod,
   listed in the Claude catalog only.
 - `.claude-plugin/marketplace.json` — Claude marketplace catalog.

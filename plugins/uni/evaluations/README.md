@@ -19,10 +19,11 @@ rubrics, and written review. Record generator and reviewer independence.
 Explicit loading, automatic discovery, model behavior, and learning efficacy
 are separate claims. Uni has no persistence or scheduling runtime to evaluate.
 
-The unchanged permanent checks protect public packaging and safe copied
-installation. Their oracles are repository manifest/resource invariants and
-the installer's non-overwrite contract. They were observed failing under
-disposable-package mutations during the original review.
+Version `0.1.2` uses native plugin installation and retires the custom
+skill-copy installer and its tests. Release checks still verify provider
+versions, catalog and hook JSON, and bundled resource references. The earlier
+installer tests and their deliberate failures remain historical evidence in
+the original review; they are not a current plugin capability.
 
 ## Historical evidence
 

@@ -1,6 +1,7 @@
 # Uni
 
-Uni is a coherent tutor with eight reusable skills. It helps the learner
+Uni bundles eight conversational tutoring skills and a teaching workspace
+skill. It helps the learner
 reconstruct an idea, criticize an argument, explain a mechanism, practice
 retrieval and transfer through questions, active recall, and concept exercises.
 These are part of normal lessons. The tutor asks one main
@@ -32,45 +33,26 @@ If the marketplace is already configured, refresh it before installing with
 `claude plugin marketplace update agent-toolbox`. Start a fresh session after
 installation. Codex invocation uses `$learn`; Claude Code uses `/uni:learn`.
 
-## Optional project-local skill copy
+Uni `0.1.2` installs all nine skills through the native plugin manager. Shared
+references stay inside the plugin; no separate installer or runtime is needed.
+If you previously copied the chat skills into a project, preserve any edits
+before removing those copies to avoid duplicate discovery.
 
-Install all eight sibling directories together. Their shared references use
-relative paths to the shared material in `learn/`. Copying one skill alone produces
-an incomplete installation.
-
-The supported Codex layout is `<project>/.agents/skills/<name>/SKILL.md`.
-Codex also supports symlinked skill folders; plugins are preferred for bundle
-distribution. See the [official skills documentation](https://learn.chatgpt.com/docs/build-skills).
-The manifests and local catalogs package this checkout as `uni` version `0.1.1`.
-
-From the `agent-toolbox` checkout, use Nushell to copy the whole skill set into
-an existing project:
-
-```nu
-nu plugins/uni/scripts/install.nu /absolute/path/to/your-project
-```
-
-The installer requires an explicit project path. It refuses existing Uni skill
-names, including symlinks, before copying. It preserves other skills. It requires
-Nushell only for installation; the installed tutor does not depend on Nushell.
-Start Codex in that project. If the skills do not appear, restart Codex. Avoid
-installing both a direct skill copy and the plugin in the same scope: duplicate
-names can appear separately in the selector.
-
-Plugin-capable hosts can use the complete `plugins/uni` bundle through their
-local-plugin workflow. Publication and actual host activation are separate from
-the checked-in packaging and clean-copy verification. The existing standalone
-[`teach`](../../skills/teach/SKILL.md) remains a separate skill.
+`teach` was previously a standalone skill. After updating Uni, remove only a
+legacy `~/.codex/skills/teach` or `~/.agents/skills/teach` symlink that points to
+the former repository path. Preserve independently edited directories. Its
+workflow, templates, upstream license, and explicit-only invocation are intact.
 
 ## Invoke the tutor
 
 In Codex, mention the skill with `$`; use the selector if needed. These prompts
-work with the documented complete local copy:
+work with the installed plugin:
 
 ```text
 $learn Help me discover why gradient descent is useful. I know derivatives and have 25 minutes.
 $learn-feynman Test my understanding of Bayesian updating. Ask me to explain first.
 $learn-review Drill the concepts from our last lesson for ten minutes, one question at a time.
+$uni:teach Build a learning workspace with short HTML lessons about linear algebra.
 ```
 
 | Skill | Use |
@@ -83,6 +65,7 @@ $learn-review Drill the concepts from our last lesson for ten minutes, one quest
 | `learn-quiz` | Ask and grade one source-grounded retrieval question at a time |
 | `learn-review` | Revisit selected or recent concepts through chat drills |
 | `learn-transfer` | Select and apply a method in a new situation |
+| `teach` | Author a persistent learning workspace with HTML lessons and reusable references; invoke explicitly |
 
 Start with the umbrella skill unless a particular exercise is already clear.
 Lessons mix explanation with purposeful questions and exercises: predict an
@@ -94,6 +77,12 @@ next exercise.
 At the end, a brief synthesis or optional chat handoff summary can help you
 continue later. `learn-review` revisits concepts you choose or material already
 encountered in the chat. Anki handles long-term review outside Uni.
+
+Use `teach` when you want lesson files and a persistent learning workspace.
+It maintains a mission, learning records, source list, glossary, and reusable
+lesson assets. Invoke it explicitly with `$uni:teach` in Codex or `/uni:teach`
+in Claude Code. Its workspace-authoring workflow is separate from the chat
+tutor's one-question-at-a-time interaction.
 
 ## Conversation scope
 
@@ -124,7 +113,7 @@ Exposure, helped performance, independent performance, delayed recall, and
 transfer remain separate evidence. The two-stalled-attempt escalation default
 is an engineering choice.
 
-Packaging checks verify the bundle and installer. The
+Release checks verify paired manifests, catalogs, and bundled references. The
 [held-out evaluation guide](evaluations/README.md) distinguishes next-turn
 behavior checks, simulated examples, actual host activation, and educational
 efficacy. Check the retained evaluation
@@ -134,8 +123,9 @@ ignored `artifacts/uni-build/` directory; they are not distributed with the plug
 
 ## Files
 
-- `skills/*/SKILL.md`: eight operational entry points and UI metadata.
+- `skills/*/SKILL.md`: nine operational entry points and UI metadata.
 - `skills/learn/references/`: shared contract, examples, and evidence notes.
-- `tests/` and `evaluations/`: packaging and behavioral verification.
-- `scripts/install.nu`: explicit-target, non-overwriting local installer.
+- `skills/teach/`: workspace-authoring workflow, four format templates, and
+  upstream license.
+- `evaluations/`: behavioral scenarios, rubrics, and historical review.
 - `NOTICE`: original-material license and source attribution.
