@@ -1,0 +1,3 @@
+interface:
+  display_name: "Retrieve and diagnose"
+  short_description: "Answer one checked question at a time"

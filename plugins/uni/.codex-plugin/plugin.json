@@ -1,0 +1,20 @@
+{
+  "name": "uni",
+  "description": "Interactive lessons with questions, active recall, and concept exercises",
+  "version": "0.1.1",
+  "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": ["learning", "tutoring", "active-recall", "exercises", "understanding"],
+  "skills": "./skills/",
+  "interface": {
+    "displayName": "uni",
+    "shortDescription": "Lessons with questions, recall, and concept exercises.",
+    "longDescription": "Help the learner understand ideas through explanations, their own answers, active recall, worked examples, and exercises that probe and deepen concepts.",
+    "developerName": "kpeez",
+    "category": "Productivity",
+    "defaultPrompt": ["Teach me this topic with questions and exercises.", "Ask me to explain this concept from memory.", "Drill the concepts we just covered, one question at a time."],
+    "brandColor": "#166534"
+  }
+}
