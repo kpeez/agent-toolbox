@@ -4,6 +4,9 @@ datasets/
 .agents/docs
 .agents/skills/
 
+# Type declarations Claude Code writes when it loads a mod
+claude-mods/*/.claude-plugin/types/
+
 # Editor noise
 .vscode/
 .cursor/
