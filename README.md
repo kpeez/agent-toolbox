@@ -9,6 +9,12 @@
 - **Uni** — interactive lessons with questions, active recall, and exercises
   that deepen understanding. See [Uni installation and usage](plugins/uni/README.md).
 
+It also provides Claude Code-only mods under `claude-mods/`:
+
+- **activity** — a live pane of the session's tool calls, with durations and
+  failures. Install it with `claude plugin install activity@agent-toolbox`,
+  then run `/activity` to open it.
+
 SWE treats the merged pull request and the code as the record. Large work can
 start from a short [plan](plugins/swe/skills/write-plan/SKILL.md) that hands off
 to a fresh session, with configured mirroring for Linear-linked plans. Its
@@ -111,13 +117,15 @@ reference figures those notes embed.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
 - `plugins/uni/` — tutoring skills, concept exercises, and research notes.
 - `skills/teach/` — standalone teaching workflow and format templates.
+- `claude-mods/<mod>/` — Claude Code function-hook mods, one plugin per mod,
+  listed in the Claude catalog only.
 - `.claude-plugin/marketplace.json` — Claude marketplace catalog.
 - `.agents/plugins/marketplace.json` — Codex marketplace catalog.
 
 ## Versioning
 
 Update each plugin's version manually in both manifests, and keep the values
-identical:
+identical (a mod under `claude-mods/` has the Claude manifest only):
 
 - `plugins/<plugin>/.claude-plugin/plugin.json`
 - `plugins/<plugin>/.codex-plugin/plugin.json`

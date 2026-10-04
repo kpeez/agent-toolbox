@@ -17,6 +17,10 @@
     {
       "name": "uni",
       "source": "./plugins/uni"
+    },
+    {
+      "name": "activity",
+      "source": "./claude-mods/activity"
     }
   ]
 }
