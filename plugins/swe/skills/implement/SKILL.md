@@ -21,7 +21,7 @@ Within an authorized task, replace a past choice when justified and explain why
 in the result; the ADR alone does not require another approval. Changes to an
 explicit requirement or approved plan design, or work outside the task's scope,
 still need the applicable approval. Preserve the earlier rationale and record
-the replacement when project-document updates are in scope, using
+the replacement in affected documentation, using
 [decision history](../sharpen/ADR-FORMAT.md).
 
 ## Contract
@@ -39,6 +39,15 @@ the replacement when project-document updates are in scope, using
    diagnosis and correction when that can resolve the failure. Report unrelated
    baseline failures without silently fixing unrelated code.
 4. Report the change, evidence, verification, and unresolved concerns.
+
+## Documentation completion
+
+An authorized code or convention change includes updating documentation that
+it makes obsolete; do not ask separately. Find and update affected guidance in
+repository docs, READMEs, linked project or vault notes, tracker descriptions,
+and agent instructions. Follow each destination's authoring and access rules.
+Keep earlier rationale recognizable as history and make current guidance
+unambiguous. Report any affected documentation left stale and the reason.
 
 ## Plans and issues
 
