@@ -1,0 +1,728 @@
+{
+  "schema_version": 1,
+  "access_date": "2026-10-03",
+  "scope": "Research records, not endorsements of this combined AI tutor. Access levels describe what the construction team actually accessed. Source texts are not bundled.",
+  "sources": [
+    {
+      "id": "toeplitz-original",
+      "title": "Das Problem der Universitätsvorlesungen über Infinitesimalrechnung und ihrer Abgrenzung gegenüber der Infinitesimalrechnung an den höheren Schulen",
+      "authors": [
+        "Otto Toeplitz"
+      ],
+      "year": 1927,
+      "urls": [
+        "https://eudml.org/doc/145749",
+        "https://www.digizeitschriften.de/dms/img/?PID=GDZPPN002127989",
+        "https://www.rheinische-geschichte.lvr.de/Persoenlichkeiten/otto-toeplitz/DE-2086/lido/5f0d6c8629f333.82381110"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Bibliographic record only. EuDML returned 403; archive scan was not fetchable. LVR biography corroborates Jahresbericht DMV 36, 88–100.",
+      "source_type": "Historical proposal",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#historical-methods",
+      "design_decisions": [
+        "Motivate an idea through an approachable originating problem",
+        "Label modern reconstruction separately from documented history"
+      ],
+      "provenance": "Historical-methods research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "toeplitz-translation",
+      "title": "The Problem of University Courses on Infinitesimal Calculus and Their Demarcation from Infinitesimal Calculus in High Schools",
+      "authors": [
+        "Otto Toeplitz",
+        "Michael N. Fried (translator)",
+        "Hans Niels Jahnke (translator)"
+      ],
+      "year": 2015,
+      "urls": [
+        "https://doi.org/10.1017/S0269889715000071"
+      ],
+      "doi": "10.1017/S0269889715000071",
+      "access_date": "2026-10-03",
+      "access_level": "Publisher excerpt and metadata only; PDF route led to abstract. Science in Context 28(2), 297–310; published online 2015-05-21.",
+      "source_type": "Historical translation",
+      "rights_license": "Copyright Cambridge University Press 2015; no open license verified.",
+      "local_notes": "research-notes.md#historical-methods",
+      "design_decisions": [
+        "Treat the genetic approach as pedagogical reconstruction, not an efficacy experiment"
+      ],
+      "provenance": "Historical-methods research lane; findings relayed by coordinator",
+      "edition_consulted": "2015 English translation of a lecture delivered 1926-09-24; original article published 1927"
+    },
+    {
+      "id": "toeplitz-calculus",
+      "title": "The Calculus: A Genetic Approach",
+      "authors": [
+        "Otto Toeplitz",
+        "Gottfried Köthe (editor)",
+        "Luise Lange (translator)"
+      ],
+      "year": 1963,
+      "urls": [
+        "https://press.uchicago.edu/ucp/books/book/chicago/C/bo5485725.html"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Publisher catalog and table of contents. Researcher also opened a third-party 206-page scan; authorized reuse was not established and it is not bundled or treated as a verified authorized full-text copy.",
+      "source_type": "Pedagogical book",
+      "rights_license": "Book copyright 1963; foreword copyright 2007; all rights reserved.",
+      "local_notes": "research-notes.md#historical-methods",
+      "design_decisions": [
+        "Use concrete problems and compare possible formalizations",
+        "Do not imply a modern concept was inevitable"
+      ],
+      "provenance": "Historical-methods research lane; findings relayed by coordinator",
+      "edition_consulted": "1963 English edition, 2007 reissue with David Bressoud foreword; 1963 is not the first German publication"
+    },
+    {
+      "id": "lakatos-proofs-refutations",
+      "title": "Proofs and Refutations: The Logic of Mathematical Discovery",
+      "authors": [
+        "Imre Lakatos",
+        "John Worrall (editor)",
+        "Elie Zahar (editor)"
+      ],
+      "year": 1976,
+      "urls": [
+        "https://www.cambridge.org/core/books/proofs-and-refutations/A11138AE31DB52797A6E4C3F1856E1CB",
+        "https://assets.cambridge.org/97811071/13466/copyright/9781107113466_copyright_info.pdf",
+        "https://www.cambridge.org/core/books/abs/proofs-and-refutations/preface-to-this-edition/5EBD6238A6AB4050D394124CC208C0C0"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "2015 reissue catalog, copyright/frontmatter PDF and preface summary; full dialogue not accessed. Frontmatter verifies original 1976 publication.",
+      "source_type": "Historical and philosophical proposal",
+      "rights_license": "Copyright Cambridge University Press 1976; copyright reserved; consulted edition 2015.",
+      "local_notes": "research-notes.md#historical-methods",
+      "design_decisions": [
+        "Localize failed premises and repair statements or proofs",
+        "Distinguish false conclusion from flawed proof",
+        "Distinguish counterexamples from noisy empirical anomalies"
+      ],
+      "provenance": "Historical-methods research lane; findings relayed by coordinator",
+      "edition_consulted": "Cambridge Philosophy Classics 2015; ISBN 9781107113466 / 9781107534056"
+    },
+    {
+      "id": "feynman-what-is-science",
+      "title": "What Is Science?",
+      "authors": [
+        "Richard P. Feynman"
+      ],
+      "year": 1969,
+      "urls": [
+        "https://feynman.com/science/what-is-science/",
+        "https://doi.org/10.1119/1.2351388",
+        "https://www.aapt.org/Resources/RichardFeynman_100.cfm"
+      ],
+      "doi": "10.1119/1.2351388",
+      "access_date": "2026-10-03",
+      "access_level": "Full authorized web transcription; DOI route unavailable; AAPT page corroborates talk/publication. 1966 talk published The Physics Teacher 7(6), 313–320 in 1969.",
+      "source_type": "Primary speech / personal account",
+      "rights_license": "Transcription presented by permission; no open reuse license identified.",
+      "local_notes": "research-notes.md#historical-methods",
+      "design_decisions": [
+        "Ask for mechanisms beyond terminology",
+        "Do not attribute a standardized four-step protocol to this essay"
+      ],
+      "provenance": "Historical-methods research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "young-feynman-technique",
+      "title": "Learn Faster with the Feynman Technique",
+      "authors": [
+        "Scott H. Young"
+      ],
+      "year": 2011,
+      "urls": [
+        "https://www.scotthyoung.com/blog/2011/09/01/learn-faster/",
+        "https://www.scotthyoung.com/learnonsteroids/learnfast.html",
+        "https://www.scotthyoung.com/learnonsteroids/grab/TranscriptFeynman.pdf"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full 2011-09-01 announcement, linked protocol page, and two-page transcript accessed.",
+      "source_type": "Practitioner protocol",
+      "rights_license": "Scott Young copyright 2009 footer, all rights reserved; no open license.",
+      "local_notes": "research-notes.md#historical-methods",
+      "design_decisions": [
+        "Learner explains, identifies gaps, consults sources, and revises",
+        "Do not infer Feynman authored the exact protocol or promise speed gains"
+      ],
+      "provenance": "Historical-methods research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "dunlosky-learning-techniques",
+      "title": "Improving Students' Learning With Effective Learning Techniques",
+      "authors": [
+        "John Dunlosky",
+        "Katherine A. Rawson",
+        "Elizabeth J. Marsh",
+        "Mitchell J. Nathan",
+        "Daniel T. Willingham"
+      ],
+      "year": 2013,
+      "urls": [
+        "https://doi.org/10.1177/1529100612453266",
+        "https://www.psychologicalscience.org/publications/journals/pspi/learning-techniques.html"
+      ],
+      "doi": "10.1177/1529100612453266",
+      "access_date": "2026-10-03",
+      "access_level": "Full publisher HTML; companion APS page is a starting/provenance link.",
+      "source_type": "Research synthesis",
+      "rights_license": "Author copyright 2013 and publisher permissions; no open license verified.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Prioritize retrieval and distribution",
+        "Use self-explanation selectively rather than assuming every prompt helps"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "alfieri-discovery",
+      "title": "Does Discovery-Based Instruction Enhance Learning?",
+      "authors": [
+        "Louis Alfieri",
+        "Patricia J. Brooks",
+        "Naomi J. Aldrich",
+        "Harriet R. Tenenbaum"
+      ],
+      "year": 2011,
+      "urls": [
+        "https://doi.org/10.1037/a0021017",
+        "https://openresearch.surrey.ac.uk/esploro/outputs/journalArticle/Does-Discovery-Based-Instruction-Enhance-Learning/99515521902346",
+        "https://www.fisme.science.uu.nl/publicaties/literatuur/2011_alfieri_discovery_learning.pdf"
+      ],
+      "doi": "10.1037/a0021017",
+      "access_date": "2026-10-03",
+      "access_level": "Full 18-page manuscript; Surrey institutional record labels open access.",
+      "source_type": "Meta-analysis",
+      "rights_license": "APA copyright; no reuse license verified despite repository access.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Use assisted discovery",
+        "Provide explicit instruction when prerequisites or progress are missing"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "sinha-kapur-productive-failure",
+      "title": "When Problem Solving Followed by Instruction Works: Evidence for Productive Failure",
+      "authors": [
+        "Tanmay Sinha",
+        "Manu Kapur"
+      ],
+      "year": 2021,
+      "urls": [
+        "https://journals.sagepub.com/doi/full/10.3102/00346543211019105"
+      ],
+      "doi": "10.3102/00346543211019105",
+      "access_date": "2026-10-03",
+      "access_level": "Full SAGE HTML.",
+      "source_type": "Research synthesis / meta-analysis",
+      "rights_license": "Open access observed; exact license not verified; source text not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Bound attempts and explicitly consolidate",
+        "Connect unsuccessful attempts to the correct method; struggle alone is not a learning outcome"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "chi-self-explanation",
+      "title": "Self-Explanations: How Students Study and Use Examples in Learning to Solve Problems",
+      "authors": [
+        "Michelene T. H. Chi",
+        "Miriam Bassok",
+        "Matthew W. Lewis",
+        "Peter Reimann",
+        "Robert Glaser"
+      ],
+      "year": 1989,
+      "urls": [
+        "https://doi.org/10.1207/s15516709cog1302_1",
+        "https://education.asu.edu/lcl/publications/chi-m-t-h-bassok-m-lewis-m-reimann-p-glaser-r-1989-self-explanations-how-students"
+      ],
+      "doi": "10.1207/s15516709cog1302_1",
+      "access_date": "2026-10-03",
+      "access_level": "Full 20-page PDF through ASU publication page.",
+      "source_type": "Empirical study",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Ask why selected example steps are valid",
+        "Do not equate fluent narration with independent understanding"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "karpicke-blunt-retrieval",
+      "title": "Retrieval Practice Produces More Learning than Elaborative Studying with Concept Mapping",
+      "authors": [
+        "Jeffrey D. Karpicke",
+        "Janell R. Blunt"
+      ],
+      "year": 2011,
+      "urls": [
+        "https://doi.org/10.1126/science.1199327",
+        "https://learninglab.psych.purdue.edu/downloads/2011/2011_Karpicke_Blunt_Science.pdf"
+      ],
+      "doi": "10.1126/science.1199327",
+      "access_date": "2026-10-03",
+      "access_level": "Full five-page author-hosted PDF.",
+      "source_type": "Experimental study",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Use retrieval with corrective feedback",
+        "Measure transfer separately from recall"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "cepeda-spacing",
+      "title": "Spacing Effects in Learning: A Temporal Ridgeline of Optimal Retention",
+      "authors": [
+        "Nicholas J. Cepeda",
+        "Edward Vul",
+        "Doug Rohrer",
+        "John T. Wixted",
+        "Harold Pashler"
+      ],
+      "year": 2008,
+      "urls": [
+        "https://doi.org/10.1111/j.1467-9280.2008.02209.x"
+      ],
+      "doi": "10.1111/j.1467-9280.2008.02209.x",
+      "access_date": "2026-10-03",
+      "access_level": "Abstract and metadata only; publisher full text restricted.",
+      "source_type": "Experimental study",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Keep long-term scheduling outside Uni; gaps depend on retention goals",
+        "Do not assert universal intervals"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "rawson-successive-relearning",
+      "title": "The Power of Successive Relearning",
+      "authors": [
+        "Katherine A. Rawson",
+        "John Dunlosky",
+        "Sarah M. Sciartelli"
+      ],
+      "year": 2013,
+      "urls": [
+        "https://link.springer.com/article/10.1007/s10648-013-9240-4"
+      ],
+      "doi": "10.1007/s10648-013-9240-4",
+      "access_date": "2026-10-03",
+      "access_level": "Abstract and metadata only.",
+      "source_type": "Research review",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Revisit selected targets across sessions rather than a single successful repetition"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "rawson-dunlosky-successive-relearning",
+      "title": "Successive Relearning: An Underexplored but Potent Technique for Obtaining and Maintaining Knowledge",
+      "authors": [
+        "Katherine A. Rawson",
+        "John Dunlosky"
+      ],
+      "year": 2022,
+      "urls": [
+        "https://journals.sagepub.com/doi/full/10.1177/09637214221100484"
+      ],
+      "doi": "10.1177/09637214221100484",
+      "access_date": "2026-10-03",
+      "access_level": "Full SAGE HTML.",
+      "source_type": "Research synthesis",
+      "rights_license": "Author copyright and publisher permissions; no open license verified.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Use repeated successful retrieval across sessions",
+        "Do not treat immediate copied corrections as delayed retention"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "rohrer-taylor-interleaving",
+      "title": "The Shuffling of Mathematics Problems Improves Learning",
+      "authors": [
+        "Doug Rohrer",
+        "Kelli Taylor"
+      ],
+      "year": 2007,
+      "urls": [
+        "https://link.springer.com/article/10.1007/s11251-007-9015-8"
+      ],
+      "doi": "10.1007/s11251-007-9015-8",
+      "access_date": "2026-10-03",
+      "access_level": "Abstract and metadata only; subscription full text.",
+      "source_type": "Experimental study",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Mix related problem types when method selection matters"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "lazonder-harmsen-guidance",
+      "title": "Meta-Analysis of Inquiry-Based Learning: Effects of Guidance",
+      "authors": [
+        "Ard W. Lazonder",
+        "Ruth Harmsen"
+      ],
+      "year": 2016,
+      "urls": [
+        "https://doi.org/10.3102/0034654315627366",
+        "https://pure.rug.nl/ws/files/81069469/Meta_analysis_of_inquiry_based_learning_Effects_of_guidance.pdf"
+      ],
+      "doi": "10.3102/0034654315627366",
+      "access_date": "2026-10-03",
+      "access_level": "Full 39-page institutional PDF including cover; coordinator independently accessed the retained URL.",
+      "source_type": "Meta-analysis",
+      "rights_license": "Copyright AERA 2016. Repository cover limits reuse to personal use absent permission or an applicable open license; Taverne terms may apply. Do not distribute the PDF.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Adapt guidance to task and observed knowledge",
+        "Do not prescribe one universal guidance type for all ages"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "wisniewski-feedback",
+      "title": "The Power of Feedback Revisited: A Meta-Analysis of Educational Feedback Research",
+      "authors": [
+        "Benedikt Wisniewski",
+        "Klaus Zierer",
+        "John Hattie"
+      ],
+      "year": 2020,
+      "urls": [
+        "https://doi.org/10.3389/fpsyg.2019.03087"
+      ],
+      "doi": "10.3389/fpsyg.2019.03087",
+      "access_date": "2026-10-03",
+      "access_level": "Abstract and full-text material in indexed search results; no direct full publisher-page access confirmed.",
+      "source_type": "Meta-analysis",
+      "rights_license": "CC BY reported by research lane; source text not redistributed.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Give information about the specific error and next action",
+        "Do not equate generic praise with informative feedback"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "pan-rickard-transfer",
+      "title": "Transfer of Test-Enhanced Learning: Meta-Analytic Review and Synthesis",
+      "authors": [
+        "Steven C. Pan",
+        "Timothy C. Rickard"
+      ],
+      "year": 2018,
+      "urls": [
+        "https://doi.org/10.1037/bul0000151"
+      ],
+      "doi": "10.1037/bul0000151",
+      "access_date": "2026-10-03",
+      "access_level": "PubMed abstract only.",
+      "source_type": "Meta-analysis",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Test new applications directly",
+        "Do not promise broad transfer from a retrieval score"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "brunmair-richter-interleaving",
+      "title": "Similarity Matters: A Meta-Analysis of Interleaved Learning and Its Moderators",
+      "authors": [
+        "Matthias Brunmair",
+        "Tobias Richter"
+      ],
+      "year": 2019,
+      "urls": [
+        "https://doi.org/10.1037/bul0000209"
+      ],
+      "doi": "10.1037/bul0000209",
+      "access_date": "2026-10-03",
+      "access_level": "PubMed abstract only.",
+      "source_type": "Meta-analysis",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Interleave to distinguish related categories or methods",
+        "Avoid universal interleaving claims across materials"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "barbieri-worked-examples",
+      "title": "A Meta-Analysis of the Worked Examples Effect on Mathematics Performance",
+      "authors": [
+        "Christina A. Barbieri",
+        "Dana Miller-Cotto",
+        "S. N. Clerjuste",
+        "K. Chawla"
+      ],
+      "year": 2023,
+      "urls": [
+        "https://doi.org/10.1007/s10648-023-09745-1",
+        "https://www.danamillercotto.com/uploads/4/7/7/2/47725475/barbieri_et_al__2023__we_meta-analysis.pdf"
+      ],
+      "doi": "10.1007/s10648-023-09745-1",
+      "access_date": "2026-10-03",
+      "access_level": "Full 33-page author-hosted PDF; coordinator independently accessed the retained URL.",
+      "source_type": "Meta-analysis",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Use correct small examples before fading",
+        "Ask targeted explanations rather than narration for every step"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "tetzlaff-expertise-reversal",
+      "title": "A cornerstone of adaptivity. A meta-analysis of the expertise reversal effect.",
+      "authors": [
+        "Leonard Tetzlaff",
+        "Bianca Simonsmeier",
+        "Tabea Peters",
+        "Garvin Brod"
+      ],
+      "year": 2025,
+      "urls": [
+        "https://doi.org/10.1016/j.learninstruc.2025.102142",
+        "https://www.pedocs.de/frontdoor.php?source_opus=34113"
+      ],
+      "doi": "10.1016/j.learninstruc.2025.102142",
+      "access_date": "2026-10-03",
+      "access_level": "Full article and abstract reported by research lane; institutional metadata/abstract independently checked by reviewer. DOI title uses a dash between clauses; registry title follows the institutional record.",
+      "source_type": "Meta-analysis",
+      "rights_license": "Open access and Creative Commons observed; exact license variant not verified.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Fade support after demonstrated knowledge and restore it after difficulty"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "miller-cotto-fading",
+      "title": "Does working memory moderate the effect of fading on math performance?",
+      "authors": [
+        "Dana Miller-Cotto",
+        "Josh Medrano"
+      ],
+      "year": 2026,
+      "urls": [
+        "https://doi.org/10.1111/bjep.12781",
+        "https://bpspsychub.onlinelibrary.wiley.com/doi/10.1111/bjep.12781"
+      ],
+      "doi": "10.1111/bjep.12781",
+      "access_date": "2026-10-03",
+      "access_level": "Full publisher HTML; independently rechecked by packaging lane. March 2026 issue, first published 2025-05-06. Abstract and discussion give inconsistent statements about prior-knowledge moderation; no firm moderator claim is used.",
+      "source_type": "Experimental study",
+      "rights_license": "No open reuse license verified. Link and summarize in original words; source text is not bundled.",
+      "local_notes": "research-notes.md#learning-science",
+      "design_decisions": [
+        "Use reversible fading as a tested local strategy, not a guaranteed general effect"
+      ],
+      "provenance": "Learning-science research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "supermemo-knowledge-rules",
+      "title": "Twenty Rules of Formulating Knowledge",
+      "authors": [
+        "Piotr Wozniak"
+      ],
+      "year": null,
+      "urls": [
+        "https://www.super-memory.com/articles/20rules.htm"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full practitioner page; original publication year not verified.",
+      "source_type": "Practitioner guidance",
+      "rights_license": "SuperMemo/author copyright; no reuse license identified.",
+      "local_notes": "research-notes.md#retention-and-implementation",
+      "design_decisions": [
+        "Make selected items answerable, meaningful and limited in scope",
+        "Repair ambiguous questions rather than drilling them unchanged"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "anki-fsrs",
+      "title": "Deck Options: FSRS",
+      "authors": [
+        "Anki maintainers"
+      ],
+      "year": null,
+      "urls": [
+        "https://docs.ankiweb.net/deck-options.html#fsrs"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full relevant documentation sections.",
+      "source_type": "First-party technical documentation",
+      "rights_license": "Documentation reuse license not apparent in accessed sections; link and paraphrase.",
+      "local_notes": "research-notes.md#retention-and-implementation",
+      "current_use": "Unused background from the earlier retention design; no scheduler or retention target in Uni.",
+      "historical_design_decisions": [
+        "Hard means successful recall with difficulty; Again means forgotten",
+        "Expose target retention and workload tradeoff"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "anki-text-import",
+      "title": "Text Files",
+      "authors": [
+        "Anki maintainers"
+      ],
+      "year": null,
+      "urls": [
+        "https://docs.ankiweb.net/importing/text-files.html"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full relevant import documentation.",
+      "source_type": "First-party technical documentation",
+      "rights_license": "Documentation reuse license not apparent in accessed sections; link and paraphrase.",
+      "local_notes": "research-notes.md#retention-and-implementation",
+      "current_use": "Unused background from the earlier export proposal; no Anki integration in Uni.",
+      "historical_design_decisions": [
+        "Export UTF-8 card content with tags and sources",
+        "Do not imply scheduling history transfers with text import"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "python-fsrs",
+      "title": "py-fsrs",
+      "authors": [
+        "Open Spaced Repetition maintainers"
+      ],
+      "year": 2026,
+      "urls": [
+        "https://github.com/open-spaced-repetition/py-fsrs",
+        "https://pypi.org/project/fsrs/"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full maintainer README and PyPI metadata; pinned fsrs 6.3.2 released 2026-08-09, requires Python >=3.10.",
+      "source_type": "Maintained implementation / technical documentation",
+      "rights_license": "MIT; previously considered as a dependency, not vendored or required by the current suite.",
+      "local_notes": "research-notes.md#retention-and-implementation",
+      "current_use": "Unused background from the earlier retention design; no runtime dependency in Uni.",
+      "historical_design_decisions": [
+        "Use maintained FSRS implementation and versioned serialized state",
+        "No silent heuristic replacement"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator",
+      "version_consulted": "6.3.2"
+    },
+    {
+      "id": "codex-skills",
+      "title": "Build Skills",
+      "authors": [
+        "OpenAI"
+      ],
+      "year": null,
+      "urls": [
+        "https://developers.openai.com/codex/skills/",
+        "https://learn.chatgpt.com/docs/build-skills"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full relevant official sections; starting URL redirects to ChatGPT Learn. Independently rechecked by packaging lane.",
+      "source_type": "First-party technical documentation",
+      "rights_license": "No documentation reuse license established; links and original summaries only.",
+      "local_notes": "research-notes.md#skill-integration",
+      "design_decisions": [
+        "Use repository .agents/skills and valid SKILL.md frontmatter",
+        "Copy all sibling skills together; plugins preferred for distribution",
+        "Use explicit $skill invocation"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator; packaging lane verification"
+    },
+    {
+      "id": "codex-subagents",
+      "title": "Subagents",
+      "authors": [
+        "OpenAI"
+      ],
+      "year": null,
+      "urls": [
+        "https://developers.openai.com/codex/multi-agent/",
+        "https://learn.chatgpt.com/docs/agent-configuration/subagents"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full official page; starting URL redirects to current page.",
+      "source_type": "First-party technical documentation",
+      "rights_license": "No reuse license established; links and original summaries only.",
+      "local_notes": "research-notes.md#skill-integration",
+      "design_decisions": [
+        "Use real host delegation during construction; no persona swarm in ordinary sessions"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "codex-agents-instructions",
+      "title": "AGENTS.md",
+      "authors": [
+        "OpenAI"
+      ],
+      "year": null,
+      "urls": [
+        "https://developers.openai.com/codex/guides/agents-md/",
+        "https://learn.chatgpt.com/docs/agent-configuration/agents-md"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full official page; starting URL redirects to current page.",
+      "source_type": "First-party technical documentation",
+      "rights_license": "No reuse license established; links and original summaries only.",
+      "local_notes": "research-notes.md#skill-integration",
+      "design_decisions": [
+        "Keep project instructions narrow and preserve ordinary coding behavior"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator"
+    },
+    {
+      "id": "agent-skills-specification",
+      "title": "Agent Skills Specification",
+      "authors": [
+        "Agent Skills contributors"
+      ],
+      "year": null,
+      "urls": [
+        "https://agentskills.io/specification"
+      ],
+      "doi": null,
+      "access_date": "2026-10-03",
+      "access_level": "Full specification.",
+      "source_type": "Technical specification",
+      "rights_license": "License not established in research handoff; no specification text redistributed.",
+      "local_notes": "research-notes.md#skill-integration",
+      "design_decisions": [
+        "Validate name and description metadata and relative bundled resources"
+      ],
+      "provenance": "Integration research lane; findings relayed by coordinator"
+    }
+  ]
+}

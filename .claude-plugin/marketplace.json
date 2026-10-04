@@ -13,6 +13,10 @@
     {
       "name": "swe",
       "source": "./plugins/swe"
+    },
+    {
+      "name": "uni",
+      "source": "./plugins/uni"
     }
   ]
 }
