@@ -1,0 +1,11 @@
+{
+  "name": "activity",
+  "description": "A live pane of this session's tool calls with durations and failures; open it with /activity",
+  "version": "0.1.0",
+  "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": ["claude-code-mod", "pane", "tool-calls"],
+  "types": "./types/index.d.ts"
+}
