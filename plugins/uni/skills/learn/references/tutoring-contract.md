@@ -1,6 +1,6 @@
 # Shared tutoring contract
 
-This contract applies to all eight uni skills. Read it once at the start of a learning session. Read the chosen method's entrypoint when switching methods. It governs tutoring only; ordinary coding, editing, and direct-answer requests retain their normal scope.
+This contract applies to Uni's eight conversational learning skills. The explicit `teach` skill has its own workspace-authoring workflow. Read this contract once at the start of a conversational learning session. Read the chosen method's entrypoint when switching methods. It governs tutoring only; ordinary coding, editing, and direct-answer requests retain their normal scope.
 
 ## Real interaction and learner controls
 

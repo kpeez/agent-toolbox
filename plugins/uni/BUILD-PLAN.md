@@ -2,11 +2,12 @@
 
 Current scope: interactive lessons that include questions, active recall, and
 exercises to deepen concepts. Package as the `uni` plugin for the Codex and
-Claude Code marketplaces. Preserve the standalone `teach` skill.
+Claude Code marketplaces. Bundle the existing `teach` workflow and templates
+without changing their content or explicit-only invocation policy.
 
 ## Decisions
 
-- Keep eight sibling skills and one shared tutoring contract. The umbrella
+- Keep eight conversational skills and one shared tutoring contract. The umbrella
   lesson uses the exercise types as needed; it does not require a fixed sequence.
 - Ask one meaningful question or task, wait for the learner, then give feedback
   and adapt. Explain directly when requested or when prerequisites are missing.
@@ -16,6 +17,9 @@ Claude Code marketplaces. Preserve the standalone `teach` skill.
 - Keep research sources with their access limits. Separate evidence for the
   instructional methods from untested claims about this combined AI tutor.
 - Use Luna for exploration and Sol for writing, testing, and independent review.
+- Include `teach` as a separate, explicit workspace-authoring entry point.
+- Use native plugin installation in both clients. No custom installer or
+  permanent test runner is needed; keep direct packaging checks at release.
 
 ## Scope correction
 
@@ -24,6 +28,10 @@ the scope was narrowed to questions, active recall, and exercises inside lessons
 with long-term review handled externally. This supersedes the retention utility
 design. The engine, storage contract, and engine-only tests are removed.
 Previous engine verification is historical evidence, not a current capability.
+
+On 2026-10-04, `teach` moved from its standalone repository folder into Uni.
+The optional skill-copy installer and its tests were retired. Version, catalog,
+and resource integrity remain release requirements.
 
 See [the build report](BUILD-REPORT.md) for current checks and limits. Generated
 run output stays in ignored `artifacts/uni-build/`; research notes contain

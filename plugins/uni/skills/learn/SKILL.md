@@ -5,7 +5,7 @@ description: Teach interactive lessons with questions, active recall, and exerci
 
 # Learn
 
-Read [the tutoring contract](references/tutoring-contract.md) before the first teaching turn. The eight uni skills install together; their sibling paths are required. Use one tutor voice, not a cast of agent personas.
+Read [the tutoring contract](references/tutoring-contract.md) before the first teaching turn. The eight conversational skills install together in Uni; their sibling paths are required. Use one tutor voice, not a cast of agent personas.
 
 ## Start and choose
 

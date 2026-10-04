@@ -1,31 +1,53 @@
 # Uni build verification
 
-Current local version: `0.1.1`, revised on 2026-10-03 to put questions, active
-recall, and concept exercises inside lessons. The separate SQLite/FSRS utility,
-storage contract, engine tests, and runtime dependencies were removed. Anki
-remains the learner's separate long-term review tool.
-
-Initial verification ran before publication and installation. It created no
-real learner records. The existing standalone `teach` skill is unchanged.
+Current version: `0.1.2`, revised on 2026-10-04 to bundle the existing `teach`
+workspace workflow and four format templates with the eight conversational
+skills. The moved files retain their content, upstream license, and
+explicit-only invocation policy. Long-term scheduling remains external.
 
 ## Current verification
 
-The unchanged packaging tests cover paired provider versions, real catalog
-paths, complete copied sibling resources, and refusal to overwrite existing
-skills. The engine-only tests were removed with their implementation. No new
-permanent tests are needed for the instruction-only scope correction.
+Native plugin installation replaces the optional custom skill-copy installer.
+The retired installer tests protected its copy and non-overwrite behavior;
+those contracts no longer belong to Uni. The hardcoded skill-count assertion
+did not protect useful behavior. The remaining packaging invariants are checked
+directly at release, without maintaining a Python test runner in this
+instruction-only plugin.
 
 Run the relevant offline checks from the repository root:
 
 ```nu
-with-env {PYTHONDONTWRITEBYTECODE: "1"} {
-    python -m unittest discover -s plugins/uni/tests -v
-}
 claude plugin validate plugins/uni
+claude plugin validate plugins/uni/skills
 claude plugin validate .claude-plugin/marketplace.json
 ```
 
-Observed results for this revision:
+Also parse both provider manifests, marketplace catalogs, and hooks as JSON.
+Check matching versions, valid catalog paths, one Uni entry per catalog, and
+bundled Markdown resource paths. Compare the moved `teach` files to their
+pre-move Git blobs. Validate installed component discovery separately from
+instruction correctness or educational outcomes.
+
+Observed `0.1.2` release results:
+
+- Native Claude validation passed for the plugin, all nine skills, and the
+  marketplace catalog.
+- Direct JSON checks passed for both catalogs, their plugin manifests and
+  hooks, paired provider versions, and Uni's catalog entries. The inherited
+  Claude-only mod entry follows the repository's current catalog rules.
+- All 46 local Markdown resource links resolve within the skill bundle.
+- All seven moved `teach` files match their pre-move Git blobs byte for byte.
+- Disposable provider-version and missing-template faults were both rejected
+  by the direct release checks. No production source was mutated.
+- The generic skill validator passes the eight conversational skills. It
+  rejects `teach`'s existing `argument-hint` and `disable-model-invocation`
+  metadata because its allowlist does not cover those native Claude fields;
+  native component validation passes them. The move preserves that metadata.
+
+Local release-check output and negative-control evidence are retained in
+ignored `artifacts/uni-teach-move/`. They are not part of the distributed plugin.
+
+## Recorded verification of version `0.1.1`
 
 - All three unchanged packaging and safe-installation tests passed.
 - All eight skill-creator validations passed.
@@ -38,7 +60,7 @@ Observed results for this revision:
   reviewer confirmed that scheduler references are historical only and that
   ordinary lessons include learner tasks and respect explanation/help controls.
 
-These are instruction/package checks. The revised behavioral scenarios have
+These were instruction/package checks. The revised behavioral scenarios have
 not been rerun through the earlier model-response evaluation harness.
 
 ## Historical evidence

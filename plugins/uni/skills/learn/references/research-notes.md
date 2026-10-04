@@ -201,10 +201,10 @@ export, or collection-management workflow.
 The [current OpenAI skills guide](https://learn.chatgpt.com/docs/build-skills)
 supports repository `.agents/skills`, follows symlink targets, and requires
 `name` and `description` frontmatter. Explicit Codex invocation uses `$skill`.
-It recommends plugins for reusable bundles. Therefore Uni ships eight sibling
-skills and the local installer copies all eight into one skill root. Shared
-references remain in that sibling layout. Restart the client if
-new skills do not appear; copied files alone do not establish live activation.
+It recommends plugins for reusable bundles. Uni ships eight conversational
+skills and the explicit teaching-workspace skill through native plugin
+installation. Shared references remain inside the plugin. Restart the client
+if new skills do not appear; installed files alone do not establish live activation.
 
 The [official subagent guidance](https://learn.chatgpt.com/docs/agent-configuration/subagents)
 informs construction delegation, not a requirement for multi-persona tutoring.
