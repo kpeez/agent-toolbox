@@ -21,6 +21,10 @@
     {
       "name": "activity",
       "source": "./claude-mods/activity"
+    },
+    {
+      "name": "subagents",
+      "source": "./claude-mods/subagents"
     }
   ]
 }
