@@ -14,6 +14,11 @@ It also provides Claude Code-only mods under `claude-mods/`:
 - **activity** — a live pane of the session's tool calls, with durations and
   failures. Install it with `claude plugin install activity@agent-toolbox`,
   then run `/activity` to open it.
+- **subagents** — an animated pane of the session's subagents: a Clawd sprite
+  per agent with its type, task, latest tool call, and elapsed time. It opens
+  when the first subagent starts, where the screen has room for a side pane.
+  Install it with
+  `claude plugin install subagents@agent-toolbox`; `/subagents` shows or hides it.
 
 SWE treats the merged pull request and the code as the record. Large work can
 start from a short [plan](plugins/swe/skills/write-plan/SKILL.md) that hands off
