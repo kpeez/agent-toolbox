@@ -13,6 +13,7 @@ Code pushes do not back up that storage.
 | Codex exec JSONL, CLI 0.159.2 | Separate command start/result and terminal turn records | The first control used an unavailable `cat` command and stopped. It proved neither a filesystem denial nor skill delivery. |
 | Claude stream JSON, CLI 2.1.286 | Native Read denied the outside canary; a subsequent result reconstructed the exact frozen skill bytes; the separate action Read started afterward | This is an explicit read control. It does not establish natural activation, complete injected context, effective effort or complete hook suppression. |
 | Claude metadata control channel | Initialization succeeded and returned twenty enabled plugin skill rows, including skills absent from the command menu | The checker stopped before hook inspection because optional pending-status fields were not accepted. Retained metadata cannot distinguish omission from malformed values in that historical reply. |
+| Corrected Claude metadata control, CLI 2.1.292 | Initialization and hook listing completed in 1.43 seconds; reported `allDisabled=true`, zero policy/listed hooks and zero validation errors | Omitted pending fields remain `not_reported` with null counts. This is observed metadata, not proof of every startup effect or complete hook suppression. |
 
 The Claude control reported the requested `claude-sonnet-5-5` model. Its effective
 low effort remains unknown. The Codex stream did not establish the served model
@@ -21,11 +22,13 @@ evidence only.
 
 ## Approved continuation and limits
 
-The shared reservation ledger records three consumed attempts out of eight.
-The current continuation authorizes correcting the optional-field checker,
-checking it offline, one short Claude hook-inspection follow-up, and a corrected
-Codex control using `/bin/cat`. Every startup consumes a new reservation; old
-attempts and failed gates remain immutable.
+The shared reservation ledger records four consumed attempts out of eight.
+The optional-field checker was corrected and checked offline; its single
+authorized Claude hook-inspection follow-up is complete and independently
+audited. A corrected Codex control using `/bin/cat` remains in preparation.
+Every startup consumes a new reservation; old attempts and failed gates remain
+immutable. The metadata follow-up retained one filtered result file and no raw
+stdout or stderr; its process group was verified gone.
 
 Use the approved exact models, `gpt-6.1-sol` low and `claude-sonnet-5-5` low.
 Runs are sequential, at most ninety seconds each, and subscription-only. No API
