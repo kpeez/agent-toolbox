@@ -69,6 +69,23 @@ test('pressing a call shows its full input and why it failed, and pressing again
   }
 })
 
+test('a call whose input holds escape sequences still draws, its control characters made visible', async ($, on) => {
+  mock.clock(on)
+  on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: '', stderr: '', interrupted: false } }))
+  await $.tool.call({ tool: 'Bash', command: 'echo \x1b]0;title\x07 hi\r\nnext' })
+
+  const desktop = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect(await desktop.find({ type: 'Button', text: '▸ echo ␛]0;title␇ hi next' })).toBeDefined()
+  await desktop.unmount()
+
+  const terminal = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  const call = await terminal.find({ type: 'Button', text: '▸ echo ␛]0;title␇ hi next' })
+  expect(call).toBeDefined()
+  await terminal.press({ key: call?.key ?? '' })
+  expect(await terminal.find({ type: 'Text', text: 'command echo ␛]0;title␇ hi␍\nnext' })).toBeDefined()
+  await terminal.unmount()
+})
+
 test('the pane says so when nothing has run', async $ => {
   const ui = await $.ui.mount({ ...PANE, surface: 'terminal' })
   expect(await ui.find({ type: 'Text', text: 'No tool calls yet.' })).toBeDefined()

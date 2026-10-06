@@ -92,6 +92,16 @@ function formatClock(ms: number): string {
   return h ? `${h}:${String(mm).padStart(2, '0')}:${ss}` : `${mm}:${ss}`
 }
 
+// The engine refuses a whole drawing whose text holds a control character, so
+// one escape sequence in a tool input would blank the pane. Rows are one line:
+// whitespace collapses, and each control character left shows as its Unicode
+// control picture (␛, ␇).
+const oneLine = (s: string): string =>
+  s.replace(/\s+/g, ' ').trim().replace(/\p{Cc}/gu, ch => {
+    const code = ch.charCodeAt(0)
+    return code < 0x20 ? String.fromCharCode(0x2400 + code) : code === 0x7f ? '␡' : '�'
+  })
+
 // What a row says, on every surface: who, how long, what for, and what now.
 function describe(a: AgentRun, at: number, viewing: string | undefined) {
   const label =
@@ -101,10 +111,10 @@ function describe(a: AgentRun, at: number, viewing: string | undefined) {
   const tools = `${a.toolCalls} tool ${a.toolCalls === 1 ? 'call' : 'calls'}`
   const line = a.status === 'running' ? a.activity || 'starting…' : `${STATUS_LINE[a.status]} · ${tools}`
   return {
-    label,
+    label: oneLine(label),
     clock: formatClock((a.endedAt ?? at) - a.startedAt),
-    description: a.description || '—',
-    line,
+    description: oneLine(a.description) || '—',
+    line: oneLine(line),
   }
 }
 

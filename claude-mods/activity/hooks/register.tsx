@@ -44,12 +44,21 @@ const toolName = (tool: string): string => tool.replace(/^mcp__/, '').replace(/_
 
 const cut = (s: string, max: number): string => (s.length > max ? `${s.slice(0, max - 1)}…` : s)
 
+// The engine refuses a whole drawing whose text holds a control character, so
+// one call with an escape sequence in its input would blank the pane. Show
+// each as its Unicode control picture (␛, ␍, ␇) instead.
+const visible = (s: string): string =>
+  s.replace(/[^\P{Cc}\n\t]/gu, ch => {
+    const code = ch.charCodeAt(0)
+    return code < 0x20 ? String.fromCharCode(0x2400 + code) : code === 0x7f ? '␡' : '�'
+  })
+
+const oneLine = (s: string): string => visible(s.replace(/\s+/g, ' ').trim())
+
 function summarize(input: Record<string, unknown>): string {
   for (const field of SUMMARY_FIELDS) {
     const value = input[field]
-    if (typeof value === 'string' && value.length > 0) {
-      return value.replace(/\s+/g, ' ').trim()
-    }
+    if (typeof value === 'string' && value.length > 0) return oneLine(value)
   }
   return ''
 }
@@ -59,8 +68,8 @@ function fieldsOf(input: Record<string, unknown>): CallField[] {
   return Object.entries(input)
     .filter(([key, value]) => !ENVELOPE.has(key) && value !== undefined && value !== '')
     .map(([key, value]) => ({
-      key,
-      value: cut(typeof value === 'string' ? value : JSON.stringify(value), FIELD_CHARS),
+      key: visible(key),
+      value: visible(cut(typeof value === 'string' ? value : JSON.stringify(value), FIELD_CHARS)),
     }))
 }
 
@@ -110,7 +119,7 @@ export const register: Register = on => {
     const status: CallStatus =
       ran.deny !== undefined ? 'denied' : ran.isError === true ? 'error' : 'ok'
     const why = ran.deny ?? (ran.isError === true ? ran.text : undefined)
-    const reason = why ? cut(why.replace(/\s+/g, ' ').trim(), REASON_CHARS) : undefined
+    const reason = why ? cut(oneLine(why), REASON_CHARS) : undefined
     await update($, calls, list =>
       list.map(one => (one.id === call.id ? { ...one, durationMs, status, reason } : one)),
     )
