@@ -11,8 +11,9 @@
 
 It also provides Claude Code-only mods under `claude-mods/`:
 
-- **activity** — a live pane of the session's tool calls, with durations and
-  failures. Install it with `claude plugin install activity@agent-toolbox`,
+- **activity** — a live pane of the session's tool calls, with an icon and
+  color per tool, status, and duration. Click a call to see its full input and
+  why it failed. Install it with `claude plugin install activity@agent-toolbox`,
   then run `/activity` to open it.
 - **subagents** — an animated pane of the session's subagents: a Clawd sprite
   per agent with its type, task, latest tool call, and elapsed time. It opens
