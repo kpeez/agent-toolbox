@@ -25,10 +25,18 @@ evidence only.
 The shared reservation ledger records four consumed attempts out of eight.
 The optional-field checker was corrected and checked offline; its single
 authorized Claude hook-inspection follow-up is complete and independently
-audited. A corrected Codex control using `/bin/cat` remains in preparation.
+audited. A corrected Codex control using `/bin/cat` passed offline verification
+and independent review. Its launch is awaiting explicit approval after automatic
+approval review rejected the requested execution. No provider started and no
+reservation was consumed by those rejected requests.
 Every startup consumes a new reservation; old attempts and failed gates remain
 immutable. The metadata follow-up retained one filtered result file and no raw
 stdout or stderr; its process group was verified gone.
+
+The corrected Codex package reserves eighty-six seconds for the provider and
+four seconds for cleanup within the ninety-second limit. It retains the full
+fixture catalog and the existing isolation checks. The launch restriction is
+an authorization boundary, not a native evaluation result.
 
 Use the approved exact models, `gpt-6.1-sol` low and `claude-sonnet-5-5` low.
 Runs are sequential, at most ninety seconds each, and subscription-only. No API
