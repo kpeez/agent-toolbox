@@ -14,6 +14,7 @@ Code pushes do not back up that storage.
 | Claude stream JSON, CLI 2.1.286 | Native Read denied the outside canary; a subsequent result reconstructed the exact frozen skill bytes; the separate action Read started afterward | This is an explicit read control. It does not establish natural activation, complete injected context, effective effort or complete hook suppression. |
 | Claude metadata control channel | Initialization succeeded and returned twenty enabled plugin skill rows, including skills absent from the command menu | The checker stopped before hook inspection because optional pending-status fields were not accepted. Retained metadata cannot distinguish omission from malformed values in that historical reply. |
 | Corrected Claude metadata control, CLI 2.1.292 | Initialization and hook listing completed in 1.43 seconds; reported `allDisabled=true`, zero policy/listed hooks and zero validation errors | Omitted pending fields remain `not_reported` with null counts. This is observed metadata, not proof of every startup effect or complete hook suppression. |
+| Corrected Codex explicit-read control, CLI 0.160.0 | Completed in 12.53 seconds; JSONL records the complete frozen skill body before the separate action read; native stderr records a sandbox denial for the outside canary | The rejected canary call is absent from JSONL. The two streams do not provide a shared event order. This is explicit delivery evidence, not natural activation or utility. |
 
 The Claude control reported the requested `claude-sonnet-5-5` model. Its effective
 low effort remains unknown. The Codex stream did not establish the served model
@@ -22,21 +23,20 @@ evidence only.
 
 ## Approved continuation and limits
 
-The shared reservation ledger records four consumed attempts out of eight.
+The shared reservation ledger records five consumed attempts out of eight.
 The optional-field checker was corrected and checked offline; its single
 authorized Claude hook-inspection follow-up is complete and independently
 audited. A corrected Codex control using `/bin/cat` passed offline verification
-and independent review. Its launch is awaiting explicit approval after automatic
-approval review rejected the requested execution. No provider started and no
-reservation was consumed by those rejected requests.
+and independent review, then ran once after explicit approval. Earlier rejected
+launch requests consumed no reservations. The completed run consumed one.
 Every startup consumes a new reservation; old attempts and failed gates remain
 immutable. The metadata follow-up retained one filtered result file and no raw
 stdout or stderr; its process group was verified gone.
 
 The corrected Codex package reserves eighty-six seconds for the provider and
 four seconds for cleanup within the ninety-second limit. It retains the full
-fixture catalog and the existing isolation checks. The launch restriction is
-an authorization boundary, not a native evaluation result.
+fixture catalog and the existing isolation checks. The run exited successfully
+and its process group was verified gone. Its raw streams remain private.
 
 Use the approved exact models, `gpt-6.1-sol` low and `claude-sonnet-5-5` low.
 Runs are sequential, at most ninety seconds each, and subscription-only. No API
