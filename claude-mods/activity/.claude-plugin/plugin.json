@@ -1,7 +1,7 @@
 {
   "name": "activity",
   "description": "A live pane of this session's tool calls, colored by tool and status, each expandable to its full input; open it with /activity",
-  "version": "0.1.1",
+  "version": "0.1.2",
   "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",

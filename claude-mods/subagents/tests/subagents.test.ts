@@ -101,6 +101,32 @@ test('running agents list above finished ones, newest first', async ($, on) => {
   await ui.unmount()
 })
 
+test('a subagent tool call with escape sequences still draws, its control characters made visible', async ($, on) => {
+  mock.clock(on)
+  on('agent.spawn', () => ({ model: 'claude-test', agentId: 'agent-escape' }))
+  on('tool.call', { tool: 'Bash' }, () => ({ result: { stdout: '', stderr: '', interrupted: false } }))
+  on('ui.open', () => ({ value: { isPlaced: true } }))
+
+  await $.agent.spawn({
+    tool_use_id: 'call-escape',
+    prompt: 'Print a title',
+    description: 'Print a title',
+    subagentType: 'general-purpose',
+    provider: { plugin: 'engine', tier: 'core' },
+    parentModel: 'claude-test',
+    background: true,
+    fork: false,
+  })
+  await $.tool.call({ tool: 'Bash', command: 'echo \x1b]0;title\x07 hi', agentId: 'agent-escape' })
+
+  const terminal = await $.ui.mount({ ...PANE, surface: 'terminal' })
+  expect(await terminal.find({ type: 'Text', text: '● Bash echo ␛]0;title␇ hi' })).toBeDefined()
+  await terminal.unmount()
+  const desktop = await $.ui.mount({ ...PANE, surface: 'desktop' })
+  expect((await desktop.find({ type: 'Svg' }))?.props.alt).toBe('general-purpose: Print a title, Bash echo ␛]0;title␇ hi')
+  await desktop.unmount()
+})
+
 test('the pane says so when no subagent has run', async $ => {
   const terminal = await $.ui.mount({ ...PANE, surface: 'terminal' })
   expect(await terminal.find({ type: 'Text', text: 'No subagents yet.' })).toBeDefined()

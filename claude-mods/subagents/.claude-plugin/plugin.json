@@ -1,7 +1,7 @@
 {
   "name": "subagents",
   "description": "An animated pane of this session's subagents: a walking Clawd per agent with its type, task and latest tool call; open it with /subagents",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
