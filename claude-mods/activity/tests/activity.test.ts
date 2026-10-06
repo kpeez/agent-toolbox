@@ -36,9 +36,35 @@ test('the pane lists finished, failed and denied calls', async ($, on) => {
   for (const surface of ['terminal', 'desktop'] as const) {
     const ui = await $.ui.mount({ ...PANE, surface })
     expect(await ui.find({ type: 'Text', text: '3 calls · 0 running · 2 failed' })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /✓ +1\.5s Bash ls -la/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /✗ .*Bash false/ })).toBeDefined()
-    expect(await ui.find({ type: 'Text', text: /⊘ .*Read \/etc\/shadow/ })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^✓ +1\.5s ❯ Bash $/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: '▸ ls -la' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^✗ .* ❯ Bash $/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: '▸ false' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^⊘ .* ▤ Read $/ })).toBeDefined()
+    expect(await ui.find({ type: 'Button', text: '▸ /etc/shadow' })).toBeDefined()
+    await ui.unmount()
+  }
+})
+
+test('pressing a call shows its full input and why it failed, and pressing again hides them', async ($, on) => {
+  mock.clock(on)
+  on('tool.call', { tool: 'Bash' }, () => ({ isError: true, result: 'Exit code 2', text: 'grep: no such file' }))
+  await $.tool.call({ tool: 'Bash', command: 'grep -rn  needle\n  missing/', description: 'Search for the needle' })
+
+  for (const surface of ['terminal', 'desktop'] as const) {
+    const ui = await $.ui.mount({ ...PANE, surface })
+    const call = await ui.find({ type: 'Button', text: '▸ grep -rn needle missing/' })
+    expect(call).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: /^command / })).toBeUndefined()
+
+    await ui.press({ key: call?.key ?? '' })
+    expect(await ui.find({ type: 'Button', text: '▾ grep -rn needle missing/' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: 'command grep -rn  needle\n  missing/' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: 'description Search for the needle' })).toBeDefined()
+    expect(await ui.find({ type: 'Text', text: '✗ grep: no such file' })).toBeDefined()
+
+    await ui.press({ key: call?.key ?? '' })
+    expect(await ui.find({ type: 'Text', text: /^command / })).toBeUndefined()
     await ui.unmount()
   }
 })
@@ -59,7 +85,7 @@ test('the pane draws every kept call, taller than its window, for the engine to 
     surface: 'terminal',
     props: { ...PANE.props, scroll: { offset: 0, bodyRows: 5 } },
   })
-  expect(await ui.find({ type: 'Text', text: /Bash echo 1$/ })).toBeDefined()
-  expect(await ui.find({ type: 'Text', text: /Bash echo 30$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: /^▸ echo 1$/ })).toBeDefined()
+  expect(await ui.find({ type: 'Button', text: /^▸ echo 30$/ })).toBeDefined()
   await ui.unmount()
 })
