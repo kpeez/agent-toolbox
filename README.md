@@ -20,6 +20,13 @@ It also provides Claude Code-only mods under `claude-mods/`:
   when the first subagent starts, where the screen has room for a side pane.
   Install it with
   `claude plugin install subagents@agent-toolbox`; `/subagents` shows or hides it.
+- **session-panel** — a control panel for the session. Its tabs show an
+  overview with a timeline, each subagent's prompt, trace and answer, each
+  shell command with its output, and the files touched. An **ask** button
+  attaches a command or an agent run to your next prompt. While subagents run,
+  a band above the prompt lists them beside a dancing Clawd for each. Install
+  it with `claude plugin install session-panel@agent-toolbox`; `/panel` shows
+  or hides it, and `/panel demo` loads sample data.
 
 SWE treats the merged pull request and the code as the record. Large work can
 start from a short [plan](plugins/swe/skills/write-plan/SKILL.md) that hands off

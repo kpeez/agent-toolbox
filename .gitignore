@@ -4,8 +4,9 @@ datasets/
 .agents/docs
 .agents/skills/
 
-# Type declarations Claude Code writes when it loads a mod
+# Type declarations and the tsconfig Claude Code writes when it loads a mod
 claude-mods/*/.claude-plugin/types/
+claude-mods/*/tsconfig.json
 
 # Editor noise
 .vscode/

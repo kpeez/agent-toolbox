@@ -25,6 +25,10 @@
     {
       "name": "subagents",
       "source": "./claude-mods/subagents"
+    },
+    {
+      "name": "session-panel",
+      "source": "./claude-mods/session-panel"
     }
   ]
 }
