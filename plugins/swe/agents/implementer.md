@@ -1,7 +1,7 @@
 ---
 name: implementer
 description: Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker tasks.
-model: opus
+model: sonnet
 effort: medium
 tools: Read, Write, Edit, Grep, Glob, Bash, Skill
 ---
