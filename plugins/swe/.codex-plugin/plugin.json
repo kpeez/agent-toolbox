@@ -1,7 +1,7 @@
 {
   "name": "swe",
   "description": "SWE skills for AI coding agents: sharpening, short handoff plans, behavioral verification, atomic PR grouping, and more",
-  "version": "1.19.5",
+  "version": "1.19.6",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
@@ -11,7 +11,7 @@
   "interface": {
     "displayName": "swe",
     "shortDescription": "Planning, implementation, review, and PR skills for coding agents.",
-    "longDescription": "Portable skills and focused agent definitions for planning, implementing, reviewing, and publishing code changes, with short handoff plans and configured Linear mirroring.",
+    "longDescription": "Portable skills for planning, implementing, reviewing, and publishing code changes, plus focused explorer, implementer, and reviewer agent definitions, with short handoff plans and configured Linear mirroring.",
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
