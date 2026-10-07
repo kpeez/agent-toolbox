@@ -1,6 +1,6 @@
 ---
 name: reviewer
-description: Read-only code reviewer. Evaluates a diff or implementation against caller-provided criteria or a single lens.
+description: Code reviewer. Evaluates a diff or implementation against caller-provided criteria or a single lens. Read-only by instruction only; its Bash access is not sandboxed.
 model: opus
 effort: high
 tools: Read, Grep, Glob, Bash
