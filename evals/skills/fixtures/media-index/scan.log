@@ -1,0 +1,3 @@
+14:00 scan=1 paths=3 entries_before=0 entries_after=3
+14:10 scan=2 paths=3 entries_before=3 entries_after=6
+14:20 scan=3 paths=2 entries_before=6 entries_after=8

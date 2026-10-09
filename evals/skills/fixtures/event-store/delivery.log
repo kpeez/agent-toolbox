@@ -1,0 +1,4 @@
+08:10:00 event=ev-31 attempt=1 response=accepted
+08:10:01 event=ev-31 attempt=2 response=accepted
+08:10:04 event=ev-32 attempt=1 response=timeout
+08:10:06 event=ev-32 attempt=2 response=accepted

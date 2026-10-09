@@ -1,0 +1,4 @@
+- Existing callers expect a local function result.
+- Images may be larger than available worker memory.
+- Local tests must not contact a remote service.
+- No deployment or publication is authorized in this planning request.

@@ -1,0 +1,3 @@
+- Start with one local archive fixture.
+- Keep current projections unchanged until a separate cutover.
+- Make progress resumable after a process restart.

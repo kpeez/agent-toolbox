@@ -1,0 +1,7 @@
+diff --git a/catalog.py b/catalog.py
+--- a/catalog.py
++++ b/catalog.py
+@@ -1,2 +1,2 @@
+ def visible_items(items):
+-    return sorted((item for item in items if not item["archived"]), key=lambda item: item["id"])
++    return sorted(items, key=lambda item: item["id"])
