@@ -137,3 +137,15 @@ identical (a mod under `claude-mods/` has the Claude manifest only):
 
 - `plugins/<plugin>/.claude-plugin/plugin.json`
 - `plugins/<plugin>/.codex-plugin/plugin.json`
+
+## Credits
+
+- `uni/skills/teach` vendors the teaching workflow and templates from Matt
+  Pocock's [skills](https://github.com/mattpocock/skills) repository.
+- The `ship-pr` PR-body template adapts Matt Pocock's
+  [`pr` skill](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr).
+  Its menu of Summary visuals comes from Dex Horthy's
+  [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md)
+  at HumanLayer.
+- `swe/skills/test-audit` adapts the OpenClaw
+  [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).
