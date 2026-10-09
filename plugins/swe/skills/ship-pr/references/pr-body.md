@@ -115,10 +115,3 @@ Name what the merge can affect. Consider every consumer: callers and
 downstream packages, installed plugins and hooks, layout and mobile rendering,
 stored data, and other agents or providers. Call out any effect a revert would
 not undo, such as deleted data, a migration, or something already published.
-
-## Credits
-
-Adapted from Matt Pocock's
-[`pr` skill](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr).
-Its menu of Summary visuals comes from Dex Horthy's
-[`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
