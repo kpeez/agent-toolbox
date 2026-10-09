@@ -87,15 +87,21 @@ any stack relationship from repository evidence or the caller's instruction.
 
 ## Pull-request description
 
-Write for a reviewer without session context:
+Write for a reviewer without session context. Follow the
+[pull-request body template](references/pr-body.md). Skip preambles, keep prose
+brief, and use the project's domain terms:
 
-- **What and why:** the concrete problem, resulting behavior, and load-bearing
-  approach.
+- **Summary:** the concrete problem, resulting behavior, and load-bearing
+  approach, shown with the smallest visual that makes the point.
 - **Reviewer's guide, when useful:** the most important diff first, sensible
   reading order, and any mechanical sections.
-- **Verification:** concise applicable lint, type, build, and test results plus
-  behavior-specific evidence and known gaps. Distinguish recorded prior results
-  from checks run in the current workspace.
+- **Evidence:** a before and after for each behavior the PR claims. Never list
+  lint, type-check, build, or test-suite runs as evidence. Every PR must pass
+  them, so they prove nothing about this one. State known gaps and pre-existing
+  failures, and distinguish recorded prior results from checks run in the
+  current workspace.
+- **Merge danger:** whether the change is a one-way or two-way door, and its
+  blast radius.
 
 Keep the text self-contained. Beyond the closing `Fixes` line, public text
 does not reveal tracker URLs, issue or plan content, or internal workflow
