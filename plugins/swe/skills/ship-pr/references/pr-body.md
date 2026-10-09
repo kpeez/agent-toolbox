@@ -20,15 +20,9 @@ applies.
 - **Before:** <screenshot, output, or failing test>
   **After:** <screenshot, output, or passing test>
 
-## Merge danger
+## Risk
 
-**Door:** <one-way or two-way>
-
-<optional: why>
-
-**Blast radius:** <one-word description>
-
-<optional: what a merge could affect>
+<what the merge can affect; anything a revert would not undo>
 ````
 
 ## Summary
@@ -115,15 +109,12 @@ observed output, or the named test that failed before and passes after, with
 its assertion sketched as pseudocode. When no reproducible demonstration
 exists, say so and name what the reviewer should inspect instead.
 
-## Merge danger
+## Risk
 
-A two-way door is cheap to roll back, so it carries less risk. A change that
-destroys data, migrates state, publishes something, or fixes a hard-to-reverse
-decision is a one-way door. Say which one the PR is.
-
-The blast radius is the scope of what the merge can affect. Consider every
-consumer: callers and downstream packages, installed plugins and hooks, layout
-and mobile rendering, stored data, and other agents or providers.
+Name what the merge can affect. Consider every consumer: callers and
+downstream packages, installed plugins and hooks, layout and mobile rendering,
+stored data, and other agents or providers. Call out any effect a revert would
+not undo, such as deleted data, a migration, or something already published.
 
 ## Credits
 

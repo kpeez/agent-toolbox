@@ -100,8 +100,7 @@ brief, and use the project's domain terms:
   them, so they prove nothing about this one. State known gaps and pre-existing
   failures, and distinguish recorded prior results from checks run in the
   current workspace.
-- **Merge danger:** whether the change is a one-way or two-way door, and its
-  blast radius.
+- **Risk:** what the merge can affect, and anything a revert would not undo.
 
 Keep the text self-contained. Beyond the closing `Fixes` line, public text
 does not reveal tracker URLs, issue or plan content, or internal workflow
