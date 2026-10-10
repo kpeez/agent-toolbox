@@ -1,6 +1,7 @@
 ---
 name: testing-code
 description: "Gate and design new behavioral tests or disposable probes. Use before adding or rewriting any permanent test, when judging a diff's new tests, and for testing strategy, regression coverage, TDD, or spikes. Not for pruning existing suites."
+user-invocable: false
 ---
 
 # Behavioral testing
@@ -62,6 +63,8 @@ bug; do not replay the same scenario at every layer it crosses.
 
 When a change makes existing tests obsolete or duplicative, delete or
 consolidate them in the same change. Use `/test-audit` for broader pruning.
+During implementation, never delete, skip, or loosen an existing test to get
+green; if a test looks wrong, report it with evidence.
 
 ## Probe when useful
 
