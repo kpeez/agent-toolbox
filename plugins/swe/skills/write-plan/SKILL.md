@@ -1,6 +1,7 @@
 ---
 name: write-plan
-description: Turn the user's rough notes into a short plan for large or ambiguous work, iterate on it with them, and hand it to a fresh session. Not for small changes, splitting work into issues, or implementation.
+description: "Turn rough notes into a short plan for large or ambiguous work and hand it to a fresh session."
+disable-model-invocation: true
 ---
 
 # Write a plan
@@ -12,7 +13,7 @@ sessions, or will be handed to another agent or provider.
 A plan is a handoff, not a record. After the pull request merges, the PR and
 the code are the record, and the plan file can be deleted. A decision worth
 keeping beyond the PR becomes an ADR when it meets
-[the decision-record criteria](../sharpen/ADR-FORMAT.md).
+[the decision-record criteria](../../references/ADR-FORMAT.md).
 
 ## Where the plan lives
 
@@ -38,7 +39,7 @@ when the work needs several pull requests.
    paths; answer questions by reading the code rather than asking.
 2. Ask only the questions whose answers would change the goal, scope, design,
    or verification: one at a time, or a small batch of independent ones. Use
-   `/sharpen` when the design needs a deeper stress test.
+   `/grill` when the design needs a deeper stress test.
 3. Write the plan from the template below. Include what the executing session
    needs and cannot read from the code; leave out what it can.
 4. Iterate until the user approves it. Approval lives in the conversation; the

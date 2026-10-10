@@ -60,10 +60,10 @@ reproduced, inferred from the evidence, or remains unresolved. Do not edit the
 implementation.
 
 For an authorized repair, decide whether the minimized reproduction earns a
-permanent regression test using `/testing-code`'s admission gate. If it does,
-write it at a correct public seam and watch it fail before applying the fix. If
-it does not, retain proportionate evidence such as the diagnostic loop or a
-behavior-specific check. If no correct seam exists, record that as an
+permanent regression test using the `testing-code` skill's admission gate. If
+it does, write it at a correct public seam and watch it fail before applying the
+fix. If it does not, retain proportionate evidence such as the diagnostic loop
+or a behavior-specific check. If no correct seam exists, record that as an
 architectural finding rather than exposing an internal seam solely for the test.
 
 Apply the authorized fix, rerun the chosen evidence against the original

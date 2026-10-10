@@ -2,7 +2,7 @@
 
 `agent-toolbox` provides three portable plugins for AI coding agents:
 
-- **SWE** — skills for sharpening and planning work, implementing and
+- **SWE** — skills for grilling designs and planning work, implementing and
   reviewing changes, and shipping pull requests.
 - **Lab** — source-backed research, reproducible experiment loops, and
   data-visualization guidance.
@@ -147,5 +147,7 @@ identical (a mod under `claude-mods/` has the Claude manifest only):
   Its menu of Summary visuals comes from Dex Horthy's
   [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md)
   at HumanLayer.
+- `swe/skills/grill`, `wait-what`, and `writing-for-agents` adapt Matt Pocock's
+  [productivity skills](https://github.com/mattpocock/skills/tree/main/skills/productivity).
 - `swe/skills/test-audit` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).

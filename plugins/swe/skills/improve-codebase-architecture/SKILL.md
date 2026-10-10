@@ -70,20 +70,20 @@ explore; otherwise follow the requested depth. Keep a review-only request at
 the report, and propose interfaces only when the user asks for design or has
 chosen a candidate. A bounded worker reports the choice to its caller.
 
-### 3. Sharpen chosen designs
+### 3. Grill chosen designs
 
 When the user picks a candidate or asks for a specific candidate design, drop
-into a sharpening conversation (`/sharpen`). Walk the design tree — constraints,
+into a grilling session (`/grill`). Walk the design tree — constraints,
 dependencies, the shape of the deepened module, what sits behind the seam, and
 what tests survive. Keep documentation side effects conditional on the requested
 design workflow:
 
 - If a chosen design introduces a reusable concept not in `CONTEXT.md`, record
-  the term only when project-document updates are in scope (see `sharpen`'s
-  `CONTEXT-FORMAT.md`).
+  the term only when project-document updates are in scope (see the
+  [context format](../../references/CONTEXT-FORMAT.md)).
 - If the user rejects a candidate for a load-bearing reason a future review would
-  re-suggest, consider an ADR only when all three of `sharpen`'s
-  [decision-record criteria](../sharpen/ADR-FORMAT.md) hold and the document
+  re-suggest, consider an ADR only when all three
+  [decision-record criteria](../../references/ADR-FORMAT.md) hold and the document
   update is in scope. Skip ephemeral ("not worth it right now") and
   self-evident reasons.
 

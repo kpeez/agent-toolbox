@@ -1,6 +1,7 @@
 ---
 name: codebase-design
 description: Evaluate module boundaries and interfaces using depth, information hiding, and caller complexity. Use for substantive interface design.
+user-invocable: false
 ---
 
 # Codebase Design — deep modules

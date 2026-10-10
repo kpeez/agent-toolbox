@@ -1,7 +1,7 @@
 {
   "name": "swe",
-  "description": "SWE skills for AI coding agents: sharpening, short handoff plans, behavioral verification, atomic PR grouping, and more",
-  "version": "1.19.7",
+  "description": "SWE skills for AI coding agents: design grilling, short handoff plans, behavioral verification, atomic PR grouping, and more",
+  "version": "1.19.8",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
@@ -15,7 +15,7 @@
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
-    "defaultPrompt": ["Write a plan for this feature.", "Implement the plan I just approved.", "Prepare this branch for a draft PR."],
+    "defaultPrompt": ["Grill me on this design.", "Implement the plan I just approved.", "Diagnose why this test fails."],
     "brandColor": "#2563EB"
   }
 }

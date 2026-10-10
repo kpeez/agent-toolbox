@@ -9,7 +9,7 @@ applies.
 
 <one or two sentences of what and why>
 
-<diagram, diff sketch, or tree>
+<real code excerpt, diagram, diff sketch, or tree, each with a one-line caption>
 
 ## Reviewer's guide
 
@@ -27,10 +27,45 @@ applies.
 
 ## Summary
 
-Pick the smallest view that makes the key point clear. Place each visual next
-to the short text it supports. Keep only the calls, files, props, states, and
-boundaries a reviewer needs. Usually one visual is enough; several is fine when
-each makes a different point.
+Pick the smallest view that makes the key point clear. Show real code when
+the reviewer needs to see the code; use a sketch when the point is a shape that
+spans many files. Give each visual a one-line caption that says what to notice.
+Keep only the calls, files, props, states, and boundaries a reviewer needs.
+Usually one visual is enough; several is fine when each makes a different point.
+
+### Real code
+
+Excerpt the load-bearing change from the actual diff: 5 to 20 lines, with the
+path in the caption. Use a `diff` block for a small change inside existing
+code. When the code is rewritten, show a before block and an after block with
+the language tag, so both keep syntax highlighting:
+
+**`src/save.ts`: save skips the write when content is unchanged.**
+
+Before:
+
+```ts
+export function save(doc: Doc): Result {
+  return write(doc.content);
+}
+```
+
+After:
+
+```ts
+export function save(doc: Doc): Result {
+  if (doc.content === cache.get(doc.id)) return cache.result(doc.id);
+  return write(doc.content);
+}
+```
+
+Copy a real-code excerpt from the diff exactly, so a reviewer can find it; an
+edited excerpt belongs under Sketches, written as pseudocode. A permalink to a
+line range at the pushed commit renders as a snippet in the same repository's
+comments; in a pull-request body it may show as a plain link, so paste the
+excerpt there.
+
+### Sketches
 
 Show logic or an algorithm as pseudocode:
 
