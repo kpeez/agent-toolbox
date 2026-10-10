@@ -1,4 +1,0 @@
-- Operations needs a reversible cutover.
-- Historical data has repeated event IDs.
-- No external service changes are approved.
-- Verify counts by warehouse and SKU.

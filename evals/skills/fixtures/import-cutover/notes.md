@@ -1,4 +1,0 @@
-- Need dry-run before switching the scheduled job.
-- Keep rejected rows and reasons visible to the operator.
-- No provider API or remote service is part of this change.
-- Verify one sample from each vendor.
