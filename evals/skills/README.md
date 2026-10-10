@@ -4,13 +4,13 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 60 authored scenarios: ten each for `implement`, `diagnose`,
-`testing-code`, `test-audit`, `improve-codebase-architecture`, and
-provisional `write-plan`. Each family has four natural requests, two contextual
-requests, three nearby negatives, and one explicit invocation control. Some
-negatives are direct diff-review requests, which expect no `swe` skill.
-`write-plan` tests planning versus authorized implementation, a frequent
-boundary in the source conversation. Twelve cases marked `holdout_candidate` are
+The corpus has 50 authored scenarios: ten each for `implement`, `diagnose`,
+`testing-code`, `test-audit`, and `improve-codebase-architecture`. Each family
+has four natural requests, two contextual requests, three nearby negatives, and
+one explicit invocation control. Some negatives are direct diff-review requests,
+which expect no `swe` skill. User-only skills such as `write-plan` have no
+family: the model cannot load them, so there is no activation to measure.
+Ten cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. An independent sealed
 set is still required before tuning from measured scores.
 
