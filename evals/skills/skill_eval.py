@@ -18,7 +18,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
     "implement", "diagnose", "testing-code", "test-audit",
-    "improve-codebase-architecture", "write-plan")}
+    "improve-codebase-architecture")}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
 RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools",
                   "harness_deltas", "catalog_scope", "context_delivery"}
