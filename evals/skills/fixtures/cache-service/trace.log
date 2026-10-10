@@ -1,0 +1,5 @@
+10:12:00 get key=profile:42 hit=false
+10:12:01 update profile=42 status=200
+10:12:02 get key=profile:42 hit=true age=00:04:51
+10:12:03 response revision=18
+10:12:04 response revision=17

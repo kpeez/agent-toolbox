@@ -1,0 +1,4 @@
+sample: 18000 tiles
+elapsed: 12.4 s
+largest caller: preview refresh
+same palette object: reused for all tiles

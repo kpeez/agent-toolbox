@@ -1,0 +1,10 @@
+diff --git a/invoice.py b/invoice.py
+--- a/invoice.py
++++ b/invoice.py
+@@ -1,5 +1,5 @@
+ def cancel(invoice):
+-    if invoice["state"] == "paid":
++    if invoice["state"] in ("paid", "draft"):
+         return False
+     invoice["state"] = "cancelled"
+     return True

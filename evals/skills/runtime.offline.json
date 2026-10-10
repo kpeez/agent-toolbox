@@ -1,0 +1,11 @@
+{
+  "model": "not-run",
+  "effort": "not-run",
+  "cli": "offline-import",
+  "cli_version": "1",
+  "permissions": {"network": "no provider invoked", "writes": "disposable run directory"},
+  "tools": ["offline raw JSONL import"],
+  "harness_deltas": ["no native provider adapter", "staged plugin hook and MCP bindings removed", "full checked-out catalog; host-installed competitors not yet verified"],
+  "catalog_scope": "full_checkedout_catalog",
+  "context_delivery": "serialized_conversation"
+}

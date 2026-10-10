@@ -1,0 +1,4 @@
+- Website: expects a string.
+- CSV export: writes the value without locale.
+- Local report A: groups by display name.
+- Local report B: sorts by display name.

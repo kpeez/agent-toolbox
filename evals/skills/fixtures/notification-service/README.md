@@ -1,0 +1,1 @@
+Notification preferences are read on each send. Disabled channels should never reach the transport. Messages are dictionaries; sends receive a copy with a default priority when none was supplied, and callers keep their original dictionary.

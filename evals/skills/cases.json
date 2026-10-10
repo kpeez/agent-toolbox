@@ -1,0 +1,1303 @@
+{
+  "schema_version": 1,
+  "cases": [
+    {
+      "id": "IM-01",
+      "target": "swe:implement",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "let's implement X"
+        },
+        {
+          "role": "user",
+          "content": "By X I mean the importer behavior in the fixture: accept a UTF-8 BOM before the first CSV header and keep the parsed keys clean."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Change the CSV read path so a leading UTF-8 BOM does not become part of the first field name.",
+      "rationale": "The user authorizes a small source change and describes observable behavior."
+    },
+    {
+      "id": "IM-02",
+      "target": "swe:implement",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "let's work on X"
+        },
+        {
+          "role": "user",
+          "content": "For the search view, an empty query should show the latest three records; typed queries should keep matching titles."
+        }
+      ],
+      "fixture": "sable-search",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Update the existing search behavior for empty queries while preserving nonempty query matching.",
+      "rationale": "The phrase comes from the source chat and the follow-up makes the implementation request concrete."
+    },
+    {
+      "id": "IM-03",
+      "target": "swe:implement",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Please preserve the selected time zone when a user saves the weekly digest preference; include an offset such as UTC-07:00."
+        }
+      ],
+      "fixture": "frost-preferences",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Preserve an offset-bearing time-zone value through preference load and save.",
+      "rationale": "This is a direct, bounded feature change with a stated example."
+    },
+    {
+      "id": "IM-04",
+      "target": "swe:implement",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The payment retry currently creates a fresh request token every time. Keep the same token across retries so the gateway can deduplicate; make the change and verify the behavior locally."
+        }
+      ],
+      "fixture": "parcel-gateway",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Reuse one idempotency token across retry attempts and verify the observable transport calls.",
+      "rationale": "A materially different payment workflow probes authorized repair and retry semantics. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "IM-05",
+      "target": "swe:implement",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The poller should return a job that arrives exactly at the timeout boundary. The log and current loop are in the fixture."
+        },
+        {
+          "role": "user",
+          "content": "Please make that behavior work and run the relevant local check; leave unrelated polling rules alone."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Correct the timeout-boundary behavior in the poller while preserving other wait behavior.",
+      "rationale": "The second message converts context into a narrow authorized repair."
+    },
+    {
+      "id": "IM-06",
+      "target": "swe:implement",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The report field line_count has always meant the number of entries, even when a line has quantity greater than one."
+        },
+        {
+          "role": "user",
+          "content": "Update the implementation to preserve that API contract; keep the change local."
+        }
+      ],
+      "fixture": "checkout-code",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Restore line_count to count cart entries while retaining quantity-based totals.",
+      "rationale": "A context-plus-API-contract repair differs from parser, preferences, and retry examples. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "IM-07",
+      "target": "swe:implement",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The cache sometimes returns an older revision after a successful update. Use the log to explain the likely cause; do not edit files yet."
+        }
+      ],
+      "fixture": "cache-service",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:implement"
+      ],
+      "relevant_action": "Use captured evidence to explain the stale response without modifying source.",
+      "rationale": "The user explicitly requests diagnosis only."
+    },
+    {
+      "id": "IM-08",
+      "target": "swe:implement",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Review the checkout change against the acceptance note and report any observable regression. Leave the diff untouched."
+        }
+      ],
+      "fixture": "checkout-diff",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:implement"
+      ],
+      "relevant_action": "Inspect the supplied diff against its stated acceptance behavior without editing it.",
+      "rationale": "A specified diff review is a direct review request, not implementation."
+    },
+    {
+      "id": "IM-09",
+      "target": "swe:implement",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Before anyone changes the authorization code, decide whether the workspace-isolation regression deserves a permanent test and name a reliable oracle."
+        }
+      ],
+      "fixture": "access-control",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:implement"
+      ],
+      "relevant_action": "Decide test value and identify an independent oracle before any production edit.",
+      "rationale": "The requested outcome is test design, not source implementation."
+    },
+    {
+      "id": "IM-10",
+      "target": "swe:implement",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:implement to add priority=normal to each outgoing notification dictionary when priority is absent. Preserve a caller-supplied priority, avoid mutating the caller's dictionary, and keep the current return shape."
+        }
+      ],
+      "fixture": "notification-service",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Add the requested payload field while preserving existing caller-visible behavior.",
+      "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "DG-01",
+      "target": "swe:diagnose",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Two accepted events were delivered twice. Look at the records and logs and tell me the most likely cause; don't change the code."
+        }
+      ],
+      "fixture": "event-store",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Explain the duplicate delivery using captured event state and log evidence.",
+      "rationale": "This is an ordinary diagnosis-only request."
+    },
+    {
+      "id": "DG-02",
+      "target": "swe:diagnose",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Why does the worker sometimes miss a job that appears right at the deadline? Please reproduce or narrow down the cause without fixing it."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Investigate the exact timeout-boundary symptom and report evidence without edits.",
+      "rationale": "The user asks for focused cause-finding and explicitly withholds repair authorization."
+    },
+    {
+      "id": "DG-03",
+      "target": "swe:diagnose",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Can you figure out why rescanning the same folder keeps increasing the index count? I only need the cause and the evidence."
+        }
+      ],
+      "fixture": "media-index",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Trace repeated scan behavior to the source of duplicate index entries.",
+      "rationale": "The request is to explain a concrete observed failure."
+    },
+    {
+      "id": "DG-04",
+      "target": "swe:diagnose",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Find the cause of the slow preview refresh from the supplied profile. Tell me whether the evidence is enough to distinguish repeated palette work from another bottleneck; no optimization yet."
+        }
+      ],
+      "fixture": "tile-renderer",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Use the profile and implementation to assess the performance hypothesis without changing code.",
+      "rationale": "A performance diagnosis with an explicit competing hypothesis broadens the natural examples. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "DG-05",
+      "target": "swe:diagnose",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The cache invalidation call returns normally, yet users still see revision 17 after update 18."
+        },
+        {
+          "role": "user",
+          "content": "Please inspect the trace and narrow down what is happening. We will decide on a repair afterward."
+        }
+      ],
+      "fixture": "cache-service",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Correlate the successful update, cache trace, and stale response.",
+      "rationale": "The follow-up clearly keeps this turn at diagnosis, despite an eventual repair possibility."
+    },
+    {
+      "id": "DG-06",
+      "target": "swe:diagnose",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The preview became slower after the list grew from about 2,000 tiles to 18,000. The profile is in the fixture."
+        },
+        {
+          "role": "user",
+          "content": "Measure or reason from the available evidence and identify the leading cause; do not refactor yet."
+        }
+      ],
+      "fixture": "tile-renderer",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Compare the current cost profile to the reported workload change and identify the likely bottleneck.",
+      "rationale": "This contextual scale change is a distinct performance investigation. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "DG-07",
+      "target": "swe:diagnose",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The existing contract rejects a session at its exact expiry timestamp, but this implementation uses an inclusive comparison. Correct that known boundary and run the existing local test."
+        }
+      ],
+      "fixture": "session-expiry",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:diagnose"
+      ],
+      "relevant_action": "Change the known inclusive expiry comparison to the specified exclusive boundary and run its existing test.",
+      "rationale": "The user supplies the cause and desired behavior; this is a narrowly specified one-line repair rather than an unresolved diagnosis."
+    },
+    {
+      "id": "DG-08",
+      "target": "swe:diagnose",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Design the smallest permanent regression test for a reader in one workspace attempting to access another workspace's document."
+        }
+      ],
+      "fixture": "access-control",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:diagnose"
+      ],
+      "relevant_action": "Choose an independent oracle and public test seam for workspace isolation.",
+      "rationale": "This asks for test strategy rather than symptom diagnosis."
+    },
+    {
+      "id": "DG-09",
+      "target": "swe:diagnose",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "These adapters and screens repeat address formatting. Assess the module boundaries and recommend the first refactor; do not implement it."
+        }
+      ],
+      "fixture": "location-routing",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:diagnose"
+      ],
+      "relevant_action": "Identify caller friction and propose a boundary change without edits.",
+      "rationale": "The requested deliverable is an architecture review."
+    },
+    {
+      "id": "DG-10",
+      "target": "swe:diagnose",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:diagnose to investigate the intermittent empty result. Report what the log proves and whether you reproduced it; do not patch."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Investigate and report the failure mode without implementation changes.",
+      "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "TC-01",
+      "target": "swe:testing-code",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "We fixed a cross-workspace document leak. Should this get a permanent regression test, and what would prove the boundary independently of the policy helper?"
+        }
+      ],
+      "fixture": "access-control",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Decide whether a durable regression is warranted and select an independent public-boundary oracle.",
+      "rationale": "This directly invokes the admission gate without naming the skill."
+    },
+    {
+      "id": "TC-02",
+      "target": "swe:testing-code",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Add one deterministic test for the fee calculation that would catch a one-cent rounding regression through the same function callers use."
+        }
+      ],
+      "fixture": "ledger-rounding",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Protect fee rounding through the public function with an independently calculable expected amount.",
+      "rationale": "The task is to design and add behavioral test coverage."
+    },
+    {
+      "id": "TC-03",
+      "target": "swe:testing-code",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the narrowest stable test boundary for showing that a timeout retry reuses one payment token? Please keep the oracle separate from the gateway implementation."
+        }
+      ],
+      "fixture": "parcel-gateway",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Choose a public seam and independent oracle for retry idempotency.",
+      "rationale": "This is an explicit testing-strategy question with behavioral criteria."
+    },
+    {
+      "id": "TC-04",
+      "target": "swe:testing-code",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The importer must skip a comment between records without dropping a continuation line inside a quoted field. Add the smallest offline regression test that distinguishes those cases."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Create one stable parser test that distinguishes record comments from quoted-field content.",
+      "rationale": "This parser edge case is a materially different holdout candidate for test design. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "TC-05",
+      "target": "swe:testing-code",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The payment path is covered by a fake transport, but the provider must remain completely local in CI."
+        },
+        {
+          "role": "user",
+          "content": "Propose a faithful deterministic regression check for the retry contract and say what failure it protects against."
+        }
+      ],
+      "fixture": "parcel-gateway",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Select a local substitute and observable retry contract without contacting a provider.",
+      "rationale": "The context introduces a test constraint and asks for test design."
+    },
+    {
+      "id": "TC-06",
+      "target": "swe:testing-code",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "We are about to change the CSV reader while preserving its caller behavior. Existing tests cover ordinary rows only."
+        },
+        {
+          "role": "user",
+          "content": "Before changing the implementation, identify whether a new test is justified and what independent oracle it should use."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Assess the coverage gap and propose an independent oracle at the public reader boundary.",
+      "rationale": "The pre-refactor preservation question differs from adding a defect-specific test. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "TC-07",
+      "target": "swe:testing-code",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Remove the duplicate subscription tests and the private helper assertions, keeping only tests with distinct behavior contracts."
+        }
+      ],
+      "fixture": "subscription-tests",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:testing-code"
+      ],
+      "relevant_action": "Audit existing test value and consolidate or remove low-value coverage.",
+      "rationale": "The user requests pruning existing tests, which is the audit boundary."
+    },
+    {
+      "id": "TC-08",
+      "target": "swe:testing-code",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The pending-status label has a one-letter typo. Change the existing literal from Pendng to Pending and run the test that already checks the public label; do not add another test."
+        }
+      ],
+      "fixture": "status-labels",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:testing-code"
+      ],
+      "relevant_action": "Correct one existing status-label literal and use the already-present test as the checker.",
+      "rationale": "This is a one-line correction with a failing existing public-behavior test; no new test design or probe is requested."
+    },
+    {
+      "id": "TC-09",
+      "target": "swe:testing-code",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Review the invoice cancellation change against the stated rule for draft invoices. Report any introduced regression; do not edit the patch."
+        }
+      ],
+      "fixture": "invoice-diff",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:testing-code"
+      ],
+      "relevant_action": "Check a production-only diff against the invoice cancellation rule and report a verified defect.",
+      "rationale": "The specified review concerns production behavior; the fixture contains no new or rewritten tests."
+    },
+    {
+      "id": "TC-10",
+      "target": "swe:testing-code",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:testing-code to decide whether this timeout behavior needs a permanent test and choose the public seam."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Apply the test-value gate to the timeout contract.",
+      "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "TA-01",
+      "target": "swe:test-audit",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Audit the subscription tests and remove only the cases that duplicate another test's contract. Keep the public behavior covered."
+        }
+      ],
+      "fixture": "subscription-tests",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Compare existing assertions to their contracts and consolidate proven duplicates.",
+      "rationale": "This is an existing-suite cleanup request."
+    },
+    {
+      "id": "TA-02",
+      "target": "swe:test-audit",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Clean up the panel tests that pin private rendering details, but keep every behavior that has no other verified coverage."
+        }
+      ],
+      "fixture": "panel-tests",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Audit implementation-coupled tests and preserve unique public behavior evidence.",
+      "rationale": "The user asks for a scoped audit and deletion batch."
+    },
+    {
+      "id": "TA-03",
+      "target": "swe:test-audit",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Take a focused pass over the shipment test surface. Find high-confidence duplicate or brittle tests and show the evidence before changing anything."
+        }
+      ],
+      "fixture": "audit-tests",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Perform read-only discovery for a coherent existing-test audit.",
+      "rationale": "This directly asks for test-suite review and evidence before editing."
+    },
+    {
+      "id": "TA-04",
+      "target": "swe:test-audit",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The balance suite repeats the same one-entry example. Audit the candidates and tell me which contract each test protects before proposing a small cleanup batch."
+        }
+      ],
+      "fixture": "ledger-tests",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Classify existing tests by unique contract and propose only justified consolidation.",
+      "rationale": "A contract-inventory-first audit is a distinct cleanup task. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "TA-05",
+      "target": "swe:test-audit",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "CI spends time in the account suite, and a recent refactor left several tests calling the same lockout function with adjacent values."
+        },
+        {
+          "role": "user",
+          "content": "Prepare a focused audit: identify the actual coverage gaps and the smallest safe batch."
+        }
+      ],
+      "fixture": "account-audit",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Inspect existing coverage and identify a reviewable audit batch.",
+      "rationale": "The second message asks for pruning analysis of existing tests."
+    },
+    {
+      "id": "TA-06",
+      "target": "swe:test-audit",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The shipment API and batch entrypoint have drifted, and several tests call a private validator directly."
+        },
+        {
+          "role": "user",
+          "content": "Audit the whole small test surface and its production callers, then recommend a keeper for each removed assertion."
+        }
+      ],
+      "fixture": "audit-tests",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Trace existing test assertions to callers and propose proven keepers before deletion.",
+      "rationale": "This exercises owner-boundary retention reasoning in a different fixture. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "TA-07",
+      "target": "swe:test-audit",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Add coverage for the case where a reader belongs to a different workspace from the document owner."
+        }
+      ],
+      "fixture": "access-control",
+      "expected_skills": [
+        "swe:testing-code"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:test-audit"
+      ],
+      "relevant_action": "Design or add new behavioral coverage for a workspace-isolation case.",
+      "rationale": "The request adds missing tests rather than pruning existing ones."
+    },
+    {
+      "id": "TA-08",
+      "target": "swe:test-audit",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "This test started failing after yesterday's change. Explain the failure from the trace; don't delete or rewrite anything yet."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:test-audit"
+      ],
+      "relevant_action": "Investigate a current failure and report its cause without editing tests.",
+      "rationale": "The task is diagnosis, not a suite audit."
+    },
+    {
+      "id": "TA-09",
+      "target": "swe:test-audit",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Review the invoice diff against the cancellation rules and report any behavior regression. Do not edit the patch."
+        }
+      ],
+      "fixture": "invoice-diff",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:test-audit"
+      ],
+      "relevant_action": "Review a specified code diff against acceptance behavior.",
+      "rationale": "A direct patch review is distinct from pruning the existing suite."
+    },
+    {
+      "id": "TA-10",
+      "target": "swe:test-audit",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:test-audit to identify duplicate tests and the evidence that would remain after removing them."
+        }
+      ],
+      "fixture": "subscription-tests",
+      "expected_skills": [
+        "swe:test-audit"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Audit existing tests for redundant contract coverage.",
+      "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "AR-01",
+      "target": "swe:improve-codebase-architecture",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Several callers repeat the same import parsing steps and tests need to know whether the CSV or JSON adapter ran. Where is the real module-boundary friction, and what would you change first? No code changes yet."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Identify caller friction and propose a deepening boundary without implementing it.",
+      "rationale": "The user asks for an architecture review of existing modules."
+    },
+    {
+      "id": "AR-02",
+      "target": "swe:improve-codebase-architecture",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "These two screens format addresses the same way through separate provider modules. Assess whether their interfaces are helping callers or just adding indirection."
+        }
+      ],
+      "fixture": "location-routing",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Evaluate existing module depth and interface cost for the address-formatting behavior.",
+      "rationale": "This is specifically about module boundaries and caller complexity."
+    },
+    {
+      "id": "AR-03",
+      "target": "swe:improve-codebase-architecture",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Changes to shipment field validation have to be copied into two entrypoints. Recommend a refactor that puts the contract in one useful place, if the evidence supports it."
+        }
+      ],
+      "fixture": "shipment-service",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Assess duplicated boundary logic and propose a justified interface-level refactor.",
+      "rationale": "The task requests an evidence-backed architecture recommendation."
+    },
+    {
+      "id": "AR-04",
+      "target": "swe:improve-codebase-architecture",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "We have multiple callers coordinating parse, validation, and normalization across tiny modules. Review the fixture and recommend the first candidate that would reduce caller work and improve testability."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Compare the current module split to its callers and recommend one deepening opportunity.",
+      "rationale": "A caller-complexity task with an explicit testability goal is a distinct holdout candidate. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "AR-05",
+      "target": "swe:improve-codebase-architecture",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The API and batch clients currently return the same shape and must keep the same field-specific errors."
+        },
+        {
+          "role": "user",
+          "content": "Please inspect the existing callers and propose a seam that would let both paths share the contract. Keep this at design level."
+        }
+      ],
+      "fixture": "shipment-service",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Propose an interface boundary that centralizes a shared contract without source edits.",
+      "rationale": "Context establishes both invariants and asks for architecture design only."
+    },
+    {
+      "id": "AR-06",
+      "target": "swe:improve-codebase-architecture",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The provider adapters were added to make tests easier, but the real issue may be that each screen rebuilds the same address label."
+        },
+        {
+          "role": "user",
+          "content": "Assess whether the current seam improves testability or hides a shallow module, then recommend a direction without implementing."
+        }
+      ],
+      "fixture": "location-routing",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Evaluate the adapter seam against actual callers, testability, and module depth.",
+      "rationale": "The testability-and-caller-friction framing differs from simple duplication detection. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "AR-07",
+      "target": "swe:improve-codebase-architecture",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Add a localized display-name option to the website and preserve the existing string field for other callers."
+        }
+      ],
+      "fixture": "catalog-migration",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "relevant_action": "Implement the requested compatibility-preserving product behavior.",
+      "rationale": "The user asks for implementation, not a proposed refactor."
+    },
+    {
+      "id": "AR-08",
+      "target": "swe:improve-codebase-architecture",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Find why the worker misses items that arrive near its deadline; report the evidence and leave the source alone."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "relevant_action": "Investigate a specific failure without recommending a broad architecture change.",
+      "rationale": "The task is a focused diagnosis request."
+    },
+    {
+      "id": "AR-09",
+      "target": "swe:improve-codebase-architecture",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Review the catalog patch against the acceptance note and report introduced defects only."
+        }
+      ],
+      "fixture": "catalog-diff",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "relevant_action": "Review a specified diff for introduced behavioral defects.",
+      "rationale": "The user requests direct change review, not an architecture audit."
+    },
+    {
+      "id": "AR-10",
+      "target": "swe:improve-codebase-architecture",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:improve-codebase-architecture to review the current module boundaries and recommend the first worthwhile refactor. Do not implement."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:improve-codebase-architecture"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Assess architecture and recommend a candidate without implementation.",
+      "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "WP-01",
+      "target": "swe:write-plan",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Turn these vendor import notes into a short handoff plan for a fresh session to implement. Preserve the operator report and local dry-run constraints."
+        }
+      ],
+      "fixture": "import-cutover",
+      "expected_skills": [
+        "swe:write-plan"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Produce a concise, actionable handoff plan from rough notes for a multi-step change.",
+      "rationale": "This naturally requests a plan for another session."
+    },
+    {
+      "id": "WP-02",
+      "target": "swe:write-plan",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "We need to add localized catalog names while keeping current callers working. The migration and compatibility period are undecided; write a plan we can review before implementation."
+        }
+      ],
+      "fixture": "catalog-migration",
+      "expected_skills": [
+        "swe:write-plan"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Plan a large, ambiguous compatibility migration before any code change.",
+      "rationale": "The task is explicitly planning-only and unresolved in material ways."
+    },
+    {
+      "id": "WP-03",
+      "target": "swe:write-plan",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write a short rollout plan for moving stock updates to the event feed, including reversible cutover and checks by warehouse and SKU."
+        }
+      ],
+      "fixture": "inventory-rollout",
+      "expected_skills": [
+        "swe:write-plan"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Turn rollout constraints into a short plan with verifiable steps.",
+      "rationale": "The requested deliverable is an implementation handoff plan."
+    },
+    {
+      "id": "WP-04",
+      "target": "swe:write-plan",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "We are considering a local thumbnail service, but retry ownership and cache behavior are still open. Write a reviewable plan that identifies those decisions and a local verification path."
+        }
+      ],
+      "fixture": "service-extraction",
+      "expected_skills": [
+        "swe:write-plan"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Frame a plan for a large ambiguous service-boundary proposal, including open decisions and verification.",
+      "rationale": "The uncertain service extraction is materially different from the data migration plans. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "WP-05",
+      "target": "swe:write-plan",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The replay tool must be read-only, resumable, and leave current projections alone until a separate cutover."
+        },
+        {
+          "role": "user",
+          "content": "Please shape the rough notes into a handoff plan for the next implementation session."
+        }
+      ],
+      "fixture": "offline-replay",
+      "expected_skills": [
+        "swe:write-plan"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Produce a handoff plan that preserves explicit scope constraints and verification needs.",
+      "rationale": "The first message provides context and the second requests a cross-session plan."
+    },
+    {
+      "id": "WP-06",
+      "target": "swe:write-plan",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "This work spans API, export, and two report callers, and we haven't chosen where localization lives."
+        },
+        {
+          "role": "user",
+          "content": "Read the fixture enough to use the real names, then write a short plan for discussion; don't implement or create tracker issues."
+        }
+      ],
+      "fixture": "catalog-migration",
+      "expected_skills": [
+        "swe:write-plan"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Create a reviewable plan from context for ambiguous work spanning sessions.",
+      "rationale": "This caller inventory makes the planning case distinct from a simple note conversion. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "WP-07",
+      "target": "swe:write-plan",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Fix the one-cent fee rounding bug in the local function and run its existing tests."
+        }
+      ],
+      "fixture": "ledger-rounding",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:write-plan"
+      ],
+      "relevant_action": "Make and verify a small authorized behavior fix.",
+      "rationale": "A small scoped implementation does not warrant a plan file."
+    },
+    {
+      "id": "WP-08",
+      "target": "swe:write-plan",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The settings title is misspelled as Notifcations. Correct the literal and run the existing exact-text test; keep this small fix local."
+        }
+      ],
+      "fixture": "notification-label",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:write-plan"
+      ],
+      "relevant_action": "Correct one existing title literal and verify the existing exact-text test.",
+      "rationale": "This is a small, fully specified correction with an existing checker, so a handoff plan would add no value."
+    },
+    {
+      "id": "WP-09",
+      "target": "swe:write-plan",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The selected zone is lost when saving preferences. Please repair the code and verify the round trip."
+        }
+      ],
+      "fixture": "frost-preferences",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:write-plan"
+      ],
+      "relevant_action": "Repair and verify a bounded preference persistence defect.",
+      "rationale": "The user asks for implementation, not a handoff plan."
+    },
+    {
+      "id": "WP-10",
+      "target": "swe:write-plan",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:write-plan to turn the event-replay constraints into a concise handoff for another session."
+        }
+      ],
+      "fixture": "offline-replay",
+      "expected_skills": [
+        "swe:write-plan"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Write a concise plan from constraints for later implementation.",
+      "rationale": "Explicit invocation is a control case."
+    }
+  ]
+}
