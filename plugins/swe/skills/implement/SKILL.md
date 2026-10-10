@@ -1,6 +1,6 @@
 ---
 name: implement
-description: "Implement an authorized feature or fix through relevant verification. Use for scoped code changes; not for writing plans, creating issues, or PR delivery."
+description: "Implement an authorized feature or fix through relevant verification. Use for scoped code changes."
 ---
 
 # Implement
@@ -22,7 +22,7 @@ in the result; the ADR alone does not require another approval. Changes to an
 explicit requirement or approved plan design, or work outside the task's scope,
 still need the applicable approval. Preserve the earlier rationale and record
 the replacement in affected documentation, using
-[decision history](../sharpen/ADR-FORMAT.md).
+[decision history](../../references/ADR-FORMAT.md).
 
 ## Contract
 
@@ -33,7 +33,10 @@ the replacement in affected documentation, using
    static check, reproducible demonstration, existing workflow, or explicit
    no-permanent-test decision is often enough. Before adding or rewriting a
    permanent test, or when behavior is uncertain or a probe is requested, use
-   `/testing-code` and pass its admission gate.
+   the `testing-code` skill and pass its admission gate. Name the behavior
+   check before writing code. Before claiming the change works, run it through
+   its real entry point (CLI, HTTP, or browser); passing unit tests do not show
+   that a feature works.
 3. Run relevant repository gates and behavior-specific checks. A failing
    required gate blocks completion and publication, but continue authorized
    diagnosis and correction when that can resolve the failure. Report unrelated
@@ -61,7 +64,8 @@ unambiguous. Report any affected documentation left stale and the reason.
   established branch name. Git and the pull request move the issue's status;
   comment on the issue only for a blocker or a decision that needs the user.
 - For substantive changes, give an independent reviewer the actual diff,
-  accepted requirements, and relevant verification evidence.
+  accepted requirements, and relevant verification evidence. Ask it to report
+  only gaps in correctness or the stated requirements.
 
 For substantial work with independently executable parts, use
 [orchestrate](../orchestrate/SKILL.md) to delegate them before implementation.

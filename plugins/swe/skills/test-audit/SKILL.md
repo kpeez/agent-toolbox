@@ -103,7 +103,7 @@ Do not edit source or tests while a test runner is watching the checkout.
 
 ## Landing and continuation
 
-If publication is authorized, use `/ship-pr` for one coherent PR at a time.
+If publication is authorized, suggest `/ship-pr` for one coherent PR at a time.
 Otherwise report the reviewed local diff and validation without publishing.
 After a PR lands, refresh from the default branch and rerun read-only discovery
 for the next high-confidence batch.

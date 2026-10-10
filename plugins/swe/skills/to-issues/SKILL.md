@@ -1,6 +1,7 @@
 ---
 name: to-issues
-description: Split a large approved plan into pull-request-sized issues with dependencies on Linear or GitHub. Not for drafting plans or executing work.
+description: "Split an approved plan into PR-sized issues with dependencies on Linear or GitHub."
+disable-model-invocation: true
 ---
 
 # /to-issues

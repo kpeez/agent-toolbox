@@ -1,0 +1,5 @@
+interface:
+  display_name: "Write Plan"
+  short_description: "Turn notes into a short handoff plan"
+policy:
+  allow_implicit_invocation: false

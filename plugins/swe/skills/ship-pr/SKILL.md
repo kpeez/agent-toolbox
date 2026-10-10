@@ -1,6 +1,7 @@
 ---
 name: ship-pr
-description: Commit, push, and open a draft PR for authorized work. Use when asked to ship; not for planning or local-only edits. Finalize only on explicit request.
+description: "Commit, push, and open or update a draft PR; `/ship-pr finalize` marks it ready."
+disable-model-invocation: true
 ---
 
 # /ship-pr — publish verified work
@@ -10,9 +11,8 @@ or established approved execution scope authorizes those actions. Respect any
 existing local-only boundary and explicit publication permission; publication
 authority does not authorize putting private identifiers or content into public
 output. A user invocation of `/ship-pr` authorizes its default commit, push, and
-draft-PR workflow for the named work. Do not invoke this skill automatically at
-a green checkpoint. If publication is not authorized, leave verified local work
-intact and report its state.
+draft-PR workflow for the named work. If publication is not authorized, leave
+verified local work intact and report its state.
 
 Default and explicit finalize modes:
 
@@ -92,7 +92,9 @@ Write for a reviewer without session context. Follow the
 brief, and use the project's domain terms:
 
 - **Summary:** the concrete problem, resulting behavior, and load-bearing
-  approach, shown with the smallest visual that makes the point.
+  approach, shown with the smallest visual that makes the point: real
+  before-and-after code from the diff when the code is the point, and a sketch
+  when the point spans many files.
 - **Reviewer's guide, when useful:** the most important diff first, sensible
   reading order, and any mechanical sections.
 - **Evidence:** a before and after for each behavior the PR claims. Never list
