@@ -1,0 +1,10 @@
+diff --git a/checkout.py b/checkout.py
+--- a/checkout.py
++++ b/checkout.py
+@@ -1,4 +1,5 @@
+ def summarize(cart):
+     lines = cart["lines"]
+     total = sum(line["price_cents"] * line["quantity"] for line in lines)
+-    return {"total_cents": total, "line_count": len(lines)}
++    count = sum(line["quantity"] for line in lines)
++    return {"total_cents": total, "line_count": count}
