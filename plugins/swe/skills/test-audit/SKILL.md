@@ -48,15 +48,15 @@ candidates over a large speculative inventory.
 
 Mark each candidate by its assertions, not its name:
 
-- `R` retain, naming the contract and the bug it catches;
-- `F` retain the contract but repair the assertion, such as a vacuous negative
-  that passes when only one of several items is missing;
-- `C` consolidate, naming the keeper that absorbs the assertion: a sibling
+- `retain`, naming the contract and the bug it catches;
+- `repair`, keeping the contract but fixing the assertion, such as a vacuous
+  negative that passes when only one of several items is missing;
+- `consolidate`, naming the keeper that absorbs the assertion: a sibling
   table case, a stronger boundary suite, or a shared owner;
-- `D` delete, naming the proof that remains or why no contract exists.
+- `delete`, naming the proof that remains or why no contract exists.
 
-Record every field below for each `F`, `C`, or `D` before editing. A missing
-field means the candidate is not ready:
+Record every field below for each `repair`, `consolidate`, or `delete` mark
+before editing. A missing field means the candidate is not ready:
 
 - exact test name and location;
 - what failure it can actually detect;
@@ -89,8 +89,9 @@ Do not edit source or tests while a test runner is watching the checkout.
    project's runner.
 3. For each removed source grep or plan assertion, run the executable path that
    owns the real contract.
-4. For each `C` or `F` contract, make one deliberate mutation of the production
-   owner, confirm the keeper fails, then restore the source byte for byte. See
+4. For each `consolidate` or `repair` contract, make one deliberate mutation of
+   the production owner, confirm the keeper fails, then restore the source byte
+   for byte. See
    [mutation audits](../testing-code/references/mutation-audits.md).
 5. Run formatting, `git diff --check`, and the repository's required gates for
    the changed paths.

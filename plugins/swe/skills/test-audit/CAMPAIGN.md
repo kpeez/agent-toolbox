@@ -6,7 +6,7 @@ evidence, and validation in [SKILL.md](SKILL.md) apply to every lane. This file 
 of work and lessons from a full campaign. Each step ends on its completion
 criterion; do not start the next step early.
 
-## 1. Baseline
+## 1-baseline
 
 Record the subsystem's test and test-support line counts and every test file's
 pass/fail state at a pinned default-branch commit. Keep baseline failures in
@@ -15,7 +15,7 @@ tests.
 
 Done when every in-scope test file has a recorded baseline result.
 
-## 2. Lanes and inventory
+## 2-lanes-and-inventory
 
 Split the surface into **lanes** along production owner boundaries, not file
 prefixes: for a messaging integration, accounts, commands, dispatch, inbound,
@@ -26,24 +26,24 @@ live-proof harness tests.
 Done when every test file and QA scenario the subsystem owns belongs to exactly
 one lane.
 
-## 3. Read-only ledger per lane
+## 3-read-only-ledger-per-lane
 
 When delegation is available and authorized, give each lane to its own
 read-only agent. Otherwise inspect the lanes serially. For every lane, read
 each assigned test in full, including parameter tables, plus the production
 owners and their entry points, callers, history, and CI configuration. Each
-test declaration goes into a written **ledger** with one `R`, `F`, `C`, or `D`
-mark from [SKILL.md](SKILL.md) and an evidence line. A parameterized test is one
-declaration unless its rows need different marks; then mark each row. A
-retained test that only moves to a better-named file stays `R` with the move
-noted.
+test declaration goes into a written **ledger** with one `retain`, `repair`,
+`consolidate`, or `delete` mark from [SKILL.md](SKILL.md) and an evidence line.
+A parameterized test is one declaration unless its rows need different marks;
+then mark each row. A retained test that only moves to a better-named file
+stays `retain` with the move noted.
 
 Judge a test by its assertions, not its name. One test named for retiring a
 progress window asserted that the window was _not_ cleared.
 
 Done when every declaration in the lane has a mark and an evidence line.
 
-## 4. Layer plan per lane
+## 4-layer-plan-per-lane
 
 Treat the per-test ledger as input, not as the edit list. A second read-only
 pass, starting from the ledger, looks for the redundant **layer**. In one
@@ -56,7 +56,7 @@ finds.
 Done when each lane plan names its retired files, its keeper per contract, the
 assertions to carry into keepers, and the test-only production seams unlocked.
 
-## 5. Cutover
+## 5-cutover
 
 Edit lane by lane. Serialize changes to shared harnesses and support files
 through one owner. With each lane, remove the test-only production seams it
@@ -67,7 +67,7 @@ instructions, drawn only from mistakes this campaign actually found.
 
 Done when every lane plan is applied and each lane's keepers pass.
 
-## 6. Preservation review
+## 6-preservation-review
 
 Before claiming completion, have independent reviewers compare deleted
 coverage against the keepers, covering every boundary group. Review groups
@@ -83,18 +83,19 @@ owner and confirm the keeper goes red. Then restore the source byte for byte.
 Done when every reported gap is restored or rejected with source evidence, and
 every restored contract has a caught mutation.
 
-## 7. Product defects
+## 7-product-defects
 
 A baseline failure that survives into a keeper is a bug report. Fix it at its
 owner as a separate commit, and prove it through the real user flow with a
-**control** run that reverts the fix and shows the old behavior. Record
-unrelated product discrepancies as follow-ups instead of fixing them in the
-campaign.
+**control** run that reverts the fix and shows the old behavior. For an
+unrelated product discrepancy, follow
+[ancillary-fixes](../principle-ancillary-fixes/SKILL.md) as a bounded worker:
+record it as a follow-up.
 
 Done when each repaired defect has a failing control and a passing candidate on
 the same harness.
 
-## 8. Reconcile and hand off
+## 8-reconcile-and-hand-off
 
 Campaigns outlive many default-branch commits. Merge the default branch rather
 than rebasing a long, many-commit campaign. When the default branch modified a
