@@ -2,7 +2,7 @@
 
 Applies when: conflicts, review threads, and CI on an open PR.
 
-1-resolve-conflicts: Resolve conflicts first. (merge-conflicts)
+1-resolve-conflicts: Resolve conflicts. (merge-conflicts)
 2-triage-review-threads: Triage each review thread. (ci-and-landing)
 3-classify-ci-failures: Classify each CI failure before any rerun or commit. (ci-and-landing)
 4-push-one-wave: Push the fixes as one wave. (ci-and-landing)

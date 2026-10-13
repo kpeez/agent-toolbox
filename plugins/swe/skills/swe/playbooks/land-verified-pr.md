@@ -3,7 +3,7 @@
 Applies when: mark ready and merge a verified PR.
 
 1-get-independent-verdict: Get a verdict from an agent that did not write the code, with the ci-and-landing verdict brief. (reviewer agent, ci-and-landing)
-2-key-verdict-to-patch: Record the verdict with its patch-id, as Land step 2 of ci-and-landing says. (ci-and-landing)
+2-key-verdict-to-patch: Record the verdict with its patch-id, as the Record step of ci-and-landing says. (ci-and-landing)
 3-recheck-before-landing: Recompute the patch-id and re-verify when it changed. (ci-and-landing)
 4-mark-ready-and-merge: Mark ready and merge only under the Ready and Merge conditions of the ci-and-landing skill. (ci-and-landing)
 
