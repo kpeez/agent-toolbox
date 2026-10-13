@@ -19,9 +19,8 @@ clearer. Read that skill only when the distinction matters to the review.
 
 This skill can be informed by the project's domain model: consult a
 `.agents/docs/CONTEXT.md` glossary or relevant `.agents/docs/adrs/` when it bears
-on the friction or recommendation. Use its rationale to compare options and
-verify any current constraints at their source. Follow an explicit project or user override of the
-`.agents/docs/` location.
+on the friction or recommendation. Use its rationale to compare options.
+Follow an explicit project or user override of the `.agents/docs/` location.
 
 ## Process
 

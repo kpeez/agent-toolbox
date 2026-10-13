@@ -57,6 +57,9 @@ contract evidence when the real boundary behavior is itself at risk.
 
 ## Testing strategy: replace, don't layer
 
+When callers move from the shallow modules to the deepened interface, follow
+[migrate-callers-then-delete](../principle-migrate-callers-then-delete/SKILL.md).
+
 - Remove old tests on shallow modules only after tests at the deepened module's
   interface preserve their useful, distinct coverage.
 - Write new tests at the deepened module's interface. **The interface is the test

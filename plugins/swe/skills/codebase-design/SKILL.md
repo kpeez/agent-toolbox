@@ -42,6 +42,11 @@ Choose these trade-offs from the real callers, side effects, and external
 contracts. A pure function or injected dependency is not automatically a better
 seam.
 
+Before you write stateful or branching logic, follow
+[model-the-domain](../principle-model-the-domain/SKILL.md). When data crosses a
+system boundary, or you decide where validation goes, follow
+[parse-at-boundaries](../principle-parse-at-boundaries/SKILL.md).
+
 For a consequential new interface, map representative callers and the behavior
 they need. Specify invariants, ordering, error modes, defaults, and costs before
 choosing the surface. Show at least one caller use and explain what complexity
@@ -60,6 +65,8 @@ comparison. Do not manufacture alternatives to an obvious interface.
 - **Adapter count is evidence, not a rule.** Multiple justified adapters make a
   seam concrete; one adapter can still be warranted by a real external contract
   or a test substitute.
+- **Reader load** — when you add or review a layer, wrapper, or piece of
+  state, follow [minimize-reader-load](../principle-minimize-reader-load/SKILL.md).
 
 For restructuring *existing* shallow modules — dependency categories, seam
 selection, interface alternatives — use `/improve-codebase-architecture`; this
