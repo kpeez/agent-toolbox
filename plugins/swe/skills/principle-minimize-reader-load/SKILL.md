@@ -15,8 +15,10 @@ has two independent axes:
 
 Line counts and complexity scores are only proxies.
 
-- Collapse a wrapper with one caller, an adapter with one implementation, and a
-  layer that repeats the methods and arguments of the next layer.
+- Collapse a layer that costs more than it saves, such as a wrapper with one
+  caller, a layer that repeats the methods and arguments of the next layer, or
+  an adapter with one implementation and no external contract or test
+  substitute behind it.
 - Prefer an interface that hides a real decision. A broad interface over
   little logic makes the reader learn both.
 - Shrink the scope of state: return values over mutation, locals over fields,

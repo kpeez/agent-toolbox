@@ -14,9 +14,8 @@ check. What you do depends on your role.
 
 You own the task and report to the user.
 
-- Fix the issue when the fix is small, safe, and inside the files and
-  authority of the task. The fix counts as task-owned work: stage and commit it
-  with the task.
+- Fix the issue when the fix is small, safe, and within the authority of the
+  task. The fix counts as task-owned work: stage and commit it with the task.
 - Report the issue instead when the fix is large or risky, needs a decision
   only the user can make, or needs access the task does not give.
 - In the final report, list each ancillary fix and each reported issue apart
