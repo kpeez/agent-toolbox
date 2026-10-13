@@ -9,6 +9,10 @@ Drive an open pull request to green, then land it only under the gate below.
 `<pr>` is the pull-request number, `<base>` its base branch, and `<head-sha>`
 the current head commit (`gh pr view <pr> --json headRefOid,baseRefName`).
 
+Push, update the branch, and reply to reviews only under the publication
+authority in [ship-pr](../ship-pr/SKILL.md), and keep public text inside its
+privacy rule. Without that authority, classify and report.
+
 ## Drive to green
 
 Work in this order: conflicts, then review threads, then CI. Collect every
@@ -35,10 +39,18 @@ known fix, then push them as one wave.
 
 Watch checks with `gh pr checks <pr> --watch --fail-fast --required`. Exit 0
 means all listed checks passed, 8 means pending, and 1 means a failure or no
-checks. Read the output to tell the last two apart: "no checks reported" means
-the repository runs no CI on this branch, so there is nothing to classify.
-When `--required` lists nothing but checks exist, use every check that
-`gh pr checks <pr>` lists.
+checks. Read the output to tell the last two apart. GitHub registers checks
+some time after a push, so "no checks reported" can come too early. The
+repository runs no CI only when both of these hold:
+
+- "No checks reported" still holds one minute or more after the last push or
+  branch update.
+- `gh run list --limit 1 --json databaseId` prints `[]`: the repository has no
+  workflow runs.
+
+When workflow runs exist, wait up to ten minutes for checks to appear, then
+report the missing checks as a blocker. When `--required` lists nothing but
+checks exist, use every check that `gh pr checks <pr>` lists.
 
 ## Classify a failed check
 
@@ -54,8 +66,10 @@ give the failure exactly one class:
   - Stale base: `git fetch origin <base>`, then
     `git merge-base --is-ancestor origin/<base> HEAD`. Exit 1 means the
     branch is behind. Update it with `gh pr update-branch <pr>`, which merges
-    the base into the branch without force, then `git pull --ff-only`. The
-    head changes, so recheck the verdict record (Land, step 3).
+    the base into the branch without force. Run it only when
+    `git rev-parse HEAD` equals the PR head, so push local fix commits first
+    (step 4). Then run `git pull --ff-only`. The head changes, so recheck the
+    verdict record (Land, step 3).
   - Red trunk: `gh run list --branch <base> --limit 5`. A failure on the base
     branch is not this branch's to fix. Report it.
 - `flake-or-infra`: the log shows a runner, network, or service fault, or a
@@ -97,8 +111,8 @@ Run these steps in order to land a pull request.
      merge.
    - The verdict is PASS or PASS+NOTES, and its patch-id equals the current
      patch-id.
-   - Required checks pass at the current head, or the repository runs no
-     checks and the report says so.
+   - Required checks pass at the current head, or the repository runs no CI
+     by the test in Drive to green and the report says so.
    - You named any release or deploy effect of the merge, and the user
      approved it.
 
