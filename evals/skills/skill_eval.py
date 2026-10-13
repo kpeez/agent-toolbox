@@ -90,7 +90,7 @@ def corpus(path=HERE / "cases.json"):
         if not fixture.is_dir():
             raise ValueError(f"missing fixture: {fixture}")
     if set(groups) != TARGETS or any(dict(counts) != COUNTS for counts in groups.values()):
-        raise ValueError("expected six targets, each with 4/2/3/1 cases")
+        raise ValueError("expected five targets, each with 4/2/3/1 cases")
     return cases
 
 
