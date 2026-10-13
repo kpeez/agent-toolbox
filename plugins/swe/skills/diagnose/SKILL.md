@@ -25,6 +25,10 @@ when a complete reproducer is unavailable. Read
 [references/feedback-loops.md](references/feedback-loops.md) when a specialized
 harness, flaky trigger, bisection, or differential comparison needs guidance.
 
+When the code is a reducer or reacts to a stream of events, replay the events
+as a trace and find the first step whose state is wrong; the `reducer` skill
+covers the trace.
+
 Run the signal when possible and record the exact symptom it distinguishes. For
 intermittent behavior, seek a useful reproduction rate or compare captured
 evidence; report the limitation. For performance regressions, measure a baseline

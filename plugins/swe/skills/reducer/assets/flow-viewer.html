@@ -1,0 +1,204 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Flow Viewer</title>
+<!--
+  Steps through a reducer trace: JSON lines (or a JSON array) of
+  {"i", "event", "before", "after", "outputs"?}. Load a file with the button,
+  drop it on the page, or pass ?trace=<relative url> when served over HTTP.
+  No dependencies; nothing leaves the browser.
+-->
+<style>
+  :root {
+    --bg: #fbfbfa; --panel: #ffffff; --text: #1d1d1b; --muted: #6b6b66; --line: #e3e2de;
+    --accent: #2f6fdf; --add: #e6f4ea; --add-text: #1e6b3a; --del: #fbeaea; --del-text: #9b2c2c;
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #161615; --panel: #1f1f1d; --text: #ecebe7; --muted: #9c9b95; --line: #343431;
+      --accent: #7aa7ff; --add: #183323; --add-text: #8fd6a6; --del: #3a1d1d; --del-text: #f2a1a1;
+    }
+  }
+  * { box-sizing: border-box; }
+  body { margin: 0; background: var(--bg); color: var(--text); font: 14px/1.45 system-ui, sans-serif; }
+  header { display: flex; flex-wrap: wrap; gap: 8px 12px; align-items: center; padding: 12px 16px; border-bottom: 1px solid var(--line); background: var(--panel); position: sticky; top: 0; z-index: 1; }
+  header h1 { font-size: 15px; margin: 0 8px 0 0; }
+  button, label.file { font: inherit; padding: 4px 10px; border: 1px solid var(--line); border-radius: 6px; background: var(--bg); color: var(--text); cursor: pointer; }
+  button:disabled { opacity: .4; cursor: default; }
+  input[type=range] { flex: 1 1 160px; min-width: 120px; accent-color: var(--accent); }
+  #pos { font-family: var(--mono); color: var(--muted); min-width: 7ch; }
+  main { display: grid; grid-template-columns: minmax(180px, 260px) 1fr; min-height: calc(100vh - 58px); }
+  nav { border-right: 1px solid var(--line); overflow-y: auto; max-height: calc(100vh - 58px); position: sticky; top: 58px; }
+  nav ol { list-style: none; margin: 0; padding: 4px 0; }
+  nav li { padding: 4px 12px; cursor: pointer; font-family: var(--mono); font-size: 12px; display: flex; gap: 8px; }
+  nav li .n { color: var(--muted); min-width: 3ch; text-align: right; }
+  nav li.on { background: var(--accent); color: #fff; }
+  nav li.on .n { color: #fff; }
+  section { padding: 16px; min-width: 0; }
+  h2 { font-size: 13px; text-transform: uppercase; letter-spacing: .04em; color: var(--muted); margin: 20px 0 8px; }
+  h2:first-child { margin-top: 0; }
+  pre { margin: 0; padding: 10px 12px; background: var(--panel); border: 1px solid var(--line); border-radius: 8px; font: 12px/1.5 var(--mono); overflow-x: auto; white-space: pre-wrap; word-break: break-word; }
+  table { width: 100%; border-collapse: collapse; font: 12px/1.5 var(--mono); table-layout: fixed; }
+  th, td { text-align: left; padding: 6px 8px; border-bottom: 1px solid var(--line); vertical-align: top; word-break: break-word; }
+  th { color: var(--muted); font-weight: 500; }
+  td.path { width: 34%; }
+  td.before { background: var(--del); color: var(--del-text); }
+  td.after { background: var(--add); color: var(--add-text); }
+  .empty { color: var(--muted); font-style: italic; }
+  details summary { cursor: pointer; color: var(--muted); margin: 20px 0 8px; }
+  #drop { padding: 48px 16px; text-align: center; color: var(--muted); }
+  body.dragging { outline: 3px dashed var(--accent); outline-offset: -6px; }
+  @media (max-width: 640px) {
+    main { grid-template-columns: 1fr; min-height: 0; }
+    nav { position: static; max-height: 180px; border-right: 0; border-bottom: 1px solid var(--line); }
+    td.path { width: 40%; }
+  }
+</style>
+</head>
+<body>
+<header>
+  <h1>Flow viewer</h1>
+  <label class="file">Open trace<input id="file" type="file" accept=".jsonl,.json,.ndjson,.txt" hidden></label>
+  <button id="prev" disabled aria-label="Previous step">←</button>
+  <input id="slider" type="range" min="0" max="0" value="0" disabled aria-label="Step">
+  <button id="next" disabled aria-label="Next step">→</button>
+  <span id="pos"></span>
+</header>
+<main id="main" hidden>
+  <nav><ol id="list"></ol></nav>
+  <section>
+    <h2>Event</h2>
+    <pre id="event"></pre>
+    <h2>Changed state</h2>
+    <div id="diff"></div>
+    <div id="outputsWrap">
+      <h2>Outputs</h2>
+      <pre id="outputs"></pre>
+    </div>
+    <details>
+      <summary>State after this step</summary>
+      <pre id="after"></pre>
+    </details>
+  </section>
+</main>
+<div id="drop">Open a trace file or drop it here. Keys: ← → step, Home / End jump.</div>
+<script>
+(() => {
+  const $ = id => document.getElementById(id);
+  let rows = [];
+  let at = 0;
+
+  const parse = text => {
+    const trimmed = text.trim();
+    const items = trimmed.startsWith('[') ? JSON.parse(trimmed)
+      : trimmed.split('\n').filter(l => l.trim()).map(l => JSON.parse(l));
+    return items.map((r, i) => ({ i: r.i ?? i, event: r.event, before: r.before, after: r.after, outputs: r.outputs }));
+  };
+
+  const isObj = v => v !== null && typeof v === 'object' && !Array.isArray(v);
+  const show = v => v === undefined ? '—' : JSON.stringify(v);
+  // Arrays of records with an `id` diff by id, so an insert does not shift
+  // every later index.
+  const keyed = a => Array.isArray(a) && a.length > 0 && a.every(x => isObj(x) && 'id' in x);
+
+  function diff(a, b, path, out) {
+    if (JSON.stringify(a) === JSON.stringify(b)) return out;
+    if (isObj(a) && isObj(b)) {
+      for (const k of new Set([...Object.keys(a), ...Object.keys(b)])) diff(a[k], b[k], path ? `${path}.${k}` : k, out);
+    } else if ((keyed(a) || keyed(b)) && Array.isArray(a ?? []) && Array.isArray(b ?? [])) {
+      const byId = xs => new Map((xs ?? []).map(x => [String(x.id), x]));
+      const A = byId(a), B = byId(b);
+      for (const id of new Set([...A.keys(), ...B.keys()])) diff(A.get(id), B.get(id), `${path}[id=${id}]`, out);
+    } else if (Array.isArray(a) && Array.isArray(b) && a.length === b.length) {
+      a.forEach((x, i) => diff(x, b[i], `${path}[${i}]`, out));
+    } else {
+      out.push([path || '(root)', a, b]);
+    }
+    return out;
+  }
+
+  function render() {
+    const r = rows[at];
+    $('pos').textContent = `${at + 1} / ${rows.length}`;
+    $('slider').value = at;
+    $('prev').disabled = at === 0;
+    $('next').disabled = at === rows.length - 1;
+    $('event').textContent = JSON.stringify(r.event, null, 2);
+    const changes = diff(r.before, r.after, '', []);
+    $('diff').innerHTML = '';
+    if (changes.length === 0) {
+      $('diff').innerHTML = '<p class="empty">No state change.</p>';
+    } else {
+      const t = document.createElement('table');
+      t.innerHTML = '<thead><tr><th>Path</th><th>Before</th><th>After</th></tr></thead>';
+      const body = document.createElement('tbody');
+      for (const [p, b, a] of changes) {
+        const tr = document.createElement('tr');
+        for (const [cls, text] of [['path', p], ['before', show(b)], ['after', show(a)]]) {
+          const td = document.createElement('td');
+          td.className = cls;
+          td.textContent = text;
+          tr.append(td);
+        }
+        body.append(tr);
+      }
+      t.append(body);
+      $('diff').append(t);
+    }
+    $('outputsWrap').hidden = r.outputs === undefined;
+    $('outputs').textContent = JSON.stringify(r.outputs ?? [], null, 2);
+    $('after').textContent = JSON.stringify(r.after, null, 2);
+    [...$('list').children].forEach((li, i) => li.classList.toggle('on', i === at));
+    $('list').children[at]?.scrollIntoView({ block: 'nearest' });
+  }
+
+  function load(text) {
+    try { rows = parse(text); } catch (err) { alert(`Could not read the trace: ${err.message}`); return; }
+    if (rows.length === 0) { alert('The trace has no rows.'); return; }
+    at = 0;
+    $('list').innerHTML = '';
+    rows.forEach((r, i) => {
+      const li = document.createElement('li');
+      const n = document.createElement('span'); n.className = 'n'; n.textContent = r.i;
+      const label = document.createElement('span'); label.textContent = r.event?.type ?? r.event?.kind ?? '(event)';
+      li.append(n, label);
+      li.onclick = () => { at = i; render(); };
+      $('list').append(li);
+    });
+    $('slider').max = rows.length - 1;
+    $('slider').disabled = false;
+    $('main').hidden = false;
+    $('drop').hidden = true;
+    render();
+  }
+
+  const go = i => { if (rows.length) { at = Math.max(0, Math.min(rows.length - 1, i)); render(); } };
+  $('prev').onclick = () => go(at - 1);
+  $('next').onclick = () => go(at + 1);
+  $('slider').oninput = e => go(Number(e.target.value));
+  $('file').onchange = e => e.target.files[0]?.text().then(load);
+  document.addEventListener('keydown', e => {
+    if (e.target.tagName === 'INPUT' && e.target.type !== 'range') return;
+    if (e.key === 'ArrowLeft') go(at - 1);
+    else if (e.key === 'ArrowRight') go(at + 1);
+    else if (e.key === 'Home') go(0);
+    else if (e.key === 'End') go(rows.length - 1);
+    else return;
+    e.preventDefault();
+  });
+  document.addEventListener('dragover', e => { e.preventDefault(); document.body.classList.add('dragging'); });
+  document.addEventListener('dragleave', () => document.body.classList.remove('dragging'));
+  document.addEventListener('drop', e => {
+    e.preventDefault();
+    document.body.classList.remove('dragging');
+    e.dataTransfer.files[0]?.text().then(load);
+  });
+  const src = new URLSearchParams(location.search).get('trace');
+  if (src) fetch(src).then(r => r.text()).then(load).catch(err => alert(`Could not fetch ${src}: ${err.message}`));
+})();
+</script>
+</body>
+</html>

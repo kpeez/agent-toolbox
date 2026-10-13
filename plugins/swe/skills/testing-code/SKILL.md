@@ -83,7 +83,8 @@ Choose the smallest mode that distinguishes the risk:
   captured offending payload where a boundary or parser is involved.
 - **Broad invariant or state transition:** one property or stateful test for
   the equivalence class. Read
-  [references/property-testing.md](references/property-testing.md).
+  [references/property-testing.md](references/property-testing.md). For
+  event-driven state, the `reducer` skill names the laws and the trace.
 - **Public system boundary:** one representative integration or contract
   workflow using the real client where practical. Read
   [references/behavior-patterns.md](references/behavior-patterns.md) for oracle

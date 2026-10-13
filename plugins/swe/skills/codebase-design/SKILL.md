@@ -42,6 +42,9 @@ Choose these trade-offs from the real callers, side effects, and external
 contracts. A pure function or injected dependency is not automatically a better
 seam.
 
+When a module's state changes on a stream of events, use the `reducer` skill to
+shape it as one pure `step(state, event)` behind a thin shell.
+
 For a consequential new interface, map representative callers and the behavior
 they need. Specify invariants, ordering, error modes, defaults, and costs before
 choosing the surface. Show at least one caller use and explain what complexity
