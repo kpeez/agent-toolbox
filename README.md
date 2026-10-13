@@ -2,7 +2,8 @@
 
 `agent-toolbox` provides three portable plugins for AI coding agents:
 
-- **SWE** — skills for grilling designs and planning work, implementing and
+- **SWE** — a `/swe` router that runs a task through a step-by-step playbook,
+  and skills for grilling designs and planning work, implementing and
   reviewing changes, and shipping pull requests.
 - **Lab** — source-backed research, reproducible experiment loops, and
   data-visualization guidance.
@@ -70,8 +71,8 @@ codex plugin add uni@agent-toolbox
 npx skills@latest add kpeez/agent-toolbox
 ```
 
-This installs editable skills only. Plugin agents still require a
-plugin installation.
+This installs editable skills only. Plugin agents and the `/swe` router still
+require a plugin installation.
 
 ### Teaching workspace
 
@@ -86,6 +87,32 @@ An earlier installation may have a `~/.codex/skills/teach` or
 `~/.agents/skills/teach` symlink to this repository's former `skills/teach`
 directory. After updating Uni, remove that legacy symlink to avoid duplicate
 discovery. Preserve any independently edited skill directory.
+
+## SWE router
+
+Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. The router
+matches the task to one of twelve
+[playbooks](plugins/swe/skills/swe/playbooks/), such as `fix-bug`,
+`build-feature`, or `drive-pr-to-green`. It copies the playbook's steps into
+the session's task list, or into a numbered list in its first reply. A step it
+does not do stays in the list as `skip: <reason>`. Each step names the skill
+that holds its rules, and the router loads that skill before the step. The
+final reply names each principle that changed a decision. Only the user starts
+the router; the model does not start it on its own.
+
+The playbooks load these skills, which also start on their own when their
+moment comes:
+
+- `why` — traces why code, a config, or a decision exists through history,
+  with a confidence tier on each claim.
+- `blast-radius` — finds what a change could break beyond its diff and proves
+  the one fact that makes it safe by running real code.
+- `correct` — stops a repeated agent mistake by fixing its class at the
+  highest level that works.
+- `ci-and-landing` — classifies a failing CI check before any rerun or commit,
+  and keys merge verdicts to `git patch-id`.
+- `principle-*` — twelve model-only engineering principles, such as
+  `principle-fix-root-causes`, that load when a decision needs them.
 
 ## Delegation
 
@@ -128,7 +155,8 @@ reference figures those notes embed.
 
 ## Layout
 
-- `plugins/swe/` — SWE skills, agents, and the plan-sync hook.
+- `plugins/swe/` — SWE skills, agents, the `/swe` router and its playbooks,
+  and the plan-sync hook.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
 - `plugins/uni/` — tutoring skills, the teaching workspace workflow, templates,
   concept exercises, and research notes.
@@ -156,5 +184,10 @@ identical (a mod under `claude-mods/` has the Claude manifest only):
   at HumanLayer.
 - `swe/skills/grill`, `wait-what`, and `writing-for-agents` adapt Matt Pocock's
   [productivity skills](https://github.com/mattpocock/skills/tree/main/skills/productivity).
+- `swe/skills/swe` (the router and its playbooks), `why`, `blast-radius`,
+  `correct`, `ci-and-landing`, eleven of the `principle-*` skills, and parts of
+  `implement`, `diagnose`, `orchestrate`, and `testing-code` adapt Lauren
+  Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
+  Each adapted skill folder has a `NOTICE`.
 - `swe/skills/test-audit` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).
