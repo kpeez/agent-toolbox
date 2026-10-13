@@ -126,5 +126,6 @@ loaded in this session.
 ## Reply
 
 Give the playbook slug or route, then what the playbook's Reply line asks
-for, the "Skipped" list, and the principle citations. Label each piece of
-evidence with the scale of the skill that produced it.
+for or, for a route, the skill's own report, the "Skipped" list, and the
+principle citations. Label each piece of evidence with the scale of the skill
+that produced it.
