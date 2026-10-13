@@ -81,3 +81,15 @@ CLI version, prompts/context delivery, fixtures, permissions, available tools,
 configuration and hook deltas. Verify fresh session and read/write/network
 isolation. The prepared directory and stripped bindings alone do not establish
 provider isolation. No live model matrix is authorized in this slice.
+
+## Pre-registered corpus deviation: TC-10
+
+Case `TC-10` (testing-code explicit control) asked for `/swe:testing-code`.
+testing-code is `user-invocable: false`, and Claude Code 2.1.296 rejects a typed
+`user-invocable: false` plugin skill with zero model turns
+(`/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/probes/claude-skill-surface/typed-modelonly.jsonl`).
+The case now reads "Use the swe:testing-code skill to …", the form that loaded
+`swe:implement` through the `Skill` tool in the `rename-explicit` probe. Its
+category, fixture, split, answer key, and action boundary are unchanged, so the
+family keeps 4/2/3/1 cases. The change was made before any native run of the
+corpus, so every comparison arm runs the same corpus.
