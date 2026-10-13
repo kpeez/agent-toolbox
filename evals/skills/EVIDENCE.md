@@ -94,7 +94,7 @@ provider isolation. No live model matrix is authorized in this slice.
 the Claude Code session transcript, not stream-json. The audited producer is
 Claude Code 2.1.296 in headless `-p` mode. The probe evidence is in
 `/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/probes/claude-trace-format/`
-(`analyze.out`, `read-check.out`, and the copied transcripts).
+(`commands.sh`, `analyze.out`, `read-check.out`, and the copied transcripts).
 
 Capture inputs:
 
@@ -163,10 +163,10 @@ makes the session partial:
 - a subagent call whose sidechain file was not captured;
 - a stream without one successful `result` event, or an invalid label.
 
-Not supported: typed slash-command loads; `Skill` calls with arguments (only
-the typed form was seen to append them, so a changed body is `partial`);
-compaction and resume, which no probe exercised and which only the checks above
-detect; repeat-load notes; Codex; and step-list extraction.
+[README.md](README.md) lists what the adapter does not support. Two reasons
+are not stated there. Only the typed form was seen to append arguments to the
+body, so a `Skill` body that arguments changed is `partial`. No probe exercised
+compaction or resume, so only the chain checks above detect them.
 
 ## Claude transcript audit (2026-10-13)
 
@@ -191,18 +191,18 @@ Other probe transcripts, parsed directly with the adapter's functions by
 `/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/review/direct_parse.py`
 (declared catalog: the scratch leaf skill only):
 
-- `claude-skill-surface/transcripts/{bare,noargs,ns,snapshot,snapshot-ns}-swe`:
-  each gives the issue "skill body not linked to one earlier Skill call" at
+- `claude-skill-surface/transcripts/{bare,noargs,ns,snapshot}-swe` and
+  `snapshot-swe-ns`: each gives the issue "skill body not linked to one earlier Skill call" at
   line 4. These are typed `/swe` loads, so this is the expected coverage loss.
 - `claude-skill-surface/transcripts/skill-leaf`: the blocked `Skill` call
   (lines 20 and 21, `is_error: true`) is `failed`.
 - `claude-skill-surface/transcripts/pineapple`: the `Skill` load (lines 21 to
   23) of a scratch skill outside any declared directory is `unavailable`, with
   the issue "skill identity unresolved" at line 21.
-- `claude-skill-surface/transcripts/bare-swe`: the full Read of the scratch
-  leaf `SKILL.md` (lines 22 and 23), checked against that file's digest, is
-  `success`. No probe holds a full Read of a catalog skill, so the catalog
-  case rests on this trace and the unit test.
+- `claude-skill-surface/transcripts/bare-swe` and `ns-swe`: the full Read of
+  the scratch leaf `SKILL.md` (lines 22 and 23), checked against that file's
+  digest, is `success`. No probe holds a full Read of a catalog skill, so the
+  catalog case rests on these traces and the unit test.
 - The other eight transcripts, including `claude-subagent-mcp/subagent-transcript.jsonl`
   as a sidechain file, give no issue.
 
@@ -217,11 +217,7 @@ adapter exists. The lead accepted a Claude-only audit as a recorded deviation
 (resolved decision `adapter-codex-control` in the swe router rewrite plan). A
 Codex score stays unpublished until a Codex adapter passes its own audit.
 
-Seen red: the Claude transcript test failed under each of four single
-mutations of `skill_eval.py`, and passed after a byte-for-byte restore. The
-mutations were: action `seq` from the tool_use line; a body-less `Skill` result
-counted as success; a sliced Read counted; and the whole-file digest used for a
-delivered body. The output is in
+Seen red: the test module docstring names the regressions. The output is in
 `/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/seen-red.out`.
 
 ## Pre-registered corpus deviation: TC-10
