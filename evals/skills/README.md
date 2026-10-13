@@ -4,8 +4,9 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 60 authored scenarios: ten each for `implement`, `diagnose`,
-`testing-code`, `test-audit`, `improve-codebase-architecture`, and `ship-pr`. Each family
+The corpus has 70 authored scenarios: ten each for `implement`, `diagnose`,
+`testing-code`, `test-audit`, `improve-codebase-architecture`, `ship-pr`, and
+`grill` (family prefix `HO`). Each family
 has four natural requests, two contextual requests, three nearby negatives, and
 one explicit invocation control. Some negatives are direct diff-review requests,
 which expect no `swe` skill.
@@ -35,7 +36,14 @@ no remote, so a trace can show the commit and the reads that precede a push, but
 not the push itself. Its `receipt-totals` fixture also holds a CI log and review
 threads as plain files, because no host is reachable.
 
-Twelve cases marked `holdout_candidate` are
+The `HO` family targets `hash-out`, the renamed `grill` with a wider trigger.
+The family keeps the corpus name `grill`. `SUCCESSORS` scores it as `hash-out` on
+the branch, so the family compares main and branch directly. Its explicit case
+types the new name `/swe:hash-out`, so main excludes it. Its negatives matter
+most: a false activation starts a question round on a clear task. They include
+"figure out why a test fails", which is diagnosis.
+
+Fourteen cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. An independent sealed
 set is still required before tuning from measured scores.
 

@@ -20,13 +20,14 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
     "implement", "diagnose", "testing-code", "test-audit",
-    "improve-codebase-architecture", "ship-pr")}
+    "improve-codebase-architecture", "ship-pr", "grill")}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
 # The swe consolidation merged these skills into a successor. The corpus keeps the old
 # names so every arm runs byte-identical cases; a name the catalog lacks scores as its
 # successor. On such a catalog, a case the merge makes meaningless is excluded.
 SUCCESSORS = {"swe:test-audit": "swe:testing-code",
-              "swe:improve-codebase-architecture": "swe:codebase-design"}
+              "swe:improve-codebase-architecture": "swe:codebase-design",
+              "swe:grill": "swe:hash-out"}
 RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools",
                   "harness_deltas", "catalog_scope", "context_delivery"}
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md).
@@ -83,11 +84,12 @@ def resolver(skills):
     return lambda name: SUCCESSORS[name] if name not in skills and name in SUCCESSORS else name
 
 
-def excluded(case, resolve):
+def excluded(case, resolve, skills):
     if set(map(resolve, case["expected_skills"])) & set(map(resolve, case["forbidden_skills"])):
         return "the merge makes it expect and forbid one skill"
-    if case["category"] == "explicit" and resolve(case["target"]) != case["target"]:
-        return "it names a skill that the merge removed"
+    named = {"swe:" + n for m in case["messages"] for n in re.findall(r"\bswe:([a-z0-9-]+)", m["content"])}
+    if case["category"] == "explicit" and named - set(skills):
+        return "it names a skill this catalog lacks"
     return None
 
 
@@ -151,7 +153,7 @@ def materialize(args):
     case = next((c for c in cases if c["id"] == args.case), None)
     if case is None:
         raise ValueError("unknown case")
-    reason = excluded(case, resolver(catalog_skills()))
+    reason = excluded(case, resolver(catalog_skills()), catalog_skills())
     if reason:
         raise ValueError(f"case {case['id']} is excluded on this catalog: {reason}")
     runtime = read_json(args.runtime)
@@ -623,8 +625,9 @@ def score(args):
         raise ValueError("answer-key corpus changed since materialization")
     case = next(c for c in corpus(args.corpus) if c["id"] == manifest["case_id"])
     resolve = resolver(manifest["skills"])
-    if excluded(case, resolve):
-        raise ValueError(f"case {case['id']} is excluded on this catalog: {excluded(case, resolve)}")
+    reason = excluded(case, resolve, manifest["skills"])
+    if reason:
+        raise ValueError(f"case {case['id']} is excluded on this catalog: {reason}")
     evidence = normalize(run, case["relevant_action"])
     scorer_sha256 = digest(Path(__file__).read_bytes())
     configuration = {field: manifest[field] for field in ("runtime", "plugin_versions", "source_catalog_files",
@@ -748,9 +751,10 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "validate":
-            cases, resolve = corpus(args.corpus), resolver(catalog_skills())
+            cases, skills = corpus(args.corpus), catalog_skills()
+            reasons = {c["id"]: excluded(c, resolver(skills), skills) for c in cases}
             result = {"cases": len(cases), "targets": sorted(TARGETS),
-                      "excluded_on_this_catalog": {c["id"]: excluded(c, resolve) for c in cases if excluded(c, resolve)}}
+                      "excluded_on_this_catalog": {k: v for k, v in reasons.items() if v}}
         else:
             result = {"materialize": materialize, "capture": capture, "score": score, "aggregate": aggregate}[args.command](args)
         print(json.dumps(result, indent=2, sort_keys=True))
