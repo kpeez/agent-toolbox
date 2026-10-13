@@ -30,8 +30,8 @@ read it.
    fits. The list runs from narrow to broad.
 5. For large, ambiguous, or cross-session work, or work for another agent,
    propose a plan. When the user agrees, read and follow
-   [write-plan](../write-plan/SKILL.md). For several PRs, then read and follow
-   [to-issues](../to-issues/SKILL.md).
+   [write-plan](../write-plan/SKILL.md). For several PRs, then follow its
+   issues mode.
 6. When nothing fits, say so in one line and use the skill that fits as a
    route. Do not invent a playbook.
 7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
@@ -42,8 +42,9 @@ read it.
 1. For a playbook, read `playbooks/<slug>.md` in full. A limit in its Reply
    line, such as "No PR", holds for the whole task. For a route, load the
    skill. Its numbered procedure is the steps; a numbered list of criteria,
-   levels, or rungs is not a procedure. When it has no procedure, its section
-   headings are the steps. Each step's title is its handle.
+   levels, or rungs is not a procedure. When the skill has modes, use the
+   procedure of the mode that fits the task. When it has no procedure, its
+   section headings are the steps. Each step's title is its handle.
 2. When the host has a task-list tool, create one task per step right after
    you read the playbook. Copy each step line byte for byte, with its handle,
    in file order, and add task-specific tasks after them.
@@ -63,9 +64,10 @@ Load a name this way:
 - A swe skill, such as `diagnose`: the Skill tool, as `swe:diagnose`.
 - A principle slug, such as `fix-root-causes`: the Skill tool, as
   `swe:principle-fix-root-causes`. [Principles](#principles) lists the slugs.
-- [ship-pr](../ship-pr/SKILL.md), [write-plan](../write-plan/SKILL.md), and
-  [to-issues](../to-issues/SKILL.md): read the `SKILL.md` by its absolute
-  path. Never call the Skill tool on these three; the host blocks the call.
+- [write-plan](../write-plan/SKILL.md) and
+  [verification-skill](../verification-skill/SKILL.md): read the `SKILL.md` by
+  its absolute path. Never call the Skill tool on these two; the host blocks
+  the call.
 - `reviewer agent`: start the swe reviewer agent as a subagent and give it the
   step's criteria. When the step gives none, brief it as the independent
   reviewer line in [implement](../implement/SKILL.md#plans-and-issues) says.
@@ -78,9 +80,8 @@ Where the host has no Skill tool, read the skill's `SKILL.md` instead.
 
 ## Authority
 
-- Read [ship-pr](../ship-pr/SKILL.md) before the first commit. Its rules
-  govern each commit, push, and pull request. Merge and release effects follow
-  [ci-and-landing](../ci-and-landing/SKILL.md).
+- Load [ship-pr](../ship-pr/SKILL.md) before the first commit. Its rules
+  govern each commit, push, pull request, merge, and release effect.
 - When publication is authorized, open a draft PR at the first meaningful
   commit and push checkpoints during the work. The final `publish-draft-pr`
   step updates that PR; it is not the first push.
@@ -102,28 +103,31 @@ loaded in this session.
 
 ## Playbooks
 
-- `land-verified-pr`: mark ready and merge a verified PR.
-- `drive-pr-to-green`: conflicts, review threads, and CI on an open PR.
-- `diagnose-only`: explain a failure, crash, hang, leak, or captured trace; no fix requested.
 - `fix-bug`: a reported defect to reproduce, root-cause, and fix.
 - `improve-performance`: a measured slowness to improve against a baseline.
-- `audit-tests`: prune or review an existing test suite.
 - `evaluate-agent-change`: measure how a skill or prompt change affects agent behavior.
 - `author-skill`: write or edit a skill, `AGENTS.md`, or `CLAUDE.md`.
-- `review-architecture`: propose deepening refactors; no implementation.
 - `refactor-structure`: change structure, keep behavior.
 - `build-feature`: new or changed behavior.
 - `investigate-question`: a read-only question with a cited answer, including "why was this built this way".
 
 ## Single-skill routes
 
+- Explain a failure, crash, hang, leak, or captured trace; no fix requested:
+  `diagnose`.
 - Design or judge a new test or a disposable probe: `testing-code`.
 - Settle a design fork by running a throwaway sketch: `testing-code`.
+- Prune or review an existing test suite: `testing-code`.
+- Propose deepening refactors; no implementation: `codebase-design`.
+- Conflicts, review threads, or CI on an open PR, or mark ready and merge a
+  verified PR: `ship-pr`.
 - Conflicts in an active merge, rebase, or cherry-pick: `merge-conflicts`.
 - Find what a change could break: `blast-radius`.
 - Stress-test a plan or design: `grill`.
 - The user corrects a mistake agents have made before: `correct`.
-- Delegate to an external provider the user named: `external-subagents`.
+- Delegate to an external provider the user named: `orchestrate`.
+- Build or audit the project's own skill that drives its app for
+  verification: `verification-skill`.
 - Sustained optimization of one metric: `lab:autoresearch`, when installed.
 
 ## Reply

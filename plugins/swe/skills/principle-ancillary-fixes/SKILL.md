@@ -19,7 +19,7 @@ You own the task and report to the user.
 - Report the issue instead when the fix is large or risky, needs a decision
   only the user can make, or needs access the task does not give.
 - A failing pull-request check follows
-  [ci-and-landing](../ci-and-landing/SKILL.md): only an `in-diff` failure
+  [the CI classification](../ship-pr/references/ci-checks.md#classify-a-failed-check): only an `in-diff` failure
   earns a fix commit on the branch.
 - In the final report, list each ancillary fix and each reported issue apart
   from the main change.

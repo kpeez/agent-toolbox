@@ -33,23 +33,20 @@ the replacement in affected documentation, using
    [sequence-verifiable-units](../principle-sequence-verifiable-units/SKILL.md).
    When the change adds a migration, job, retry, or resume path, follow
    [idempotent-operations](../principle-idempotent-operations/SKILL.md).
-2. Choose evidence by behavioral risk. Default to no new permanent test; a
-   static check, reproducible demonstration, existing workflow, or explicit
-   no-permanent-test decision is often enough. Before adding or rewriting a
-   permanent test, or when behavior is uncertain or a probe is requested, use
-   the `testing-code` skill and pass its admission gate. Name the behavior
-   check before writing code. Before claiming the change works, run it through
-   its real entry point (CLI, HTTP, or browser); passing unit tests do not show
-   that a feature works. Give the verdict VERIFIED, NOT VERIFIED, or
-   INCONCLUSIVE that
-   [verify-on-real-surface](../principle-verify-on-real-surface/SKILL.md)
-   defines.
-3. Run relevant repository gates and behavior-specific checks. A failing
+2. For a reported defect, find the cause with
+   [diagnose](../diagnose/SKILL.md) before you change code, and rerun its
+   reproduction after the fix.
+3. Choose evidence by behavioral risk, and name the behavior check before
+   writing code. Before adding or rewriting a permanent test, or when behavior
+   is uncertain or a probe is requested, pass the `testing-code` admission
+   gate. Before claiming the change works, follow
+   [verify-on-real-surface](../principle-verify-on-real-surface/SKILL.md).
+4. Run relevant repository gates and behavior-specific checks. A failing
    required gate blocks completion and publication, but continue authorized
    diagnosis and correction when that can resolve the failure. When you find an
    issue outside the task, such as an unrelated baseline failure, follow
    [ancillary-fixes](../principle-ancillary-fixes/SKILL.md).
-4. Report the change, evidence, verification, and unresolved concerns.
+5. Report the change, evidence, verification, and unresolved concerns.
 
 ## Documentation completion
 

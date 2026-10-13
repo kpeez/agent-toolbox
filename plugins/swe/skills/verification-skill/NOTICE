@@ -1,6 +1,7 @@
-SKILL.md and references/verdict-brief.md are adapted from the Babysit and Shipping
-playbooks and the Bugbot triage reference of Lauren Tan's pstack plugin:
-https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack
+SKILL.md and references/feature-map-example/ are adapted from the
+create-verification-skill and maintain-verification-skill skills of Lauren Tan's pstack:
+https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack/skills/create-verification-skill
+https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack/skills/maintain-verification-skill
 
 MIT License
 

@@ -8,7 +8,7 @@ deepening candidates. A bounded, obvious interface needs no alternatives.
 
 Identify representative callers and the constraints every design must meet:
 invariants, ordering, error modes, configuration, and performance. Classify
-dependencies with [DEEPENING.md](../improve-codebase-architecture/DEEPENING.md)
+dependencies with [deepening](deepening.md)
 when a refactor crosses an existing seam. A small code sketch can make the
 constraints concrete; it need not be a proposal. Show the frame to the user
 when feedback could materially change the design.

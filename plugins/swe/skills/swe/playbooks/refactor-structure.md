@@ -7,7 +7,7 @@ Applies when: change structure, keep behavior.
 3-subtract-first: Delete dead code and needless layers before adding structure. (subtract-before-adding)
 4-move-in-small-steps: Move in small steps that each pass the pin. (sequence-verifiable-units)
 5-migrate-then-delete: Move every caller, then delete the old path and tests that protect only it. (migrate-callers-then-delete)
-6-prove-equivalence: Run the pin again on the real surface. (verify-on-real-surface)
+6-prove-equivalence: Run the pin again on the real surface, with the project's verification skill when one exists. (verify-on-real-surface)
 7-confirm-reader-gain: Revert if reader load did not fall. (minimize-reader-load)
 8-independent-review: Give the diff and evidence to an agent that did not write it. (reviewer agent)
 9-update-obsolete-docs: Update documentation this change makes obsolete. (implement)

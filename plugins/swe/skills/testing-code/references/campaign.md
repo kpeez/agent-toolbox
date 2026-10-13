@@ -2,7 +2,7 @@
 
 Campaign mode prunes one subsystem's whole test surface in one reviewable
 change: a package, plugin, service, or core area. The value bar, candidate
-evidence, and validation in [SKILL.md](SKILL.md) apply to every lane. This file adds the order
+evidence, and validation in [audit.md](audit.md) apply to every lane. This file adds the order
 of work and lessons from a full campaign. Each step ends on its completion
 criterion; do not start the next step early.
 
@@ -33,7 +33,7 @@ read-only agent. Otherwise inspect the lanes serially. For every lane, read
 each assigned test in full, including parameter tables, plus the production
 owners and their entry points, callers, history, and CI configuration. Each
 test declaration goes into a written **ledger** with one `retain`, `repair`,
-`consolidate`, or `delete` mark from [SKILL.md](SKILL.md) and an evidence line.
+`consolidate`, or `delete` mark from [audit.md](audit.md) and an evidence line.
 A parameterized test is one declaration unless its rows need different marks;
 then mark each row. A retained test that only moves to a better-named file
 stays `retain` with the move noted.
@@ -71,8 +71,7 @@ Done when every lane plan is applied and each lane's keepers pass.
 
 Before claiming completion, have independent reviewers compare deleted
 coverage against the keepers, covering every boundary group. Review groups
-serially when parallel delegation is unavailable. Report an unavailable
-independent review as a verification gap. Look for contracts that lost their
+serially when parallel delegation is unavailable. Look for contracts that lost their
 only proof and for new assertions that cannot fail,
 such as a rejection row the production code never reaches. One campaign's
 review found nine real gaps and one unreachable assertion.
@@ -89,7 +88,7 @@ A baseline failure that survives into a keeper is a bug report. Fix it at its
 owner as a separate commit, and prove it through the real user flow with a
 **control** run that reverts the fix and shows the old behavior. For an
 unrelated product discrepancy, follow
-[ancillary-fixes](../principle-ancillary-fixes/SKILL.md) as a bounded worker.
+[ancillary-fixes](../../principle-ancillary-fixes/SKILL.md) as a bounded worker.
 
 Done when each repaired defect has a failing control and a passing candidate on
 the same harness.
@@ -106,7 +105,7 @@ Expect review tooling to see a truncated file list on a diff this large. Record
 maintainer decisions about gates in the PR evidence rather than weakening the
 gates.
 
-Hand off with the [SKILL.md](SKILL.md) report, plus:
+Hand off with the [audit.md](audit.md) handoff report, plus:
 
 - baseline and final test and test-support line counts, with production counted
   separately;

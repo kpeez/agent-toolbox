@@ -8,7 +8,7 @@ description: Investigate bugs and performance regressions using focused evidence
 Investigate the reported symptom with enough evidence to support the requested
 outcome. Diagnosis and repair are separate outcomes: a request to diagnose or
 explain does not authorize implementation edits. When repair is authorized,
-continue in-scope investigation and correction through relevant verification.
+diagnose first, then make the fix with [implement](../implement/SKILL.md).
 
 Use the project's vocabulary when it clarifies the diagnosis. Consult a
 `.agents/docs/CONTEXT.md` glossary or relevant `.agents/docs/adrs/` only when they
@@ -55,36 +55,24 @@ If a prediction cannot be stated, sharpen or discard the hypothesis. A
 standalone developer may show the ranked list when the user can change its
 order. A bounded worker reports consequential uncertainty to its caller.
 
-## Diagnose or repair
+## Label the cause
 
-For a diagnosis-only or explanation request, report the confirmed or
-most-supported cause, evidence, and uncertainty. Say whether the failure was
-reproduced, inferred from the evidence, or remains unresolved. Do not edit the
-implementation.
-
-Before you apply a fix, and after a fix fails, follow
-[fix-root-causes](../principle-fix-root-causes/SKILL.md).
-
-For an authorized repair, decide whether the minimized reproduction earns a
-permanent regression test using the `testing-code` skill's admission gate. If
-it does, write it at a correct public seam and watch it fail before applying the
-fix. If it does not, retain proportionate evidence such as the diagnostic loop
-or a behavior-specific check. If no correct seam exists, record that as an
-architectural finding rather than exposing an internal seam solely for the test.
-
-Apply the authorized fix, rerun the chosen evidence against the original
-scenario, and run relevant checks. A failing required check blocks completion or
-publication, but continue in-scope diagnosis and correction when that can
-resolve it. When you find an issue outside the task, such as an unrelated
-baseline failure, follow [ancillary-fixes](../principle-ancillary-fixes/SKILL.md).
+Report the confirmed or most-supported cause, its evidence, and the
+uncertainty. Label the cause reproduced, inferred from the evidence, or
+unresolved. Do not edit the implementation. Before you recommend a fix, follow
+[fix-root-causes](../principle-fix-root-causes/SKILL.md). Keep the minimized
+reproduction: an authorized fix reruns it and decides through the
+`testing-code` admission gate whether it becomes a permanent test. If no
+correct public seam exists for that test, record it as an architectural
+finding rather than exposing an internal seam solely for the test.
 
 ## Close out
 
-Remove task-owned temporary instrumentation and harnesses. Report the confirmed
-cause, evidence, verification limits, and any unresolved blocker. Recommend
-`/improve-codebase-architecture` only when the evidence shows a real
-architectural testability or coupling problem; diagnosis does not require a
-post-mortem or architecture handoff by default.
+Remove task-owned temporary instrumentation and harnesses. Report the
+verification limits and any unresolved blocker. Recommend `/codebase-design`
+only when the evidence shows a real architectural testability or coupling
+problem; diagnosis does not require a post-mortem or architecture handoff by
+default.
 
 > A standalone developer may delegate substantial bounded reads or writes to
 > suitable available agents. A bounded worker reports to its caller rather than

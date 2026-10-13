@@ -1,10 +1,4 @@
----
-name: to-issues
-description: "Split an approved plan into PR-sized issues with dependencies on Linear or GitHub."
-disable-model-invocation: true
----
-
-# /to-issues
+# Split a plan into issues
 
 Most plans need one issue or none. Split only when the work needs several pull
 requests that can be reviewed, verified, or sequenced independently. Do not
@@ -42,9 +36,9 @@ existing states and labels.
 2. Draft the smallest set of issues and their dependencies, and present it.
 3. After approval, create the issues in dependency order and report their keys.
 4. For a Linear issue, name its linked plan `ABC-123-slug.md` so it is eligible
-   to mirror, following [plan storage](../write-plan/references/plan-storage.md).
-   A GitHub-linked plan stays local; link it through the authorized GitHub
-   workflow without assuming the Linear mirror applies.
+   to mirror, following [plan storage](plan-storage.md). A GitHub-linked plan
+   stays local; link it through the authorized GitHub workflow without
+   assuming the Linear mirror applies.
 
 Use the selected tracker's actual Git integration for status. For GitHub, use
 an intended closing reference such as `Fixes #123` or `Fixes owner/repo#123`

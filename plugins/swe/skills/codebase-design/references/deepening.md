@@ -1,7 +1,7 @@
 # Deepening
 
 How to deepen a cluster of shallow modules safely, given its dependencies. Uses
-the vocabulary in `SKILL.md` — **module**, **interface**, **implementation**,
+the [vocabulary](../SKILL.md#vocabulary) — **module**, **interface**, **implementation**,
 **depth**, **seam**, **adapter**.
 
 When you assess a candidate for deepening, classify each dependency it has. The
@@ -47,9 +47,9 @@ contract evidence when the real boundary behavior is itself at risk.
 
 ## Seam discipline
 
-- **Treat adapter count as evidence.** Multiple justified adapters make a seam
-  concrete. A single adapter may still earn a port for a real external contract
-  or faithful test substitute; otherwise it may be needless indirection.
+- **Adapter count is evidence** (see the key tests in
+  [SKILL.md](../SKILL.md#key-tests)). A single adapter with no external
+  contract or faithful test substitute may be needless indirection.
 - **Internal vs external seams.** A deep module can have internal seams (private
   to its implementation, used by its own tests) as well as the external seam at
   its interface. Don't expose internal seams through the interface just because
@@ -58,11 +58,11 @@ contract evidence when the real boundary behavior is itself at risk.
 ## Testing strategy: replace, don't layer
 
 When callers move from the shallow modules to the deepened interface, follow
-[migrate-callers-then-delete](../principle-migrate-callers-then-delete/SKILL.md).
+[migrate-callers-then-delete](../../principle-migrate-callers-then-delete/SKILL.md).
 
 - Remove old tests on shallow modules only after tests at the deepened module's
   interface preserve their useful, distinct coverage.
-- Write new tests at the deepened module's interface. **The interface is the test
-  surface.**
+- Write new tests at the deepened module's interface (the interface is the test
+  surface).
 - Assert on observable outcomes through the interface, not internal state. A test
   that must change when the implementation changes is testing past the interface.

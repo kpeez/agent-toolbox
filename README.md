@@ -91,18 +91,23 @@ discovery. Preserve any independently edited skill directory.
 ## SWE router
 
 Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. Only the user
-starts the router. It matches the task to one of twelve
+starts the router. It matches the task to one of seven
 [playbooks](plugins/swe/skills/swe/playbooks/), such as `fix-bug` or
-`drive-pr-to-green`, or to one skill that owns the task. It ends with the state
+`build-feature`, or to one skill that owns the task. It ends with the state
 of every step, including the reason for each skipped step.
 
 The router and its playbooks use these swe skills, which also start on their
 own when their moment comes: [why](plugins/swe/skills/why/SKILL.md),
 [blast-radius](plugins/swe/skills/blast-radius/SKILL.md),
 [correct](plugins/swe/skills/correct/SKILL.md),
-[ci-and-landing](plugins/swe/skills/ci-and-landing/SKILL.md), and twelve
+[ship-pr](plugins/swe/skills/ship-pr/SKILL.md), and twelve
 model-only `principle-*` skills, such as
 [principle-fix-root-causes](plugins/swe/skills/principle-fix-root-causes/SKILL.md).
+
+The verify steps use the project's own verification skill when one exists: a
+project-local skill that launches, drives, and observes the real app, with a
+feature map. Type `/verification-skill` (`$swe:verification-skill` in Codex) to
+create one, or to audit an existing one against the app.
 
 ## Delegation
 
@@ -175,9 +180,10 @@ identical (a mod under `claude-mods/` has the Claude manifest only):
 - `swe/skills/grill`, `wait-what`, and `writing-for-agents` adapt Matt Pocock's
   [productivity skills](https://github.com/mattpocock/skills/tree/main/skills/productivity).
 - `swe/skills/swe` (the router and its playbooks), `why`, `blast-radius`,
-  `correct`, `ci-and-landing`, eleven of the `principle-*` skills, and parts of
-  `implement`, `diagnose`, `orchestrate`, `testing-code`, and `ship-pr` adapt
+  `correct`, `verification-skill`, eleven of the `principle-*` skills, and
+  parts of `implement`, `diagnose`, `orchestrate`, `testing-code`, and
+  `ship-pr` adapt
   Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
   Each adapted skill folder has a `NOTICE`.
-- `swe/skills/test-audit` adapts the OpenClaw
+- The audit mode of `swe/skills/testing-code` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).

@@ -1,10 +1,21 @@
 ---
 name: testing-code
-description: "Gate and design new behavioral tests or disposable probes. Use before adding or rewriting any permanent test, when judging a diff's new tests, and for testing strategy, regression coverage, TDD, or spikes. Not for pruning existing suites."
-user-invocable: false
+description: "Gate, design, and audit tests. Use before adding or rewriting any permanent test, for probes, TDD, regression coverage, testing strategy, and judging a diff's tests. Also for reviewing or pruning existing test suites."
 ---
 
-# Behavioral testing
+# Testing code
+
+One skill owns all work on tests. Pick the mode from the request:
+
+- **New tests and probes:** adding, rewriting, or judging a test, a probe, TDD,
+  regression coverage, or testing strategy. Follow the rest of this file down to
+  the autoresearch pointer.
+- **Audit:** reviewing or pruning existing tests, a test-suite sweep, or a
+  pruning campaign. Follow "Audit mode" at the end of this file.
+
+Both modes share one value bar: [references/test-value.md](references/test-value.md).
+
+## New tests and probes
 
 Default to no new permanent test. A test is a maintenance cost that must be
 repaid by protecting behavior nothing cheaper already protects. Use scratch
@@ -63,7 +74,7 @@ the fixture, not the behavior. One regression at the owner boundary covers a
 bug; do not replay the same scenario at every layer it crosses.
 
 When a change makes existing tests obsolete or duplicative, delete or
-consolidate them in the same change. Use `/test-audit` for broader pruning.
+consolidate them in the same change. Use audit mode for broader pruning.
 During implementation, never delete, skip, or loosen an existing test to get
 green; if a test looks wrong, report it with evidence.
 
@@ -127,3 +138,34 @@ only facts that matter to that consumer.
 For a long-running autonomous exploration with a metric target and many
 experiments, use `lab:autoresearch`. A scratch probe answers a bounded question
 in one sitting.
+
+## Audit mode
+
+Shrink an existing suite to the tests that earn their cost. A test added or
+rewritten during an audit passes the admission gate above. Read
+[references/audit.md](references/audit.md) for the detail of each step. For a
+whole subsystem, read [references/campaign.md](references/campaign.md) first.
+
+1. **1-record-suite-baseline.** Before any edit, record each in-scope test's
+   pass state and the test line counts at the starting commit. Keep baseline
+   failures in their own list.
+2. **2-mark-candidates.** Read each candidate and its production owner in full.
+   Mark it `retain`, `repair`, `consolidate`, or `delete` with its evidence
+   fields. A candidate with a missing field is not ready.
+3. **3-edit-in-small-batches.** Edit one coherent owner-boundary batch. Delete
+   the test-only seams the removed tests kept alive. Rerun the owner and sibling
+   tests after each batch. Sequence the batches as in
+   [principle-sequence-verifiable-units](../principle-sequence-verifiable-units/SKILL.md).
+4. **4-mutate-changed-contracts.** Mutate the production owner of each
+   `consolidate` or `repair` contract once. Confirm its keeper fails. Restore
+   the source byte for byte.
+5. **5-independent-preservation-review.** Get a review of the final diff from
+   an agent that did not edit, such as the swe reviewer agent. Report an
+   unavailable review as a verification gap.
+6. **6-publish-draft-pr.** When publication is authorized, push the final
+   commits and update the draft PR with [ship-pr](../ship-pr/SKILL.md).
+   Otherwise report the reviewed local diff.
+
+Reply with the tests and production lines removed, the contracts kept, and the
+review result. The full handoff list is in
+[references/audit.md](references/audit.md#handoff).
