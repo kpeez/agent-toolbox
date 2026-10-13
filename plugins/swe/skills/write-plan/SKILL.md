@@ -7,7 +7,7 @@ disable-model-invocation: true
 
 # Write a plan
 
-This skill has two modes. Pick the mode from the user's arguments.
+This skill has two modes. Pick the mode from the user's arguments or the caller's instruction.
 
 - **Notes** (default): turn rough notes into a plan, as below.
 - **`issues <plan>`**: split an approved plan into PR-sized issues on Linear or

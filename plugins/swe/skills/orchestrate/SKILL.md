@@ -56,7 +56,7 @@ content to it, require explicit authorization for that provider.
 
 Apply the delegation preflight before launch. If a model constraint applies,
 set a permitted provider model explicitly. Report an unavailable model or
-permission; do not switch routes silently.
+permission.
 
 For parallel or ongoing OpenCode work, use the direct ACP bridge when its MCP
 tools are configured. Read [the bridge guide](references/opencode-acp.md) for

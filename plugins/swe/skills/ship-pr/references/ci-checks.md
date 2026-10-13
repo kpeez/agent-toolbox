@@ -37,8 +37,9 @@ give the failure exactly one class:
     branch is behind. Update it with `gh pr update-branch <pr>`, which merges
     the base into the branch without force. Run it only when
     `git rev-parse HEAD` equals the PR head, so push local fix commits first
-    (`4-push-one-wave`). Then run `git pull --ff-only`. The head changes, so
-    redo `3-recheck-before-landing`.
+    (Drive to green `4-push-one-wave`, or Publish `4-push`). Then run
+    `git pull --ff-only`. The head changes, so when a verdict record exists,
+    redo Land `3-recheck-before-landing`.
   - Red trunk: `gh run list --branch <base> --limit 5`. A failure on the base
     branch is not this branch's to fix. Report it.
 - `flake-or-infra`: the log shows a runner, network, or service fault, or a

@@ -35,9 +35,11 @@ the replacement in affected documentation, using
    [idempotent-operations](../principle-idempotent-operations/SKILL.md).
 2. For a reported defect, find the cause with
    [diagnose](../diagnose/SKILL.md) before you change code, and rerun its
-   reproduction after the fix.
+   reproduction after the fix. Before you apply the fix, and after a fix
+   fails, follow [fix-root-causes](../principle-fix-root-causes/SKILL.md).
 3. Choose evidence by behavioral risk, and name the behavior check before
-   writing code. Before adding or rewriting a permanent test, or when behavior
+   writing code. A static check, reproducible demonstration, existing
+   workflow, or explicit no-permanent-test decision is often enough. Before adding or rewriting a permanent test, or when behavior
    is uncertain or a probe is requested, pass the `testing-code` admission
    gate. Before claiming the change works, follow
    [verify-on-real-surface](../principle-verify-on-real-surface/SKILL.md).

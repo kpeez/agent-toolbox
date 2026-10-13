@@ -30,10 +30,11 @@ INCONCLUSIVE is not a pass. Report a negative verdict as plainly as a positive
 one.
 
 When no verification skill exists and you improvised the drive, say once in
-your reply that `/verification-skill` would make the drive reusable. Do not run
+your reply that the `verification-skill` skill (`/verification-skill`, or
+`$swe:verification-skill` in Codex) would make the drive reusable. Do not run
 it yourself.
 
 When a feature-map entry is wrong about a feature the change touched, or the
-change adds or changes a user-facing feature, update that entry. It is
-documentation that the change made obsolete. For wider drift, suggest
-`/verification-skill` to the user.
+change adds or changes a user-facing feature, add or update that entry. It is
+documentation that the change made obsolete. For wider drift, suggest the
+`verification-skill` skill to the user.

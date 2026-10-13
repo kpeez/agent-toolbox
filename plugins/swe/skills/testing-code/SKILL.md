@@ -9,7 +9,8 @@ One skill owns all work on tests. Pick the mode from the request:
 
 - **New tests and probes:** adding, rewriting, or judging a test, a probe, TDD,
   regression coverage, or testing strategy. Follow the rest of this file down to
-  the autoresearch pointer.
+  the autoresearch pointer. This mode has no numbered procedure; its section
+  headings are its steps.
 - **Audit:** reviewing or pruning existing tests, a test-suite sweep, or a
   pruning campaign. Follow "Audit mode" at the end of this file.
 
@@ -146,23 +147,25 @@ rewritten during an audit passes the admission gate above. Read
 [references/audit.md](references/audit.md) for the detail of each step. For a
 whole subsystem, read [references/campaign.md](references/campaign.md) first.
 
-1. **1-record-suite-baseline.** Before any edit, record each in-scope test's
+1. `1-record-suite-baseline`: Before any edit, record each in-scope test's
    pass state and the test line counts at the starting commit. Keep baseline
    failures in their own list.
-2. **2-mark-candidates.** Read each candidate and its production owner in full.
+2. `2-mark-candidates`: Read each candidate and its production owner in full.
    Mark it `retain`, `repair`, `consolidate`, or `delete` with its evidence
    fields. A candidate with a missing field is not ready.
-3. **3-edit-in-small-batches.** Edit one coherent owner-boundary batch. Delete
+3. `3-edit-in-small-batches`: Edit one coherent owner-boundary batch. Delete
    the test-only seams the removed tests kept alive. Rerun the owner and sibling
    tests after each batch. Sequence the batches as in
    [principle-sequence-verifiable-units](../principle-sequence-verifiable-units/SKILL.md).
-4. **4-mutate-changed-contracts.** Mutate the production owner of each
+4. `4-mutate-changed-contracts`: Mutate the production owner of each
    `consolidate` or `repair` contract once. Confirm its keeper fails. Restore
-   the source byte for byte.
-5. **5-independent-preservation-review.** Get a review of the final diff from
+   the source byte for byte. Then run the
+   [validation checks](references/audit.md#validation-checks), including the
+   repository's required gates.
+5. `5-independent-preservation-review`: Get a review of the final diff from
    an agent that did not edit, such as the swe reviewer agent. Report an
    unavailable review as a verification gap.
-6. **6-publish-draft-pr.** When publication is authorized, push the final
+6. `6-publish-draft-pr`: When publication is authorized, push the final
    commits and update the draft PR with [ship-pr](../ship-pr/SKILL.md).
    Otherwise report the reviewed local diff.
 

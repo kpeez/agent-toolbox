@@ -43,11 +43,12 @@ read it.
    line, such as "No PR", holds for the whole task. For a route, load the
    skill. Its numbered procedure is the steps; a numbered list of criteria,
    levels, or rungs is not a procedure. When the skill has modes, use the
-   procedure of the mode that fits the task. When it has no procedure, its
-   section headings are the steps. Each step's title is its handle.
+   procedure of the mode that fits the task. When the chosen skill or mode has
+   no numbered procedure, its section headings are the steps. Each step's title is its handle.
 2. When the host has a task-list tool, create one task per step right after
-   you read the playbook. Copy each step line byte for byte, with its handle,
-   in file order, and add task-specific tasks after them.
+   you read the playbook or load the routed skill. Copy each playbook step line
+   byte for byte; for a routed skill, copy each handle with its first
+   sentence. Keep file order, and add task-specific tasks after them.
 3. End your final reply with a "Steps" section that gives every handle in
    order with its state. A step you did not do is `skip:` with its reason:
 

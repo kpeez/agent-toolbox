@@ -17,7 +17,13 @@ name, `SUCCESSORS` in `skill_eval.py` scores it as its successor. Four cases
 lose their meaning there and are excluded: `TC-07` and `TA-07` expect and
 forbid the same merged skill, and `TA-10` and `AR-10` type a removed name.
 `validate` lists them. A comparison with a catalog that still has the old
-names must drop the same four cases from both arms. User-only skills such as `write-plan` have no
+names must drop the same four cases from both arms.
+
+Five negatives also change meaning on the new catalog. `TA-08` and `TA-09`
+now forbid `testing-code`, and `AR-07` to `AR-09` now forbid
+`codebase-design`. On the old catalog, a load of those skills there was only
+unexpected, and `codebase-design` could load legitimately. Report these five
+cases' false activations as their own stratum, not in a pooled comparison. User-only skills such as `write-plan` have no
 family: the model cannot load them, so there is no activation to measure.
 Ten cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. An independent sealed

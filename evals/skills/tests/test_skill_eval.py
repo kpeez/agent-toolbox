@@ -159,19 +159,25 @@ class OfflineCLIContract(unittest.TestCase):
         # A silent miss on every case of a merged family would read as an activation loss.
         excluded = self.cli("validate")["excluded_on_this_catalog"]
         self.assertEqual(sorted(excluded), ["AR-10", "TA-07", "TA-10", "TC-07"])
-        self.cli("materialize", "--case", "TA-07", "--runtime", HERE / "runtime.offline.json",
-                 "--output", self.root / "excluded", ok=False)
-        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == "TA-01")
-        run, _, _ = self.prepare("successor", case)
-        skill = json.loads((run / "manifest.json").read_text())["skills"]["swe:testing-code"]
-        score = self.trace(run, [{"type": "session.started"},
-                                 {"type": "skill_read.request", "request_id": "merged", "skill": "swe:testing-code", "path": skill["path"]},
-                                 {"type": "skill_read.result", "request_id": "merged", "exit_code": 0,
-                                  "body": Path(skill["path"]).read_text(), "body_complete": True},
-                                 {"type": "action.started", "kind": case["relevant_action"]},
-                                 {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}}])
-        self.assertEqual(score["activation"], {"swe:test-audit": "loaded"})
-        self.assertEqual(score["unexpected_skills"], [])
+        for case_id in ("TA-07", "TA-10"):
+            self.cli("materialize", "--case", case_id, "--runtime", HERE / "runtime.offline.json",
+                     "--output", self.root / ("excluded-" + case_id), ok=False)
+        cases = {c["id"]: c for c in json.loads((HERE / "cases.json").read_text())["cases"]}
+        scores = {}
+        for case_id in ("TA-01", "TA-09"):
+            case = cases[case_id]
+            run, _, _ = self.prepare("successor-" + case_id, case)
+            skill = json.loads((run / "manifest.json").read_text())["skills"]["swe:testing-code"]
+            scores[case_id] = self.trace(run, [
+                {"type": "session.started"},
+                {"type": "skill_read.request", "request_id": "merged", "skill": "swe:testing-code", "path": skill["path"]},
+                {"type": "skill_read.result", "request_id": "merged", "exit_code": 0,
+                 "body": Path(skill["path"]).read_text(), "body_complete": True},
+                {"type": "action.started", "kind": case["relevant_action"]},
+                {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}}])
+        self.assertEqual(scores["TA-01"]["activation"], {"swe:test-audit": "loaded"})
+        self.assertEqual(scores["TA-01"]["unexpected_skills"], [])
+        self.assertTrue(scores["TA-09"]["false_activation"])
 
     def claude_trace(self, run, steps, relevant):
         """Write a minimal transcript in the audited Claude Code shape (EVIDENCE.md) and score it."""
