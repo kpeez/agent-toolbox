@@ -6,7 +6,8 @@ parent issue that names an initiative.
 
 ## Search Linear
 
-Use the Linear MCP tools.
+Use the Linear MCP tools. When they are missing, record "Linear: not searched,
+no Linear tools" as a gap and run only the GitHub Issues search.
 
 1. Fetch each ticket ID from the anchor with `get_issue`, and read its
    comments with `list_comments`.
