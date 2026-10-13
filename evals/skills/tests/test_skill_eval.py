@@ -11,9 +11,12 @@ artifacts/skill-evals/2026-09-30-offline-verification/verification.json.
 The Claude transcript test protects the native load proof and action order.
 Credible regressions are digesting the whole SKILL.md against a delivered body
 that has no frontmatter, counting a Skill result with no linked body, counting a
-sliced Read, and ordering an action by its own line when its API message started
-before the skill body arrived. Each was seen red by one mutation of
-skill_eval.py; EVIDENCE.md records the runs.
+sliced Read, ordering an action by its own line when its API message started
+before the skill body arrived, keeping an unproved bare-name Skill load under its
+bare name (a silent miss), and keeping a Skill load whose name differs from its
+delivered body without an issue (also a silent miss). Each was seen red: the
+first four under one mutation each of skill_eval.py, the last two on the code
+before their fix. EVIDENCE.md points to the output.
 """
 from __future__ import annotations
 
@@ -178,16 +181,21 @@ class OfflineCLIContract(unittest.TestCase):
 
     def test_claude_transcript_load_proof_and_action_order(self):
         # Shapes come from the audited probe traces; see EVIDENCE.md "Claude transcript audit".
-        expected = {"skill-body": ("loaded", "before"), "skill-without-body": ("unavailable", "unavailable"),
-                    "skill-in-action-message": ("loaded", "late"), "full-read": ("loaded", "before"),
-                    "sliced-read": ("unavailable", "unavailable")}
+        # Values: evidence coverage, then activation and timing of swe:implement.
+        unresolved = ("complete", "unavailable", "unavailable")
+        expected = {"skill-body": ("complete", "loaded", "before"), "skill-without-body": unresolved,
+                    "skill-in-action-message": ("complete", "loaded", "late"), "full-read": ("complete", "loaded", "before"),
+                    "sliced-read": unresolved, "bare-name-without-body": unresolved,
+                    "name-differs-from-body": ("partial", "unavailable", "unavailable")}
         for name, outcome in expected.items():
             with self.subTest(name=name):
                 run, skill, text = self.prepare("claude-" + name)
                 lines = text.split("\n")
                 body = ("Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n"
                         + text.split("\n---\n", 1)[1].lstrip("\n"))
-                skill_call = [("call", "message-skill", "use-skill", {"name": "Skill", "input": {"skill": "swe:implement"}}),
+                requested = {"bare-name-without-body": "implement", "name-differs-from-body": "swe:diagnose"}
+                skill_call = [("call", "message-skill", "use-skill",
+                               {"name": "Skill", "input": {"skill": requested.get(name, "swe:implement")}}),
                               ("result", None, "use-skill", {"success": True, "commandName": "swe:implement"})]
                 read_call = [("call", "message-read", "use-read", {"name": "Read", "input": {"file_path": skill["path"]}})]
                 shown = len(lines) if name == "full-read" else 3
@@ -195,7 +203,8 @@ class OfflineCLIContract(unittest.TestCase):
                     "filePath": skill["path"], "content": text if name == "full-read" else "\n".join(lines[:3]),
                     "startLine": 1, "numLines": shown, "totalLines": len(lines)}})]
                 steps = {"skill-body": skill_call + [("body", None, "use-skill", body)],
-                         "skill-without-body": skill_call,
+                         "skill-without-body": skill_call, "bare-name-without-body": skill_call,
+                         "name-differs-from-body": skill_call + [("body", None, "use-skill", body)],
                          "skill-in-action-message": skill_call + [("body", None, "use-skill", body)],
                          "full-read": read_call + read_result, "sliced-read": read_call + read_result}[name]
                 # The Edit shares the Skill call's API message only in skill-in-action-message.
@@ -203,8 +212,8 @@ class OfflineCLIContract(unittest.TestCase):
                 steps += [("call", edit_message, "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
                           ("result", None, "use-edit", {"filePath": "calc.py"})]
                 score = self.claude_trace(run, steps, "use-edit")
-                self.assertEqual(score["evidence_coverage"], "complete")
-                self.assertEqual((score["activation"]["swe:implement"], score["timing"]["swe:implement"]), outcome)
+                self.assertEqual((score["evidence_coverage"], score["activation"]["swe:implement"],
+                                  score["timing"]["swe:implement"]), outcome)
 
     def test_isolation_native_unknown_and_frozen_input_integrity(self):
         run, skill, body = self.prepare("identity")

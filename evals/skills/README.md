@@ -116,8 +116,8 @@ Use `PYTHONDONTWRITEBYTECODE=1` for unittest and place explicit compilation cach
 under `artifacts/skill-evals/`, so run output stays out of source directories.
 
 Native scoring supports Claude Code session transcripts from the audited
-version (2.1.296, headless): `Skill`-tool loads proved by the linked delivered
-body, full `Read` loads of a frozen `SKILL.md`, root versus sidechain scope,
+version (2.1.296, headless): `Skill`-tool loads, by full or bare name, proved
+by the linked delivered body, full `Read` loads of a frozen `SKILL.md`, root versus sidechain scope,
 labeled action timing, and end coverage from stream-json. It does not support
 typed slash-command loads, `Skill` calls with arguments, compaction, resumes,
 repeat-load notes, Codex traces, unlabeled actions, or step-list extraction.

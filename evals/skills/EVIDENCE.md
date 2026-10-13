@@ -116,7 +116,7 @@ Load proofs:
 
 | Proof | Raw lines | Success needs |
 |---|---|---|
-| `skill_body_delivery` | An assistant `tool_use` named `Skill`; the user `tool_result` with the same `tool_use_id`; an `isMeta` user line whose `sourceToolUseID` is that id and whose only text block starts `Base directory for this skill: ` | No `is_error`; `toolUseResult.success` is `true`; the base directory plus `/SKILL.md` is a frozen path inside a declared plugin directory; the requested name is that skill; the text after the base-directory line and one blank line matches the manifest `body_sha256` |
+| `skill_body_delivery` | An assistant `tool_use` named `Skill`; the user `tool_result` with the same `tool_use_id`; an `isMeta` user line whose `sourceToolUseID` is that id and whose only text block starts `Base directory for this skill: ` | No `is_error`; `toolUseResult.success` is `true`; the base directory plus `/SKILL.md` is a frozen path inside a declared plugin directory; the requested name is that skill (a bare name resolves to the one declared skill with that name); the text after the base-directory line and one blank line matches the manifest `body_sha256` |
 | `full_body_read` | An assistant `tool_use` named `Read` whose `file_path` is a frozen `SKILL.md` path; its `tool_result` | No `is_error`; `toolUseResult.file.filePath` is the same path; `startLine` is 1 and `numLines` equals `totalLines`; the `content` digest matches the manifest whole-file `sha256` |
 
 `body_sha256` is the digest of `SKILL.md` with its frontmatter removed and its
@@ -125,7 +125,9 @@ result is `failed`. A success without proof is `partial`: no linked body, a
 digest mismatch, or a sliced read. No result, no success flag, a path outside
 the declared plugin directories, or a requested name that differs from the
 delivered directory is `unavailable`. `completed_seq` is the later of the result
-line and the body line.
+line and the body line. A root load that is not proved and whose name is not a
+frozen skill keeps the name as given, so it cannot match an answer key. That
+case is an issue, as listed below.
 
 Paths match after `posixpath.normpath`, against the declared path as given and
 its real path at capture time. Scoring does not read the file system.
@@ -155,6 +157,9 @@ makes the session partial:
 - a duplicate `tool_use` id, or a `tool_result` without one earlier `tool_use`;
 - a skill body that is not linked to one earlier `Skill` call, which is how a
   typed slash command delivers it;
+- a root `Skill` load whose body comes from outside the declared plugin
+  directories or names another skill, or a root load that is `partial` or
+  `unavailable` under a name that is not a frozen skill;
 - a subagent call whose sidechain file was not captured;
 - a stream without one successful `result` event, or an invalid label.
 
@@ -182,7 +187,9 @@ raw lines.
 | `relread` (label: `none`) | `swe:implement` success at 21; `swe:testing-code` `partial`, detail `sliced read`; timing unavailable | Line 29 Read of the frozen `testing-code/SKILL.md` with `limit: 30`; line 30 result `startLine` 1, `numLines` 30, `totalLines` 128 |
 | `subagent` (label: `none`) | No root loads; activation `miss`; one child load, `unavailable`, detail `tool_result lacks toolUseResult.success`; two sidechain files captured | Root line 19 Agent call, line 20 result with `agentId` `ac805767b100cd127`; sidechain lines 12 (`Skill`) and 17 (`Read`) share `message.id` `msg_011CfyodWD7K3xLkeuH3ypVH`, with the result on line 13 and the body on line 14; line 13 has no `toolUseResult` |
 
-Other probe transcripts, parsed directly with the adapter's functions:
+Other probe transcripts, parsed directly with the adapter's functions by
+`/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/review/direct_parse.py`
+(declared catalog: the scratch leaf skill only):
 
 - `claude-skill-surface/transcripts/{bare,noargs,ns,snapshot,snapshot-ns}-swe`:
   each gives the issue "skill body not linked to one earlier Skill call" at
@@ -190,7 +197,8 @@ Other probe transcripts, parsed directly with the adapter's functions:
 - `claude-skill-surface/transcripts/skill-leaf`: the blocked `Skill` call
   (lines 20 and 21, `is_error: true`) is `failed`.
 - `claude-skill-surface/transcripts/pineapple`: the `Skill` load (lines 21 to
-  23) of a scratch skill outside any declared directory is `unavailable`.
+  23) of a scratch skill outside any declared directory is `unavailable`, with
+  the issue "skill identity unresolved" at line 21.
 - `claude-skill-surface/transcripts/bare-swe`: the full Read of the scratch
   leaf `SKILL.md` (lines 22 and 23), checked against that file's digest, is
   `success`. No probe holds a full Read of a catalog skill, so the catalog

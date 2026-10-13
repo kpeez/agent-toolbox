@@ -35,6 +35,9 @@ CLAUDE_ATTACHMENT_TYPES = {
     "mcp_instructions_delta", "model", "prompt_snapshot", "remote_session_change",
     "session_context", "skill_listing", "total_tokens_reminder"}
 CLAUDE_BASE_PREFIX = "Base directory for this skill: "
+# A delivered body that names another skill, or comes from outside the frozen catalog, breaks isolation.
+CLAUDE_IDENTITY_LOSS = {"base directory outside the declared snapshot",
+                        "requested skill differs from the delivered base directory"}
 
 
 def digest(data):
@@ -361,7 +364,8 @@ def claude_session(rows, label, sid, agent, issues):
     return {"uses": uses, "results": results, "bodies": bodies, "first": first}
 
 
-def claude_load(tool_use_id, session, frozen, manifest, sid, agent):
+def claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues):
+    """One load record. A root load whose identity stays unresolved is an issue, never a silent miss."""
     use = session["uses"][tool_use_id]
     result = session["results"].get(tool_use_id)
     body = session["bodies"].get(tool_use_id)
@@ -369,11 +373,22 @@ def claude_load(tool_use_id, session, frozen, manifest, sid, agent):
             "completed_seq": None, "session_id": sid, "agent_id": agent, "ordering": "unknown",
             "evidence": [use["ref"]] + [item["ref"] for item in (result, body) if item]}
     if use["name"] == "Skill":
-        load.update(skill=str(use["input"].get("skill")), proof="skill_body_delivery",
+        requested = str(use["input"].get("skill"))
+        # The Skill tool also accepts a bare name; resolve it within the declared snapshots.
+        matches = {skill for skill in frozen.values() if requested in {skill, skill.split(":", 1)[1]}}
+        load.update(skill=matches.pop() if len(matches) == 1 else requested, proof="skill_body_delivery",
                     transform="frontmatter_removed_leading_newlines_stripped")
     else:
         load.update(skill_path=use["input"].get("file_path"), proof="full_body_read", transform=None)
         load["skill"] = frozen[posixpath.normpath(load["skill_path"])]
+    load = claude_proof(load, use, result, body, frozen, manifest)
+    unresolved = load["status"] in {"partial", "unavailable"} and load["skill"] not in manifest["skills"]
+    if agent is None and (unresolved or load["detail"] in CLAUDE_IDENTITY_LOSS):
+        issues.append(f"{use['ref']['file']} line {use['line']}: skill identity unresolved ({load['detail']})")
+    return load
+
+
+def claude_proof(load, use, result, body, frozen, manifest):
     if result is None:
         load["detail"] = "no tool_result"
         return load
@@ -395,7 +410,7 @@ def claude_load(tool_use_id, session, frozen, manifest, sid, agent):
         if skill is None:
             load["detail"] = "base directory outside the declared snapshot"
             return load
-        if load["skill"] not in {skill, skill.split(":", 1)[1]}:
+        if load["skill"] != skill:
             load["detail"] = "requested skill differs from the delivered base directory"
             return load
         load["skill"] = skill
@@ -456,7 +471,7 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
         for tool_use_id, use in session["uses"].items():
             path = use["input"].get("file_path") if use["name"] == "Read" else None
             if use["name"] == "Skill" or (isinstance(path, str) and posixpath.normpath(path) in frozen):
-                load = claude_load(tool_use_id, session, frozen, manifest, sid, agent)
+                load = claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues)
                 base["loads" if agent is None else "child_loads"].append(load)
     stream = capture_info["stream"]
     if stream:
