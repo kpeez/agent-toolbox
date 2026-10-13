@@ -41,8 +41,9 @@ read it.
 
 1. For a playbook, read `playbooks/<slug>.md` in full. A limit in its Reply
    line, such as "No PR", holds for the whole task. For a route, load the
-   skill. Its numbered steps are the steps; when it has none, its section
-   headings are. Each step's title is its handle.
+   skill. Its numbered procedure is the steps; a numbered list of criteria,
+   levels, or rungs is not a procedure. When it has no procedure, its section
+   headings are the steps. Each step's title is its handle.
 2. When the host has a task-list tool, create one task per step right after
    you read the playbook. Copy each step line byte for byte, with its handle,
    in file order, and add task-specific tasks after them.
@@ -61,12 +62,7 @@ Load a name this way:
 
 - A swe skill, such as `diagnose`: the Skill tool, as `swe:diagnose`.
 - A principle slug, such as `fix-root-causes`: the Skill tool, as
-  `swe:principle-fix-root-causes`. The principle slugs are
-  `subtract-before-adding`, `ancillary-fixes`, `verify-on-real-surface`,
-  `fix-root-causes`, `model-the-domain`, `parse-at-boundaries`,
-  `minimize-reader-load`, `sequence-verifiable-units`,
-  `migrate-callers-then-delete`, `idempotent-operations`,
-  `separate-shared-state`, and `explain-measurements`.
+  `swe:principle-fix-root-causes`. [Principles](#principles) lists the slugs.
 - [ship-pr](../ship-pr/SKILL.md), [write-plan](../write-plan/SKILL.md), and
   [to-issues](../to-issues/SKILL.md): read the `SKILL.md` by its absolute
   path. Never call the Skill tool on these three; the host blocks the call.
@@ -92,6 +88,13 @@ Where the host has no Skill tool, read the skill's `SKILL.md` instead.
   tracker or chat.
 
 ## Principles
+
+The principle slugs are `subtract-before-adding`, `ancillary-fixes`,
+`verify-on-real-surface`, `fix-root-causes`, `model-the-domain`,
+`parse-at-boundaries`, `minimize-reader-load`, `sequence-verifiable-units`,
+`migrate-callers-then-delete`, `idempotent-operations`,
+`separate-shared-state`, and `explain-measurements`.
+Only these are principles; another skill, such as `testing-code`, is not.
 
 Load a principle before you apply it. In the final reply, name each principle
 that changed a decision and the choice it changed. Cite only principles you
@@ -127,5 +130,8 @@ loaded in this session.
 
 Give the playbook slug or route, then what the playbook's Reply line asks
 for or, for a route, the skill's own report. Then give the principle
-citations. End with the "Steps" section. Label each piece of evidence with the
-scale of the skill that produced it.
+citations. End with the "Steps" section. Give each claim the confidence
+label its skill defines: VERIFIED, NOT VERIFIED, or INCONCLUSIVE for a
+change; a why tier for a rationale claim; a blast-radius rung for a safety
+fact; and reproduced, inferred from the evidence, or unresolved for a
+failure's cause.
