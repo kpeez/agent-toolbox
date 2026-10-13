@@ -20,7 +20,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
     "implement", "diagnose", "testing-code", "test-audit",
-    "improve-codebase-architecture")}
+    "improve-codebase-architecture", "ship-pr")}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
 # The swe consolidation merged these skills into a successor. The corpus keeps the old
 # names so every arm runs byte-identical cases; a name the catalog lacks scores as its
@@ -132,7 +132,7 @@ def corpus(path=HERE / "cases.json"):
         if not fixture.is_dir():
             raise ValueError(f"missing fixture: {fixture}")
     if set(groups) != TARGETS or any(dict(counts) != COUNTS for counts in groups.values()):
-        raise ValueError("expected five targets, each with 4/2/3/1 cases")
+        raise ValueError("expected the declared targets, each with 4/2/3/1 cases")
     return cases
 
 

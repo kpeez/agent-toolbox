@@ -4,8 +4,8 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 50 authored scenarios: ten each for `implement`, `diagnose`,
-`testing-code`, `test-audit`, and `improve-codebase-architecture`. Each family
+The corpus has 60 authored scenarios: ten each for `implement`, `diagnose`,
+`testing-code`, `test-audit`, `improve-codebase-architecture`, and `ship-pr`. Each family
 has four natural requests, two contextual requests, three nearby negatives, and
 one explicit invocation control. Some negatives are direct diff-review requests,
 which expect no `swe` skill.
@@ -25,7 +25,17 @@ now forbid `testing-code`, and `AR-07` to `AR-09` now forbid
 unexpected, and `codebase-design` could load legitimately. Report these five
 cases' false activations as their own stratum, not in a pooled comparison. User-only skills such as `write-plan` have no
 family: the model cannot load them, so there is no activation to measure.
-Ten cases marked `holdout_candidate` are
+
+The `ship-pr` family exists because `ship-pr` became model-invoked on the
+`swe-router-rewrite` branch. On main it is user-only, so main scores zero recall
+and zero false activation for it by construction. Report this family on its own,
+not in the pooled main-versus-branch comparison. Its negatives matter most: a
+false activation loads a skill that commits, pushes, and merges. The fixture has
+no remote, so a trace can show the commit and the reads that precede a push, but
+not the push itself. Its `receipt-totals` fixture also holds a CI log and review
+threads as plain files, because no host is reachable.
+
+Twelve cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. An independent sealed
 set is still required before tuning from measured scores.
 
