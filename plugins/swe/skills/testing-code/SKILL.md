@@ -10,10 +10,11 @@ Default to no new permanent test. A test is a maintenance cost that must be
 repaid by protecting behavior nothing cheaper already protects. Use scratch
 probes to learn, then retain only the smallest stable evidence that uniquely
 protects meaningful behavior: a committed test, shared workflow, static check,
-reproducible demonstration, or explicit no-permanent-test decision. There is
-no TDD ritual, test-per-goal rule, coverage quota, or suite-wide
-mutation-score target, but every new or rewritten permanent test must have
-been seen failing, often through one deliberate mutation.
+reproducible demonstration, or explicit no-permanent-test decision. A TDD
+request goes through the admission gate below; there is no red-green ritual,
+test-per-goal rule, coverage quota, or suite-wide mutation-score target, but
+every new or rewritten permanent test must have been seen failing, often
+through one deliberate mutation.
 Keeping an existing valuable test during an audit does not itself require a
 new mutation exercise.
 
@@ -107,7 +108,8 @@ when choosing a substitute or mock, especially for ML and external services.
 Before completion, tie each observable claim to its oracle and evidence mode,
 remove task-owned scratch work, and run direct and behavior-specific checks. A
 failing required gate blocks completion; investigate an in-scope failure before
-claiming success and report unrelated baseline failures. For each permanent
+claiming success, and handle an unrelated baseline failure per
+[ancillary-fixes](../principle-ancillary-fixes/SKILL.md). For each permanent
 test added or rewritten, report the contract it guards and how it was seen red.
 Record a verdict-only probe or durable decision only when it affects future
 work and the established project workflow calls for a record.
