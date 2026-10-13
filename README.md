@@ -176,8 +176,8 @@ identical (a mod under `claude-mods/` has the Claude manifest only):
   [productivity skills](https://github.com/mattpocock/skills/tree/main/skills/productivity).
 - `swe/skills/swe` (the router and its playbooks), `why`, `blast-radius`,
   `correct`, `ci-and-landing`, eleven of the `principle-*` skills, and parts of
-  `implement`, `diagnose`, `orchestrate`, and `testing-code` adapt Lauren
-  Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
+  `implement`, `diagnose`, `orchestrate`, `testing-code`, and `ship-pr` adapt
+  Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
   Each adapted skill folder has a `NOTICE`.
 - `swe/skills/test-audit` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).
