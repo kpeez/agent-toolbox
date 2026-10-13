@@ -11,16 +11,18 @@ or established approved execution scope authorizes those actions. Respect any
 existing local-only boundary and explicit publication permission; publication
 authority does not authorize putting private identifiers or content into public
 output. A user invocation of `/ship-pr` authorizes its default commit, push, and
-draft-PR workflow for the named work. If publication is not authorized, leave
-verified local work intact and report its state.
+draft-PR workflow for the named work. In a `/swe` task that asks for an
+implementation, the playbook's `publish-draft-pr` step carries the same
+authority, unless the request keeps the work local. If publication is not
+authorized, leave verified local work intact and report its state.
 
 Default and explicit finalize modes:
 
 - `/ship-pr [plan or issue]`: verify, group, commit, push, and ensure a draft
   pull request exists.
 - `/ship-pr finalize`: re-verify and mark the existing draft ready. Read
-  [finalize](references/finalize.md) for this explicit mode. Merging remains
-  separate.
+  [finalize](references/finalize.md) for this explicit mode. It merges only
+  under the merge rule below; otherwise it stops at ready.
 
 ## Rules
 
@@ -35,8 +37,12 @@ Default and explicit finalize modes:
   metadata. If neither establishes it, stop and ask rather than guessing.
 - Never force-push except through an explicitly requested stack operation whose
   documented workflow requires it.
-- Draft pull requests are the default. Do not change an existing draft/ready
-  state unless the user requested that transition.
+- Draft pull requests are the default. Change an existing draft/ready state
+  only when the user's standing instructions or the current request ask for
+  that transition.
+- Merge only when the user's standing instructions or the current request
+  authorize a merge, and only through the landing gate in
+  [ci-and-landing](../ci-and-landing/SKILL.md).
 - Never put private identifiers, URLs, or content into a public branch, commit,
   pull-request body, or bot output. The one exception is an issue key (such as
   `ABC-123`) in the branch name and a `Fixes ABC-123` line, which link the
@@ -70,7 +76,8 @@ any stack relationship from repository evidence or the caller's instruction.
    the revision, relevant uncommitted content, environment, and coverage still
    match; identify them as recorded results, not checks rerun here. Do not
    invent a generic lint, type-check, or test stack. A required failure stops
-   publication.
+   publication. When a pull-request check fails, follow
+   [ci-and-landing](../ci-and-landing/SKILL.md) before any rerun or fix commit.
 3. **Group and commit.** Check proposed public branch, commit, and PR text
    against the privacy rule above. Build the smallest coherent commit groups.
    Stage and commit one group at a time, checking status between groups.

@@ -20,6 +20,9 @@ applies.
 - **Before:** <screenshot, output, or failing test>
   **After:** <screenshot, output, or passing test>
 
+Verification record (optional): <PASS | PASS+NOTES | FAIL>; head `<sha>`;
+base `<sha>`; patch-id `<id>`.
+
 ## Risk
 
 <what the merge can affect; anything a revert would not undo>
@@ -143,6 +146,12 @@ one. Otherwise show execution: the command a reviewer can paste with its
 observed output, or the named test that failed before and passes after, with
 its assertion sketched as pseudocode. When no reproducible demonstration
 exists, say so and name what the reviewer should inspect instead.
+
+When an independent verdict gates landing, add the verification record: the
+verdict, head SHA, base SHA, and patch-id, and nothing else.
+[ci-and-landing](../../ci-and-landing/SKILL.md) says how to compute it and
+when to recompute it. Replace the record when it changes; keep one current
+record.
 
 ## Risk
 
