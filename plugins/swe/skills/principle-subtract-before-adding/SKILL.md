@@ -1,6 +1,6 @@
 ---
 name: principle-subtract-before-adding
-description: "When a change would add code, a layer, a check, or a special case: delete first, then simplify, then optimize, then automate. No change is a valid result."
+description: "When a change would add code, a layer, a check, or a special case: prefer deleting, then simplifying, then optimizing, then automating; stop at the first that works. No change is a valid result."
 user-invocable: false
 ---
 

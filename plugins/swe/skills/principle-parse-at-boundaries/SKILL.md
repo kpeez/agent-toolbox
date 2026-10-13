@@ -1,6 +1,6 @@
 ---
 name: principle-parse-at-boundaries
-description: "When data enters the system or you place validation: parse it once at the edge into types that cannot hold bad states, and trust those types inside."
+description: "When data enters the system or you place validation: parse it once at the edge into domain types, and trust those types inside."
 user-invocable: false
 ---
 
@@ -17,9 +17,6 @@ API responses.
 - Keep special-purpose policy at the edge and general-purpose mechanism
   inside. Do not expose transport, storage, or wire types through the public
   interface.
-- Make illegal states impossible to build. Model variants as a tagged union,
-  not as optional fields whose contradictions still compile, such as
-  `completed: true` with no `completedAt`.
 - Give two meanings two types when they share a primitive, such as a user id
   and an order id.
 - Match exhaustively on variants, so that an unhandled new variant fails the

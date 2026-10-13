@@ -9,7 +9,7 @@ user-invocable: false
 Fix a failure where it starts, not where it shows.
 
 - Reproduce first. When you are stuck, instrument the code and read the actual
-  error. Do not guess.
+  error.
 - Ask why until the answer is a cause you can change, not another symptom.
 - Do not add a guard, null check, retry, or catch that only silences the
   symptom. A workaround that needs a long comment to justify it marks the wrong
@@ -18,7 +18,7 @@ Fix a failure where it starts, not where it shows.
   config files, caches, lock files, and serialized state.
 - After you find the cause, search for the same faulty pattern elsewhere. Fix
   each instance in scope and report the others.
-- Revert the changes that refuted hypotheses motivated.
+- When a probe refutes a hypothesis, revert the changes you made to test it.
 
 ## After two failed fixes
 
