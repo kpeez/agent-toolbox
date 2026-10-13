@@ -7,6 +7,13 @@ runs as misses, or materializing answer keys. No existing suite owns these
 contracts. Standard-library synthetic protocol and throwaway repo snapshots
 keep cost deterministic/offline. Seen-red evidence is retained in
 artifacts/skill-evals/2026-09-30-offline-verification/verification.json.
+
+The Claude transcript test protects the native load proof and action order.
+Credible regressions are digesting the whole SKILL.md against a delivered body
+that has no frontmatter, counting a Skill result with no linked body, counting a
+sliced Read, and ordering an action by its own line when its API message started
+before the skill body arrived. Each was seen red by one mutation of
+skill_eval.py; EVIDENCE.md records the runs.
 """
 from __future__ import annotations
 
@@ -139,6 +146,65 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(report["confusion"][0]["count"], 1)
         self.assertEqual(report["confusion"][0]["denominator"], 1)
         self.assertEqual(report["confusion"][0]["interrupted_or_partial_observations"], 1)
+
+    def claude_trace(self, run, steps, relevant):
+        """Write a minimal transcript in the audited Claude Code shape (EVIDENCE.md) and score it."""
+        lines, sid = [], "claude-session"
+
+        def add(row):
+            row = {"uuid": f"line-{len(lines)}", "parentUuid": lines[-1]["uuid"] if lines else None,
+                   "sessionId": sid, "isSidechain": False, **row}
+            lines.append(row)
+
+        add({"type": "user", "message": {"role": "user", "content": "rename it"}})
+        for kind, message_id, tool_use_id, payload in steps:
+            if kind == "call":
+                add({"type": "assistant", "message": {"id": message_id, "content": [
+                    {"type": "tool_use", "id": tool_use_id, "name": payload["name"], "input": payload["input"]}]}})
+            elif kind == "result":
+                add({"type": "user", "toolUseResult": payload, "message": {"role": "user", "content": [
+                    {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}})
+            else:
+                add({"type": "user", "isMeta": True, "sourceToolUseID": tool_use_id, "message": {
+                    "role": "user", "content": [{"type": "text", "text": payload}]}})
+        source = self.root / (run.name + ".jsonl")
+        source.write_text("".join(json.dumps(row) + "\n" for row in lines)
+                          + json.dumps({"type": "cost-state", "sessionId": sid}) + "\n")
+        stream = self.root / (run.name + ".stream.jsonl")
+        stream.write_text(json.dumps({"type": "result", "subtype": "success", "is_error": False, "session_id": sid}) + "\n")
+        self.cli("capture", "--run", run, "--source", source, "--state", "completed", "--format", "claude-transcript",
+                 "--plugin-dir", run / "inputs" / "plugins" / "swe", "--stream", stream, "--relevant-action", relevant)
+        return self.cli("score", "--run", run)
+
+    def test_claude_transcript_load_proof_and_action_order(self):
+        # Shapes come from the audited probe traces; see EVIDENCE.md "Claude transcript audit".
+        expected = {"skill-body": ("loaded", "before"), "skill-without-body": ("unavailable", "unavailable"),
+                    "skill-in-action-message": ("loaded", "late"), "full-read": ("loaded", "before"),
+                    "sliced-read": ("unavailable", "unavailable")}
+        for name, outcome in expected.items():
+            with self.subTest(name=name):
+                run, skill, text = self.prepare("claude-" + name)
+                lines = text.split("\n")
+                body = ("Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n"
+                        + text.split("\n---\n", 1)[1].lstrip("\n"))
+                skill_call = [("call", "message-skill", "use-skill", {"name": "Skill", "input": {"skill": "swe:implement"}}),
+                              ("result", None, "use-skill", {"success": True, "commandName": "swe:implement"})]
+                read_call = [("call", "message-read", "use-read", {"name": "Read", "input": {"file_path": skill["path"]}})]
+                shown = len(lines) if name == "full-read" else 3
+                read_result = [("result", None, "use-read", {"type": "text", "file": {
+                    "filePath": skill["path"], "content": text if name == "full-read" else "\n".join(lines[:3]),
+                    "startLine": 1, "numLines": shown, "totalLines": len(lines)}})]
+                steps = {"skill-body": skill_call + [("body", None, "use-skill", body)],
+                         "skill-without-body": skill_call,
+                         "skill-in-action-message": skill_call + [("body", None, "use-skill", body)],
+                         "full-read": read_call + read_result, "sliced-read": read_call + read_result}[name]
+                # The Edit shares the Skill call's API message only in skill-in-action-message.
+                edit_message = "message-skill" if name == "skill-in-action-message" else "message-edit"
+                steps += [("call", edit_message, "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+                          ("result", None, "use-edit", {"filePath": "calc.py"})]
+                score = self.claude_trace(run, steps, "use-edit")
+                self.assertEqual(score["evidence_coverage"], "complete")
+                self.assertEqual((score["activation"]["swe:implement"], score["timing"]["swe:implement"]), outcome)
 
     def test_isolation_native_unknown_and_frozen_input_integrity(self):
         run, skill, body = self.prepare("identity")
