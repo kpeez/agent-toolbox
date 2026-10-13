@@ -45,7 +45,7 @@ limitation or ask for that specific access.
 Generate the smallest useful set of ranked, falsifiable hypotheses. Include
 alternatives when they guard against anchoring; do not add them to meet a quota.
 For each probe, state the prediction it tests and change one variable at a time.
-When you suspect a regression, use the `why` skill to seed hypotheses from the
+When you suspect a regression, use [why](../why/SKILL.md) to seed hypotheses from the
 history of the failing area.
 
 > If <X> is the cause, then changing <Y> makes the bug disappear or changing

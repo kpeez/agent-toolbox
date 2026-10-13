@@ -11,6 +11,9 @@
   Claude Code function-hook mods, which only the Claude catalog lists.
 - Keep every skill reference pointed at a resource or script that exists in
   the same plugin.
+- Before you add a rule for a repeated agent mistake, read
+  [docs/agent-rule-enforcers.md](docs/agent-rule-enforcers.md) and follow the
+  `correct` skill in `plugins/swe`.
 
 ## Verification
 
