@@ -96,7 +96,7 @@ Do not edit source or tests while a test runner is watching the checkout.
 Get an independent preservation review of the final diff: compare deleted
 coverage against keepers for contracts that lost their only proof, and look for
 new assertions that cannot fail. Report an unavailable review as a verification
-gap. A second pass by the implementer is not independent review.
+gap. A second pass by the agent that made the edits is not independent review.
 
 ## Landing and continuation
 

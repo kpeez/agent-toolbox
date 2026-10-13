@@ -1,7 +1,7 @@
 {
   "name": "swe",
   "description": "SWE skills for AI coding agents: an SWE router that runs a task through a step-by-step playbook, design hash-outs, short handoff plans, behavioral verification, CI triage and verified landing, and more",
-  "version": "1.20.1",
+  "version": "1.20.2",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
@@ -11,7 +11,7 @@
   "interface": {
     "displayName": "swe",
     "shortDescription": "A task router plus planning, implementation, review, and PR skills for coding agents.",
-    "longDescription": "The SWE router ($swe:swe <task> in Codex, /swe <task> in Claude Code) matches a task to a step-by-step playbook and tracks every step. Portable skills for planning, implementing, reviewing, and publishing code changes, plus focused explorer, meeseeks (implementation), and reviewer agent definitions, with short handoff plans and configured Linear mirroring.",
+    "longDescription": "The SWE router ($swe:swe <task> in Codex, /swe <task> in Claude Code) matches a task to a step-by-step playbook and tracks every step. Portable skills for planning, implementing, reviewing, and publishing code changes, plus focused explorer, golem (implementation), and reviewer agent definitions, with short handoff plans and configured Linear mirroring.",
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
