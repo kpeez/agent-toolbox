@@ -117,7 +117,7 @@ rule to your user-level `AGENTS.md` (Codex) or `CLAUDE.md` (Claude):
 
 > For substantial work with independently executable parts, use
 > `swe:orchestrate` to delegate them. Keep tightly coupled work with one agent.
-> Send a single independent review directly to the reviewer.
+> Send a single independent review directly to one fresh subagent.
 
 The plugin does not edit user instructions. Existing sessions may retain prior
 instructions; use a fresh session after updating.
