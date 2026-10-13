@@ -11,6 +11,10 @@ It installs nothing on the host and has no native Codex/host integration.
 
 ## Verification snapshot — 2026-09-11
 
+This snapshot is dated. Its versions (Codex CLI 0.154.0, SWE 1.17.1, OpenCode
+1.18.30) are those of the 2026-09-11 run, not of the current release. Run the
+live checks again before you rely on them for a later version.
+
 - 19 offline entrypoint tests passed, including concurrent waits, follow-ups,
   cancellation stalls, child death, output limits, cwd routing, and permissions.
 - Codex CLI 0.154.0 loaded the installed SWE 1.17.1 bridge through an explicit
