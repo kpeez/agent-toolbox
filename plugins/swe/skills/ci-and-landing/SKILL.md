@@ -68,7 +68,7 @@ time.
 
 ## Land
 
-Run these steps before you mark a pull request ready or merge it.
+Run these steps in order to land a pull request.
 
 1. **Verdict.** Get a verdict from an agent that did not write the code. Give
    it the brief in [verdict-brief](references/verdict-brief.md). CI green is
