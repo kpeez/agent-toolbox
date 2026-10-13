@@ -163,7 +163,8 @@ whole subsystem, read [references/campaign.md](references/campaign.md) first.
    [validation checks](references/audit.md#validation-checks), including the
    repository's required gates.
 5. `5-independent-preservation-review`: Get a review of the final diff from
-   an agent that did not edit, such as the swe reviewer agent. Report an
+   an agent that did not edit, with the
+   [review brief](../../references/review-brief.md). Report an
    unavailable review as a verification gap.
 6. `6-publish-draft-pr`: When publication is authorized, push the final
    commits and update the draft PR with [ship-pr](../ship-pr/SKILL.md).

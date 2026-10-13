@@ -54,7 +54,8 @@ application ships and calls the exact function in question.
    `artifacts/temp/`. It becomes a permanent test only through the admission
    gate in [testing-code](../testing-code/SKILL.md).
 6. `6-optional-independent-review`: For a large or wide change, give the
-   change and your write-up to the reviewer agent, and ask it to find a
+   change and your write-up to a reviewer with the
+   [review brief](../../references/review-brief.md), and ask it to find a
    breakage you missed and to rerun your probe.
 
 ## Hand back

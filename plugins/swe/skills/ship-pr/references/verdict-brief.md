@@ -1,8 +1,8 @@
 # Verdict brief
 
-Give this brief to an agent that did not write or edit the branch, such as a
-fresh [reviewer agent](../../../agents/reviewer.md). Fill each `<field>`. Its
-caller contract lets this brief set the verdict shape.
+Give this brief to a fresh subagent that did not write or edit the branch,
+with the [review brief](../../../references/review-brief.md) in verdict-only
+mode. Fill each `<field>`. This brief sets the verdict shape.
 
 ```text
 Judge pull request <pr> for landing. Base <base-sha>, head <head-sha>.

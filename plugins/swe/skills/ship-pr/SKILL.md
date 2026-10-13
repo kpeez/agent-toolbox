@@ -154,7 +154,7 @@ evidence, and what still blocks.
 the current head commit (`gh pr view <pr> --json headRefOid,baseRefName`).
 
 1. `1-get-independent-verdict`: Get a verdict from an agent that did not
-   write the code, such as the swe reviewer agent. Give it the brief in
+   write the code, in verdict-only mode. Give it the brief in
    [verdict-brief](references/verdict-brief.md). CI green is not a verdict,
    and an approving bot review is not a verdict.
 2. `2-key-verdict-to-patch`: Write the verification record in the

@@ -45,8 +45,7 @@ touch the target (most recent first), the PR numbers, and the ticket IDs.
 Start one investigator per lane, all at once. Each investigator is a
 general-purpose subagent. Give it the investigator brief from
 [briefs](references/briefs.md), its lane reference, the anchor, and the
-question. The reviewer agent cannot run an MCP lane: its tool allowlist drops
-MCP tools. When the host cannot start subagents, run each lane yourself, one
+question. When the host cannot start subagents, run each lane yourself, one
 at a time, and keep each lane's notes apart.
 
 A lane whose tools are missing is a gap, not a choice. Record it in "Sources
