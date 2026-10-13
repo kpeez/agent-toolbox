@@ -4,19 +4,27 @@ The skill-specific branch of [`writing-for-agents`](SKILL.md): what changes when
 
 ## Invocation
 
-Two choices, trading the two loads:
+Three modes trade the two loads. Each mode sets who can start the skill and which path loads it.
 
-- A **model-invoked** skill keeps a `description`, so the agent can fire it autonomously, and other skills can reach it. You can still type its name: model-invocation always _includes_ user reach; a description only ever adds agent discovery, never removes the human's. The description is the skill's top-level context pointer, forced to stay loaded at all times: permanent context load in exchange for discoverability. A model-invoked skill whose content is all reference is also one home for shared reference: another skill can invoke it, so reference needed by several skills lives in one place. Mechanics: omit `disable-model-invocation`, and write a model-facing description carrying the trigger branches (the pointer-writing rules in `SKILL.md` apply in full).
-- A **user-invoked** skill strips the description from the agent's reach: only the human typing its name can invoke it, and no other skill can. Zero context load, but it spends cognitive load: you are the index that must remember it exists. Mechanics: set `disable-model-invocation: true`, and set `policy.allow_implicit_invocation: false` in the skill's `agents/openai.yaml` for hosts that read that file; the `description` becomes human-facing: a one-line summary, trigger lists stripped.
+- A **model-invoked** skill has no invocation flag and a model-facing `description` with its trigger branches (the pointer rules in `SKILL.md` apply in full). The model listing shows it, so the agent can start it, and other skills load it through the Skill tool. The human can also type its name. The description is permanent context load, paid for discoverability.
+- A **model-only** skill sets `user-invocable: false`. The model listing shows its description, and the Skill tool loads it, but the slash menu omits it and the host rejects its typed name before any model turn. It pays the same context load as a model-invoked skill and adds no menu entry for the human to remember.
+- A **user-invoked** skill sets `disable-model-invocation: true`. The slash menu shows it, the model listing does not, and only the human typing its name starts it. Its `description` is a human-facing one-line summary with no trigger list. Zero context load; the human is the index that remembers it. A Skill-tool call on it fails with an error that tells the agent to ask the user and not to replicate the skill's workflow by other means. So another skill names it for the human and does not route to it through the Skill tool. A router may instead read its `SKILL.md` by path under the human's authority: see [Router skills](#router-skills).
 
-Pick model-invocation only when the agent must reach the skill on its own, or another skill must. If it only ever fires by hand, make it user-invoked and pay no context load.
+Codex reads `agents/openai.yaml` in the skill folder and ignores `disable-model-invocation`. Its `policy.allow_implicit_invocation` is the switch: `false` removes the skill from the model listing, which gives the user-invoked mode. With no file, the model listing shows the skill, which serves both the model-invoked and the model-only mode; `true` is the documented default and was not probed. So a user-invoked skill sets both `disable-model-invocation: true` and `allow_implicit_invocation: false`. Codex has no observed switch that hides a skill from the human.
 
-Shared reference that two user-invoked skills both need can live in neither: with no descriptions, neither can fire the other. Push it to a plain file outside the skill system: external reference any skill can point at.
+Pick a mode by who must start the skill. The human only: user-invoked. The agent or another skill, never the human: model-only. Both: model-invoked.
+
+Reference that several skills need goes in one model-only or model-invoked skill that each loads through the Skill tool, or in a plain file outside the skill system that any skill points at.
 
 ## Splitting by invocation
 
-The invocation cut of splitting (the sequence cut lives in `SKILL.md`): split off a model-invoked skill when you have a distinct leading word that should trigger it on its own (a trigger word you actually use in your prompts), or another skill must reach it. You pay context load for the new always-loaded description, so that independent reach has to be worth it.
+The invocation cut of splitting (the sequence cut lives in `SKILL.md`): split off a model-invoked skill when you have a distinct leading word that should trigger it on its own (a trigger word you actually use in your prompts); split off a model-only skill when another skill must reach it and the human never types it. You pay context load for the new always-loaded description, so that independent reach has to be worth it.
 
 ## Router skills
 
-When user-invoked skills multiply past what you can remember, that piled-up cognitive load is cured by a **router skill**: one user-invoked skill that names the others and when to reach for each, so the human has one skill to remember instead of many. It can only hint, never fire them: user-invoked skills have no description, so nothing but the human can reach them.
+When user-invoked skills multiply past what you can remember, a **router skill** cures that cognitive load: one user-invoked skill that matches the task to a playbook, so the human remembers one name instead of many. A router:
+
+- loads model-invoked and model-only skills through the Skill tool;
+- reads its playbook files by an absolute path built from the "Base directory for this skill" line at the top of its loaded body, because the Read tool resolves a relative path against the session's working directory, not the skill folder;
+- reads a user-invoked skill's `SKILL.md` by the same kind of absolute path when a step needs its rules, and lets that skill's own authority rule decide which of its actions run;
+- copies the playbook's steps into the host task list when one exists, and ends its final reply with every step's state. Headless Claude Code has no task-list tool, and in observed runs the model did not write a text list before its tool calls, so the final state list is the record that always exists.

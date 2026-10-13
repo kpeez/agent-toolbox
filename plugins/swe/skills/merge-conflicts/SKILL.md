@@ -14,7 +14,8 @@ trace intent before touching a hunk, and verify behavior after.
    cherry-pick), and every conflicting file.
 2. **Trace each side's intent.** For each conflict, find *why* each side made
    its change using commit messages, linked PRs, issues, callers, tests, and
-   observable behavior. State each side's intent in one sentence; label an
+   observable behavior; the [git-history source](../why/references/sources/git-history.md)
+   lists the commands. State each side's intent in one sentence; label an
    intent inferred from code when no rationale was recorded. Stop when an
    observable product choice remains unjustified.
 3. **Resolve.** Preserve both intents where possible. Where they're genuinely

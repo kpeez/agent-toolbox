@@ -1,0 +1,4 @@
+interface:
+  display_name: "Idempotent operations"
+policy:
+  allow_implicit_invocation: true

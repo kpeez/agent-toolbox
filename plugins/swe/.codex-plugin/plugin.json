@@ -1,21 +1,21 @@
 {
   "name": "swe",
-  "description": "SWE skills for AI coding agents: design grilling, short handoff plans, behavioral verification, atomic PR grouping, and more",
-  "version": "1.19.8",
+  "description": "SWE skills for AI coding agents: an SWE router that runs a task through a step-by-step playbook, design hash-outs, short handoff plans, behavioral verification, CI triage and verified landing, and more",
+  "version": "1.20.0",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
   "license": "MIT",
-  "keywords": ["plan", "workflow", "skills", "tdd", "pr", "code-review"],
+  "keywords": ["plan", "workflow", "skills", "pr", "code-review", "router"],
   "skills": "./skills/",
   "interface": {
     "displayName": "swe",
-    "shortDescription": "Planning, implementation, review, and PR skills for coding agents.",
-    "longDescription": "Portable skills for planning, implementing, reviewing, and publishing code changes, plus focused explorer, implementer, and reviewer agent definitions, with short handoff plans and configured Linear mirroring.",
+    "shortDescription": "A task router plus planning, implementation, review, and PR skills for coding agents.",
+    "longDescription": "The SWE router ($swe:swe <task> in Codex, /swe <task> in Claude Code) matches a task to a step-by-step playbook and tracks every step. Portable skills for planning, implementing, reviewing, and publishing code changes, plus focused explorer, implementer, and reviewer agent definitions, with short handoff plans and configured Linear mirroring.",
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
-    "defaultPrompt": ["Grill me on this design.", "Implement the plan I just approved.", "Diagnose why this test fails."],
+    "defaultPrompt": ["Help me decide how to design this.", "Implement the plan I just approved.", "$swe:swe Diagnose why this test fails."],
     "brandColor": "#2563EB"
   }
 }

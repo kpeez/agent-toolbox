@@ -17,6 +17,11 @@ bare name (a silent miss), and keeping a Skill load whose name differs from its
 delivered body without an issue (also a silent miss). Each was seen red: the
 first four under one mutation each of skill_eval.py, the last two on the code
 before their fix. EVIDENCE.md points to the output.
+
+The successor test protects scoring after the swe consolidation merged two
+target skills. The credible regression is a silent miss on every case of a
+merged family; it was seen red with the successor lookup removed from the
+activation loop.
 """
 from __future__ import annotations
 
@@ -149,6 +154,30 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(report["confusion"][0]["count"], 1)
         self.assertEqual(report["confusion"][0]["denominator"], 1)
         self.assertEqual(report["confusion"][0]["interrupted_or_partial_observations"], 1)
+
+    def test_merged_skill_scores_as_its_successor(self):
+        # A silent miss on every case of a merged family would read as an activation loss.
+        excluded = self.cli("validate")["excluded_on_this_catalog"]
+        self.assertEqual(sorted(excluded), ["AR-10", "TA-07", "TA-10", "TC-07"])
+        for case_id in ("TA-07", "TA-10"):
+            self.cli("materialize", "--case", case_id, "--runtime", HERE / "runtime.offline.json",
+                     "--output", self.root / ("excluded-" + case_id), ok=False)
+        cases = {c["id"]: c for c in json.loads((HERE / "cases.json").read_text())["cases"]}
+        scores = {}
+        for case_id in ("TA-01", "TA-09"):
+            case = cases[case_id]
+            run, _, _ = self.prepare("successor-" + case_id, case)
+            skill = json.loads((run / "manifest.json").read_text())["skills"]["swe:testing-code"]
+            scores[case_id] = self.trace(run, [
+                {"type": "session.started"},
+                {"type": "skill_read.request", "request_id": "merged", "skill": "swe:testing-code", "path": skill["path"]},
+                {"type": "skill_read.result", "request_id": "merged", "exit_code": 0,
+                 "body": Path(skill["path"]).read_text(), "body_complete": True},
+                {"type": "action.started", "kind": case["relevant_action"]},
+                {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}}])
+        self.assertEqual(scores["TA-01"]["activation"], {"swe:test-audit": "loaded"})
+        self.assertEqual(scores["TA-01"]["unexpected_skills"], [])
+        self.assertTrue(scores["TA-09"]["false_activation"])
 
     def claude_trace(self, run, steps, relevant):
         """Write a minimal transcript in the audited Claude Code shape (EVIDENCE.md) and score it."""

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Sequence verifiable units"
+policy:
+  allow_implicit_invocation: true

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Ancillary fixes"
+policy:
+  allow_implicit_invocation: true

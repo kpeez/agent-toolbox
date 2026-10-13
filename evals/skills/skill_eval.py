@@ -20,8 +20,14 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
     "implement", "diagnose", "testing-code", "test-audit",
-    "improve-codebase-architecture")}
+    "improve-codebase-architecture", "ship-pr", "grill")}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
+# The swe consolidation merged these skills into a successor. The corpus keeps the old
+# names so every arm runs byte-identical cases; a name the catalog lacks scores as its
+# successor. On such a catalog, a case the merge makes meaningless is excluded.
+SUCCESSORS = {"swe:test-audit": "swe:testing-code",
+              "swe:improve-codebase-architecture": "swe:codebase-design",
+              "swe:grill": "swe:hash-out"}
 RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools",
                   "harness_deltas", "catalog_scope", "context_delivery"}
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md).
@@ -74,6 +80,19 @@ def catalog_skills():
     return {f"{p.parents[2].name}:{p.parent.name}" for p in (REPO / "plugins").glob("*/skills/*/SKILL.md")}
 
 
+def resolver(skills):
+    return lambda name: SUCCESSORS[name] if name not in skills and name in SUCCESSORS else name
+
+
+def excluded(case, resolve, skills):
+    if set(map(resolve, case["expected_skills"])) & set(map(resolve, case["forbidden_skills"])):
+        return "the merge makes it expect and forbid one skill"
+    named = {"swe:" + n for m in case["messages"] for n in re.findall(r"\bswe:([a-z0-9-]+)", m["content"])}
+    if case["category"] == "explicit" and named - set(skills):
+        return "it names a skill this catalog lacks"
+    return None
+
+
 def corpus(path=HERE / "cases.json"):
     data = read_json(path)
     if data.get("schema_version") != 1:
@@ -82,6 +101,7 @@ def corpus(path=HERE / "cases.json"):
     ids = set()
     groups = defaultdict(Counter)
     skills = catalog_skills()
+    resolve = resolver(skills)
     for case in cases:
         if not re.fullmatch(r"[A-Za-z0-9-]+", case["id"]) or case["id"] in ids:
             raise ValueError("invalid or duplicate case ID")
@@ -94,7 +114,7 @@ def corpus(path=HERE / "cases.json"):
         for field in ("expected_skills", "acceptable_auxiliaries", "forbidden_skills"):
             if not isinstance(case[field], list) or len(set(case[field])) != len(case[field]):
                 raise ValueError(f"invalid {field}")
-            if set(case[field]) - skills:
+            if set(map(resolve, case[field])) - skills:
                 raise ValueError(f"unknown skill in {field}")
         if set(case["expected_skills"]) & set(case["forbidden_skills"]):
             raise ValueError("contradictory answer key")
@@ -114,7 +134,7 @@ def corpus(path=HERE / "cases.json"):
         if not fixture.is_dir():
             raise ValueError(f"missing fixture: {fixture}")
     if set(groups) != TARGETS or any(dict(counts) != COUNTS for counts in groups.values()):
-        raise ValueError("expected five targets, each with 4/2/3/1 cases")
+        raise ValueError("expected the declared targets, each with 4/2/3/1 cases")
     return cases
 
 
@@ -133,6 +153,9 @@ def materialize(args):
     case = next((c for c in cases if c["id"] == args.case), None)
     if case is None:
         raise ValueError("unknown case")
+    reason = excluded(case, resolver(catalog_skills()), catalog_skills())
+    if reason:
+        raise ValueError(f"case {case['id']} is excluded on this catalog: {reason}")
     runtime = read_json(args.runtime)
     if RUNTIME_FIELDS - runtime.keys() or any(runtime[k] is None for k in RUNTIME_FIELDS):
         raise ValueError("runtime must freeze model, effort, CLI, permissions, tools and harness deltas")
@@ -601,6 +624,10 @@ def score(args):
     if digest(Path(args.corpus).read_bytes()) != manifest["corpus_sha256"]:
         raise ValueError("answer-key corpus changed since materialization")
     case = next(c for c in corpus(args.corpus) if c["id"] == manifest["case_id"])
+    resolve = resolver(manifest["skills"])
+    reason = excluded(case, resolve, manifest["skills"])
+    if reason:
+        raise ValueError(f"case {case['id']} is excluded on this catalog: {reason}")
     evidence = normalize(run, case["relevant_action"])
     scorer_sha256 = digest(Path(__file__).read_bytes())
     configuration = {field: manifest[field] for field in ("runtime", "plugin_versions", "source_catalog_files",
@@ -610,8 +637,8 @@ def score(args):
     configuration_sha256 = digest(json.dumps(configuration, sort_keys=True).encode())
     save_json(run / "evidence.json", evidence)
     observed = {load["skill"] for load in evidence["loads"] if load["status"] == "success"}
-    allowed = set(case["expected_skills"]) | set(case["acceptable_auxiliaries"])
-    forbidden = set(case["forbidden_skills"])
+    allowed = set(map(resolve, case["expected_skills"] + case["acceptable_auxiliaries"]))
+    forbidden = set(map(resolve, case["forbidden_skills"]))
     complete = evidence["evidence_coverage"] == "complete" and evidence["session_state"] == "completed"
     ambiguous_forbidden = any(l["skill"] in forbidden and l["status"] in {"partial", "unavailable"}
                               for l in evidence["loads"])
@@ -619,8 +646,8 @@ def score(args):
     timing = {}
     actions = [a["seq"] for a in evidence["actions"] if a["kind"] == case["relevant_action"]]
     for skill in case["expected_skills"]:
-        loads = [l["completed_seq"] for l in evidence["loads"] if l["skill"] == skill and l["status"] == "success"]
-        ambiguous = any(l["skill"] == skill and l["status"] in {"partial", "unavailable"} for l in evidence["loads"])
+        loads = [l["completed_seq"] for l in evidence["loads"] if l["skill"] == resolve(skill) and l["status"] == "success"]
+        ambiguous = any(l["skill"] == resolve(skill) and l["status"] in {"partial", "unavailable"} for l in evidence["loads"])
         activation[skill] = "loaded" if loads else "miss" if complete and not ambiguous else "unavailable"
         action_coverage = evidence["coverage"]["start"] and evidence["coverage"]["relevant_actions"] and not evidence["issues"]
         timing[skill] = ("before" if min(loads) < min(actions) else "late") if loads and actions and action_coverage else "unavailable"
@@ -724,7 +751,10 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "validate":
-            result = {"cases": len(corpus(args.corpus)), "targets": sorted(TARGETS)}
+            cases, skills = corpus(args.corpus), catalog_skills()
+            reasons = {c["id"]: excluded(c, resolver(skills), skills) for c in cases}
+            result = {"cases": len(cases), "targets": sorted(TARGETS),
+                      "excluded_on_this_catalog": {k: v for k, v in reasons.items() if v}}
         else:
             result = {"materialize": materialize, "capture": capture, "score": score, "aggregate": aggregate}[args.command](args)
         print(json.dumps(result, indent=2, sort_keys=True))

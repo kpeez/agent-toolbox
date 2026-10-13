@@ -1,0 +1,4 @@
+interface:
+  display_name: "Parse at boundaries"
+policy:
+  allow_implicit_invocation: true

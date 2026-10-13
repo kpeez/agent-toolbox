@@ -1,8 +1,28 @@
 # Pull-request body template
 
 Use this shape for the body. Omit the reviewer's guide when the diff is small
-enough to read in order. End with the issue line from the workflow when one
-applies.
+enough to read in order. End with the issue line from `6-link-issue` of the
+Publish procedure when one applies.
+
+Write for a reviewer without session context. Skip preambles, keep prose
+brief, and use the project's domain terms:
+
+- **Summary:** the concrete problem, resulting behavior, and load-bearing
+  approach, shown with the smallest visual that makes the point: real
+  before-and-after code from the diff when the code is the point, and a sketch
+  when the point spans many files.
+- **Reviewer's guide, when useful:** the most important diff first, sensible
+  reading order, and any mechanical sections.
+- **Evidence:** a before and after for each behavior the PR claims. Never list
+  lint, type-check, build, or test-suite runs as evidence. Every PR must pass
+  them, so they prove nothing about this one. State known gaps and pre-existing
+  failures, and distinguish recorded prior results from checks run in the
+  current workspace.
+- **Risk:** what the merge can affect, and anything a revert would not undo.
+
+Keep the text self-contained. Beyond the closing `Fixes` line, public text
+does not reveal tracker URLs, issue or plan content, or internal workflow
+commentary.
 
 ````markdown
 ## Summary
@@ -19,6 +39,9 @@ applies.
 
 - **Before:** <screenshot, output, or failing test>
   **After:** <screenshot, output, or passing test>
+
+Verification record (optional): <PASS | PASS+NOTES | FAIL>; head `<sha>`;
+base `<sha>`; patch-id `<id>`.
 
 ## Risk
 
@@ -143,6 +166,12 @@ one. Otherwise show execution: the command a reviewer can paste with its
 observed output, or the named test that failed before and passes after, with
 its assertion sketched as pseudocode. When no reproducible demonstration
 exists, say so and name what the reviewer should inspect instead.
+
+When an independent verdict gates landing, add the verification record in the
+template's form, and nothing else.
+The Land procedure in [ship-pr](../SKILL.md) (`2-key-verdict-to-patch` and
+`3-recheck-before-landing`) says how to compute it and when to recompute it. Replace the record when it changes; keep one current
+record.
 
 ## Risk
 
