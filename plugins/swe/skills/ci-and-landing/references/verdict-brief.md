@@ -27,5 +27,4 @@ FINDINGS:
 - <file:line> <finding> (blocking or note)
 ```
 
-PASS and PASS+NOTES both pass the landing gate. A FAIL, or a `HEAD` line that
-differs from `<head-sha>`, does not.
+Reject a reply whose `HEAD` line differs from the `<head-sha>` in this brief.
