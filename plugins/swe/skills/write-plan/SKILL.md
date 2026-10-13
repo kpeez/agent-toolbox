@@ -47,7 +47,7 @@ when the work needs several pull requests.
    paths; answer questions by reading the code rather than asking.
 2. Ask only the questions whose answers would change the goal, scope, design,
    or verification: one at a time, or a small batch of independent ones. Use
-   `/grill` when the design needs a deeper stress test.
+   `/hash-out` when the design needs a full pass over its open decisions.
 3. Write the plan from the template below. Include what the executing session
    needs and cannot read from the code; leave out what it can.
 4. Iterate until the user approves it. Approval lives in the conversation; the

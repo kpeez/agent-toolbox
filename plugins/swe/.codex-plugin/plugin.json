@@ -1,6 +1,6 @@
 {
   "name": "swe",
-  "description": "SWE skills for AI coding agents: an SWE router that runs a task through a step-by-step playbook, design grilling, short handoff plans, behavioral verification, CI triage and verified landing, and more",
+  "description": "SWE skills for AI coding agents: an SWE router that runs a task through a step-by-step playbook, design hash-outs, short handoff plans, behavioral verification, CI triage and verified landing, and more",
   "version": "1.20.0",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
@@ -15,7 +15,7 @@
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
-    "defaultPrompt": ["Grill me on this design.", "Implement the plan I just approved.", "$swe:swe Diagnose why this test fails."],
+    "defaultPrompt": ["Help me decide how to design this.", "Implement the plan I just approved.", "$swe:swe Diagnose why this test fails."],
     "brandColor": "#2563EB"
   }
 }

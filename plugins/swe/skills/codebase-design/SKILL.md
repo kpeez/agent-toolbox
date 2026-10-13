@@ -88,8 +88,8 @@ friction signals, the candidate fields, ranking, and the documentation rules.
 2. `2-apply-deletion-test`: Apply the deletion test to each candidate module.
 3. `3-report-candidates`: Report candidates with strength, or say no refactor
    is recommended.
-4. `4-grill-chosen-design`: Grill a chosen design with the user before
-   implementation. Use [grill](../grill/SKILL.md). Classify the dependencies
+4. `4-hash-out-chosen-design`: Settle a chosen design with the user before
+   implementation. Use [hash-out](../hash-out/SKILL.md). Classify the dependencies
    of the chosen candidate with [deepening](references/deepening.md).
 
 Reply with the report only. Implementation is a new task, routed to the

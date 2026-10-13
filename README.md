@@ -3,7 +3,7 @@
 `agent-toolbox` provides three portable plugins for AI coding agents:
 
 - **SWE** — an SWE router that runs a task through a step-by-step playbook,
-  and skills for grilling designs and planning work, implementing and
+  and skills for hashing out designs and planning work, implementing and
   reviewing changes, and shipping pull requests.
 - **Lab** — source-backed research, reproducible experiment loops, and
   data-visualization guidance.
@@ -170,20 +170,14 @@ identical (a mod under `claude-mods/` has the Claude manifest only):
 
 ## Credits
 
-- `uni/skills/teach` vendors the teaching workflow and templates from Matt
-  Pocock's [skills](https://github.com/mattpocock/skills) repository.
-- The `ship-pr` PR-body template adapts Matt Pocock's
-  [`pr` skill](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr).
-  Its menu of Summary visuals comes from Dex Horthy's
-  [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md)
+- Many `swe` skills, the router and its playbooks among them, adapt Lauren
+  Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
+- Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
+  [skills](https://github.com/mattpocock/skills).
+- The `ship-pr` PR-body template's menu of Summary visuals comes from Dex
+  Horthy's [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md)
   at HumanLayer.
-- `swe/skills/grill`, `wait-what`, and `writing-for-agents` adapt Matt Pocock's
-  [productivity skills](https://github.com/mattpocock/skills/tree/main/skills/productivity).
-- `swe/skills/swe` (the router and its playbooks), `why`, `blast-radius`,
-  `correct`, `verification-skill`, eleven of the `principle-*` skills, and
-  parts of `implement`, `diagnose`, `orchestrate`, `testing-code`, and
-  `ship-pr` adapt
-  Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
-  Each adapted skill folder has a `NOTICE`.
 - The audit mode of `swe/skills/testing-code` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).
+
+Each adapted skill folder has a `NOTICE` with the source and its license.

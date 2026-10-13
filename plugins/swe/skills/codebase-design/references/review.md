@@ -53,10 +53,10 @@ explore; otherwise follow the requested depth. Keep a review-only request at
 the report, and propose interfaces only when the user asks for design or has
 chosen a candidate. A bounded worker reports the choice to its caller.
 
-## 4-grill-chosen-design
+## 4-hash-out-chosen-design
 
 When the user picks a candidate or asks for a specific candidate design, drop
-into a grilling session with [grill](../../grill/SKILL.md). Walk the design
+into a session with [hash-out](../../hash-out/SKILL.md). Walk the design
 tree: constraints, dependencies, the shape of the deepened module, what sits
 behind the seam, and what tests survive. Keep documentation side effects
 conditional on the requested design workflow:

@@ -1,11 +1,16 @@
 ---
-name: grill
-description: Grill the user about a plan, design, or decision until every branch is resolved. Use when the user asks to be grilled, wants their thinking stress-tested, or wants holes poked in an idea.
+name: hash-out
+description: "Settle a plan or design with the user, one round of questions at a time, until no decision is open. Use for 'help me decide', 'figure out the approach', 'hash this out', or before you build on scope or design the user has not decided."
 ---
 
-Interview the user relentlessly until you reach a shared understanding. Map the
-work as a **design tree**: every decision branches into the decisions that hang
-off it.
+Work through the plan with the user until you reach a shared understanding.
+Leave no decision assumed. Map the work as a **design tree**: every decision
+branches into the decisions that hang off it.
+
+When you start this yourself, because the work rests on a decision the user
+has not made, say in one line which decision blocks you. Keep the first round
+to the decisions that block the work. Do not start it for a clear, fully
+specified task.
 
 Work the tree in **rounds**. The **frontier** is every decision whose
 prerequisites are settled: the questions you can ask now without guessing at
