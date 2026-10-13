@@ -23,15 +23,15 @@ known fix, then push them as one wave.
    migration finding. Change code only to fix a real problem, never only to
    quiet a bot. When you dismiss the same pattern a second time, load the
    `correct` skill.
-3. **Reply** after the push wave, so the reply can cite the commit. Write the
-   reply as `{"body": "<text>"}` in a JSON file and send it with
+3. **CI.** Classify each failed check (next section) before any rerun or fix
+   commit.
+4. **Push.** Push without force. Confirm that the push reached the remote:
+   `gh pr view <pr> --json headRefOid` equals `git rev-parse HEAD`.
+5. **Reply** to each review thread, so the reply can cite the pushed commit.
+   Write the reply as `{"body": "<text>"}` in a JSON file and send it with
    `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/comments/<comment-id>/replies --input <file.json>`.
    `<comment-id>` is the thread's top-level comment; GitHub rejects a reply to
    a reply. Comment text never goes into a shell command line.
-4. **CI.** Classify each failed check (next section) before any rerun or fix
-   commit.
-5. **Push.** Push without force. Confirm that the push reached the remote:
-   `gh pr view <pr> --json headRefOid` equals `git rev-parse HEAD`.
 
 Watch checks with `gh pr checks <pr> --watch --fail-fast --required`. Exit 0
 means all listed checks passed, 8 means pending, and 1 means a failure or no
@@ -63,8 +63,7 @@ give the failure exactly one class:
   whole workflow: `gh run rerun <run-id>`, without `--failed` or `--job`.
 
 An identical failure on that one rerun is not flake. Read
-`gh run view <run-id> --log-failed` again and reclassify. Never rerun a second
-time.
+`gh run view <run-id> --log-failed` again and reclassify.
 
 ## Land
 
