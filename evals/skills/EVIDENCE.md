@@ -6,15 +6,19 @@ it does not accept an execution agent's self-report as a grade.
 
 The normalized record has `schema_version`, `provider`, `adapter_version`,
 `evidence_kind`, `session_id`, `session_state`, `evidence_coverage`, `coverage`,
-`raw_trace`, `loads`, `actions`, and `issues`.
+`raw_trace`, `loads`, `actions`, and `issues`. The Claude transcript adapter
+adds `child_loads`, and its load records add `agent_id`, `detail`, and
+`transform`.
 
 `raw_trace` contains a relative path and SHA-256 digest. Each evidence reference
 contains a stable `event_id` and a one-based raw JSONL `line`; a Claude reference
 also names its `file`, because one session spans several files. Array order is
 source order; timestamps are not used to infer order. This intentionally small
 interface is for one root session. Child-session events remain in the raw trace
-but cannot satisfy root-session activation. A trailing child event does not
-invalidate the root terminal; end coverage is checked against the last root event.
+but cannot satisfy root-session activation. In the synthetic envelope, a
+trailing child event does not invalidate the root terminal; end coverage is
+checked against the last root event. The Claude adapter takes end coverage from
+the stream `result` event instead (see "Claude transcript adapter").
 
 Load records contain:
 
