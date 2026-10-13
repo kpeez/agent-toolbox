@@ -4,13 +4,46 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 50 authored scenarios: ten each for `implement`, `diagnose`,
-`testing-code`, `test-audit`, and `improve-codebase-architecture`. Each family
+The corpus has 70 authored scenarios: ten each for `implement`, `diagnose`,
+`testing-code`, `test-audit`, `improve-codebase-architecture`, `ship-pr`, and
+`grill` (family prefix `HO`). Each family
 has four natural requests, two contextual requests, three nearby negatives, and
 one explicit invocation control. Some negatives are direct diff-review requests,
-which expect no `swe` skill. User-only skills such as `write-plan` have no
+which expect no `swe` skill.
+
+The swe consolidation merged `test-audit` into `testing-code` and
+`improve-codebase-architecture` into `codebase-design`. The corpus keeps the
+old names, so every arm runs byte-identical cases. On a catalog without an old
+name, `SUCCESSORS` in `skill_eval.py` scores it as its successor. Four cases
+lose their meaning there and are excluded: `TC-07` and `TA-07` expect and
+forbid the same merged skill, and `TA-10` and `AR-10` type a removed name.
+`validate` lists them. A comparison with a catalog that still has the old
+names must drop the same four cases from both arms.
+
+Five negatives also change meaning on the new catalog. `TA-08` and `TA-09`
+now forbid `testing-code`, and `AR-07` to `AR-09` now forbid
+`codebase-design`. On the old catalog, a load of those skills there was only
+unexpected, and `codebase-design` could load legitimately. Report these five
+cases' false activations as their own stratum, not in a pooled comparison. User-only skills such as `write-plan` have no
 family: the model cannot load them, so there is no activation to measure.
-Ten cases marked `holdout_candidate` are
+
+The `ship-pr` family exists because `ship-pr` became model-invoked on the
+`swe-router-rewrite` branch. On main it is user-only, so main scores zero recall
+and zero false activation for it by construction. Report this family on its own,
+not in the pooled main-versus-branch comparison. Its negatives matter most: a
+false activation loads a skill that commits, pushes, and merges. The fixture has
+no remote, so a trace can show the commit and the reads that precede a push, but
+not the push itself. Its `receipt-totals` fixture also holds a CI log and review
+threads as plain files, because no host is reachable.
+
+The `HO` family targets `hash-out`, the renamed `grill` with a wider trigger.
+The family keeps the corpus name `grill`. `SUCCESSORS` scores it as `hash-out` on
+the branch, so the family compares main and branch directly. Its explicit case
+types the new name `/swe:hash-out`, so main excludes it. Its negatives matter
+most: a false activation starts a question round on a clear task. They include
+"figure out why a test fails", which is diagnosis.
+
+Fourteen cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. An independent sealed
 set is still required before tuning from measured scores.
 

@@ -38,7 +38,8 @@ schema win. Do not impose an additional status, prose, or response shape.
 
 ## Boundaries
 
-- Do not expand scope beyond the assigned task.
+- Do not expand scope beyond the assigned task. Report an issue you find
+  outside it to the caller, and fix it only when the assignment says so.
 - Do not invent abstractions, flexibility, or error handling the task does not
   need.
 - Do not commit, push, or open a pull request unless the caller explicitly

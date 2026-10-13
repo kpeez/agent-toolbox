@@ -8,12 +8,30 @@ description: Investigate bugs and performance regressions using focused evidence
 Investigate the reported symptom with enough evidence to support the requested
 outcome. Diagnosis and repair are separate outcomes: a request to diagnose or
 explain does not authorize implementation edits. When repair is authorized,
-continue in-scope investigation and correction through relevant verification.
+diagnose first, then make the fix with [implement](../implement/SKILL.md).
 
 Use the project's vocabulary when it clarifies the diagnosis. Consult a
 `.agents/docs/CONTEXT.md` glossary or relevant `.agents/docs/adrs/` only when they
 bear on the behavior or decision under investigation. Follow an explicit
 project or user override of the `.agents/docs/` location.
+
+## Procedure
+
+1. `1-state-exact-failure`: State the exact failure mode and the surface where
+   it was seen. [Establish evidence](#establish-evidence) gives the detail.
+2. `2-build-feedback-loop`: Build the fastest loop that reproduces the
+   failure, or record why none exists.
+3. `3-seed-from-history`: When you suspect a regression, seed hypotheses from
+   the history of the failing area with [why](../why/SKILL.md).
+4. `4-rank-hypotheses`: Rank falsifiable hypotheses and change one variable
+   per probe until one survives, as [Test hypotheses](#test-hypotheses) says.
+5. `5-label-confidence`: Label the cause as
+   [Label the cause](#label-the-cause) says.
+6. `6-remove-instrumentation`: Remove task-owned temporary instrumentation and
+   harnesses.
+
+Reply with the cause and its label, the evidence, and the limits. Diagnosis
+makes no production-source edits.
 
 ## Establish evidence
 
@@ -23,7 +41,8 @@ targeted script, static comparison, or measured performance baseline. Logs,
 traces, static reasoning, and partial evidence can still support a diagnosis
 when a complete reproducer is unavailable. Read
 [references/feedback-loops.md](references/feedback-loops.md) when a specialized
-harness, flaky trigger, bisection, or differential comparison needs guidance.
+harness, flaky trigger, bisection, differential comparison, or performance
+measurement needs guidance.
 
 Run the signal when possible and record the exact symptom it distinguishes. For
 intermittent behavior, seek a useful reproduction rate or compare captured
@@ -52,33 +71,24 @@ If a prediction cannot be stated, sharpen or discard the hypothesis. A
 standalone developer may show the ranked list when the user can change its
 order. A bounded worker reports consequential uncertainty to its caller.
 
-## Diagnose or repair
+## Label the cause
 
-For a diagnosis-only or explanation request, report the confirmed or
-most-supported cause, evidence, and uncertainty. Say whether the failure was
-reproduced, inferred from the evidence, or remains unresolved. Do not edit the
-implementation.
-
-For an authorized repair, decide whether the minimized reproduction earns a
-permanent regression test using the `testing-code` skill's admission gate. If
-it does, write it at a correct public seam and watch it fail before applying the
-fix. If it does not, retain proportionate evidence such as the diagnostic loop
-or a behavior-specific check. If no correct seam exists, record that as an
-architectural finding rather than exposing an internal seam solely for the test.
-
-Apply the authorized fix, rerun the chosen evidence against the original
-scenario, and run relevant checks. A failing required check blocks completion or
-publication, but continue in-scope diagnosis and correction when that can
-resolve it. Report unrelated baseline failures without silently fixing unrelated
-code.
+Report the confirmed or most-supported cause, its evidence, and the
+uncertainty. Label the cause reproduced, inferred from the evidence, or
+unresolved. Diagnosis itself does not edit the implementation; an authorized
+fix goes through implement. Before you recommend a fix, follow
+[fix-root-causes](../principle-fix-root-causes/SKILL.md). Keep the minimized
+reproduction: an authorized fix reruns it and decides through the
+`testing-code` admission gate whether it becomes a permanent test. If no
+correct public seam exists for that test, record it as an architectural
+finding rather than exposing an internal seam solely for the test.
 
 ## Close out
 
-Remove task-owned temporary instrumentation and harnesses. Report the confirmed
-cause, evidence, verification limits, and any unresolved blocker. Recommend
-`/improve-codebase-architecture` only when the evidence shows a real
-architectural testability or coupling problem; diagnosis does not require a
-post-mortem or architecture handoff by default.
+Report the verification limits and any unresolved blocker. Recommend `/codebase-design`
+only when the evidence shows a real architectural testability or coupling
+problem; diagnosis does not require a post-mortem or architecture handoff by
+default.
 
 > A standalone developer may delegate substantial bounded reads or writes to
 > suitable available agents. A bounded worker reports to its caller rather than

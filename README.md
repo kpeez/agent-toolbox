@@ -2,7 +2,8 @@
 
 `agent-toolbox` provides three portable plugins for AI coding agents:
 
-- **SWE** — skills for grilling designs and planning work, implementing and
+- **SWE** — an SWE router that runs a task through a step-by-step playbook,
+  and skills for hashing out designs and planning work, implementing and
   reviewing changes, and shipping pull requests.
 - **Lab** — source-backed research, reproducible experiment loops, and
   data-visualization guidance.
@@ -70,8 +71,8 @@ codex plugin add uni@agent-toolbox
 npx skills@latest add kpeez/agent-toolbox
 ```
 
-This installs editable skills only. Plugin agents still require a
-plugin installation.
+This installs editable skills only. Plugin agents and the SWE router still
+require a plugin installation.
 
 ### Teaching workspace
 
@@ -86,6 +87,27 @@ An earlier installation may have a `~/.codex/skills/teach` or
 `~/.agents/skills/teach` symlink to this repository's former `skills/teach`
 directory. After updating Uni, remove that legacy symlink to avoid duplicate
 discovery. Preserve any independently edited skill directory.
+
+## SWE router
+
+Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. Only the user
+starts the router. It matches the task to one of seven
+[playbooks](plugins/swe/skills/swe/playbooks/), such as `fix-bug` or
+`build-feature`, or to one skill that owns the task. It ends with the state
+of every step, including the reason for each skipped step.
+
+The router and its playbooks use these swe skills, which also start on their
+own when their moment comes: [why](plugins/swe/skills/why/SKILL.md),
+[blast-radius](plugins/swe/skills/blast-radius/SKILL.md),
+[correct](plugins/swe/skills/correct/SKILL.md),
+[ship-pr](plugins/swe/skills/ship-pr/SKILL.md), and twelve
+model-only `principle-*` skills, such as
+[principle-fix-root-causes](plugins/swe/skills/principle-fix-root-causes/SKILL.md).
+
+The verify steps use the project's own verification skill when one exists: a
+project-local skill that launches, drives, and observes the real app, with a
+feature map. Type `/verification-skill` (`$swe:verification-skill` in Codex) to
+create one, or to audit an existing one against the app.
 
 ## Delegation
 
@@ -128,7 +150,8 @@ reference figures those notes embed.
 
 ## Layout
 
-- `plugins/swe/` — SWE skills, agents, and the plan-sync hook.
+- `plugins/swe/` — SWE skills, agents, the SWE router and its playbooks,
+  and the plan-sync hook.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
 - `plugins/uni/` — tutoring skills, the teaching workspace workflow, templates,
   concept exercises, and research notes.
@@ -147,14 +170,14 @@ identical (a mod under `claude-mods/` has the Claude manifest only):
 
 ## Credits
 
-- `uni/skills/teach` vendors the teaching workflow and templates from Matt
-  Pocock's [skills](https://github.com/mattpocock/skills) repository.
-- The `ship-pr` PR-body template adapts Matt Pocock's
-  [`pr` skill](https://github.com/mattpocock/skills/tree/main/skills/engineering/pr).
-  Its menu of Summary visuals comes from Dex Horthy's
-  [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md)
+- Many `swe` skills, the router and its playbooks among them, adapt Lauren
+  Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
+- Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
+  [skills](https://github.com/mattpocock/skills).
+- The `ship-pr` PR-body template's menu of Summary visuals comes from Dex
+  Horthy's [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md)
   at HumanLayer.
-- `swe/skills/grill`, `wait-what`, and `writing-for-agents` adapt Matt Pocock's
-  [productivity skills](https://github.com/mattpocock/skills/tree/main/skills/productivity).
-- `swe/skills/test-audit` adapts the OpenClaw
+- The audit mode of `swe/skills/testing-code` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).
+
+Each adapted skill folder has a `NOTICE` with the source and its license.

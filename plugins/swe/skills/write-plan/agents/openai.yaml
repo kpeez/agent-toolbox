@@ -1,5 +1,5 @@
 interface:
   display_name: "Write Plan"
-  short_description: "Turn notes into a short handoff plan"
+  short_description: "Write a handoff plan, or split it into issues"
 policy:
   allow_implicit_invocation: false

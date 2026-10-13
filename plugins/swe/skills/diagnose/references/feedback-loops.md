@@ -24,9 +24,25 @@ do not build a harness merely to follow a fixed ranking.
 Iterate on the loop itself: cache setup, narrow the scope, assert the specific
 symptom, pin time and randomness, isolate the filesystem, and freeze network
 inputs when appropriate. A short deterministic loop is valuable; a long flaky
-one needs either a higher reproduction rate or an explicit limitation.
+one needs either a higher reproduction rate or an explicit limitation. When a
+check passes too easily, suspect the observation method before the system.
 
-For performance regressions, establish a baseline with a timing harness,
-profiler, or query plan before changing code. For intermittent bugs, loop the
-trigger, add targeted stress, or narrow the timing window. A unique prefix on
-temporary debug logs can make cleanup auditable.
+For intermittent bugs, loop the trigger, add targeted stress, or narrow the
+timing window. A unique prefix on temporary debug logs can make cleanup
+auditable.
+
+## Performance
+
+Before you trust, report, or act on a measured number, follow
+[explain-measurements](../../principle-explain-measurements/SKILL.md).
+
+Choose a fix from the cheapest form first, and stop at the first form that
+meets the target:
+
+1. Do not do the work. Stop work whose result nothing uses.
+2. Do the work once, not again.
+3. Do less of it.
+4. Do it later.
+5. Do it while nothing waits for it.
+6. Do it concurrently.
+7. Do it cheaper.

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Subtract before adding"
+policy:
+  allow_implicit_invocation: true

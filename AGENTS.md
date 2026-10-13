@@ -11,6 +11,11 @@
   Claude Code function-hook mods, which only the Claude catalog lists.
 - Keep every skill reference pointed at a resource or script that exists in
   the same plugin.
+- When a skill adapts text from another project, keep a `NOTICE` in the skill
+  folder that names the source and carries its license.
+- Before you add a rule for a repeated agent mistake, read
+  [docs/agent-rule-enforcers.md](docs/agent-rule-enforcers.md) and follow the
+  `correct` skill in `plugins/swe`.
 
 ## Verification
 
@@ -21,5 +26,6 @@
   for a docs-only change.
 - Run local provider smoke checks against the checked-out catalogs, manifests,
   and hooks without network access when those surfaces change. A broad plugin
-  release should run the full offline smoke gate.
+  release also runs the link, plugin-validation, agent-config, eval, unit-test,
+  and Codex-load checks in [docs/release-checks.md](docs/release-checks.md).
 - Do not require `pyproject.toml`, a lockfile, or a test suite.

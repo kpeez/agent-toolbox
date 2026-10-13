@@ -1084,6 +1084,457 @@
       "forbidden_skills": [],
       "relevant_action": "Assess architecture and recommend a candidate without implementation.",
       "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "SP-01",
+      "target": "swe:ship-pr",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The receipt formatting work in this directory is finished and its tests pass. Commit it and put up a draft PR for it."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:ship-pr"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Stage the finished receipt change and commit it as one coherent commit.",
+      "rationale": "The user asks to commit finished work and open a draft pull request."
+    },
+    {
+      "id": "SP-02",
+      "target": "swe:ship-pr",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The python 3.8 check on my open PR is failing. The log is in checks.log. Get it passing."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:ship-pr"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:implement"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Read the failing check log and classify the failure before any rerun or fix commit.",
+      "rationale": "The user asks to drive a failing check on an open pull request to green."
+    },
+    {
+      "id": "SP-03",
+      "target": "swe:ship-pr",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Two reviewers commented on my open PR. The threads are in threads.md. Go through them, fix what is right, and reply to each thread."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:ship-pr"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:implement"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Check each review comment's claim against the code before changing anything.",
+      "rationale": "The user asks to triage review threads, push fixes, and reply on an open pull request."
+    },
+    {
+      "id": "SP-04",
+      "target": "swe:ship-pr",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The reviewer gave the receipt PR a PASS verdict and the required checks are green. I approve the merge. Land it."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:ship-pr"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Recheck that the verdict still matches the current patch before marking the PR ready or merging.",
+      "rationale": "The user asks to land a verified pull request and authorizes the merge."
+    },
+    {
+      "id": "SP-05",
+      "target": "swe:ship-pr",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Look over receipt.py and test_receipt.py and tell me where the work stands."
+        },
+        {
+          "role": "assistant",
+          "content": "The change is complete. The three receipt tests pass and nothing is committed yet."
+        },
+        {
+          "role": "user",
+          "content": "Good. Ship it as a draft PR."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:ship-pr"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Inspect the working tree and stage the receipt change as a coherent commit group.",
+      "rationale": "The earlier turns establish finished, verified local work. The last turn asks to publish it."
+    },
+    {
+      "id": "SP-06",
+      "target": "swe:ship-pr",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "CI is red on my PR. The log is in checks.log."
+        },
+        {
+          "role": "assistant",
+          "content": "The python 3.8 job fails because line_label calls str.removeprefix, which python 3.8 lacks. The python 3.12 job passes."
+        },
+        {
+          "role": "user",
+          "content": "Fix that and update the PR."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:ship-pr"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:implement"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Replace the call that python 3.8 lacks and verify locally before any push.",
+      "rationale": "The earlier turns diagnose a failing check. The last turn asks to fix it and update the open pull request."
+    },
+    {
+      "id": "SP-07",
+      "target": "swe:ship-pr",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The python 3.8 job fails on this branch; the log is in checks.log. Fix the code so the tests pass on 3.8 and run them locally. Do not commit or push anything yet."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code",
+        "swe:diagnose"
+      ],
+      "forbidden_skills": [
+        "swe:ship-pr"
+      ],
+      "relevant_action": "Replace the call that python 3.8 lacks and run the local tests without committing.",
+      "rationale": "A local-only boundary makes this a scoped code fix, not publication."
+    },
+    {
+      "id": "SP-08",
+      "target": "swe:ship-pr",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write the pull request description for the receipt change as text in your reply. I will open the PR myself, so do not commit anything or run any gh command."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:ship-pr"
+      ],
+      "relevant_action": "Draft the description text in the reply without committing, pushing, or calling gh.",
+      "rationale": "The user keeps publication for themselves and asks only for text."
+    },
+    {
+      "id": "SP-09",
+      "target": "swe:ship-pr",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Read threads.md and tell me which review comments point at a real defect in receipt.py. Do not change code and do not reply to anyone."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:ship-pr"
+      ],
+      "relevant_action": "Check each review comment's claim against the code and report without editing or replying.",
+      "rationale": "A report-only triage of review comments is not pull request work."
+    },
+    {
+      "id": "SP-10",
+      "target": "swe:ship-pr",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:ship-pr to commit the finished receipt change and open a draft PR for it."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:ship-pr"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Verify the finished change, then group it into a commit.",
+      "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "HO-01",
+      "target": "swe:grill",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Help me decide how to roll out localized product names. The website, the export command, and the two local reports all read the current name, and I have not picked a migration path or a compatibility period."
+        }
+      ],
+      "fixture": "catalog-migration",
+      "expected_skills": [
+        "swe:grill"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:codebase-design"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Name the blocking decision and put the first round of migration questions to the user before any code edit.",
+      "rationale": "The user asks for help deciding and says the migration path is open."
+    },
+    {
+      "id": "HO-02",
+      "target": "swe:grill",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Let's figure out the approach for the weekly digest: when it goes out and how a person's saved time zone applies. Nothing is decided yet."
+        }
+      ],
+      "fixture": "frost-preferences",
+      "expected_skills": [
+        "swe:grill"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Ask the first round of questions about digest timing and time-zone handling before any code edit.",
+      "rationale": "The user uses the figure-out-the-approach phrasing for an undecided design."
+    },
+    {
+      "id": "HO-03",
+      "target": "swe:grill",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hash this out with me before you build anything: I want the search view to rank prefix matches above other matches and to favor recently opened records, but I have not decided how the two should combine."
+        }
+      ],
+      "fixture": "sable-search",
+      "expected_skills": [
+        "swe:grill"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Present the open ranking decisions with recommended answers before any edit to the search code.",
+      "rationale": "The user asks to hash out an undecided design before building."
+    },
+    {
+      "id": "HO-04",
+      "target": "swe:grill",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Add quiet hours to the notification service."
+        }
+      ],
+      "fixture": "notification-service",
+      "expected_skills": [
+        "swe:grill"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Name the blocking decision in one line and ask the first round of questions before any code edit.",
+      "rationale": "The request rests on choices only the user can make: whose hours, how they are stored, and whether a held message is dropped or delayed."
+    },
+    {
+      "id": "HO-05",
+      "target": "swe:grill",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Look at how the notification service picks channels and tell me what it does today."
+        },
+        {
+          "role": "assistant",
+          "content": "It reads the preferences on each send and sends the message to every channel in the preferences. It has no rule that depends on the kind of message."
+        },
+        {
+          "role": "user",
+          "content": "People should be able to choose which kinds of messages go to which channel. I have not decided what that should look like, so work it out with me."
+        }
+      ],
+      "fixture": "notification-service",
+      "expected_skills": [
+        "swe:grill"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Ask the first round of questions about message kinds and channel choices before any code edit.",
+      "rationale": "The earlier turns establish the current behavior. The last turn asks to settle an undecided design together."
+    },
+    {
+      "id": "HO-06",
+      "target": "swe:grill",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Why can a writer not read a published document in their own workspace?"
+        },
+        {
+          "role": "assistant",
+          "content": "Because can_read accepts only the owner and reader roles. A writer gets False even for a published document in the same workspace."
+        },
+        {
+          "role": "user",
+          "content": "Right. Add document editing for writers."
+        }
+      ],
+      "fixture": "access-control",
+      "expected_skills": [
+        "swe:grill"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Name the blocking decision in one line and ask the first round of questions about edit rights before any code edit.",
+      "rationale": "The request leaves open what writers may edit, whether they see unpublished documents, and what owners and readers may do. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "HO-07",
+      "target": "swe:grill",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "We already settled this: a channel named in the preferences under \"disabled\" must be skipped, and every other channel still gets the message. Change deliver to do that, keep one result per channel actually sent, and run the local test."
+        }
+      ],
+      "fixture": "notification-service",
+      "expected_skills": [
+        "swe:implement"
+      ],
+      "acceptable_auxiliaries": [
+        "swe:testing-code"
+      ],
+      "forbidden_skills": [
+        "swe:grill"
+      ],
+      "relevant_action": "Change deliver to skip disabled channels and run the local test.",
+      "rationale": "The user states the decision and the behavior. No decision is open."
+    },
+    {
+      "id": "HO-08",
+      "target": "swe:grill",
+      "category": "negative",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Let's figure out why test_pending_label fails. I have not touched labels.py."
+        }
+      ],
+      "fixture": "status-labels",
+      "expected_skills": [
+        "swe:diagnose"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:grill"
+      ],
+      "relevant_action": "Run or read the failing test and trace the mismatch to its cause in labels.py without asking design questions.",
+      "rationale": "Figure out why a test fails is a diagnosis request, not a design decision. This disclosed candidate is not sealed."
+    },
+    {
+      "id": "HO-09",
+      "target": "swe:grill",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Which roles does can_read accept, and does it check the viewer's workspace?"
+        }
+      ],
+      "fixture": "access-control",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:grill"
+      ],
+      "relevant_action": "Read policy.py and answer from the code without editing or asking design questions.",
+      "rationale": "A factual question about existing code has no open decision."
+    },
+    {
+      "id": "HO-10",
+      "target": "swe:grill",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:hash-out to settle how the worker should handle a poll that comes back empty at the deadline. Nothing is decided: retry, back off, or report it."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:grill"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "relevant_action": "Ask the first round of questions about empty-poll handling before any code edit.",
+      "rationale": "Explicit invocation is a control case."
     }
   ]
 }

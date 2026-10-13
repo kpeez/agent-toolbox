@@ -1,10 +1,18 @@
 ---
 name: write-plan
-description: "Turn rough notes into a short plan for large or ambiguous work and hand it to a fresh session."
+description: "Turn rough notes into a short handoff plan for large or ambiguous work, or split an approved plan into PR-sized tracker issues with `/write-plan issues`."
+argument-hint: "[notes | issues <plan>]"
 disable-model-invocation: true
 ---
 
 # Write a plan
+
+This skill has two modes. Pick the mode from the user's arguments or the caller's instruction.
+
+- **Notes** (default): turn rough notes into a plan, as below.
+- **`issues <plan>`**: split an approved plan into PR-sized issues on Linear or
+  GitHub. Follow [the issues mode](references/issues.md) and skip the rest of
+  this file.
 
 Most work needs no plan file: use plan mode or proceed directly. Write one only
 when the user asks, or when the work is large or ambiguous, will span
@@ -27,10 +35,10 @@ directory and choose the appropriate sync path. Never write a plan into
 - `short-slug.md`: local only, including plans linked to GitHub issues.
 
 When the user wants the work tracked and no issue exists, create one issue for
-the plan on the tracker chosen as in [`/to-issues`](../to-issues/SKILL.md)
+the plan on the tracker chosen as in [the issues mode](references/issues.md)
 (title: the goal; body: the outcome in a sentence or two). Use a Linear key in
 the filename for an eligible mirror; keep a GitHub-linked plan unkeyed and link
-it from the issue. One issue per plan is the default; use `/to-issues` only
+it from the issue. One issue per plan is the default; use `/write-plan issues` only
 when the work needs several pull requests.
 
 ## Process
@@ -39,7 +47,7 @@ when the work needs several pull requests.
    paths; answer questions by reading the code rather than asking.
 2. Ask only the questions whose answers would change the goal, scope, design,
    or verification: one at a time, or a small batch of independent ones. Use
-   `/grill` when the design needs a deeper stress test.
+   `/hash-out` when the design needs a full pass over its open decisions.
 3. Write the plan from the template below. Include what the executing session
    needs and cannot read from the code; leave out what it can.
 4. Iterate until the user approves it. Approval lives in the conversation; the
