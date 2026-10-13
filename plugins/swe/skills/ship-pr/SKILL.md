@@ -11,9 +11,10 @@ or established approved execution scope authorizes those actions. Respect any
 existing local-only boundary and explicit publication permission; publication
 authority does not authorize putting private identifiers or content into public
 output. A user invocation of `/ship-pr` authorizes its default commit, push, and
-draft-PR workflow for the named work. In a `/swe` task that asks for an
-implementation, the draft PR and checkpoint pushes during the task, and the
-playbook's `publish-draft-pr` step, carry the same authority. If publication
+draft-PR workflow for the named work. In a `/swe` task, the
+draft PR, checkpoint pushes, and the playbook's `publish-draft-pr` step need
+the same authority from the request or the user's standing instructions;
+typing `/swe` does not grant it. If publication
 is not authorized, leave verified local work intact and report its state.
 
 Default and explicit finalize modes:
