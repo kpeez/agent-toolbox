@@ -64,7 +64,7 @@ be combined with legacy sandbox settings; see the official
 [permission profile documentation](https://learn.chatgpt.com/docs/permissions).
 
 Hidden model inputs are a measurement limit, not a prerequisite for independent
-immutable collection and replay. The existing seventy-case offline harness is
+immutable collection and replay. The existing fifty-case offline harness is
 development evidence. No native activation baseline or paired utility result
 has been established. Provider adapters and downstream scoring must advertise
 only the capture surfaces and claims that their evidence supports.
