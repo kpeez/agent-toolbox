@@ -4,6 +4,10 @@ on:
   pull_request:
     types: [opened, edited, reopened, synchronize]
 
+permissions:
+  contents: read
+  pull-requests: read
+
 jobs:
   no-claude-attribution:
     runs-on: ubuntu-latest
@@ -15,8 +19,11 @@ jobs:
         env:
           BASE: ${{ github.event.pull_request.base.sha }}
           HEAD: ${{ github.event.pull_request.head.sha }}
-          BODY: ${{ github.event.pull_request.body }}
+          PR: ${{ github.event.pull_request.number }}
+          GH_TOKEN: ${{ github.token }}
         run: |
+          # Read the description now: a run queued before an edit carries the old one.
+          BODY=$(gh pr view "$PR" --repo "$GITHUB_REPOSITORY" --json body --jq .body)
           pattern='noreply@anthropic\.com|Co-Authored-By: Claude|Claude-Session:|Generated (with|by) \[?Claude Code|claude\.ai/code/session_|claude-projects-attribution'
           status=0
           for sha in $(git rev-list "$BASE..$HEAD"); do
