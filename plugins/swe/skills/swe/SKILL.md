@@ -69,8 +69,8 @@ Load a name this way:
   [verification-skill](../verification-skill/SKILL.md): read the `SKILL.md` by
   its absolute path. Never call the Skill tool on these two; the host blocks
   the call.
-- `reviewer agent`: start the swe reviewer agent as a subagent and give it the
-  step's criteria. When the step gives none, brief it as the independent
+- `reviewer agent`: start a fresh native subagent with the
+  [review brief](../../references/review-brief.md) and the step's criteria. When the step gives none, brief it as the independent
   reviewer line in [implement](../implement/SKILL.md#plans-and-issues) says.
 - A playbook slug: read `playbooks/<slug>.md` as reference for that step. Its
   steps do not join the list, and the step text sets the scope.
