@@ -23,7 +23,8 @@ targeted script, static comparison, or measured performance baseline. Logs,
 traces, static reasoning, and partial evidence can still support a diagnosis
 when a complete reproducer is unavailable. Read
 [references/feedback-loops.md](references/feedback-loops.md) when a specialized
-harness, flaky trigger, bisection, or differential comparison needs guidance.
+harness, flaky trigger, bisection, differential comparison, or performance
+measurement needs guidance.
 
 Run the signal when possible and record the exact symptom it distinguishes. For
 intermittent behavior, seek a useful reproduction rate or compare captured
@@ -44,6 +45,8 @@ limitation or ask for that specific access.
 Generate the smallest useful set of ranked, falsifiable hypotheses. Include
 alternatives when they guard against anchoring; do not add them to meet a quota.
 For each probe, state the prediction it tests and change one variable at a time.
+When you suspect a regression, use the `why` skill to seed hypotheses from the
+history of the failing area.
 
 > If <X> is the cause, then changing <Y> makes the bug disappear or changing
 > <Z> makes it worse.
@@ -59,6 +62,9 @@ most-supported cause, evidence, and uncertainty. Say whether the failure was
 reproduced, inferred from the evidence, or remains unresolved. Do not edit the
 implementation.
 
+Before you apply a fix, and after a fix fails, follow
+[fix-root-causes](../principle-fix-root-causes/SKILL.md).
+
 For an authorized repair, decide whether the minimized reproduction earns a
 permanent regression test using the `testing-code` skill's admission gate. If
 it does, write it at a correct public seam and watch it fail before applying the
@@ -69,8 +75,8 @@ architectural finding rather than exposing an internal seam solely for the test.
 Apply the authorized fix, rerun the chosen evidence against the original
 scenario, and run relevant checks. A failing required check blocks completion or
 publication, but continue in-scope diagnosis and correction when that can
-resolve it. Report unrelated baseline failures without silently fixing unrelated
-code.
+resolve it. When you find an issue outside the task, such as an unrelated
+baseline failure, follow [ancillary-fixes](../principle-ancillary-fixes/SKILL.md).
 
 ## Close out
 
