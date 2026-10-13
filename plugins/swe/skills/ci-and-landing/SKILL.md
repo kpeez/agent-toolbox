@@ -9,9 +9,10 @@ Drive an open pull request to green, then land it only under the gate below.
 `<pr>` is the pull-request number, `<base>` its base branch, and `<head-sha>`
 the current head commit (`gh pr view <pr> --json headRefOid,baseRefName`).
 
-Push, update the branch, and reply to reviews only under the publication
-authority in [ship-pr](../ship-pr/SKILL.md), and keep public text inside its
-privacy rule. Without that authority, classify and report.
+Push, update the branch, edit the pull-request body, and reply to reviews
+only under the publication authority in [ship-pr](../ship-pr/SKILL.md), and
+keep public text inside its privacy rule. Without that authority, classify
+and report.
 
 ## Drive to green
 

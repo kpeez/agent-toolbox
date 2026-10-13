@@ -11,8 +11,8 @@ makes an existing draft ready for review, and it never deploys.
    a required failure.
 4. When the current request or the user's standing instructions call for a
    merge, run the Land steps of
-   [ci-and-landing](../../ci-and-landing/SKILL.md). They mark the draft ready
-   and merge only when their gate holds. Otherwise mark the draft ready.
+   [ci-and-landing](../../ci-and-landing/SKILL.md). They mark the draft ready,
+   then merge only when their gate holds. Otherwise mark the draft ready.
 5. Leave issue status to the tracker's GitHub integration; a ready pull request
    does not mark work delivered.
 6. Report the pull request, verification, and state changes.
