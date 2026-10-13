@@ -21,5 +21,17 @@
   for a docs-only change.
 - Run local provider smoke checks against the checked-out catalogs, manifests,
   and hooks without network access when those surfaces change. A broad plugin
-  release should run the full offline smoke gate.
+  release runs the packaging checks above and these offline checks:
+  - Check that every relative link in changed Markdown resolves.
+  - Run `claude plugin validate --strict` on the repository root and on each
+    changed plugin.
+  - Parse each `agents/*.toml` with `python3 -c 'import tomllib'` and each
+    `agents/openai.yaml` with `nu -c 'open <file>'`.
+  - Run `python3 evals/skills/skill_eval.py validate`, and
+    `python3 -m unittest discover -s <dir>` for `evals/skills/tests` and
+    `plugins/swe/mcp/tests`.
+  - Load each changed plugin in Codex with `HOME` and `CODEX_HOME` set to a
+    new temporary directory: `codex plugin marketplace add <checkout>`, then
+    `codex plugin add <plugin>@agent-toolbox`, then `codex plugin list`. The
+    install is a copy, so add the plugin again after each source edit.
 - Do not require `pyproject.toml`, a lockfile, or a test suite.
