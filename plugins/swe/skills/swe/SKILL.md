@@ -12,10 +12,11 @@ Task: $ARGUMENTS
 When the task line is empty or still holds an unreplaced placeholder, the task
 is the user's current request.
 
-Relative paths in this file resolve against this skill's base directory, which
-the "Base directory for this skill" line at the top of this body gives. The
-Read tool does not resolve them for you: build the absolute path from that
-line, then read it.
+Relative paths in this file resolve against this skill's base directory: the
+"Base directory for this skill" line at the top of this body or, when that
+line is absent, the directory that holds this `SKILL.md`. The Read tool does
+not resolve them for you: build the absolute path from that directory, then
+read it.
 
 ## Match
 
@@ -23,34 +24,38 @@ line, then read it.
    "new task". Do not continue an earlier playbook silently.
 2. Observe any fact you need to choose a playbook: read code or run a
    command. Ask the user only for a choice that no observation can settle.
-3. Pick the first playbook in [Playbooks](#playbooks) whose line fits. The
-   list runs from narrow to broad.
-4. When one skill owns the whole task, use [Single-skill routes](#single-skill-routes).
-   That skill's own steps are the checklist.
+3. When one skill owns the whole task, use its line in
+   [Single-skill routes](#single-skill-routes).
+4. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
+   fits. The list runs from narrow to broad.
 5. For large, ambiguous, or cross-session work, or work for another agent,
    propose a plan. When the user agrees, read and follow
    [write-plan](../write-plan/SKILL.md). For several PRs, then read and follow
    [to-issues](../to-issues/SKILL.md).
-6. When nothing fits, say so in one line and use the skill that fits. Do not
-   invent a playbook.
-7. Say: `Playbook: <slug>. Reason: <one clause>.`
+6. When nothing fits, say so in one line and use the skill that fits as a
+   route. Do not invent a playbook.
+7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
+   `Route: <skill>. Reason: <one clause>.`
 
 ## Track
 
-1. Read `playbooks/<slug>.md` in full.
+1. For a playbook, read `playbooks/<slug>.md` in full. A limit in its Reply
+   line, such as "No PR", holds for the whole task. For a route, load the
+   skill. Its numbered steps are the steps; when it has none, its section
+   headings are. Each step's title is its handle.
 2. Before any task work, make the step list. When the host has a task-list
    tool, create one task per step. Otherwise, put a numbered list at the top of
    your first reply, and give it again with its current state in later
    replies.
-3. Copy each step line byte for byte, with its handle, as one item, in file
-   order. Do not paraphrase, merge, or reorder.
+3. Copy each playbook step line byte for byte, with its handle, as one item,
+   in file order. Do not paraphrase, merge, or reorder.
 4. A step you do not do stays in the list as `<handle> skip: <reason>`, and
    appears under "Skipped" in your final reply.
 5. Add task-specific items after the playbook steps.
 6. The list is a working checklist for this session. Do not copy it into
    files, PRs, or trackers.
-7. Before a step, load each name in its parentheses. The loaded skill's rules
-   win over the step text.
+7. Before a step, load each name in its parentheses that you have not loaded
+   in this session. The loaded skill's rules win over the step text.
 
 Load a name this way:
 
@@ -66,8 +71,10 @@ Load a name this way:
   [to-issues](../to-issues/SKILL.md): read the `SKILL.md` by its absolute
   path. Never call the Skill tool on these three; the host blocks the call.
 - `reviewer agent`: start the swe reviewer agent as a subagent and give it the
-  step's criteria.
-- A playbook slug: read `playbooks/<slug>.md`.
+  step's criteria. When the step gives none, brief it as the independent
+  reviewer line in [implement](../implement/SKILL.md#plans-and-issues) says.
+- A playbook slug: read `playbooks/<slug>.md` as reference for that step. Its
+  steps do not join the list, and the step text sets the scope.
 - A skill of another plugin, such as `lab:autoresearch`: the Skill tool, by
   that name.
 
@@ -75,14 +82,14 @@ Where the host has no Skill tool, read the skill's `SKILL.md` instead.
 
 ## Authority
 
-- Commit, push, and pull-request steps follow the authority rule in
-  [ship-pr](../ship-pr/SKILL.md).
+- Read [ship-pr](../ship-pr/SKILL.md) before the first commit. Its rules
+  govern each commit, push, and pull request. Merge and release effects follow
+  [ci-and-landing](../ci-and-landing/SKILL.md).
 - When publication is authorized, open a draft PR at the first meaningful
   commit and push checkpoints during the work. The final `publish-draft-pr`
   step updates that PR; it is not the first push.
-- Ask before a hard-to-reverse action: a force-push or history rewrite,
-  deleting a branch or data, a merge without standing authority, a release or
-  deploy effect, or a write to a tracker or chat.
+- Ask before a history rewrite, deleting a branch or data, or a write to a
+  tracker or chat.
 
 ## Principles
 
@@ -118,5 +125,6 @@ loaded in this session.
 
 ## Reply
 
-Give the playbook slug, the result, the evidence with the label that the
-playbook's skill assigns, the "Skipped" list, and the principle citations.
+Give the playbook slug or route, then what the playbook's Reply line asks
+for, the "Skipped" list, and the principle citations. Label each piece of
+evidence with the scale of the skill that produced it.
