@@ -40,7 +40,7 @@ export function demo(now: number): Demo {
       answer: '## Findings\n\n- Desktop panes draw `Box`, `Text`, `Button`, `Svg`, `Code` and `Markdown`.\n- `Svg` with `isInteractive` gets hover and `<title>` tooltips, but no script.\n- The subagents mod draws one SVG card per agent in `hooks/desktop.ts`.',
     },
     {
-      id: 'demo-impl', agentId: 'demo-impl', type: 'swe:golem', description: 'Add the shell tab with output tails',
+      id: 'demo-impl', agentId: 'demo-impl', type: 'swe:daedalus', description: 'Add the shell tab with output tails',
       prompt: 'Implement the Shell tab: one row per Bash call, expandable to the command and the tails of stdout and stderr. Keep control characters out of every drawn string.',
       model: 'claude-sonnet-5-5', isBackground: false, status: 'running', startedAt: at(5 * MIN),
       toolCalls: 23, tokensIn: 131_000, tokensOut: 9_800,
