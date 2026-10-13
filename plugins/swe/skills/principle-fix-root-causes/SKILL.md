@@ -17,7 +17,8 @@ Fix a failure where it starts, not where it shows.
 - When a failure starts after a restart, suspect stale persisted state first:
   config files, caches, lock files, and serialized state.
 - After you find the cause, search for the same faulty pattern elsewhere. Fix
-  each instance in scope and report the others.
+  each instance in scope, and handle the others per
+  [ancillary-fixes](../principle-ancillary-fixes/SKILL.md).
 - When a probe refutes a hypothesis, revert the changes you made to test it.
 
 ## After two failed fixes

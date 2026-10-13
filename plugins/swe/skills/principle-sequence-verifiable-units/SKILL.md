@@ -17,6 +17,4 @@ after a batch is not.
 4. Repeat. When a script makes the edits, still run the check after each unit.
 
 Order the commits so that they argue for the change: a deletion before a
-reshape, a baseline before a treatment, a scaffold before a feature. When a
-regression test passes the `testing-code` admission gate, it lands before its
-fix, so that a reviewer sees it fail and then pass.
+reshape, a baseline before a treatment, a scaffold before a feature.
