@@ -89,8 +89,7 @@ A baseline failure that survives into a keeper is a bug report. Fix it at its
 owner as a separate commit, and prove it through the real user flow with a
 **control** run that reverts the fix and shows the old behavior. For an
 unrelated product discrepancy, follow
-[ancillary-fixes](../principle-ancillary-fixes/SKILL.md) as a bounded worker:
-record it as a follow-up.
+[ancillary-fixes](../principle-ancillary-fixes/SKILL.md) as a bounded worker.
 
 Done when each repaired defect has a failing control and a passing candidate on
 the same harness.
