@@ -273,13 +273,14 @@ def retained(run, path, sha256):
 
 def claude_lines(path, label, issues):
     """One-based (line, object) pairs; a malformed or unterminated line is coverage loss."""
-    parts = path.read_text(encoding="utf-8").split("\n")
+    # Split bytes first: a tail cut inside a multibyte character is coverage loss, not a crash.
+    parts = path.read_bytes().split(b"\n")
     if parts.pop():
         issues.append(f"{label} line {len(parts) + 1}: unterminated final line")
     rows = []
     for line, text in enumerate(parts, 1):
         try:
-            row = json.loads(text)
+            row = json.loads(text.decode("utf-8"))
             if not isinstance(row, dict):
                 raise ValueError("not an object")
             rows.append((line, row))
