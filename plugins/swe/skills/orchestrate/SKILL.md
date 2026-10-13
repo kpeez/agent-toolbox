@@ -7,7 +7,9 @@ description: Split work across subagents and integrate results, or delegate to a
 
 Keep requirements, decisions, synthesis, and final acceptance with the lead.
 Use the host's available delegation facilities and configured roles, choosing
-the smallest capable agent. Delegation does not expand the user's scope or
+the smallest capable agent. A role's pinned model is only its default: when
+the host allows, set the model per assignment, a cheaper one for mechanical
+work and a stronger one for judgment-heavy work. Delegation does not expand the user's scope or
 authority and does not require a plan or tracker. This skill's job is bounded
 coordination plus independent review.
 
