@@ -122,7 +122,7 @@ rule to your user-level `AGENTS.md` (Codex) or `CLAUDE.md` (Claude):
 The plugin does not edit user instructions. Existing sessions may retain prior
 instructions; use a fresh session after updating.
 
-`orchestrate` hands bounded work to the plugin's one agent, `golem`. It does
+`orchestrate` hands bounded work to the plugin's one agent, `daedalus`. It does
 one task (code, tests, docs, or tracker work) under the caller's brief, with
 the principles the brief names, and publishes nothing without explicit
 authority. Its default model is Sonnet; the caller can choose another per

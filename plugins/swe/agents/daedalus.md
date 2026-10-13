@@ -1,5 +1,5 @@
 ---
-name: golem
+name: daedalus
 description: Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker tasks.
 model: sonnet
 effort: medium
