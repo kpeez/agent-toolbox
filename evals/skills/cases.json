@@ -649,7 +649,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Use /swe:testing-code to decide whether this timeout behavior needs a permanent test and choose the public seam."
+          "content": "Use the swe:testing-code skill to decide whether this timeout behavior needs a permanent test and choose the public seam."
         }
       ],
       "fixture": "worker-queue",
@@ -659,7 +659,7 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Apply the test-value gate to the timeout contract.",
-      "rationale": "Explicit invocation is a control case."
+      "rationale": "Explicit invocation is a control case. testing-code is model-only (user-invocable: false), so the request names the skill instead of a slash command."
     },
     {
       "id": "TA-01",
