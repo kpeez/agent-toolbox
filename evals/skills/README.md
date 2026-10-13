@@ -40,9 +40,20 @@ python3 evals/skills/skill_eval.py aggregate artifacts/skill-evals/*/score.json
 ```
 
 Replace `CASE_ID` using `cases.json` and `RUN_ID` with a unique name. To score a
-Claude Code session, run `claude --plugin-dir <run>/inputs/plugins/swe` with
-`--output-format stream-json` from the run's `workspace/`, then capture the
-session transcript:
+Claude Code session, run it headless from the run's `workspace/` in the audited
+shape, then capture the session transcript:
+
+```sh
+claude -p "$(cat /absolute/RUN/inputs/prompt.txt)" --output-format stream-json --verbose \
+  --setting-sources project,local --plugin-dir /absolute/RUN/inputs/plugins/swe \
+  < /dev/null > /absolute/path/to/stream.jsonl
+```
+
+`--output-format stream-json` needs `-p` and `--verbose`.
+`--setting-sources project,local` keeps user settings out, so an installed
+`swe` plugin does not load beside the snapshot. Add the model, permission, and
+tool flags that the frozen runtime names. [EVIDENCE.md](EVIDENCE.md) names the
+audited probe runs; their `commands.sh` is the reference invocation.
 
 ```sh
 python3 evals/skills/skill_eval.py capture \
