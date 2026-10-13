@@ -1,4 +1,4 @@
-name = "golem"
+name = "daedalus"
 description = "Executes one bounded workspace task under caller-supplied constraints, including code, tests, documentation, and tracker tasks."
 model = "gpt-6-luna"
 model_provider = "openai"
