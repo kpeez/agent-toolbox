@@ -27,4 +27,4 @@ When user-invoked skills multiply past what you can remember, a **router skill**
 - loads model-invoked and model-only skills through the Skill tool;
 - reads its playbook files by an absolute path built from the "Base directory for this skill" line at the top of its loaded body, because the Read tool resolves a relative path against the session's working directory, not the skill folder;
 - reads a user-invoked skill's `SKILL.md` by the same kind of absolute path only when the human's invocation of the router carries the authority that skill requires, for example a publish step under a request that authorizes publication; otherwise it names the skill for the human to type;
-- copies the playbook's steps into the host task list, or into a numbered list at the top of its first reply when the host has no task tool.
+- copies the playbook's steps into the host task list when one exists, and ends its final reply with every step's state. Headless Claude Code has no task-list tool, and in observed runs the model did not write a text list before its tool calls, so the final state list is the record that always exists.

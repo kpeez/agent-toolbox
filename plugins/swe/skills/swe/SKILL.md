@@ -43,18 +43,18 @@ read it.
    line, such as "No PR", holds for the whole task. For a route, load the
    skill. Its numbered steps are the steps; when it has none, its section
    headings are. Each step's title is its handle.
-2. Before any task work, make the step list. When the host has a task-list
-   tool, create one task per step. Otherwise, put a numbered list at the top of
-   your first reply, and give it again with its current state in later
-   replies.
-3. Copy each playbook step line byte for byte, with its handle, as one item,
-   in file order. Do not paraphrase, merge, or reorder.
-4. A step you do not do stays in the list as `<handle> skip: <reason>`, and
-   appears under "Skipped" in your final reply.
-5. Add task-specific items after the playbook steps.
-6. The list is a working checklist for this session. Do not copy it into
-   files, PRs, or trackers.
-7. Before a step, load each name in its parentheses that you have not loaded
+2. When the host has a task-list tool, create one task per step right after
+   you read the playbook. Copy each step line byte for byte, with its handle,
+   in file order, and add task-specific tasks after them.
+3. End your final reply with a "Steps" section that gives every handle in
+   order with its state. A step you did not do is `skip:` with its reason:
+
+   ```text
+   1-reproduce-failure: done
+   7-check-blast-radius skip: the change keeps the public signature
+   ```
+
+4. Before a step, load each name in its parentheses that you have not loaded
    in this session. The loaded skill's rules win over the step text.
 
 Load a name this way:
@@ -126,6 +126,6 @@ loaded in this session.
 ## Reply
 
 Give the playbook slug or route, then what the playbook's Reply line asks
-for or, for a route, the skill's own report, the "Skipped" list, and the
-principle citations. Label each piece of evidence with the scale of the skill
-that produced it.
+for or, for a route, the skill's own report. Then give the principle
+citations. End with the "Steps" section. Label each piece of evidence with the
+scale of the skill that produced it.

@@ -93,8 +93,8 @@ discovery. Preserve any independently edited skill directory.
 Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. Only the user
 starts the router. It matches the task to one of twelve
 [playbooks](plugins/swe/skills/swe/playbooks/), such as `fix-bug` or
-`drive-pr-to-green`, or to one skill that owns the task. It tracks every step
-and lists the steps it skipped in its final reply.
+`drive-pr-to-green`, or to one skill that owns the task. It ends with the state
+of every step, including the reason for each skipped step.
 
 The router and its playbooks use these swe skills, which also start on their
 own when their moment comes: [why](plugins/swe/skills/why/SKILL.md),
