@@ -39,9 +39,34 @@ python3 evals/skills/skill_eval.py score --run artifacts/skill-evals/RUN_ID
 python3 evals/skills/skill_eval.py aggregate artifacts/skill-evals/*/score.json
 ```
 
-Replace `CASE_ID` using `cases.json` and `RUN_ID` with a unique name. For native
-trace import, omit the two synthetic flags; the bytes are captured but scores
-remain unavailable until a verified native adapter exists. Interrupted capture
+Replace `CASE_ID` using `cases.json` and `RUN_ID` with a unique name. To score a
+Claude Code session, run it headless from the run's `workspace/` in the audited
+shape, then capture the session transcript:
+
+```sh
+claude -p "$(cat /absolute/RUN/inputs/prompt.txt)" --output-format stream-json --verbose \
+  --setting-sources project,local --plugin-dir /absolute/RUN/inputs/plugins/swe \
+  < /dev/null > /absolute/path/to/stream.jsonl
+```
+
+`--output-format stream-json` needs `-p` and `--verbose`.
+`--setting-sources project,local` keeps user settings out, so an installed
+`swe` plugin does not load beside the snapshot. Add the model, permission, and
+tool flags that the frozen runtime names. [EVIDENCE.md](EVIDENCE.md) names the
+audited probe runs; their `commands.sh` is the reference invocation.
+
+```sh
+python3 evals/skills/skill_eval.py capture \
+  --run artifacts/skill-evals/RUN_ID \
+  --source ~/.claude/projects/PROJECT/SESSION_ID.jsonl --state completed \
+  --format claude-transcript --plugin-dir /absolute/RUN/inputs/plugins/swe \
+  --stream /absolute/path/to/stream.jsonl --relevant-action TOOL_USE_ID
+```
+
+`--plugin-dir` repeats the absolute path given to `claude`. `--relevant-action`
+is a person's label: the root `tool_use` id where the case's relevant action
+starts, or `none`. Any other native trace, captured with the default
+`--format native`, is retained but stays unscored. Interrupted capture
 uses `--state timeout` or `--state incomplete`. Import retains the raw bytes,
 capture digest, and final fixture files. Inputs and raw trace digests are checked
 before scoring. Each score points to raw evidence and its frozen manifest.
@@ -63,9 +88,9 @@ catalog scope, context delivery, and harness deltas before materializing.
 
 ## Metrics and evidence
 
-See [EVIDENCE.md](EVIDENCE.md) for the exact observation contract and synthetic
-envelope. The synthetic adapter proves exact identity and full delivered body
-before counting a load. Mentions, intentions, listings, failed reads and partial
+See [EVIDENCE.md](EVIDENCE.md) for the exact observation contract, the synthetic
+envelope, and the Claude transcript adapter. Both adapters prove exact identity
+and full delivered body before counting a load. Mentions, intentions, listings, failed reads and partial
 bodies cannot count as successful activation.
 
 Aggregation separates frozen configuration (runtime, source catalog, adapter
@@ -90,9 +115,10 @@ or justify a single pooled efficacy percentage.
 ## Verification and next step
 
 `python3 -m unittest discover -s evals/skills/tests` exercises the public CLI with
-synthetic traces. It checks leakage/isolation of fixtures, strict body identity,
-ordering, incomplete/failed reads, missing native evidence, and aggregate
-denominators. This verifies harness behavior only.
+synthetic traces and minimal Claude-shaped transcripts. It checks leakage/isolation
+of fixtures, strict body identity, ordering, incomplete/failed reads, missing
+native evidence, aggregate denominators, and the Claude load proofs and message
+order. This verifies harness behavior only.
 The retained verification record is
 `artifacts/skill-evals/2026-09-30-offline-verification/verification.json`.
 Four inspectable synthetic examples and their raw evidence are retained at
@@ -100,10 +126,18 @@ Four inspectable synthetic examples and their raw evidence are retained at
 Use `PYTHONDONTWRITEBYTECODE=1` for unittest and place explicit compilation caches
 under `artifacts/skill-evals/`, so run output stays out of source directories.
 
-The next step is an authorized small native observability pilot, followed by a
-provider-specific capture/runner adapter if evidence is sufficient. Proposed
-model, effort, count, access, isolation limits and costs must go to the coordinator
-before starting. Do not run the model matrix from this README or assume stripping
+Native scoring supports Claude Code session transcripts from the audited
+version (2.1.296, headless): `Skill`-tool loads, by full or bare name, proved
+by the linked delivered body, full `Read` loads of a frozen `SKILL.md`, root versus sidechain scope,
+labeled action timing, and end coverage from stream-json. It does not support
+typed slash-command loads, `Skill` calls with arguments, compaction, resumes,
+repeat-load notes, Codex traces, unlabeled actions, or step-list extraction.
+These leave the session partial or the load unproved; they never count as a
+miss. EVIDENCE.md holds the contract and the raw-event audit.
+
+No activation baseline exists yet. A native run needs an authorized pilot:
+proposed model, effort, count, access, isolation limits and costs must go to the
+coordinator before starting. Do not run the model matrix from this README or assume stripping
 bindings disables manual external calls. Native subprocess execution and sandbox
 enforcement are intentionally absent pending that gate.
 
