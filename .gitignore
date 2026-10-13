@@ -12,7 +12,8 @@ claude-mods/*/tsconfig.json
 .vscode/
 .cursor/
 .idea/
-.claude/
+.claude/*
+!.claude/settings.json
 .ipynb_checkpoints/
 
 # OS noise
