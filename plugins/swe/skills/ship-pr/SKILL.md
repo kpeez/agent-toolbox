@@ -13,16 +13,15 @@ authority does not authorize putting private identifiers or content into public
 output. A user invocation of `/ship-pr` authorizes its default commit, push, and
 draft-PR workflow for the named work. In a `/swe` task that asks for an
 implementation, the playbook's `publish-draft-pr` step carries the same
-authority, unless the request keeps the work local. If publication is not
-authorized, leave verified local work intact and report its state.
+authority. If publication is not authorized, leave verified local work intact
+and report its state.
 
 Default and explicit finalize modes:
 
 - `/ship-pr [plan or issue]`: verify, group, commit, push, and ensure a draft
   pull request exists.
 - `/ship-pr finalize`: re-verify and mark the existing draft ready. Read
-  [finalize](references/finalize.md) for this explicit mode. It merges only
-  under the merge rule below; otherwise it stops at ready.
+  [finalize](references/finalize.md) for this explicit mode.
 
 ## Rules
 
@@ -40,8 +39,7 @@ Default and explicit finalize modes:
 - Draft pull requests are the default. Change an existing draft/ready state
   only when the user's standing instructions or the current request ask for
   that transition.
-- Merge only when the user's standing instructions or the current request
-  authorize a merge, and only through the landing gate in
+- Merge only through the Land steps of
   [ci-and-landing](../ci-and-landing/SKILL.md).
 - Never put private identifiers, URLs, or content into a public branch, commit,
   pull-request body, or bot output. The one exception is an issue key (such as

@@ -147,8 +147,8 @@ observed output, or the named test that failed before and passes after, with
 its assertion sketched as pseudocode. When no reproducible demonstration
 exists, say so and name what the reviewer should inspect instead.
 
-When an independent verdict gates landing, add the verification record: the
-verdict, head SHA, base SHA, and patch-id, and nothing else.
+When an independent verdict gates landing, add the verification record in the
+template's form, and nothing else.
 [ci-and-landing](../../ci-and-landing/SKILL.md) says how to compute it and
 when to recompute it. Replace the record when it changes; keep one current
 record.
