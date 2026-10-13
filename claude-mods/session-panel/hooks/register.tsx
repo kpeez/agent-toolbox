@@ -1,27 +1,18 @@
 import { atom, read, update } from 'claude-code'
 import type { EngineInterface, Register, StateDollar } from 'claude-code'
 
-import type {
-  AgentRun, AgentStatus, CallMark, CallStatus, FileTouch, ShellRun, ShellStatus, Tab, TraceStep,
-} from '../types'
+import type { AgentRun, AgentStatus, CallMark, CallStatus, Session, ShellStatus, Tab } from '../types'
 import { agentAskText, shellAskText } from './ask'
 import { BEAT_MS, DANCERS_HEIGHT, DANCER_COLUMNS, DANCER_ROWS, dancerCells, dancersSvg } from './dancer'
 import { demo } from './demo'
 import { AGENT_CARD_HEIGHT, AXIS_HEIGHT, LANE_HEIGHT, TONE, agentCardSvg, agentColor, axisSvg, laneSvg, tilesSvg } from './svg'
 import type { Lane, Span, Tile } from './svg'
-import { baseName, clean, cut, formatClock, formatDuration, formatTokens, oneLine, tail } from './text'
+import { SHELL_TOOLS, emptySession, isLive as isLiveSession, step } from './session'
+import type { SessionEvent } from './session'
+import { baseName, cut, formatClock, formatDuration, formatTokens, oneLine } from './text'
 
 const PANE = 'session-panel'
 const TITLE = 'Session'
-const KEEP_CALLS = 1500
-const KEEP_SHELL = 150
-const KEEP_AGENTS = 60
-const KEEP_TRACE = 40
-const KEEP_FILES = 300
-const STDOUT_CHARS = 4000
-const STDERR_CHARS = 2000
-const PROMPT_CHARS = 4000
-const ANSWER_CHARS = 8000
 const TIMELINE_AGENTS = 10
 // Agent rows the band above the prompt shows before `+N more`.
 const BAND_AGENTS = 3
@@ -30,16 +21,11 @@ const SPINNER = '◐◓◑◒'
 const LANE_LABEL_COLUMNS = 20
 const PX_PER_COLUMN = 8
 
-const calls = atom({ plugin: 'session-panel', key: 'calls' } as const, [])
-const shell = atom({ plugin: 'session-panel', key: 'shell' } as const, [])
-const agents = atom({ plugin: 'session-panel', key: 'agents' } as const, [])
-const files = atom({ plugin: 'session-panel', key: 'files' } as const, [])
-const usage = atom({ plugin: 'session-panel', key: 'usage' } as const, { tokensIn: 0, tokensOut: 0, turns: 0 })
-const tab = atom({ plugin: 'session-panel', key: 'tab' } as const, 'overview')
-const expanded = atom({ plugin: 'session-panel', key: 'expanded' } as const, [])
+const session = atom({ plugin: 'session-panel', key: 'session' } as const, emptySession())
 const now = atom({ plugin: 'session-panel', key: 'now' } as const, 0)
-const asked = atom({ plugin: 'session-panel', key: 'asked' } as const, [])
-const turnFrom = atom({ plugin: 'session-panel', key: 'turnFrom' } as const, 0)
+
+// Every change to the panel's state goes through `step`, in one atomic update.
+const apply = ($: Parameters<typeof update>[0], e: SessionEvent): Promise<Session> => update($, session, s => step(s, e))
 
 const TABS: { id: Tab; label: string }[] = [
   { id: 'overview', label: 'Overview' },
@@ -47,17 +33,6 @@ const TABS: { id: Tab; label: string }[] = [
   { id: 'shell', label: 'Shell' },
   { id: 'files', label: 'Files' },
 ]
-
-const SHELL_TOOLS = new Set(['Bash', 'PowerShell'])
-const READ_TOOLS = new Set(['Read', 'NotebookRead'])
-const EDIT_TOOLS = new Set(['Edit', 'MultiEdit', 'Write', 'NotebookEdit'])
-
-// The first of these input fields that holds a string names the call.
-const SUMMARY_FIELDS = [
-  'description', 'command', 'file_path', 'notebook_path', 'pattern', 'url',
-  'query', 'skill', 'path', 'prompt',
-]
-const PATH_FIELDS = new Set(['file_path', 'notebook_path', 'path'])
 
 // Terminal colors are theme keys, so the pane follows the person's theme.
 const CALL_GLYPH: Record<ShellStatus, { glyph: string; color: string }> = {
@@ -87,18 +62,6 @@ const KINDS: { match: RegExp; color: string }[] = [
 ]
 const kindColor = (tool: string): string => KINDS.find(k => k.match.test(tool))?.color ?? TONE.plain
 
-function summarize(tool: string, input: Record<string, unknown>): string {
-  const name = tool.replace(/^mcp__/, '').replace(/__/g, ' ')
-  for (const field of SUMMARY_FIELDS) {
-    const value = input[field]
-    if (typeof value !== 'string' || value.length === 0) continue
-    return oneLine(`${name} ${PATH_FIELDS.has(field) ? baseName(value) : value}`)
-  }
-  return name
-}
-
-const isOpen = (status: string) => status === 'running'
-
 // Markdown read as one plain line: headings, list markers, emphasis and code
 // marks dropped.
 const plainText = (md: string): string =>
@@ -116,18 +79,13 @@ let beat = 0
 // Whether anything still runs, so the clock ticks only while it matters.
 let isLive = false
 
-async function refreshLive($: StateDollar): Promise<void> {
-  const [s, a] = await Promise.all([read($, shell), read($, agents)])
-  isLive = s.some(r => isOpen(r.status)) || a.some(r => isOpen(r.status))
-}
-
 export const register: Register = on => {
   on('session.start', async ($, e, next) => {
     await $.command.register({
       name: 'panel',
       description: 'Show or hide the session panel; `/panel demo` loads sample data, `/panel clear` empties it',
     })
-    await refreshLive($)
+    isLive = isLiveSession(await read($, session))
     $.clock.every(BEAT_MS, () => {
       const site = bandSite
       if (site === undefined || bandDancers.length === 0) return
@@ -155,17 +113,8 @@ export const register: Register = on => {
     const arg = e.args.trim()
     if (arg === 'demo') {
       const at = await $.clock.now()
-      const sample = demo(at)
-      await Promise.all([
-        update($, calls, () => sample.calls),
-        update($, shell, () => sample.shell),
-        update($, agents, () => sample.agents),
-        update($, files, () => sample.files),
-        update($, usage, () => sample.usage),
-        update($, now, () => at),
-        update($, turnFrom, () => 0),
-      ])
-      await refreshLive($)
+      isLive = isLiveSession(await apply($, { type: 'DemoLoaded', sample: demo(at) }))
+      await update($, now, () => at)
       await $.ui.open({ id: PANE, title: TITLE })
       return { text: 'Session panel opened with sample data. `/panel clear` empties it.' }
     }
@@ -186,24 +135,11 @@ export const register: Register = on => {
     const started = await next(e)
     if (started.deny !== undefined) return started
     const at = await $.clock.now()
-    const run: AgentRun = {
-      id: started.agentId ?? e.tool_use_id,
-      agentId: started.agentId,
-      parentAgentId: e.parentAgentId,
-      type: e.subagentType,
-      name: e.name,
-      description: oneLine(e.description),
-      prompt: cut(clean(e.prompt), PROMPT_CHARS),
-      model: started.model,
-      isBackground: e.background,
-      status: 'running',
-      startedAt: at,
-      toolCalls: 0,
-      trace: [],
-      tokensIn: 0,
-      tokensOut: 0,
-    }
-    await update($, agents, list => [...list.filter(a => a.id !== run.id), run].slice(-KEEP_AGENTS))
+    await apply($, {
+      type: 'AgentSpawned', at, id: started.agentId ?? e.tool_use_id, agentId: started.agentId,
+      parentAgentId: e.parentAgentId, agentType: e.subagentType, name: e.name, description: e.description,
+      prompt: e.prompt, model: started.model, isBackground: e.background,
+    })
     await update($, now, () => at)
     isLive = true
     return started
@@ -215,132 +151,66 @@ export const register: Register = on => {
     const tool = String(e.tool)
     const id = e.tool_use_id ?? `${tool}-${startedAt}-${Math.random()}`
     const agentId = e.agentId
-    const isShell = SHELL_TOOLS.has(tool)
 
-    await update($, calls, list => [...list, { id, tool, agentId, status: 'running' as const, startedAt }].slice(-KEEP_CALLS))
-    if (isShell) {
-      const run: ShellRun = {
-        id, agentId, status: 'running', startedAt, stdout: '', stderr: '',
-        command: clean(String(input.command ?? '')),
-        description: oneLine(String(input.description ?? '')),
-      }
-      await update($, shell, list => [...list, run].slice(-KEEP_SHELL))
-      isLive = true
-    }
-    if (agentId !== undefined) {
-      const step: TraceStep = { id, tool, summary: summarize(tool, input), status: 'running', at: startedAt }
-      await update($, agents, list =>
-        list.map(a =>
-          a.agentId === agentId
-            ? { ...a, status: 'running' as const, endedAt: undefined, toolCalls: a.toolCalls + 1, trace: [...a.trace, step].slice(-KEEP_TRACE) }
-            : a,
-        ),
-      )
-    }
+    isLive = isLiveSession(await apply($, { type: 'ToolStarted', at: startedAt, id, tool, agentId, input }))
 
     const ran = await next(e)
 
     const endedAt = await $.clock.now()
     const status: CallStatus = ran.deny !== undefined ? 'denied' : ran.isError === true ? 'error' : 'ok'
-    await update($, calls, list => list.map(c => (c.id === id ? { ...c, status, endedAt } : c)))
-    if (agentId !== undefined) {
-      await update($, agents, list =>
-        list.map(a =>
-          a.agentId === agentId ? { ...a, trace: a.trace.map(s => (s.id === id ? { ...s, status } : s)) } : a,
-        ),
-      )
-    }
-    if (isShell) {
-      const result = (ran as { result?: unknown }).result
-      const out = typeof result === 'object' && result !== null ? (result as Record<string, unknown>) : {}
-      const isBackground = typeof out.backgroundTaskId === 'string'
-      const stdout = typeof out.stdout === 'string' ? out.stdout : ''
-      // An errored call stores its error text, which holds the command's output.
-      const stderr = typeof out.stderr === 'string' ? out.stderr : status === 'error' ? (ran.text ?? '') : ''
-      const note =
-        ran.deny ??
-        (out.interrupted === true ? 'Interrupted' : undefined) ??
-        (typeof out.timedOutAfterMs === 'number' ? `Timed out after ${formatDuration(out.timedOutAfterMs)}; moved to the background` : undefined) ??
-        (isBackground ? 'Running in the background' : undefined) ??
-        (typeof out.returnCodeInterpretation === 'string' ? out.returnCodeInterpretation : undefined)
-      await update($, shell, list =>
-        list.map(r =>
-          r.id === id
-            ? {
-                ...r, endedAt, status: (isBackground && status === 'ok' ? 'background' : status) as ShellStatus,
-                stdout: tail(clean(stdout), STDOUT_CHARS), stderr: tail(clean(stderr), STDERR_CHARS),
-                note: note === undefined ? undefined : oneLine(note),
-              }
-            : r,
-        ),
-      )
-      await refreshLive($)
-    }
+    const result = (ran as { result?: unknown }).result
+    const out = typeof result === 'object' && result !== null ? (result as Record<string, unknown>) : {}
+    const isBackground = typeof out.backgroundTaskId === 'string'
+    const note =
+      ran.deny ??
+      (out.interrupted === true ? 'Interrupted' : undefined) ??
+      (typeof out.timedOutAfterMs === 'number' ? `Timed out after ${formatDuration(out.timedOutAfterMs)}; moved to the background` : undefined) ??
+      (isBackground ? 'Running in the background' : undefined) ??
+      (typeof out.returnCodeInterpretation === 'string' ? out.returnCodeInterpretation : undefined)
     const path = input.file_path ?? input.notebook_path
-    if (status === 'ok' && typeof path === 'string' && (READ_TOOLS.has(tool) || EDIT_TOOLS.has(tool))) {
-      const isEdit = EDIT_TOOLS.has(tool)
-      await update($, files, list => {
-        const old = list.find(f => f.path === path)
-        const touch: FileTouch = {
-          path,
-          reads: (old?.reads ?? 0) + (isEdit ? 0 : 1),
-          edits: (old?.edits ?? 0) + (isEdit ? 1 : 0),
-          lastAt: endedAt,
-        }
-        return [...list.filter(f => f.path !== path), touch].slice(-KEEP_FILES)
-      })
-    }
+    const after = await apply($, {
+      type: 'ToolFinished', at: endedAt, id, tool, agentId, status,
+      path: typeof path === 'string' ? path : undefined,
+      shell: {
+        stdout: typeof out.stdout === 'string' ? out.stdout : '',
+        // An errored call stores its error text, which holds the command's output.
+        stderr: typeof out.stderr === 'string' ? out.stderr : status === 'error' ? (ran.text ?? '') : '',
+        note, isBackground,
+      },
+    })
+    isLive = isLiveSession(after)
     return ran
   }).catch(($, e, next) => next(e))
 
   on('turn.complete', async ($, e, next) => {
     const at = await $.clock.now()
     const u = e.usage
-    const tokensIn = u ? u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens : 0
-    const tokensOut = u ? u.output_tokens : 0
-    await update($, usage, old => ({
-      tokensIn: old.tokensIn + tokensIn,
-      tokensOut: old.tokensOut + tokensOut,
-      turns: old.turns + (e.agentId === undefined ? 1 : 0),
-    }))
-    const agentId = e.agentId
-    if (agentId !== undefined) {
-      const status: AgentStatus = e.reason === 'answer' ? 'done' : e.reason === 'aborted' ? 'stopped' : 'failed'
-      await update($, agents, list =>
-        list.map(a =>
-          a.agentId === agentId
-            ? {
-                ...a, status, endedAt: at, model: u?.model ?? a.model,
-                answer: e.answer ? cut(clean(e.answer), ANSWER_CHARS) : a.answer,
-                tokensIn: a.tokensIn + tokensIn, tokensOut: a.tokensOut + tokensOut,
-              }
-            : a,
-        ),
-      )
+    const after = await apply($, {
+      type: 'TurnCompleted', at, agentId: e.agentId, reason: e.reason,
+      tokensIn: u ? u.input_tokens + u.cache_read_input_tokens + u.cache_creation_input_tokens : 0,
+      tokensOut: u ? u.output_tokens : 0, model: u?.model, answer: e.answer,
+    })
+    if (e.agentId !== undefined) {
       await update($, now, () => at)
-      await refreshLive($)
+      isLive = isLiveSession(after)
     }
     return next(e)
   }).catch(($, e, next) => next(e))
 
   // Each armed row's details ride the next prompt the person sends, once.
   on('prompt.submit', async ($, e, next) => {
-    if (!e.text.trimStart().startsWith('/')) {
-      const at = await $.clock.now()
-      await update($, turnFrom, () => at)
-    }
-    const ids = await read($, asked)
-    if (ids.length === 0 || e.text.trimStart().startsWith('/')) return next(e)
-    const [shellList, agentList] = await Promise.all([read($, shell), read($, agents)])
-    const texts = ids.flatMap(id => {
-      const run = shellList.find(r => r.id === id)
+    if (e.text.trimStart().startsWith('/')) return next(e)
+    const s = await apply($, { type: 'PromptSubmitted', at: await $.clock.now() })
+    if (s.asked.length === 0) return next(e)
+    const texts = s.asked.flatMap(id => {
+      const run = s.shell.find(r => r.id === id)
       if (run !== undefined) return [shellAskText(run)]
-      const agent = agentList.find(a => a.id === id)
+      const agent = s.agents.find(a => a.id === id)
       return agent !== undefined ? [agentAskText(agent)] : []
     })
     const result = await next(texts.length === 0 ? e : { ...e, context: [...(e.context ?? []), ...texts] })
     if (result.drop === undefined) {
-      await update($, asked, () => [])
+      await apply($, { type: 'AsksSent' })
       await $.ui.status(undefined)
     }
     return result
@@ -350,7 +220,7 @@ export const register: Register = on => {
   // they ended until the next prompt. Other mods' rows stay beneath it.
   on('ui.render', { component: 'AbovePrompt' }, async ($, e, next) => {
     if (e.props.hasSurvey) return next(e)
-    const [agentList, from, clock] = await Promise.all([read($, agents), read($, turnFrom), read($, now)])
+    const [{ agents: agentList, turnFrom: from }, clock] = await Promise.all([read($, session), read($, now)])
     const shown = agentList.filter(a => a.status === 'running' || (a.endedAt ?? 0) > from)
     if (shown.length === 0) return next(e)
 
@@ -429,22 +299,20 @@ export const register: Register = on => {
   on('ui.render', { component: 'Pane', requestId: PANE }, async ($, e) => {
     const { Box, Text, Button, Code, Markdown } = $.ui.resolve(e)
     const Svg = e.surface === 'terminal' ? undefined : $.ui.resolve(e).Svg
-    const [current, open, callList, shellList, agentList, fileList, totals, clock, armed] = await Promise.all([
-      read($, tab), read($, expanded), read($, calls), read($, shell), read($, agents), read($, files), read($, usage), read($, now),
-      read($, asked),
-    ])
+    const [s, clock] = await Promise.all([read($, session), read($, now)])
+    const { tab: current, expanded: open, calls: callList, shell: shellList, agents: agentList, files: fileList, usage: totals, asked: armed } = s
     const at = Math.max(clock, ...callList.map(c => c.endedAt ?? c.startedAt), ...agentList.map(a => a.startedAt))
     const isOpenRow = new Set(open)
     const width = Math.max(260, Math.min(980, e.props.bodyColumns * 8 - 8))
     const columns = e.props.bodyColumns
 
     const toggle = (id: string) =>
-      update($, expanded, ids => (ids.includes(id) ? ids.filter(one => one !== id) : [...ids, id]))
+      apply($, { type: 'RowToggled', id })
     // Switches tab and lands on the row asked for, or on the tab's top.
     const show = (next: Tab, id?: string) => showInPanel($, next, id)
     const isArmed = new Set(armed)
     const toggleAsk = async (id: string) => {
-      const ids = await update($, asked, list => (list.includes(id) ? list.filter(one => one !== id) : [...list, id]))
+      const { asked: ids } = await apply($, { type: 'AskToggled', id })
       await $.ui.status(askStatus(ids.length))
     }
     // Arms the row: its details ride the next prompt as context.
@@ -837,22 +705,13 @@ export const register: Register = on => {
 
 // Opens the panel on a tab, and on one row of it with its details open.
 async function showInPanel($: EngineInterface, next: Tab, id?: string): Promise<void> {
-  await update($, tab, () => next)
-  if (id !== undefined) await update($, expanded, ids => (ids.includes(id) ? ids : [...ids, id]))
+  await apply($, { type: 'TabShown', tab: next, id })
   await $.ui.open({ id: PANE, title: TITLE })
   const to = id === undefined ? ('start' as const) : { key: next === 'shell' ? `sh-${id}` : `agent-${id}` }
   await $.ui.scroll({ in: PANE, to, block: 'start' }).catch(() => undefined)
 }
 
 async function reset($: StateDollar): Promise<void> {
-  await Promise.all([
-    update($, calls, () => []),
-    update($, shell, () => []),
-    update($, agents, () => []),
-    update($, files, () => []),
-    update($, usage, () => ({ tokensIn: 0, tokensOut: 0, turns: 0 })),
-    update($, expanded, () => []),
-    update($, asked, () => []),
-  ])
+  await apply($, { type: 'Cleared' })
   isLive = false
 }

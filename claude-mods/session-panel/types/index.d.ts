@@ -76,21 +76,27 @@ export type FileTouch = {
 
 export type Usage = { tokensIn: number; tokensOut: number; turns: number }
 
+/** Everything the panel shows, changed only by `step` in hooks/session.ts. */
+export type Session = {
+  calls: CallMark[]
+  shell: ShellRun[]
+  agents: AgentRun[]
+  files: FileTouch[]
+  usage: Usage
+  tab: Tab
+  /** Ids of the rows shown open. */
+  expanded: string[]
+  /** Ids of the shell runs and agents whose details ride the next prompt. */
+  asked: string[]
+  /** When the person last sent a prompt: the band shows agents since. */
+  turnFrom: number
+}
+
 declare module 'claude-code' {
   interface PluginState {
     'session-panel': {
-      calls: CallMark[]
-      shell: ShellRun[]
-      agents: AgentRun[]
-      files: FileTouch[]
-      usage: Usage
-      tab: Tab
-      /** Ids of the rows shown open. */
-      expanded: string[]
-      /** Ids of the shell runs and agents whose details ride the next prompt. */
-      asked: string[]
-      /** When the person last sent a prompt: the band shows agents since. */
-      turnFrom: number
+      session: Session
+      /** The clock the timers draw from; it ticks only while something runs. */
       now: number
     }
   }
