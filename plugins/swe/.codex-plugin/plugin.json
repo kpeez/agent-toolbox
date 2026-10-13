@@ -11,7 +11,7 @@
   "interface": {
     "displayName": "swe",
     "shortDescription": "A task router plus planning, implementation, review, and PR skills for coding agents.",
-    "longDescription": "The SWE router ($swe:swe <task> in Codex, /swe <task> in Claude Code) matches a task to a step-by-step playbook and tracks every step. Portable skills for planning, implementing, reviewing, and publishing code changes, plus focused explorer, implementer, and reviewer agent definitions, with short handoff plans and configured Linear mirroring.",
+    "longDescription": "The SWE router ($swe:swe <task> in Codex, /swe <task> in Claude Code) matches a task to a step-by-step playbook and tracks every step. Portable skills for planning, implementing, reviewing, and publishing code changes, plus focused explorer, meeseeks (implementation), and reviewer agent definitions, with short handoff plans and configured Linear mirroring.",
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
