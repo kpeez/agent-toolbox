@@ -2,7 +2,7 @@
 
 `agent-toolbox` provides three portable plugins for AI coding agents:
 
-- **SWE** — a `/swe` router that runs a task through a step-by-step playbook,
+- **SWE** — an SWE router that runs a task through a step-by-step playbook,
   and skills for grilling designs and planning work, implementing and
   reviewing changes, and shipping pull requests.
 - **Lab** — source-backed research, reproducible experiment loops, and
@@ -71,7 +71,7 @@ codex plugin add uni@agent-toolbox
 npx skills@latest add kpeez/agent-toolbox
 ```
 
-This installs editable skills only. Plugin agents and the `/swe` router still
+This installs editable skills only. Plugin agents and the SWE router still
 require a plugin installation.
 
 ### Teaching workspace
@@ -90,29 +90,19 @@ discovery. Preserve any independently edited skill directory.
 
 ## SWE router
 
-Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. The router
-matches the task to one of twelve
-[playbooks](plugins/swe/skills/swe/playbooks/), such as `fix-bug`,
-`build-feature`, or `drive-pr-to-green`. It copies the playbook's steps into
-the session's task list, or into a numbered list in its first reply. A step it
-does not do stays in the list as `skip: <reason>`. Each step names the skill
-that holds its rules, and the router loads that skill before the step. The
-final reply names each principle that changed a decision. Only the user starts
-the router; the model does not start it on its own.
+Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. Only the user
+starts the router. It matches the task to one of twelve
+[playbooks](plugins/swe/skills/swe/playbooks/), such as `fix-bug` or
+`drive-pr-to-green`, or to one skill that owns the task. It tracks every step
+and lists the steps it skipped in its final reply.
 
-The playbooks load these skills, which also start on their own when their
-moment comes:
-
-- `why` — traces why code, a config, or a decision exists through history,
-  with a confidence tier on each claim.
-- `blast-radius` — finds what a change could break beyond its diff and proves
-  the one fact that makes it safe by running real code.
-- `correct` — stops a repeated agent mistake by fixing its class at the
-  highest level that works.
-- `ci-and-landing` — classifies a failing CI check before any rerun or commit,
-  and keys merge verdicts to `git patch-id`.
-- `principle-*` — twelve model-only engineering principles, such as
-  `principle-fix-root-causes`, that load when a decision needs them.
+The router and its playbooks use these swe skills, which also start on their
+own when their moment comes: [why](plugins/swe/skills/why/SKILL.md),
+[blast-radius](plugins/swe/skills/blast-radius/SKILL.md),
+[correct](plugins/swe/skills/correct/SKILL.md),
+[ci-and-landing](plugins/swe/skills/ci-and-landing/SKILL.md), and twelve
+model-only `principle-*` skills, such as
+[principle-fix-root-causes](plugins/swe/skills/principle-fix-root-causes/SKILL.md).
 
 ## Delegation
 
@@ -155,7 +145,7 @@ reference figures those notes embed.
 
 ## Layout
 
-- `plugins/swe/` — SWE skills, agents, the `/swe` router and its playbooks,
+- `plugins/swe/` — SWE skills, agents, the SWE router and its playbooks,
   and the plan-sync hook.
 - `plugins/lab/` — Lab skills and their runtime scripts and references.
 - `plugins/uni/` — tutoring skills, the teaching workspace workflow, templates,
