@@ -32,23 +32,22 @@ gh pr view <number> --json title,body,author,mergedAt,closingIssuesReferences,co
 
 The anchor lists the files and line ranges, the key symbols, the commits that
 touch the target (most recent first), the PR numbers, and the ticket IDs.
-Every lane and the synthesizer get the same anchor.
 
 ## 3-run-lanes
 
 | Source | The lane runs when | Lane reference |
 |---|---|---|
 | git and gh history | always | [git-history](references/sources/git-history.md) |
-| Linear and GitHub Issues | Linear tools exist, or the anchor names an issue | [linear](references/sources/linear.md) |
+| Linear and GitHub Issues | always (GitHub Issues through gh); add Linear when its tools exist | [linear](references/sources/linear.md) |
 | llmOS vault (read only) | the llmos MCP tools exist | [llmos-vault](references/sources/llmos-vault.md) |
-| Slack | Slack search tools exist | [slack](references/sources/slack.md) |
+| Slack | Slack search tools exist; with only authentication tools, record the gap "the Slack server needs authentication" and do not authenticate | [slack](references/sources/slack.md) |
 
 Start one investigator per lane, all at once. Each investigator is a
 general-purpose subagent. Give it the investigator brief from
 [briefs](references/briefs.md), its lane reference, the anchor, and the
-question, with absolute paths. The reviewer agent cannot run an MCP lane: its
-tool allowlist drops MCP tools. When the host cannot start subagents, run each
-lane yourself, one at a time, and keep each lane's notes apart.
+question. The reviewer agent cannot run an MCP lane: its tool allowlist drops
+MCP tools. When the host cannot start subagents, run each lane yourself, one
+at a time, and keep each lane's notes apart.
 
 A lane whose tools are missing is a gap, not a choice. Record it in "Sources
 consulted" as "not searched" with the reason. Skip a lane whose tools exist
@@ -59,8 +58,9 @@ only when its source cannot hold the answer, and write that reason too.
 When two or more lanes return evidence, start a fresh general-purpose subagent
 with the synthesizer brief, every lane report (null results and gaps
 included), the anchor, the question, and whether the question comes before a
-change to the target. With evidence from one lane or none, apply the
-synthesizer brief yourself.
+change to the target. With evidence from one lane or none, or when the host
+cannot start subagents, apply the synthesizer brief yourself after the lanes
+finish.
 
 Give the user the synthesized answer. You may edit for clarity and add
 context from the conversation. Keep each claim's tier and phrasing.

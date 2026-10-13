@@ -12,14 +12,17 @@ answer and its phrasing.
 
 ### direct
 
-An author wrote down the reason. Examples: a PR body ("this fixes pagination
-for users with more than 1000 items"), a ticket ("customer Acme asked for this
-in their security review"), a code comment ("clamp to 100 because the upstream
-API rejects larger values"), an ADR ("we chose a file store because state must
-survive restarts"), or a chat message from the author.
+The record states the claim outright. For a reason, an author wrote it down.
+Examples: a PR body ("this fixes pagination for users with more than 1000
+items"), a ticket ("customer Acme asked for this in their security review"), a
+code comment ("clamp to 100 because the upstream API rejects larger values"),
+an ADR ("we chose a file store because state must survive restarts"), or a
+chat message from the author. For a history fact (when it changed, in which
+commit, and what changed), a commit, PR, or ticket records it. A history fact
+is not a reason: the evidence rules below still apply to intent.
 
 Phrasing: plain, present tense, with the citation next to the claim. "This
-exists because X (PR #123)."
+exists because X (PR #123)." "Commit abc1234 changed X (PR #123)."
 
 ### supported
 

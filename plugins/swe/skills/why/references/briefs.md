@@ -88,8 +88,7 @@ Investigator reports:
 Lanes not searched, with reasons:
 {SKIPPED_LANES_WITH_REASONS}
 
-Read {EPISTEMICS_PATH} in full before you write. Every claim takes one tier
-from it.
+Read {EPISTEMICS_PATH} in full before you write.
 
 How to work:
 1. Merge items that several reports cite into one reference.

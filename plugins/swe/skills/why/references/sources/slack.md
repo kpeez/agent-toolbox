@@ -5,12 +5,10 @@ most when the PR and tracker record is thin.
 
 ## check-access
 
-Look at the Slack tools that exist. When only authentication tools exist (for
-example `authenticate` and `complete_authentication`), or a search call fails
-on authentication, stop. Record "Slack: not searched, the Slack server needs
-authentication" as a gap, and return no findings. Do not start the
-authentication flow from a lane; the user can authenticate and run the lane
-again.
+When a search call fails on authentication, stop. Record "Slack: not
+searched, the Slack server needs authentication" as a gap, and return no
+findings. Do not start the authentication flow from a lane; the user can
+authenticate and run the lane again.
 
 ## author-window
 
