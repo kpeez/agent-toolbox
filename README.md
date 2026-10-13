@@ -122,14 +122,16 @@ rule to your user-level `AGENTS.md` (Codex) or `CLAUDE.md` (Claude):
 The plugin does not edit user instructions. Existing sessions may retain prior
 instructions; use a fresh session after updating.
 
-`orchestrate` hands work to the plugin's agents:
+`orchestrate` hands bounded work to the plugin's one agent, `golem`. It does
+one task (code, tests, docs, or tracker work) under the caller's brief, with
+the principles the brief names, and publishes nothing without explicit
+authority. Its default model is Sonnet; the caller can choose another per
+task.
 
-- `golem`: does one bounded task (code, tests, docs, or tracker work) under
-  the caller's brief, with the principles the brief names. It publishes
-  nothing without explicit authority. Its default model is Sonnet; the caller
-  can choose another per task.
-- `reviewer`: reviews a diff against the caller's criteria. It is read-only.
-- `explorer` (Codex only): read-only search that returns cited findings.
+Reviews and searches use the host's native subagents. A review brief
+([review-brief](plugins/swe/references/review-brief.md)) carries the review
+rules; by default the reviewer fixes small, sure findings and reports each
+fix, and a landing verdict edits nothing.
 
 ## Project documents
 
