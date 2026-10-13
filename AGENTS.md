@@ -30,8 +30,8 @@
   - Run `python3 evals/skills/skill_eval.py validate`, and
     `python3 -m unittest discover -s <dir>` for `evals/skills/tests` and
     `plugins/swe/mcp/tests`.
-  - Load each changed plugin in Codex with `HOME` and `CODEX_HOME` set to a
-    new temporary directory: `codex plugin marketplace add <checkout>`, then
+  - Load each changed plugin in Codex with a new temporary `HOME` and
+    `CODEX_HOME` set to `$HOME/.codex`: `codex plugin marketplace add <checkout>`, then
     `codex plugin add <plugin>@agent-toolbox`, then `codex plugin list`. The
     install is a copy, so add the plugin again after each source edit.
 - Do not require `pyproject.toml`, a lockfile, or a test suite.
