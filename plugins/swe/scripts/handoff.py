@@ -9,8 +9,9 @@ worktree of the repository and kept out of git by the directory's own
 
 The session model writes the file with the ``handoff`` skill. ``hook`` (run on
 SessionEnd and PreCompact) is the fallback. A file is stale when the session's
-newest Edit or Write is later than the file's modification time, or the file
-does not exist. For a stale file, ``hook`` starts a detached ``write`` process
+newest Edit or Write is less than RECENT_EDIT seconds old and later than the
+file's modification time, or the file does not exist. The age limit skips an
+old session that is only opened and closed again. For a stale file, ``hook`` starts a detached ``write`` process
 that summarizes the transcript with ``claude -p --model haiku`` and replaces
 the file. ``hook`` never blocks and always exits 0.
 
@@ -25,12 +26,14 @@ from pathlib import Path
 import subprocess
 import sys
 import tempfile
+import time
 
 EDIT_TOOLS = {"Edit", "Write", "MultiEdit", "NotebookEdit"}
 DEFAULT_BRANCHES = {"main", "master"}
 CHILD_ENV = "SWE_HANDOFF_CHILD"
 MAX_TRANSCRIPT_CHARS = 150_000
 WRITE_TIMEOUT = 300
+RECENT_EDIT = 3600
 
 PROMPT = """\
 Write a handoff file for a coding session, so that a new agent session can
@@ -140,7 +143,7 @@ def last_edit_time(transcript):
 
 def is_stale(path, transcript):
     edited = last_edit_time(transcript)
-    if edited is None:
+    if edited is None or time.time() - edited > RECENT_EDIT:
         return False
     try:
         return path.stat().st_mtime < edited

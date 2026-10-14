@@ -150,7 +150,8 @@ Each piece of work has one file, named after its branch: `write-plan` starts
 it, and the `handoff` skill overwrites it with the current state at the end of
 a session. In Claude Code, SessionEnd and PreCompact hooks
 ([`handoff.py`](plugins/swe/scripts/handoff.py)) are the fallback: when a
-session edited files after the handoff file last changed, the hook writes it
+session edited files in the last hour and after the handoff file last
+changed, the hook writes it
 with `claude -p --model haiku` from the transcript, in a detached process.
 Codex has the skill only. Plans are local; nothing syncs them to a tracker.
 

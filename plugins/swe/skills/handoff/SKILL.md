@@ -53,7 +53,8 @@ Then give the user the path and this prompt for the new session:
 ## Fallback
 
 In Claude Code, the swe plugin's SessionEnd and PreCompact hooks run
-`handoff.py hook`. When the session used Edit or Write after the file last
-changed, the hook writes the file with Haiku from the transcript. A handoff
+`handoff.py hook`. When the session used Edit or Write in the last hour and
+after the file last changed, the hook writes the file with Haiku from the
+transcript. An old session that is only opened and closed does not trigger it. A handoff
 from this skill is better; the hook only covers a session that ended without
 one.
