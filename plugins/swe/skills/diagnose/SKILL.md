@@ -10,10 +10,8 @@ outcome. Diagnosis and repair are separate outcomes: a request to diagnose or
 explain does not authorize implementation edits. When repair is authorized,
 diagnose first, then make the fix with [implement](../implement/SKILL.md).
 
-Use the project's vocabulary when it clarifies the diagnosis. Consult a
-`.agents/docs/CONTEXT.md` glossary or relevant `.agents/docs/adrs/` only when they
-bear on the behavior or decision under investigation. Follow an explicit
-project or user override of the `.agents/docs/` location.
+Consult relevant `.agents/docs/adrs/` only when they bear on the behavior or
+decision under investigation.
 
 ## Procedure
 

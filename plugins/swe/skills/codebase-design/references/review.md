@@ -3,11 +3,8 @@
 Details for [review mode](../SKILL.md#review-mode). Use the vocabulary and key
 tests in [SKILL.md](../SKILL.md#vocabulary).
 
-The project's domain model can inform the review. Consult a
-`.agents/docs/CONTEXT.md` glossary or relevant `.agents/docs/adrs/` when it
-bears on the friction or recommendation. Use its rationale to compare options.
-Follow an explicit project or user override of the `.agents/docs/` location.
-Do not require a document preflight for every review.
+Consult relevant `.agents/docs/adrs/` when they bear on the friction or
+recommendation. Do not require a document preflight for every review.
 
 ## 1-explore-friction
 
@@ -37,14 +34,10 @@ candidate:
 - **Before / After** — a short sketch of the shallow shape vs the deepened one
 - **Strength** — `Strong` | `Worth exploring` | `Speculative`
 
-Use `CONTEXT.md` vocabulary for the domain and the vocabulary in
-[SKILL.md](../SKILL.md#vocabulary) for the architecture. Decision records
-explain earlier choices; they do not forbid alternatives. Rank candidates by
-current goals, evidence, constraints, and switching costs, without penalizing
-disagreement with an ADR. Explain the earlier rationale and why a different
-choice would be better; its assumptions need not have changed. Verify any
-claimed constraint at its current source. Recommending a change does not
-authorize implementing it.
+Use the project's terms for the domain and the vocabulary in
+[SKILL.md](../SKILL.md#vocabulary) for the architecture. Rank candidates by
+current goals, evidence, constraints, and switching costs. Recommending a
+change does not authorize implementing it.
 
 End with a **Top recommendation**: which you would tackle first and why. If no
 candidate shows real caller friction and a net gain, say that no refactor is
@@ -61,9 +54,6 @@ tree: constraints, dependencies, the shape of the deepened module, what sits
 behind the seam, and what tests survive. Keep documentation side effects
 conditional on the requested design workflow:
 
-- If a chosen design introduces a reusable concept not in `CONTEXT.md`, record
-  the term only when project-document updates are in scope (see the
-  [context format](../../../references/CONTEXT-FORMAT.md)).
 - If the user rejects a candidate for a load-bearing reason a future review would
   re-suggest, consider an ADR only when all three
   [decision-record criteria](../../../references/ADR-FORMAT.md) hold and the

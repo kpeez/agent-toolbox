@@ -8,8 +8,7 @@ matter to the proposed breakdown.
 ## Tracker
 
 Use the tracker the user names, otherwise the one pinned in the repository's
-`AGENTS.md`, `CLAUDE.md`, or `.agents/docs/CONTEXT.md` (for example
-`Issue tracker: local`), otherwise ask. Never infer the tracker from where the
+`AGENTS.md` or `CLAUDE.md` (for example `Issue tracker: local`), otherwise ask. Never infer the tracker from where the
 code is hosted. Use local plan files for `local`, the Linear connection for
 Linear, and `gh` for GitHub. An
 unavailable or unsupported tracker is a limitation to report, not a reason to

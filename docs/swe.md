@@ -15,6 +15,9 @@ The router matches the task to one of seven
 that owns the task. It ends with the state of every step and the reason for
 each skipped step. The agent can also start the router itself.
 
+A playbook chains several skills in order for one kind of task. A job that one
+skill does from start to end stays a skill, so it can start without the router.
+
 | Playbook | Use for |
 | --- | --- |
 | `fix-bug` | A reported defect to reproduce, root-cause, and fix |
@@ -87,7 +90,7 @@ edits nothing.
 
 | Files | Location |
 | --- | --- |
-| ADRs, notes, research | `.agents/docs/`, unless the project or user names another place. It can be a folder or a symlink, tracked or ignored. |
+| ADRs, notes, research | `.agents/docs/adrs/`, `notes/`, and `research/`, unless the project or user names another place. It can be a folder or a symlink, tracked or ignored. See the [ADR format](../plugins/swe/references/ADR-FORMAT.md). |
 | Plans and handoffs | `<main checkout>/.agents/plans/<branch>.md`, with an optional `<branch>.decisions.jsonl` decision log, shared by all worktrees and kept out of git by its own `.gitignore`. See [handoffs](handoffs.md). |
 
 The plugin needs no setup step, vault, or generated `AGENTS.md`.
