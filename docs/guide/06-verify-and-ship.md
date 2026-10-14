@@ -1,0 +1,128 @@
+# Verify the result and ship it
+
+This page shows you how to make the agent prove a change on the real app, vet a measured number, and take the change from a draft PR to merged. "It compiles" is not evidence. The [prove-it-works principle](../../plugins/swe/skills/principle-prove-it-works/SKILL.md) makes the agent check the real artifact through its real entry point before it reports success. Your job is to make that artifact checkable.
+
+## State the finish condition up front
+
+Put what done means in the first prompt:
+
+```text
+/swe:playbook add json output to the export command. the text output stays byte-identical, the json parses, and both run against the sample project. show me the evidence.
+```
+
+Now the agent has three checks it can run. Each change ends with one verdict:
+
+- VERIFIED means the agent saw the expected behavior on the real surface.
+- NOT VERIFIED means it saw wrong behavior, or the check failed.
+- INCONCLUSIVE means it could not reach the real surface, or the check cannot tell success from failure. INCONCLUSIVE is not a pass.
+
+Match the check to the change. A CLI change runs the real command. A UI change walks the changed flow in the running app. A parser or migration replays a saved input. A storage change reads back the written value. A perf change compares before and after artifacts. Ask for proof you can inspect yourself, such as command output, a screenshot, a video, or a script a reviewer can rerun.
+
+## Check what a change could break
+
+For a diff you do not fully trust, ask what it breaks outside the diff:
+
+```text
+/swe:blast-radius what could the cache eviction change break?
+```
+
+[`blast-radius`](../../plugins/swe/skills/blast-radius/SKILL.md) finds the one fact the change is safe because of, then proves that fact by running real code. It grades the proof on five rungs: `asserted`, `cited`, `traced`, `executed`, and `reproduced-live`. The reply says where the proof stopped. The `build-feature` playbook runs it when a change touches shared state, a wire format, or a public interface.
+
+## Vet a measured number
+
+A warm cache, a debug build on one side, or work that never ran in the timed region can each produce a false speedup. Before you report or act on a number, type:
+
+```text
+/swe:benchmark-checklist vet the export speedup before it goes in the pr
+```
+
+[`benchmark-checklist`](../../plugins/swe/skills/benchmark-checklist/SKILL.md) asks seven questions and wants evidence from a run for each:
+
+1. Why not double? Name the limiter.
+2. Did every side run tuned the way production runs?
+3. Does the result break a physical limit, such as disk bandwidth or core count?
+4. Did anything error or return wrong output?
+5. Does it reproduce over at least 5 alternating runs per side, with a median and a range?
+6. Does it matter on the end-to-end path a user waits on?
+7. Did the work happen inside the timed region?
+
+The verdict is faster, slower, no measurable difference, or inconclusive. It comes with the run count, the range, and the limiter. The router runs this checklist on every number the agent measures, and the `improve-performance` and `hillclimb-metric` playbooks run it on their baseline and harness. Type it yourself for a number from outside a swe run.
+
+## Create a verification skill for your app
+
+A UI or app check needs a scripted way to drive the app. When your project has none, run:
+
+```text
+/swe:verification-skill
+```
+
+In Codex, type `$swe:verification-skill`. The [`verification-skill`](../../plugins/swe/skills/verification-skill/SKILL.md) skill reads the repository and asks you only what the code cannot answer. It writes a project-local `verify-<app>` skill in `.claude/skills/` for Claude Code or `.agents/skills/` for Codex. The skill has Launch, Doctor, Drive, Evidence, and Cleanup sections, plus a feature map under `features/` with one file per user-facing feature. See the [feature-map example](../../plugins/swe/skills/verification-skill/references/feature-map-example/README.md). Before it hands over, the generator runs the new skill once end to end on one feature.
+
+After that, every verify step in a playbook uses the skill. Name it in a prompt when you want the proof in a specific form:
+
+```text
+/swe:playbook build the bulk-archive action. use verify-<app> to prove it and show me screenshots.
+```
+
+Commit the verification skill so every person and agent drives the app the same way.
+
+## Keep the verification skill current
+
+Run `/swe:verification-skill` again when the skill already exists, and it audits the skill instead. It checks each feature from source in parallel, then drives every feature live. It ends in one outcome. `clean` means nothing to ship. `changed` means proven corrections to the skill's own folder. `blocked` names the blocker. It never edits product code, and it reports a product regression instead of hiding it in the docs.
+
+When a change adds or changes a user-facing feature, the agent updates that feature's entry in the map as part of the change.
+
+## Match a UI to a baseline
+
+For a UI that must match a reference pixel for pixel, use the [`match-visual-parity`](../../plugins/swe/skills/playbook/playbooks/match-visual-parity.md) playbook. It builds a screenshot harness of the current component in each state first. Then it migrates one component at a time and diffs each against its baseline. A nonzero diff is a fail, and the agent never edits the baseline to make a diff pass.
+
+## Diagnose a live symptom or a captured trace
+
+To find the cause of a leak, a CPU spin, or a glitch in a running process, the [`diagnose-runtime`](../../plugins/swe/skills/playbook/playbooks/diagnose-runtime.md) playbook captures a profile, heap snapshot, or trace on the real surface. When you already have a capture, the [`diagnose-trace`](../../plugins/swe/skills/playbook/playbooks/diagnose-trace.md) playbook loads it into sqlite and queries it. Both deliver a cited diagnosis with a source location, not a fix.
+
+## Open the PR
+
+```text
+/swe:playbook open the pr. small ordered commits, evidence in the description.
+```
+
+The [`ship-pr`](../../plugins/swe/skills/ship-pr/SKILL.md) skill owns commits, pushes, and PRs. It acts only when your request or your standing instructions authorize publication. Typing `/swe:playbook` alone does not authorize it. It verifies the work, commits small ordered groups, pushes without force, and opens a draft PR. The title uses the Conventional Commits form, such as `fix(parser): reject empty headers`. The body follows the [PR body template](../../plugins/swe/skills/ship-pr/references/pr-body.md), with Why, What changed, Scope, Tradeoffs, Blast Radius, and Verification sections.
+
+Opening a PR does not start a babysit. The agent posts the URL and keeps building.
+
+## Drive the PR to merge-ready
+
+An open PR collects failed checks, review comments, and conflicts. Hand them to the [`babysit-pr`](../../plugins/swe/skills/playbook/playbooks/babysit-pr.md) playbook:
+
+```text
+/swe:playbook babysit this pr. get it green.
+```
+
+It declares a mode first: `drive` (loop to merge-ready), `background`, `threads-only`, or `check` (one status pass). It works conflicts, then review threads, then CI, and batches every fix into one push. It classifies each failed check before a rerun, and it triages each bot comment as fix, dismiss, or ask. In Claude Code it watches with `gh pr checks <pr> --watch` or `/loop`. In Codex you rerun the pass by hand. For status only, ask smaller:
+
+```text
+/swe:playbook check on pr 123. anything outstanding?
+```
+
+Babysit stops at merge-ready. It never merges.
+
+## Land the stack
+
+Green is not safe. When you want the change merged, say so:
+
+```text
+/swe:playbook land the stack.
+```
+
+The [`ship-stack`](../../plugins/swe/skills/playbook/playbooks/ship-stack.md) playbook gives each PR its own verifier, an agent that did not write the code. The verifier runs the change as a user would and records `PASS`, `PASS+NOTES`, or `FAIL`, keyed to the patch-id. Then ship-stack lands the contiguous verified run from the bottom, one PR at a time, and stops at the first unverified PR. A verified PR above an unverified one waits.
+
+```mermaid
+flowchart LR
+  publish["ship-pr<br/>draft PR"] --> babysit["babysit-pr<br/>merge-ready"]
+  babysit --> verify["ship-stack<br/>verdict per PR"]
+  verify --> land["merge bottom-up<br/>to the ceiling"]
+```
+
+To mark a draft ready for human review without a merge, type `/swe:ship-pr finalize`.
+
+Next: [Run long work and hand it off](./07-long-runs.md).
