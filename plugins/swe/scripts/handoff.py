@@ -13,7 +13,12 @@ runs on PostCompact (manual, auto, and idle compaction) and puts the event's
 earlier one and keeping the rest of the file. It skips a default branch or
 detached HEAD, never fails the session, and makes no model call.
 
-Usage: python3 handoff.py {dir,path,hook} --help
+``log`` appends one decision to the work's decision log, a JSON Lines file next
+to the handoff file with the same stem and ``.decisions.jsonl``. Each line holds
+``ts``, ``phase``, ``decision``, ``why``, ``evidence`` (a list of pointers), and
+``result``. The ``log-decisions`` skill says when to write a row.
+
+Usage: python3 handoff.py {dir,path,log,hook} --help
 """
 
 import argparse
@@ -80,6 +85,22 @@ def handoff_path(cwd, session_id=""):
     return None if directory is None else directory / handoff_name(cwd, session_id)
 
 
+def log_path(cwd, session_id=""):
+    directory = plans_dir(cwd)
+    if directory is None:
+        return None
+    return directory / (Path(handoff_name(cwd, session_id)).stem + ".decisions.jsonl")
+
+
+def append_decision(path, phase, decision, why, evidence, result):
+    """Append one decision as a JSON line; return the row."""
+    row = {"ts": datetime.now().astimezone().isoformat(timespec="seconds"), "phase": phase,
+           "decision": decision, "why": why, "evidence": list(evidence), "result": result}
+    with path.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(row, ensure_ascii=False) + "\n")
+    return row
+
+
 SUMMARY_HEADING = "## Session summary"
 
 
@@ -121,10 +142,18 @@ def run_hook():
 
 def main(argv=None):
     parser = argparse.ArgumentParser(description=__doc__.split("\n\n")[0])
-    commands = parser.add_subparsers(dest="command", required=True, metavar="{dir,path,hook}")
+    commands = parser.add_subparsers(dest="command", required=True, metavar="{dir,path,log,hook}")
     commands.add_parser("dir", help="create and print the plans directory")
     path_cmd = commands.add_parser("path", help="create the plans directory and print this work's handoff file")
     path_cmd.add_argument("--session", default="", help="session id, used on a default branch")
+    log_cmd = commands.add_parser("log", help="append one decision to this work's decision log and print its path")
+    log_cmd.add_argument("--session", default="", help="session id, used on a default branch")
+    log_cmd.add_argument("--phase", required=True, help="phase or workstream, or start for a new session's first row")
+    log_cmd.add_argument("--decision", required=True, help="what was chosen or done, one line")
+    log_cmd.add_argument("--why", required=True, help="the reason, in plain words")
+    log_cmd.add_argument("--evidence", action="append", default=[],
+                         help="a pointer: commit SHA, PR, file:line, or path; repeat for more")
+    log_cmd.add_argument("--result", required=True, help="the outcome, such as reverted, tests pass, or open")
     commands.add_parser("hook", help="PostCompact hook; reads the hook event on stdin")
     args = parser.parse_args(argv)
 
@@ -134,6 +163,11 @@ def main(argv=None):
     if directory is None:
         print("not inside a git work tree", file=sys.stderr)
         return 1
+    if args.command == "log":
+        path = log_path(Path.cwd(), args.session)
+        append_decision(path, args.phase, args.decision, args.why, args.evidence, args.result)
+        print(path)
+        return 0
     print(directory if args.command == "dir" else directory / handoff_name(Path.cwd(), args.session))
     return 0
 

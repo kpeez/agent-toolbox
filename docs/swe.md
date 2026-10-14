@@ -34,6 +34,7 @@ Each skill also starts on its own when its task comes up.
 | `hash-out` | Settle a plan or design with you, one round of questions at a time |
 | `write-plan` | Turn rough notes into a short plan, or split a plan into PR-sized issues |
 | `handoff` | Save the work's current state for a new session ([handoffs](handoffs.md)) |
+| `log-decisions` | Keep an append-only decision log for a long or unattended run ([handoffs](handoffs.md#decision-log)) |
 | `implement` | Build an approved feature or fix, then verify it |
 | `diagnose` | Find the cause of a bug or a performance regression |
 | `testing-code` | Design, gate, and audit tests |
@@ -49,7 +50,7 @@ Each skill also starts on its own when its task comes up.
 | `writing-for-agents` | Write a skill, `AGENTS.md`, or `CLAUDE.md` |
 | `wait-what` | Explain the last message again, in simpler words |
 
-Twelve `principle-*` skills are model-only. Other skills load them at the step
+Thirteen `principle-*` skills are model-only. Other skills load them at the step
 they apply to, for example
 [principle-fix-root-causes](../plugins/swe/skills/principle-fix-root-causes/SKILL.md).
 
@@ -87,6 +88,6 @@ edits nothing.
 | Files | Location |
 | --- | --- |
 | ADRs, notes, research | `.agents/docs/`, unless the project or user names another place. It can be a folder or a symlink, tracked or ignored. |
-| Plans and handoffs | `<main checkout>/.agents/plans/<branch>.md`, shared by all worktrees and kept out of git by its own `.gitignore`. See [handoffs](handoffs.md). |
+| Plans and handoffs | `<main checkout>/.agents/plans/<branch>.md`, with an optional `<branch>.decisions.jsonl` decision log, shared by all worktrees and kept out of git by its own `.gitignore`. See [handoffs](handoffs.md). |
 
 The plugin needs no setup step, vault, or generated `AGENTS.md`.
