@@ -1,0 +1,94 @@
+# Set up swe
+
+This page shows you how to install the `swe` plugin in Claude Code or Codex, make every session use the router, and run your first task. Setup is two commands and, in Codex, a few lines in `AGENTS.md`.
+
+## Install the plugin
+
+In Claude Code, run:
+
+```text
+/plugin marketplace add kpeez/agent-toolbox
+/plugin install swe@agent-toolbox
+```
+
+In Codex CLI, run:
+
+```text
+codex plugin marketplace add kpeez/agent-toolbox
+codex plugin add swe@agent-toolbox
+```
+
+Start a new session after you install. The plugin needs no setup step, no config file, and no generated `AGENTS.md`.
+
+To install only the skills, without the plugin agents, the hooks, or the router, run `npx skills@latest add kpeez/agent-toolbox`. The rest of this guide assumes the full plugin.
+
+## Let the hook start the router (Claude Code)
+
+The plugin adds a SessionStart hook. At the start of every session, it puts a short rule from [session-start.md](../../plugins/swe/hooks/session-start.md) into the context. The rule tells the agent to load `swe:playbook` before it acts on any new software task, however small.
+
+So you do not have to type `/swe:playbook` each time. The agent starts the router itself, also after a short prompt such as "continue". The rule does not apply to chat, quick factual answers, and work that is not software.
+
+The plugin also adds a PostCompact hook that saves a session summary to the branch's handoff file. [Run long work](./07-long-runs.md) covers it.
+
+## Add the router rule to AGENTS.md (Codex)
+
+Codex plugins have no hooks. To get the same behavior, copy the hook's lines into the repository's `AGENTS.md`, or into your user-level `AGENTS.md`:
+
+```text
+swe: Before you act on a new software task, load the `swe:playbook` skill and follow the playbook or skill it routes to. A software task is any request to change, fix, refactor, speed up, explain, or review code, or to edit a skill, however small it looks. Say `Playbook: <slug>` or `Route: <skill>`, track each step, and end with its Steps section. Skip this only for chat, quick factual answers, and work that is not software. Write replies to the user and agent-facing text in ASD-STE100 Simplified Technical English (the `writing` skill).
+```
+
+Without these lines, type `$swe:playbook <task>` to start the router in Codex.
+
+## Add the orchestrate rule (optional)
+
+The [`implement`](../../plugins/swe/skills/implement/SKILL.md) skill sends large work with independent parts to [`orchestrate`](../../plugins/swe/skills/orchestrate/SKILL.md). To make that choice before the agent picks a skill, add this rule to your user-level `CLAUDE.md` (Claude Code) or `AGENTS.md` (Codex):
+
+```text
+For substantial work with independently executable parts, use
+`swe:orchestrate` to delegate them. Keep tightly coupled work with one agent.
+Send a single independent review directly to one fresh subagent.
+```
+
+Start a new session after you add it.
+
+## Know where the tokens go
+
+swe spends extra tokens on subagents. Code goes to delegates, reviews go to a fresh reviewer, and `how` and `why` can fan out to several explorers. That is the price of independent checks.
+
+The router picks a model for each job. You do not configure it. In Claude Code, the [router's Subagents section](../../plugins/swe/skills/playbook/SKILL.md#subagents) uses these models:
+
+| Job | Model |
+| --- | --- |
+| Judgment, prose, and the hardest code | `opus` |
+| Routine code | `sonnet` |
+| Mechanical edits | `haiku` |
+
+In Codex, the router raises or lowers reasoning effort the same way. The `daedalus` code agent runs on `sonnet` with medium effort in Claude Code. Its Codex definition, [daedalus.toml](../../plugins/swe/agents/daedalus.toml), pins its own model with maximum reasoning effort.
+
+To spend fewer tokens:
+
+- Ask a narrow question. `how` spawns no explorers for a single module or function.
+- Give the router a scoped task with a clear done check, so it does not plan work you did not ask for.
+- Run the main chat on a cheaper model. The subagent choices above stay the same.
+
+## Run your first task
+
+Pick something real but small, and describe it the way you would describe it to a colleague:
+
+```text
+/swe:playbook add a --json flag to the export command. text output stays byte-identical. verify both.
+```
+
+The router first names its choice, for example `Playbook: build-feature. Reason: new behavior.` Then it copies each step of that playbook into the task list, such as `1-map-subsystem` and `8-verify-on-surface`. Before each step, it loads the skills and principles that the step names.
+
+The final reply ends with a Steps section. It gives every step with its state. A step the router did not do stays in the list as `skip:` with its reason, so you can see what it chose not to do:
+
+```text
+1-map-subsystem: done
+9-check-blast-radius skip: the change keeps the public signature
+```
+
+Typing `/swe:playbook` does not let the agent publish. The agent commits, pushes, and opens a draft PR only when your request or your standing instructions (for example, your `CLAUDE.md`) allow it. Without that, it verifies the change, leaves it local, and reports. It always pauses before an irreversible write, such as a force-push to a shared branch or a deploy. See [`ship-pr`](../../plugins/swe/skills/ship-pr/SKILL.md#publication-authority).
+
+Next: [Route work through `/swe:playbook`](./02-route-work.md).
