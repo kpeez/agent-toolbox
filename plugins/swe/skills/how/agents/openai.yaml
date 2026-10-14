@@ -1,0 +1,4 @@
+interface:
+  display_name: "How"
+policy:
+  allow_implicit_invocation: false

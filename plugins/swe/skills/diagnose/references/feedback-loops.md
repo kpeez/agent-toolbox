@@ -34,7 +34,7 @@ auditable.
 ## Performance
 
 Before you trust, report, or act on a measured number, follow
-[explain-measurements](../../principle-explain-measurements/SKILL.md).
+[explain-the-number](../../principle-explain-the-number/SKILL.md).
 
 Choose a fix from the cheapest form first, and stop at the first form that
 meets the target:

@@ -1,0 +1,4 @@
+interface:
+  display_name: "Foundational thinking"
+policy:
+  allow_implicit_invocation: false

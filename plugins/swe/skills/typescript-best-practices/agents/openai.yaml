@@ -1,0 +1,4 @@
+interface:
+  display_name: "TypeScript Best Practices"
+policy:
+  allow_implicit_invocation: false
