@@ -1,7 +1,7 @@
 ---
 name: principle-idempotent-operations
 description: "When a change adds a migration, job, retry, or resume path: make a rerun, or a resume after a crash at any point, reach the same end state."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Idempotent operations

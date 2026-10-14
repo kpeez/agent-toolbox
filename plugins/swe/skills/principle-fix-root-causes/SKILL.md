@@ -1,7 +1,7 @@
 ---
 name: principle-fix-root-causes
 description: "Before you apply a bug fix, and after a fix fails: find the root cause and fix it there, sweep for the same pattern, and do not guard the symptom."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Fix root causes

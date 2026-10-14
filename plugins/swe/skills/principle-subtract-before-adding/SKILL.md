@@ -1,7 +1,7 @@
 ---
 name: principle-subtract-before-adding
 description: "When a change would add code, a layer, a check, or a special case: prefer deleting, then simplifying, then optimizing, then automating; stop at the first that works. No change is a valid result."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Subtract before adding

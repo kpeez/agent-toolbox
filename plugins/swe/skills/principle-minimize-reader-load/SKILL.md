@@ -1,7 +1,7 @@
 ---
 name: principle-minimize-reader-load
 description: "When you add or review a layer, wrapper, or piece of state: count what a reader must trace and hold, and collapse layers that do not pay for themselves."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Minimize reader load

@@ -61,8 +61,9 @@ read it.
 Load a name this way:
 
 - A swe skill, such as `diagnose`: the Skill tool, as `swe:diagnose`.
-- A principle slug, such as `fix-root-causes`: the Skill tool, as
-  `swe:principle-fix-root-causes`. [Principles](#principles) lists the slugs.
+- A principle slug, such as `fix-root-causes`: read
+  `../principle-fix-root-causes/SKILL.md` in full. Principles are not in the
+  model's skill list. [Principles](#principles) lists the slugs.
 - `reviewer agent`: start a fresh native subagent with the
   [review brief](../../references/review-brief.md) and the step's criteria. When the step gives none, brief it as the independent
   reviewer line in [implement](../implement/SKILL.md#plans-and-issues) says.
