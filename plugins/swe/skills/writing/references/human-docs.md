@@ -40,7 +40,7 @@ The README is the front door. It holds these sections, in this order:
    sees.
 4. **What is included**: one line per part, each linked to its docs page.
 5. **Docs**: links to the other docs pages.
-6. **Credits and license**: short; detail lives in `NOTICE` files.
+6. **Credits and license**: short.
 
 Keep it under 100 lines. When a fact needs more than one line in the README,
 it belongs on a docs page; the README keeps a one-line link.
