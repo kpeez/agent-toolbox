@@ -90,7 +90,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 - [ ] Use `gh` for every PR operation. Never require `gt`.
 - [ ] Open the PR as a draft per the swe `ship-pr` skill, with `gh pr create --draft --base <base-branch>`. A stack child targets its parent branch.
 - [ ] Run the repo's lint and typecheck once before the PR-facing push. Push with hooks on.
-- [ ] Run `unslop` and a self-review of the diff before each commit, and `no-comments` before review.
+- [ ] Run the `writing` prose rules and a self-review of the diff before each commit, and `no-comments` before review.
 - [ ] Triage every review-bot and security-reviewer comment per the `ship-pr` bot-triage reference.
 - [ ] Rebase onto current trunk before the code-ready report and the babysit. Keep that merge base in fix rounds. Rebase again only at merge prep, on a `git merge-tree` conflict with trunk, or on a CI failure that comes from a change on trunk.
 

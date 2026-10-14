@@ -12,6 +12,6 @@ The work is read-only. It produces a cited explanation or a recommendation, not 
 4-note-throughput: Write `throughput checkpoint: n/a, read-only investigation`.
 5-shape-the-answer: Give Overview, Key Concepts, How It Works, Where Things Live, and Gotchas. For a choice between alternatives, give a recommendation with a tradeoffs table. (how)
 6-label-each-claim: Label each claim with its source and one confidence tier from the why skill. (why)
-7-unslop-the-reply: Apply unslop to the reply. (unslop)
+7-check-reply-prose: Apply the prose rules to the reply. (writing)
 
 Reply: a cited answer with a tier on each claim, and what remains unknown. For "are we sure?", give your real judgment with reasons and push back on a wrong premise. No PR.

@@ -36,10 +36,10 @@ no remote, so a trace can show the commit and the reads that precede a push, but
 not the push itself. Its `receipt-totals` fixture also holds a CI log and review
 threads as plain files, because no host is reachable.
 
-The `HO` family targets `hash-out`, the renamed `grill` with a wider trigger.
-The family keeps the corpus name `grill`. `SUCCESSORS` scores it as `hash-out` on
+The `HO` family targets `interview-user`, the renamed `grill` with a wider trigger.
+The family keeps the corpus name `grill`. `SUCCESSORS` scores it as `interview-user` on
 the branch, so the family compares main and branch directly. Its explicit case
-types the new name `/swe:hash-out`, so main excludes it. Its negatives matter
+types the new name `/swe:interview-user`, so main excludes it. Its negatives matter
 most: a false activation starts a question round on a clear task. They include
 "figure out why a test fails", which is diagnosis.
 

@@ -93,12 +93,15 @@ These hold in every playbook and route, in addition to the steps.
   the `build-prototype` playbook. In a read-only investigation, answer from
   the evidence instead. Ask the user only a product or preference call that
   no experiment can settle (`never-block-on-the-human`).
+- Initial scope or design that rests on a product or preference decision
+  the user has not made: `interview-user` on those decisions only.
 - Nontrivial multi-step work: write the throughput checkpoint
-  (`build-feature` step 3).
+  (`build-feature` step 5).
 - Parallel fan-out: `swarm`. Delegation to an external provider: `orchestrate`.
-- Any prose surface, the reply included: `unslop`. Docs, PR bodies, and commit
-  messages also follow `writing-docs`. Skills and agent instructions follow
-  `writing-for-agents`.
+- Any prose surface, the reply included: `writing`. It routes each surface
+  (docs, skills, PR bodies, handoffs, plans, replies) to its rules. Write
+  replies to the user and agent-facing text in ASD-STE100 Simplified
+  Technical English.
 - Before review: `no-comments` over the diff.
 - A number you measured (a speedup, a regression, latency, an eval result):
   `benchmark-checklist` before you report or act on it.
@@ -313,13 +316,12 @@ Long runs and sessions:
 - Prune or review an existing test suite: `testing-code`.
 - Explore competing designs before code: `architect`.
 - Propose deepening refactors; no implementation: `codebase-design`.
-- Write or restructure a README or a docs page: `writing-docs`.
-- Strip AI tells from prose: `unslop`.
+- Write or edit a README, a docs page, or other prose: `writing`.
 - Conflicts, review threads, or CI on an open PR, or mark ready and merge a
   verified PR: `ship-pr`.
 - Conflicts in an active merge, rebase, or cherry-pick: `merge-conflicts`.
 - Find what a change could break: `blast-radius`.
-- Settle open decisions in a plan or design with the user: `hash-out`.
+- Settle open decisions in a plan or design with the user: `interview-user`.
 - Turn rough notes into a short handoff plan, or split a plan into issues:
   `write-plan`.
 - Write the work's current state for a new session: `handoff`.

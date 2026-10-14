@@ -18,7 +18,7 @@ pass", not "CI is green". Leave out hashes, file paths, commands, build
 numbers, and test counts unless the user needs one to act. Call each PR,
 branch, or agent by a name the user would know, not by a label you invented.
 If a fact needs context to make sense, give the context or leave the fact
-out. Apply the [unslop](../unslop/SKILL.md) rules to every line.
+out. Apply the [prose rules](../writing/references/prose.md) to every line.
 
 ## Gather what changed
 

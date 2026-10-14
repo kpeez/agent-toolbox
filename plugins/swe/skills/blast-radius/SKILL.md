@@ -78,7 +78,7 @@ application ships and calls the exact function in question.
 - **Before merge**: the cheapest test or reproduction that catches the real
   bug, including your probe.
 
-Write the hand-back through [unslop](../unslop/SKILL.md) and cite real code.
+Write the hand-back through the [prose rules](../writing/references/prose.md) and cite real code.
 This write-up feeds the Blast Radius section of the
 [PR body](../ship-pr/references/pr-body.md). Before any part of it goes into a
 branch, commit, or PR body, apply the privacy rule in

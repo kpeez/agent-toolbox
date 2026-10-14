@@ -1,19 +1,11 @@
----
-name: unslop
-description: "Cut AI tells from any writing: docs, PR bodies, commit messages, comments, replies."
-disable-model-invocation: true
----
+# Prose rules
 
-# Unslop
+These rules apply to every prose surface: docs, skills, PR bodies, commit
+messages, handoffs, plans, code comments, and replies. Rule numbers in the AI
+patterns are stable ids that other skills cite. A removed rule leaves a gap.
+Code, quoted text, and identifiers stay as they are.
 
-Edit text to remove AI patterns. Scan the text for each pattern below, then
-rewrite it. Keep the meaning and match the intended tone.
-
-Apply these rules to every prose surface you write: docs, skills, PR bodies,
-commit messages, code comments, and replies. Other swe skills read this file
-by path.
-
-## Patterns to detect and fix
+## AI patterns to detect and fix
 
 Rule numbers are stable ids that other skills cite. A removed rule leaves a
 gap.
@@ -44,9 +36,9 @@ gap.
 
 ### Style
 
-13. **Long dash overuse.** Use no em dashes at all. Use periods or commas
-    only: no parentheses, no en dashes, and no hyphen used as a dash. If a
-    thought needs separation, end the sentence or use a comma.
+13. **Long dash overuse.** Use no em dashes and no en dashes, and no hyphen
+    used as a dash. If a thought needs separation, end the sentence or use a
+    comma. Parentheses are fine when the text inside is a full unit.
 14. **Colon overuse.** A colon is fine before a list or an example, not as a
     mid-sentence connector. "If you're coming from traditional automation:
     instead of registering event handlers, you describe conditions" gains
@@ -124,8 +116,82 @@ gap.
     with code 2, and writes nothing." Write whole sentences with their
     articles and verbs, and spell out arrows, symbols, and abbreviations.
 
+## Vary the rhythm
+
+A doc can obey every layer and still read as if a machine wrote it: every
+sentence clipped short, no view anywhere, nothing specific.
+
+- Mix sentence lengths on purpose. Short sentences land a point. Longer ones
+  carry a fact with its condition or consequence.
+- Split the sentence that carries two thoughts. Keep the long sentence that
+  carries one.
+- Have a view where the mode allows it. An explanation weighs trade-offs, so
+  say what you make of them instead of listing pros and cons. A reference
+  stays dry.
+- Be specific. Write "a column rename fails the build", not "schema changes
+  can cause issues".
+
+## Make statements load one at a time (STE rules)
+
+- Write one instruction per sentence. Write one thought per sentence
+  everywhere else.
+- Split an instruction longer than about 20 words. Split other sentences
+  longer than about 25 words.
+- Put the warning or condition before the step it guards: "If hot oil touches
+  your skin, injuries can occur."
+- Keep "the" and "a". "Remove backup file" has two readings. "Remove the
+  backup file" has one.
+- Give each word one meaning and one job, then keep it. If "check" means
+  inspect, do not also use it to mean restrain.
+- Pick one word per action and keep it: "start", not "start" here and
+  "initiate" there.
+- Write procedures as direct commands, never as narration and never in the
+  passive: "Install the component", not "the component must be installed".
+- Avoid "-ing" words where you can.
+
+## Replies and agent-facing text (ASD-STE100)
+
+Write replies to the user and text that agents read (skills, `AGENTS.md`,
+`CLAUDE.md`, briefs, handoffs, plans) in ASD-STE100 Simplified Technical
+English. The STE rules above apply, plus these:
+
+- Keep an instruction to 20 words or fewer and a description to 25 or fewer.
+- Use the simple, common verb: "use", "start", "stop", "show", "find". Do not
+  use phrasal verbs ("set up", "carry out") when one verb does the job.
+- Use the active voice. Use the past participle only as an adjective.
+- Do not use "-ing" forms as nouns or adjectives.
+- Write a sequence as a numbered list, one action per item.
+- Lead with the answer, then the evidence. Cut words that do not change what
+  the reader does next.
+- Keep the project's own terms, even when STE would pick another word.
+- Code, identifiers, commands, paths, and quoted text stay as they are.
+
+## Leave no sentence open to two readings (Global English)
+
+- Keep words like "only" and "not" next to the word they change. "Only fails
+  on growth" and "fails only on growth" say different things.
+- Break up long noun strings. "The proto import budget check script" becomes
+  "the script that checks the proto-import budget".
+- Make every "it", "they", and "this" point at one obvious thing. Repeat the
+  noun when in doubt. Never use "this" or "which" to point at a whole clause.
+- Keep every verb. "Phase 1 moves the converters and Phase 2 the runtime"
+  leaves Phase 2 without one. Give it one.
+- Keep the small words that show structure, such as "that" in "Ensure that
+  the switch is off". Never trade clarity for word count.
+- Repeat the article in a series when it prevents a misread: "the client and
+  the host", not "the client and host", when they are two things.
+- Say which parts "and" or "or" joins when a sentence can group two ways.
+  "Both...and", "either...or", and "if...then" remove the doubt at no cost.
+- Use periods, not semicolons. Replace a long dash with a new sentence.
+- Make text in parentheses a full grammatical unit. Never form plurals with
+  "(s)".
+- Write "a, b, or both" instead of "a/b" or "and/or".
+- Call each thing by one name, everywhere. A doc that says "the gate", "the
+  ratchet", and "the budget check" for one thing teaches three things. Leave
+  the names of unchanged things as they are.
+- Skip idioms, colloquialisms, Latin abbreviations, and metaphors.
+
 ## Done
 
-Every pattern above is checked against the whole text, and each hit is
-rewritten or deliberately kept. Code, quoted text, and identifiers stay as
-they are.
+Every rule above is checked against the whole text, and each hit is
+rewritten or deliberately kept.
