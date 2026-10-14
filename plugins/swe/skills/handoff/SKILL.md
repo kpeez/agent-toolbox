@@ -50,10 +50,8 @@ sections, in this order, and write "None" in an empty section:
 Then give the user the path and this prompt for the new session:
 `Continue the work in <path>.`
 
-## Automatic triggers
+## Compaction
 
-In Claude Code, the swe plugin's hooks run `handoff.py hook` when the session
-used Edit or Write in the last hour and after the file last changed. When the
-session goes idle, the hook wakes you with a reminder to run this skill: run
-it, then stop. At session end, the hook writes the file with Haiku from the
-transcript.
+In Claude Code, the swe plugin's PostCompact hook puts each compaction's
+summary in the file's `## Session summary` section and keeps the rest. When
+you write the file, drop that section: your sections replace it.

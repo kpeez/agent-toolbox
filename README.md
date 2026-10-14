@@ -148,7 +148,7 @@ directory keeps itself out of git with its own `.gitignore`.
 
 Each piece of work has one file, named after its branch: `write-plan` starts
 it, and the `handoff` skill overwrites it with the current state. In Claude
-Code, hooks keep it current when a session goes idle or ends; see
+Code, each compaction also saves its summary there; see
 [handoffs](docs/handoffs.md). Plans are local; nothing syncs them to a tracker.
 
 New autoresearch runs keep their program, ledgers, logs, configuration, and

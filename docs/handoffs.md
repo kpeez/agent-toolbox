@@ -1,59 +1,47 @@
 # Handoffs
 
-A handoff file holds the current state of one piece of work, so a new session
-can continue it. Each branch has one file,
-`<main checkout>/.agents/plans/<branch>.md` (`/` changed to `-`). `write-plan`
-can start it as a plan; the [`handoff`](../plugins/swe/skills/handoff/SKILL.md)
-skill overwrites it with Goal, Done, Decisions, Next, Open questions, and Branch
-and PR. Start the next session with `Continue the work in <path>.`
+A handoff file holds the current state of one piece of work, so a new session,
+another agent, or another host can continue it. Each branch has one file,
+`<main checkout>/.agents/plans/<branch>.md` (`/` changed to `-`). Delete it
+when the pull request merges; the code and the pull request are the record.
 
-## Triggers
+## Workflow
 
 ```mermaid
 flowchart LR
-  manual["/swe:handoff<br/>(you, any time)"]
-  idle["Notification: idle_prompt<br/>(Claude waits for input)"]
-  ended["SessionEnd<br/>(quit, /clear, logout)"]
-  gate{"handoff.py hook<br/>stale?"}
-  rewake["asyncRewake: exit 2<br/>wakes the session"]
-  model["Session model runs swe:handoff<br/>(warm cache)"]
-  haiku["Detached claude -p --model haiku<br/>on the transcript"]
-  file[(".agents/plans/#lt;branch#gt;.md")]
+  plan["write-plan<br/>(large work only)"]
+  resume["claude --resume<br/>(same machine and agent)"]
+  manual["/swe:handoff<br/>(new session, agent, or host)"]
+  compact["Compaction: /compact, auto,<br/>or idle (about 54 min)"]
+  hook["PostCompact hook<br/>handoff.py hook"]
+  file[("plans/#lt;branch#gt;.md")]
   next["Next session:<br/>Continue the work in #lt;path#gt;"]
-  noop["exit 0, nothing"]
 
-  manual --> model
-  idle --> gate
-  ended --> gate
-  gate -- "no" --> noop
-  gate -- "yes, idle" --> rewake --> model
-  gate -- "yes, end" --> haiku
-  model --> file
-  haiku --> file
+  plan --> file
+  manual -- "whole file" --> file
+  compact --> hook -- "Session summary section" --> file
   file --> next
+  resume -. "no file needed" .-> next
 ```
 
-Each hook gets `session_id`, `transcript_path`, and `cwd` on stdin.
-[`handoff.py hook`](../plugins/swe/scripts/handoff.py) finds the branch's file
-from `cwd` and reads the transcript.
+- **Same machine, same agent:** `claude --resume`. The transcript is the full
+  state. Claude Code's idle compaction keeps a resume cheap.
+- **New session, other agent, or other host:** run the
+  [`handoff`](../plugins/swe/skills/handoff/SKILL.md) skill. The session model
+  overwrites the file with Goal, Done, Decisions, Next, Open questions, and
+  Branch and PR. Codex has the skill only.
+- **Compaction:** the PostCompact hook
+  ([`handoff.py hook`](../plugins/swe/scripts/handoff.py)) gets the summary that
+  the session model just wrote (`compact_summary`) and puts it in the file's
+  `## Session summary` section. It replaces the earlier summary, keeps the rest
+  of the file, and makes no model call. It skips `main`, `master`, and a
+  detached HEAD.
 
-- **Stale** means the session's newest Edit or Write is less than one hour old
-  and later than the file's last change, or the file does not exist. An old
-  session that you only open and close has no recent edit, so nothing runs.
-- **Idle**: Claude Code sends `idle_prompt` after the prompt waits for 60
-  seconds (`messageIdleNotifThresholdMs`). For a stale file, the hook exits 2
-  and the session model gets a reminder to run the skill. It reminds once per
-  newest edit; a marker file `.reminded-<session>` in the plans directory
-  records it.
-- **Session end**: the session model is gone, so a detached Haiku process
-  writes the file. It runs `claude -p` with `SWE_HANDOFF_CHILD=1`, so its own
-  hooks do nothing. When the file changes during the call, it keeps the newer
-  file.
-- After any write, the file is newer than the last edit, so later idles and
-  session ends do nothing until the next edit.
+## Idle compaction
 
-Codex has the skill only; it has no equivalent hooks.
-
-On a Claude subscription, when you resume a session that was idle for more
-than about an hour and holds more than 100,000 tokens, Claude Code itself
-offers to resume from a summary.
+Claude Code 2.1.299 compacts a session that has been idle for about 54 minutes,
+before its one-hour prompt cache expires. Every new request resets the timer,
+so it runs only when you have left. By default it needs 200,000 tokens of
+context; set `CLAUDE_CODE_IDLE_COMPACT_MIN_TOKENS` lower to cover smaller
+sessions, or `"idleCompaction": false` to turn it off. See
+[`idleCompaction`](https://code.claude.com/docs/en/settings-reference#idlecompaction).

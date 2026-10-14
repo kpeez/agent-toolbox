@@ -1,19 +1,6 @@
 {
   "hooks": {
-    "Notification": [
-      {
-        "matcher": "idle_prompt",
-        "hooks": [
-          {
-            "type": "command",
-            "command": "python3 \"$CLAUDE_PLUGIN_ROOT\"/scripts/handoff.py hook",
-            "asyncRewake": true,
-            "timeout": 10
-          }
-        ]
-      }
-    ],
-    "SessionEnd": [
+    "PostCompact": [
       {
         "hooks": [
           {
