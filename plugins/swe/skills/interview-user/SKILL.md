@@ -1,6 +1,6 @@
 ---
-name: hash-out
-description: "Settle a plan or design with the user, one round of questions at a time, until no decision is open. Use for 'help me decide', 'figure out the approach', 'hash this out', or before you build on scope or design the user has not decided."
+name: interview-user
+description: "Interview the user, one round of questions at a time, until no plan or design decision is open. Use for 'help me decide', 'figure out the approach', 'interview me', 'hash this out', or before you build on scope or design the user has not decided."
 ---
 
 Work through the plan with the user until you reach a shared understanding.

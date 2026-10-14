@@ -27,7 +27,7 @@ starts the router itself, also after a short prompt such as "continue". Codex
 plugins have no hooks: copy the same lines into the repository's `AGENTS.md`.
 
 The router also holds rules that apply in every playbook: triggers (for
-example, run `how` before a nontrivial change, `unslop` on every prose
+example, run `how` before a nontrivial change, `writing` on every prose
 surface), autonomy (do reversible work, then report; pause before
 irreversible writes), subagent and model choice, and how to write the reply.
 See [the router](../plugins/swe/skills/playbook/SKILL.md).
@@ -85,7 +85,7 @@ when its task comes up.
 
 | Skill | Use for |
 | --- | --- |
-| `hash-out` | Settle a plan or design with you, one round of questions at a time |
+| `interview-user` | Settle a plan or design with you, one round of questions at a time |
 | `write-plan` | Turn rough notes into a short plan, or split a plan into PR-sized issues |
 | `handoff` | Save the work's current state for a new session ([handoffs](handoffs.md)) |
 | `log-decisions` | Keep an append-only decision log for a long or unattended run ([handoffs](handoffs.md#decision-log)) |
@@ -100,7 +100,7 @@ when its task comes up.
 | `ship-pr` | Commit, push, open a draft PR, and drive it to green |
 | `merge-conflicts` | Resolve an active merge, rebase, or cherry-pick (model-only) |
 | `verification-skill` | Create or audit the project's skill that runs the real app |
-| `writing-docs` | Write a README or a docs page |
+| `writing` | Write any prose: docs, PR bodies, handoffs, plans, replies |
 | `writing-for-agents` | Write a skill, `AGENTS.md`, or `CLAUDE.md` |
 | `wait-what` | Explain the last message again, in simpler words |
 
@@ -113,7 +113,6 @@ triggers read them by path. You can type any of them, such as `/swe:how`.
 | `architect` | Explore competing designs in parallel before code |
 | `swarm` | Fan-out shapes: coverage matrices, races, gauntlets, verifier lanes |
 | `figure-it-out` | Write a bespoke playbook when none fits |
-| `unslop` | Remove AI tells from any prose |
 | `benchmark-checklist` | Vet a measured number before you report it |
 | `sharpen` | Restate a vague ask as an expert would approach it |
 | `no-comments` | Remove comments that do not explain a non-obvious why |

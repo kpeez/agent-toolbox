@@ -49,7 +49,8 @@ sections, in this order, and write "None" in an empty section:
 - Name files, commands, branches, and pull requests exactly. Leave out what
   the next session can read from the code or `git log`.
 - No frontmatter, identifiers, or status fields.
-- Apply the [unslop](../unslop/SKILL.md) rules.
+- Apply the [prose rules](../writing/references/prose.md). Show a design
+  or a code path with [show-me](../writing/references/show-me.md) visuals.
 
 Then give the user the path and this prompt for the new session:
 `Continue the work in <path>.`

@@ -27,7 +27,7 @@ COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
 # successor. On such a catalog, a case the merge makes meaningless is excluded.
 SUCCESSORS = {"swe:test-audit": "swe:testing-code",
               "swe:improve-codebase-architecture": "swe:codebase-design",
-              "swe:grill": "swe:hash-out"}
+              "swe:grill": "swe:interview-user"}
 RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools",
                   "harness_deltas", "catalog_scope", "context_delivery"}
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md).

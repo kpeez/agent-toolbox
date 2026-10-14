@@ -1524,7 +1524,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Use /swe:hash-out to settle how the worker should handle a poll that comes back empty at the deadline. Nothing is decided: retry, back off, or report it."
+          "content": "Use /swe:interview-user to settle how the worker should handle a poll that comes back empty at the deadline. Nothing is decided: retry, back off, or report it."
         }
       ],
       "fixture": "worker-queue",

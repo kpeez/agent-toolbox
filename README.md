@@ -48,7 +48,7 @@ flowchart TD
   router{"playbook router:<br/>match the task"}
   pb["Playbook<br/>fix-bug, build-feature, refactor-structure,<br/>babysit-pr, ship-stack, run-autonomously, ..."]
   fio["figure-it-out<br/>writes a bespoke playbook"]
-  route["Single-skill route<br/>diagnose, how, blast-radius,<br/>hash-out, handoff, correct, ..."]
+  route["Single-skill route<br/>diagnose, how, blast-radius,<br/>interview-user, handoff, correct, ..."]
   steps["Copy each step to the task list"]
   load["Before each step: load its skills,<br/>read its principles by path"]
   work["Do the step under the router rules:<br/>triggers, autonomy, subagents"]

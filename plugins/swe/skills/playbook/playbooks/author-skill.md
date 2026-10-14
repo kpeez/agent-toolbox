@@ -8,7 +8,7 @@ When in doubt, delete. Keep only prose that changes a decision. Tell the agent t
 
 1-choose-invocation: Choose model-invoked, model-only, or user-invoked and say why. (writing-for-agents)
 2-single-source-check: Point to the existing home of any rule, or to a structural source such as a type, README, or config, instead of restating it. (writing-for-agents, encode-lessons-in-structure)
-3-cut-to-decisions: Delete each sentence that changes no decision. (writing-for-agents, unslop)
+3-cut-to-decisions: Delete each sentence that changes no decision. (writing-for-agents, writing)
 4-validate-skill: Check that frontmatter has `name` and `description`, referenced files exist, and cross-skill links resolve.
 5-check-packaging: Apply the packaging rules and run the checks that the repository's AGENTS.md names for the changed files.
 6-plan-activation-check: When the change is structural or a model-invoked description changes, add or update a test case. Skip for a subjective change. (evaluate-agent-change)

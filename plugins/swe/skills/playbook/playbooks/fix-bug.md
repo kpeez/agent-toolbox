@@ -16,7 +16,7 @@ Delegate the investigation and the fix to subagents and stay in the lead. Be sci
 8-apply-smallest-fix: Apply the smallest fix the evidence justifies, nothing more. (implement, subtract-before-you-add, laziness-protocol)
 9-verify-original-repro: Run the original reproduction again on the same surface. Inconclusive or wrong-surface is not a pass. Unit tests show branch behavior, not bug absence. (prove-it-works)
 10-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)
-11-clean-the-diff: Self-review the diff and keep a comment only for a non-obvious why. (no-comments, unslop)
+11-clean-the-diff: Self-review the diff and keep a comment only for a non-obvious why. (no-comments, writing)
 12-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
 13-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
 

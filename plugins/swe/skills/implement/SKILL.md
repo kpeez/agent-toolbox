@@ -47,7 +47,7 @@ An authorized code or convention change includes updating documentation that
 it makes obsolete; do not ask separately. Find and update affected guidance in
 repository docs, READMEs, linked project or vault notes, tracker descriptions,
 and agent instructions. Follow each destination's authoring and access rules;
-for a README or a docs page, follow `writing-docs`. Replace stale guidance with
+for a README or a docs page, follow `writing`. Replace stale guidance with
 the current behavior; earlier rationale stays in ADRs and the PR. Report any
 affected documentation left stale and the reason.
 

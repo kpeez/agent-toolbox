@@ -35,7 +35,7 @@ and prints the path. The script stamps `ts`. Git ignores the file.
   as "Runs and start rows" says.
 - **decision**: what was chosen or done, one line.
 - **why**: the reason in plain words, per the
-  [unslop](../unslop/SKILL.md) rules. When a principle drove the decision,
+  the [prose rules](../writing/references/prose.md) rules. When a principle drove the decision,
   say what it made you do, not its name as a tag.
 - **evidence**: pointers only: a commit SHA, a PR, `file:line`, or an
   artifact, trace, or screenshot path. Never a paragraph. Prefer output of a
