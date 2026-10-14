@@ -1,7 +1,7 @@
 ---
 name: principle-ancillary-fixes
 description: "When you find an issue outside the task, such as a stale doc, a conflict, a bug, or an unrelated failing check: decide whether to fix it now or report it."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Ancillary fixes

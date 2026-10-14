@@ -1,7 +1,7 @@
 ---
 name: principle-parse-at-boundaries
 description: "When data enters the system or you place validation: parse it once at the edge into domain types, and trust those types inside."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Parse at boundaries

@@ -1,7 +1,7 @@
 ---
 name: principle-sequence-verifiable-units
 description: "When work has several steps, such as a sweep, a migration, or a run of similar edits: finish and check each unit before you start the next."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Sequence verifiable units

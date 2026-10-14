@@ -1,7 +1,7 @@
 ---
 name: principle-migrate-callers-then-delete
 description: "When a new internal API or module shape replaces an old one: move every caller, then delete the old path and its tests in the same change."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Migrate callers, then delete
