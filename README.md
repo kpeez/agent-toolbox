@@ -96,7 +96,7 @@ playbooks, skills, and principles.
   Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/1e5c90a4b6f249917bd21fe361b3a2a7deb741b8/pstack).
 - Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
   [skills](https://github.com/mattpocock/skills).
-- The `ship-pr` PR-body menu of Summary visuals comes from Dex Horthy's
+- The `ship-pr` PR-body menu of visuals comes from Dex Horthy's
   [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
 - The audit mode of `swe/skills/testing-code` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).
