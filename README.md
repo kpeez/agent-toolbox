@@ -31,7 +31,8 @@ It also provides Claude Code-only mods under `claude-mods/`:
 
 SWE treats the merged pull request and the code as the record. Large work can
 start from a short [plan](plugins/swe/skills/write-plan/SKILL.md) that hands off
-to a fresh session, with configured mirroring for Linear-linked plans. Its
+to a fresh session, and a [handoff](plugins/swe/skills/handoff/SKILL.md) keeps
+its state current between sessions. Its
 [implementation discipline](plugins/swe/skills/implement/SKILL.md) challenges
 unnecessary code and simplifies the completed change before final verification.
 Sound work can stay unchanged. Publication follows the user's authorization.
@@ -145,14 +146,13 @@ generated `AGENTS.md`/`CLAUDE.md` is required.
 Plans live in `<main checkout>/.agents/plans/`, shared by all worktrees. The
 directory keeps itself out of git with its own `.gitignore`.
 
-A plan named `ABC-123-short-slug.md` can be mirrored one way to a document on
-Linear issue ABC-123 by a configured host Stop hook
-([`plan_sync.py`](plugins/swe/scripts/plan_sync.py)). It reads a Linear personal
-API key from `LINEAR_API_KEY`, or else from `~/.config/swe/linear-api-key`
-(mode 0600, honoring `XDG_CONFIG_HOME`), so no shell configuration is needed.
-Without a key, or without an issue key in the name, plans stay local and nothing
-is blocked. Hook delivery varies by host; confirm sync state when it matters.
-GitHub-linked plans remain local unless a separate publication route is configured.
+Each piece of work has one file, named after its branch: `write-plan` starts
+it, and the `handoff` skill overwrites it with the current state at the end of
+a session. In Claude Code, SessionEnd and PreCompact hooks
+([`handoff.py`](plugins/swe/scripts/handoff.py)) are the fallback: when a
+session edited files after the handoff file last changed, the hook writes it
+with `claude -p --model haiku` from the transcript, in a detached process.
+Codex has the skill only. Plans are local; nothing syncs them to a tracker.
 
 New autoresearch runs keep their program, ledgers, logs, configuration, and
 generated figures under `artifacts/autoresearch/<tag>/`. Existing runs retain

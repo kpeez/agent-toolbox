@@ -119,6 +119,7 @@ loaded in this session.
 - Conflicts in an active merge, rebase, or cherry-pick: `merge-conflicts`.
 - Find what a change could break: `blast-radius`.
 - Settle open decisions in a plan or design with the user: `hash-out`.
+- Write the work's current state for a new session: `handoff`.
 - The user corrects a mistake agents have made before: `correct`.
 - Delegate to an external provider the user named: `orchestrate`.
 - Build or audit the project's own skill that drives its app for
