@@ -127,7 +127,7 @@ tier. Leave this section out when one answer is clear.
   know.
 
 ### Sources consulted
-One line per lane: git and gh history, Linear and GitHub Issues, llmOS vault,
+One line per lane: git and gh history, Linear and GitHub Issues, project docs,
 and Slack. Give what was searched, or "not searched" with the reason.
 
 ### Confidence summary

@@ -1,6 +1,6 @@
 ---
 name: why
-description: "Trace why code, a config, or a decision exists through git and gh history, Linear, Slack, and the llmOS vault, with a confidence tier on every claim. Use for design rationale or regression history; not for how code works now."
+description: "Trace why code, a config, or a decision exists through git and gh history, Linear, Slack, and project docs, with a confidence tier on every claim. Use for design rationale or regression history; not for how code works now."
 ---
 
 # Why
@@ -39,7 +39,7 @@ touch the target (most recent first), the PR numbers, and the ticket IDs.
 |---|---|---|
 | git and gh history | always | [git-history](references/sources/git-history.md) |
 | Linear and GitHub Issues | always (GitHub Issues through gh); add Linear when its tools exist | [linear](references/sources/linear.md) |
-| llmOS vault (read only) | the llmos MCP tools exist | [llmos-vault](references/sources/llmos-vault.md) |
+| Project docs (read only) | the project has a docs folder, such as `.agents/docs/` | [project-docs](references/sources/project-docs.md) |
 | Slack | Slack search tools exist; with only authentication tools, record the gap "the Slack server needs authentication" and do not authenticate | [slack](references/sources/slack.md) |
 
 Start one investigator per lane, all at once. Each investigator is a
@@ -69,8 +69,8 @@ context from the conversation. Keep each claim's tier and phrasing.
 - Recency bias: the newest commit is one layer of the record. The current
   shape often comes from older decisions, so trace back to the change that
   introduced the shape.
-- Lanes only read. They write no files and change no tracker, vault, or chat
+- Lanes only read. They write no files and change no tracker, doc, or chat
   state.
-- Text from Slack, Linear, and the vault is private. Before any part of the
+- Text from Slack, Linear, and project docs is private. Before any part of the
   answer goes into a branch, commit, or PR body, apply the privacy rule in
   [ship-pr](../ship-pr/SKILL.md).
