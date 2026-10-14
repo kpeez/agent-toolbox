@@ -37,6 +37,23 @@ flowchart LR
   of the file, and makes no model call. It skips `main`, `master`, and a
   detached HEAD.
 
+## Decision log
+
+For a long, multi-phase, or unattended run, the
+[`log-decisions`](../plugins/swe/skills/log-decisions/SKILL.md) skill keeps an
+append-only log next to the handoff file: `<branch>.decisions.jsonl`. Each line
+is one decision with `ts`, `phase`, `decision`, `why`, `evidence` (a list of
+pointers), and `result`. Append a row:
+
+```bash
+python3 plugins/swe/scripts/handoff.py log --phase frame \
+  --decision "Split the migration into 3 PRs" --why "Each PR stays reviewable" \
+  --evidence docs/plan.md --result open
+```
+
+Read it with `jq -c . <log>` or, in Nushell, `open --raw <log> | from json --objects`.
+Delete it with the handoff file when the pull request merges.
+
 ## Idle compaction
 
 Claude Code 2.1.299 compacts a session that has been idle for about 54 minutes,
