@@ -85,7 +85,8 @@ These hold in every playbook and route, in addition to the steps.
 - A nontrivial change, an architecture decision, or "are we sure?": run `how`
   over the affected subsystem first.
 - Code that crosses a function boundary: run `architect` before you build.
-- A contested design: run `interrogate` before you ship.
+- A contested design: give the design and its evidence to a `reviewer agent`
+  before you ship.
 - A fork you want to ask about ("which approach", "what should this do"):
   classify it first. When a run can show the answer (behavior, timing,
   layout, output, performance), it is not the user's question. Settle it with
@@ -312,7 +313,6 @@ Long runs and sessions:
 - Prune or review an existing test suite: `testing-code`.
 - Explore competing designs before code: `architect`.
 - Propose deepening refactors; no implementation: `codebase-design`.
-- Adversarial review of a design or diff: `interrogate`.
 - Write or restructure a README or a docs page: `writing-docs`.
 - Strip AI tells from prose: `unslop`.
 - Conflicts, review threads, or CI on an open PR, or mark ready and merge a

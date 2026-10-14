@@ -112,7 +112,6 @@ triggers read them by path. You can type any of them, such as `/swe:how`.
 | `how` | Explain how a subsystem works, with explorer and explainer subagents |
 | `architect` | Explore competing designs in parallel before code |
 | `swarm` | Fan-out shapes: coverage matrices, races, gauntlets, verifier lanes |
-| `interrogate` | Adversarial review of a design or diff on several models |
 | `figure-it-out` | Write a bespoke playbook when none fits |
 | `unslop` | Remove AI tells from any prose |
 | `benchmark-checklist` | Vet a measured number before you report it |

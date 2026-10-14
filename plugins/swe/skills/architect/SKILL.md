@@ -91,8 +91,9 @@ synthesized design and pause for sign-off.
 The synthesis can ship as its own commit either way, as the "scaffold first"
 mode of the **foundational-thinking** principle. Planned and scoped breakage
 during fill-in is fine, per the **outcome-oriented-execution** principle. For
-adversarial pressure on the design before you implement, run the
-[interrogate](../interrogate/SKILL.md) skill on the synthesized sketch.
+adversarial pressure on the design before you implement, give the
+synthesized sketch to a fresh reviewer subagent with the
+[review brief](../../references/review-brief.md).
 
 If the human pushes back on the shape, in a checkpoint or later, treat that as
 Phase A evidence. Re-ground and run Phase B again before you write more code.
