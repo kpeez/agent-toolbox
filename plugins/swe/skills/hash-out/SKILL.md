@@ -54,7 +54,7 @@ current behavior against the code, and put any contradiction in the next round.
 The decisions are the user's: put each one to them and wait.
 
 When a term is vague or overloaded, propose one precise term as a frontier
-question. Check it against `.agents/docs/CONTEXT.md` when that glossary exists.
+question.
 
 ## Done
 
@@ -63,6 +63,5 @@ silently assumed. Summarize the settled decisions, the alternatives rejected and
 why, and any decision left open with its owner. Act on the result only after the
 user confirms the shared understanding.
 
-When a settled term is reusable, or a decision meets the criteria in the
-[ADR format](../../references/ADR-FORMAT.md), offer to record it as a glossary
-entry ([context format](../../references/CONTEXT-FORMAT.md)) or an ADR.
+When a decision meets the criteria in the
+[ADR format](../../references/ADR-FORMAT.md), offer to record it as an ADR.
