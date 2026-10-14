@@ -9,8 +9,8 @@ argument-hint: "[notes | issues <plan>]"
 This skill has two modes. Pick the mode from the user's arguments or the caller's instruction.
 
 - **Notes** (default): turn rough notes into a plan, as below.
-- **`issues <plan>`**: split an approved plan into PR-sized issues on Linear or
-  GitHub. Follow [the issues mode](references/issues.md) and skip the rest of
+- **`issues <plan>`**: split an approved plan into PR-sized issues: local plan
+  files, or issues on Linear or GitHub. Follow [the issues mode](references/issues.md) and skip the rest of
   this file.
 
 Most work needs no plan file: use plan mode or proceed directly. Write one only
@@ -25,20 +25,16 @@ keeping beyond the PR becomes an ADR when it meets
 ## Where the plan lives
 
 Use [plan storage](references/plan-storage.md) to locate the shared plans
-directory and choose the appropriate sync path. Never write a plan into
-`.agents/docs/` or a notes vault.
+directory. Name the plan `<slug>.md`, where the slug is the work's branch name
+with `/` changed to `-`. The [handoff](../handoff/SKILL.md) skill later updates
+the same file. Never write a plan into `.agents/docs/` or a notes vault.
 
-- `ABC-123-short-slug.md`: eligible to mirror to a document on Linear issue
-  ABC-123 through a configured host Stop hook or explicit sync. Confirm the
-  recorded sync state before reporting delivery.
-- `short-slug.md`: local only, including plans linked to GitHub issues.
-
-When the user wants the work tracked and no issue exists, create one issue for
-the plan on the tracker chosen as in [the issues mode](references/issues.md)
-(title: the goal; body: the outcome in a sentence or two). Use a Linear key in
-the filename for an eligible mirror; keep a GitHub-linked plan unkeyed and link
-it from the issue. One issue per plan is the default; use `/write-plan issues` only
-when the work needs several pull requests.
+When the user wants the work tracked on a remote tracker and no issue exists,
+create one issue for the plan on the tracker chosen as in
+[the issues mode](references/issues.md) (title: the goal; body: the outcome in a
+sentence or two), and link the plan's path from it. One issue per plan is the
+default; use `/write-plan issues` only when the work needs several pull
+requests.
 
 ## Process
 

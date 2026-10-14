@@ -112,9 +112,9 @@ human-review-ready; product delivery and merge remain separate outcomes.
 Create a local PR markdown artifact only when the user requests one or the
 authorized publication route is unavailable. Follow
 [plan storage](../write-plan/references/plan-storage.md) to find the plans
-directory; resolve `../../scripts/plan_sync.py` from this skill's directory,
-not the current working directory, when running `dir`. Use a name without an
-issue key, such as `pr-<branch>.md`, so it stays local. Include the proposed
+directory; resolve `../../scripts/handoff.py` from this skill's directory,
+not the current working directory, when running `dir`. Use a name such as
+`pr-<branch>.md`, so it does not replace the branch's plan. Include the proposed
 title, body, commit grouping, and relevant diff references.
 
 ## Drive to green
