@@ -38,7 +38,10 @@ sections, in this order, and write "None" in an empty section:
 ```
 
 - Keep the Goal and the Decisions of the current file, unless this session
-  changed them. Give each decision its reason.
+  changed them. Give each decision its reason. When the work has a decision
+  log from [log-decisions](../log-decisions/SKILL.md), read its rows first,
+  carry each decision that still holds into Decisions, and end Decisions with
+  the log path.
 - Keep any other section of the current file, such as Non-goals, Approach, or
   Verification from a plan, after Decisions.
 - Write only facts from this session and the current file. Mark a claim that
@@ -46,6 +49,7 @@ sections, in this order, and write "None" in an empty section:
 - Name files, commands, branches, and pull requests exactly. Leave out what
   the next session can read from the code or `git log`.
 - No frontmatter, identifiers, or status fields.
+- Apply the [prose rules](../writing-docs/references/prose-rules.md).
 
 Then give the user the path and this prompt for the new session:
 `Continue the work in <path>.`

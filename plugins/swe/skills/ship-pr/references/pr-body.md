@@ -5,7 +5,8 @@ enough to read in order. End with the issue line from `6-link-issue` of the
 Publish procedure when one applies.
 
 Write for a reviewer without session context. Skip preambles, keep prose
-brief, and use the project's domain terms:
+brief, use the project's domain terms, and apply the
+[prose rules](../../writing-docs/references/prose-rules.md):
 
 - **Summary:** the concrete problem, resulting behavior, and load-bearing
   approach, shown with the smallest visual that makes the point: real

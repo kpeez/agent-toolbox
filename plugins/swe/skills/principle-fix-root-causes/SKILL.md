@@ -20,6 +20,9 @@ Fix a failure where it starts, not where it shows.
   each instance in scope, and handle the others per
   [ancillary-fixes](../principle-ancillary-fixes/SKILL.md).
 - When a probe refutes a hypothesis, revert the changes you made to test it.
+- When the deciding fact took a deep dig to find, propose a cheap, always-on
+  signal, such as a log line, a metric, or an assertion, that would have shown
+  it at first look.
 
 ## After two failed fixes
 

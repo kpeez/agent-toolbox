@@ -63,6 +63,7 @@ it belongs on a docs page; the README keeps a one-line link.
   paths that differ by machine.
 - Write for a newcomer: define a project term on first use, or link to where
   it is defined.
+- Apply every rule in [prose rules](references/prose-rules.md).
 
 ## When a change makes docs stale
 
@@ -77,6 +78,7 @@ Done when every item holds:
 - Each fact in the change sits on its owning page, once.
 - The README has the six sections in order and is under 100 lines.
 - Every relative link resolves.
+- No sentence matches a pattern in [prose rules](references/prose-rules.md).
 - Every command in the change was run, or is marked not verified.
 - A fresh subagent given only the README can say what the project is, how to
   install it, and where to read next.

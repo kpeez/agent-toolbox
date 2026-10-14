@@ -80,16 +80,23 @@ Where the host has no Skill tool, read the skill's `SKILL.md` instead.
 - When publication is authorized, open a draft PR at the first meaningful
   commit and push checkpoints during the work. The final `publish-draft-pr`
   step updates that PR; it is not the first push.
+- Do reversible work without asking: edit code, write a file, or start a
+  branch. Then report what you did and why, so the user can correct it.
 - Ask before a history rewrite, deleting a branch or data, or a write to a
   tracker or chat.
 
 ## Principles
 
-The principle slugs are `subtract-before-adding`, `ancillary-fixes`,
-`verify-on-real-surface`, `fix-root-causes`, `model-the-domain`,
-`parse-at-boundaries`, `minimize-reader-load`, `sequence-verifiable-units`,
-`migrate-callers-then-delete`, `idempotent-operations`,
-`separate-shared-state`, and `explain-measurements`.
+The principle slugs, in the order the work meets them:
+
+- Before code: `model-the-domain`, `parse-at-boundaries`,
+  `subtract-before-adding`, `minimize-reader-load`.
+- During the work: `sequence-verifiable-units`, `build-the-lever`,
+  `migrate-callers-then-delete`, `idempotent-operations`,
+  `separate-shared-state`, `ancillary-fixes`.
+- On a bug: `fix-root-causes`.
+- Before a claim: `verify-on-real-surface`, `explain-measurements`.
+
 Only these are principles; another skill, such as `testing-code`, is not.
 
 Load a principle before you apply it. In the final reply, name each principle
