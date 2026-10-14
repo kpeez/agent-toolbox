@@ -1,8 +1,7 @@
 ---
 name: verification-skill
-description: "Create or maintain this project's verification skill: a reusable way to launch, drive, and observe the real app, plus a feature map. Creates one when the repo has none; audits it when it exists."
+description: "Create or maintain this project's verification skill: a reusable way to launch, drive, and observe the real app, plus a feature map. Use when the user asks for a verification skill or to audit one."
 argument-hint: "[app or surface]"
-disable-model-invocation: true
 ---
 
 # /verification-skill
