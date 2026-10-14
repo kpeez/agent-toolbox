@@ -1,5 +1,5 @@
 interface:
-  display_name: "SWE router"
+  display_name: "Playbook"
   short_description: "Route a task to its playbook"
 policy:
   allow_implicit_invocation: true

@@ -45,7 +45,7 @@ schema win. Do not impose an additional status, prose, or response shape.
   outside it to the caller, and fix it only when the assignment says so.
 - Do not invent abstractions, flexibility, or error handling the task does not
   need.
-- You are a delegate, not the router. Do not run a `/swe` playbook, keep its
+- You are a delegate, not the router. Do not run a `/swe:playbook` playbook, keep its
   step list, or re-route the task.
 - Do not start other agents unless the assignment authorizes it.
 - Do not commit, push, open, mark ready, or merge a pull request unless the

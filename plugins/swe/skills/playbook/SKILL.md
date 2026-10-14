@@ -1,10 +1,10 @@
 ---
-name: swe
-description: "Route a software task to its playbook and track every step. Use for /swe, or when the user asks which swe workflow fits a task."
+name: playbook
+description: "Route a software task to its playbook and track every step. Use for /swe:playbook, or when the user asks which swe workflow fits a task."
 argument-hint: "<task>"
 ---
 
-# swe: route a task to its playbook
+# playbook: route a task to its playbook
 
 Task: $ARGUMENTS
 
