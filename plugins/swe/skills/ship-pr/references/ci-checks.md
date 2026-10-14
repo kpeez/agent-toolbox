@@ -21,6 +21,44 @@ When workflow runs exist, wait up to ten minutes for checks to appear, then
 report the missing checks as a blocker. When `--required` lists nothing but
 checks exist, use every check that `gh pr checks <pr>` lists.
 
+## Read pull-request status
+
+The `babysit-pr` playbook and Drive to green read status with these commands.
+Re-read them each time a check watch returns.
+
+- Merge state:
+  `gh pr view <pr> --json state,isDraft,mergeable,mergeStateStatus,reviewDecision,headRefOid`.
+  `mergeable` is `CONFLICTING` on a conflict. `mergeStateStatus` is `BEHIND`
+  on a stale base, `BLOCKED` while a required check or approval is missing,
+  `DRAFT` on a draft, and `CLEAN` when a ready pull request can merge.
+- Unresolved review threads, with the top-level comment id that a reply
+  needs:
+
+  ```bash
+  gh api graphql -F owner='{owner}' -F repo='{repo}' -F pr=<pr> -f query='
+    query($owner: String!, $repo: String!, $pr: Int!) {
+      repository(owner: $owner, name: $repo) {
+        pullRequest(number: $pr) {
+          reviewThreads(first: 100) {
+            nodes { isResolved isOutdated
+              comments(first: 1) { nodes { databaseId author { login } path line body } } }
+          }
+        }
+      }
+    }' --jq '.data.repository.pullRequest.reviewThreads.nodes[]
+      | select(.isResolved | not) | .comments.nodes[0]'
+  ```
+
+- Review-bot passes, for the pass count in
+  [bot-triage](bot-triage.md):
+  `gh api repos/{owner}/{repo}/pulls/<pr>/reviews --jq '[.[] | select(.user.type == "Bot") | .user.login] | group_by(.) | map({bot: .[0], passes: length})'`.
+
+A pull request is merge-ready when all of these hold at the current head:
+required checks pass, `mergeable` is `MERGEABLE`, no unresolved review thread
+blocks it, and `reviewDecision` is not `CHANGES_REQUESTED`. A draft reads
+`DRAFT` here; that is expected, and only Land or Finalize marks it ready. An
+owner approval that is still missing is a wait, not a blocker to fix.
+
 ## Classify a failed check
 
 Read the failure first. `gh pr checks <pr> --json name,state,link` gives each

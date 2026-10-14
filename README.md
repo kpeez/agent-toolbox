@@ -38,6 +38,41 @@ Give the swe router a task:
 In Codex, type `$swe:playbook <task>`. The router picks a playbook, such as
 `fix-bug`, runs its steps, and ends with the state of each step.
 
+## How swe works
+
+```mermaid
+flowchart TD
+  task["Software task"]
+  hook["SessionStart hook<br/>(Claude Code)"]
+  typed["/swe:playbook task<br/>$swe:playbook task"]
+  router{"playbook router:<br/>match the task"}
+  pb["Playbook<br/>fix-bug, build-feature, refactor-structure,<br/>babysit-pr, ship-stack, run-autonomously, ..."]
+  fio["figure-it-out<br/>writes a bespoke playbook"]
+  route["Single-skill route<br/>diagnose, how, blast-radius,<br/>hash-out, handoff, correct, ..."]
+  steps["Copy each step to the task list"]
+  load["Before each step: load its skills,<br/>read its principles by path"]
+  work["Do the step under the router rules:<br/>triggers, autonomy, subagents"]
+  verify["Verify on the real surface,<br/>independent review"]
+  ship["ship-pr: commit, push,<br/>update the draft PR"]
+  reply["Final reply: result, evidence,<br/>principles cited, Steps section"]
+
+  task --> hook --> router
+  task --> typed --> router
+  router -- "several skills in order" --> pb --> steps
+  router -- "large work or no match" --> fio --> steps
+  router -- "one skill owns the task" --> route --> steps
+  steps --> load --> work
+  work -- "next step" --> load
+  work --> verify
+  verify -- "code change" --> ship --> reply
+  verify -- "read-only answer" --> reply
+```
+
+The router holds 22 playbooks, 25 principles, and the rules every step
+follows. Each step names the skills and principles it needs, and the router
+loads them at that step only. See [docs/swe.md](docs/swe.md) for the
+playbooks, skills, and principles.
+
 ## What is included
 
 | Part | What it does | Docs |
@@ -57,8 +92,8 @@ In Codex, type `$swe:playbook <task>`. The router picks a playbook, such as
 
 ## Credits
 
-- Many `swe` skills, the router and its playbooks among them, adapt Lauren
-  Tan's [pstack](https://github.com/cursor/plugins/tree/1dcc2bacde73ddd284803b7af28164d0436198fc/pstack).
+- The `swe` router, its playbooks and principles, and most `swe` skills adapt
+  Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/1e5c90a4b6f249917bd21fe361b3a2a7deb741b8/pstack).
 - Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
   [skills](https://github.com/mattpocock/skills).
 - The `ship-pr` PR-body menu of Summary visuals comes from Dex Horthy's

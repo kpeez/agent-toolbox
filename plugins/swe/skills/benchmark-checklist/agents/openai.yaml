@@ -1,0 +1,4 @@
+interface:
+  display_name: "Benchmark Checklist"
+policy:
+  allow_implicit_invocation: false

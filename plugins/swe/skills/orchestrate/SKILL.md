@@ -47,9 +47,14 @@ goal, scope, verify, and report fields is enough.
 
 Delegate independent work in parallel only with isolated worktrees or disjoint
 write ownership. When two workers would write the same state, follow
-[separate-shared-state](../principle-separate-shared-state/SKILL.md). Tell
+[separate-before-serializing-shared-state](../principle-separate-before-serializing-shared-state/SKILL.md). Tell
 workers they are not alone and must preserve others' changes. Ask for stable
 paths and focused evidence, not bulk logs.
+
+To fan out N parallel workers as a coverage matrix, a race, a gauntlet, an
+exploration partition, or verifier lanes, follow [swarm](../swarm/SKILL.md)
+for the shape, the drain, and the single report. This skill still owns the
+preflight, the brief fields, and the external-provider mode for every worker.
 
 ## External providers
 

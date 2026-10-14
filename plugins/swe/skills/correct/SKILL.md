@@ -12,6 +12,10 @@ opened, copies the nearest example, and takes the shortest path that passes.
 Design the repository so that a change that looks right from one file is
 right for the whole repository.
 
+This skill applies
+[encode-lessons-in-structure](../principle-encode-lessons-in-structure/SKILL.md).
+Run it again each time the user corrects you.
+
 ## Find the mistake classes
 
 Read the current correction, recent commits and reverts, review comments,
@@ -29,8 +33,9 @@ occurrence gets its fix and nothing more.
 3. `lint-or-check`: when bad code still builds, add a lint or check whose
    error names the file, type, or function to use instead. When the pattern is
    already common, fail only on new instances.
-4. `test`: test the behavior. Every new permanent test goes through the
-   admission gate in [testing-code](../testing-code/SKILL.md).
+4. `test`: test the behavior. Fix or delete any test that would still pass if
+   every function it calls returned nothing. Every new permanent test goes
+   through the admission gate in [testing-code](../testing-code/SKILL.md).
 5. `docs-last`: write a doc or agent rule only for a judgment call. Nothing
    fails when an agent skips a doc, so make the rule prominent and add an
    example of the mistake.
@@ -55,6 +60,7 @@ The repository keeps a rule-to-enforcer table in the file that its
 `AGENTS.md` line that points to it.
 
 - Add one row per rule when you add its enforcer.
+- When the user corrects you, fix the mistake and add its rule.
 - When the user corrects a mistake whose rule is already in the table, check
   that its enforcer still exists and still runs. An enforcer that was deleted
   or no longer fails counts as a repeat: fix the class at a higher level in

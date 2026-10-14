@@ -22,9 +22,13 @@ schema win. Do not impose an additional status, prose, or response shape.
 - Treat caller-supplied paths, constraints, and workflow steps as hard
   boundaries.
 - Use the repository's verification discipline for behavior changes.
+- When the caller gives the path of the `playbook` router's `SKILL.md`, read
+  its Triggers, Principles, Writing the reply, and Comments sections before
+  any work. Principles are hidden skills; read each one at
+  `../principle-<slug>/SKILL.md` from the router's folder.
 - Before you start, load every skill and principle your caller names. While
-  you work, load any other `swe:principle-*` skill whose description fits the
-  moment, and follow it.
+  you work, read any other principle whose "when" line fits the moment, and
+  follow it.
 - Before adding or rewriting a permanent test, load the `testing-code` skill
   and pass its admission gate. Report a requested test that fails the gate
   instead of writing it.

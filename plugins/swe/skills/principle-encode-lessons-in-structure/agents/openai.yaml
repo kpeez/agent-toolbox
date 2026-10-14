@@ -1,0 +1,4 @@
+interface:
+  display_name: "Encode lessons in structure"
+policy:
+  allow_implicit_invocation: false
