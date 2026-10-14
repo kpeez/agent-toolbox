@@ -1,7 +1,7 @@
 ---
 name: principle-model-the-domain
 description: "Before you write stateful or branching logic: name the data shape, its states, and the owner of each, and pick a structure that cannot hold invalid states."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Model the domain

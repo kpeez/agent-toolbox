@@ -1,7 +1,7 @@
 ---
 name: principle-verify-on-real-surface
 description: "Before you claim a change works: run it through its real entry point, observe the real result, and give a VERIFIED, NOT VERIFIED, or INCONCLUSIVE verdict."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Verify on the real surface

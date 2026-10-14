@@ -1,7 +1,7 @@
 ---
 name: principle-build-the-lever
 description: "Before you make many similar edits, a migration, an analysis, or a check by hand: build the script, codemod, or generator that does it or proves it, so a reviewer can rerun it."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Build the lever

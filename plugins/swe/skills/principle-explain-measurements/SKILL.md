@@ -1,7 +1,7 @@
 ---
 name: principle-explain-measurements
 description: "Before you trust, report, or act on a measured number, such as a speedup, latency, or eval result: name what limits it, and record its run count and spread."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Explain measurements

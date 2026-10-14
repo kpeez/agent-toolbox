@@ -1,7 +1,7 @@
 ---
 name: principle-separate-shared-state
 description: "When two workers, processes, or agents would write the same file, branch, key, or state object: give each its own state before you add a lock."
-user-invocable: false
+disable-model-invocation: true
 ---
 
 # Separate shared state

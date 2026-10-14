@@ -13,7 +13,13 @@ $swe:playbook <task>     # Codex
 The router matches the task to one of seven
 [playbooks](../plugins/swe/skills/playbook/playbooks/) or to the one skill
 that owns the task. It ends with the state of every step and the reason for
-each skipped step. The agent can also start the router itself.
+each skipped step.
+
+In Claude Code, a SessionStart hook puts a short rule in every session:
+route each new software task through the router
+([session-start.md](../plugins/swe/hooks/session-start.md)). So the agent
+starts the router itself, also after a short prompt such as "continue". Codex
+plugins have no hooks: copy the same lines into the repository's `AGENTS.md`.
 
 A playbook chains several skills in order for one kind of task. A job that one
 skill does from start to end stays a skill, so it can start without the router.
@@ -53,9 +59,11 @@ Each skill also starts on its own when its task comes up.
 | `writing-for-agents` | Write a skill, `AGENTS.md`, or `CLAUDE.md` |
 | `wait-what` | Explain the last message again, in simpler words |
 
-Thirteen `principle-*` skills are model-only. Other skills load them at the step
-they apply to, for example
+Thirteen `principle-*` skills are hidden from the model's skill list, so they
+cost no context until a step needs one. The router and other skills read them
+by path at the step they apply to, for example
 [principle-fix-root-causes](../plugins/swe/skills/principle-fix-root-causes/SKILL.md).
+You can still type one, such as `/swe:principle-fix-root-causes`.
 
 ## Verification skill
 
