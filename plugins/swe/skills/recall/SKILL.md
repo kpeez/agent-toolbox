@@ -108,7 +108,7 @@ next move. Put deeper detail below, or cut it.
 
 An adjacent feature or ticket stays out unless it blocks this one. When the
 summary and thread lines outgrow a screen, cut detail before you cut threads.
-Write the brief with the [unslop](../unslop/SKILL.md) rules. Cite chat
+Write the brief with the [prose rules](../writing/references/prose.md). Cite chat
 findings by session id and shared-record findings by their source (PR number,
 ticket id, chat permalink, error-tracker issue). Remove private context before
 any public output.

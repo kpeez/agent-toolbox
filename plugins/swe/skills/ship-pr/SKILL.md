@@ -60,9 +60,9 @@ Run the numbered procedure of the chosen mode, in order.
   `refactor`, `test`, `chore`, or `perf`. The scope is the area. The subject
   is short and imperative, and names a real symbol when one carries the
   change, for example `fix(parser): reject empty headers`.
-- Before each commit, run the `unslop` skill over new prose and review your
+- Before each commit, apply the `writing` prose rules to new prose and review your
   own diff for slop. Before review, run the `no-comments` skill. Write each
-  title, body, and commit body with the `writing-docs` skill.
+  title, body, and commit body with the `writing` skill.
 - Prefer several narrow pull requests to one large one. Branch independent
   work from trunk.
 - Give each writer its own worktree. Parallel subagents on one branch each

@@ -1,30 +1,17 @@
----
-name: writing-docs
-description: Write or restructure docs for human readers: a README, a docs/ page, or a plugin guide. Use when creating or editing one, or when a change makes one stale.
----
-
-# Write docs for people
+# Human docs
 
 A reader comes to a document with one question. The document answers it, then
 points to the next page. Write so a tired engineer understands on the first
 read. Docs written for agents (a skill, `AGENTS.md`, `CLAUDE.md`) follow
-`writing-for-agents` instead.
+`writing-for-agents` instead. Every doc also follows the
+[prose rules](prose.md).
 
-Three rules sit above the rest of this skill:
+When a rule makes a sentence worse, fix the sentence another way or leave it
+alone. A sentence that follows every rule and sounds like a machine wrote it
+has failed.
 
-- **Cut every word that does no work.** If the sentence survives without a
-  word, the word goes. "In order to" is "to". "It is important to note that"
-  is nothing.
-- **Use the short, everyday word.** "Use", not "utilize". "Help", not
-  "facilitate". "Do", not "perform". A long word has to buy its length with
-  precision.
-- **When a rule makes a sentence worse, fix the sentence another way or leave
-  it alone.** A sentence that follows every rule and sounds like a machine
-  wrote it has failed.
-
-Apply all four layers below to every doc: the mode, the sentences, the
-statement rules, and the Global English rules. PR descriptions and commit
-messages are writing too. Every layer except the mode applies to them.
+Apply both layers below to every doc: the mode and the sentences. The prose
+rules add the statement rules and the Global English rules.
 
 ## Where each fact goes
 
@@ -117,7 +104,7 @@ no hand-holding, and a how-to holds no argument. Split and link instead.
   "ratchet", or "endgame". A named pattern is fine when the doc says what it
   means the first time.
 - When you find a new jargon word, propose it and its replacement in your
-  reply as an addition to rule 26 of [unslop](../unslop/SKILL.md), with the
+  reply as an addition to rule 26 of the [prose rules](prose.md), with the
   diff. Leave that skill unchanged.
 - Write the current behavior. History earns a line only as a migration step
   the reader must do ("Remove the old `~/.codex/skills/teach` symlink").
@@ -128,23 +115,6 @@ no hand-holding, and a how-to holds no argument. Split and link instead.
   paths that differ by machine.
 - Write for a newcomer: define a project term on first use, or link to where
   it is defined.
-- Apply every rule in [unslop](../unslop/SKILL.md). That skill owns the
-  catalog of AI patterns: vocabulary, filler, hedging, and formatting tells.
-
-## Vary the rhythm
-
-A doc can obey every layer and still read as if a machine wrote it: every
-sentence clipped short, no view anywhere, nothing specific.
-
-- Mix sentence lengths on purpose. Short sentences land a point. Longer ones
-  carry a fact with its condition or consequence.
-- Split the sentence that carries two thoughts. Keep the long sentence that
-  carries one.
-- Have a view where the mode allows it. An explanation weighs trade-offs, so
-  say what you make of them instead of listing pros and cons. A reference
-  stays dry.
-- Be specific. Write "a column rename fails the build", not "schema changes
-  can cause issues".
 
 ## Write sentences to the reader (Google developer style)
 
@@ -173,49 +143,6 @@ sentence clipped short, no view anywhere, nothing specific.
   a list with a complete sentence. Keep items parallel.
 - Put code in code font and UI elements in bold. Use serial commas. Drop
   "etc." and say up front that a list is partial.
-
-## Make statements load one at a time (STE rules)
-
-- Write one instruction per sentence. Write one thought per sentence
-  everywhere else.
-- Split an instruction longer than about 20 words. Split other sentences
-  longer than about 25 words.
-- Put the warning or condition before the step it guards: "If hot oil touches
-  your skin, injuries can occur."
-- Keep "the" and "a". "Remove backup file" has two readings. "Remove the
-  backup file" has one.
-- Give each word one meaning and one job, then keep it. If "check" means
-  inspect, do not also use it to mean restrain.
-- Pick one word per action and keep it: "start", not "start" here and
-  "initiate" there.
-- Write procedures as direct commands, never as narration and never in the
-  passive: "Install the component", not "the component must be installed".
-- Avoid "-ing" words where you can.
-
-## Leave no sentence open to two readings (Global English)
-
-- Keep words like "only" and "not" next to the word they change. "Only fails
-  on growth" and "fails only on growth" say different things.
-- Break up long noun strings. "The proto import budget check script" becomes
-  "the script that checks the proto-import budget".
-- Make every "it", "they", and "this" point at one obvious thing. Repeat the
-  noun when in doubt. Never use "this" or "which" to point at a whole clause.
-- Keep every verb. "Phase 1 moves the converters and Phase 2 the runtime"
-  leaves Phase 2 without one. Give it one.
-- Keep the small words that show structure, such as "that" in "Ensure that
-  the switch is off". Never trade clarity for word count.
-- Repeat the article in a series when it prevents a misread: "the client and
-  the host", not "the client and host", when they are two things.
-- Say which parts "and" or "or" joins when a sentence can group two ways.
-  "Both...and", "either...or", and "if...then" remove the doubt at no cost.
-- Use periods, not semicolons. Replace a long dash with a new sentence.
-- Make text in parentheses a full grammatical unit or its own sentence. Never
-  form plurals with "(s)".
-- Write "a, b, or both" instead of "a/b" or "and/or".
-- Call each thing by one name, everywhere. A doc that says "the gate", "the
-  ratchet", and "the budget check" for one thing teaches three things. Leave
-  the names of unchanged things as they are.
-- Skip idioms, colloquialisms, Latin abbreviations, and metaphors.
 
 ## Other surfaces
 
@@ -253,8 +180,8 @@ Done when every item holds:
 - Each page has one mode.
 - The README has the six sections in order and is under 100 lines.
 - Every relative link resolves.
-- Every sentence passes the four layers above.
-- No sentence matches a pattern in [unslop](../unslop/SKILL.md).
+- Every sentence passes the sentence layer above and the
+  [prose rules](prose.md).
 - Every command in the change was run, or is marked not verified.
 - A fresh subagent given only the README can say what the project is, how to
   install it, and where to read next.
