@@ -210,9 +210,9 @@ The body transform (frontmatter removed, leading newlines stripped) matched all
 four `Skill`-tool bodies in the probes. It did not match the five typed bodies,
 because the typed form replaces or appends the arguments.
 
-Deviation: item 6 of "Acceptance and migration" in
-`docs/trace-framework-proposal.md` asks for a manual raw-event audit on small
-Claude and Codex controls. This audit covers Claude only, because no Codex
+Deviation: item 6 of "Acceptance and migration" in the research note
+`.agents/docs/research/2026-09-30-trace-framework-proposal.md` asks for a
+manual raw-event audit on small Claude and Codex controls. This audit covers Claude only, because no Codex
 adapter exists. The lead accepted a Claude-only audit as a recorded deviation
 (resolved decision `adapter-codex-control` in the swe router rewrite plan). A
 Codex score stays unpublished until a Codex adapter passes its own audit.

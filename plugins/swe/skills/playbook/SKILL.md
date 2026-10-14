@@ -114,6 +114,7 @@ loaded in this session.
 - Settle a design fork by running a throwaway sketch: `testing-code`.
 - Prune or review an existing test suite: `testing-code`.
 - Propose deepening refactors; no implementation: `codebase-design`.
+- Write or restructure a README or a docs page: `writing-docs`.
 - Conflicts, review threads, or CI on an open PR, or mark ready and merge a
   verified PR: `ship-pr`.
 - Conflicts in an active merge, rebase, or cherry-pick: `merge-conflicts`.
