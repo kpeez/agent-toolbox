@@ -45,7 +45,7 @@ requests.
    `/hash-out` when the design needs a full pass over its open decisions.
 3. Write the plan from the template below. Include what the executing session
    needs and cannot read from the code; leave out what it can. Apply the
-   [prose rules](../writing-docs/references/prose-rules.md).
+   [unslop](../unslop/SKILL.md) rules.
 4. Iterate until the user approves it. Approval lives in the conversation; the
    file has no status or approval fields.
 5. Hand off. Suggest a fresh session with "Implement the plan in `<path>`",

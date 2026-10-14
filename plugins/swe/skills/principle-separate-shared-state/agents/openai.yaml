@@ -1,4 +1,0 @@
-interface:
-  display_name: "Separate shared state"
-policy:
-  allow_implicit_invocation: false

@@ -23,10 +23,11 @@ repaid by protecting behavior nothing cheaper already protects. Use scratch
 probes to learn, then retain only the smallest stable evidence that uniquely
 protects meaningful behavior: a committed test, shared workflow, static check,
 reproducible demonstration, or explicit no-permanent-test decision. A TDD
-request goes through the admission gate below; there is no red-green ritual,
-test-per-goal rule, coverage quota, or suite-wide mutation-score target, but
-every new or rewritten permanent test must have been seen failing, often
-through one deliberate mutation.
+request goes through the admission gate below. There is no test-per-goal rule,
+coverage quota, or suite-wide mutation-score target, but every new or
+rewritten permanent test must have been seen failing, often through one
+deliberate mutation. A bug fix with a cheap local test target follows
+"Failing test first" below.
 Keeping an existing valuable test during an audit does not itself require a
 new mutation exercise.
 
@@ -37,6 +38,15 @@ Work through one behavioral risk or equivalence class at a time. Before choosing
 an evidence mode, name the promised behavior or invariant, the independent
 oracle, and the narrowest stable public seam. If any remain unclear, explore
 with a probe before writing a test.
+
+Follow
+[test-behavior-not-implementation](../principle-test-behavior-not-implementation/SKILL.md).
+Call the subject in the test body with one concrete input, as its users do,
+and assert the literal output or effect. For a mock, assert the payload it
+received. For an absence, also assert the presence on another input. For a
+constant, test the mechanism that reads it with one input instead of restating
+the value. Rewrite or delete a test that would still pass if every imported
+function returned `undefined` or a wrong value.
 
 ## Admission gate
 
@@ -78,6 +88,50 @@ When a change makes existing tests obsolete or duplicative, delete or
 consolidate them in the same change. Use audit mode for broader pruning.
 During implementation, never delete, skip, or loosen an existing test to get
 green; if a test looks wrong, report it with evidence.
+
+## Failing test first
+
+Use this cadence when the user asks for TDD, a failing test, or a regression
+test, or when a bug has an obvious cheap local test target. Skip it when the
+test path is unclear, expensive, or integration-heavy and nobody asked for it.
+
+1. Understand the bug. Name the intended behavior, the current behavior, the
+   affected path, and the smallest observable reproduction.
+2. Choose the narrowest executable check. Prefer the closest unit, component,
+   integration, or regression test that the codepath already uses. When no
+   practical test path is obvious, do not create one from scratch to satisfy
+   this cadence.
+3. Write the smallest focused test that would have caught the bug. It encodes
+   the intended behavior, not the current implementation.
+4. Run it before the fix. Confirm it fails for the intended reason. If it
+   passes, or fails for an unrelated reason, correct the test or the
+   reproduction before you edit production code.
+5. Make the smallest production change that gives the intended behavior and
+   keeps nearby contracts.
+6. Rerun the test. Confirm it passes.
+
+When a failing test is impractical (broad harness setup, brittle mocks, slow
+end-to-end infrastructure, production-only state, vague reproduction steps, or
+large unrelated fixture churn), use the closest executable regression check
+instead: a targeted script, a manual reproduction command, browser
+automation, a snapshot comparison, a log assertion, or a focused integration
+check. Prefer no new test over a bad test.
+
+- Change a test only when the expected behavior changed. Never change it to
+  match a wrong implementation.
+- Weaken an existing assertion only when the expected behavior changed and the
+  reason is clear.
+- Keep the regression test on the bug. Avoid broad fixture churn and unrelated
+  coverage.
+- For a flaky bug, make the test deterministic where possible and write down
+  the signal it locks down.
+- When the bug exposes a broader class of failures, land the focused
+  regression first. Then consider sibling coverage.
+
+Report the failing-before test or check and the failure it produced, and the
+passing-after run with any nearby validation. If you could not show the
+failure before the fix, say why and name the closest regression check you used
+instead.
 
 ## Probe when useful
 

@@ -3,7 +3,7 @@ name: codebase-design
 description: Design a consequential new interface, or review existing module boundaries and propose deepening refactors that cut coupling and caller complexity. Report-only for reviews; implementation is separate.
 ---
 
-# Codebase Design — deep modules
+# Codebase design: deep modules
 
 The goal of module design is **depth**: a lot of behavior behind a small
 interface. The vocabulary below supports precise reasoning. Use the project's
@@ -18,35 +18,36 @@ Pick the mode:
 
 ## Vocabulary
 
-- **Module** — anything with an interface and an implementation (function,
-  class, package, slice).
-- **Interface** — everything a caller must know to use the module correctly:
-  types, invariants, ordering constraints, error modes, required config,
-  performance characteristics. Not just the type signature.
-- **Implementation** — the code inside.
-- **Depth** — leverage at the interface: how much behavior a caller (or test)
-  can exercise per unit of interface they must learn. **Deep** = high leverage.
-  **Shallow** = interface nearly as complex as the implementation.
-- **Seam** — where an interface lives; a place behavior can be altered without
-  editing in place.
-- **Adapter** — a concrete thing satisfying an interface at a seam.
-- **Leverage** — the caller's benefit from depth; **locality** — the
-  maintainer's: changes, bugs, and knowledge concentrated in one place.
+- **Module.** Anything with an interface and an implementation (a function,
+  class, package, or slice).
+- **Interface.** Everything a caller must know to use the module correctly:
+  types, invariants, ordering constraints, error modes, required config, and
+  performance characteristics. It is more than the type signature.
+- **Implementation.** The code inside.
+- **Depth.** Leverage at the interface: how much behavior a caller (or test)
+  can exercise per unit of interface they must learn. A **deep** module has
+  high leverage. A **shallow** module has an interface nearly as complex as
+  its implementation.
+- **Seam.** Where an interface lives; a place where behavior can change
+  without an edit in place.
+- **Adapter.** A concrete thing that satisfies an interface at a seam.
+- **Leverage.** The caller's benefit from depth. **Locality** is the
+  maintainer's benefit: changes, bugs, and knowledge sit in one place.
 
 **Depth is a property of the interface, not the implementation.**
 
 ## Key tests
 
-- **Deletion test** — imagine deleting the module. If complexity vanishes, it
+- **Deletion test.** Imagine deleting the module. If complexity vanishes, it
   was a pass-through. If complexity reappears across N callers, it was earning
   its keep.
-- **The interface is the test surface.** Callers and tests cross the same seam;
+- **The interface is the test seam.** Callers and tests cross the same seam;
   if a test bypasses it, check whether the test protects a real contract before
   deciding that the module needs reshaping.
 - **Adapter count is evidence, not a rule.** Multiple justified adapters make a
   seam concrete; one adapter can still be warranted by a real external contract
   or a test substitute.
-- **Reader load** — when you add or review a layer, wrapper, or piece of
+- **Reader load.** When you add or review a layer, wrapper, or piece of
   state, follow [minimize-reader-load](../principle-minimize-reader-load/SKILL.md).
 
 ## Design mode
@@ -65,7 +66,7 @@ seam.
 Before you write stateful or branching logic, follow
 [model-the-domain](../principle-model-the-domain/SKILL.md). When data crosses a
 system boundary, or you decide where validation goes, follow
-[parse-at-boundaries](../principle-parse-at-boundaries/SKILL.md).
+[boundary-discipline](../principle-boundary-discipline/SKILL.md).
 
 For a consequential new interface, map representative callers and the behavior
 they need. Specify invariants, ordering, error modes, defaults, and costs before
@@ -73,6 +74,12 @@ choosing the surface. Show at least one caller use and explain what complexity
 the implementation hides. Compare materially different interfaces only when a
 real trade-off exists; use [interface design](references/interface-design.md)
 for that comparison. Do not manufacture alternatives to an obvious interface.
+
+When the interface or architecture has no precedent in the codebase, follow
+[exhaust-the-design-space](../principle-exhaust-the-design-space/SKILL.md):
+build two or three competing sketches and compare them side by side before
+you commit to one. To run those designs in parallel and then fill in code
+against the chosen sketch, use [architect](../architect/SKILL.md).
 
 ## Review mode
 

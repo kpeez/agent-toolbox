@@ -19,11 +19,11 @@ When the change replaces a past decision, supersede its record per the
 
 1. Make the smallest justified change. Before you add code, a layer, or a
    special case, follow
-   [subtract-before-adding](../principle-subtract-before-adding/SKILL.md).
+   [subtract-before-you-add](../principle-subtract-before-you-add/SKILL.md).
    When the work has several steps, such as a sweep or a migration, follow
    [sequence-verifiable-units](../principle-sequence-verifiable-units/SKILL.md).
    When the change adds a migration, job, retry, or resume path, follow
-   [idempotent-operations](../principle-idempotent-operations/SKILL.md).
+   [make-operations-idempotent](../principle-make-operations-idempotent/SKILL.md).
 2. For a reported defect, find the cause with
    [diagnose](../diagnose/SKILL.md) before you change code, and rerun its
    reproduction after the fix. Before you apply the fix, and after a fix
@@ -33,7 +33,7 @@ When the change replaces a past decision, supersede its record per the
    workflow, or explicit no-permanent-test decision is often enough. Before adding or rewriting a permanent test, or when behavior
    is uncertain or a probe is requested, pass the `testing-code` admission
    gate. Before claiming the change works, follow
-   [verify-on-real-surface](../principle-verify-on-real-surface/SKILL.md).
+   [prove-it-works](../principle-prove-it-works/SKILL.md).
 4. Run relevant repository gates and behavior-specific checks. A failing
    required gate blocks completion and publication, but continue authorized
    diagnosis and correction when that can resolve the failure. When you find an

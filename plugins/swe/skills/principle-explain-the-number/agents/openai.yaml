@@ -1,0 +1,4 @@
+interface:
+  display_name: "Explain the number"
+policy:
+  allow_implicit_invocation: false
