@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Find handoff files, and write one with Haiku when a session leaves it stale.
+"""Find handoff files, and get a stale one rewritten before the session goes cold.
 
 A handoff file holds the current state of one piece of work, so a new session
 can continue it. It lives in ``<main checkout>/.agents/plans/``, shared by every
@@ -7,13 +7,19 @@ worktree of the repository and kept out of git by the directory's own
 ``.gitignore``. Its name is the branch name with ``/`` changed to ``-``. On
 ``main``, ``master``, or a detached HEAD it is ``<date>-<session id prefix>.md``.
 
-The session model writes the file with the ``handoff`` skill. ``hook`` (run on
-SessionEnd and PreCompact) is the fallback. A file is stale when the session's
-newest Edit or Write is less than RECENT_EDIT seconds old and later than the
-file's modification time, or the file does not exist. The age limit skips an
-old session that is only opened and closed again. For a stale file, ``hook`` starts a detached ``write`` process
-that summarizes the transcript with ``claude -p --model haiku`` and replaces
-the file. ``hook`` never blocks and always exits 0.
+The session model writes the file with the ``handoff`` skill. ``hook`` is the
+automatic path. A file is stale when the session's newest Edit or Write is less
+than RECENT_EDIT seconds old and later than the file's modification time, or
+the file does not exist. The age limit skips an old session that is only
+opened and closed again. For a stale file:
+
+- Notification ``idle_prompt`` (an ``asyncRewake`` hook): exit 2 with a
+  reminder, which wakes the session so its model runs the skill on a warm
+  cache. It reminds once per newest edit.
+- SessionEnd: start a detached ``write`` process that summarizes the
+  transcript with ``claude -p --model haiku`` and replaces the file.
+
+Otherwise ``hook`` exits 0 and prints nothing. It never fails the session.
 
 Usage: python3 handoff.py {dir,path,hook} --help
 """
@@ -196,17 +202,34 @@ def write(path, transcript):
     return 0
 
 
+def remind(path, session_id, edited):
+    """Return 2 with a reminder on stderr, once per newest edit; else 0."""
+    marker = path.parent / f".reminded-{session_id[:8] or 'session'}"
+    try:
+        if float(marker.read_text(encoding="utf-8")) >= edited:
+            return 0
+    except (OSError, ValueError):
+        pass
+    marker.write_text(str(edited), encoding="utf-8")
+    print(f"The handoff file {path} is missing or older than this session's last edit. "
+          "Run the swe:handoff skill to update it, then stop.", file=sys.stderr)
+    return 2
+
+
 def run_hook():
-    """Start a detached Haiku write when this session left its handoff file stale."""
+    """Remind the idle session, or start a detached Haiku write at session end."""
     if os.environ.get(CHILD_ENV):
         return 0
     try:
         event = json.load(sys.stdin)
         cwd, transcript = event["cwd"], event["transcript_path"]
-        path = handoff_path(cwd, event.get("session_id", ""))
+        session_id = event.get("session_id", "")
+        path = handoff_path(cwd, session_id)
         if path is None or not is_stale(path, transcript):
             return 0
         ensure_dir(cwd)
+        if event.get("hook_event_name") == "Notification":
+            return remind(path, session_id, last_edit_time(transcript))
         subprocess.Popen(
             [sys.executable, __file__, "write", "--path", str(path), "--transcript", transcript],
             cwd=cwd, stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
@@ -222,7 +245,7 @@ def main(argv=None):
     commands.add_parser("dir", help="create and print the plans directory")
     path_cmd = commands.add_parser("path", help="create the plans directory and print this work's handoff file")
     path_cmd.add_argument("--session", default="", help="session id, used on a default branch")
-    commands.add_parser("hook", help="SessionEnd and PreCompact hook; reads the hook event on stdin")
+    commands.add_parser("hook", help="Notification idle_prompt and SessionEnd hook; reads the hook event on stdin")
     write_cmd = commands.add_parser("write", help="internal: summarize a transcript into a handoff file")
     write_cmd.add_argument("--path", required=True, type=Path)
     write_cmd.add_argument("--transcript", required=True)

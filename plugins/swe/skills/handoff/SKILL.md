@@ -50,11 +50,10 @@ sections, in this order, and write "None" in an empty section:
 Then give the user the path and this prompt for the new session:
 `Continue the work in <path>.`
 
-## Fallback
+## Automatic triggers
 
-In Claude Code, the swe plugin's SessionEnd and PreCompact hooks run
-`handoff.py hook`. When the session used Edit or Write in the last hour and
-after the file last changed, the hook writes the file with Haiku from the
-transcript. An old session that is only opened and closed does not trigger it. A handoff
-from this skill is better; the hook only covers a session that ended without
-one.
+In Claude Code, the swe plugin's hooks run `handoff.py hook` when the session
+used Edit or Write in the last hour and after the file last changed. When the
+session goes idle, the hook wakes you with a reminder to run this skill: run
+it, then stop. At session end, the hook writes the file with Haiku from the
+transcript.
