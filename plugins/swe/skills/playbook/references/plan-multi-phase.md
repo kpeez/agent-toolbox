@@ -183,5 +183,5 @@ Each live lane runs in its own worktree or cloud session at the PR head. Drive t
 
 ## Appendix D. Links and reading list
 
-<Docs to read before editing. Which PRs get the `how` and `interrogate` skills. The decision log per the `log-decisions` skill.>
+<Docs to read before editing. Which PRs get the `how` skill and a reviewer agent. The decision log per the `log-decisions` skill.>
 ````
