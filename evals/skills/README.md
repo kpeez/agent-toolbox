@@ -24,8 +24,8 @@ Five negatives also change meaning on the new catalog. `TA-08` and `TA-09`
 now forbid `testing-code`, and `AR-07` to `AR-09` now forbid
 `codebase-design`. On the old catalog, a load of those skills there was only
 unexpected, and `codebase-design` could load legitimately. Report these five
-cases' false activations as their own stratum, not in a pooled comparison. User-only skills such as `write-plan` have no
-family: the model cannot load them, so there is no activation to measure.
+cases' false activations as their own stratum, not in a pooled comparison. `write-plan`,
+`verification-skill`, and `wait-what` have no family yet.
 
 The `ship-pr` family exists because `ship-pr` became model-invoked on the
 `swe-router-rewrite` branch. On main it is user-only, so main scores zero recall

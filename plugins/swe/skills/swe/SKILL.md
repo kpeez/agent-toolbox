@@ -1,7 +1,6 @@
 ---
 name: swe
-description: "Route a software task to its playbook and track every step."
-disable-model-invocation: true
+description: "Route a software task to its playbook and track every step. Use for /swe, or when the user asks which swe workflow fits a task."
 argument-hint: "<task>"
 ---
 
@@ -29,9 +28,8 @@ read it.
 4. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
    fits. The list runs from narrow to broad.
 5. For large, ambiguous, or cross-session work, or work for another agent,
-   propose a plan. When the user agrees, read and follow
-   [write-plan](../write-plan/SKILL.md). For several PRs, then follow its
-   issues mode.
+   propose a plan. When the user agrees, load and follow `write-plan`. For
+   several PRs, then follow its issues mode.
 6. When nothing fits, say so in one line and use the skill that fits as a
    route. Do not invent a playbook.
 7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
@@ -65,10 +63,6 @@ Load a name this way:
 - A swe skill, such as `diagnose`: the Skill tool, as `swe:diagnose`.
 - A principle slug, such as `fix-root-causes`: the Skill tool, as
   `swe:principle-fix-root-causes`. [Principles](#principles) lists the slugs.
-- [write-plan](../write-plan/SKILL.md) and
-  [verification-skill](../verification-skill/SKILL.md): read the `SKILL.md` by
-  its absolute path. Never call the Skill tool on these two; the host blocks
-  the call.
 - `reviewer agent`: start a fresh native subagent with the
   [review brief](../../references/review-brief.md) and the step's criteria. When the step gives none, brief it as the independent
   reviewer line in [implement](../implement/SKILL.md#plans-and-issues) says.

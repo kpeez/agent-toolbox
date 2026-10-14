@@ -1,7 +1,6 @@
 ---
 name: wait-what
-description: "Stop. That last message did not land: re-pitch it."
-disable-model-invocation: true
+description: "Re-pitch the last message with more context in simpler words. Use when the user says they do not follow, or asks to re-pitch."
 ---
 
 Wait, I don't understand where you've got to here. Re-pitch that: give me a

@@ -2,4 +2,4 @@ interface:
   display_name: "Write Plan"
   short_description: "Write a handoff plan, or split it into issues"
 policy:
-  allow_implicit_invocation: false
+  allow_implicit_invocation: true

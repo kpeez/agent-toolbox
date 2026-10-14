@@ -1,8 +1,7 @@
 ---
 name: write-plan
-description: "Turn rough notes into a short handoff plan for large or ambiguous work, or split an approved plan into PR-sized tracker issues with `/write-plan issues`."
+description: "Turn rough notes into a short handoff plan for large or ambiguous work, or split an approved plan into PR-sized tracker issues. Use when the user asks for a plan or issues, or work will span sessions or go to another agent."
 argument-hint: "[notes | issues <plan>]"
-disable-model-invocation: true
 ---
 
 # Write a plan

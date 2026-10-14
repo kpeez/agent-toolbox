@@ -90,8 +90,8 @@ discovery. Preserve any independently edited skill directory.
 
 ## SWE router
 
-Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. Only the user
-starts the router. It matches the task to one of seven
+Type `/swe <task>` in Claude Code or `$swe:swe <task>` in Codex. The agent can
+also start it. It matches the task to one of seven
 [playbooks](plugins/swe/skills/swe/playbooks/), such as `fix-bug` or
 `build-feature`, or to one skill that owns the task. It ends with the state
 of every step, including the reason for each skipped step.
