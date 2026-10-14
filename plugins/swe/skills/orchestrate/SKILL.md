@@ -16,7 +16,8 @@ coordination plus independent review.
 Choose work that can proceed independently and gives each worker a complete
 result to deliver. Keep tightly coupled changes with one agent. Do not split
 work merely to increase the agent count. When one deterministic script can
-make every edit, run it yourself instead of fanning out hand edits.
+make every edit, run it yourself instead of fanning out hand edits, per
+[build-the-lever](../principle-build-the-lever/SKILL.md).
 
 Before dispatch, apply the [delegation preflight](references/delegation-contract.md):
 check the effective model, provider, role, tools, write scope, and host

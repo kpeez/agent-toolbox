@@ -49,7 +49,7 @@ Each skill also starts on its own when its task comes up.
 | `writing-for-agents` | Write a skill, `AGENTS.md`, or `CLAUDE.md` |
 | `wait-what` | Explain the last message again, in simpler words |
 
-Twelve `principle-*` skills are model-only. Other skills load them at the step
+Thirteen `principle-*` skills are model-only. Other skills load them at the step
 they apply to, for example
 [principle-fix-root-causes](../plugins/swe/skills/principle-fix-root-causes/SKILL.md).
 
