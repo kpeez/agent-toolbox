@@ -125,7 +125,5 @@ ignored `artifacts/uni-build/` directory; they are not distributed with the plug
 
 - `skills/*/SKILL.md`: nine operational entry points and UI metadata.
 - `skills/learn/references/`: shared contract, examples, and evidence notes.
-- `skills/teach/`: workspace-authoring workflow, four format templates, and
-  upstream license.
+- `skills/teach/`: workspace-authoring workflow and four format templates.
 - `evaluations/`: behavioral scenarios, rubrics, and historical review.
-- `NOTICE`: original-material license and source attribution.

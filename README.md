@@ -100,5 +100,3 @@ playbooks, skills, and principles.
   [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
 - The audit mode of `swe/skills/testing-code` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).
-
-Each adapted skill folder has a `NOTICE` with its source and license.
