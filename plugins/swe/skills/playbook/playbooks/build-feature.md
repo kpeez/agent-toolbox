@@ -14,7 +14,7 @@ Delegate implementation and stay in the lead. Delegation is mandatory and the la
 6-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)
 7-verify-on-surface: Run the feature through its real entry point, with the project's verification skill when one exists. Inconclusive or wrong-surface is not a pass. (prove-it-works)
 8-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)
-9-interrogate-if-contested: When the design is contested, run interrogate before shipping. (interrogate)
+9-review-if-contested: When the design is contested, give the design and its evidence to a reviewer agent before shipping. (reviewer agent)
 10-independent-review: Give the diff and evidence to an agent that did not write it. (reviewer agent, no-comments)
 11-order-commits: Shape the work into small ordered commits before you push them, and stack follow-ups. (sequence-verifiable-units)
 12-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
