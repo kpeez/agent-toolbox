@@ -101,10 +101,8 @@ and give one example prompt.
 | Vet a performance number before reporting it | [benchmark-checklist](../benchmark-checklist/SKILL.md) |
 | Run a large or cross-cutting change, or one to review after stepping away | [figure-it-out](../figure-it-out/SKILL.md) |
 | Keep a decision log during a run | [log-decisions](../log-decisions/SKILL.md) |
-| Write a short plan, or split a plan into issues | [write-plan](../write-plan/SKILL.md) |
 | Save the work's state for a new session | [handoff](../handoff/SKILL.md) |
-| Open, fix, or land a PR | [ship-pr](../ship-pr/SKILL.md) |
-| Resolve conflicts in an active merge or rebase | [merge-conflicts](../merge-conflicts/SKILL.md) |
+| Open, fix, or land a PR, including its conflicts | [ship-pr](../ship-pr/SKILL.md) |
 | Turn what a session taught into skill edits | [reflect](../reflect/SKILL.md) |
 | Stop agents from repeating a mistake in this repo | [correct](../correct/SKILL.md) |
 | Find their way around swe | `/swe:help` |
