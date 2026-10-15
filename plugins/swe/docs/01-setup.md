@@ -20,7 +20,19 @@ codex plugin add swe@agent-toolbox
 
 Start a new session after you install. The plugin needs no setup step, no config file, and no generated `AGENTS.md`.
 
-To install only the skills, without the plugin agents, the hooks, or the router, run `npx skills@latest add kpeez/agent-toolbox`. The rest of this guide assumes the full plugin.
+To update, run `claude plugin marketplace update agent-toolbox`, then `claude plugin update swe@agent-toolbox`. In Codex, run `codex plugin marketplace upgrade agent-toolbox`, then `codex plugin add swe@agent-toolbox` again.
+
+## Install the skills only
+
+For an agent without plugin support, or to skip the plugin, install the swe skills with [`npx skills`](https://github.com/vercel-labs/skills):
+
+```text
+npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe
+```
+
+This installs the swe skills and no other plugin. Install all of them, because the router and the playbooks read the other skills by path. Add `-g` to install for your user instead of the current project. Run `npx skills update` to update.
+
+The skills-only install has no hooks and no agents. To make the agent start the router, add the lines in [Add the router rule to AGENTS.md](#add-the-router-rule-to-agentsmd-codex) to `AGENTS.md` or `CLAUDE.md`. Delegated work uses the host's own subagents instead of `daedalus` and `comment-sicko`. The rest of this guide assumes the full plugin.
 
 ## Let the hook start the router (Claude Code)
 

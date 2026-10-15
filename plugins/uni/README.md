@@ -12,32 +12,47 @@ explain,” “quiz me,” “harder,” “skip,” and “stop.” Instruction
 prerequisites are missing or progress stalls. The learning loop is a repertoire,
 not a required sequence. Ordinary coding requests do not enter tutoring mode.
 
-## Install from the marketplace
+## Install
 
-For Codex:
+Each plugin installs alone. Pick one way, then start a new session.
+
+Claude Code plugin:
+
+```text
+/plugin marketplace add kpeez/agent-toolbox
+/plugin install uni@agent-toolbox
+```
+
+Codex CLI plugin:
 
 ```text
 codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add uni@agent-toolbox
 ```
 
-For Claude Code:
+Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), for
+Claude Code, Codex, and other agents that read Agent Skills:
 
 ```text
-claude plugin marketplace add kpeez/agent-toolbox
-claude plugin install uni@agent-toolbox --scope user
+npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/uni
 ```
 
-If the marketplace is already configured, refresh it before installing with
-`codex plugin marketplace upgrade agent-toolbox` or
-`claude plugin marketplace update agent-toolbox`. Start a fresh session after
-installation. Codex invocation uses `$learn`; Claude Code uses `/uni:learn`.
+This installs the uni skills and no other plugin. Install all of them, because
+they read each other by path. Add `-g` to install for your user instead of
+the current project.
 
-To install only the skills, run
-`npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/uni`.
+To update:
 
-Uni installs all nine skills through the native plugin manager. Shared
-references stay inside the plugin; no separate installer or runtime is needed.
+- Claude Code: `claude plugin marketplace update agent-toolbox`, then
+  `claude plugin update uni@agent-toolbox`.
+- Codex: `codex plugin marketplace upgrade agent-toolbox`, then
+  `codex plugin add uni@agent-toolbox` again.
+- npx skills: `npx skills update`.
+
+Codex invocation uses `$learn`; Claude Code uses `/uni:learn`.
+
+Each install path brings all nine skills. Shared references stay inside the
+plugin; no separate installer or runtime is needed.
 If you previously copied the chat skills into a project, preserve any edits
 before removing those copies to avoid duplicate discovery.
 
