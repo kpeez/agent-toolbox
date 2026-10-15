@@ -8,27 +8,47 @@ session.
 
 ## Install
 
-Claude Code:
+Each plugin installs alone. Pick one way, then start a new session.
+
+Claude Code plugin:
 
 ```text
 /plugin marketplace add kpeez/agent-toolbox
 /plugin install swe@agent-toolbox
 ```
 
-Codex CLI:
+Codex CLI plugin:
 
 ```text
 codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 ```
 
-Start a new session after you install. In Claude Code, a SessionStart hook
-tells the agent to start the router for each new software task, so you can
-also type the task without the command. Codex plugins have no hooks.
-[Set up swe](./docs/01-setup.md) gives the lines to put in `AGENTS.md`.
+Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), for
+Claude Code, Codex, and other agents that read Agent Skills:
 
-To install only the skills, without the agents or the hook, run
-`npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe`.
+```text
+npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe
+```
+
+This installs the swe skills and no other plugin. Install all of them, because
+they read each other by path. Add `-g` to install for your user instead of
+the current project. The skills-only install has no hooks and no
+agents. [Set up swe](./docs/01-setup.md#install-the-skills-only) says what
+changes.
+
+To update:
+
+- Claude Code: `claude plugin marketplace update agent-toolbox`, then
+  `claude plugin update swe@agent-toolbox`.
+- Codex: `codex plugin marketplace upgrade agent-toolbox`, then
+  `codex plugin add swe@agent-toolbox` again.
+- npx skills: `npx skills update`.
+
+In Claude Code, a SessionStart hook tells the agent to start the router for
+each new software task, so you can also type the task without the command.
+Codex plugins have no hooks. [Set up swe](./docs/01-setup.md) gives the lines
+to put in `AGENTS.md`.
 
 New here? Ask [`/swe:help`](./skills/help/SKILL.md) a question, such as "which
 skill reviews a PR?". The [swe guide](./docs/README.md) walks you through a

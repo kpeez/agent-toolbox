@@ -5,22 +5,40 @@ experiment loops, and plot guidance.
 
 ## Install
 
-Claude Code:
+Each plugin installs alone. Pick one way, then start a new session.
+
+Claude Code plugin:
 
 ```text
 /plugin marketplace add kpeez/agent-toolbox
 /plugin install lab@agent-toolbox
 ```
 
-Codex CLI:
+Codex CLI plugin:
 
 ```text
 codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
-Start a new session after you install. To install only the skills, run
-`npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/lab`.
+Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), for
+Claude Code, Codex, and other agents that read Agent Skills:
+
+```text
+npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/lab
+```
+
+This installs the lab skills and no other plugin. Install all of them, because
+they read each other by path. Add `-g` to install for your user instead of
+the current project.
+
+To update:
+
+- Claude Code: `claude plugin marketplace update agent-toolbox`, then
+  `claude plugin update lab@agent-toolbox`.
+- Codex: `codex plugin marketplace upgrade agent-toolbox`, then
+  `codex plugin add lab@agent-toolbox` again.
+- npx skills: `npx skills update`.
 
 ## Skills
 
