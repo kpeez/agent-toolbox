@@ -321,11 +321,8 @@ Long runs and sessions:
 - Write or edit a README, a docs page, or other prose: `writing`.
 - Conflicts, review threads, or CI on an open PR, or mark ready and merge a
   verified PR: `ship-pr`.
-- Conflicts in an active merge, rebase, or cherry-pick: `merge-conflicts`.
 - Find what a change could break: `blast-radius`.
 - Settle open decisions in a plan or design with the user: `interview-user`.
-- Turn rough notes into a short handoff plan, or split a plan into issues:
-  `write-plan`.
 - Write the work's current state for a new session: `handoff`.
 - Catch the user up after time away: `ketchup`.
 - The user corrects a mistake agents have made before: `correct`.
