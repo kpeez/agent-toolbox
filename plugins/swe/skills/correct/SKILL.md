@@ -1,6 +1,7 @@
 ---
 name: correct
 description: "Stop a repeated agent mistake by fixing its class at the highest level that works: architecture, types, lint or check, test, docs last. Use when the user corrects a mistake agents have made before, or asks to encode a lesson."
+argument-hint: "<repeated mistake>"
 ---
 
 # Correct

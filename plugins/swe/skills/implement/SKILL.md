@@ -1,6 +1,7 @@
 ---
 name: implement
 description: "Implement an authorized feature or fix through relevant verification. Use for scoped code changes."
+argument-hint: "<feature or fix>"
 ---
 
 # Implement

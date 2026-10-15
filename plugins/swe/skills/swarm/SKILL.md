@@ -1,6 +1,7 @@
 ---
 name: swarm
 description: "Fan out N parallel workers, drain them, and return one report. Use for parallel coverage matrices, races, gauntlets, exploration partitions, and verifier lanes."
+argument-hint: "<task>"
 disable-model-invocation: true
 ---
 

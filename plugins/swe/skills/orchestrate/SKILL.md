@@ -1,6 +1,7 @@
 ---
 name: orchestrate
 description: Split work across subagents and integrate results, or delegate to an external provider the user named (OpenCode, Copilot). Use for parallel tasks, investigations, or reviewers. Not for a single edit or one direct review.
+argument-hint: "<task>"
 ---
 
 # Orchestrate

@@ -1,6 +1,7 @@
 ---
 name: how
 description: "Explain how code works now: a subsystem's architecture, its runtime flow, or a walkthrough before you change it. Also for placement, ownership, and layering questions such as 'where should this live'. Use why for motivation."
+argument-hint: "<subsystem or question>"
 disable-model-invocation: true
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: figure-it-out
 description: "Design a bespoke, auditable playbook when no swe playbook fits or the work is large: a migration, an ambitious multi-part change, or work a human reviews after stepping away. Scales rigor to the task, runs a hypothesis loop, and logs decisions."
+argument-hint: "<task>"
 disable-model-invocation: true
 ---
 

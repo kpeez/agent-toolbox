@@ -1,6 +1,7 @@
 ---
 name: deep-research
 description: Produce repository-retained research briefs, lane evidence, and an audited Markdown report. Use for multi-lane project research requiring those artifacts; not for a single bounded question or an experiment loop.
+argument-hint: "<topic>"
 ---
 
 # Deep research

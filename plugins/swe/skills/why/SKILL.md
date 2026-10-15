@@ -1,6 +1,7 @@
 ---
 name: why
 description: "Trace why code, a config, or a decision exists through git and gh history, Linear, Slack, and project docs, with a confidence tier on every claim. Use for design rationale or regression history; not for how code works now."
+argument-hint: "<code, config, or decision>"
 ---
 
 # Why

@@ -1,6 +1,7 @@
 ---
 name: autoresearch
 description: Run a bounded autonomous experiment loop against an approved metric and evaluator, or clean up a completed run into a verified archive. Use for autoresearch, repeated optimization runs, or autoresearch cleanup; not for one-off research memos or multi-lane reviews.
+argument-hint: "<metric goal>, or cleanup <run tag>"
 ---
 
 # Autoresearch

@@ -1,6 +1,7 @@
 ---
 name: sharpen
 description: "Sharpen a task before you start: the expert approach, what the user is really after, and the right level of specification."
+argument-hint: "<task>"
 disable-model-invocation: true
 ---
 

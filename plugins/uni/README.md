@@ -73,17 +73,21 @@ $learn-review Drill the concepts from our last lesson for ten minutes, one quest
 $uni:teach Build a learning workspace with short HTML lessons about linear algebra.
 ```
 
-| Skill | Use |
+Each command shows its arguments: `<x>` is required and `[x]` is optional.
+Claude Code shows the same hint when you type the command. In Codex, type `$`
+in place of `/`.
+
+| Command | Use |
 | --- | --- |
-| `learn` | Establish a small goal, check relevant knowledge, route and resume |
-| `learn-genetic` | Reconstruct the problem that makes an idea useful |
-| `learn-refute` | Test a conjecture or argument and repair the failing part |
-| `learn-feynman` | Diagnose and revise the learner's own explanation |
-| `learn-worked-example` | Study a small example, complete missing steps, then work independently |
-| `learn-quiz` | Ask and grade one source-grounded retrieval question at a time |
-| `learn-review` | Revisit selected or recent concepts through chat drills |
-| `learn-transfer` | Select and apply a method in a new situation |
-| `teach` | Author a persistent learning workspace with HTML lessons and reusable references; invoke explicitly |
+| [`/uni:learn <topic>`](./skills/learn/SKILL.md) | Establish a small goal, check relevant knowledge, route and resume |
+| [`/uni:learn-genetic <concept>`](./skills/learn-genetic/SKILL.md) | Reconstruct the problem that makes an idea useful |
+| [`/uni:learn-refute <claim or argument>`](./skills/learn-refute/SKILL.md) | Test a conjecture or argument and repair the failing part |
+| [`/uni:learn-feynman <concept>`](./skills/learn-feynman/SKILL.md) | Diagnose and revise the learner's own explanation |
+| [`/uni:learn-worked-example <procedure or concept>`](./skills/learn-worked-example/SKILL.md) | Study a small example, complete missing steps, then work independently |
+| [`/uni:learn-quiz <topic or source>`](./skills/learn-quiz/SKILL.md) | Ask and grade one source-grounded retrieval question at a time |
+| [`/uni:learn-review [concepts]`](./skills/learn-review/SKILL.md) | Revisit selected or recent concepts through chat drills |
+| [`/uni:learn-transfer <concept or method>`](./skills/learn-transfer/SKILL.md) | Select and apply a method in a new situation |
+| [`/uni:teach [topic]`](./skills/teach/SKILL.md) | Author a persistent learning workspace with HTML lessons and reusable references; invoke explicitly |
 
 Start with the umbrella skill unless a particular exercise is already clear.
 Lessons mix explanation with purposeful questions and exercises: predict an

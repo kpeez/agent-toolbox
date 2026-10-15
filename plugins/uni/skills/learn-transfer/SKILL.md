@@ -1,6 +1,7 @@
 ---
 name: learn-transfer
 description: Test and develop selection and use of learned ideas in new situations. Use meaningful context or structural variation, method discrimination, implementations, experiment designs, and nontechnical applications.
+argument-hint: "<concept or method>"
 ---
 
 # Choose and apply in a new setting

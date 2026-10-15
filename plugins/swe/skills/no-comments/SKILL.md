@@ -1,6 +1,7 @@
 ---
 name: no-comments
 description: "Spawn Comment Sicko to delete comments, fix the accepted findings, and offer encodings for claimed constraints."
+argument-hint: "[path or diff]"
 disable-model-invocation: true
 ---
 

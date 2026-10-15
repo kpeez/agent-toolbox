@@ -1,6 +1,7 @@
 ---
 name: making-plots
 description: Create or revise publication- or report-quality scientific result figures and their plotting code. Use for benchmark, training, and evaluation figures; not ordinary tabulation, general dashboard critique, or UI mockups.
+argument-hint: "<results or figure>"
 ---
 
 # Making plots

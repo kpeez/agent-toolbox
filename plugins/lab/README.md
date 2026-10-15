@@ -42,16 +42,17 @@ To update:
 
 ## Skills
 
-| Skill | Use for |
-| --- | --- |
-| [`research`](./skills/research/SKILL.md) | One cited memo for a bounded question or a source audit |
-| [`deep-research`](./skills/deep-research/SKILL.md) | A multi-lane research program with briefs, lane evidence, and an audited report |
-| [`autoresearch`](./skills/autoresearch/SKILL.md) | A bounded experiment loop against an approved metric and evaluator, and its cleanup |
-| [`making-plots`](./skills/making-plots/SKILL.md) | Publication-quality result figures and their plotting code |
-| [`visualizing-data`](./skills/visualizing-data/SKILL.md) | Review plots for honest scales and accessibility |
+Each command shows its arguments: `<x>` is required and `[x]` is optional.
+Claude Code shows the same hint when you type the command. In Codex, type `$`
+in place of `/`.
 
-Start a skill by name, for example `/lab:research <question>` in Claude Code
-or `$lab:research <question>` in Codex.
+| Command | Use for |
+| --- | --- |
+| [`/lab:research <question>`](./skills/research/SKILL.md) | One cited memo for a bounded question or a source audit |
+| [`/lab:deep-research <topic>`](./skills/deep-research/SKILL.md) | A multi-lane research program with briefs, lane evidence, and an audited report |
+| [`/lab:autoresearch <metric goal>, or cleanup <run tag>`](./skills/autoresearch/SKILL.md) | A bounded experiment loop against an approved metric and evaluator, and its cleanup |
+| [`/lab:making-plots <results or figure>`](./skills/making-plots/SKILL.md) | Publication-quality result figures and their plotting code |
+| [`/lab:visualizing-data <plot or plotting code>`](./skills/visualizing-data/SKILL.md) | Review plots for honest scales and accessibility |
 
 ## Autoresearch files
 

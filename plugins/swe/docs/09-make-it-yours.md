@@ -56,6 +56,8 @@ The steps load [writing-for-agents](../skills/writing-for-agents/SKILL.md). Agen
 
 Codex ignores `disable-model-invocation`. A user-invoked skill also needs `agents/openai.yaml` with `policy.allow_implicit_invocation: false`.
 
+A skill you type with input also sets `argument-hint`, such as `"<question>"`. Claude Code shows it as you type the command. The plugin README lists the same hint for Codex users.
+
 A skill that drives your app to prove behavior is a verification skill. Use [verification-skill](../skills/verification-skill/SKILL.md) for it instead. [Verify and ship](06-verify-and-ship.md) covers it.
 
 ## Test a skill change before you trust it

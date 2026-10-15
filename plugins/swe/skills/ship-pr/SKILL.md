@@ -1,6 +1,7 @@
 ---
 name: ship-pr
 description: "Commit, push, and open or update a draft PR; fix a failing PR check or CI, review threads, or conflicts on an open PR; mark a PR ready or merge it."
+argument-hint: "[PR number or action]"
 ---
 
 # Ship a pull request

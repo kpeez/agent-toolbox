@@ -124,29 +124,33 @@ when you want only that job:
 /swe:blast-radius what else could this diff break?
 ```
 
+Each command shows its arguments: `<x>` is required and `[x]` is optional.
+Claude Code shows the same hint when you type the command. In Codex, type `$`
+in place of `/`.
+
 <details>
 <summary>Skills in the model's skill list</summary>
 
 Each of these also starts on its own when its task comes up.
 
-| Skill | Use it when |
+| Command | Use it when |
 | --- | --- |
-| [`interview-user`](./skills/interview-user/SKILL.md) | A plan or design has open decisions only you can make |
-| [`handoff`](./skills/handoff/SKILL.md) | You want the work's current state saved for a new session |
-| [`log-decisions`](./skills/log-decisions/SKILL.md) | You want an append-only decision log for a long or unattended run |
-| [`implement`](./skills/implement/SKILL.md) | You approved a feature or fix and want it built and verified |
-| [`diagnose`](./skills/diagnose/SKILL.md) | You want the cause of a bug or a performance regression |
-| [`testing-code`](./skills/testing-code/SKILL.md) | You design, gate, or audit tests, or want test-first work |
-| [`codebase-design`](./skills/codebase-design/SKILL.md) | You design a new interface, or want deeper module boundaries proposed |
-| [`blast-radius`](./skills/blast-radius/SKILL.md) | You want to know what a change could break beyond its diff |
-| [`why`](./skills/why/SKILL.md) | You want to know why code or a decision exists |
-| [`correct`](./skills/correct/SKILL.md) | Agents keep making the same mistake |
-| [`orchestrate`](./skills/orchestrate/SKILL.md) | You want work split across subagents, or sent to another provider |
-| [`ship-pr`](./skills/ship-pr/SKILL.md) | You want a commit, a push, and a draft PR driven to green |
-| [`verification-skill`](./skills/verification-skill/SKILL.md) | Your project has no scripted way to run and observe the real app |
-| [`writing`](./skills/writing/SKILL.md) | You write prose: docs, PR bodies, handoffs, plans, or replies |
-| [`writing-for-agents`](./skills/writing-for-agents/SKILL.md) | You write a skill, `AGENTS.md`, or `CLAUDE.md` |
-| [`wait-what`](./skills/wait-what/SKILL.md) | You want the last message again in simpler words |
+| [`/swe:interview-user [plan or decision]`](./skills/interview-user/SKILL.md) | A plan or design has open decisions only you can make |
+| [`/swe:handoff`](./skills/handoff/SKILL.md) | You want the work's current state saved for a new session |
+| [`/swe:log-decisions`](./skills/log-decisions/SKILL.md) | You want an append-only decision log for a long or unattended run |
+| [`/swe:implement <feature or fix>`](./skills/implement/SKILL.md) | You approved a feature or fix and want it built and verified |
+| [`/swe:diagnose <symptom or failing check>`](./skills/diagnose/SKILL.md) | You want the cause of a bug or a performance regression |
+| [`/swe:testing-code [code, diff, or test suite]`](./skills/testing-code/SKILL.md) | You design, gate, or audit tests, or want test-first work |
+| [`/swe:codebase-design <interface or module>`](./skills/codebase-design/SKILL.md) | You design a new interface, or want deeper module boundaries proposed |
+| [`/swe:blast-radius [diff, branch, or PR]`](./skills/blast-radius/SKILL.md) | You want to know what a change could break beyond its diff |
+| [`/swe:why <code, config, or decision>`](./skills/why/SKILL.md) | You want to know why code or a decision exists |
+| [`/swe:correct <repeated mistake>`](./skills/correct/SKILL.md) | Agents keep making the same mistake |
+| [`/swe:orchestrate <task>`](./skills/orchestrate/SKILL.md) | You want work split across subagents, or sent to another provider |
+| [`/swe:ship-pr [PR number or action]`](./skills/ship-pr/SKILL.md) | You want a commit, a push, and a draft PR driven to green |
+| [`/swe:verification-skill [app or surface]`](./skills/verification-skill/SKILL.md) | Your project has no scripted way to run and observe the real app |
+| [`/swe:writing <document or path>`](./skills/writing/SKILL.md) | You write prose: docs, PR bodies, handoffs, plans, or replies |
+| [`/swe:writing-for-agents <skill or AGENTS.md path>`](./skills/writing-for-agents/SKILL.md) | You write a skill, `AGENTS.md`, or `CLAUDE.md` |
+| [`/swe:wait-what`](./skills/wait-what/SKILL.md) | You want the last message again in simpler words |
 
 </details>
 
@@ -156,21 +160,21 @@ Each of these also starts on its own when its task comes up.
 Playbook steps and router triggers read these by path. You can still type
 them, such as `/swe:how`.
 
-| Skill | Use it when |
+| Command | Use it when |
 | --- | --- |
-| [`help`](./skills/help/SKILL.md) | You want to know which swe skill, playbook, or principle fits |
-| [`how`](./skills/how/SKILL.md) | You want a walkthrough of how a subsystem works |
-| [`architect`](./skills/architect/SKILL.md) | You want competing designs explored before code |
-| [`swarm`](./skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
-| [`figure-it-out`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
-| [`benchmark-checklist`](./skills/benchmark-checklist/SKILL.md) | You measured a number and want it vetted before you report it |
-| [`sharpen`](./skills/sharpen/SKILL.md) | You want a vague ask restated as an expert would approach it |
-| [`no-comments`](./skills/no-comments/SKILL.md) | You want comments that do not explain a non-obvious why removed |
-| [`ketchup`](./skills/ketchup/SKILL.md) | You come back after time away and want to catch up |
-| [`recall`](./skills/recall/SKILL.md) | You want recent context rebuilt from chat history and the handoff file |
-| [`reflect`](./skills/reflect/SKILL.md) | You want a session reviewed for agent mistakes |
-| [`in-your-own-words`](./skills/in-your-own-words/SKILL.md) | You want the agent to restate your goal before it starts |
-| [`typescript-best-practices`](./skills/typescript-best-practices/SKILL.md) | You read or edit TypeScript |
+| [`/swe:help [question]`](./skills/help/SKILL.md) | You want to know which swe skill, playbook, or principle fits |
+| [`/swe:how <subsystem or question>`](./skills/how/SKILL.md) | You want a walkthrough of how a subsystem works |
+| [`/swe:architect <feature or interface>`](./skills/architect/SKILL.md) | You want competing designs explored before code |
+| [`/swe:swarm <task>`](./skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
+| [`/swe:figure-it-out <task>`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
+| [`/swe:benchmark-checklist <number and how you measured it>`](./skills/benchmark-checklist/SKILL.md) | You measured a number and want it vetted before you report it |
+| [`/swe:sharpen <task>`](./skills/sharpen/SKILL.md) | You want a vague ask restated as an expert would approach it |
+| [`/swe:no-comments [path or diff]`](./skills/no-comments/SKILL.md) | You want comments that do not explain a non-obvious why removed |
+| [`/swe:ketchup`](./skills/ketchup/SKILL.md) | You come back after time away and want to catch up |
+| [`/swe:recall [topic]`](./skills/recall/SKILL.md) | You want recent context rebuilt from chat history and the handoff file |
+| [`/swe:reflect`](./skills/reflect/SKILL.md) | You want a session reviewed for agent mistakes |
+| [`/swe:in-your-own-words`](./skills/in-your-own-words/SKILL.md) | You want the agent to restate your goal before it starts |
+| [`/swe:typescript-best-practices`](./skills/typescript-best-practices/SKILL.md) | You read or edit TypeScript |
 
 </details>
 
