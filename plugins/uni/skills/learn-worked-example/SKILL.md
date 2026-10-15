@@ -1,6 +1,7 @@
 ---
 name: learn-worked-example
 description: Teach through a small worked example, selective explanation prompts, completion problems, and independent attempts. Use for missing prerequisites, stalled discovery, unfamiliar procedures, or requested instruction.
+argument-hint: "<procedure or concept>"
 ---
 
 # Scaffold and fade

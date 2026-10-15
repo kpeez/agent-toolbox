@@ -1,6 +1,7 @@
 ---
 name: research
 description: Produce one retained, cited memo for a bounded research question or explicit source audit. Not for multi-lane programs or experiment loops.
+argument-hint: "<question>"
 ---
 
 # Research

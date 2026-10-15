@@ -1,6 +1,7 @@
 ---
 name: benchmark-checklist
 description: "Vet a performance number (limiter, tuning, limits, errors, repeatability, relevance, and whether the work happened) before you report or act on it."
+argument-hint: "<number and how you measured it>"
 disable-model-invocation: true
 ---
 

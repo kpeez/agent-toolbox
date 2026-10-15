@@ -1,6 +1,7 @@
 ---
 name: learn-refute
 description: Tutor through criticism and repair of a learner's conjecture, explanation, proof sketch, or algorithm. Test assumptions and counterexamples while distinguishing false claims, invalid arguments, and empirical uncertainty.
+argument-hint: "<claim or argument>"
 ---
 
 # Criticize and repair

@@ -1,6 +1,7 @@
 ---
 name: architect
 description: "Sketch types, signatures, and module structure in parallel competing designs before code, then stay in the loop while implementation fills in. Use for 'architect this', or code that crosses a function boundary where jumping to code would lock in the wrong shape."
+argument-hint: "<feature or interface>"
 disable-model-invocation: true
 ---
 
