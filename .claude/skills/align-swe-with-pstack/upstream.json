@@ -1,0 +1,942 @@
+{
+  "repo": "https://github.com/cursor/plugins",
+  "path": "pstack",
+  "commit": "1e5c90a4b6f249917bd21fe361b3a2a7deb741b8",
+  "items": [
+    {
+      "upstream": ".cursor-plugin/plugin.json",
+      "class": "dropped"
+    },
+    {
+      "upstream": ".gitignore",
+      "class": "dropped"
+    },
+    {
+      "upstream": "plugin.json",
+      "class": "dropped"
+    },
+    {
+      "upstream": "assets/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "automations/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "docs/guide/images/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "LICENSE",
+      "class": "modified",
+      "local": [
+        "README.md"
+      ],
+      "note": "MIT notice; swe credits pstack in the README Credits section"
+    },
+    {
+      "upstream": "README.md",
+      "class": "modified",
+      "local": [
+        "README.md"
+      ]
+    },
+    {
+      "upstream": "agents/comment-sicko.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/agents/comment-sicko.md",
+        "plugins/swe/agents/comment-sicko.toml"
+      ]
+    },
+    {
+      "upstream": "agents/poteto-agent.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/agents/daedalus.md",
+        "plugins/swe/agents/daedalus.toml"
+      ]
+    },
+    {
+      "upstream": "docs/guide/01-setup.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/01-setup.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/02-poteto-mode.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/02-route-work.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/03-understand.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/03-understand.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/04-design.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/04-design.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/05-build-and-clean.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/05-build-and-clean.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/06-verify-and-ship.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/06-verify-and-ship.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/07-overnight.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/07-long-runs.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/08-principles.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/08-principles.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/09-make-it-yours.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/09-make-it-yours.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/10-recipes-and-pitfalls.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/10-recipes-and-pitfalls.md"
+      ]
+    },
+    {
+      "upstream": "docs/guide/README.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/README.md"
+      ]
+    },
+    {
+      "upstream": "skills/architect/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/architect/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/architect/references/design-red-flags.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/architect/references/design-red-flags.md"
+      ]
+    },
+    {
+      "upstream": "skills/architect/references/rationale-template.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/architect/references/rationale-template.md"
+      ]
+    },
+    {
+      "upstream": "skills/architect/references/runner-prompt.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/architect/references/runner-prompt.md"
+      ]
+    },
+    {
+      "upstream": "skills/arena/",
+      "class": "dropped",
+      "note": "Kyle dropped arena; evals run through swarm"
+    },
+    {
+      "upstream": "skills/automate-me/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/benchmark-checklist/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/benchmark-checklist/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/blast-radius/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/blast-radius/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/correct/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/correct/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/figure-it-out/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/figure-it-out/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/in-your-own-words/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/in-your-own-words/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/ketchup/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/ketchup/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/no-comments/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/no-comments/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/sharpen/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/sharpen/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/swarm/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/swarm/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/bro/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/wait-what/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/create-verification-skill/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/verification-skill/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/create-verification-skill/references/feature-map-example/README.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/verification-skill/references/feature-map-example/README.md"
+      ]
+    },
+    {
+      "upstream": "skills/create-verification-skill/references/feature-map-example/create-note.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/verification-skill/references/feature-map-example/create-note.md"
+      ]
+    },
+    {
+      "upstream": "skills/create-verification-skill/references/feature-map-example/search.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/verification-skill/references/feature-map-example/search.md"
+      ]
+    },
+    {
+      "upstream": "skills/maintain-verification-skill/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/verification-skill/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/how/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/how/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/how/references/explainer-prompt.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/how/references/explainer-prompt.md"
+      ]
+    },
+    {
+      "upstream": "skills/how/references/explorer-prompt.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/how/references/explorer-prompt.md"
+      ]
+    },
+    {
+      "upstream": "skills/interrogate/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/references/review-brief.md"
+      ],
+      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+    },
+    {
+      "upstream": "skills/interrogate/references/code-quality-review.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/references/review-brief.md"
+      ],
+      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+    },
+    {
+      "upstream": "skills/interrogate/references/lead-judgment.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/references/review-brief.md"
+      ],
+      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+    },
+    {
+      "upstream": "skills/interrogate/references/reviewer-prompt.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/references/review-brief.md"
+      ],
+      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+    },
+    {
+      "upstream": "skills/interrogate/references/rubric.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/references/review-brief.md"
+      ],
+      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+    },
+    {
+      "upstream": "skills/make-bot-ui/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/poteto-help/SKILL.md",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/poteto-help/references/prompting.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/09-make-it-yours.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-help/references/recipes.md",
+      "class": "modified",
+      "local": [
+        "docs/guide/10-recipes-and-pitfalls.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/SKILL.md",
+        "plugins/swe/hooks/session-start.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/authoring-a-skill.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/author-skill.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/autonomous-run.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/run-autonomously.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/autopilot-full.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/autopilot-full.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/autopilot-stack.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/autopilot-stack.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/babysit.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/babysit-pr.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/bug-fix.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/fix-bug.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/eval.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/evaluate-agent-change.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/feature.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/build-feature.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/hillclimb.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/hillclimb-metric.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/investigation.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/investigate-question.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/multi-phase-plan.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/plan-multi-phase.md",
+        "plugins/swe/skills/playbook/references/plan-multi-phase.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/orchestrate.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/run-program.md",
+        "plugins/swe/skills/playbook/references/run-program.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/pause-safely.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/pause-safely.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/perf-issue.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/improve-performance.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/prototype.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/build-prototype.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/refactoring.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/refactor-structure.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/runtime-forensics.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/diagnose-runtime.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/session-pickup.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/pick-up-session.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/shipping.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/ship-stack.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/trace-forensics.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/diagnose-trace.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/visual-parity.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/match-visual-parity.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/worktree-cleanup.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/playbook/playbooks/clean-worktrees.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/playbooks/opening-a-pr.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/ship-pr/SKILL.md",
+        "plugins/swe/skills/ship-pr/references/pr-body.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/references/bugbot-triage.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/ship-pr/references/bot-triage.md"
+      ]
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/check-plan.mjs",
+      "class": "modified",
+      "local": [
+        "plugins/swe/scripts/check_plan.py"
+      ],
+      "note": "ported to Python"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/worktree-audit.sh",
+      "class": "modified",
+      "local": [
+        "plugins/swe/scripts/worktree_audit.sh"
+      ],
+      "note": "Cursor and Xcode cache lines dropped"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/bootstrap.ts",
+      "class": "dropped",
+      "note": "bun/TS tooling not ported"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/bun.lock",
+      "class": "dropped",
+      "note": "bun/TS tooling not ported"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/package.json",
+      "class": "dropped",
+      "note": "bun/TS tooling not ported"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/check-plan.test.ts",
+      "class": "dropped",
+      "note": "bun/TS tooling not ported"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/orch/",
+      "class": "dropped",
+      "note": "bun/TS tooling not ported"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/watch-pr/",
+      "class": "dropped",
+      "note": "bun/TS tooling not ported"
+    },
+    {
+      "upstream": "skills/principle-attack-the-premise/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-attack-the-premise/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-boundary-discipline/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-boundary-discipline/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-build-the-lever/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-build-the-lever/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-encode-lessons-in-structure/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-encode-lessons-in-structure/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-exhaust-the-design-space/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-exhaust-the-design-space/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-experience-first/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-experience-first/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-explain-the-number/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-explain-the-number/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-fix-root-causes/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-fix-root-causes/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-foundational-thinking/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-foundational-thinking/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-guard-the-context-window/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-guard-the-context-window/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-laziness-protocol/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-laziness-protocol/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-make-operations-idempotent/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-make-operations-idempotent/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-minimize-reader-load/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-minimize-reader-load/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-model-the-domain/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-model-the-domain/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-never-block-on-the-human/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-never-block-on-the-human/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-outcome-oriented-execution/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-outcome-oriented-execution/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-prove-it-works/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-prove-it-works/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-redesign-from-first-principles/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-redesign-from-first-principles/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-separate-before-serializing-shared-state/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-separate-before-serializing-shared-state/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-sequence-verifiable-units/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-sequence-verifiable-units/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-subtract-before-you-add/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-subtract-before-you-add/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-test-behavior-not-implementation/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-test-behavior-not-implementation/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/principle-type-system-discipline/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/principle-type-system-discipline/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/recall/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/recall/SKILL.md",
+        "plugins/swe/skills/recall/scripts/transcripts.py"
+      ]
+    },
+    {
+      "upstream": "skills/reflect/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/reflect/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/reflect/references/divergent-reviewer.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/reflect/references/divergent-reviewer.md"
+      ]
+    },
+    {
+      "upstream": "skills/reflect/references/judgment-reviewer.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/reflect/references/judgment-reviewer.md"
+      ]
+    },
+    {
+      "upstream": "skills/reflect/references/synthesizer.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/reflect/references/synthesizer.md"
+      ]
+    },
+    {
+      "upstream": "skills/reflect/references/tooling-reviewer.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/reflect/references/tooling-reviewer.md"
+      ]
+    },
+    {
+      "upstream": "skills/setup-pstack/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/show-me-your-work/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/log-decisions/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/show-me-your-work/scripts/log.sh",
+      "class": "modified",
+      "local": [
+        "plugins/swe/scripts/handoff.py"
+      ],
+      "note": "handoff.py log appends JSONL rows"
+    },
+    {
+      "upstream": "skills/show-me-your-work/references/decision-log-template.tsv",
+      "class": "dropped",
+      "note": "swe logs JSONL, not TSV"
+    },
+    {
+      "upstream": "skills/tdd/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/testing-code/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/teach/",
+      "class": "dropped",
+      "note": "the uni plugin owns teaching"
+    },
+    {
+      "upstream": "skills/technical-writing/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/writing/SKILL.md",
+        "plugins/swe/skills/writing/references/human-docs.md"
+      ]
+    },
+    {
+      "upstream": "skills/typescript-best-practices/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/typescript-best-practices/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/typescript-best-practices/references/patterns.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/typescript-best-practices/references/patterns.md"
+      ]
+    },
+    {
+      "upstream": "skills/unslop/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/writing/references/prose.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/epistemics.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/epistemics.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/investigator-prompt.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/briefs.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/synthesizer-prompt.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/briefs.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/source-playbook.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/SKILL.md",
+        "plugins/swe/skills/why/references/sources/project-docs.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/sources/code-archaeology.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/sources/git-history.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/sources/linear.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/sources/linear.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/sources/slack.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/sources/slack.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/sources/databricks.md",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/why/references/sources/datadog.md",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/why/references/sources/incident-postmortem.md",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/why/references/sources/notion.md",
+      "class": "dropped"
+    },
+    {
+      "upstream": "skills/why/references/sources/sentry.md",
+      "class": "dropped"
+    }
+  ]
+}
