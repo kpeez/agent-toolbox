@@ -62,77 +62,77 @@
       "upstream": "docs/guide/01-setup.md",
       "class": "modified",
       "local": [
-        "docs/guide/01-setup.md"
+        "plugins/swe/docs/01-setup.md"
       ]
     },
     {
       "upstream": "docs/guide/02-poteto-mode.md",
       "class": "modified",
       "local": [
-        "docs/guide/02-route-work.md"
+        "plugins/swe/docs/02-route-work.md"
       ]
     },
     {
       "upstream": "docs/guide/03-understand.md",
       "class": "modified",
       "local": [
-        "docs/guide/03-understand.md"
+        "plugins/swe/docs/03-understand.md"
       ]
     },
     {
       "upstream": "docs/guide/04-design.md",
       "class": "modified",
       "local": [
-        "docs/guide/04-design.md"
+        "plugins/swe/docs/04-design.md"
       ]
     },
     {
       "upstream": "docs/guide/05-build-and-clean.md",
       "class": "modified",
       "local": [
-        "docs/guide/05-build-and-clean.md"
+        "plugins/swe/docs/05-build-and-clean.md"
       ]
     },
     {
       "upstream": "docs/guide/06-verify-and-ship.md",
       "class": "modified",
       "local": [
-        "docs/guide/06-verify-and-ship.md"
+        "plugins/swe/docs/06-verify-and-ship.md"
       ]
     },
     {
       "upstream": "docs/guide/07-overnight.md",
       "class": "modified",
       "local": [
-        "docs/guide/07-long-runs.md"
+        "plugins/swe/docs/07-long-runs.md"
       ]
     },
     {
       "upstream": "docs/guide/08-principles.md",
       "class": "modified",
       "local": [
-        "docs/guide/08-principles.md"
+        "plugins/swe/docs/08-principles.md"
       ]
     },
     {
       "upstream": "docs/guide/09-make-it-yours.md",
       "class": "modified",
       "local": [
-        "docs/guide/09-make-it-yours.md"
+        "plugins/swe/docs/09-make-it-yours.md"
       ]
     },
     {
       "upstream": "docs/guide/10-recipes-and-pitfalls.md",
       "class": "modified",
       "local": [
-        "docs/guide/10-recipes-and-pitfalls.md"
+        "plugins/swe/docs/10-recipes-and-pitfalls.md"
       ]
     },
     {
       "upstream": "docs/guide/README.md",
       "class": "modified",
       "local": [
-        "docs/guide/README.md"
+        "plugins/swe/docs/README.md"
       ]
     },
     {
@@ -354,7 +354,7 @@
       "class": "modified",
       "local": [
         "plugins/swe/skills/help/references/prompting.md",
-        "docs/guide/09-make-it-yours.md"
+        "plugins/swe/docs/09-make-it-yours.md"
       ]
     },
     {
@@ -362,7 +362,7 @@
       "class": "modified",
       "local": [
         "plugins/swe/skills/help/references/recipes.md",
-        "docs/guide/10-recipes-and-pitfalls.md"
+        "plugins/swe/docs/10-recipes-and-pitfalls.md"
       ]
     },
     {

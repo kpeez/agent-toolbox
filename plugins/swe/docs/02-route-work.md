@@ -32,13 +32,13 @@ flowchart TD
   verify -- "read-only answer or local change" --> reply
 ```
 
-The [router](../../plugins/swe/skills/swe-mode/SKILL.md#match) matches in this order:
+The [router](../skills/swe-mode/SKILL.md#match) matches in this order:
 
 1. When one skill owns the whole task, it routes to that skill. "Explain how a subsystem works, no code change" goes to `how`, for example.
 2. Otherwise it picks the first playbook whose line fits. The list runs from narrow to broad, so `fix-bug` comes before `build-feature`.
-3. Large or cross-cutting work, work you step away from, or work that no playbook fits goes to [`figure-it-out`](../../plugins/swe/skills/figure-it-out/SKILL.md). It writes a bespoke playbook in the same step format.
+3. Large or cross-cutting work, work you step away from, or work that no playbook fits goes to [`figure-it-out`](../skills/figure-it-out/SKILL.md). It writes a bespoke playbook in the same step format.
 
-The router says its choice in one line, such as `Playbook: fix-bug. Reason: a reported defect.` The [playbook directory](../../plugins/swe/skills/swe-mode/playbooks/) has the full set.
+The router says its choice in one line, such as `Playbook: fix-bug. Reason: a reported defect.` The [playbook directory](../skills/swe-mode/playbooks) has the full set.
 
 ## Say the goal, not the ceremony
 
@@ -94,7 +94,7 @@ A long chat collects context from the last task. When you change subjects, say s
 
 ## Give parallel work its own worktree
 
-Two agents that write to one working tree overwrite each other's files. [`ship-pr`](../../plugins/swe/skills/ship-pr/SKILL.md) gives each writer its own worktree. When your branch holds unrelated dirty work, it leaves that work in place and starts a fresh worktree from the base. To pick the base or the place yourself, say so:
+Two agents that write to one working tree overwrite each other's files. [`ship-pr`](../skills/ship-pr/SKILL.md) gives each writer its own worktree. When your branch holds unrelated dirty work, it leaves that work in place and starts a fresh worktree from the base. To pick the base or the place yourself, say so:
 
 ```text
 /swe:swe-mode new task. branch off <base> in a fresh worktree, then port the parser change there.
@@ -106,7 +106,7 @@ Worktrees use disk. When disk gets tight, ask:
 /swe:swe-mode what's using my disk? prune the worktrees that are safe to prune.
 ```
 
-The [`clean-worktrees`](../../plugins/swe/skills/swe-mode/playbooks/clean-worktrees.md) playbook runs [worktree_audit.sh](../../plugins/swe/scripts/worktree_audit.sh) to sort each worktree by merge state and uncommitted work. It asks you which sessions still use a worktree, and that answer wins over the audit. It pauses before it removes any worktree with uncommitted edits.
+The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playbook runs [worktree_audit.sh](../scripts/worktree_audit.sh) to sort each worktree by merge state and uncommitted work. It asks you which sessions still use a worktree, and that answer wins over the audit. It pauses before it removes any worktree with uncommitted edits.
 
 ## Leave it running
 
@@ -116,12 +116,12 @@ When you step away, say what done means and go:
 /swe:swe-mode going to bed. keep going until the migration check reports zero old callers. log your decisions.
 ```
 
-"going to bed", "run until done", and "don't stop" tell the router to keep going and decide each call itself. A long task routes to [`run-autonomously`](../../plugins/swe/skills/swe-mode/playbooks/run-autonomously.md). It states the exit condition as a check before the first iteration and keeps a decision log with [`log-decisions`](../../plugins/swe/skills/log-decisions/SKILL.md). In Claude Code, it uses `/loop` to wake itself. Codex has no wake mechanism, so you start the next run yourself. [Run long work](./07-long-runs.md) covers the full contract.
+"going to bed", "run until done", and "don't stop" tell the router to keep going and decide each call itself. A long task routes to [`run-autonomously`](../skills/swe-mode/playbooks/run-autonomously.md). It states the exit condition as a check before the first iteration and keeps a decision log with [`log-decisions`](../skills/log-decisions/SKILL.md). In Claude Code, it uses `/loop` to wake itself. Codex has no wake mechanism, so you start the next run yourself. [Run long work](07-long-runs.md) covers the full contract.
 
 ## Avoid listing skills in your prompt
 
 Do not write "use how, then architect, then blast-radius". The playbook already orders the skills, and a list you write by hand usually drops or reorders steps that the playbook keeps. Name a skill only when you want to override one choice.
 
-Read the [router](../../plugins/swe/skills/swe-mode/SKILL.md) itself for the full rules.
+Read the [router](../skills/swe-mode/SKILL.md) itself for the full rules.
 
-Next: [Understand the code](./03-understand.md).
+Next: [Understand the code](03-understand.md).
