@@ -19,7 +19,8 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
-Start a new session after you install.
+Start a new session after you install. To install only the skills, run
+`npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/lab`.
 
 ## Skills
 

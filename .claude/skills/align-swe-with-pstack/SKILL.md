@@ -1,6 +1,8 @@
 ---
 name: align-swe-with-pstack
 description: "Pull upstream pstack changes into the swe plugin since the pinned commit. Merge copied files directly, review modified files, then move the pin. Use when asked to sync, update, or align swe with pstack."
+metadata:
+  internal: true
 ---
 
 # Align swe with pstack

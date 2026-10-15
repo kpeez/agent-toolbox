@@ -7,7 +7,7 @@ This page is for people who change this repository. Agent rules live in
 
 | Path | Holds |
 | --- | --- |
-| `plugins/swe/` | swe skills, the `daedalus` agent, the router and its playbooks, hooks, and scripts |
+| `plugins/swe/` | swe skills, the `daedalus` agent, the router and its playbooks, hooks, scripts, and the swe guide in `docs/` |
 | `plugins/lab/` | lab skills and their scripts and references |
 | `plugins/uni/` | tutoring skills, the teaching workspace, templates, and evaluations |
 | `claude-mods/<mod>/` | Claude Code mods, one plugin per mod |

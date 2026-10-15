@@ -25,13 +25,14 @@ codex plugin add swe@agent-toolbox
 Start a new session after you install. In Claude Code, a SessionStart hook
 tells the agent to start the router for each new software task, so you can
 also type the task without the command. Codex plugins have no hooks.
-[Set up swe](../../docs/guide/01-setup.md) gives the lines to put in
-`AGENTS.md`.
+[Set up swe](./docs/01-setup.md) gives the lines to put in `AGENTS.md`.
+
+To install only the skills, without the agents or the hook, run
+`npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe`.
 
 New here? Ask [`/swe:help`](./skills/help/SKILL.md) a question, such as "which
-skill reviews a PR?". The [swe guide](../../docs/guide/README.md) walks you
-through a first real task, from setup and prompts through verification and
-long runs.
+skill reviews a PR?". The [swe guide](./docs/README.md) walks you through a
+first real task, from setup and prompts through verification and long runs.
 
 ## Usage
 
@@ -58,7 +59,7 @@ When you start it, the router:
 When no playbook fits, or the work is large, `figure-it-out` writes a bespoke
 playbook in the same format. The full rules are in
 [`swe-mode/SKILL.md`](./skills/swe-mode/SKILL.md), and
-[Route work](../../docs/guide/02-route-work.md) shows the flow as a diagram.
+[Route work](./docs/02-route-work.md) shows the flow as a diagram.
 
 <details>
 <summary>The 22 playbooks</summary>
@@ -172,7 +173,7 @@ Reviews and searches use the host's own subagents with the
 The 25 principles are short hidden skills, one rule each. The router lists each
 one with the moment it applies, and reads it by path at that step. Name one in
 a prompt to steer the agent, as in "fix the root cause, not the symptom".
-[Steer with principle names](../../docs/guide/08-principles.md) shows how.
+[Steer with principle names](./docs/08-principles.md) shows how.
 
 <details>
 <summary>The 25 principles</summary>

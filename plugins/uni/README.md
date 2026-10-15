@@ -33,6 +33,9 @@ If the marketplace is already configured, refresh it before installing with
 `claude plugin marketplace update agent-toolbox`. Start a fresh session after
 installation. Codex invocation uses `$learn`; Claude Code uses `/uni:learn`.
 
+To install only the skills, run
+`npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/uni`.
+
 Uni installs all nine skills through the native plugin manager. Shared
 references stay inside the plugin; no separate installer or runtime is needed.
 If you previously copied the chat skills into a project, preserve any edits

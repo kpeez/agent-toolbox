@@ -33,8 +33,8 @@ codex plugin add uni@agent-toolbox
 ```
 
 Start a new session after you install. To install the skills only, without
-plugin agents, hooks, or the swe router, run
-`npx skills@latest add kpeez/agent-toolbox`.
+plugin agents or hooks, run `npx skills@latest add kpeez/agent-toolbox`. Each
+plugin README gives the command for that plugin alone.
 
 ## Get started
 
@@ -45,11 +45,11 @@ Give the swe router a task with `/swe:swe-mode` (`$swe:swe-mode` in Codex):
 ```
 
 New here? Ask `/swe:help` which skill fits, or read the
-[swe guide](./docs/guide/README.md). Each plugin README lists its skills.
+[swe guide](./plugins/swe/docs/README.md). Each plugin README lists its skills.
 
 ## Docs
 
-- [swe guide](./docs/guide/README.md): ten pages from setup to long runs.
+- [swe guide](./plugins/swe/docs/README.md): ten pages from setup to long runs.
 - [Claude Code mods](./docs/mods.md): live panes for the Claude Code interface.
 - [Contributing](./docs/contributing.md): how to change this repository.
 
@@ -57,7 +57,7 @@ New here? Ask `/swe:help` which skill fits, or read the
 
 - The `swe` router, its playbooks and principles, and most `swe` skills adapt
   Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/99743e9c151c8537cbbf1f98bb38f34ef3368453/pstack).
-  The [swe guide](./docs/guide/README.md) follows the layout of the pstack guide.
+  The [swe guide](./plugins/swe/docs/README.md) follows the layout of the pstack guide.
 - Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
   [skills](https://github.com/mattpocock/skills).
 - The `ship-pr` PR-body menu of visuals comes from Dex Horthy's
