@@ -33,7 +33,7 @@ If the marketplace is already configured, refresh it before installing with
 `claude plugin marketplace update agent-toolbox`. Start a fresh session after
 installation. Codex invocation uses `$learn`; Claude Code uses `/uni:learn`.
 
-Uni `0.1.2` installs all nine skills through the native plugin manager. Shared
+Uni installs all nine skills through the native plugin manager. Shared
 references stay inside the plugin; no separate installer or runtime is needed.
 If you previously copied the chat skills into a project, preserve any edits
 before removing those copies to avoid duplicate discovery.
