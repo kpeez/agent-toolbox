@@ -1,6 +1,7 @@
 ---
 name: learn
 description: Teach interactive lessons with questions, active recall, and exercises that deepen understanding and application. Choose useful uni methods without requiring pedagogical labels. Do not turn ordinary coding or answer requests into a lesson.
+argument-hint: "<topic>"
 ---
 
 # Learn

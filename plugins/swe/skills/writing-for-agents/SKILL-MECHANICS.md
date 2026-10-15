@@ -16,6 +16,10 @@ Pick a mode by who must start the skill. The human only: user-invoked. The agent
 
 Reference that several skills need goes in one model-only or model-invoked skill that each loads through the Skill tool, or in a plain file outside the skill system that any skill points at.
 
+## Arguments
+
+When the human types the skill with input, set `argument-hint` to the input it expects, such as `"<question>"` or `"[diff, branch, or PR]"`. Use `<x>` for required input and `[x]` for optional input. Claude Code shows the hint in the slash-menu autocomplete; the skill still reads the text from `$ARGUMENTS` or from the appended arguments. Codex has no hint field, so also list the command with its hint in the plugin README. Skip the field when the skill takes no input.
+
 ## Splitting by invocation
 
 The invocation cut of splitting (the sequence cut lives in `SKILL.md`): split off a model-invoked skill when you have a distinct leading word that should trigger it on its own (a trigger word you actually use in your prompts); split off a model-only skill when another skill must reach it and the human never types it. You pay context load for the new always-loaded description, so that independent reach has to be worth it.

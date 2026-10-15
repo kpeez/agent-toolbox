@@ -1,6 +1,7 @@
 ---
 name: visualizing-data
 description: Design or review statistical plots and plotting code for honest scales and accessibility. Not for conversational diagrams, simulations, or UI mockups.
+argument-hint: "<plot or plotting code>"
 ---
 
 # Visualizing data

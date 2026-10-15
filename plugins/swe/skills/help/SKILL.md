@@ -1,6 +1,7 @@
 ---
 name: help
 description: "Guide the user through swe setup, /swe:swe-mode, and the choice of a skill, playbook, or principle for a task. Type /swe:help with a question."
+argument-hint: "[question]"
 disable-model-invocation: true
 ---
 

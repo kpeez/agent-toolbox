@@ -1,6 +1,7 @@
 ---
 name: blast-radius
 description: "Find what a change could break beyond its diff, and prove the one fact it is safe because of by running real code. Use for 'blast radius', 'what could this break', or a risky diff before it ships."
+argument-hint: "[diff, branch, or PR]"
 ---
 
 # Blast radius

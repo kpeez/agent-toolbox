@@ -1,6 +1,7 @@
 ---
 name: codebase-design
 description: Design a consequential new interface, or review existing module boundaries and propose deepening refactors that cut coupling and caller complexity. Report-only for reviews; implementation is separate.
+argument-hint: "<interface or module>"
 ---
 
 # Codebase design: deep modules

@@ -1,6 +1,7 @@
 ---
 name: recall
 description: "Rebuild your recent working context from this project's chat history, handoff file, live state, and the shared record, then hand back a tight current-state brief."
+argument-hint: "[topic]"
 disable-model-invocation: true
 ---
 

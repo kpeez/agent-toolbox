@@ -1,6 +1,7 @@
 ---
 name: diagnose
 description: Investigate bugs and performance regressions using focused evidence. Use when asked to diagnose, debug, or explain a failure.
+argument-hint: "<symptom or failing check>"
 ---
 
 # Diagnose

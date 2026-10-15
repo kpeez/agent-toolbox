@@ -1,6 +1,7 @@
 ---
 name: writing
 description: "Write or edit prose: a README, a docs page, a skill or AGENTS.md, a PR body, a commit message, a handoff, a plan, or a reply. Use when you create or edit one, or when a change makes one stale."
+argument-hint: "<document or path>"
 ---
 
 # Writing

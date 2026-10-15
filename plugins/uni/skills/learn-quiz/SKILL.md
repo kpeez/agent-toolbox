@@ -1,6 +1,7 @@
 ---
 name: learn-quiz
 description: Administer source-grounded retrieval and diagnostic questions one at a time, with private answer preparation, fair grading, feedback, and adaptive follow-up. Use for an interactive quiz rather than a worksheet or simulated dialogue.
+argument-hint: "<topic or source>"
 ---
 
 # Retrieve and diagnose

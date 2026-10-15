@@ -1,6 +1,7 @@
 ---
 name: testing-code
 description: "Gate, design, and audit tests. Use before adding or rewriting any permanent test, for probes, TDD, regression coverage, testing strategy, and judging a diff's tests. Also for reviewing or pruning existing test suites."
+argument-hint: "[code, diff, or test suite]"
 ---
 
 # Testing code
