@@ -7,35 +7,35 @@ This page shows what to put in the prompt for each build task, and how swe keeps
 A bug prompt states the symptom and asks for a reproduction first:
 
 ```text
-/swe:playbook this command emits two records after a retry. repro first, then fix and verify.
+/swe:swe-mode this command emits two records after a retry. repro first, then fix and verify.
 ```
 
 A feature prompt states the new behavior and what must stay the same:
 
 ```text
-/swe:playbook add a --json flag. text output stays byte-identical. verify both forms.
+/swe:swe-mode add a --json flag. text output stays byte-identical. verify both forms.
 ```
 
 A refactor prompt pins behavior before the structure moves:
 
 ```text
-/swe:playbook move parsing into one module, zero behavior change. record the current output first and prove it is unchanged after.
+/swe:swe-mode move parsing into one module, zero behavior change. record the current output first and prove it is unchanged after.
 ```
 
 A performance prompt states a measurement:
 
 ```text
-/swe:playbook startup takes 1.8s on this fixture. measure it, fix the measured cause, show me before and after.
+/swe:swe-mode startup takes 1.8s on this fixture. measure it, fix the measured cause, show me before and after.
 ```
 
 Each prompt routes to its playbook:
 
 | Playbook | What it adds to your prompt |
 | --- | --- |
-| [`fix-bug`](../../plugins/swe/skills/playbook/playbooks/fix-bug.md) | Reproduce on the reported surface, binary search the cause, sweep for the same pattern, apply the smallest fix, run the original repro again |
-| [`build-feature`](../../plugins/swe/skills/playbook/playbooks/build-feature.md) | Map the subsystem, name the data shape, explore designs, write a throughput checkpoint, build and verify one unit at a time |
-| [`refactor-structure`](../../plugins/swe/skills/playbook/playbooks/refactor-structure.md) | Pin behavior with a characterization test or snapshot, subtract first, move every caller and delete the old API, prove equivalence, revert if reader load did not fall |
-| [`improve-performance`](../../plugins/swe/skills/playbook/playbooks/improve-performance.md) | Capture a baseline with run count and spread, name the limiting resource, try the performance mantras cheapest first, change one thing at a time |
+| [`fix-bug`](../../plugins/swe/skills/swe-mode/playbooks/fix-bug.md) | Reproduce on the reported surface, binary search the cause, sweep for the same pattern, apply the smallest fix, run the original repro again |
+| [`build-feature`](../../plugins/swe/skills/swe-mode/playbooks/build-feature.md) | Map the subsystem, name the data shape, explore designs, write a throughput checkpoint, build and verify one unit at a time |
+| [`refactor-structure`](../../plugins/swe/skills/swe-mode/playbooks/refactor-structure.md) | Pin behavior with a characterization test or snapshot, subtract first, move every caller and delete the old API, prove equivalence, revert if reader load did not fall |
+| [`improve-performance`](../../plugins/swe/skills/swe-mode/playbooks/improve-performance.md) | Capture a baseline with run count and spread, name the limiting resource, try the performance mantras cheapest first, change one thing at a time |
 
 The four playbooks end the same way. They check the blast radius when the change touches shared state, a wire format, or a public interface. An agent that did not write the diff reviews it. They update the docs the change makes obsolete. Then they push and update the draft PR when publication is authorized. [Verify and ship](./06-verify-and-ship.md) covers those steps.
 
@@ -43,10 +43,10 @@ In `build-feature` and `fix-bug`, the lead delegates the code to the `daedalus` 
 
 ## Improve one number with hillclimb-metric
 
-For sustained work on one metric, the [hillclimb-metric playbook](../../plugins/swe/skills/playbook/playbooks/hillclimb-metric.md) runs a loop. Give it the metric, the target, and a floor on attempts:
+For sustained work on one metric, the [hillclimb-metric playbook](../../plugins/swe/skills/swe-mode/playbooks/hillclimb-metric.md) runs a loop. Give it the metric, the target, and a floor on attempts:
 
 ```text
-/swe:playbook hillclimb p50 parse time on the 60k-row fixture. target 400ms. try at least 15 ideas before you stop.
+/swe:swe-mode hillclimb p50 parse time on the 60k-row fixture. target 400ms. try at least 15 ideas before you stop.
 ```
 
 It freezes one measurement command, records a baseline, and then tests one hypothesis per attempt. It keeps a change only when the metric moves past noise and the regression gate stays green. Otherwise it reverts the change in full. Each attempt gets a row in a gitignored `decision.tsv`. When the `lab:autoresearch` skill is installed, the playbook runs its loop through that skill.
@@ -92,7 +92,7 @@ To prune an existing suite, ask for audit mode:
 If the diff feels padded, say so before you commit:
 
 ```text
-/swe:playbook clean the diff. remove narrating comments, unneeded guards, dead paths, and unrelated edits.
+/swe:swe-mode clean the diff. remove narrating comments, unneeded guards, dead paths, and unrelated edits.
 ```
 
 ## Strip the comments with no-comments

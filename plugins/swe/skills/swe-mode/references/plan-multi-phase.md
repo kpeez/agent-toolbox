@@ -67,7 +67,7 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 - [ ] State the protocol and this plan to the operator, then stop. Start execution only on the operator's explicit go.
 - [ ] Re-read these at program start and at every tick.
-  - [ ] The execution playbook `playbooks/<execution playbook>.md` of the swe playbook skill.
+  - [ ] The execution playbook `playbooks/<execution playbook>.md` of the swe-mode skill.
   - [ ] The swe `swarm` skill.
   - [ ] `<verification skill path>`
   - [ ] The swe `ship-pr` skill.

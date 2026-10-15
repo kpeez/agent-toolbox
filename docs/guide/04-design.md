@@ -5,10 +5,10 @@ This page shows how to settle the shape of a change before code locks it in. The
 ## Settle the shape with architect
 
 ```text
-/swe:playbook design the import pipeline before writing any code. i care most about how callers use it.
+/swe:swe-mode design the import pipeline before writing any code. i care most about how callers use it.
 ```
 
-The router runs [`architect`](../../plugins/swe/skills/architect/SKILL.md) on its own when code crosses a function boundary. You can also type `/swe:architect` to start it directly. In Codex, the same commands start with `$`, such as `$swe:playbook` and `$swe:architect`. It runs in five phases:
+The router runs [`architect`](../../plugins/swe/skills/architect/SKILL.md) on its own when code crosses a function boundary. You can also type `/swe:architect` to start it directly. In Codex, the same commands start with `$`, such as `$swe:swe-mode` and `$swe:architect`. It runs in five phases:
 
 1. Ground. It runs [`how`](../../plugins/swe/skills/how/SKILL.md) over every subsystem the design touches. When the design moves ownership or layers, it also runs [`why`](../../plugins/swe/skills/why/SKILL.md) on the current shape.
 2. Sketch. It runs [`swarm`](../../plugins/swe/skills/swarm/SKILL.md) as a race with the `rank all` rule. At least two runners on different models (in Claude Code, `opus` and `sonnet`) each write a sketch of types, signatures, and module boundaries with `not implemented` bodies. It needs at least two structurally distinct candidates, screens each one against the [design red flags](../../plugins/swe/skills/architect/references/design-red-flags.md), picks a base, and grafts in what the others do better.
@@ -34,24 +34,24 @@ Review mode looks at modules you already have:
 /swe:codebase-design review the storage layer. find shallow modules and propose deepening refactors.
 ```
 
-A review only reports. It applies the deletion test to each candidate module and ranks what it finds. To build a refactor it proposes, start a new task. The router sends it to the [refactor-structure playbook](../../plugins/swe/skills/playbook/playbooks/refactor-structure.md).
+A review only reports. It applies the deletion test to each candidate module and ranks what it finds. To build a refactor it proposes, start a new task. The router sends it to the [refactor-structure playbook](../../plugins/swe/skills/swe-mode/playbooks/refactor-structure.md).
 
 ## Settle open decisions with interview-user
 
 Some forks are product or preference calls that no run can settle. [`interview-user`](../../plugins/swe/skills/interview-user/SKILL.md) asks them in rounds. Each round holds every decision whose prerequisites are settled, and each question comes with a recommended answer. It looks up facts in the code itself and asks you only for decisions.
 
 ```text
-/swe:playbook interview me about the retention policy for exported files before you plan anything.
+/swe:swe-mode interview me about the retention policy for exported files before you plan anything.
 ```
 
 The build playbooks run it only on decisions you have not made. It ends with a summary of settled decisions, rejected options, and open items with an owner.
 
 ## Prototype instead of debating
 
-When a run can show the answer, the router does not ask you. It runs the [build-prototype playbook](../../plugins/swe/skills/playbook/playbooks/build-prototype.md):
+When a run can show the answer, the router does not ask you. It runs the [build-prototype playbook](../../plugins/swe/skills/swe-mode/playbooks/build-prototype.md):
 
 ```text
-/swe:playbook prototype a few options for the new dropdown menu. take screenshots for me to compare.
+/swe:swe-mode prototype a few options for the new dropdown menu. take screenshots for me to compare.
 ```
 
 The playbook names the one decision, builds throwaway variants in a scratch directory outside production source, and puts them behind one switcher. Then it drives each variant and records screenshots, output, or timings. It works for behavior and algorithms as well as UI. It recommends a direction, hands it to the build-feature playbook or `architect`, and opens no PR.
@@ -71,18 +71,18 @@ Many steps say `reviewer agent`. That is a fresh subagent that did not write the
 The router gives a contested design and its evidence to a reviewer before you ship. `architect` can also give its synthesized sketch to a reviewer before implementation. Ask for it when the design is expensive to reverse:
 
 ```text
-/swe:playbook add rate limiting for external webhooks. architect it first, then have a reviewer agent attack the sketch before you implement.
+/swe:swe-mode add rate limiting for external webhooks. architect it first, then have a reviewer agent attack the sketch before you implement.
 ```
 
 ## Write a plan after the design settles
 
-For work that spans phases or stacked PRs, the [plan-multi-phase playbook](../../plugins/swe/skills/playbook/playbooks/plan-multi-phase.md) writes the plan:
+For work that spans phases or stacked PRs, the [plan-multi-phase playbook](../../plugins/swe/skills/swe-mode/playbooks/plan-multi-phase.md) writes the plan:
 
 ```text
-/swe:playbook turn this design into a plan. small verifiable PRs, each with its own verification steps.
+/swe:swe-mode turn this design into a plan. small verifiable PRs, each with its own verification steps.
 ```
 
-It skips the plan for a one or two file change. Otherwise it settles open questions by prototype, explores in subagents, and fills the skeleton in the [plan rules](../../plugins/swe/skills/playbook/references/plan-multi-phase.md) with one section per PR. Tests alone do not verify a PR. Each PR needs unit, live, and perf boxes. The playbook runs `check_plan.py` on the plan, names the execution playbook, and stops. The plan is the deliverable, so it implements nothing until you say go.
+It skips the plan for a one or two file change. Otherwise it settles open questions by prototype, explores in subagents, and fills the skeleton in the [plan rules](../../plugins/swe/skills/swe-mode/references/plan-multi-phase.md) with one section per PR. Tests alone do not verify a PR. Each PR needs unit, live, and perf boxes. The playbook runs `check_plan.py` on the plan, names the execution playbook, and stops. The plan is the deliverable, so it implements nothing until you say go.
 
 For smaller work, [`write-plan`](../../plugins/swe/skills/write-plan/SKILL.md) turns rough notes into a short plan with a goal, non-goals, approach, decisions, and verification. Most work needs no plan file. Use it when you ask for one, or when the work will span sessions or go to another agent. With `issues <plan>`, it splits an approved plan into PR-sized issues. Plans live in `<main checkout>/.agents/plans/`, outside Git. Delete a plan when its PR merges, because the PR and the code are the record. [Run long work](./07-long-runs.md) covers where these files live.
 

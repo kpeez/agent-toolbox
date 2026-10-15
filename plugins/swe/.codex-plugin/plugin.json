@@ -1,7 +1,7 @@
 {
   "name": "swe",
   "description": "SWE skills for AI coding agents: an SWE router that runs a task through a step-by-step playbook, design interviews, short handoff plans, behavioral verification, CI triage and verified landing, and more",
-  "version": "1.21.4",
+  "version": "1.21.5",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
@@ -11,11 +11,11 @@
   "interface": {
     "displayName": "swe",
     "shortDescription": "A task router plus planning, implementation, review, and PR skills for coding agents.",
-    "longDescription": "The playbook router ($swe:playbook <task> in Codex, /swe:playbook <task> in Claude Code) matches a task to a step-by-step playbook and tracks every step. Portable skills for planning, implementing, reviewing, and publishing code changes, plus a daedalus agent for bounded implementation tasks and a review brief for native reviewers, with short handoff plans and session handoffs.",
+    "longDescription": "The swe-mode router ($swe:swe-mode <task> in Codex, /swe:swe-mode <task> in Claude Code) matches a task to a step-by-step playbook and tracks every step. Portable skills for planning, implementing, reviewing, and publishing code changes, plus a daedalus agent for bounded implementation tasks and a review brief for native reviewers, with short handoff plans and session handoffs.",
     "developerName": "kpeez",
     "category": "Productivity",
     "capabilities": ["Write", "Review", "Automation"],
-    "defaultPrompt": ["Help me decide how to design this.", "Implement the plan I just approved.", "$swe:playbook Diagnose why this test fails."],
+    "defaultPrompt": ["Help me decide how to design this.", "Implement the plan I just approved.", "$swe:swe-mode Diagnose why this test fails."],
     "brandColor": "#2563EB"
   }
 }

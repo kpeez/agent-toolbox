@@ -16,7 +16,7 @@ the parent branch:
 - Put a fix on the lowest branch that owns the code, then replay the branches
   above it.
 - When a parent merges, move its child onto trunk as step 4 of the
-  [ship-stack playbook](../../playbook/playbooks/ship-stack.md) says.
+  [ship-stack playbook](../../swe-mode/playbooks/ship-stack.md) says.
 
 Use GitHub (`gh`) and plain git. Do not require Graphite (`gt`) or other stack
 tooling. When the repository already uses stack tooling, follow its documented
