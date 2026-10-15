@@ -344,12 +344,16 @@
     },
     {
       "upstream": "skills/poteto-help/SKILL.md",
-      "class": "dropped"
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/help/SKILL.md"
+      ]
     },
     {
       "upstream": "skills/poteto-help/references/prompting.md",
       "class": "modified",
       "local": [
+        "plugins/swe/skills/help/references/prompting.md",
         "docs/guide/09-make-it-yours.md"
       ]
     },
@@ -357,6 +361,7 @@
       "upstream": "skills/poteto-help/references/recipes.md",
       "class": "modified",
       "local": [
+        "plugins/swe/skills/help/references/recipes.md",
         "docs/guide/10-recipes-and-pitfalls.md"
       ]
     },
@@ -364,7 +369,7 @@
       "upstream": "skills/poteto-mode/SKILL.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/SKILL.md",
+        "plugins/swe/skills/swe-mode/SKILL.md",
         "plugins/swe/hooks/session-start.md"
       ]
     },
@@ -372,156 +377,156 @@
       "upstream": "skills/poteto-mode/playbooks/authoring-a-skill.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/author-skill.md"
+        "plugins/swe/skills/swe-mode/playbooks/author-skill.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/autonomous-run.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/run-autonomously.md"
+        "plugins/swe/skills/swe-mode/playbooks/run-autonomously.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/autopilot-full.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/autopilot-full.md"
+        "plugins/swe/skills/swe-mode/playbooks/autopilot-full.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/autopilot-stack.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/autopilot-stack.md"
+        "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/babysit.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/babysit-pr.md"
+        "plugins/swe/skills/swe-mode/playbooks/babysit-pr.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/bug-fix.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/fix-bug.md"
+        "plugins/swe/skills/swe-mode/playbooks/fix-bug.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/eval.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/evaluate-agent-change.md"
+        "plugins/swe/skills/swe-mode/playbooks/evaluate-agent-change.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/feature.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/build-feature.md"
+        "plugins/swe/skills/swe-mode/playbooks/build-feature.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/hillclimb.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/hillclimb-metric.md"
+        "plugins/swe/skills/swe-mode/playbooks/hillclimb-metric.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/investigation.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/investigate-question.md"
+        "plugins/swe/skills/swe-mode/playbooks/investigate-question.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/multi-phase-plan.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/plan-multi-phase.md",
-        "plugins/swe/skills/playbook/references/plan-multi-phase.md"
+        "plugins/swe/skills/swe-mode/playbooks/plan-multi-phase.md",
+        "plugins/swe/skills/swe-mode/references/plan-multi-phase.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/orchestrate.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/run-program.md",
-        "plugins/swe/skills/playbook/references/run-program.md"
+        "plugins/swe/skills/swe-mode/playbooks/run-program.md",
+        "plugins/swe/skills/swe-mode/references/run-program.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/pause-safely.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/pause-safely.md"
+        "plugins/swe/skills/swe-mode/playbooks/pause-safely.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/perf-issue.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/improve-performance.md"
+        "plugins/swe/skills/swe-mode/playbooks/improve-performance.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/prototype.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/build-prototype.md"
+        "plugins/swe/skills/swe-mode/playbooks/build-prototype.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/refactoring.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/refactor-structure.md"
+        "plugins/swe/skills/swe-mode/playbooks/refactor-structure.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/runtime-forensics.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/diagnose-runtime.md"
+        "plugins/swe/skills/swe-mode/playbooks/diagnose-runtime.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/session-pickup.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/pick-up-session.md"
+        "plugins/swe/skills/swe-mode/playbooks/pick-up-session.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/shipping.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/ship-stack.md"
+        "plugins/swe/skills/swe-mode/playbooks/ship-stack.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/trace-forensics.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/diagnose-trace.md"
+        "plugins/swe/skills/swe-mode/playbooks/diagnose-trace.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/visual-parity.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/match-visual-parity.md"
+        "plugins/swe/skills/swe-mode/playbooks/match-visual-parity.md"
       ]
     },
     {
       "upstream": "skills/poteto-mode/playbooks/worktree-cleanup.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/playbook/playbooks/clean-worktrees.md"
+        "plugins/swe/skills/swe-mode/playbooks/clean-worktrees.md"
       ]
     },
     {

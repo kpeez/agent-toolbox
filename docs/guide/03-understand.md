@@ -9,10 +9,10 @@ swe gives you several ways in. `how` explains what the code does now. `why` find
 When the cause is unclear, ask for findings, not a fix:
 
 ```text
-/swe:playbook investigate why background jobs time out every few hours. give me what we know, what data you used, and your best hypotheses. don't change any code yet.
+/swe:swe-mode investigate why background jobs time out every few hours. give me what we know, what data you used, and your best hypotheses. don't change any code yet.
 ```
 
-A read-only question routes to the [`investigate-question`](../../plugins/swe/skills/playbook/playbooks/investigate-question.md) playbook. It restates the question, runs `how` over the code paths, and adds `why` when the question is about motivation. The answer has an Overview, Key Concepts, How It Works, Where Things Live, and Gotchas. For a choice between options, it gives a recommendation with a tradeoffs table instead. Every claim carries its source and a confidence tier.
+A read-only question routes to the [`investigate-question`](../../plugins/swe/skills/swe-mode/playbooks/investigate-question.md) playbook. It restates the question, runs `how` over the code paths, and adds `why` when the question is about motivation. The answer has an Overview, Key Concepts, How It Works, Where Things Live, and Gotchas. For a choice between options, it gives a recommendation with a tradeoffs table instead. Every claim carries its source and a confidence tier.
 
 The playbook changes no code and opens no PR. When the findings point at a fix, start the fix as a new task.
 
@@ -69,7 +69,7 @@ When you come back to a chat after the agent worked for a while, type:
 /swe:ketchup
 ```
 
-[`ketchup`](../../plugins/swe/skills/ketchup/SKILL.md) tells you what changed since your last message, in under 150 words. It opens with how many things need you. It shows what happened in one small diagram, then gives each decision only you can make with its recommendation. It changes nothing while it reports.
+[`ketchup`](../../plugins/swe/skills/ketchup/SKILL.md) tells you what changed since your last message, in under 150 words. It opens with how many things need you. It shows screenshots and diagrams first, then one line for each thing you asked for, then each decision only you can make with its recommendation. It changes nothing while it reports.
 
 ## Ask for a simpler answer with wait-what
 

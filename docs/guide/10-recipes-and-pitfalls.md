@@ -1,6 +1,6 @@
 # Recipes and pitfalls
 
-This page gives prompts you can copy, then the mistakes most people make once. Swap in your own paths and done checks. The prompts are informal on purpose, because that is how people type them, and the router reads intent from plain words. In Codex, type `$swe:playbook` and `$swe:<skill>` where these prompts say `/swe:`.
+This page gives prompts you can copy, then the mistakes most people make once. Swap in your own paths and done checks. The prompts are informal on purpose, because that is how people type them, and the router reads intent from plain words. In Codex, type `$swe:swe-mode` and `$swe:<skill>` where these prompts say `/swe:`.
 
 ## Understand an unfamiliar subsystem
 
@@ -21,18 +21,18 @@ A misreading shows up in the restatement, where it costs one message to correct.
 ## Prototype before you pick
 
 ```text
-/swe:playbook prototype a few options for the settings layout. put them behind a switcher and send me screenshots of each.
+/swe:swe-mode prototype a few options for the settings layout. put them behind a switcher and send me screenshots of each.
 ```
 
-The [build-prototype](../../plugins/swe/skills/playbook/playbooks/build-prototype.md) playbook builds throwaway variants in a scratch directory and opens no PR. You pick from things that run, not from descriptions.
+The [build-prototype](../../plugins/swe/skills/swe-mode/playbooks/build-prototype.md) playbook builds throwaway variants in a scratch directory and opens no PR. You pick from things that run, not from descriptions.
 
 ## Turn a settled design into a plan
 
 ```text
-/swe:playbook turn this design into a plan. small verifiable PRs, each with its own proof.
+/swe:swe-mode turn this design into a plan. small verifiable PRs, each with its own proof.
 ```
 
-Ask only after the design settles. The [plan-multi-phase](../../plugins/swe/skills/playbook/playbooks/plan-multi-phase.md) playbook settles open questions by prototype, runs `check_plan.py` on the plan, and names the playbook that will run it. It stops there until you say go.
+Ask only after the design settles. The [plan-multi-phase](../../plugins/swe/skills/swe-mode/playbooks/plan-multi-phase.md) playbook settles open questions by prototype, runs `check_plan.py` on the plan, and names the playbook that will run it. It stops there until you say go.
 
 ## Check independent slices in parallel
 
@@ -53,10 +53,10 @@ You get the one or two facts the change is safe because of, each with the eviden
 ## Fix a bug through a failing test
 
 ```text
-/swe:playbook the export writes duplicate rows when a retry lands mid-run. repro first. if there's a cheap test path, commit the failing test before the fix.
+/swe:swe-mode the export writes duplicate rows when a retry lands mid-run. repro first. if there's a cheap test path, commit the failing test before the fix.
 ```
 
-"if there's a cheap test path" matters. The [fix-bug](../../plugins/swe/skills/playbook/playbooks/fix-bug.md) playbook skips the failing-test commit when the test would be expensive or unclear. A test forced through brittle mocks proves less than the real command.
+"if there's a cheap test path" matters. The [fix-bug](../../plugins/swe/skills/swe-mode/playbooks/fix-bug.md) playbook skips the failing-test commit when the test would be expensive or unclear. A test forced through brittle mocks proves less than the real command.
 
 ## Vet a number before you post it
 
@@ -77,7 +77,7 @@ The fix lands in the repository as architecture, a type, a check, or a test, so 
 ## Keep a run going while you are away
 
 ```text
-/swe:playbook i'm going to bed. keep going until every fixture passes. do not stop. keep a decision log i can audit in the morning.
+/swe:swe-mode i'm going to bed. keep going until every fixture passes. do not stop. keep a decision log i can audit in the morning.
 ```
 
 "going to bed" is a session override. The agent decides each call the grant covers and reports it. [Run long work and hand it off](./07-long-runs.md) covers the decision log and handoffs.
@@ -121,7 +121,7 @@ That is the whole prompt. [wait-what](../../plugins/swe/skills/wait-what/SKILL.m
 - **Correcting the same mistake by hand.** A correction in chat helps one run. `correct` fixes the repository so no later run repeats it.
 - **Accepting every review comment.** Review bots file real catches and noise in one list. The router triages each bot finding on its merits by the [bot triage](../../plugins/swe/skills/ship-pr/references/bot-triage.md) rules.
 - **Reporting success off a green build.** A build proves it compiles. Ask for the real command, flow, stored value, or profile, and expect the evidence in the reply.
-- **Writing a `SKILL.md` freehand.** Route it through the [author-skill](../../plugins/swe/skills/playbook/playbooks/author-skill.md) playbook so the checks run.
+- **Writing a `SKILL.md` freehand.** Route it through the [author-skill](../../plugins/swe/skills/swe-mode/playbooks/author-skill.md) playbook so the checks run.
 - **Editing a skill mid-task.** Fix a broken skill in its own PR and keep the task moving.
 
 That is the guide. If you skipped ahead, go back to [Set up swe](./01-setup.md) and run one real task. The habits stick from use, not from reading.

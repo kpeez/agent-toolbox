@@ -7,13 +7,13 @@ This page shows you how to leave an agent on a long task, audit what it decided,
 Give the run a goal, a predicate that can pass or fail, permissions, and a way out:
 
 ```text
-/swe:playbook going to bed. migrate every caller to the new parser in a fresh worktree off <base>.
+/swe:swe-mode going to bed. migrate every caller to the new parser in a fresh worktree off <base>.
 done means zero old callers, all parser fixtures pass, and the old api is deleted.
 keep a decision log. commit without asking me.
 if you are truly stuck after a few hours, stop and write up why.
 ```
 
-"Going to bed" is a session override. The agent stops asking and decides each call itself, then reports it. The [`run-autonomously`](../../plugins/swe/skills/playbook/playbooks/run-autonomously.md) playbook states the exit predicate first. In Claude Code it wakes itself with `/loop`, or with a background watcher such as `gh pr checks <pr> --watch` when there is an event to watch. In Codex you rerun the task by hand. Each iteration follows the same loop:
+"Going to bed" is a session override. The agent stops asking and decides each call itself, then reports it. The [`run-autonomously`](../../plugins/swe/skills/swe-mode/playbooks/run-autonomously.md) playbook states the exit predicate first. In Claude Code it wakes itself with `/loop`, or with a background watcher such as `gh pr checks <pr> --watch` when there is an event to watch. In Codex you rerun the task by hand. Each iteration follows the same loop:
 
 ```mermaid
 flowchart TD
@@ -78,35 +78,35 @@ Claude Code 2.1.299 compacts a session that has been idle for about 54 minutes, 
 
 ## Pause and pick up
 
-To stop a run on purpose, say so, or say that you are going offline or restarting. The [`pause-safely`](../../plugins/swe/skills/playbook/playbooks/pause-safely.md) playbook finishes or backs out of the current step and commits a local `wip:` commit. Then it writes the resume note to the handoff file. It opens no PR. "Keep going" never triggers a pause.
+To stop a run on purpose, say so, or say that you are going offline or restarting. The [`pause-safely`](../../plugins/swe/skills/swe-mode/playbooks/pause-safely.md) playbook finishes or backs out of the current step and commits a local `wip:` commit. Then it writes the resume note to the handoff file. It opens no PR. "Keep going" never triggers a pause.
 
 ```text
-/swe:playbook pick up the work on this branch.
+/swe:swe-mode pick up the work on this branch.
 ```
 
-The [`pick-up-session`](../../plugins/swe/skills/playbook/playbooks/pick-up-session.md) playbook reads the handoff file and decision log first, then this project's transcripts or the pushed branch. It names the resume point, does not redo finished work, and verifies inherited claims on the real artifact.
+The [`pick-up-session`](../../plugins/swe/skills/swe-mode/playbooks/pick-up-session.md) playbook reads the handoff file and decision log first, then this project's transcripts or the pushed branch. It names the resume point, does not redo finished work, and verifies inherited claims on the real artifact.
 
 ## Run a queue of PRs
 
-The [`autopilot-full`](../../plugins/swe/skills/playbook/playbooks/autopilot-full.md) playbook runs a queue of independent PRs to merged. Each PR gets one owner agent from build to merge. A swarm of verifiers that never wrote the code proves the code-ready head, and nothing merges without a clean verdict on the patch that lands.
+The [`autopilot-full`](../../plugins/swe/skills/swe-mode/playbooks/autopilot-full.md) playbook runs a queue of independent PRs to merged. Each PR gets one owner agent from build to merge. A swarm of verifiers that never wrote the code proves the code-ready head, and nothing merges without a clean verdict on the patch that lands.
 
 ```text
-/swe:playbook full autopilot on this queue. each item is independent. merge them when verified.
+/swe:swe-mode full autopilot on this queue. each item is independent. merge them when verified.
 ```
 
-The [`autopilot-stack`](../../plugins/swe/skills/playbook/playbooks/autopilot-stack.md) playbook runs the same owners but lands nothing. You get one linear stack with a verdict on each link, and you land it yourself. Pick it when the changes are coupled, or when you want to review before anything merges.
+The [`autopilot-stack`](../../plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md) playbook runs the same owners but lands nothing. You get one linear stack with a verdict on each link, and you land it yourself. Pick it when the changes are coupled, or when you want to review before anything merges.
 
 ## Run a multi-day program
 
-The [`run-program`](../../plugins/swe/skills/playbook/playbooks/run-program.md) playbook is for work that outlives any single agent. It runs many stacked PRs and many subagents under one coordinator session. The coordinator writes briefs, drains reports, keeps the lowest unmerged PR green, and never writes code. It frames a countable done predicate, pushes one pilot unit through the whole path, then scales. The [program rules](../../plugins/swe/skills/playbook/references/run-program.md) define the roles, the store, the brief, the drain, and escalation. When one agent could finish inside the budget, the playbook sends you back to `run-autonomously`.
+The [`run-program`](../../plugins/swe/skills/swe-mode/playbooks/run-program.md) playbook is for work that outlives any single agent. It runs many stacked PRs and many subagents under one coordinator session. The coordinator writes briefs, drains reports, keeps the lowest unmerged PR green, and never writes code. It frames a countable done predicate, pushes one pilot unit through the whole path, then scales. The [program rules](../../plugins/swe/skills/swe-mode/references/run-program.md) define the roles, the store, the brief, the drain, and escalation. When one agent could finish inside the budget, the playbook sends you back to `run-autonomously`.
 
 ## Clean up worktrees
 
 ```text
-/swe:playbook clean up merged worktrees.
+/swe:swe-mode clean up merged worktrees.
 ```
 
-The [`clean-worktrees`](../../plugins/swe/skills/playbook/playbooks/clean-worktrees.md) playbook runs [`worktree_audit.sh`](../../plugins/swe/scripts/worktree_audit.sh), asks you which sessions are in use, and pauses on uncommitted work. It removes only confirmed worktrees and reports `df -h /` before and after.
+The [`clean-worktrees`](../../plugins/swe/skills/swe-mode/playbooks/clean-worktrees.md) playbook runs [`worktree_audit.sh`](../../plugins/swe/scripts/worktree_audit.sh), asks you which sessions are in use, and pauses on uncommitted work. It removes only confirmed worktrees and reports `df -h /` before and after.
 
 ## Delegate work
 
