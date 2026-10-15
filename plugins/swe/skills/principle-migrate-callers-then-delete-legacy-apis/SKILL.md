@@ -6,25 +6,8 @@ disable-model-invocation: true
 
 # Migrate callers then delete legacy APIs
 
-When a new API is the right design, migrate the callers and remove the old API
-in the same refactor wave. Do not keep compatibility layers.
-
-Keeping both old and new APIs creates dual-path complexity, slows cleanup, and
-makes the codebase feel append-only.
-
-## Rule
-
-1. List every caller of the old path, including code, scripts, configs, docs,
-   and tests.
-2. Move each caller to the new path.
-3. Delete the old path, its aliases and adapters, and the tests that protect
-   only its pre-refactor implementation. Make the remaining tests assert the
-   new contract.
-4. Search again for the old names to show that no caller remains.
-
-Do not keep a legacy path only because internal callers still use it. A
-temporary adapter is an exception, not the default architecture. Give it a
-reason and a removal point.
+- Make the tests assert the new contract. Delete the tests that protect only
+  the pre-refactor implementation.
 
 ## When this applies
 

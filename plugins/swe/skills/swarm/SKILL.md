@@ -6,9 +6,6 @@ disable-model-invocation: true
 
 # Swarm
 
-Fan out N parallel workers. They may cover separate slices, race the same
-brief, or mix both. The parent waits, aggregates, and returns one report.
-
 Swarm owns the fan-out shape. [orchestrate](../orchestrate/SKILL.md) owns the
 delegation contract. Apply its delegation preflight and brief fields to every
 worker. Use its external-provider mode when a worker runs on a provider the
@@ -42,16 +39,13 @@ Open the host's task list with one entry per phase before you launch anything.
 2. Choose the shape. Partition into slices, race N workers on identical
    briefs, or mix both. For a race or a mixed shape, declare `first pass`,
    `rank all`, or `best-of` before you spawn.
-3. Set N from the user or derive it from the shape. N is the total number of
-   workers, not the host's concurrency limit. Queue the rest when the host
-   caps concurrent agents.
-4. Pick the worker model by role. In Claude Code, use `sonnet` for routine
+3. Pick the worker model by role. In Claude Code, use `sonnet` for routine
    workers, `haiku` for mechanical lanes, and `opus` for judgment or the
    hardest code. In Codex, set reasoning effort the same way. For a model
    race, name each arm's model up front. A diversity arm can run on a
    different Claude model, or on an external provider through orchestrate. If
    the host rejects a model, use the host default and say so.
-5. Give each worker its own writable output when it writes. Use a worktree
+4. Give each worker its own writable output when it writes. Use a worktree
    per worker or disjoint paths. When workers verify or measure commits, each
    brief names the exact SHAs. A measurement brief also names the method,
    which is the sample count, what one sample is, and the order. The worker records both in its
@@ -84,9 +78,6 @@ method its brief names, and respawn that worker once. After a second miss,
 record a gap. A gap does not count as a pass. For coverage, every required
 slice needs a result. For a race, apply the selection rule declared up front.
 Use first pass, rank all, or best-of. Do not paste raw worker dumps.
-
-Keep a compact result table, one-line evidenced issues, and explicit gaps or
-dropouts.
 
 ## Phase D: Report
 

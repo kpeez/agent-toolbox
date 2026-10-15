@@ -130,7 +130,7 @@ it applies. The leaf is `../principle-<slug>/SKILL.md`.
 - `redesign-from-first-principles`: a new requirement meets an existing
   design. Redesign as if it had been there from day one.
 - `attack-the-premise`: two or more fixes that share one premise failed the
-  same check. Count which actors hold the failure, then question the premise.
+  same check. Write the premise down and test it before the next fix.
 - `subtract-before-you-add`: sequencing an addition, refactor, or rewrite.
   Remove dead weight first.
 - `minimize-reader-load`: code that is hard to trace. Count layers and hidden
@@ -163,12 +163,14 @@ it applies. The leaf is `../principle-<slug>/SKILL.md`.
 
 - `prove-it-works`: before you say a change works. Verify on the real
   artifact and give a VERIFIED, NOT VERIFIED, or INCONCLUSIVE verdict.
-- `fix-root-causes`: debugging. Reproduce, trace each symptom to its cause,
-  and fix it there.
+- `fix-root-causes`: debugging. Trace each symptom to the first place the
+  system went wrong and fix it there. A guard is a fix only for a legitimate
+  state.
 - `sequence-verifiable-units`: multi-step work and how you stack commits and
   PRs. Check each unit before the next.
 - `test-behavior-not-implementation`: writing, changing, or keeping a test.
-  Call the code as its users do and assert a literal expected result.
+  Assert what users observe: fail when behavior breaks, pass when internals
+  change.
 - `explain-the-number`: before you trust, report, or act on a measured number.
   Name what limits it, with run count and spread.
 

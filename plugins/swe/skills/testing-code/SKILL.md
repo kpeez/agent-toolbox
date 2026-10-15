@@ -41,12 +41,10 @@ with a probe before writing a test.
 
 Follow
 [test-behavior-not-implementation](../principle-test-behavior-not-implementation/SKILL.md).
-Call the subject in the test body with one concrete input, as its users do,
-and assert the literal output or effect. For a mock, assert the payload it
-received. For an absence, also assert the presence on another input. For a
-constant, test the mechanism that reads it with one input instead of restating
-the value. Rewrite or delete a test that would still pass if every imported
-function returned `undefined` or a wrong value.
+Drive the subject through its users' interface with one concrete input, and
+derive the expected value from the requirement. Keep a test that fails when
+the behavior breaks and passes when only the internals change. Rewrite or
+delete the rest.
 
 ## Admission gate
 
