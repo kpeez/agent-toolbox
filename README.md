@@ -14,6 +14,9 @@ subagents, and the session.
 
 ## Install
 
+Each plugin installs alone. Install the ones you need, then start a new
+session.
+
 Claude Code:
 
 ```text
@@ -32,9 +35,17 @@ codex plugin add lab@agent-toolbox
 codex plugin add uni@agent-toolbox
 ```
 
-Start a new session after you install. To install the skills only, without
-plugin agents or hooks, run `npx skills@latest add kpeez/agent-toolbox`. Each
-plugin README gives the command for that plugin alone.
+Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), one
+plugin per command:
+
+```text
+npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe
+npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/lab
+npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/uni
+```
+
+The skills-only install has no hooks and no agents. Each plugin README gives
+the update commands.
 
 ## Get started
 
