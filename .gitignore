@@ -1,4 +1,4 @@
-artifacts/
+artifacts
 data/
 datasets/
 .agents/docs
@@ -14,6 +14,7 @@ claude-mods/*/tsconfig.json
 .idea/
 .claude/*
 !.claude/settings.json
+!.claude/skills/
 .ipynb_checkpoints/
 
 # OS noise
