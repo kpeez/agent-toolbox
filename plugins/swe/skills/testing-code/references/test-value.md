@@ -13,8 +13,8 @@ stronger keeper for that contract is verified.
 
 - assertion-free coverage probes, and non-crash checks where a value or
   invariant oracle exists;
-- tests that still pass if every function they call returned nothing or a
-  wrong value;
+- tests that still pass when the behavior they check breaks, or that fail
+  when only the internals change;
 - self-comparisons and identity copiers;
 - expected values produced by the code under test, copied from its output, or
   held in broad snapshots accepted without independent review;

@@ -207,7 +207,7 @@ a prompt to steer the agent, as in "fix the root cause, not the symptom".
 | [laziness-protocol](./plugins/swe/skills/principle-laziness-protocol/SKILL.md) | core | Bias toward deletion and the smallest change that solves the problem. |
 | [foundational-thinking](./plugins/swe/skills/principle-foundational-thinking/SKILL.md) | core | Choose the core types and data structures before logic, so the downstream code becomes obvious. |
 | [redesign-from-first-principles](./plugins/swe/skills/principle-redesign-from-first-principles/SKILL.md) | core | Redesign as if a new requirement had been there from the start. |
-| [attack-the-premise](./plugins/swe/skills/principle-attack-the-premise/SKILL.md) | core | When two fixes that share one premise fail the same check, question the premise. |
+| [attack-the-premise](./plugins/swe/skills/principle-attack-the-premise/SKILL.md) | core | When two fixes that share one premise fail the same check, write the premise down and test it. |
 | [subtract-before-you-add](./plugins/swe/skills/principle-subtract-before-you-add/SKILL.md) | core | Remove dead code and redundant checks first, then build on the simpler base. |
 | [minimize-reader-load](./plugins/swe/skills/principle-minimize-reader-load/SKILL.md) | core | Count the layers and state a reader must hold, then collapse wrappers. |
 | [outcome-oriented-execution](./plugins/swe/skills/principle-outcome-oriented-execution/SKILL.md) | core | In a planned migration, converge on the target with no throwaway compatibility code. |
@@ -221,9 +221,9 @@ a prompt to steer the agent, as in "fix the root cause, not the symptom".
 | [migrate-callers-then-delete-legacy-apis](./plugins/swe/skills/principle-migrate-callers-then-delete-legacy-apis/SKILL.md) | architecture | Migrate every caller and delete the old API in the same change. |
 | [separate-before-serializing-shared-state](./plugins/swe/skills/principle-separate-before-serializing-shared-state/SKILL.md) | architecture | Remove shared writes before you add a lock. |
 | [prove-it-works](./plugins/swe/skills/principle-prove-it-works/SKILL.md) | verification | Check the real artifact and give a VERIFIED, NOT VERIFIED, or INCONCLUSIVE verdict. |
-| [fix-root-causes](./plugins/swe/skills/principle-fix-root-causes/SKILL.md) | verification | Trace each symptom to its root cause and fix it there. |
+| [fix-root-causes](./plugins/swe/skills/principle-fix-root-causes/SKILL.md) | verification | Trace each symptom to the first place the system went wrong and fix it there. |
 | [sequence-verifiable-units](./plugins/swe/skills/principle-sequence-verifiable-units/SKILL.md) | verification | Split work into small units and check each before the next. |
-| [test-behavior-not-implementation](./plugins/swe/skills/principle-test-behavior-not-implementation/SKILL.md) | verification | Call the code as its users do and assert the exact result they see. |
+| [test-behavior-not-implementation](./plugins/swe/skills/principle-test-behavior-not-implementation/SKILL.md) | verification | Assert what users observe, so the test fails when behavior breaks and passes when internals change. |
 | [explain-the-number](./plugins/swe/skills/principle-explain-the-number/SKILL.md) | verification | Find what limits a measured number before you trust or report it. |
 | [guard-the-context-window](./plugins/swe/skills/principle-guard-the-context-window/SKILL.md) | delegation | Send bulk work to subagents and keep summaries in the main thread. |
 | [never-block-on-the-human](./plugins/swe/skills/principle-never-block-on-the-human/SKILL.md) | delegation | Do reversible work, show the result, and let the human correct it. |
@@ -245,7 +245,7 @@ To change this repository, read [Contributing](./docs/contributing.md).
 ## Credits
 
 - The `swe` router, its playbooks and principles, and most `swe` skills adapt
-  Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/1e5c90a4b6f249917bd21fe361b3a2a7deb741b8/pstack).
+  Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/99743e9c151c8537cbbf1f98bb38f34ef3368453/pstack).
   The [swe guide](./docs/guide/README.md) follows the layout of the pstack guide.
 - Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
   [skills](https://github.com/mattpocock/skills).
