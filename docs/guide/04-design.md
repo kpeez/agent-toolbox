@@ -84,7 +84,7 @@ For work that spans phases or stacked PRs, the [plan-multi-phase playbook](../..
 
 It skips the plan for a one or two file change. Otherwise it settles open questions by prototype, explores in subagents, and fills the skeleton in the [plan rules](../../plugins/swe/skills/swe-mode/references/plan-multi-phase.md) with one section per PR. Tests alone do not verify a PR. Each PR needs unit, live, and perf boxes. The playbook runs `check_plan.py` on the plan, names the execution playbook, and stops. The plan is the deliverable, so it implements nothing until you say go.
 
-For smaller work, [`write-plan`](../../plugins/swe/skills/write-plan/SKILL.md) turns rough notes into a short plan with a goal, non-goals, approach, decisions, and verification. Most work needs no plan file. Use it when you ask for one, or when the work will span sessions or go to another agent. With `issues <plan>`, it splits an approved plan into PR-sized issues. Plans live in `<main checkout>/.agents/plans/`, outside Git. Delete a plan when its PR merges, because the PR and the code are the record. [Run long work](./07-long-runs.md) covers where these files live.
+Smaller work needs no plan file. Use plan mode, or ask for a plan in chat. Plans live in `<main checkout>/.agents/plans/`, outside Git. Delete a plan when its PR merges, because the PR and the code are the record. [Run long work](./07-long-runs.md) covers where these files live.
 
 ## Match the design work to the task
 

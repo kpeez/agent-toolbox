@@ -9,7 +9,7 @@ create and print the directory. Do not use `.agents/docs/` or a notes vault for
 plans.
 
 - A plan is named `<slug>.md`, where the slug is the work's branch name with
-  `/` changed to `-`. The [handoff](../../handoff/SKILL.md) skill and its hook
+  `/` changed to `-`. The [handoff](../skills/handoff/SKILL.md) skill and its hook
   update the same file, so one file follows the branch from plan to merge.
 - Plans are local only. Nothing syncs them to a tracker.
 

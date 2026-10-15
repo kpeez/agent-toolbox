@@ -136,7 +136,6 @@ Each of these also starts on its own when its task comes up.
 | Skill | Use it when |
 | --- | --- |
 | [`interview-user`](./plugins/swe/skills/interview-user/SKILL.md) | A plan or design has open decisions only you can make |
-| [`write-plan`](./plugins/swe/skills/write-plan/SKILL.md) | You want rough notes as a short plan, or a plan split into PR-sized issues |
 | [`handoff`](./plugins/swe/skills/handoff/SKILL.md) | You want the work's current state saved for a new session |
 | [`log-decisions`](./plugins/swe/skills/log-decisions/SKILL.md) | You want an append-only decision log for a long or unattended run |
 | [`implement`](./plugins/swe/skills/implement/SKILL.md) | You approved a feature or fix and want it built and verified |
@@ -148,7 +147,6 @@ Each of these also starts on its own when its task comes up.
 | [`correct`](./plugins/swe/skills/correct/SKILL.md) | Agents keep making the same mistake |
 | [`orchestrate`](./plugins/swe/skills/orchestrate/SKILL.md) | You want work split across subagents, or sent to another provider |
 | [`ship-pr`](./plugins/swe/skills/ship-pr/SKILL.md) | You want a commit, a push, and a draft PR driven to green |
-| [`merge-conflicts`](./plugins/swe/skills/merge-conflicts/SKILL.md) | A merge, rebase, or cherry-pick has conflicts (model-only) |
 | [`verification-skill`](./plugins/swe/skills/verification-skill/SKILL.md) | Your project has no scripted way to run and observe the real app |
 | [`writing`](./plugins/swe/skills/writing/SKILL.md) | You write prose: docs, PR bodies, handoffs, plans, or replies |
 | [`writing-for-agents`](./plugins/swe/skills/writing-for-agents/SKILL.md) | You write a skill, `AGENTS.md`, or `CLAUDE.md` |
