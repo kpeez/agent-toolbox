@@ -1,0 +1,5 @@
+interface:
+  display_name: "Help"
+  short_description: "Find the right swe skill, playbook, or principle"
+policy:
+  allow_implicit_invocation: false

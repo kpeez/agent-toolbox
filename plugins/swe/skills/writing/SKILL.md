@@ -13,7 +13,7 @@ apply the [prose rules](references/prose.md) to every surface.
 | README, docs page, plugin guide | [human docs](references/human-docs.md) |
 | Skill, `AGENTS.md`, `CLAUDE.md`, agent brief | [writing-for-agents](../writing-for-agents/SKILL.md), and the ASD-STE100 section of the prose rules |
 | PR body, commit message | [PR body](../ship-pr/references/pr-body.md) and [show-me](references/show-me.md) |
-| Handoff, plan | its rules ([handoff](../handoff/SKILL.md), [plan-multi-phase](../playbook/references/plan-multi-phase.md)), [show-me](references/show-me.md) for a design or a change, and the ASD-STE100 section |
+| Handoff, plan | its rules ([handoff](../handoff/SKILL.md), [plan-multi-phase](../swe-mode/references/plan-multi-phase.md)), [show-me](references/show-me.md) for a design or a change, and the ASD-STE100 section |
 | Reply to the user | the ASD-STE100 section; [show-me](references/show-me.md) when the reply explains a design |
 | Code comment | only a non-obvious why ([no-comments](../no-comments/SKILL.md)) |
 

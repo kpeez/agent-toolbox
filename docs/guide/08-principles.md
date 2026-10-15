@@ -2,7 +2,7 @@
 
 This page lists the 25 swe principles and shows how you use their names to redirect an agent in the middle of a task.
 
-Each principle is a short skill named `principle-<slug>`. The skills are hidden from the model's skill list, so they cost no context until a step needs one. The [router](../../plugins/swe/skills/playbook/SKILL.md#principles) lists each slug with the moment it applies. When a playbook step names a principle, the agent reads its `SKILL.md` by path before the step. In the final reply, the agent names each principle that changed a decision and the choice it changed. It cites only the principles it loaded in that session.
+Each principle is a short skill named `principle-<slug>`. The skills are hidden from the model's skill list, so they cost no context until a step needs one. The [router](../../plugins/swe/skills/swe-mode/SKILL.md#principles) lists each slug with the moment it applies. When a playbook step names a principle, the agent reads its `SKILL.md` by path before the step. In the final reply, the agent names each principle that changed a decision and the choice it changed. It cites only the principles it loaded in that session.
 
 You do not start principles yourself. You use their names to steer. Each name points at a complete rule, so one phrase redirects the work more precisely than a paragraph of instructions.
 

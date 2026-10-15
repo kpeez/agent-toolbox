@@ -20,9 +20,9 @@ authorize putting private identifiers or content into public output.
 - A user invocation of `/ship-pr` authorizes the default commit, push, and
   draft-PR workflow for the named work.
 - Loading this skill grants nothing: not when its description matches, and
-  not when a router or playbook loads it. In a `/swe:playbook` task, the draft PR,
+  not when a router or playbook loads it. In a `/swe:swe-mode` task, the draft PR,
   checkpoint pushes, and every later action need the same authority from the
-  request or the user's standing instructions. Typing `/swe:playbook` does not grant
+  request or the user's standing instructions. Typing `/swe:swe-mode` does not grant
   it.
 - Without authority, classify, verify, and report. Leave verified local work
   intact.

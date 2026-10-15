@@ -7,7 +7,7 @@ This page shows you how to make the agent prove a change on the real app, vet a 
 Put what done means in the first prompt:
 
 ```text
-/swe:playbook add json output to the export command. the text output stays byte-identical, the json parses, and both run against the sample project. show me the evidence.
+/swe:swe-mode add json output to the export command. the text output stays byte-identical, the json parses, and both run against the sample project. show me the evidence.
 ```
 
 Now the agent has three checks it can run. Each change ends with one verdict:
@@ -61,7 +61,7 @@ In Codex, type `$swe:verification-skill`. The [`verification-skill`](../../plugi
 After that, every verify step in a playbook uses the skill. Name it in a prompt when you want the proof in a specific form:
 
 ```text
-/swe:playbook build the bulk-archive action. use verify-<app> to prove it and show me screenshots.
+/swe:swe-mode build the bulk-archive action. use verify-<app> to prove it and show me screenshots.
 ```
 
 Commit the verification skill so every person and agent drives the app the same way.
@@ -74,34 +74,34 @@ When a change adds or changes a user-facing feature, the agent updates that feat
 
 ## Match a UI to a baseline
 
-For a UI that must match a reference pixel for pixel, use the [`match-visual-parity`](../../plugins/swe/skills/playbook/playbooks/match-visual-parity.md) playbook. It builds a screenshot harness of the current component in each state first. Then it migrates one component at a time and diffs each against its baseline. A nonzero diff is a fail, and the agent never edits the baseline to make a diff pass.
+For a UI that must match a reference pixel for pixel, use the [`match-visual-parity`](../../plugins/swe/skills/swe-mode/playbooks/match-visual-parity.md) playbook. It builds a screenshot harness of the current component in each state first. Then it migrates one component at a time and diffs each against its baseline. A nonzero diff is a fail, and the agent never edits the baseline to make a diff pass.
 
 ## Diagnose a live symptom or a captured trace
 
-To find the cause of a leak, a CPU spin, or a glitch in a running process, the [`diagnose-runtime`](../../plugins/swe/skills/playbook/playbooks/diagnose-runtime.md) playbook captures a profile, heap snapshot, or trace on the real surface. When you already have a capture, the [`diagnose-trace`](../../plugins/swe/skills/playbook/playbooks/diagnose-trace.md) playbook loads it into sqlite and queries it. Both deliver a cited diagnosis with a source location, not a fix.
+To find the cause of a leak, a CPU spin, or a glitch in a running process, the [`diagnose-runtime`](../../plugins/swe/skills/swe-mode/playbooks/diagnose-runtime.md) playbook captures a profile, heap snapshot, or trace on the real surface. When you already have a capture, the [`diagnose-trace`](../../plugins/swe/skills/swe-mode/playbooks/diagnose-trace.md) playbook loads it into sqlite and queries it. Both deliver a cited diagnosis with a source location, not a fix.
 
 ## Open the PR
 
 ```text
-/swe:playbook open the pr. small ordered commits, evidence in the description.
+/swe:swe-mode open the pr. small ordered commits, evidence in the description.
 ```
 
-The [`ship-pr`](../../plugins/swe/skills/ship-pr/SKILL.md) skill owns commits, pushes, and PRs. It acts only when your request or your standing instructions authorize publication. Typing `/swe:playbook` alone does not authorize it. It verifies the work, commits small ordered groups, pushes without force, and opens a draft PR. The title uses the Conventional Commits form, such as `fix(parser): reject empty headers`. The body follows the [PR body template](../../plugins/swe/skills/ship-pr/references/pr-body.md), with Why, What changed, Scope, Tradeoffs, Blast Radius, and Verification sections.
+The [`ship-pr`](../../plugins/swe/skills/ship-pr/SKILL.md) skill owns commits, pushes, and PRs. It acts only when your request or your standing instructions authorize publication. Typing `/swe:swe-mode` alone does not authorize it. It verifies the work, commits small ordered groups, pushes without force, and opens a draft PR. The title uses the Conventional Commits form, such as `fix(parser): reject empty headers`. The body follows the [PR body template](../../plugins/swe/skills/ship-pr/references/pr-body.md), with Why, What changed, Scope, Tradeoffs, Blast Radius, and Verification sections.
 
 Opening a PR does not start a babysit. The agent posts the URL and keeps building.
 
 ## Drive the PR to merge-ready
 
-An open PR collects failed checks, review comments, and conflicts. Hand them to the [`babysit-pr`](../../plugins/swe/skills/playbook/playbooks/babysit-pr.md) playbook:
+An open PR collects failed checks, review comments, and conflicts. Hand them to the [`babysit-pr`](../../plugins/swe/skills/swe-mode/playbooks/babysit-pr.md) playbook:
 
 ```text
-/swe:playbook babysit this pr. get it green.
+/swe:swe-mode babysit this pr. get it green.
 ```
 
 It declares a mode first: `drive` (loop to merge-ready), `background`, `threads-only`, or `check` (one status pass). It works conflicts, then review threads, then CI, and batches every fix into one push. It classifies each failed check before a rerun, and it triages each bot comment as fix, dismiss, or ask. In Claude Code it watches with `gh pr checks <pr> --watch` or `/loop`. In Codex you rerun the pass by hand. For status only, ask smaller:
 
 ```text
-/swe:playbook check on pr 123. anything outstanding?
+/swe:swe-mode check on pr 123. anything outstanding?
 ```
 
 Babysit stops at merge-ready. It never merges.
@@ -111,10 +111,10 @@ Babysit stops at merge-ready. It never merges.
 Green is not safe. When you want the change merged, say so:
 
 ```text
-/swe:playbook land the stack.
+/swe:swe-mode land the stack.
 ```
 
-The [`ship-stack`](../../plugins/swe/skills/playbook/playbooks/ship-stack.md) playbook gives each PR its own verifier, an agent that did not write the code. The verifier runs the change as a user would and records `PASS`, `PASS+NOTES`, or `FAIL`, keyed to the patch-id. Then ship-stack lands the contiguous verified run from the bottom, one PR at a time, and stops at the first unverified PR. A verified PR above an unverified one waits.
+The [`ship-stack`](../../plugins/swe/skills/swe-mode/playbooks/ship-stack.md) playbook gives each PR its own verifier, an agent that did not write the code. The verifier runs the change as a user would and records `PASS`, `PASS+NOTES`, or `FAIL`, keyed to the patch-id. Then ship-stack lands the contiguous verified run from the bottom, one PR at a time, and stops at the first unverified PR. A verified PR above an unverified one waits.
 
 ```mermaid
 flowchart LR

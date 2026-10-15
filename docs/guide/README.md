@@ -1,14 +1,14 @@
 # The swe guide
 
 swe works best when you stop micromanaging the agent. You say what you want
-and how you will know it is done. `/swe:playbook` picks the playbook, runs the
+and how you will know it is done. `/swe:swe-mode` picks the playbook, runs the
 other skills as the steps need them, and shows you the evidence. This guide
 teaches that habit with realistic prompts.
 
 The pages cover these topics:
 
 1. [Set up swe](./01-setup.md). Install the plugin and run a first task.
-2. [Route work through `/swe:playbook`](./02-route-work.md). Give it a goal and see it pick a playbook.
+2. [Route work through `/swe:swe-mode`](./02-route-work.md). Give it a goal and see it pick a playbook.
 3. [Understand the code](./03-understand.md). A read-only investigation, then `how`, `why`, and `recall` before you edit anything.
 4. [Design the change](./04-design.md). `architect`, `interview-user`, prototypes, reviewers, and plans before code sets a shape.
 5. [Build and clean the change](./05-build-and-clean.md). The build playbooks, test-first work, `no-comments`, and `writing`.
@@ -25,7 +25,7 @@ Read the pages in order the first time. After that, each page stands alone.
 Give the agent a goal and a way to check it, in your own words:
 
 ```text
-/swe:playbook the export writes duplicate rows when a retry lands mid-run. repro first, then fix and verify.
+/swe:swe-mode the export writes duplicate rows when a retry lands mid-run. repro first, then fix and verify.
 ```
 
 You do not need to name a playbook or list skills. "repro first" and a

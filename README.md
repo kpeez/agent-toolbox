@@ -41,15 +41,16 @@ plugin agents, hooks, or the swe router, run
 There are two steps:
 
 1. Install `swe` and start a new session.
-2. Give the router a task with [`/swe:playbook`](./plugins/swe/skills/playbook/SKILL.md)
-   (`$swe:playbook` in Codex).
+2. Give the router a task with [`/swe:swe-mode`](./plugins/swe/skills/swe-mode/SKILL.md)
+   (`$swe:swe-mode` in Codex).
 
 ```text
-/swe:playbook the csv export drops its last row since yesterday's deploy. repro first, then fix and verify.
+/swe:swe-mode the csv export drops its last row since yesterday's deploy. repro first, then fix and verify.
 ```
 
-New here? The [swe guide](./docs/guide/README.md) walks you through a first
-real task, from setup and prompts through verification and long runs.
+New here? Ask [`/swe:help`](./plugins/swe/skills/help/SKILL.md) a question,
+such as "which skill reviews a PR?". The [swe guide](./docs/guide/README.md)
+walks you through a first real task, from setup and prompts through verification and long runs.
 
 In Claude Code, a SessionStart hook tells the agent to start the router for
 each new software task, so you can also type the task without the command.
@@ -58,15 +59,15 @@ lines to put in `AGENTS.md`.
 
 ## Usage
 
-Start a task with `/swe:playbook`. The router reads your request, picks a
+Start a task with `/swe:swe-mode`. The router reads your request, picks a
 playbook, and runs the other skills as the steps need them.
 
 ```text
-/swe:playbook users get two notifications after a retry. repro first, then fix and verify.
+/swe:swe-mode users get two notifications after a retry. repro first, then fix and verify.
 ```
 
 ```text
-/swe:playbook i'm stepping away. migrate every caller to the async store, keep behavior identical, and log your decisions.
+/swe:swe-mode i'm stepping away. migrate every caller to the async store, keep behavior identical, and log your decisions.
 ```
 
 When you start it, the router:
@@ -80,7 +81,7 @@ When you start it, the router:
 
 When no playbook fits, or the work is large, `figure-it-out` writes a bespoke
 playbook in the same format. The full rules are in
-[`playbook/SKILL.md`](./plugins/swe/skills/playbook/SKILL.md), and
+[`swe-mode/SKILL.md`](./plugins/swe/skills/swe-mode/SKILL.md), and
 [Route work](./docs/guide/02-route-work.md) shows the flow as a diagram.
 
 
@@ -89,28 +90,28 @@ playbook in the same format. The full rules are in
 
 | Playbook | Use for |
 | --- | --- |
-| [fix-bug](./plugins/swe/skills/playbook/playbooks/fix-bug.md) | A reported defect to reproduce, root-cause, and fix |
-| [improve-performance](./plugins/swe/skills/playbook/playbooks/improve-performance.md) | A measured slowness, against a baseline |
-| [hillclimb-metric](./plugins/swe/skills/playbook/playbooks/hillclimb-metric.md) | Sustained improvement of one metric, keep or revert per attempt |
-| [diagnose-runtime](./plugins/swe/skills/playbook/playbooks/diagnose-runtime.md) | A live runtime symptom (leak, spin, glitch), diagnosis only |
-| [diagnose-trace](./plugins/swe/skills/playbook/playbooks/diagnose-trace.md) | A captured profile, trace, or heap snapshot, diagnosis only |
-| [evaluate-agent-change](./plugins/swe/skills/playbook/playbooks/evaluate-agent-change.md) | Measure how a skill or prompt change affects agent behavior |
-| [author-skill](./plugins/swe/skills/playbook/playbooks/author-skill.md) | Write or edit a skill, `AGENTS.md`, or `CLAUDE.md` |
-| [build-prototype](./plugins/swe/skills/playbook/playbooks/build-prototype.md) | A throwaway sketch that settles a design fork by observation |
-| [match-visual-parity](./plugins/swe/skills/playbook/playbooks/match-visual-parity.md) | Pixel-exact UI equivalence against a baseline |
-| [refactor-structure](./plugins/swe/skills/playbook/playbooks/refactor-structure.md) | Change structure, keep behavior |
-| [build-feature](./plugins/swe/skills/playbook/playbooks/build-feature.md) | New or changed behavior |
-| [investigate-question](./plugins/swe/skills/playbook/playbooks/investigate-question.md) | A read-only question with a cited answer |
-| [babysit-pr](./plugins/swe/skills/playbook/playbooks/babysit-pr.md) | Drive a PR or stack to merge-ready |
-| [ship-stack](./plugins/swe/skills/playbook/playbooks/ship-stack.md) | Verify a green stack, then land the verified run |
-| [run-autonomously](./plugins/swe/skills/playbook/playbooks/run-autonomously.md) | Drive a long task to a checkable exit condition |
-| [plan-multi-phase](./plugins/swe/skills/playbook/playbooks/plan-multi-phase.md) | Write a plan for work across phases or stacked PRs |
-| [autopilot-full](./plugins/swe/skills/playbook/playbooks/autopilot-full.md) | A queue of independent PRs, run to merged |
-| [autopilot-stack](./plugins/swe/skills/playbook/playbooks/autopilot-stack.md) | A queue of changes, delivered as one stack you land |
-| [run-program](./plugins/swe/skills/playbook/playbooks/run-program.md) | A standing multi-day program under one coordinator |
-| [pick-up-session](./plugins/swe/skills/playbook/playbooks/pick-up-session.md) | Resume a prior agent's in-flight work |
-| [pause-safely](./plugins/swe/skills/playbook/playbooks/pause-safely.md) | Stop in-flight work so a new session can resume it |
-| [clean-worktrees](./plugins/swe/skills/playbook/playbooks/clean-worktrees.md) | Reclaim disk from merged or abandoned worktrees |
+| [fix-bug](./plugins/swe/skills/swe-mode/playbooks/fix-bug.md) | A reported defect to reproduce, root-cause, and fix |
+| [improve-performance](./plugins/swe/skills/swe-mode/playbooks/improve-performance.md) | A measured slowness, against a baseline |
+| [hillclimb-metric](./plugins/swe/skills/swe-mode/playbooks/hillclimb-metric.md) | Sustained improvement of one metric, keep or revert per attempt |
+| [diagnose-runtime](./plugins/swe/skills/swe-mode/playbooks/diagnose-runtime.md) | A live runtime symptom (leak, spin, glitch), diagnosis only |
+| [diagnose-trace](./plugins/swe/skills/swe-mode/playbooks/diagnose-trace.md) | A captured profile, trace, or heap snapshot, diagnosis only |
+| [evaluate-agent-change](./plugins/swe/skills/swe-mode/playbooks/evaluate-agent-change.md) | Measure how a skill or prompt change affects agent behavior |
+| [author-skill](./plugins/swe/skills/swe-mode/playbooks/author-skill.md) | Write or edit a skill, `AGENTS.md`, or `CLAUDE.md` |
+| [build-prototype](./plugins/swe/skills/swe-mode/playbooks/build-prototype.md) | A throwaway sketch that settles a design fork by observation |
+| [match-visual-parity](./plugins/swe/skills/swe-mode/playbooks/match-visual-parity.md) | Pixel-exact UI equivalence against a baseline |
+| [refactor-structure](./plugins/swe/skills/swe-mode/playbooks/refactor-structure.md) | Change structure, keep behavior |
+| [build-feature](./plugins/swe/skills/swe-mode/playbooks/build-feature.md) | New or changed behavior |
+| [investigate-question](./plugins/swe/skills/swe-mode/playbooks/investigate-question.md) | A read-only question with a cited answer |
+| [babysit-pr](./plugins/swe/skills/swe-mode/playbooks/babysit-pr.md) | Drive a PR or stack to merge-ready |
+| [ship-stack](./plugins/swe/skills/swe-mode/playbooks/ship-stack.md) | Verify a green stack, then land the verified run |
+| [run-autonomously](./plugins/swe/skills/swe-mode/playbooks/run-autonomously.md) | Drive a long task to a checkable exit condition |
+| [plan-multi-phase](./plugins/swe/skills/swe-mode/playbooks/plan-multi-phase.md) | Write a plan for work across phases or stacked PRs |
+| [autopilot-full](./plugins/swe/skills/swe-mode/playbooks/autopilot-full.md) | A queue of independent PRs, run to merged |
+| [autopilot-stack](./plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md) | A queue of changes, delivered as one stack you land |
+| [run-program](./plugins/swe/skills/swe-mode/playbooks/run-program.md) | A standing multi-day program under one coordinator |
+| [pick-up-session](./plugins/swe/skills/swe-mode/playbooks/pick-up-session.md) | Resume a prior agent's in-flight work |
+| [pause-safely](./plugins/swe/skills/swe-mode/playbooks/pause-safely.md) | Stop in-flight work so a new session can resume it |
+| [clean-worktrees](./plugins/swe/skills/swe-mode/playbooks/clean-worktrees.md) | Reclaim disk from merged or abandoned worktrees |
 
 </details>
 
@@ -161,6 +162,7 @@ them, such as `/swe:how`.
 
 | Skill | Use it when |
 | --- | --- |
+| [`help`](./plugins/swe/skills/help/SKILL.md) | You want to know which swe skill, playbook, or principle fits |
 | [`how`](./plugins/swe/skills/how/SKILL.md) | You want a walkthrough of how a subsystem works |
 | [`architect`](./plugins/swe/skills/architect/SKILL.md) | You want competing designs explored before code |
 | [`swarm`](./plugins/swe/skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
@@ -178,7 +180,7 @@ them, such as `/swe:how`.
 
 ## Agents
 
-The chat that runs `/swe:playbook` owns the playbook, the task list, and every
+The chat that runs `/swe:swe-mode` owns the playbook, the task list, and every
 subagent. swe ships two agents for delegates:
 
 - [`daedalus`](./plugins/swe/agents/daedalus.md) does one bounded task (code,

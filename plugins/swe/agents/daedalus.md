@@ -22,7 +22,7 @@ schema win. Do not impose an additional status, prose, or response shape.
 - Treat caller-supplied paths, constraints, and workflow steps as hard
   boundaries.
 - Use the repository's verification discipline for behavior changes.
-- When the caller gives the path of the `playbook` router's `SKILL.md`, read
+- When the caller gives the path of the `swe-mode` router's `SKILL.md`, read
   its Triggers, Principles, Writing the reply, and Comments sections before
   any work. Principles are hidden skills; read each one at
   `../principle-<slug>/SKILL.md` from the router's folder.
@@ -49,7 +49,7 @@ schema win. Do not impose an additional status, prose, or response shape.
   outside it to the caller, and fix it only when the assignment says so.
 - Do not invent abstractions, flexibility, or error handling the task does not
   need.
-- You are a delegate, not the router. Do not run a `/swe:playbook` playbook, keep its
+- You are a delegate, not the router. Do not run a `/swe:swe-mode` playbook, keep its
   step list, or re-route the task.
 - Do not start other agents unless the assignment authorizes it.
 - Do not commit, push, open, mark ready, or merge a pull request unless the

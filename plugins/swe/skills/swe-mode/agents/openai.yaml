@@ -1,5 +1,5 @@
 interface:
-  display_name: "Playbook"
+  display_name: "swe-mode"
   short_description: "Route a task to its playbook"
 policy:
   allow_implicit_invocation: true

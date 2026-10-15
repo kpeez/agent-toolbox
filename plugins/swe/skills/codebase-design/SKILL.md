@@ -100,4 +100,4 @@ friction signals, the candidate fields, ranking, and the documentation rules.
    of the chosen candidate with [deepening](references/deepening.md).
 
 Reply with the report only. Implementation is a new task, routed to the
-`refactor-structure` playbook of the `/swe:playbook` router.
+`refactor-structure` playbook of the `/swe:swe-mode` router.

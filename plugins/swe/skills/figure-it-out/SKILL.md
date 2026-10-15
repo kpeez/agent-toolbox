@@ -16,8 +16,8 @@ A principle named here is a swe principle skill. Load it by reading
 
 ## Steps
 
-1. `1-read-principles`: Read the [Principles](../playbook/SKILL.md#principles)
-   section of the playbook router. Load each principle before you apply it.
+1. `1-read-principles`: Read the [Principles](../swe-mode/SKILL.md#principles)
+   section of the swe-mode router. Load each principle before you apply it.
 2. `2-frame-the-run`: Frame the run. See [Frame](#frame).
 3. `3-design-the-playbook`: Design the workflow and write it as a playbook.
    See [Design the playbook](#design-the-playbook).
@@ -65,7 +65,7 @@ the **foundational-thinking** principle.
   edits. In Codex, set reasoning effort the same way.
 
 Write the designed workflow in the swe playbook file format, so the
-[playbook router](../playbook/SKILL.md#track) can track it. That file is what
+[swe-mode router](../swe-mode/SKILL.md#track) can track it. That file is what
 the human reviews.
 
 ```text
@@ -133,5 +133,5 @@ and the [correct](../correct/SKILL.md) skill.
 
 Give the playbook you designed, the rigor level and why, the decision log
 path, what is verified against the predicate, and what is still open. End with
-the "Steps" section that the playbook router defines, with this skill's
+the "Steps" section that the swe-mode router defines, with this skill's
 handles and every designed handle.

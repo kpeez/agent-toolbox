@@ -41,10 +41,10 @@ reflect and correct split the work. reflect improves skills from one session. co
 When you know the workflow you want to capture, give it to the router:
 
 ```text
-/swe:playbook write a skill for verifying database migrations in this repo
+/swe:swe-mode write a skill for verifying database migrations in this repo
 ```
 
-The router matches the [author-skill](../../plugins/swe/skills/playbook/playbooks/author-skill.md) playbook. It also matches an edit to `AGENTS.md` or `CLAUDE.md`. Its steps choose the invocation mode, point to the existing home of each rule instead of restating it, cut each sentence that changes no decision, check frontmatter and links, run the repository's packaging checks, and update the draft PR. The reply states the skill's always-on context cost.
+The router matches the [author-skill](../../plugins/swe/skills/swe-mode/playbooks/author-skill.md) playbook. It also matches an edit to `AGENTS.md` or `CLAUDE.md`. Its steps choose the invocation mode, point to the existing home of each rule instead of restating it, cut each sentence that changes no decision, check frontmatter and links, run the repository's packaging checks, and update the draft PR. The reply states the skill's always-on context cost.
 
 The steps load [writing-for-agents](../../plugins/swe/skills/writing-for-agents/SKILL.md). Agent-facing prose has a higher bar than prose for people, because each sentence becomes an instruction some future agent follows. Its [skill mechanics](../../plugins/swe/skills/writing-for-agents/SKILL-MECHANICS.md) page sets the invocation mode by who must start the skill:
 
@@ -63,10 +63,10 @@ A skill that drives your app to prove behavior is a verification skill. Use [ver
 A skill edit affects every future session. Test it like the experiment it is. The same goes for a skill you adopt from someone else.
 
 ```text
-/swe:playbook update the review brief so reviewers flag missing migrations, and measure the change against the current version.
+/swe:swe-mode update the review brief so reviewers flag missing migrations, and measure the change against the current version.
 ```
 
-This matches the [evaluate-agent-change](../../plugins/swe/skills/playbook/playbooks/evaluate-agent-change.md) playbook. It is built around one failure mode. An agent that knows it is under test behaves differently. So each candidate gets an organic task in its own directory, with no evaluation words in any name or prompt, and never learns that other candidates exist. One judge on a different model scores every output under sanitized labels. The playbook grades chain-following from the files each candidate opened in its own transcript, not from what the candidate claims. It writes the metrics and pass thresholds before any run, and reports each metric with run count and interval.
+This matches the [evaluate-agent-change](../../plugins/swe/skills/swe-mode/playbooks/evaluate-agent-change.md) playbook. It is built around one failure mode. An agent that knows it is under test behaves differently. So each candidate gets an organic task in its own directory, with no evaluation words in any name or prompt, and never learns that other candidates exist. One judge on a different model scores every output under sanitized labels. The playbook grades chain-following from the files each candidate opened in its own transcript, not from what the candidate claims. It writes the metrics and pass thresholds before any run, and reports each metric with run count and interval.
 
 Read every output yourself before you accept the verdict. If you disagree with the judge, suspect the rubric before your own judgment.
 
@@ -92,7 +92,7 @@ Follow the repository rules in [AGENTS.md](../../AGENTS.md) and [contributing](.
 
 - Keep the versions in `plugins/swe/.claude-plugin/plugin.json` and `plugins/swe/.codex-plugin/plugin.json` identical, and bump the patch number.
 - Keep every skill reference pointed at a file that exists in the plugin.
-- When you add or rename a playbook, add its line to the Playbooks list in the [router](../../plugins/swe/skills/playbook/SKILL.md#playbooks). The router matches only the playbooks it lists.
+- When you add or rename a playbook, add its line to the Playbooks list in the [router](../../plugins/swe/skills/swe-mode/SKILL.md#playbooks). The router matches only the playbooks it lists.
 - Run the [release checks](../release-checks.md) before a broad release.
 
 Do not edit a skill in the middle of a task because it misbehaves. The router's rule is to fix a broken skill in its own PR and keep the task moving. A skill edit mixed into feature work is hard to review and impossible to evaluate.
