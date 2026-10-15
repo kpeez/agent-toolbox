@@ -33,8 +33,9 @@ occurrence gets its fix and nothing more.
 3. `lint-or-check`: when bad code still builds, add a lint or check whose
    error names the file, type, or function to use instead. When the pattern is
    already common, fail only on new instances.
-4. `test`: test the behavior. Fix or delete any test that would still pass if
-   every function it calls returned nothing. Every new permanent test goes
+4. `test`: test the behavior. Fix or delete any test that still passes when
+   the behavior it checks breaks, or that fails when only the internals
+   change. Every new permanent test goes
    through the admission gate in [testing-code](../testing-code/SKILL.md).
 5. `docs-last`: write a doc or agent rule only for a judgment call. Nothing
    fails when an agent skips a doc, so make the rule prominent and add an

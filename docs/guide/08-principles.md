@@ -41,7 +41,7 @@ The core principles decide how much to build and when to rethink the design.
 - [Laziness protocol](../../plugins/swe/skills/principle-laziness-protocol/SKILL.md) applies when you refactor, size a diff, or want to add an abstraction or a layer. It prefers deletion and the smallest change that solves the problem.
 - [Foundational thinking](../../plugins/swe/skills/principle-foundational-thinking/SKILL.md) applies before you write logic. It chooses the core types and data structures first, and asks what concurrent actors share.
 - [Redesign from first principles](../../plugins/swe/skills/principle-redesign-from-first-principles/SKILL.md) applies when a new requirement meets an existing design. It redesigns as if the requirement had been there from the start.
-- [Attack the premise](../../plugins/swe/skills/principle-attack-the-premise/SKILL.md) applies when two or more fixes that share one premise failed the same check. It counts which actors hold the failure, then questions the premise.
+- [Attack the premise](../../plugins/swe/skills/principle-attack-the-premise/SKILL.md) applies when two or more fixes that share one premise failed the same check. It writes the premise down and tests it before the next fix.
 - [Subtract before you add](../../plugins/swe/skills/principle-subtract-before-you-add/SKILL.md) applies when you sequence an addition, a refactor, or a rewrite. It removes dead weight first.
 - [Minimize reader load](../../plugins/swe/skills/principle-minimize-reader-load/SKILL.md) applies to code that is hard to trace. It counts layers and hidden state, and collapses layers that do not pay for themselves.
 - [Outcome-oriented execution](../../plugins/swe/skills/principle-outcome-oriented-execution/SKILL.md) applies to planned rewrites and migrations. It converges on the target and keeps no throwaway compatibility states.
@@ -73,9 +73,9 @@ make operations idempotent. a retry after a crash mid-import must not write a se
 The verification principles define what counts as proof.
 
 - [Prove it works](../../plugins/swe/skills/principle-prove-it-works/SKILL.md) applies before you say a change works. It checks the real artifact through its real entry point and gives a VERIFIED, NOT VERIFIED, or INCONCLUSIVE verdict.
-- [Fix root causes](../../plugins/swe/skills/principle-fix-root-causes/SKILL.md) applies to debugging. It reproduces the failure, traces each symptom to its cause, and fixes it there.
+- [Fix root causes](../../plugins/swe/skills/principle-fix-root-causes/SKILL.md) applies to debugging. It traces each symptom to the first place the system went wrong and fixes it there.
 - [Sequence work into verifiable units](../../plugins/swe/skills/principle-sequence-verifiable-units/SKILL.md) applies to multi-step work and to how you stack commits and PRs. It checks each unit before the next.
-- [Test behavior, not implementation](../../plugins/swe/skills/principle-test-behavior-not-implementation/SKILL.md) applies when you write, change, or keep a test. It calls the code as its users do and asserts a literal expected result.
+- [Test behavior, not implementation](../../plugins/swe/skills/principle-test-behavior-not-implementation/SKILL.md) applies when you write, change, or keep a test. It asserts what users observe, so a test fails when behavior breaks and survives a change to the internals.
 - [Explain the number](../../plugins/swe/skills/principle-explain-the-number/SKILL.md) applies before you trust, report, or act on a measured number. It names what limits the number, with run count and spread. [benchmark-checklist](../../plugins/swe/skills/benchmark-checklist/SKILL.md) turns it into questions you answer from real runs.
 
 ```text
