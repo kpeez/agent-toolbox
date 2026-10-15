@@ -53,7 +53,7 @@ A handoff file holds the current state of one piece of work, so a new session, a
 
 ```mermaid
 flowchart LR
-  plan["write-plan<br/>(large work only)"]
+  plan["plan-multi-phase<br/>(large work only)"]
   resume["claude --resume<br/>(same machine and agent)"]
   manual["/swe:handoff<br/>(new session, agent, or host)"]
   compact["Compaction: /compact, auto,<br/>or idle (about 54 min)"]

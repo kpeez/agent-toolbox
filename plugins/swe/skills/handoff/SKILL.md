@@ -18,8 +18,7 @@ file's path: `<main checkout>/.agents/plans/<branch>.md`, with `/` in the branch
 changed to `-`. On `main`, `master`, or a detached HEAD the name is
 `<date>-<session>.md`.
 
-When the file exists, read it first. It can hold a plan from `write-plan` or an
-earlier handoff.
+When the file exists, read it first. It can hold a plan or an earlier handoff.
 
 ## Write the file
 

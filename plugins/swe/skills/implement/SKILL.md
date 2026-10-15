@@ -54,7 +54,7 @@ affected documentation left stale and the reason.
 ## Plans and issues
 
 - When the caller names a plan (for example `fix-login-redirect.md`), read it
-  first and work to it. Follow [plan storage](../write-plan/references/plan-storage.md)
+  first and work to it. Follow [plan storage](../../references/plan-storage.md)
   to find plans in the main checkout; resolve `../../scripts/handoff.py` from
   this skill's directory, not the current working directory, when running `dir`.
   If a material design choice changes during the work, update the plan's
