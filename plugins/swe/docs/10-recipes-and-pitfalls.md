@@ -24,7 +24,7 @@ A misreading shows up in the restatement, where it costs one message to correct.
 /swe:swe-mode prototype a few options for the settings layout. put them behind a switcher and send me screenshots of each.
 ```
 
-The [build-prototype](../../plugins/swe/skills/swe-mode/playbooks/build-prototype.md) playbook builds throwaway variants in a scratch directory and opens no PR. You pick from things that run, not from descriptions.
+The [build-prototype](../skills/swe-mode/playbooks/build-prototype.md) playbook builds throwaway variants in a scratch directory and opens no PR. You pick from things that run, not from descriptions.
 
 ## Turn a settled design into a plan
 
@@ -32,7 +32,7 @@ The [build-prototype](../../plugins/swe/skills/swe-mode/playbooks/build-prototyp
 /swe:swe-mode turn this design into a plan. small verifiable PRs, each with its own proof.
 ```
 
-Ask only after the design settles. The [plan-multi-phase](../../plugins/swe/skills/swe-mode/playbooks/plan-multi-phase.md) playbook settles open questions by prototype, runs `check_plan.py` on the plan, and names the playbook that will run it. It stops there until you say go.
+Ask only after the design settles. The [plan-multi-phase](../skills/swe-mode/playbooks/plan-multi-phase.md) playbook settles open questions by prototype, runs `check_plan.py` on the plan, and names the playbook that will run it. It stops there until you say go.
 
 ## Check independent slices in parallel
 
@@ -56,7 +56,7 @@ You get the one or two facts the change is safe because of, each with the eviden
 /swe:swe-mode the export writes duplicate rows when a retry lands mid-run. repro first. if there's a cheap test path, commit the failing test before the fix.
 ```
 
-"if there's a cheap test path" matters. The [fix-bug](../../plugins/swe/skills/swe-mode/playbooks/fix-bug.md) playbook skips the failing-test commit when the test would be expensive or unclear. A test forced through brittle mocks proves less than the real command.
+"if there's a cheap test path" matters. The [fix-bug](../skills/swe-mode/playbooks/fix-bug.md) playbook skips the failing-test commit when the test would be expensive or unclear. A test forced through brittle mocks proves less than the real command.
 
 ## Vet a number before you post it
 
@@ -80,7 +80,7 @@ The fix lands in the repository as architecture, a type, a check, or a test, so 
 /swe:swe-mode i'm going to bed. keep going until every fixture passes. do not stop. keep a decision log i can audit in the morning.
 ```
 
-"going to bed" is a session override. The agent decides each call the grant covers and reports it. [Run long work and hand it off](./07-long-runs.md) covers the decision log and handoffs.
+"going to bed" is a session override. The agent decides each call the grant covers and reports it. [Run long work and hand it off](07-long-runs.md) covers the decision log and handoffs.
 
 ## Redirect a drifting run
 
@@ -98,7 +98,7 @@ apply prove it works. show me the real output, not the build log.
 new task. the export bug is done. now look at the import timeout.
 ```
 
-"new task" makes the router match again instead of continuing the earlier playbook. You rarely need more words. You need the right name, and [the principles page](./08-principles.md) is the vocabulary.
+"new task" makes the router match again instead of continuing the earlier playbook. You rarely need more words. You need the right name, and [the principles page](08-principles.md) is the vocabulary.
 
 ## Get the reply in plain words
 
@@ -106,7 +106,7 @@ new task. the export bug is done. now look at the import timeout.
 /swe:wait-what
 ```
 
-That is the whole prompt. [wait-what](../../plugins/swe/skills/wait-what/SKILL.md) restates the last message in simpler words, with a little context and the project's own terms.
+That is the whole prompt. [wait-what](../skills/wait-what/SKILL.md) restates the last message in simpler words, with a little context and the project's own terms.
 
 ## Avoid these pitfalls
 
@@ -116,14 +116,14 @@ That is the whole prompt. [wait-what](../../plugins/swe/skills/wait-what/SKILL.m
 - **Taking the first design.** One attempt locks in the first shape the model thought of. Ask for prototypes or `architect` and pick from evidence.
 - **Polishing an abstract plan.** A review of a plan with no code behind it invents risks that never happen. Settle open questions with prototypes, then review what got built.
 - **Parallel agents in one worktree.** They overwrite each other's files. Say "own worktree per attempt".
-- **Looping before you trust the loop.** A loop that cannot verify its own work only makes unchecked work faster. Get the [verification skill](../../plugins/swe/skills/verification-skill/SKILL.md) working first.
+- **Looping before you trust the loop.** A loop that cannot verify its own work only makes unchecked work faster. Get the [verification skill](../skills/verification-skill/SKILL.md) working first.
 - **Trusting an unvetted number.** A warm cache or a skipped code path can fake a speedup. Run `benchmark-checklist` before the number goes anywhere.
 - **Correcting the same mistake by hand.** A correction in chat helps one run. `correct` fixes the repository so no later run repeats it.
-- **Accepting every review comment.** Review bots file real catches and noise in one list. The router triages each bot finding on its merits by the [bot triage](../../plugins/swe/skills/ship-pr/references/bot-triage.md) rules.
+- **Accepting every review comment.** Review bots file real catches and noise in one list. The router triages each bot finding on its merits by the [bot triage](../skills/ship-pr/references/bot-triage.md) rules.
 - **Reporting success off a green build.** A build proves it compiles. Ask for the real command, flow, stored value, or profile, and expect the evidence in the reply.
-- **Writing a `SKILL.md` freehand.** Route it through the [author-skill](../../plugins/swe/skills/swe-mode/playbooks/author-skill.md) playbook so the checks run.
+- **Writing a `SKILL.md` freehand.** Route it through the [author-skill](../skills/swe-mode/playbooks/author-skill.md) playbook so the checks run.
 - **Editing a skill mid-task.** Fix a broken skill in its own PR and keep the task moving.
 
-That is the guide. If you skipped ahead, go back to [Set up swe](./01-setup.md) and run one real task. The habits stick from use, not from reading.
+That is the guide. If you skipped ahead, go back to [Set up swe](01-setup.md) and run one real task. The habits stick from use, not from reading.
 
-Back to the [guide index](./README.md).
+Back to the [guide index](README.md).

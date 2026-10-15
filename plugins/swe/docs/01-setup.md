@@ -24,11 +24,11 @@ To install only the skills, without the plugin agents, the hooks, or the router,
 
 ## Let the hook start the router (Claude Code)
 
-The plugin adds a SessionStart hook. At the start of every session, it puts a short rule from [session-start.md](../../plugins/swe/hooks/session-start.md) into the context. The rule tells the agent to load `swe:swe-mode` before it acts on any new software task, however small.
+The plugin adds a SessionStart hook. At the start of every session, it puts a short rule from [session-start.md](../hooks/session-start.md) into the context. The rule tells the agent to load `swe:swe-mode` before it acts on any new software task, however small.
 
 So you do not have to type `/swe:swe-mode` each time. The agent starts the router itself, also after a short prompt such as "continue". The rule does not apply to chat, quick factual answers, and work that is not software.
 
-The plugin also adds a PostCompact hook that saves a session summary to the branch's handoff file. [Run long work](./07-long-runs.md) covers it.
+The plugin also adds a PostCompact hook that saves a session summary to the branch's handoff file. [Run long work](07-long-runs.md) covers it.
 
 ## Add the router rule to AGENTS.md (Codex)
 
@@ -42,7 +42,7 @@ Without these lines, type `$swe:swe-mode <task>` to start the router in Codex.
 
 ## Add the orchestrate rule (optional)
 
-The [`implement`](../../plugins/swe/skills/implement/SKILL.md) skill sends large work with independent parts to [`orchestrate`](../../plugins/swe/skills/orchestrate/SKILL.md). To make that choice before the agent picks a skill, add this rule to your user-level `CLAUDE.md` (Claude Code) or `AGENTS.md` (Codex):
+The [`implement`](../skills/implement/SKILL.md) skill sends large work with independent parts to [`orchestrate`](../skills/orchestrate/SKILL.md). To make that choice before the agent picks a skill, add this rule to your user-level `CLAUDE.md` (Claude Code) or `AGENTS.md` (Codex):
 
 ```text
 For substantial work with independently executable parts, use
@@ -56,7 +56,7 @@ Start a new session after you add it.
 
 swe spends extra tokens on subagents. Code goes to delegates, reviews go to a fresh reviewer, and `how` and `why` can fan out to several explorers. That is the price of independent checks.
 
-The router picks a model for each job. You do not configure it. In Claude Code, the [router's Subagents section](../../plugins/swe/skills/swe-mode/SKILL.md#subagents) uses these models:
+The router picks a model for each job. You do not configure it. In Claude Code, the [router's Subagents section](../skills/swe-mode/SKILL.md#subagents) uses these models:
 
 | Job | Model |
 | --- | --- |
@@ -64,7 +64,7 @@ The router picks a model for each job. You do not configure it. In Claude Code, 
 | Routine code | `sonnet` |
 | Mechanical edits | `haiku` |
 
-In Codex, the router raises or lowers reasoning effort the same way. The `daedalus` code agent runs on `sonnet` with medium effort in Claude Code. Its Codex definition, [daedalus.toml](../../plugins/swe/agents/daedalus.toml), pins its own model with maximum reasoning effort.
+In Codex, the router raises or lowers reasoning effort the same way. The `daedalus` code agent runs on `sonnet` with medium effort in Claude Code. Its Codex definition, [daedalus.toml](../agents/daedalus.toml), pins its own model with maximum reasoning effort.
 
 To spend fewer tokens:
 
@@ -89,8 +89,8 @@ The final reply ends with a Steps section. It gives every step with its state. A
 9-check-blast-radius skip: the change keeps the public signature
 ```
 
-Typing `/swe:swe-mode` does not let the agent publish. The agent commits, pushes, and opens a draft PR only when your request or your standing instructions (for example, your `CLAUDE.md`) allow it. Without that, it verifies the change, leaves it local, and reports. It always pauses before an irreversible write, such as a force-push to a shared branch or a deploy. See [`ship-pr`](../../plugins/swe/skills/ship-pr/SKILL.md#publication-authority).
+Typing `/swe:swe-mode` does not let the agent publish. The agent commits, pushes, and opens a draft PR only when your request or your standing instructions (for example, your `CLAUDE.md`) allow it. Without that, it verifies the change, leaves it local, and reports. It always pauses before an irreversible write, such as a force-push to a shared branch or a deploy. See [`ship-pr`](../skills/ship-pr/SKILL.md#publication-authority).
 
-If you do not know which skill fits, ask [`/swe:help`](../../plugins/swe/skills/help/SKILL.md). It answers with a prompt you can send and a link to the file that holds the answer.
+If you do not know which skill fits, ask [`/swe:help`](../skills/help/SKILL.md). It answers with a prompt you can send and a link to the file that holds the answer.
 
-Next: [Route work through `/swe:swe-mode`](./02-route-work.md).
+Next: [Route work through `/swe:swe-mode`](02-route-work.md).

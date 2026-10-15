@@ -19,8 +19,8 @@ Those files own the details. Read the file you route to before you quote it,
 and trust it when it disagrees with this map. The links here point into the
 installed plugin, which the user may not be able to open. Give the user the
 public copy: `https://github.com/kpeez/agent-toolbox/blob/main/plugins/swe/`
-followed by the file's path in the plugin. Guide pages are at
-`https://github.com/kpeez/agent-toolbox/blob/main/docs/guide/`.
+followed by the file's path in the plugin. Guide pages are in the plugin's
+`docs/` folder.
 
 ## Find out what they need
 
