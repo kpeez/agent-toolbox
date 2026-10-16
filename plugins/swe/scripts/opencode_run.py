@@ -9,8 +9,10 @@ server (``--standalone`` on 2.x, ``--pure`` on 1.x), so the worker policy
 below reaches it and parallel runs share no server.
 
 ``models`` prints one JSON line per active model that can call tools:
-``model``, ``provider``, and ``free`` (input and output cost 0). ``--free``
-keeps only the free ones.
+``model``, ``provider``, ``free`` (input and output cost 0), ``stealth``, and
+``variants`` (its effort levels). ``--free`` keeps only the free ones. A
+stealth model is a free OpenCode Zen model under a code name: it has no model
+family and no version number in its ID, such as ``cat-jam-free``.
 
 ``prefs`` shows or sets the user's model pool, kept per user in
 ``$XDG_CONFIG_HOME/swe/opencode.json`` (default ``~/.config``). It never
@@ -25,10 +27,15 @@ per task, at most ``--parallel`` at a time. Each task is an object:
 Only ``id`` and ``prompt`` are required. A task without ``model`` takes the
 next model from the pool in turn, and a failed task runs once more on the next
 model in the pool, because free models often hit rate limits. The pool is
-``--models``, else the user's ``prefs``. With neither, every task runs on the
-OpenCode Zen stealth model and falls back to DeepSeek V4.1 Flash, both free. A
-paid model runs only when the user names it. A task without ``dir`` runs in
+``--models``, else the user's ``prefs``. With neither, the pool is every live
+stealth model, and a failed task falls back to DeepSeek V4.1 Flash, all free.
+A paid model runs only when the user names it. A task without ``dir`` runs in
 ``--dir``.
+
+A task's ``effort`` (or ``--effort``) sets the model's reasoning effort, one
+of ``none minimal low medium high xhigh max``. It maps to the model's nearest
+variant (``#variant`` on 2.x, ``--variant`` on 1.x). A model with no variants
+runs at its default effort.
 
 Workers are read-only by default: they may read, grep, glob, and list, and
 every other tool is denied, the 2.x code-mode ``execute`` tool included.
@@ -36,7 +43,8 @@ every other tool is denied, the 2.x code-mode ``execute`` tool included.
 ``dir``, such as a git worktree. Shell, web, and nested subagents stay denied
 in both modes. This is OpenCode's own permission config, not an OS sandbox.
 
-``run`` prints one JSON line per task: ``id``, ``model``, ``status`` (``ok``,
+``run`` prints one JSON line per task: ``id``, ``model``, ``effort`` (the
+variant used, or null), ``status`` (``ok``,
 ``error``, or ``timeout``), ``exit``, ``seconds``, ``attempts``, ``text`` (the
 worker's final answer), ``error``, and ``session``. ``--out DIR`` also keeps
 each attempt's raw event stream as ``DIR/<id>.<attempt>.jsonl``.
@@ -58,8 +66,8 @@ import threading
 import time
 
 READ_TOOLS = ("read", "grep", "glob", "list")
-DEFAULT_MODEL = "opencode/big-pickle"  # the OpenCode Zen stealth model
 FALLBACK_MODEL = "opencode/deepseek-v4.1-flash-free"
+EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 
 
 def policy(edit: bool) -> dict:
@@ -94,17 +102,22 @@ def output(cmd: list[str]) -> str:
                           stdin=subprocess.DEVNULL).stdout
 
 
-def entry(provider: str, model_id: str, costs: list) -> dict:
+def entry(provider: str, model_id: str, costs: list, family: str,
+          variants: list) -> dict:
     free = bool(costs) and all(
         c.get("input") == 0 and c.get("output") == 0 for c in costs)
-    return {"model": f"{provider}/{model_id}", "provider": provider, "free": free}
+    stealth = (provider == "opencode" and free and not family
+               and not re.search(r"\d", model_id))
+    return {"model": f"{provider}/{model_id}", "provider": provider, "free": free,
+            "stealth": stealth, "variants": variants}
 
 
 def list_models(opencode: str, major: int) -> list[dict]:
     """Every active model that can call tools, over all connected providers."""
     if major >= 2:
         data = json.loads(output([opencode, "api", "--standalone", "model.list"]))
-        return [entry(m["providerID"], m["id"], m.get("cost") or [])
+        return [entry(m["providerID"], m["id"], m.get("cost") or [],
+                      m.get("family"), [v["id"] for v in m.get("variants") or []])
                 for m in data["data"]
                 if m.get("enabled", True) and m.get("status", "active") == "active"
                 and m.get("capabilities", {}).get("tools")]
@@ -115,7 +128,8 @@ def list_models(opencode: str, major: int) -> list[dict]:
         if (info.get("status", "active") == "active"
                 and info.get("capabilities", {}).get("toolcall")):
             provider, model_id = name.split("/", 1)
-            models.append(entry(provider, model_id, [info.get("cost", {})]))
+            models.append(entry(provider, model_id, [info.get("cost", {})],
+                                info.get("family"), list(info.get("variants") or {})))
     return models
 
 
@@ -129,14 +143,25 @@ def read_prefs() -> dict:
     return json.loads(path.read_text()) if path.exists() else {}
 
 
-def model_pool(args) -> tuple[list[str], bool]:
-    """Return the pool, and whether tasks take its models in turn."""
+def model_pool(args, catalog: list[dict]) -> tuple[list[str], str | None]:
+    """Return the pool, and the fallback model (None: the next in the pool)."""
     if args.models:
-        return args.models.split(","), True
+        return args.models.split(","), None
     saved = read_prefs().get("models")
     if saved:
-        return saved, True
-    return [DEFAULT_MODEL, FALLBACK_MODEL], False
+        return saved, None
+    stealth = [m["model"] for m in catalog if m["stealth"]]
+    return stealth or [FALLBACK_MODEL], FALLBACK_MODEL
+
+
+def variant(effort: str | None, variants: list[str]) -> str | None:
+    """The model's variant nearest to the effort, preferring the higher one."""
+    known = [v for v in variants if v in EFFORTS]
+    if not effort or not known:
+        return None
+    want = EFFORTS.index(effort)
+    return min(known, key=lambda v: (abs(EFFORTS.index(v) - want),
+                                     -EFFORTS.index(v)))
 
 
 def parse_events(stream: str) -> tuple[str, str, str]:
@@ -158,8 +183,15 @@ def parse_events(stream: str) -> tuple[str, str, str]:
 
 
 def attempt(args, task: dict, model: str, n: int) -> dict:
-    server = "--standalone" if args.major >= 2 else "--pure"
-    cmd = [args.opencode, "run", server, "--format", "json", "-m", model]
+    level = variant(task.get("effort") or args.effort,
+                    args.variants.get(model, []))
+    if args.major >= 2:
+        cmd = [args.opencode, "run", "--standalone", "--format", "json",
+               "-m", f"{model}#{level}" if level else model]
+    else:
+        cmd = [args.opencode, "run", "--pure", "--format", "json", "-m", model]
+        if level:
+            cmd += ["--variant", level]
     for f in task.get("files", []):
         cmd += ["-f", f]
     cmd += ["--", task["prompt"]]
@@ -184,7 +216,7 @@ def attempt(args, task: dict, model: str, n: int) -> dict:
         error = f"no answer after {args.timeout}s" + ("" if stdout else ", no events")
     if status == "error" and not error:
         error = stderr.strip()[-2000:] or "no answer"
-    return {"id": task["id"], "model": model, "status": status,
+    return {"id": task["id"], "model": model, "effort": level, "status": status,
             "exit": proc.returncode, "seconds": round(time.monotonic() - start, 1),
             "text": text, "error": error, "session": session}
 
@@ -208,6 +240,8 @@ def load_tasks(path: str, edit: bool) -> list[dict]:
     for task in tasks:
         if not isinstance(task, dict) or not task.get("id") or not task.get("prompt"):
             sys.exit(f"tasks: every task needs id and prompt: {task!r}")
+        if task.get("effort") not in (None, *EFFORTS):
+            sys.exit(f"tasks: effort must be one of {' '.join(EFFORTS)}: {task['id']}")
         if not re.fullmatch(r"[A-Za-z0-9._-]+", task["id"]) or task["id"] in ids:
             sys.exit(f"tasks: id must be a unique slug: {task['id']!r}")
         ids.add(task["id"])
@@ -242,15 +276,17 @@ def cmd_prefs(args) -> None:
 
 def cmd_run(args) -> None:
     tasks = load_tasks(args.tasks, args.edit)
-    pool, rotate = model_pool(args)
+    catalog = list_models(args.opencode, args.major)
+    args.variants = {m["model"]: m["variants"] for m in catalog}
+    pool, fallback = model_pool(args, catalog)
     if args.out:
         args.out.mkdir(parents=True, exist_ok=True)
-    turn = itertools.cycle(range(len(pool)) if rotate else [0])
+    turn = itertools.cycle(range(len(pool)))
     plans = []
     for task in tasks:
         i = next(turn)
         model = task.get("model") or pool[i]
-        plans.append((task, model, pool[(i + 1) % len(pool)]))
+        plans.append((task, model, fallback or pool[(i + 1) % len(pool)]))
     lock = threading.Lock()
     failed = 0
 
@@ -281,6 +317,8 @@ def main() -> None:
     run.add_argument("--dir", default=os.getcwd(),
                      help="directory for tasks without their own dir")
     run.add_argument("--models", help="comma-separated pool; overrides prefs")
+    run.add_argument("--effort", choices=EFFORTS,
+                     help="reasoning effort for tasks without their own")
     run.add_argument("--parallel", type=int, default=4)
     run.add_argument("--timeout", type=int, default=600,
                      help="seconds per attempt (default: 600)")
