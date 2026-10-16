@@ -23,10 +23,12 @@ per task, at most ``--parallel`` at a time. Each task is an object:
      "dir": "/abs/worktree", "files": ["/abs/file"]}
 
 Only ``id`` and ``prompt`` are required. A task without ``model`` takes the
-next model from the pool in turn. The pool is ``--models``, else the user's
-``prefs``, else every free model. A paid model runs only when one of those
-names it. A task without ``dir`` runs in ``--dir``. A failed task runs once
-more on the next model in the pool, because free models often hit rate limits.
+next model from the pool in turn, and a failed task runs once more on the next
+model in the pool, because free models often hit rate limits. The pool is
+``--models``, else the user's ``prefs``. With neither, every task runs on the
+OpenCode Zen stealth model and falls back to DeepSeek V4.1 Flash, both free. A
+paid model runs only when the user names it. A task without ``dir`` runs in
+``--dir``.
 
 Workers are read-only by default: they may read, grep, glob, and list, and
 every other tool is denied, the 2.x code-mode ``execute`` tool included.
@@ -56,6 +58,8 @@ import threading
 import time
 
 READ_TOOLS = ("read", "grep", "glob", "list")
+DEFAULT_MODEL = "opencode/big-pickle"  # the OpenCode Zen stealth model
+FALLBACK_MODEL = "opencode/deepseek-v4.1-flash-free"
 
 
 def policy(edit: bool) -> dict:
@@ -125,13 +129,14 @@ def read_prefs() -> dict:
     return json.loads(path.read_text()) if path.exists() else {}
 
 
-def model_pool(args) -> list[str]:
+def model_pool(args) -> tuple[list[str], bool]:
+    """Return the pool, and whether tasks take its models in turn."""
     if args.models:
-        return args.models.split(",")
+        return args.models.split(","), True
     saved = read_prefs().get("models")
     if saved:
-        return saved
-    return [m["model"] for m in list_models(args.opencode, args.major) if m["free"]]
+        return saved, True
+    return [DEFAULT_MODEL, FALLBACK_MODEL], False
 
 
 def parse_events(stream: str) -> tuple[str, str, str]:
@@ -237,12 +242,10 @@ def cmd_prefs(args) -> None:
 
 def cmd_run(args) -> None:
     tasks = load_tasks(args.tasks, args.edit)
-    pool = model_pool(args)
-    if not pool:
-        sys.exit("no model in the pool; pass --models or set prefs")
+    pool, rotate = model_pool(args)
     if args.out:
         args.out.mkdir(parents=True, exist_ok=True)
-    turn = itertools.cycle(range(len(pool)))
+    turn = itertools.cycle(range(len(pool)) if rotate else [0])
     plans = []
     for task in tasks:
         i = next(turn)
