@@ -25,11 +25,12 @@ every worker answer as a lead to check, not a finding.
 1. **Check OpenCode.** Run `opencode --version`. The script supports
    OpenCode 2.x (npm `@opencode/cli`) and 1.x (npm `opencode-ai`).
 2. **Choose the pool.** Run `python3 <plugin-root>/scripts/opencode_run.py prefs`.
-   A saved `models` list is the user's pool. With no saved list, the pool is
-   every free model. Run `models` to see each model OpenCode can reach, with
-   its provider and whether it is free. When the user names models or a
-   provider, save that choice with `prefs --models <a,b>`. Use a paid model
-   only when the user named it.
+   A saved `models` list is the user's pool. With no saved list, every worker
+   runs on the OpenCode Zen stealth model, `opencode/big-pickle`, and falls
+   back to `opencode/deepseek-v4.1-flash-free`. Run `models` to see each
+   model OpenCode can reach, with its provider and whether it is free. When
+   the user names models or a provider, save that choice with
+   `prefs --models <a,b>`. Use a paid model only when the user named it.
 3. **Frame the swarm.** Pick a swarm shape: a coverage matrix for one slice
    per worker, or a race for one brief on several models. Keep three to five
    workers. Each worker gets one bounded question that it can answer by
@@ -42,10 +43,10 @@ every worker answer as a lead to check, not a finding.
 5. **Run it.** Run
    `python3 <plugin-root>/scripts/opencode_run.py run tasks.json --dir <repo>`.
    Workers are read-only by default and take models from the pool in turn.
-   A failed task runs once more on the next model. `--models` overrides the
-   pool for one run. Add `--out <dir>` to keep raw event streams. Run
-   `run --help` for the other flags. Some models are slow, so a worker can
-   take several minutes.
+   A failed task runs once more on the next model in the pool. `--models`
+   overrides the pool for one run. Add `--out <dir>` to keep raw event
+   streams. Run `run --help` for the other flags. Some models are slow, so a
+   worker can take several minutes.
 6. **Verify.** Read the JSON line of each task. Check each claim in the code
    before you use it. Drop claims you cannot confirm. For a race, apply the
    selection rule you declared in step 3. A task with status `error` or
