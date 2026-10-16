@@ -25,11 +25,11 @@ every worker answer as a lead to check, not a finding.
 1. **Check OpenCode.** Run `opencode --version`. The script supports
    OpenCode 2.x (npm `@opencode/cli`) and 1.x (npm `opencode-ai`).
 2. **Choose the pool.** Run `python3 <plugin-root>/scripts/opencode_run.py prefs`.
-   A saved `models` list is the user's pool. With no saved list, every worker
-   runs on the OpenCode Zen stealth model, `opencode/big-pickle`, and falls
-   back to `opencode/deepseek-v4.1-flash-free`. Run `models` to see each
-   model OpenCode can reach, with its provider and whether it is free. When
-   the user names models or a provider, save that choice with
+   A saved `models` list is the user's pool. With no saved list, the pool is
+   every live OpenCode Zen stealth model, and a failed worker falls back to
+   `opencode/deepseek-v4.1-flash-free`. Run `models` to see each model
+   OpenCode can reach, with its provider, cost, stealth flag, and effort
+   levels. When the user names models or a provider, save that choice with
    `prefs --models <a,b>`. Use a paid model only when the user named it.
 3. **Frame the swarm.** Pick a swarm shape: a coverage matrix for one slice
    per worker, or a race for one brief on several models. Keep three to five
@@ -37,9 +37,11 @@ every worker answer as a lead to check, not a finding.
    reading files.
 4. **Write the task file.** A JSON list of
    `{"id": "<slug>", "prompt": "<brief>"}` objects, with optional `model`,
-   `dir`, and `files`. A worker sees no chat, so each prompt names the goal,
-   the absolute paths to read, and the report format, such as one
-   `path:line: finding` per line or `NONE`.
+   `effort`, `dir`, and `files`. Set `effort` per task as you would for a
+   native subagent: `low` for mechanical lookups, `medium` for routine
+   reading, `high` or above for judgment. A worker sees no chat, so each
+   prompt names the goal, the absolute paths to read, and the report format,
+   such as one `path:line: finding` per line or `NONE`.
 5. **Run it.** Run
    `python3 <plugin-root>/scripts/opencode_run.py run tasks.json --dir <repo>`.
    Workers are read-only by default and take models from the pool in turn.
