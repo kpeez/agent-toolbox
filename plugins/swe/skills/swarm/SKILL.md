@@ -54,7 +54,18 @@ Open the host's task list with one entry per phase before you launch anything.
 
 ## Phase B: Fan out
 
-Spawn all N workers in one message, in the background. In Claude Code, use
+**Workflow path, Claude Code only.** Run Phases B and C as one Workflow
+script when the host lists the Workflow tool and the user opted in. Opt-in
+means the user typed `/swe:swarm`, asked for a workflow in their own words,
+or turned on ultracode. A router that read this file by path is not opt-in.
+Load `workflow-authoring` first. In the script, run `pipeline()` over the
+slices or race arms, with one `agent()` per worker. Give each worker a
+`schema` for its `PASS`, `ISSUES`, or `BLOCKED` report. A worker that writes
+code gets `agentType: "swe:daedalus"` and `isolation: "worktree"`. `log()`
+each lane the script drops. Apply the Phase C rules to the returned results.
+In every other case, and in Codex, use the Agent path below.
+
+**Agent path.** Spawn all N workers in one message, in the background. In Claude Code, use
 the Agent tool with `run_in_background: true`. Use `swe:daedalus` for workers
 that change code, and a native subagent for search or review. Give a writing
 worker `isolation: "worktree"`. When the user has cloud sessions, a Claude Code

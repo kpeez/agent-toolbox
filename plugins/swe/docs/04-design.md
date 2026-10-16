@@ -64,6 +64,8 @@ The playbook names the one decision, builds throwaway variants in a scratch dire
 
 `swarm` runs N workers in parallel and returns one report. Its shapes are a coverage matrix, a race, a gauntlet of independent checkers, an exploration partition, and verifier lanes. For a race, it declares `first pass`, `rank all`, or `best-of` before it spawns. Each worker reports `PASS`, `ISSUES`, or `BLOCKED` with evidence. A worker that drops out becomes a gap in the report, not a pass.
 
+In Claude Code, when you type `/swe:swarm`, ask for a workflow, or turn on ultracode, `swarm` runs the fan-out as one Workflow script: a `pipeline()` over the slices, a result schema per worker, and a log line for each dropped lane. Otherwise, and in Codex, it spawns workers with the Agent tool.
+
 ## Get an independent review
 
 Many steps say `reviewer agent`. That is a fresh subagent that did not write the code, briefed with the [review brief](../references/review-brief.md). The brief has two modes. In review and fix mode, the default, the reviewer fixes small, sure findings and reports each fix. In verdict only mode, it edits nothing. A landing verdict and parallel reviews of one change use verdict only.
