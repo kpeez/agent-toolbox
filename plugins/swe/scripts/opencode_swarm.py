@@ -1,9 +1,13 @@
 #!/usr/bin/env python3
 """Run a small swarm of OpenCode workers on free OpenCode Zen models.
 
-``models`` prints the free Zen models that can call tools: the ``opencode/``
-models whose input and output cost is 0 in ``opencode models opencode
---verbose``. The list changes often, so read it live before each swarm.
+It supports OpenCode 1.x (npm ``opencode-ai``) and 2.x (npm ``@opencode/cli``).
+Each run starts its own server (``--pure`` on 1.x, ``--standalone`` on 2.x), so
+the swarm policy below reaches it and parallel runs share no server.
+
+``models`` prints the free Zen models that can call tools: the active
+``opencode/`` models whose input and output cost is 0. The list changes often,
+so read it live before each swarm.
 
 ``run`` reads a JSON list of tasks and runs one ``opencode run --format json``
 per task, at most ``--parallel`` at a time. Each task is an object:
@@ -16,10 +20,11 @@ next model from ``--models`` (or the live free list) in turn. A task without
 ``dir`` runs in ``--dir``. A failed task runs once more on the next model in
 the pool, because free models often hit rate limits.
 
-Workers are read-only by default: the build agent may read, grep, glob, and
-list, and every other tool is denied. ``--edit`` also allows file edits, and
-then every task needs its own ``dir``, such as a git worktree. Shell, web,
-and nested subagents stay denied in both modes. This is OpenCode's own
+Workers are read-only by default: they may read, grep, glob, and list, and
+every other tool is denied, the 2.x code-mode ``execute`` tool included.
+``--edit`` also allows file edits and writes, and then every task needs its own
+``dir``, such as a git worktree. Shell, web, and nested subagents stay denied
+in both modes. This is OpenCode's own
 permission config, not an OS sandbox.
 
 ``run`` prints one JSON line per task: ``id``, ``model``, ``status`` (``ok``,
@@ -67,21 +72,34 @@ def child_env(edit: bool) -> dict:
     return env
 
 
-def free_models(opencode: str) -> list[str]:
-    out = subprocess.run(
-        [opencode, "models", "opencode", "--verbose"],
-        capture_output=True, text=True, check=True,
-    ).stdout
+def major_version(opencode: str) -> int:
+    out = subprocess.run([opencode, "--version"], capture_output=True,
+                         text=True, check=True).stdout
+    return int(re.search(r"(\d+)\.\d+", out).group(1))
+
+
+def output(cmd: list[str]) -> str:
+    return subprocess.run(cmd, capture_output=True, text=True, check=True).stdout
+
+
+def is_free(info: dict, costs: list, tools: bool) -> bool:
+    return (info.get("status", "active") == "active" and tools and costs
+            and all(c.get("input") == 0 and c.get("output") == 0 for c in costs))
+
+
+def free_models(opencode: str, major: int) -> list[str]:
+    if major >= 2:
+        data = json.loads(output([opencode, "api", "--standalone", "model.list"]))
+        return [f"opencode/{m['id']}" for m in data["data"]
+                if m.get("providerID") == "opencode" and m.get("enabled", True)
+                and is_free(m, m.get("cost") or [],
+                            m.get("capabilities", {}).get("tools"))]
+    out = output([opencode, "models", "opencode", "--verbose"])
     models = []
     for name, body in re.findall(r"^(opencode/\S+)\n(\{.*?^\})", out, re.M | re.S):
         info = json.loads(body)
-        cost = info.get("cost", {})
-        if (
-            info.get("status", "active") == "active"
-            and cost.get("input") == 0
-            and cost.get("output") == 0
-            and info.get("capabilities", {}).get("toolcall")
-        ):
+        if is_free(info, [info.get("cost", {})],
+                   info.get("capabilities", {}).get("toolcall")):
             models.append(name)
     return models
 
@@ -104,15 +122,15 @@ def parse_events(stream: str) -> tuple[str, str, str]:
 
 
 def attempt(args, task: dict, model: str, n: int) -> dict:
-    cmd = [args.opencode, "run", "--pure", "--format", "json", "--agent", "build",
-           "-m", model, "--dir", task.get("dir", args.dir)]
+    server = "--standalone" if args.major >= 2 else "--pure"
+    cmd = [args.opencode, "run", server, "--format", "json", "-m", model]
     for f in task.get("files", []):
         cmd += ["-f", f]
     cmd += ["--", task["prompt"]]
     start = time.monotonic()
     proc = subprocess.Popen(cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE,
                             text=True, env=child_env(args.edit),
-                            start_new_session=True)
+                            cwd=task.get("dir", args.dir), start_new_session=True)
     try:
         stdout, stderr = proc.communicate(timeout=args.timeout)
         status = None
@@ -164,12 +182,12 @@ def load_tasks(path: str, edit: bool) -> list[dict]:
 
 
 def cmd_models(args) -> None:
-    print("\n".join(free_models(args.opencode)))
+    print("\n".join(free_models(args.opencode, args.major)))
 
 
 def cmd_run(args) -> None:
     tasks = load_tasks(args.tasks, args.edit)
-    pool = args.models.split(",") if args.models else free_models(args.opencode)
+    pool = args.models.split(",") if args.models else free_models(args.opencode, args.major)
     if not pool:
         sys.exit("no free OpenCode Zen model found; pass --models")
     if args.out:
@@ -214,7 +232,8 @@ def main() -> None:
     run.add_argument("--out", type=Path, help="keep raw event streams here")
     args = parser.parse_args()
     if not shutil.which(args.opencode):
-        sys.exit(f"{args.opencode} not found; install opencode-ai 1.x")
+        sys.exit(f"{args.opencode} not found; install @opencode/cli or opencode-ai")
+    args.major = major_version(args.opencode)
     if args.command == "models":
         cmd_models(args)
     else:

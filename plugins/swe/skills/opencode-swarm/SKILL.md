@@ -21,9 +21,9 @@ than the lead: treat every worker answer as a lead to check, not a finding.
 
 ## Steps
 
-1. **Check OpenCode.** Run `opencode --version`. The script needs OpenCode
-   1.x with `opencode run`. The OpenCode 2 preview (`opencode2`) has no `run`
-   command, so keep 1.x installed next to it. The free models need no login.
+1. **Check OpenCode.** Run `opencode --version`. The script supports
+   OpenCode 2.x (npm `@opencode/cli`) and 1.x (npm `opencode-ai`). The free
+   models need no login.
 2. **List the free models.** Run
    `python3 <plugin-root>/scripts/opencode_swarm.py models`. It prints the
    `opencode/` models with zero cost that can call tools. The list changes
@@ -41,7 +41,8 @@ than the lead: treat every worker answer as a lead to check, not a finding.
    `python3 <plugin-root>/scripts/opencode_swarm.py run tasks.json --dir <repo>`.
    Workers are read-only by default and get models from the free list in
    turn. A failed task runs once more on the next model. Add `--out <dir>` to
-   keep raw event streams. Run `run --help` for the other flags.
+   keep raw event streams. Run `run --help` for the other flags. Some free
+   models are slow, so a worker can take several minutes.
 6. **Verify.** Read the JSON line of each task. Check each claim in the code
    before you use it. Drop claims you cannot confirm. For a race, apply the
    selection rule you declared in step 3. A task with status `error` or
@@ -53,6 +54,6 @@ than the lead: treat every worker answer as a lead to check, not a finding.
 
 Use `--edit` only when a worker must write files. Every task then needs its
 own `dir`, such as a git worktree from `git worktree add`. The script allows
-read and edit tools and denies shell, web, and nested subagents in both
-modes. This is OpenCode's permission config, not an OS sandbox. Review each
+read and edit tools and denies shell, web, code mode, and nested subagents in
+both modes. This is OpenCode's permission config, not an OS sandbox. Review each
 worktree's diff as you would a stranger's patch before you take any of it.

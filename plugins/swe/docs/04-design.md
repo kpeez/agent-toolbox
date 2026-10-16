@@ -72,7 +72,7 @@ In Claude Code, when you type `/swe:swarm`, ask for a workflow, or turn on ultra
 /swe:opencode-swarm find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
 ```
 
-`opencode-swarm` runs three to five OpenCode workers on free OpenCode Zen models. The lead writes a JSON task list, and [opencode_swarm.py](../scripts/opencode_swarm.py) runs one `opencode run` per task in parallel, gives the tasks the free models in turn, and retries a failed task once on the next model. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports. It needs OpenCode 1.x on your computer. The OpenCode 2 preview has no `run` command. Free models can keep your prompts, so use the skill only on code you agree to send to OpenCode.
+`opencode-swarm` runs three to five OpenCode workers on free OpenCode Zen models. The lead writes a JSON task list, and [opencode_swarm.py](../scripts/opencode_swarm.py) runs one `opencode run` per task in parallel, gives the tasks the free models in turn, and retries a failed task once on the next model. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports. It needs OpenCode 2.x (`@opencode/cli`) or 1.x (`opencode-ai`) on your computer. Free models can keep your prompts, so use the skill only on code you agree to send to OpenCode.
 
 ## Get an independent review
 
