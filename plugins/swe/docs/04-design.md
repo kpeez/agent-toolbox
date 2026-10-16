@@ -66,13 +66,13 @@ The playbook names the one decision, builds throwaway variants in a scratch dire
 
 In Claude Code, when you type `/swe:swarm`, ask for a workflow, or turn on ultracode, `swarm` runs the fan-out as one Workflow script: a `pipeline()` over the slices, a result schema per worker, and a log line for each dropped lane. Otherwise, and in Codex, it spawns workers with the Agent tool.
 
-## Fan out free OpenCode Zen workers
+## Fan out OpenCode workers
 
 ```text
-/swe:opencode-swarm find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
+/swe:opencode find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
 ```
 
-`opencode-swarm` runs three to five OpenCode workers on free OpenCode Zen models. The lead writes a JSON task list, and [opencode_swarm.py](../scripts/opencode_swarm.py) runs one `opencode run` per task in parallel, gives the tasks the free models in turn, and retries a failed task once on the next model. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports. It needs OpenCode 2.x (`@opencode/cli`) or 1.x (`opencode-ai`) on your computer. Free models can keep your prompts, so use the skill only on code you agree to send to OpenCode.
+`opencode` runs three to five OpenCode workers on any model OpenCode can reach: OpenCode Zen, OpenCode Go, GitHub Copilot, or another provider you connected. The lead writes a JSON task list, and [opencode_run.py](../scripts/opencode_run.py) runs one `opencode run` per task in parallel, gives the tasks the pool's models in turn, and retries a failed task once on the next model. The pool is your saved choice, kept per user in `~/.config/swe/opencode.json`, or every free model when you saved none. To save a pool, name the models in your prompt, or run `python3 <plugin-root>/scripts/opencode_run.py prefs --models <a,b>`. A paid model runs only when you name it. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports. It needs OpenCode 2.x (`@opencode/cli`) or 1.x (`opencode-ai`) on your computer. Providers can keep your prompts, so use the skill only on code you agree to send to them.
 
 ## Get an independent review
 

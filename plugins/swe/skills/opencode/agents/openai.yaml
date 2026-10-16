@@ -1,4 +1,4 @@
 interface:
-  display_name: "OpenCode Swarm"
+  display_name: "OpenCode"
 policy:
   allow_implicit_invocation: false

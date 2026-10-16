@@ -45,8 +45,8 @@ Open the host's task list with one entry per phase before you launch anything.
    hardest code. In Codex, set reasoning effort the same way. For a model
    race, name each arm's model up front. A diversity arm can run on a
    different Claude model, or on an external provider through orchestrate.
-   For free OpenCode Zen workers, use
-   [opencode-swarm](../opencode-swarm/SKILL.md). If
+   For OpenCode workers, use
+   [opencode](../opencode/SKILL.md). If
    the host rejects a model, use the host default and say so.
 4. Give each worker its own writable output when it writes. Use a worktree
    per worker or disjoint paths. When workers verify or measure commits, each
