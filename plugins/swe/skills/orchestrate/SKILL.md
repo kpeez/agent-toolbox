@@ -72,7 +72,8 @@ tools are configured. Read [the bridge guide](references/opencode-acp.md) for
 session controls, permission configuration, and limits. Call those tools
 directly; do not add a host-agent forwarding layer. Bridge agent IDs belong to
 the bridge, not the host's native subagent tools. Use the CLI for an individual
-assignment when the bridge is unavailable.
+assignment when the bridge is unavailable. To fan out several one-shot OpenCode workers, use
+[opencode](../opencode/SKILL.md).
 
 Give the provider exactly one bounded assignment and the absolute worktree
 path. The host sandbox and approval policy still apply, and the external CLI

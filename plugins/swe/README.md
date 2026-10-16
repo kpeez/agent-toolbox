@@ -166,6 +166,7 @@ them, such as `/swe:how`.
 | [`/swe:how <subsystem or question>`](./skills/how/SKILL.md) | You want a walkthrough of how a subsystem works |
 | [`/swe:architect <feature or interface>`](./skills/architect/SKILL.md) | You want competing designs explored before code |
 | [`/swe:swarm <task>`](./skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
+| [`/swe:opencode <task>`](./skills/opencode/SKILL.md) | You want parallel OpenCode workers on Zen, Go, Copilot, or other models |
 | [`/swe:figure-it-out <task>`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
 | [`/swe:benchmark-checklist <number and how you measured it>`](./skills/benchmark-checklist/SKILL.md) | You measured a number and want it vetted before you report it |
 | [`/swe:sharpen <task>`](./skills/sharpen/SKILL.md) | You want a vague ask restated as an expert would approach it |
