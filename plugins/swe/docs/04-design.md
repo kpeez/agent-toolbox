@@ -66,6 +66,14 @@ The playbook names the one decision, builds throwaway variants in a scratch dire
 
 In Claude Code, when you type `/swe:swarm`, ask for a workflow, or turn on ultracode, `swarm` runs the fan-out as one Workflow script: a `pipeline()` over the slices, a result schema per worker, and a log line for each dropped lane. Otherwise, and in Codex, it spawns workers with the Agent tool.
 
+## Fan out free OpenCode Zen workers
+
+```text
+/swe:opencode-swarm find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
+```
+
+`opencode-swarm` runs three to five OpenCode workers on free OpenCode Zen models. The lead writes a JSON task list, and [opencode_swarm.py](../scripts/opencode_swarm.py) runs one `opencode run` per task in parallel, gives the tasks the free models in turn, and retries a failed task once on the next model. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports. It needs OpenCode 1.x on your computer. The OpenCode 2 preview has no `run` command. Free models can keep your prompts, so use the skill only on code you agree to send to OpenCode.
+
 ## Get an independent review
 
 Many steps say `reviewer agent`. That is a fresh subagent that did not write the code, briefed with the [review brief](../references/review-brief.md). The brief has two modes. In review and fix mode, the default, the reviewer fixes small, sure findings and reports each fix. In verdict only mode, it edits nothing. A landing verdict and parallel reviews of one change use verdict only.

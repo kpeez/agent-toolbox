@@ -93,6 +93,7 @@ and give one example prompt.
 | Design a new interface, or review module boundaries | [codebase-design](../codebase-design/SKILL.md) |
 | Run parallel checks over slices, or race workers | [swarm](../swarm/SKILL.md) |
 | Delegate to OpenCode or Copilot | [orchestrate](../orchestrate/SKILL.md) |
+| Run a swarm of free OpenCode Zen models | [opencode-swarm](../opencode-swarm/SKILL.md) |
 | Gate, design, or audit tests | [testing-code](../testing-code/SKILL.md) |
 | Apply TypeScript rules to `.ts` or `.tsx` work | [typescript-best-practices](../typescript-best-practices/SKILL.md) |
 | Strip comments before review | [no-comments](../no-comments/SKILL.md) |
@@ -126,7 +127,8 @@ Close calls:
   program across days and many PRs. The `run-autonomously` playbook drives
   one task to an exit condition.
 - `swarm` fans out native subagents. `orchestrate` sends work to an external
-  provider the user named.
+  provider the user named. `opencode-swarm` runs several one-shot OpenCode
+  workers on free Zen models.
 
 ## Playbooks and principles
 
