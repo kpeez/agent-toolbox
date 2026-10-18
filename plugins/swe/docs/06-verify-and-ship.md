@@ -72,6 +72,16 @@ Run `/swe:verification-skill` again when the skill already exists, and it audits
 
 When a change adds or changes a user-facing feature, the agent updates that feature's entry in the map as part of the change.
 
+## Verify what tests cannot reach
+
+Some bugs need one rare order of events or one input that no test tries: a race, a retry, a state machine, a parser. Type:
+
+```text
+/swe:create-formal-verification-skill
+```
+
+The [`create-formal-verification-skill`](../skills/create-formal-verification-skill/SKILL.md) skill picks the property where a break costs the most and tests reach the least. It verifies that property with the tool that fits, such as TLA+ for a bad order of events or an SMT-backed verifier for every input. It shows each check failing on a broken variant first. It reports a break in the current code as a finding and does not weaken the check. Then it writes a project-local skill that reruns the check on each change. Name an area or a bug to start there.
+
 ## Match a UI to a baseline
 
 For a UI that must match a reference pixel for pixel, use the [`match-visual-parity`](../skills/swe-mode/playbooks/match-visual-parity.md) playbook. It builds a screenshot harness of the current component in each state first. Then it migrates one component at a time and diffs each against its baseline. A nonzero diff is a fail, and the agent never edits the baseline to make a diff pass.

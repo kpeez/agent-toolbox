@@ -100,6 +100,7 @@ and give one example prompt.
 | Write a README, docs page, PR body, or commit message | [writing](../writing/SKILL.md) |
 | Write a skill, `AGENTS.md`, or `CLAUDE.md` | [writing-for-agents](../writing-for-agents/SKILL.md) |
 | Give agents a scripted way to drive the app | [verification-skill](../verification-skill/SKILL.md) |
+| Formally verify a race, invariant, or other property that tests rarely reach | [create-formal-verification-skill](../create-formal-verification-skill/SKILL.md) |
 | Vet a performance number before reporting it | [benchmark-checklist](../benchmark-checklist/SKILL.md) |
 | Run a large or cross-cutting change, or one to review after stepping away | [figure-it-out](../figure-it-out/SKILL.md) |
 | Keep a decision log during a run | [log-decisions](../log-decisions/SKILL.md) |
