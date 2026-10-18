@@ -69,7 +69,7 @@ When you come back to a chat after the agent worked for a while, type:
 /swe:ketchup
 ```
 
-[`ketchup`](../skills/ketchup/SKILL.md) tells you what changed since your last message, in under 150 words. It opens with how many things need you. It shows screenshots and diagrams first, then one line for each thing you asked for, then each decision only you can make with its recommendation. It changes nothing while it reports.
+[`ketchup`](../skills/ketchup/SKILL.md) tells you what changed since your last message. It opens with what waits on you. It shows screenshots and diagrams first, then one line for each thing you asked for, then every decision only you can make, each with its recommendation, evidence, and risk. It never cuts a waiting decision to stay short, so you can decide each one from the reply alone. It changes nothing while it reports.
 
 ## Ask for a simpler answer with wait-what
 

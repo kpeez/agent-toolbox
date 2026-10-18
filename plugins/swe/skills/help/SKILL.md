@@ -85,7 +85,7 @@ and give one example prompt.
 | Know how code works now, or where new code goes | [how](../how/SKILL.md) |
 | Know why code is shaped this way | [why](../why/SKILL.md) |
 | Catch up on their own recent work on a topic | [recall](../recall/SKILL.md) |
-| Catch up on this chat since their last message | [ketchup](../ketchup/SKILL.md) |
+| Catch up on this chat since their last message, with every waiting call decidable from the reply | [ketchup](../ketchup/SKILL.md) |
 | Hear the last reply again in plain words | [wait-what](../wait-what/SKILL.md) |
 | Explain a failure, crash, hang, or leak | [diagnose](../diagnose/SKILL.md) |
 | Know what a diff could break outside itself | [blast-radius](../blast-radius/SKILL.md) |
@@ -100,6 +100,7 @@ and give one example prompt.
 | Write a README, docs page, PR body, or commit message | [writing](../writing/SKILL.md) |
 | Write a skill, `AGENTS.md`, or `CLAUDE.md` | [writing-for-agents](../writing-for-agents/SKILL.md) |
 | Give agents a scripted way to drive the app | [verification-skill](../verification-skill/SKILL.md) |
+| Formally verify a race, invariant, or other property that tests rarely reach | [create-formal-verification-skill](../create-formal-verification-skill/SKILL.md) |
 | Vet a performance number before reporting it | [benchmark-checklist](../benchmark-checklist/SKILL.md) |
 | Run a large or cross-cutting change, or one to review after stepping away | [figure-it-out](../figure-it-out/SKILL.md) |
 | Keep a decision log during a run | [log-decisions](../log-decisions/SKILL.md) |
