@@ -136,6 +136,10 @@
       ]
     },
     {
+      "upstream": "docs/harness/",
+      "class": "dropped"
+    },
+    {
       "upstream": "skills/architect/SKILL.md",
       "class": "modified",
       "local": [
