@@ -88,7 +88,7 @@ The [`pick-up-session`](../skills/swe-mode/playbooks/pick-up-session.md) playboo
 
 ## Run a queue of PRs
 
-The [`autopilot-full`](../skills/swe-mode/playbooks/autopilot-full.md) playbook runs a queue of independent PRs to merged. Each PR gets one owner agent from build to merge. A swarm of verifiers that never wrote the code proves the code-ready head, and nothing merges without a clean verdict on the patch that lands.
+The [`autopilot-full`](../skills/swe-mode/playbooks/autopilot-full.md) playbook runs a queue of independent PRs to merged. Each PR gets one owner agent from build to merge. A swarm of verifiers that never wrote the code proves the code-ready head. A later rebase or minor fix gets one fresh verifier, and only new behavior or a large new diff calls the full swarm again. Nothing merges without a clean verdict on the patch that lands.
 
 ```text
 /swe:swe-mode full autopilot on this queue. each item is independent. merge them when verified.

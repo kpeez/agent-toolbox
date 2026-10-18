@@ -1,6 +1,6 @@
 ---
 name: ketchup
-description: "Catch the user up on what changed in this chat since their last message, in a few plain sentences and small visuals, with just enough context for each call they must make."
+description: "Catch the user up on what changed in this chat since their last message, in plain words and small visuals. List every item waiting on them with what they need to decide it from the reply alone."
 disable-model-invocation: true
 ---
 
@@ -8,7 +8,8 @@ disable-model-invocation: true
 
 Catch the user up on what changed in this chat since the last message they
 wrote before `/ketchup`, and help them understand each change, not only where
-it stands. Notifications, hook output, scheduled `/loop` turns,
+it stands. Then lay out every call waiting on them so they can make it from
+your reply alone. Notifications, hook output, scheduled `/loop` turns,
 and subagent results are not their messages. Assume the user remembers their
 last message and nothing after it.
 
@@ -30,29 +31,33 @@ else in this chat. Check the current state of each PR, CI run, or agent this
 chat touched, with `gh` for PRs and checks. Check each number you will show
 against the facts it comes from, and say so when you correct one.
 
-An action item is a decision or step only the user can take, such as a
+An action item is a call or step only the user can take, such as a
 product choice, an approval, an irreversible action, or access you lack.
 Include any action item still waiting on the user, even one raised before
 their last message. Work you can still do yourself is not an action item.
 Never make up a call to fill the reply. A step the user did not ask for and
 the work does not need is not an action item, unless it is irreversible and
-waiting on the user. Give that step one action line, no visual, and skip what
-happens if the user does not answer.
+waiting on the user. Give that step one line and no visual.
+
+One call can cover many items, such as each PR in a set that waits for a
+merge. For each item, collect its link, what it changes for users, the
+evidence behind your pick, its risk, and your pick. Write "unknown" for a fact
+the call needs that you do not know. Leave out a link you do not have.
 
 ## Write the reply
 
-Keep the whole reply well under 150 words, not counting visuals. When
-something is easier to grasp as a picture than as sentences, draw it: how a
-design or system works, a PR stack or dependency chain with each PR's state,
-a before and after of a fix, or options side by side. Never draw a status
-list or boxes with nothing that connects them. Never give a fact twice, in
-text or across visuals. Leave out work that changed nothing for the user.
-When words run short, cut from what happened before you cut from the action
-items.
+Spend words on the calls, not on the story. Keep what happened under 100
+words, not counting visuals, and shorter when less happened. Leave out work
+that changed nothing for the user. Give each item about 30 words. The reply
+grows with the number of items: two items need well under 150 words in all,
+not counting visuals, and thirty need far more. Never cut items or shrink
+them to stay under a word count. Do not put a count in place of a list or a
+link in place of an item. A link can add depth, but the reply alone must be
+enough to decide.
 
-Open with one sentence that says how many things need the user, or that
-nothing does. If nothing happened and nothing waits on the user, say so and
-stop.
+Open with one short sentence that names what waits on the user, or says that
+nothing does. The action items give the detail. If nothing happened and
+nothing waits on the user, say so and stop.
 
 Then show what happened, pictures first. Embed inline the screenshots and
 videos that the work produced, then any diagram that explains a change. Then
@@ -66,25 +71,39 @@ action items say. Under the summary, give at most three short lines that
 change what the user knows or must do. Then name in one line any work left
 that you can do yourself.
 
-Then list the action items as plain bullets, never as a diagram or box. Give
-each two lines, or one for an unasked irreversible step. The first line is
-the decision with your recommendation and why. The second is what happens if
-the user does not answer. Ask the call the user owns, such as merge, approve,
-or pick. A step you would take first goes in your recommendation. So does
-anything that must happen first, and anything that cannot be undone. Write
-"unknown" for a part you do not know. Link to the detail.
+Then list the action items as plain bullets. Ask the call the user owns, such
+as merge, approve, or pick, and give your pick. A step you would take first
+goes in your pick. So does anything that must happen first, and anything that
+cannot be undone. Give the number or link of each PR, issue, or agent that a
+call is about, also in a call between options.
 
-Show a choice after the list. If the screenshots above already show its
-options, write each option's gain and cost under its screenshot instead of a
-new visual. Otherwise, compare the options side by side, with the current
-state when there is one. Give every option the work weighed, each with what
-it gets the user and what it costs. Keep them out of the rest of the text.
+Fit the shape to the call. A call about one item is one bullet: the call,
+your pick, what it changes for users, the evidence behind your pick, and its
+risk, with the item named once. When items share a call, write the call and
+your pick once. Then give each item its own bullet, riskiest first: its link
+and name, what it changes for users, the evidence behind your pick, and its
+risk. Name an item's pick only where it differs from the call's. Give each
+item's risk even when it is low, such as "Low risk: only the colors change."
+Say what waiting costs only when it is more than a delay, such as a deadline
+or lost data.
+
+For a call between options, give every option the work weighed, each with
+what it gets the user and what it costs, and the current state when there is
+one. Those costs are the call's risk, so add no separate risk line. When the
+screenshots above show the options, write each option's gain and cost under
+its screenshot.
 
 ## Visuals
 
 A visual is a picture: a screenshot, a video, a Mermaid diagram, a chart, or
 a generated image. A Markdown table is not a visual, even with before and
 after columns.
+
+When something is easier to grasp as a picture than as sentences, draw it:
+how a design or system works, a PR stack or dependency chain with each PR's
+state, a before and after of a fix, or options side by side. Never draw a
+status list, a list of action items, or boxes with nothing that connects
+them. Never give a fact twice, in text or across visuals.
 
 Keep each visual small enough to read at a glance: at most six boxes, with at
 most eight words in each. Write labels as plain words a person would say, not

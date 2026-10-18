@@ -168,6 +168,7 @@ them, such as `/swe:how`.
 | [`/swe:swarm <task>`](./skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
 | [`/swe:opencode <task>`](./skills/opencode/SKILL.md) | You want parallel OpenCode workers on Zen, Go, Copilot, or other models |
 | [`/swe:figure-it-out <task>`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
+| [`/swe:create-formal-verification-skill [area or bug]`](./skills/create-formal-verification-skill/SKILL.md) | Tests cannot reach the case that breaks a race, retry, state machine, or parser |
 | [`/swe:benchmark-checklist <number and how you measured it>`](./skills/benchmark-checklist/SKILL.md) | You measured a number and want it vetted before you report it |
 | [`/swe:sharpen <task>`](./skills/sharpen/SKILL.md) | You want a vague ask restated as an expert would approach it |
 | [`/swe:no-comments [path or diff]`](./skills/no-comments/SKILL.md) | You want comments that do not explain a non-obvious why removed |
