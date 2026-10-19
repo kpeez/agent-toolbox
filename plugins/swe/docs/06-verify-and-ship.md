@@ -80,7 +80,9 @@ Some bugs need one rare order of events or one input that no test tries: a race,
 /swe:create-formal-verification-skill
 ```
 
-The [`create-formal-verification-skill`](../skills/create-formal-verification-skill/SKILL.md) skill picks the property where a break costs the most and tests reach the least. It verifies that property with the tool that fits, such as TLA+ for a bad order of events or an SMT-backed verifier for every input. It shows each check failing on a broken variant first. It reports a break in the current code as a finding and does not weaken the check. Then it writes a project-local skill that reruns the check on each change. Name an area or a bug to start there.
+The [`create-formal-verification-skill`](../skills/create-formal-verification-skill/SKILL.md) skill picks the property where a break costs the most and tests reach the least. It verifies that property with the tool that fits, such as TLA+ for a bad order of events in any language, or an SMT-backed verifier for every input. When no verifier runs on your language, it says so and tests the real code with generated inputs. It shows each check failing on a broken variant first. It reports a break in the current code as a finding and does not weaken the check. Then it writes a project-local skill that reruns the check on each change. Name an area or a bug to start there.
+
+The generated skill records which code each check covers and the sync commit: the commit where the check last matched the code. A merge or a refactor that skips the skill can leave the check passing on code that is gone. After such changes, type `/swe:maintain-formal-verification-skill`. The [`maintain-formal-verification-skill`](../skills/maintain-formal-verification-skill/SKILL.md) skill updates the verification from the code, reruns it, shows that each updated check can still fail, and says whether each failure is drift in the verification or a bug in the code.
 
 ## Match a UI to a baseline
 

@@ -67,7 +67,7 @@ New here? Ask `/swe:help` which skill fits, or read the
 ## Credits
 
 - The `swe` router, its playbooks and principles, and most `swe` skills adapt
-  Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/0b8e952052d482ee6de06deebf14d590d77b1b34/pstack).
+  Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/d457567332aa6989e753ea289f30ea2bfbc80bc0/pstack).
   The [swe guide](./plugins/swe/docs/README.md) follows the layout of the pstack guide.
 - Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
   [skills](https://github.com/mattpocock/skills).
