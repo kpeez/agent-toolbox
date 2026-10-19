@@ -40,6 +40,20 @@ To update:
   `codex plugin add lab@agent-toolbox` again.
 - npx skills: `npx skills update`.
 
+## Go deeper on each new task
+
+The Claude Code plugin adds a SessionStart hook. It tells the agent to run
+[`go-deeper`](./skills/go-deeper/SKILL.md) on each new task: expert moves, raw
+sources, real methods, and an outside check, then the rewritten task. swe, lab,
+and uni each carry an identical copy, so each plugin works alone.
+
+Codex plugins and the skills-only install have no hooks. Add this line to
+`AGENTS.md` or `CLAUDE.md` to get the same behavior:
+
+```text
+lab: Before you act on a new task of any kind, run `lab:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it.
+```
+
 ## Skills
 
 Each command shows its arguments: `<x>` is required and `[x]` is optional.

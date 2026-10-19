@@ -47,7 +47,7 @@ The plugin also adds a PostCompact hook that saves a session summary to the bran
 Codex plugins have no hooks. To get the same behavior, copy the hook's lines into the repository's `AGENTS.md`, or into your user-level `AGENTS.md`:
 
 ```text
-swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless it is chat, a quick factual answer, or a fully specified mechanical edit. Before you act on a new software task, load the `swe:swe-mode` skill and follow the playbook or skill it routes to. A software task is any request to change, fix, refactor, speed up, explain, or review code, or to edit a skill, however small it looks. Say `Playbook: <slug>` or `Route: <skill>`, track each step, and end with its Steps section. Skip this only for chat, quick factual answers, and work that is not software. Write replies to the user and agent-facing text in ASD-STE100 Simplified Technical English (the `writing` skill).
+swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. Before you act on a new software task, load the `swe:swe-mode` skill and follow the playbook or skill it routes to. A software task is any request to change, fix, refactor, speed up, explain, or review code, or to edit a skill, however small it looks. Say `Playbook: <slug>` or `Route: <skill>`, track each step, and end with its Steps section. Skip this only for chat, quick factual answers, and work that is not software. Write replies to the user and agent-facing text in ASD-STE100 Simplified Technical English (the `writing` skill).
 ```
 
 Without these lines, type `$swe:swe-mode <task>` to start the router in Codex.
