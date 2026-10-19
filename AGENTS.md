@@ -11,6 +11,9 @@
   Claude Code function-hook mods, which only the Claude catalog lists.
 - Keep every skill reference pointed at a resource or script that exists in
   the same plugin.
+- `go-deeper` lives in `plugins/swe`, `plugins/lab`, and `plugins/uni` so each
+  plugin installs alone. Edit all three copies together; the `shared-skills`
+  workflow fails when they differ.
 - To pull upstream pstack changes into swe, use the repo-local
   `align-swe-with-pstack` skill in `.claude/skills/`.
 - Before you add a rule for a repeated agent mistake, read

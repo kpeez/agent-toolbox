@@ -31,7 +31,8 @@ A principle named here is a swe principle skill. Load it by reading
 
 ## Frame
 
-Ground first, then commit. Do not start the run until you can state:
+Ground first, then commit. Run [go-deeper](../go-deeper/SKILL.md) on the task
+unless it already ran. Do not start the run until you can state:
 
 - The definition of done as a falsifiable predicate, per the
   **prove-it-works** principle.

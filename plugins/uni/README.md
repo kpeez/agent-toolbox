@@ -61,6 +61,20 @@ legacy `~/.codex/skills/teach` or `~/.agents/skills/teach` symlink that points t
 the former repository path. Preserve independently edited directories. Its
 workflow, templates, upstream license, and explicit-only invocation are intact.
 
+## Go deeper on each new task
+
+The Claude Code plugin adds a SessionStart hook. It tells the agent to run
+[`go-deeper`](./skills/go-deeper/SKILL.md) on each new task: expert moves, raw
+sources, real methods, and an outside check, then the rewritten task. swe, lab,
+and uni each carry an identical copy, so each plugin works alone.
+
+Codex plugins and the skills-only install have no hooks. Add this line to
+`AGENTS.md` or `CLAUDE.md` to get the same behavior:
+
+```text
+uni: Before you act on a new task of any kind, run `uni:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it.
+```
+
 ## Invoke the tutor
 
 In Codex, mention the skill with `$`; use the selector if needed. These prompts
@@ -87,6 +101,7 @@ in place of `/`.
 | [`/uni:learn-quiz <topic or source>`](./skills/learn-quiz/SKILL.md) | Ask and grade one source-grounded retrieval question at a time |
 | [`/uni:learn-review [concepts]`](./skills/learn-review/SKILL.md) | Revisit selected or recent concepts through chat drills |
 | [`/uni:learn-transfer <concept or method>`](./skills/learn-transfer/SKILL.md) | Select and apply a method in a new situation |
+| [`/uni:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. `learn` uses it to plan a new lesson |
 | [`/uni:teach [topic]`](./skills/teach/SKILL.md) | Author a persistent learning workspace with HTML lessons and reusable references; invoke explicitly |
 
 Start with the umbrella skill unless a particular exercise is already clear.

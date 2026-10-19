@@ -10,6 +10,8 @@ Read [the tutoring contract](references/tutoring-contract.md) before the first t
 
 ## Start and choose
 
+For a new learning goal, use [go-deeper](../go-deeper/SKILL.md) to plan the lesson: primary sources, a method that fits, and the learner's independent attempt as the outside check. Keep its frame out of the lesson.
+
 1. Use the learner's goal, prior knowledge, time, and source material. Reuse preferences stated in the chat. Ask only for missing information needed now; a quick question does not need curriculum intake. One small diagnostic task can establish a prerequisite better than a self-rating.
 2. Offer one concrete task within their knowledge and budget. Keep intake separate from the cognitive task. Do not assume expertise from their job or knowledge elsewhere.
 3. Choose from observed need and read the chosen entrypoint:
