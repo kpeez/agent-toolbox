@@ -32,7 +32,7 @@ flowchart TD
   verify -- "read-only answer or local change" --> reply
 ```
 
-The [router](../skills/swe-mode/SKILL.md#match) matches in this order:
+The [router](../skills/swe-mode/SKILL.md#match) first runs [`go-deeper`](../skills/go-deeper/SKILL.md) on a new task, then matches the rewritten task in this order:
 
 1. When one skill owns the whole task, it routes to that skill. "Explain how a subsystem works, no code change" goes to `how`, for example.
 2. Otherwise it picks the first playbook whose line fits. The list runs from narrow to broad, so `fix-bug` comes before `build-feature`.

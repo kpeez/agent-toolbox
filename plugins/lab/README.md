@@ -48,6 +48,7 @@ in place of `/`.
 
 | Command | Use for |
 | --- | --- |
+| [`/lab:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. Runs on its own at the start of a new task |
 | [`/lab:research <question>`](./skills/research/SKILL.md) | One cited memo for a bounded question or a source audit |
 | [`/lab:deep-research <topic>`](./skills/deep-research/SKILL.md) | A multi-lane research program with briefs, lane evidence, and an audited report |
 | [`/lab:autoresearch <metric goal>, or cleanup <run tag>`](./skills/autoresearch/SKILL.md) | A bounded experiment loop against an approved metric and evaluator, and its cleanup |

@@ -21,16 +21,18 @@ read it. Put this file's absolute path in every delegate's brief.
 
 1. Match again each time this skill is invoked and whenever the user says
    "new task". Do not continue an earlier playbook silently.
-2. Observe any fact you need to choose a playbook: read code or run a
+2. Run `go-deeper` on a new task, unless it already ran for this task or
+   its skip rule applies. Match the rewritten task.
+3. Observe any fact you need to choose a playbook: read code or run a
    command. Ask the user only for a choice that no observation can settle.
-3. When one skill owns the whole task, use its line in
+4. When one skill owns the whole task, use its line in
    [Single-skill routes](#single-skill-routes).
-4. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
+5. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
    fits. The list runs from narrow to broad.
-5. Large or cross-cutting work, work the user steps away from, or work that no
+6. Large or cross-cutting work, work the user steps away from, or work that no
    playbook fits goes to `figure-it-out`. It writes a bespoke playbook in the
    same step format. A standing multi-day program goes to `run-program`.
-6. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
+7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
    `Route: <skill>. Reason: <one clause>.`
 
 ## Track

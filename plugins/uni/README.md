@@ -87,6 +87,7 @@ in place of `/`.
 | [`/uni:learn-quiz <topic or source>`](./skills/learn-quiz/SKILL.md) | Ask and grade one source-grounded retrieval question at a time |
 | [`/uni:learn-review [concepts]`](./skills/learn-review/SKILL.md) | Revisit selected or recent concepts through chat drills |
 | [`/uni:learn-transfer <concept or method>`](./skills/learn-transfer/SKILL.md) | Select and apply a method in a new situation |
+| [`/uni:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. `learn` uses it to plan a new lesson |
 | [`/uni:teach [topic]`](./skills/teach/SKILL.md) | Author a persistent learning workspace with HTML lessons and reusable references; invoke explicitly |
 
 Start with the umbrella skill unless a particular exercise is already clear.

@@ -25,6 +25,9 @@ Read supporting references only when their phase needs them:
 
 ## Frame the work
 
+Run [go-deeper](../go-deeper/SKILL.md) on the topic first, unless it already
+ran for this task. Put its answers in the brief.
+
 Create `.agents/docs/research/<slug>/brief.md` (or the chosen location) before
 dispatch. State:
 
