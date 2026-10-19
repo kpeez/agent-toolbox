@@ -58,7 +58,7 @@ Codex ignores `disable-model-invocation`. A user-invoked skill also needs `agent
 
 A skill you type with input also sets `argument-hint`, such as `"<question>"`. Claude Code shows it as you type the command. The plugin README lists the same hint for Codex users.
 
-A skill that drives your app to prove behavior is a verification skill. Use [verification-skill](../skills/verification-skill/SKILL.md) for it instead. [Verify and ship](06-verify-and-ship.md) covers it.
+A skill that drives your app to prove behavior is a verification skill. Use [verification-skill](../skills/verification-skill/SKILL.md) for it instead. A skill that checks a property of your code with a model checker, a proof, or another verifier is a formal verification skill. Use [create-formal-verification-skill](../skills/create-formal-verification-skill/SKILL.md) and [maintain-formal-verification-skill](../skills/maintain-formal-verification-skill/SKILL.md) for it. [Verify and ship](06-verify-and-ship.md) covers both kinds.
 
 ## Test a skill change before you trust it
 

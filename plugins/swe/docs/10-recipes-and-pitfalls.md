@@ -58,6 +58,14 @@ You get the one or two facts the change is safe because of, each with the eviden
 
 "if there's a cheap test path" matters. The [fix-bug](../skills/swe-mode/playbooks/fix-bug.md) playbook skips the failing-test commit when the test would be expensive or unclear. A test forced through brittle mocks proves less than the real command.
 
+## Prove a property tests rarely reach
+
+```text
+/swe:create-formal-verification-skill the retry queue. a message must never be delivered twice.
+```
+
+You get one property checked in every case within a stated scope, a counterexample in your code's terms if the code already breaks it, and a project skill the next agent runs on any change to that code. After merges or refactors in that code, run `/swe:maintain-formal-verification-skill`.
+
 ## Vet a number before you post it
 
 ```text
