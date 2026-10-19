@@ -7,7 +7,7 @@ Codex, type `$swe:` in place of `/swe:`.
 
 - `/swe:swe-mode read <thread>. restate the underlying issue in your own words, in plain english.`
 - `/swe:in-your-own-words <long or messy ask>`
-- `/swe:sharpen <your task>`
+- `/swe:go-deeper <your task>`
 - `/swe:swe-mode investigate why <symptom>. give me what we know, what data you used, and your best hypotheses. don't change any code yet.`
 - `use how to understand <subsystem>. then use why to find out why it broke recently.`
 - `/swe:recall my work on <topic> from last week, then read <issue>.`

@@ -49,6 +49,8 @@ Fluency can give the user an illusory sense of mastery, but storage strength is 
 
 A lesson is the main thing you produce — the unit in which knowledge and skills reach the user. Each lesson is one self-contained HTML file, saved to `./lessons/` and titled `0001-<dash-case-name>.html` where the number increments each time.
 
+Before you write a lesson, run [go-deeper](../go-deeper/SKILL.md) on its goal. Ask what a top teacher of this topic would do, which primary sources they would teach from, which methods fit, and what learner performance would show the lesson worked. Keep its frame out of the lesson.
+
 A lesson should be **beautiful** — clean, readable typography and layout — since the user will return to these later to review. Think Tufte.
 
 The lesson should be short, and completable very quickly. Learners' working memory is very small, and we need to stay within it. But each lesson should give the user a single tangible win that they can build on. It should be directly tied to the mission, and should be in the user's zone of proximal development.

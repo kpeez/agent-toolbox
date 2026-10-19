@@ -1,0 +1,28 @@
+name: shared-skills
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  identical-copies:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Shared skills are identical in every plugin
+        run: |
+          # Each line: a skill folder that swe, lab, and uni each carry.
+          status=0
+          for skill in go-deeper; do
+            for plugin in lab uni; do
+              if ! diff -r "plugins/swe/skills/$skill" "plugins/$plugin/skills/$skill"; then
+                echo "::error::plugins/$plugin/skills/$skill differs from plugins/swe/skills/$skill"
+                status=1
+              fi
+            done
+          done
+          exit $status

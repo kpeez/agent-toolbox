@@ -80,7 +80,7 @@ and give one example prompt.
 |---|---|
 | Do any nontrivial software task with rigor | [swe-mode](../swe-mode/SKILL.md) |
 | Check that the agent understood the goal before it starts | [in-your-own-words](../in-your-own-words/SKILL.md) |
-| Aim a task higher before it starts | [sharpen](../sharpen/SKILL.md) |
+| Make a task deeper, not bigger, before it starts | [go-deeper](../go-deeper/SKILL.md) |
 | Settle open plan or design decisions in an interview | [interview-user](../interview-user/SKILL.md) |
 | Know how code works now, or where new code goes | [how](../how/SKILL.md) |
 | Know why code is shaped this way | [why](../why/SKILL.md) |

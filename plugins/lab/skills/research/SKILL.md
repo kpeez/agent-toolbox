@@ -21,6 +21,9 @@ owns record details; do not duplicate its full contract here.
 
 ## Frame the request
 
+Run [go-deeper](../go-deeper/SKILL.md) on the question first, unless it
+already ran for this task.
+
 Confirm or state:
 
 - the exact question and requested memo filename;

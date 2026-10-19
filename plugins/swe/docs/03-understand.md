@@ -2,7 +2,7 @@
 
 This page shows you how to make the agent understand the code, and you, before it edits anything. Agents usually fail in one of two ways. They misread what you want, or they lack the context to do the work right. [Put up to five things in a prompt](02-route-work.md#put-up-to-five-things-in-a-prompt) handles the first. This page handles the second.
 
-swe gives you several ways in. `how` explains what the code does now. `why` finds the reasons it has this shape. `recall` and `ketchup` rebuild context you lost. `in-your-own-words`, `sharpen`, and `wait-what` check that you and the agent mean the same thing. Each one makes the agent explain itself in words you can check.
+swe gives you several ways in. `how` explains what the code does now. `why` finds the reasons it has this shape. `recall` and `ketchup` rebuild context you lost. `in-your-own-words`, `go-deeper`, and `wait-what` check that you and the agent mean the same thing. Each one makes the agent explain itself in words you can check.
 
 ## Start with a read-only investigation
 
@@ -91,13 +91,15 @@ For a noisy report, such as a long thread or a vague bug, make the restatement t
 
 [`in-your-own-words`](../skills/in-your-own-words/SKILL.md) restates your goals and the problem you want to solve. A misreading shows up in the restatement, before any code exists. Correct it there, and it costs you one message instead of one wrong fix.
 
-## Sharpen a vague ask
+## Make a task deeper, not bigger
 
 ```text
-/swe:sharpen make the search page feel faster
+/swe:go-deeper make the search page feel faster
 ```
 
-[`sharpen`](../skills/sharpen/SKILL.md) asks how a top expert would approach the task, what you are really after, and whether the task is over or under specified. It keeps one outside check that the result is right. It does not hand back a rewritten prompt. It does the work with the sharper framing.
+[`go-deeper`](../skills/go-deeper/SKILL.md) answers four questions before the work starts. What would a top expert do here that you did not ask for? What raw material would they start from? Which methods and tools would they use? What check, outside the agent and you, shows the result is right? It gives those answers and the rewritten task in five lines or fewer, then does the rewritten task. It rejects additions that only make the task bigger. When an answer depends on a preference only you can set, it asks you through `interview-user`.
+
+You seldom type it. The SessionStart hook and the router run it on every new task, and skip chat, quick facts, and fully specified mechanical edits. lab and uni have their own identical copy, so each plugin works alone.
 
 ## Avoid skipping this page
 
