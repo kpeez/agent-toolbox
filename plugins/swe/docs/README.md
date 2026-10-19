@@ -12,7 +12,7 @@ The pages cover these topics:
 3. [Understand the code](03-understand.md). A read-only investigation, then `how`, `why`, and `recall` before you edit anything.
 4. [Design the change](04-design.md). `architect`, `interview-user`, prototypes, reviewers, and plans before code sets a shape.
 5. [Build and clean the change](05-build-and-clean.md). The build playbooks, test-first work, `no-comments`, and `writing`.
-6. [Verify and ship](06-verify-and-ship.md). Prove behavior on the real app, vet numbers, then open a focused PR and drive it to merged.
+6. [Verify and ship](06-verify-and-ship.md). Prove behavior on the real app, formally verify what tests rarely reach, vet numbers, then open a focused PR and drive it to merged.
 7. [Run long work](07-long-runs.md). Autonomous runs, decision logs, handoffs, delegation, and where swe keeps its files.
 8. [Steer with principle names](08-principles.md). The 25 names that redirect an agent during a task.
 9. [Make it yours](09-make-it-yours.md). `correct` for repeated mistakes, skill edits, and how to test a skill change.

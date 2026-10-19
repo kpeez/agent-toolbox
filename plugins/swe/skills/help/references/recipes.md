@@ -29,6 +29,7 @@ Codex, type `$swe:` in place of `/swe:`.
 
 ## Review and ship
 
+- `/swe:create-formal-verification-skill prove <property> holds in <module>, even when <steps> interleave or retry.` After merges or refactors in that code: `/swe:maintain-formal-verification-skill`.
 - `/swe:blast-radius the whole branch. don't change anything yet.`
 - `/swe:swarm check every package under <dir> against its check script. one worker per package. one report.`
 - `/swe:swe-mode open the pr. small ordered commits, evidence in the description.`
