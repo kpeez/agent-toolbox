@@ -72,6 +72,18 @@ Dispatch independent lanes concurrently only when the host can do so safely;
 otherwise run their briefs sequentially without merging their questions or
 weakening privacy boundaries.
 
+**Workflow path, Claude Code only.** Run one dispatch round of lanes as one
+Workflow script when the host lists the Workflow tool and the user opted in.
+Opt-in means the user typed `/lab:deep-research`, asked for a workflow in
+their own words, or turned on ultracode. A router or skill that read this file
+by path is not opt-in. Load `workflow-authoring` first. In the script, run
+`pipeline()` over the lanes, with one `agent()` per lane. Give each lane a
+`schema` whose fields follow the evidence-packet sections, so every packet
+returns in the same shape. `log()` each lane the script drops. The script only
+dispatches and returns packets: retain, reconcile, choose follow-ups, and write
+outputs in the coordinator session. A follow-up round is a new script. In every
+other case, and in Codex, use host-native delegation as above.
+
 Require each lane to stop at its budget or earlier when it has answered its
 question. Repeated failed searches count against the budget and remain visible.
 Each worker returns one compact packet following the evidence-packet guide.
