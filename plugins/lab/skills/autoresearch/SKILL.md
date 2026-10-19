@@ -19,7 +19,8 @@ that vary by run live in `program.md`; this skill defines the stable loop. The
 historical [Karpathy prompt](references/karpathy-program.md) is provenance only;
 its TSV, branch, fixed-budget, and infinite-loop rules are not active.
 
-For a new run, read [setup and program approval](references/setup-program.md).
+For a new run, run [go-deeper](../go-deeper/SKILL.md) on the goal before you
+draft `program.md`, then read [setup and program approval](references/setup-program.md).
 When resuming, read [interrupted-run reconciliation](references/resume-reconciliation.md).
 For the standard single-objective progress plot, read
 [progress plotting](references/trial-plots.md).
