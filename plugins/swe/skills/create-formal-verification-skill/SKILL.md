@@ -32,12 +32,12 @@ Prefer a tool that the repository's developers can install and run. Tell the use
 - **Findings stay findings.** When the current code breaks the property, report it with the counterexample in the code's terms. Do not weaken the property or the model until it passes. Do not change product code unless the user asks.
 - **Honest about scope.** Say what is verified, under which bounds and assumptions, and what is left out. A pass covers the model or the bound, not the whole system.
 - **Readable without the tool.** State the property and the harm in one plain sentence each. Tell a counterexample as a short sequence of steps in the code's words.
-- **Cheap to rerun.** One command, a pinned tool version, and a run short enough that the next agent uses it on every relevant change.
+- **Cheap to rerun.** One repo-level command, a pinned tool version, and a run short enough that the next agent uses it on every relevant change.
 - **Kept in step with the code.** Record which files and functions each check covers, and the sync commit: the commit at which you last confirmed that the verification describes them. When the covered code changes after that commit, the next agent can see that the verification needs another look.
 
 ## Generate the verify skill
 
-Write a project-local skill in `.claude/skills/` for Claude Code or `.agents/skills/` for Codex. Give it frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to:
+Write a project-local skill in `.agents/skills/<skill-name>/`, and lay it out as [project skill layout](../../references/project-skill-layout.md) says: the model or proof files and the runner scripts in the skill folder, the `.claude/skills` link made by the setup step, one repo-level command for the check, and that command named in `AGENTS.md`. Keep no top-level `formal/` directory. Give the skill frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to:
 
 - tell whether a change touches the verified code,
 - run the check,
@@ -48,7 +48,7 @@ Put the coverage record and the sync commit in the skill. Tell the next agent to
 
 ## Prove it before you hand off
 
-Follow the generated skill once, as the next agent would, on a scratch change that breaks the property in the real code. It must catch the break. Then drop the scratch change and confirm that the check is back where it started: passing, or failing only on the findings you will report. A verify skill that never ran is a draft. If the skill misses the break or a step does not run, fix the skill or the verification, not the scratch change.
+Run the setup step, and confirm that `.claude/skills/<skill-name>/SKILL.md` resolves through the link. Follow the generated skill once, as the next agent would, through the repo-level command, on a scratch change that breaks the property in the real code. It must catch the break. Then drop the scratch change and confirm that the check is back where it started: passing, or failing only on the findings you will report. A verify skill that never ran is a draft. If the skill misses the break or a step does not run, fix the skill or the verification, not the scratch change.
 
 ## Hand off
 
