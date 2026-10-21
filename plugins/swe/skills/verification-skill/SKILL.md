@@ -31,11 +31,7 @@ Say which mode you chose.
 
 2. `2-fix-the-checkout`: Build and start the app as it is. A skill written against a broken base teaches wrong steps. Fix the break, or report it precisely and stop. An irrelevant missing asset can block startup (a static dir the API never serves, a sample config). The generated skill may create it, mark it as verification scaffolding, and remove it in Cleanup.
 
-3. `3-generate-the-skill`: Pick the output folder, then write `verify-<app>/SKILL.md` in it.
-   - Claude Code reads project skills from `.claude/skills/<name>/SKILL.md`. Codex scans `.agents/skills` in every directory from the working directory up to the repository root, and follows symlinked skill folders.
-   - Write the skill where the current host reads project skills.
-   - When the project also uses the other host's folder, keep one copy and link the other path to it.
-   - When the project keeps project skills somewhere else, follow that.
+3. `3-generate-the-skill`: Write `.agents/skills/verify-<app>/SKILL.md`, and lay the skill out as [project skill layout](../../references/project-skill-layout.md) says: helper scripts under the skill's `scripts/`, paths in `SKILL.md` relative to the skill folder, and the `.claude/skills` link made by the repository's setup step. Codex reads `.agents/skills/` directly. Claude Code reads it through the link.
 
    The frontmatter needs `name: verify-<app>` and a `description` that names the app, the surface, and when to use the skill. Without frontmatter the skill never registers. Give the body these sections. Ground each in what the interview found. Leave no placeholder.
    - **Launch.** The exact command that starts the app for verification, and how to tell it is ready (a log line, a prompt). Ready means usable, not only that a process answers: a database health check can pass while its init scripts still run. Launch reaches a usable state from an empty data dir, including migrations and seed data. Include teardown. A short-lived CLI or TUI has no server to keep alive. Its Launch builds the binary or installs dependencies once, and each drive starts in its own isolated PTY or tmux session.
@@ -48,13 +44,13 @@ Say which mode you chose.
      - Mock only where a production boundary already isolates the external system.
      - When the safe path is a dry-run or test mode, observe what it skips (files, network, git refs) instead of trusting its name. Some dry-runs still touch the network or open a browser.
    - **Cleanup.** How to tear down what the run created. Never kill by process name. Kill what you started. Cleanup removes instances and scratch state. Evidence survives cleanup, in a location the skill names.
-   - **Helpers.** Every script the skill ships is executable, and the skill body shows how to call it. A helper that the reader must reverse-engineer is not a helper.
+   - **Helpers.** Every script the skill ships is in its `scripts/` folder and executable, and the skill body shows how to call it. A helper that the reader must reverse-engineer is not a helper.
 
 4. `4-seed-the-feature-map`: Write `verify-<app>/features/README.md` and one file per user-facing feature. Start with the top three to five, found from routes, commands, menus, or docs. Follow the shape in [the feature-map example](references/feature-map-example/README.md). Each feature file has these four H2 sections: `Sub-features`, `How to get to it (user POV)`, `Driving it with <harness>`, and `Gotchas`. It answers four questions from the user's point of view: what the feature is, how to reach it, how to drive it, and what end state shows it works. When the seed data lacks a precondition that a journey needs, the journey reports a failure, and the reason goes in that feature's `Gotchas`. Never weaken a journey to make it pass. The map is the repo's source for verification, so a check that drives one entry point is incomplete when the map lists others.
 
 5. `5-prove-the-generated-skill`: Run the skill's own instructions once, end to end: launch, doctor, drive one mapped feature, capture evidence, clean up. One feature is enough; the map exists so later runs cover the rest. After cleanup, confirm the evidence still exists at its named location. A cleanup that deletes the evidence fails this step. Fix what fails. Run the generated Cleanup after every failed attempt, so broken attempts strand no processes or ports. A generated skill that never ran is a draft, not a deliverable. If you ran it against a stand-in for the real target (a container for a fresh VM, a local stack for a remote one), list every setup step the stand-in did that the target will not do. Those steps stay unverified until a run on the real target covers them.
 
-6. `6-hand-over`: Report the skill's path, the features the map covers, the feature you proved, and any unverified stand-in steps. When you linked the skill into the other host's folder, confirm that host lists the skill, or report that path as unverified. Tell the user that `/verification-skill` run again will audit the skill as the app changes. Suggest a cadence only if the user asks.
+6. `6-hand-over`: Report the skill's path, the features the map covers, the feature you proved, and any unverified stand-in steps. Confirm that `.claude/skills/verify-<app>/SKILL.md` resolves through the link after the setup step, or report the link as unverified. Tell the user that `/verification-skill` run again will audit the skill as the app changes. Suggest a cadence only if the user asks.
 
 ## Maintain mode
 
