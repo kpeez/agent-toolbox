@@ -50,7 +50,7 @@ Say which mode you chose.
 
 5. `5-prove-the-generated-skill`: Run the skill's own instructions once, end to end: launch, doctor, drive one mapped feature, capture evidence, clean up. One feature is enough; the map exists so later runs cover the rest. After cleanup, confirm the evidence still exists at its named location. A cleanup that deletes the evidence fails this step. Fix what fails. Run the generated Cleanup after every failed attempt, so broken attempts strand no processes or ports. A generated skill that never ran is a draft, not a deliverable. If you ran it against a stand-in for the real target (a container for a fresh VM, a local stack for a remote one), list every setup step the stand-in did that the target will not do. Those steps stay unverified until a run on the real target covers them.
 
-6. `6-hand-over`: Report the skill's path, the features the map covers, the feature you proved, and any unverified stand-in steps. Confirm that `.claude/skills/verify-<app>/SKILL.md` resolves through the link after the setup step, or report the link as unverified. Tell the user that `/verification-skill` run again will audit the skill as the app changes. Suggest a cadence only if the user asks.
+6. `6-hand-over`: Report the skill's path, the features the map covers, the feature you proved, and any unverified stand-in steps. Confirm that Git tracks every file of the skill folder and does not track the `.claude/skills` link. Confirm that `.claude/skills/verify-<app>/SKILL.md` resolves through the link after the setup step, or report the link as unverified. Tell the user that `/verification-skill` run again will audit the skill as the app changes. Suggest a cadence only if the user asks.
 
 ## Maintain mode
 

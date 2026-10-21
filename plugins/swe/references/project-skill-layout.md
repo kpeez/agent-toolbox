@@ -16,12 +16,22 @@ A skill that a swe skill generates for a project follows this layout.
   use a path relative to the skill folder: `scripts/check.py`, not
   `.agents/skills/<skill-name>/scripts/check.py`. A script finds its sibling
   files from its own location, not from the working directory.
+- Commit the skill folder with the change that adds it, so every clone gets
+  the skill. Many repositories ignore parts of `.agents/` (for example
+  `.agents/docs/` or `.agents/plans/`). Before you commit, run
+  `git check-ignore -v .agents/skills/<skill-name>/SKILL.md`. When it prints a
+  rule, change `.gitignore` so it ignores only those other parts. Git cannot
+  re-include a file under an ignored directory, so `!/.agents/skills/` after
+  `.agents/` has no effect. Write `/.agents/*` and then `!/.agents/skills/`
+  instead. Then confirm that
+  `git ls-files .agents/skills/<skill-name>` lists every file of the skill.
 
 ## Claude Code sees it through a link
 
 Claude Code reads project skills only from `.claude/skills/`. Give it the
 skill through the symlink `.claude/skills -> ../.agents/skills`. The
-repository's setup step creates the link. Do not commit it.
+repository's setup step creates the link. Commit the skill folder, but do
+not commit the link.
 
 - Add one line to the setup step that the repository already has, such as
   `just install` or `make install`:
