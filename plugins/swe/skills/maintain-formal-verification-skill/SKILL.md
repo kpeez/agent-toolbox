@@ -37,8 +37,10 @@ describe the code again, and then the property fails on it.
 
 ## Edit scope
 
-Edit only the verification: models, harnesses, property files, and the verify
-skill itself. Do not edit product code unless the user asks. When a property
+Edit only the verification: models, harnesses, property files, the verify
+skill itself, and the setup line, check recipe, and `AGENTS.md` line that
+[project skill layout](../../references/project-skill-layout.md) asks for. Do
+not edit product code unless the user asks. When a property
 fails on the current code, do not weaken the property or the model to make it
 pass. Report the failure.
 
@@ -46,7 +48,9 @@ pass. Report the failure.
 
 1. `1-find-the-checks`: Find each verify skill by what it does: a project
    skill that runs a model checker, a prover, or another verifier against
-   named code. Read each one, or the one the user named. For each check,
+   named code. Look in `.agents/skills/` first, then in `.claude/skills/` for
+   a skill made before the current layout. Read each one, or the one the user
+   named. For each check,
    collect the property, the code it covers, the bounds and assumptions, the
    command, and the sync commit: the commit where it was last confirmed to
    describe the code. When no verify skill exists, stop and point to
@@ -96,8 +100,13 @@ pass. Report the failure.
 6. `6-update-the-verify-skill`: Update the covered code, the commands, the
    bounds, the assumptions, and the sync commit of each check. Set the sync
    commit to the commit you checked. Do not move it for a blocked check, and
-   say so. Then follow the verify skill once as the next agent would, to show
-   that its steps still run.
+   say so. When the skill does not follow
+   [project skill layout](../../references/project-skill-layout.md), move it
+   into that layout: the skill and its files in `.agents/skills/<skill-name>/`,
+   no top-level `formal/` directory, the `.claude/skills` link made by the
+   setup step, and one repo-level command named in `AGENTS.md`. Then follow
+   the verify skill once as the next agent would, through that command, to
+   show that its steps still run.
 
 ## Report
 
