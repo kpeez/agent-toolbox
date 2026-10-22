@@ -1,7 +1,7 @@
 # Uni
 
-Uni bundles eight conversational tutoring skills and a teaching workspace
-skill. It helps the learner
+Uni bundles eight conversational tutoring skills, a teaching workspace
+skill, and a tech-tree skill that gates courses on prerequisites. It helps the learner
 reconstruct an idea, criticize an argument, explain a mechanism, practice
 retrieval and transfer through questions, active recall, and concept exercises.
 These are part of normal lessons. The tutor asks one main
@@ -51,7 +51,7 @@ To update:
 
 Codex invocation uses `$learn`; Claude Code uses `/uni:learn`.
 
-Each install path brings all nine skills. Shared references stay inside the
+Each install path brings all ten skills. Shared references stay inside the
 plugin; no separate installer or runtime is needed.
 If you previously copied the chat skills into a project, preserve any edits
 before removing those copies to avoid duplicate discovery.
@@ -85,6 +85,7 @@ $learn Help me discover why gradient descent is useful. I know derivatives and h
 $learn-feynman Test my understanding of Bayesian updating. Ask me to explain first.
 $learn-review Drill the concepts from our last lesson for ten minutes, one question at a time.
 $uni:teach Build a learning workspace with short HTML lessons about linear algebra.
+$tech-tree Build a gated course on linear equations. Place me first.
 ```
 
 Each command shows its arguments: `<x>` is required and `[x]` is optional.
@@ -102,6 +103,7 @@ in place of `/`.
 | [`/uni:learn-review [concepts]`](./skills/learn-review/SKILL.md) | Revisit selected or recent concepts through chat drills |
 | [`/uni:learn-transfer <concept or method>`](./skills/learn-transfer/SKILL.md) | Select and apply a method in a new situation |
 | [`/uni:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. `learn` uses it to plan a new lesson |
+| [`/uni:tech-tree <course>`](./skills/tech-tree/SKILL.md) | Build a prerequisite graph, place the learner, and teach only topics whose prerequisites are mastered or placed |
 | [`/uni:teach [topic]`](./skills/teach/SKILL.md) | Author a persistent learning workspace with HTML lessons and reusable references; invoke explicitly |
 
 Start with the umbrella skill unless a particular exercise is already clear.
@@ -128,9 +130,29 @@ the tutor waits for your response and gives explanation or help when needed.
 It does not simulate your answers. Success after hints or explanation is
 distinguished from an independent attempt.
 
-The suite has no learner database, custom scheduler, retention target, or Anki
-integration. Prompts and responses are handled by the chosen host. No separate
-runtime or learning account is needed for the lessons.
+Without a tech tree, the suite has no learner database, custom scheduler,
+retention target, or Anki integration. Prompts and responses are handled by the
+chosen host. No separate runtime or learning account is needed for the lessons.
+
+## Tech-tree courses
+
+A course built with `tech-tree` starts from a prerequisite graph, as Math
+Academy does. The agent writes `tech-tree.json` (topics, prerequisite edges
+with reasons, knowledge points), validates it, has a fresh reviewer audit the
+edges, and shows you the tree before the first lesson. A short placement check
+finds where you start. You can start a topic only when every topic below it is mastered
+or placed. Mastery needs correct answers without help; a hint makes the
+attempt helped, and a helped pass does not count. A failed lesson goes down a
+remediation ladder: retry later, review key prerequisites, reteach them, then
+fix the graph. Mastered topics get review dates.
+
+A small Python script, `skills/tech-tree/scripts/tech_tree.py`, keeps the gate
+and writes your state to `progress.json` beside the graph. It needs Python 3
+and nothing else. `teach` builds a tech tree before its first lesson, and
+`learn` and `learn-review` follow one when a course folder has it. The
+[design notes](skills/tech-tree/references/design-notes.md) give the sources and
+limits. This is a coarse version of Math Academy's system, and no study tests
+the combined design.
 
 ## Evidence and verification
 
@@ -160,7 +182,9 @@ ignored `artifacts/uni-build/` directory; they are not distributed with the plug
 
 ## Files
 
-- `skills/*/SKILL.md`: nine operational entry points and UI metadata.
+- `skills/*/SKILL.md`: ten operational entry points and UI metadata.
+- `skills/tech-tree/`: graph format, edge review brief, design notes, and the
+  `tech_tree.py` gating script (Python standard library only).
 - `skills/learn/references/`: shared contract, examples, and evidence notes.
 - `skills/teach/`: workspace-authoring workflow and four format templates.
 - `evaluations/`: behavioral scenarios, rubrics, and historical review.

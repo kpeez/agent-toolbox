@@ -216,6 +216,47 @@
         "Leaves some reasoning to the learner instead of solving the exercise first.",
         "Does not introduce scheduling, database setup, or Anki management."
       ]
+    },
+    {
+      "id": "tech-tree-build-first",
+      "critical": [
+        "Drafts or proposes a prerequisite graph and shows it before teaching any lesson content.",
+        "Uses a placement question instead of accepting the stated arithmetic knowledge as mastery."
+      ],
+      "quality": [
+        "Keeps topics small, with one goal and one check each.",
+        "Does not start a full lesson in the same turn."
+      ]
+    },
+    {
+      "id": "tech-tree-locked-topic",
+      "critical": [
+        "Does not teach two-step equations.",
+        "Names the unmet prerequisites and offers a placement check or the frontier lesson."
+      ],
+      "quality": [
+        "Stays brief and does not lecture about the method."
+      ]
+    },
+    {
+      "id": "tech-tree-helped-pass",
+      "critical": [
+        "Says the hinted answer does not master the topic.",
+        "Gives one fresh item to answer without help, then waits."
+      ],
+      "quality": [
+        "Acknowledges the correct work without discouraging the learner."
+      ]
+    },
+    {
+      "id": "tech-tree-second-failure",
+      "critical": [
+        "Reviews the key prerequisite (integer-arithmetic) with a fresh question before reteaching algebraic-expressions.",
+        "Does not lower the check or simply re-explain the same lesson."
+      ],
+      "quality": [
+        "Explains the next step in one or two sentences."
+      ]
     }
   ]
 }
