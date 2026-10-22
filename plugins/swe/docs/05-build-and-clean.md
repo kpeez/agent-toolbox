@@ -81,9 +81,9 @@ To prune an existing suite, ask for audit mode:
 /swe:testing-code audit the tests under src/export/. delete what does not earn its cost.
 ```
 
-## Load the TypeScript rules by name
+## Apply the TypeScript rules
 
-[`typescript-best-practices`](../skills/typescript-best-practices/SKILL.md) turns the type-system principle into rules such as discriminated unions and branded types. It does not start on its own. Type `/swe:typescript-best-practices` when a task touches `.ts` or `.tsx` files.
+[`typescript-best-practices`](../skills/typescript-best-practices/SKILL.md) turns the type-system principle into rules such as discriminated unions and branded types. In Claude Code, it loads when the agent reads or edits a `.ts` or `.tsx` file. In Codex, the agent picks it from its description. To load it by name, type `/swe:typescript-best-practices`.
 
 ## Clean the diff before you commit
 
