@@ -1,7 +1,7 @@
 {
   "repo": "https://github.com/cursor/plugins",
   "path": "pstack",
-  "commit": "d457567332aa6989e753ea289f30ea2bfbc80bc0",
+  "commit": "7698375f92a729f8bb89d113c633dce9ff9dc6db",
   "items": [
     {
       "upstream": ".cursor-plugin/plugin.json",
@@ -230,6 +230,90 @@
       "class": "modified",
       "local": [
         "plugins/swe/skills/go-deeper/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/SKILL.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/chart-to-tla.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/chart-to-tla.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/compare-charts.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/compare-charts.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/lib.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/lib.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/model/OutputFolder.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/model/OutputFolder.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/model/OutputFolder.map.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/model/OutputFolder.map.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/model/OutputFolder.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/model/OutputFolder.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/statechart.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/statechart.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/statechart.test.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/statechart.test.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/sync.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/sync.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/upload.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/upload.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/tlc-to-chart.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/tlc-to-chart.mjs"
       ]
     },
     {

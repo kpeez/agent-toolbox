@@ -84,6 +84,22 @@ The [`create-formal-verification-skill`](../skills/create-formal-verification-sk
 
 The generated skill records which code each check covers and the sync commit: the commit where the check last matched the code. A merge or a refactor that skips the skill can leave the check passing on code that is gone. After such changes, type `/swe:maintain-formal-verification-skill`. The [`maintain-formal-verification-skill`](../skills/maintain-formal-verification-skill/SKILL.md) skill updates the verification from the code, reruns it, shows that each updated check can still fail, and says whether each failure is drift in the verification or a bug in the code.
 
+## Show the behavior as a statechart
+
+A counterexample in model terms convinces you. The PM or designer who owns the behavior must see it in their terms. Type:
+
+```text
+/swe:statechart what the user sees when they edit a note offline
+```
+
+The [`statechart`](../skills/statechart/SKILL.md) skill draws a Mermaid statechart of what the user sees from a TLA+ model, so the chart and the checked model cannot drift apart. Each rule of the reader, such as "you never see Synced while you are offline", becomes an invariant. Each bug that TLC finds is a numbered path in the reader's words. Each state is marked works, still wrong, or fixed by your open PR. Before the handoff, the agent reproduces each bug path in the real code, so a modeling error does not reach the reader as a bug.
+
+It also works in the other direction. Draw the behavior as a chart and agree on it with the reader. The skill writes a TLA+ skeleton from the chart, and TLC checks the chart's rules before any code exists. When guards from the real code go into the spec, each place where the code departs from the chart shows as a difference for the reader to decide.
+
+When the code already has a TLA+ spec, the skill can audit the code against it. The agent models what the code does and checks that model next to the unchanged spec. The chart marks the steps where the two differ.
+
+The scripts need Node and TLC: set `TLA2TOOLS` to the path of `tla2tools.jar` from a [TLA+ release](https://github.com/tlaplus/tlaplus/releases), and have Java 11 or later.
+
 ## Match a UI to a baseline
 
 For a UI that must match a reference pixel for pixel, use the [`match-visual-parity`](../skills/swe-mode/playbooks/match-visual-parity.md) playbook. It builds a screenshot harness of the current component in each state first. Then it migrates one component at a time and diffs each against its baseline. A nonzero diff is a fail, and the agent never edits the baseline to make a diff pass.
