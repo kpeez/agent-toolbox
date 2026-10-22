@@ -12,7 +12,7 @@ One file per course. JSON, so the script needs only the Python standard library.
       "id": "integer-arithmetic",
       "title": "Arithmetic with signed integers",
       "goal": "Learner computes with negative integers.",
-      "check": "10 mixed items such as -7 - (-3), all correct, no calculator.",
+      "check": "Mixed signed-integer items such as -7 - (-3), without a calculator.",
       "minutes": 20,
       "requires": {},
       "kps": [
@@ -24,7 +24,7 @@ One file per course. JSON, so the script needs only the Python standard library.
       "id": "one-step-equations",
       "title": "One-step equations",
       "goal": "Learner solves x + a = b or ax = b.",
-      "check": "6 items with negatives; verify each by substitution.",
+      "check": "Equations with negative coefficients; verify each answer by substitution.",
       "minutes": 20,
       "requires": {"integer-arithmetic": "each step adds, subtracts, or divides signed numbers"},
       "kps": [
@@ -42,13 +42,13 @@ One file per course. JSON, so the script needs only the Python standard library.
 | `id` | Kebab-case, unique, stable. Progress uses it. |
 | `title` | Short name for the tree view. |
 | `goal` | One skill: "Learner can ...". |
-| `check` | The mastery test. Concrete items and the pass condition. |
+| `check` | The kind of items that show the goal. Practice and review items come from it. The skill's pass rule decides a pass. |
 | `minutes` | Optional. 10-30. |
 | `requires` | Map of prerequisite id to the reason the edge exists. All are needed. |
 | `kps` | 1-4 knowledge points, easy to hard. `key` lists the earlier topics each step uses directly. |
 | `encompasses` | Optional. Map of ancestor id to 0.5 (partly practiced) or 1.0 (fully practiced). |
 
-`validate` fails on: a bad or duplicate id; an unknown id in `requires`; an edge without a reason; an empty title, goal, or check; a cycle; a KP without a title; a `key` or `encompasses` target that is not an ancestor; a weight other than 0.5 or 1.0.
+`validate` fails on: a field of the wrong type; a bad or duplicate id; an unknown id in `requires`; an edge without a reason; an empty title, goal, or check; a cycle; a KP without a title; a `key` or `encompasses` target that is not an ancestor; a weight other than 0.5 or 1.0.
 
 `validate` warns on: more than 4 direct prerequisites; no KPs or more than 4; more than 30 minutes; a goal that joins two skills with "and"; a redundant edge that another prerequisite already implies.
 
@@ -72,8 +72,8 @@ The script writes it beside the graph. Do not edit it by hand.
 | --- | --- |
 | `unseen` | Not taught or placed. |
 | `learning` | Taught or retaught, not yet passed without help. |
-| `conditional` | Placed by the diagnostic. Counts as met until its first failed use. |
-| `mastered` | Passed without help. Has review dates. |
+| `conditional` | Placed by the diagnostic. Counts as met until a failed review or placement. |
+| `mastered` | Passed without help. Has review dates. A mastered topic stays mastered when a topic below it fails; its own reviews test it. |
 
 `reps` counts repetitions, with fractional credit from encompassing topics. `due` is the next review date. `log` keeps every result, helped or not, so a tutor can see the learner's history.
 

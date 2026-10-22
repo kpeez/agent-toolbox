@@ -84,8 +84,49 @@ class Graph:
         return out if partial or len(out) == len(self.topics) else None
 
 
-def validate(g):
-    errors, warnings = [], []
+def is_text(v):
+    return isinstance(v, str) and v.strip() != ""
+
+
+def shape_errors(data):
+    """Type errors that would crash the other checks."""
+    if not isinstance(data, dict) or not isinstance(data.get("topics"), list):
+        return ["the file must be an object with a topics list"]
+    errors = []
+    for i, t in enumerate(data["topics"], 1):
+        if not isinstance(t, dict):
+            errors.append(f"topic {i} is not an object")
+            continue
+        tid = t.get("id", f"topic {i}")
+        for field in ("title", "goal", "check"):
+            if not is_text(t.get(field)):
+                errors.append(f"{tid}: {field} must be non-empty text")
+        if "minutes" in t and (isinstance(t["minutes"], bool) or not isinstance(t["minutes"], (int, float))):
+            errors.append(f"{tid}: minutes must be a number")
+        req = t.get("requires", {})
+        if not isinstance(req, dict) or not all(is_text(v) for v in req.values()):
+            errors.append(f"{tid}: requires must map each prerequisite id to a reason")
+        kps = t.get("kps", [])
+        if not isinstance(kps, list) or not all(
+            isinstance(kp, dict) and is_text(kp.get("title"))
+            and isinstance(kp.get("key", []), list) and all(isinstance(k, str) for k in kp.get("key", []))
+            for kp in kps
+        ):
+            errors.append(f"{tid}: kps must be a list of objects with a title and a key list")
+        enc = t.get("encompasses", {})
+        if not isinstance(enc, dict) or not all(
+            not isinstance(w, bool) and w in WEIGHTS for w in enc.values()
+        ):
+            errors.append(f"{tid}: encompasses must map ancestor ids to 0.5 or 1.0")
+    return errors
+
+
+def validate(data):
+    errors = shape_errors(data)
+    if errors:
+        return errors, []
+    g = Graph(data)
+    warnings = []
     ids = [t.get("id") for t in g.topics]
     for tid in ids:
         if not isinstance(tid, str) or not ID_RE.match(tid):
@@ -95,19 +136,9 @@ def validate(g):
     if errors:
         return errors, warnings
     for t in g.topics:
-        tid = t["id"]
-        for field in ("title", "goal", "check"):
-            if not str(t.get(field, "")).strip():
-                errors.append(f"{tid}: {field} is empty")
-        req = t.get("requires", {})
-        if not isinstance(req, dict):
-            errors.append(f"{tid}: requires must map each prerequisite id to a reason")
-            continue
-        for p, why in req.items():
+        for p in t.get("requires", {}):
             if p not in g.by_id:
-                errors.append(f"{tid}: requires unknown topic {p}")
-            elif not str(why).strip():
-                errors.append(f"{tid}: requires {p} has no reason")
+                errors.append(f"{t['id']}: requires unknown topic {p}")
     if errors:
         return errors, warnings
     if g.order() is None:
@@ -116,16 +147,12 @@ def validate(g):
     for t in g.topics:
         tid, anc = t["id"], g.ancestors(t["id"])
         for i, kp in enumerate(t.get("kps", []), 1):
-            if not str(kp.get("title", "")).strip():
-                errors.append(f"{tid}: knowledge point {i} has no title")
             for k in kp.get("key", []):
                 if k not in anc:
                     errors.append(f"{tid}: knowledge point {i} key {k} is not an ancestor")
         for e, w in t.get("encompasses", {}).items():
             if e not in anc:
                 errors.append(f"{tid}: encompasses {e}, which is not an ancestor")
-            if w not in WEIGHTS:
-                errors.append(f"{tid}: encompasses {e} with weight {w}; use 0.5 or 1.0")
         req = list(t.get("requires", {}))
         if len(req) > 4:
             warnings.append(f"{tid}: {len(req)} direct prerequisites; split the topic")
@@ -146,10 +173,11 @@ def validate(g):
 
 def load(args):
     gpath = Path(args.graph)
-    g = Graph(json.loads(gpath.read_text()))
-    errors, _ = validate(g)
+    data = json.loads(gpath.read_text())
+    errors, _ = validate(data)
     if errors:
         sys.exit("graph has errors; run validate:\n  " + "\n  ".join(errors))
+    g = Graph(data)
     ppath = Path(args.progress) if args.progress else gpath.with_name("progress.json")
     progress = json.loads(ppath.read_text()) if ppath.exists() else {}
     progress.setdefault("topics", {})
@@ -171,11 +199,14 @@ def met(state, tid):
     return state[tid]["status"] in MET
 
 
+def unmet_ancestors(g, state, tid):
+    """A topic stays locked while any ancestor is unmet, so a retaught key
+    prerequisite several edges back locks it too."""
+    return [a for a in g.order() if a in g.ancestors(tid) and not met(state, a)]
+
+
 def frontier(g, state):
-    return [
-        tid for tid in g.order()
-        if not met(state, tid) and all(met(state, p) for p in g.requires(tid))
-    ]
+    return [tid for tid in g.order() if not met(state, tid) and not unmet_ancestors(g, state, tid)]
 
 
 def due_reviews(g, state, today):
@@ -214,29 +245,35 @@ def cmd_next(g, progress, today):
 
     def score(tid):
         covers = sum(w for e, w in g.by_id[tid].get("encompasses", {}).items() if e in due)
-        return (tid not in failed_today, covers, len(g.descendants(tid)) - state[tid]["fails"])
+        return (covers, len(g.descendants(tid)) - state[tid]["fails"])
 
+    # A failed lesson waits a day: rest, then retry with new questions.
+    front = [t for t in front if t not in failed_today]
     lesson = max(front, key=score) if front else None
-    covering = lesson and any(
-        g.by_id[lesson].get("encompasses", {}).get(e) == 1.0 for e in due
+    covering = lesson and any(  # credit reaches only mastered topics
+        g.by_id[lesson].get("encompasses", {}).get(e) == 1.0 and state[e]["status"] == "mastered"
+        for e in due
     )
     if due and not covering and (progress["reviews_since_lesson"] < LESSON_EVERY or not lesson):
         return f"review {due[0]}  (due {state[due[0]]['due']}; {len(due)} due)"
     if lesson:
         kind = "retry" if state[lesson]["fails"] else "lesson"
         return f"{kind} {lesson}  ({g.by_id[lesson]['title']})"
-    upcoming = sorted(state[t]["due"] for t in state if met(state, t) and state[t]["due"])
-    if len(front) == 0 and all(met(state, t) for t in g.by_id):
-        return "course complete" + (f"; next review {upcoming[0]}" if upcoming else "")
-    return f"nothing due; next review {upcoming[0]}" if upcoming else "nothing to do"
+    upcoming = sorted(state[t]["due"] for t in g.by_id if met(state, t) and state[t]["due"])
+    after = f"; next review {upcoming[0]}" if upcoming else ""
+    if all(state[t]["status"] == "mastered" for t in g.by_id):
+        return "course complete" + after
+    if all(met(state, t) for t in g.by_id):
+        return "every topic is placed or mastered; verify placed topics at their reviews" + after
+    return f"nothing due today{after}"
 
 
 def cmd_record(g, progress, tid, passed, helped, today):
     state = progress["topics"]
     s = state[tid]
     is_review = met(state, tid)
-    if not is_review and not all(met(state, p) for p in g.requires(tid)):
-        missing = [p for p in g.requires(tid) if not met(state, p)]
+    missing = unmet_ancestors(g, state, tid)
+    if not is_review and missing:
         sys.exit(f"{tid} is locked; first master: {', '.join(missing)}")
     progress["log"].append({
         "date": today, "id": tid, "kind": "review" if is_review else "lesson",
@@ -252,8 +289,9 @@ def cmd_record(g, progress, tid, passed, helped, today):
         s["reps"] = s["reps"] + 1 if is_review else 1
         s["due"] = add_days(today, interval(s["reps"]))
         if not is_review:  # a retaught prerequisite restarts its dependents' ladder
-            for c in g.children(tid):
-                state[c]["fails"] = 0
+            for d in g.descendants(tid):
+                if not met(state, d):
+                    state[d]["fails"] = 0
         credit(g, state, tid, today)
         return f"{tid}: mastered; next review {s['due']}"
     s["fails"] += 1
@@ -316,15 +354,22 @@ def cmd_mermaid(g, state):
 
 
 def main():
-    ap = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
-    ap.add_argument("--graph", default="tech-tree.json")
-    ap.add_argument("--progress", help="default: progress.json beside the graph")
-    ap.add_argument("--date", default=dt.date.today().isoformat(), help="today, as YYYY-MM-DD")
+    def options(parser, defaults):
+        # Accept the options before or after the command.
+        parser.add_argument("--graph", default="tech-tree.json" if defaults else argparse.SUPPRESS)
+        parser.add_argument("--progress", default=None if defaults else argparse.SUPPRESS,
+                            help="default: progress.json beside the graph")
+        parser.add_argument("--date", default=dt.date.today().isoformat() if defaults else argparse.SUPPRESS,
+                            help="today, as YYYY-MM-DD")
+        return parser
+
+    common = options(argparse.ArgumentParser(add_help=False), defaults=False)
+    ap = options(argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter), defaults=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("validate", "mermaid", "frontier", "next", "status"):
-        sub.add_parser(name)
+        sub.add_parser(name, parents=[common])
     for name in ("record", "place"):
-        p = sub.add_parser(name)
+        p = sub.add_parser(name, parents=[common])
         p.add_argument("id")
         p.add_argument("result", choices=("pass", "fail"))
         if name == "record":
@@ -332,7 +377,7 @@ def main():
     args = ap.parse_args()
 
     if args.cmd == "validate":
-        errors, warnings = validate(Graph(json.loads(Path(args.graph).read_text())))
+        errors, warnings = validate(json.loads(Path(args.graph).read_text()))
         for w in warnings:
             print(f"warning: {w}")
         for e in errors:

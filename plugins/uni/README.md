@@ -103,7 +103,7 @@ in place of `/`.
 | [`/uni:learn-review [concepts]`](./skills/learn-review/SKILL.md) | Revisit selected or recent concepts through chat drills |
 | [`/uni:learn-transfer <concept or method>`](./skills/learn-transfer/SKILL.md) | Select and apply a method in a new situation |
 | [`/uni:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. `learn` uses it to plan a new lesson |
-| [`/uni:tech-tree <course>`](./skills/tech-tree/SKILL.md) | Build a prerequisite graph, place the learner, and teach only topics whose prerequisites are mastered |
+| [`/uni:tech-tree <course>`](./skills/tech-tree/SKILL.md) | Build a prerequisite graph, place the learner, and teach only topics whose prerequisites are mastered or placed |
 | [`/uni:teach [topic]`](./skills/teach/SKILL.md) | Author a persistent learning workspace with HTML lessons and reusable references; invoke explicitly |
 
 Start with the umbrella skill unless a particular exercise is already clear.
@@ -140,8 +140,8 @@ A course built with `tech-tree` starts from a prerequisite graph, as Math
 Academy does. The agent writes `tech-tree.json` (topics, prerequisite edges
 with reasons, knowledge points), validates it, has a fresh reviewer audit the
 edges, and shows you the tree before the first lesson. A short placement check
-finds where you start. You can start a topic only when you have mastered all its
-prerequisites. Mastery needs correct answers without help; a hint makes the
+finds where you start. You can start a topic only when every topic below it is mastered
+or placed. Mastery needs correct answers without help; a hint makes the
 attempt helped, and a helped pass does not count. A failed lesson goes down a
 remediation ladder: retry later, review key prerequisites, reteach them, then
 fix the graph. Mastered topics get review dates.
