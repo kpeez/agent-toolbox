@@ -18,6 +18,11 @@ upstream commit and one item for each pinned pstack file or folder:
   `local` lists every swe file that holds its content.
 - `dropped`: swe does not use it. A path that ends in `/` covers its folder.
 
+[references/decisions.md](references/decisions.md) records why swe differs:
+each renamed, merged, dropped, or replaced pstack skill, and each upstream
+change that a sync skipped on purpose. Read it before you decide on an
+upstream change. A past decision can already answer it.
+
 The script [scripts/pstack_sync.py](scripts/pstack_sync.py) clones upstream
 into `artifacts/pstack-upstream` on first use (`--upstream` sets another
 path). Run it from the repository root.
@@ -41,11 +46,13 @@ path). Run it from the repository root.
    - **Skip** it when it is Cursor-only, already in swe, or conflicts with a
      swe decision.
    Keep this review brief. Port the intent, not the upstream wording. Write
-   one line per file: ported or skipped, and why.
+   one line per file: ported or skipped, and why. Add each skip that is not
+   a wording change to `references/decisions.md`.
 5. `5-classify-new`: For each `new` file, import it (add an item) or drop it
    (add a `dropped` item). For a deleted upstream file, delete its swe content
    or keep it as swe-only, and remove its item. Ask the user before you import
-   a new skill or playbook.
+   a new skill or playbook. Add each import, drop, and deletion to
+   `references/decisions.md`. Import upstream scripts in their own language.
 6. `6-move-the-pin`: Run `pstack_sync.py pin`. It writes the new commit to
    `upstream.json` and to the README Credits link. Then run `check` again.
 7. `7-ship`: Bump the swe patch version in both plugin manifests. Run the
@@ -59,3 +66,5 @@ path). Run it from the repository root.
 - When a merge or review changes a file into or out of the `copied` shape,
   change its class in `upstream.json`.
 - When a swe change moves pstack content to another file, update `local`.
+- When a swe change renames, merges, or removes pstack content outside a
+  sync, add the reason to `references/decisions.md` in the same PR.
