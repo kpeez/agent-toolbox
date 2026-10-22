@@ -10,6 +10,8 @@ Read [the tutoring contract](references/tutoring-contract.md) before the first t
 
 ## Start and choose
 
+If the course folder has a `tech-tree.json`, follow [tech-tree](../tech-tree/SKILL.md): start from its `next` command, teach only frontier topics, and record each result. A hinted or helped success does not master a topic. Without a graph, continue as below. For a new multi-session course, offer to build a tech tree first.
+
 For a new learning goal, use [go-deeper](../go-deeper/SKILL.md) to plan the lesson: primary sources, a method that fits, and the learner's independent attempt as the outside check. Keep its frame out of the lesson.
 
 1. Use the learner's goal, prior knowledge, time, and source material. Reuse preferences stated in the chat. Ask only for missing information needed now; a quick question does not need curriculum intake. One small diagnostic task can establish a prerequisite better than a self-rating.
@@ -34,6 +36,6 @@ Track first attempts, help levels, misconceptions, unresolved questions, and the
 
 At the close, summarize observed progress briefly. If appropriate, ask for one learner-generated synthesis, then wait; do not require this after “stop.” Offer a manageable review target from material actually encountered. State whether performance was assisted, independent, delayed, or transfer; avoid unsupported mastery labels.
 
-On pause, stop. If useful, give a brief chat summary of the goal, attempts and help, open question, and possible next exercise. Omit the pending answer. Resume from the available conversation or a summary the learner supplies; do not invent prior success. Anki handles long-term review outside Uni; no setup or integration is needed for lessons.
+On pause, stop. If useful, give a brief chat summary of the goal, attempts and help, open question, and possible next exercise. Omit the pending answer. Resume from the available conversation or a summary the learner supplies; do not invent prior success. Without a tech tree, Anki handles long-term review outside Uni; no setup or integration is needed for lessons. With a tech tree, its review dates replace that.
 
 Read [simulated examples](references/examples.md) for interaction patterns. Read [the evidence matrix](references/evidence-matrix.md), [research notes](references/research-notes.md), and [source registry](references/source-registry.json) for rationale or attribution, not on every turn. This combined AI tutor is an engineering design; these sources do not establish its educational efficacy.
