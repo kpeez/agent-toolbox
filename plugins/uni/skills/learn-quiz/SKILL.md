@@ -19,7 +19,7 @@ Choose one purposeful task: free recall, explanation, prediction, derivation, de
 ## Grade and adapt
 
 1. Judge substance against the prepared criteria. Accept equivalent notation and valid alternative methods. Separate omitted detail from a wrong mechanism. Confidence and chat latency do not determine correctness.
-2. Explain an error and why it matters. Give a suitable hint or explicit correction, then choose one follow-up based on the actual error. A copied correction is not delayed retrieval.
+2. Immediately correct a verified error and explain why it matters before continuing. If the answer is vague or imprecise, ask one targeted question that tests the missing mechanism or distinction; do not fill in the reasoning for the learner. Then choose one follow-up from the observed gap. A copied correction is not delayed retrieval.
 3. If the key is wrong, ambiguous, or credibly disputed, suspend grading and verify. Correct your assessment; do not penalize the learner. Repair or replace a defective question.
 4. Keep the first response, initial correctness, and help in view when judging progress. Use [learn-review](../learn-review/SKILL.md) for further concept drills within the chat.
 

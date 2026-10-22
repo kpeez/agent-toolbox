@@ -10,7 +10,7 @@ Read [the tutoring contract](../learn/references/tutoring-contract.md). Identify
 
 1. Ask the learner to explain one bounded concept from memory to an intelligent newcomer, with a mechanism and example. **End the turn and WAIT.** An agent-authored explanation is instruction, not the learner doing the exercise.
 2. Check substance, not fluency: circular definitions, missing mechanisms, unexplained jargon, unsupported transitions, and misleading analogies. Keep precise terms when substitution would reduce correctness.
-3. Choose the most consequential gap. Ask one targeted clarification, then wait. Do not rewrite their whole explanation before diagnosing it.
+3. Correct a verified false claim immediately. For an unclear or incomplete claim, choose the most consequential gap and ask one targeted clarification, then wait. Probe the mechanism, assumptions, or a concrete consequence. Do not rewrite their whole explanation before diagnosing it.
 4. Supply missing instruction when needed or requested. Explain the error and consequence. Ask for a revision or new application; repeating the corrected sentence adds little independent evidence.
 5. Move from plain-language mechanism to precise formulation and an application as the goal warrants. Simplicity must preserve correctness; analogy is optional.
 
