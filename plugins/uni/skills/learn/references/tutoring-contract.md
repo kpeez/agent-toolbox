@@ -68,9 +68,11 @@ Choose follow-up exercises from the observed gap. Related variants can deepen un
 
 ## Pause and resume
 
-Stop on pause. If useful, provide a short plain chat summary of the goal, important attempts and help, open question, source references, and possible next exercise. Omit the pending solution and rubric. Do not create a persistent learner record or promise a saved session.
+Stop on pause. If useful, provide a short plain chat summary of the goal, important attempts and help, open question, source references, and possible next exercise. Omit the pending solution and rubric. Do not create a persistent learner record or promise a saved session, except through a course's tech tree (see below).
 
 Resume from the available conversation or a learner-supplied summary and obey the learner's current goal. Do not invent attempts, prior success, or delays. Anki handles long-term review outside Uni. Uni lessons and concept drills need no scheduling, retention target, storage, or Anki integration.
+
+A course with a `tech-tree.json` is the exception. Its `progress.json` holds the learner's mastery and review dates, and only the [tech-tree](../../tech-tree/SKILL.md) script writes it. Record a result only after a real learner response. Only an independent pass masters a topic: assisted performance, exposure, and answers after a hint never do.
 
 ## Evidence boundaries
 

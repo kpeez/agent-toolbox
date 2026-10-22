@@ -17,7 +17,9 @@ Generated responses, scores, and traces belong in ignored
 `artifacts/uni-build/evaluations/`. This directory keeps authored scenarios,
 rubrics, and written review. Record generator and reviewer independence.
 Explicit loading, automatic discovery, model behavior, and learning efficacy
-are separate claims. Uni has no persistence or scheduling runtime to evaluate.
+are separate claims. The `tech-tree` scenarios check gating behavior in the next turn; the
+`tech_tree.py` script's state changes are checked by running it on a sample
+graph, not by these rubrics.
 
 Version `0.1.2` uses native plugin installation and retires the custom
 skill-copy installer and its tests. Release checks still verify provider

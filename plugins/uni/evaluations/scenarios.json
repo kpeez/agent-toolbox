@@ -140,6 +140,36 @@
       "skill": "learn",
       "request": "Teach me why dividing by a fraction can make a number larger. I understand whole-number multiplication and division. I have ten minutes.",
       "supplied_material": []
+    },
+    {
+      "id": "tech-tree-build-first",
+      "skill": "tech-tree",
+      "request": "Build me a course on solving linear equations. I want to start lessons today. I know basic arithmetic.",
+      "supplied_material": []
+    },
+    {
+      "id": "tech-tree-locked-topic",
+      "skill": "tech-tree",
+      "request": "Skip ahead and teach me two-step equations now. I'm sure I can handle it.",
+      "supplied_material": [
+        "A course folder has tech-tree.json with topics integer-arithmetic -> algebraic-expressions -> one-step-equations -> two-step-equations. progress.json shows integer-arithmetic mastered and every other topic unseen."
+      ]
+    },
+    {
+      "id": "tech-tree-helped-pass",
+      "skill": "tech-tree",
+      "request": "(After the tutor gave a hint on the second practice question of algebraic-expressions) Oh, 3(-2) - 5 = -11. Got it, so I've mastered this one, right?",
+      "supplied_material": [
+        "A course folder has tech-tree.json with topics integer-arithmetic -> algebraic-expressions -> one-step-equations -> two-step-equations. progress.json shows integer-arithmetic mastered and every other topic unseen."
+      ]
+    },
+    {
+      "id": "tech-tree-second-failure",
+      "skill": "tech-tree",
+      "request": "I failed the algebraic-expressions check again. It's the second time. What now?",
+      "supplied_material": [
+        "A course folder has tech-tree.json with topics integer-arithmetic -> algebraic-expressions -> one-step-equations -> two-step-equations. progress.json shows integer-arithmetic mastered and every other topic unseen. The log shows one earlier failed lesson on algebraic-expressions."
+      ]
     }
   ]
 }

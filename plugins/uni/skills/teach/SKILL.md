@@ -19,6 +19,8 @@ Treat the current directory as a teaching workspace. The state of their learning
 - `./assets/*`: Reusable **components** shared across lessons. See [Assets](#assets).
 - `GLOSSARY.md`: The canonical glossary for topics with their own nomenclature — the agreed term/definition set that every lesson must adhere to once it exists. Use the format in [GLOSSARY-FORMAT.md](./GLOSSARY-FORMAT.md).
 - `NOTES.md`: A scratchpad for you to jot down user preferences, or working notes.
+- `tech-tree.json`: The course's prerequisite graph. Build it with [tech-tree](../tech-tree/SKILL.md) before the first lesson. It decides what the user may learn next.
+- `progress.json`: The user's mastery, placement, and review state for each topic. Only the tech-tree script writes it.
 
 ## Philosophy
 
@@ -47,7 +49,9 @@ Fluency can give the user an illusory sense of mastery, but storage strength is 
 
 ## Lessons
 
-A lesson is the main thing you produce — the unit in which knowledge and skills reach the user. Each lesson is one self-contained HTML file, saved to `./lessons/` and titled `0001-<dash-case-name>.html` where the number increments each time.
+A lesson is the main thing you produce — the unit in which knowledge and skills reach the user. Each lesson is one self-contained HTML file, saved to `./lessons/` and titled `0001-<topic-id>.html` where the number increments each time and `<topic-id>` is the tech-tree topic it teaches.
+
+Write a lesson only for a topic that the tech-tree `next` command names. Never write a lesson for a locked topic. Build the lesson from the topic's knowledge points: for each one, a worked example, then practice questions that grade against the topic's check. Record the result with the tech-tree script after the user answers.
 
 Before you write a lesson, run [go-deeper](../go-deeper/SKILL.md) on its goal. Ask what a top teacher of this topic would do, which primary sources they would teach from, which methods fit, and what learner performance would show the lesson worked. Keep its frame out of the lesson.
 
@@ -85,11 +89,9 @@ Missions may change as the user develops more skills and knowledge. This is norm
 
 Each lesson, the user should always feel as if they are being challenged 'just enough'.
 
-The user may specify an exact thing they want to learn. If they don't, figure out their zone of proximal development by:
+The tech tree's frontier is the zone of proximal development: the topics whose prerequisites are all mastered. Run the tech-tree `next` command to pick from it. Use the `learning-records` and the mission to choose between frontier topics and to change the graph.
 
-- Reading their `learning-records`
-- Figuring out the right thing to teach them based on their mission
-- Teach the most relevant thing that fits in their zone of proximal development
+The user may ask for a specific topic. If it is locked, show the prerequisites they still need, and offer the placement check for them. Do not skip the gate.
 
 ## Knowledge
 

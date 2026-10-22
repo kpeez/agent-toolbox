@@ -16,6 +16,6 @@ Use the actual response to locate a gap. Explain the error and why it matters, g
 
 Distinguish independent attempts from success after hints or explanation. A fresh application can reveal a different gap from factual recall. At the close, briefly name what the learner demonstrated and what still needs practice when useful.
 
-Review happens within the chat when requested. Anki handles long-term spaced review outside Uni. Do not create a schedule, retention target, database, or Anki integration. A plain chat handoff summary is enough when the learner wants to pause or continue elsewhere.
+Review happens within the chat when requested. Anki handles long-term spaced review outside Uni. Do not create a schedule, retention target, database, or Anki integration. If the course has a `tech-tree.json`, review the topics its `next` command names and record each result with the [tech-tree](../tech-tree/SKILL.md) script. A plain chat handoff summary is enough when the learner wants to pause or continue elsewhere.
 
 Read [the evidence matrix](../learn/references/evidence-matrix.md) for retrieval, feedback, and transfer limits, and [examples](../learn/references/examples.md) for interaction patterns.
