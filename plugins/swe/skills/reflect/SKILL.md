@@ -76,6 +76,12 @@ Offer to file each Backlog item to the team's tracker, or run the `correct`
 skill on it when the user approves. Only the Accepted list waits for
 approval; the Backlog list is an offer.
 
+Never edit a skill in a plugin cache, such as `~/.claude/plugins/cache/` or
+`~/.codex/plugins/cache/`. A plugin update overwrites it. Before approval,
+show the destination: `.claude/skills/<skill>/` or `~/.claude/skills/<skill>/`
+(Codex: `.agents/skills/<skill>/` or `~/.agents/skills/<skill>/`). After
+approval, copy the skill folder there and edit the copy.
+
 Follow each approved row's Routing exactly:
 
 - Trivial edit to an existing skill (a one-line bullet, a tightened sentence,
