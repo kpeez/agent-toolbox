@@ -46,6 +46,8 @@ Write a project-local skill in `.agents/skills/<skill-name>/`, and lay it out as
 
 Put the coverage record and the sync commit in the skill. Tell the next agent to move the sync commit forward only after it confirms that the verification describes the code at the new commit. Use this repository's real commands, paths, and nouns. Leave no placeholders.
 
+If the check is a TLA+ model, tell the next agent to read every result with the [statechart](../statechart/SKILL.md) skill. It shows each invariant violation that the checker finds as its shortest path in plain words, and which of those violations a change fixes. When the check passes, `statechart` draws a chart of how the system moves between states. Refer to `statechart` by name. Its commands, options, and file paths change between releases and machines, so copy none of them into the generated skill or its scripts.
+
 ## Prove it before you hand off
 
 Confirm that Git tracks every file of the skill folder and does not track the `.claude/skills` link. Run the setup step, and confirm that `.claude/skills/<skill-name>/SKILL.md` resolves through the link. Follow the generated skill once, as the next agent would, through the repo-level command, on a scratch change that breaks the property in the real code. It must catch the break. Then drop the scratch change and confirm that the check is back where it started: passing, or failing only on the findings you will report. A verify skill that never ran is a draft. If the skill misses the break or a step does not run, fix the skill or the verification, not the scratch change.

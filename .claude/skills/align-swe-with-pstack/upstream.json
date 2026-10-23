@@ -1,7 +1,7 @@
 {
   "repo": "https://github.com/cursor/plugins",
   "path": "pstack",
-  "commit": "7698375f92a729f8bb89d113c633dce9ff9dc6db",
+  "commit": "7054003c3723e82d099fb7620e3bc8d7d63eebc6",
   "items": [
     {
       "upstream": ".cursor-plugin/plugin.json",
@@ -125,7 +125,8 @@
       "upstream": "docs/guide/10-recipes-and-pitfalls.md",
       "class": "modified",
       "local": [
-        "plugins/swe/docs/10-recipes-and-pitfalls.md"
+        "plugins/swe/docs/10-recipes-and-pitfalls.md",
+        "plugins/swe/docs/03-understand.md"
       ]
     },
     {
@@ -219,6 +220,13 @@
       ]
     },
     {
+      "upstream": "skills/ketchup-video/SKILL.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/ketchup-video/SKILL.md"
+      ]
+    },
+    {
       "upstream": "skills/no-comments/SKILL.md",
       "class": "modified",
       "local": [
@@ -261,27 +269,6 @@
       ]
     },
     {
-      "upstream": "skills/statechart/scripts/model/OutputFolder.cfg",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/model/OutputFolder.cfg"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/model/OutputFolder.map.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/model/OutputFolder.map.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/model/OutputFolder.tla",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/model/OutputFolder.tla"
-      ]
-    },
-    {
       "upstream": "skills/statechart/scripts/statechart.mjs",
       "class": "copied",
       "local": [
@@ -314,6 +301,132 @@
       "class": "copied",
       "local": [
         "plugins/swe/skills/statechart/scripts/tlc-to-chart.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/bug-states.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/bug-states.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/chart-edges.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/chart-edges.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/chart-parts.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/chart-parts.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/map-view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/map-view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/property-loop.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/property-loop.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/read-check.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/read-check.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/regions-chart.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/regions-chart.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/render.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/render.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/rule-book.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/rule-book.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/second-replay.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/second-replay.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/snapshot.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/snapshot.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/spec-text.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/spec-text.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/statechart-help.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/statechart-help.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/tlc-to-chart-args.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/tlc-to-chart-args.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/tlc-tools.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/tlc-tools.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/ways-in.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/ways-in.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/band.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/band.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/regions.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/regions.mmd"
       ]
     },
     {

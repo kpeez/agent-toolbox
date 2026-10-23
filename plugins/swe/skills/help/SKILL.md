@@ -86,6 +86,7 @@ and give one example prompt.
 | Know why code is shaped this way | [why](../why/SKILL.md) |
 | Catch up on their own recent work on a topic | [recall](../recall/SKILL.md) |
 | Catch up on this chat since their last message, with every waiting call decidable from the reply | [ketchup](../ketchup/SKILL.md) |
+| Catch up like `ketchup`, in a short silent video of slides, with the waiting calls as text under it | [ketchup-video](../ketchup-video/SKILL.md) |
 | Hear the last reply again in plain words | [wait-what](../wait-what/SKILL.md) |
 | Explain a failure, crash, hang, or leak | [diagnose](../diagnose/SKILL.md) |
 | Know what a diff could break outside itself | [blast-radius](../blast-radius/SKILL.md) |

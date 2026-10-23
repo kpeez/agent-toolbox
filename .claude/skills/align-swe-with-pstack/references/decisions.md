@@ -40,6 +40,7 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | pstack | Why | PR |
 | --- | --- | --- |
 | `statechart` | Kyle approved. Node scripts kept, not ported to Python: upstream code keeps its own language. Class `copied`. | #198 |
+| `ketchup-video` | Kyle approved. Class `copied`. | #200 |
 
 ## Skipped upstream changes
 
@@ -47,3 +48,4 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | --- | --- | --- |
 | `sharpen` returns only the rewritten prompt (cursor/plugins#729) | `go-deeper` frames and then does the task. Its prompt-only mode already covers the rewrite. | #198 |
 | `sharpen` drops the rewritten-prompt ban | `go-deeper` already gives the rewrite on request. | #193 |
+| `reflect`: never open a PR or push after a skill edit (cursor/plugins#800) | swe defaults allow task-scoped commits and draft PRs. swe ports only the rule against edits in a plugin cache. | #200 |
