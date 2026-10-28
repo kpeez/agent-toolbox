@@ -94,11 +94,11 @@ The [`autopilot-full`](../skills/swe-mode/playbooks/autopilot-full.md) playbook 
 /swe:swe-mode full autopilot on this queue. each item is independent. merge them when verified.
 ```
 
-The [`autopilot-stack`](../skills/swe-mode/playbooks/autopilot-stack.md) playbook runs the same owners but lands nothing. You get one linear stack with a verdict on each link, and you land it yourself. Pick it when the changes are coupled, or when you want to review before anything merges.
+The [`autopilot-stack`](../skills/swe-mode/playbooks/autopilot-stack.md) playbook is `autopilot-full` without the merge. You get verified PRs, each with its verdict, and you land them yourself. A PR stacks only on a PR it builds on. Pick it when you want to review before anything merges.
 
 ## Run a multi-day program
 
-The [`run-program`](../skills/swe-mode/playbooks/run-program.md) playbook is for work that outlives any single agent. It runs many stacked PRs and many subagents under one coordinator session. The coordinator writes briefs, drains reports, keeps the lowest unmerged PR green, and never writes code. It frames a countable done predicate, pushes one pilot unit through the whole path, then scales. The [program rules](../skills/swe-mode/references/run-program.md) define the roles, the store, the brief, the drain, and escalation. When one agent could finish inside the budget, the playbook sends you back to `run-autonomously`.
+The [`run-program`](../skills/swe-mode/playbooks/run-program.md) playbook is for work that outlives any single agent. It runs many stacked PRs and many subagents under one coordinator session. The coordinator decides which agent does each piece of work, checks what each one produces, and never writes code. It uses only its own tools: subagent spawns, one tracker note, and PR event subscriptions. It takes one unit through owner, verifier, and merge before it fans out. When one agent could finish inside the budget, the playbook sends you back to `run-autonomously`.
 
 ## Clean up worktrees
 

@@ -1,7 +1,7 @@
 {
   "repo": "https://github.com/cursor/plugins",
   "path": "pstack",
-  "commit": "7054003c3723e82d099fb7620e3bc8d7d63eebc6",
+  "commit": "0f77cd5dab1e006de02d6ad221d5620de026473a",
   "items": [
     {
       "upstream": ".cursor-plugin/plugin.json",
@@ -9,22 +9,6 @@
     },
     {
       "upstream": ".gitignore",
-      "class": "dropped"
-    },
-    {
-      "upstream": "plugin.json",
-      "class": "dropped"
-    },
-    {
-      "upstream": "assets/",
-      "class": "dropped"
-    },
-    {
-      "upstream": "automations/",
-      "class": "dropped"
-    },
-    {
-      "upstream": "docs/guide/images/",
       "class": "dropped"
     },
     {
@@ -57,6 +41,14 @@
         "plugins/swe/agents/daedalus.md",
         "plugins/swe/agents/daedalus.toml"
       ]
+    },
+    {
+      "upstream": "assets/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "automations/",
+      "class": "dropped"
     },
     {
       "upstream": "docs/guide/01-setup.md",
@@ -137,7 +129,15 @@
       ]
     },
     {
+      "upstream": "docs/guide/images/",
+      "class": "dropped"
+    },
+    {
       "upstream": "docs/harness/",
+      "class": "dropped"
+    },
+    {
+      "upstream": "plugin.json",
       "class": "dropped"
     },
     {
@@ -192,251 +192,6 @@
       ]
     },
     {
-      "upstream": "skills/correct/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/correct/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/figure-it-out/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/figure-it-out/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/in-your-own-words/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/in-your-own-words/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/ketchup/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/ketchup/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/ketchup-video/SKILL.md",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/ketchup-video/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/no-comments/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/no-comments/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/sharpen/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/go-deeper/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/SKILL.md",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/chart-to-tla.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/chart-to-tla.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/compare-charts.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/compare-charts.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/lib.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/lib.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/statechart.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/statechart.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/test/statechart.test.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/test/statechart.test.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/test/sync.mmd",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/test/sync.mmd"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/test/upload.mmd",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/test/upload.mmd"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/tlc-to-chart.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/tlc-to-chart.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/bug-states.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/bug-states.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/chart-edges.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/chart-edges.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/chart-parts.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/chart-parts.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/map-view.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/map-view.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/property-loop.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/property-loop.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/read-check.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/read-check.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/regions-chart.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/regions-chart.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/render.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/render.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/rule-book.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/rule-book.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/second-replay.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/second-replay.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/snapshot.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/snapshot.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/spec-text.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/spec-text.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/statechart-help.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/statechart-help.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/tlc-to-chart-args.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/tlc-to-chart-args.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/tlc-tools.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/tlc-tools.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/ways-in.mjs",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/ways-in.mjs"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/test/band.mmd",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/test/band.mmd"
-      ]
-    },
-    {
-      "upstream": "skills/statechart/scripts/test/regions.mmd",
-      "class": "copied",
-      "local": [
-        "plugins/swe/skills/statechart/scripts/test/regions.mmd"
-      ]
-    },
-    {
-      "upstream": "skills/swarm/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/swarm/SKILL.md"
-      ]
-    },
-    {
       "upstream": "skills/bro/SKILL.md",
       "class": "modified",
       "local": [
@@ -444,17 +199,17 @@
       ]
     },
     {
+      "upstream": "skills/correct/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/correct/SKILL.md"
+      ]
+    },
+    {
       "upstream": "skills/create-formal-verification-skill/SKILL.md",
       "class": "modified",
       "local": [
         "plugins/swe/skills/create-formal-verification-skill/SKILL.md"
-      ]
-    },
-    {
-      "upstream": "skills/maintain-formal-verification-skill/SKILL.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/maintain-formal-verification-skill/SKILL.md"
       ]
     },
     {
@@ -486,10 +241,10 @@
       ]
     },
     {
-      "upstream": "skills/maintain-verification-skill/SKILL.md",
+      "upstream": "skills/figure-it-out/SKILL.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/verification-skill/SKILL.md"
+        "plugins/swe/skills/figure-it-out/SKILL.md"
       ]
     },
     {
@@ -514,6 +269,13 @@
       ]
     },
     {
+      "upstream": "skills/in-your-own-words/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/in-your-own-words/SKILL.md"
+      ]
+    },
+    {
       "upstream": "skills/interrogate/SKILL.md",
       "class": "modified",
       "local": [
@@ -522,40 +284,43 @@
       "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
     },
     {
-      "upstream": "skills/interrogate/references/code-quality-review.md",
-      "class": "modified",
+      "upstream": "skills/ketchup-video/SKILL.md",
+      "class": "copied",
       "local": [
-        "plugins/swe/references/review-brief.md"
-      ],
-      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+        "plugins/swe/skills/ketchup-video/SKILL.md"
+      ]
     },
     {
-      "upstream": "skills/interrogate/references/lead-judgment.md",
+      "upstream": "skills/ketchup/SKILL.md",
       "class": "modified",
       "local": [
-        "plugins/swe/references/review-brief.md"
-      ],
-      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+        "plugins/swe/skills/ketchup/SKILL.md"
+      ]
     },
     {
-      "upstream": "skills/interrogate/references/reviewer-prompt.md",
+      "upstream": "skills/maintain-formal-verification-skill/SKILL.md",
       "class": "modified",
       "local": [
-        "plugins/swe/references/review-brief.md"
-      ],
-      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+        "plugins/swe/skills/maintain-formal-verification-skill/SKILL.md"
+      ]
     },
     {
-      "upstream": "skills/interrogate/references/rubric.md",
+      "upstream": "skills/maintain-verification-skill/SKILL.md",
       "class": "modified",
       "local": [
-        "plugins/swe/references/review-brief.md"
-      ],
-      "note": "interrogate removed; a fresh reviewer agent reads review-brief.md"
+        "plugins/swe/skills/verification-skill/SKILL.md"
+      ]
     },
     {
       "upstream": "skills/make-bot-ui/",
       "class": "dropped"
+    },
+    {
+      "upstream": "skills/no-comments/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/no-comments/SKILL.md"
+      ]
     },
     {
       "upstream": "skills/poteto-help/SKILL.md",
@@ -667,11 +432,18 @@
       ]
     },
     {
+      "upstream": "skills/poteto-mode/playbooks/opening-a-pr.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/ship-pr/SKILL.md",
+        "plugins/swe/skills/ship-pr/references/pr-body.md"
+      ]
+    },
+    {
       "upstream": "skills/poteto-mode/playbooks/orchestrate.md",
       "class": "modified",
       "local": [
-        "plugins/swe/skills/swe-mode/playbooks/run-program.md",
-        "plugins/swe/skills/swe-mode/references/run-program.md"
+        "plugins/swe/skills/swe-mode/playbooks/run-program.md"
       ]
     },
     {
@@ -745,35 +517,11 @@
       ]
     },
     {
-      "upstream": "skills/poteto-mode/playbooks/opening-a-pr.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/ship-pr/SKILL.md",
-        "plugins/swe/skills/ship-pr/references/pr-body.md"
-      ]
-    },
-    {
       "upstream": "skills/poteto-mode/references/bugbot-triage.md",
       "class": "modified",
       "local": [
         "plugins/swe/skills/ship-pr/references/bot-triage.md"
       ]
-    },
-    {
-      "upstream": "skills/poteto-mode/scripts/check-plan.mjs",
-      "class": "modified",
-      "local": [
-        "plugins/swe/scripts/check_plan.py"
-      ],
-      "note": "ported to Python"
-    },
-    {
-      "upstream": "skills/poteto-mode/scripts/worktree-audit.sh",
-      "class": "modified",
-      "local": [
-        "plugins/swe/scripts/worktree_audit.sh"
-      ],
-      "note": "Cursor and Xcode cache lines dropped"
     },
     {
       "upstream": "skills/poteto-mode/scripts/bootstrap.ts",
@@ -786,9 +534,12 @@
       "note": "bun/TS tooling not ported"
     },
     {
-      "upstream": "skills/poteto-mode/scripts/package.json",
-      "class": "dropped",
-      "note": "bun/TS tooling not ported"
+      "upstream": "skills/poteto-mode/scripts/check-plan.mjs",
+      "class": "modified",
+      "local": [
+        "plugins/swe/scripts/check_plan.py"
+      ],
+      "note": "ported to Python"
     },
     {
       "upstream": "skills/poteto-mode/scripts/check-plan.test.ts",
@@ -796,7 +547,7 @@
       "note": "bun/TS tooling not ported"
     },
     {
-      "upstream": "skills/poteto-mode/scripts/orch/",
+      "upstream": "skills/poteto-mode/scripts/package.json",
       "class": "dropped",
       "note": "bun/TS tooling not ported"
     },
@@ -804,6 +555,14 @@
       "upstream": "skills/poteto-mode/scripts/watch-pr/",
       "class": "dropped",
       "note": "bun/TS tooling not ported"
+    },
+    {
+      "upstream": "skills/poteto-mode/scripts/worktree-audit.sh",
+      "class": "modified",
+      "local": [
+        "plugins/swe/scripts/worktree_audit.sh"
+      ],
+      "note": "Cursor and Xcode cache lines dropped"
     },
     {
       "upstream": "skills/principle-attack-the-premise/SKILL.md",
@@ -1021,11 +780,23 @@
       "class": "dropped"
     },
     {
+      "upstream": "skills/sharpen/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/go-deeper/SKILL.md"
+      ]
+    },
+    {
       "upstream": "skills/show-me-your-work/SKILL.md",
       "class": "modified",
       "local": [
         "plugins/swe/skills/log-decisions/SKILL.md"
       ]
+    },
+    {
+      "upstream": "skills/show-me-your-work/references/decision-log-template.tsv",
+      "class": "dropped",
+      "note": "swe logs JSONL, not TSV"
     },
     {
       "upstream": "skills/show-me-your-work/scripts/log.sh",
@@ -1036,9 +807,2860 @@
       "note": "handoff.py log appends JSONL rows"
     },
     {
-      "upstream": "skills/show-me-your-work/references/decision-log-template.tsv",
-      "class": "dropped",
-      "note": "swe logs JSONL, not TSV"
+      "upstream": "skills/statechart/SKILL.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/SKILL.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/references/render.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/references/render.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/backends/cfg.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/backends/cfg.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/backends/mermaid.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/backends/mermaid.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/backends/plain-text.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/backends/plain-text.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/backends/report.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/backends/report.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/config.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/config.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/dot.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/dot.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/marks.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/marks.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/messages.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/messages.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/spec.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/spec.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/trace.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/trace.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/value.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/value.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/verdict.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/verdict.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/frontends/view.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/frontends/view.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/ir.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/ir.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/package.json",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/package.json"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/annotate.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/annotate.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/label.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/label.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/lift.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/lift.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/loop-check.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/loop-check.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/paths.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/paths.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/reach.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/reach.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/region-check.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/region-check.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/passes/regions.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/passes/regions.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/pipeline.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/pipeline.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/run.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/run.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/statechart",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/statechart"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/statechart.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/statechart.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/ConfigOracle.java",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/ConfigOracle.java"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/chart.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/chart.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/charts/Braces.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/charts/Braces.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/charts/Escapes.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/charts/Escapes.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/charts/Phases.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/charts/Phases.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/cli.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/cli.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/config-fuzz.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/config-fuzz.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/Counter.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/Counter.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/Counter.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/Counter.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Counter/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Counter/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/CounterAction.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/CounterAction.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/CounterAction.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/CounterAction.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterAction/verdict-3.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterAction/verdict-3.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/CounterDeadlock.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/CounterDeadlock.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/CounterDeadlock.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/CounterDeadlock.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterDeadlock/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/CounterFan.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/CounterFan.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/CounterFan.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/CounterFan.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterFan/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterFan/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/ChartRun.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/ChartRun.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/CounterGuard.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/CounterGuard.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/CounterGuard.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/CounterGuard.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterGuard/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterGuard/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/CounterInitPast.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/CounterInitPast.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/CounterInitPast.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/CounterInitPast.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPast/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPast/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/CounterInitPastHolds.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/CounterInitPastHolds.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/CounterInitPastHolds.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/CounterInitPastHolds.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInitPastHolds/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInitPastHolds/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/CounterInstance.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/CounterInstance.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/CounterInstance.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/CounterInstance.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/CounterSteps.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/CounterSteps.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterInstance/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterInstance/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/CounterJump.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/CounterJump.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/CounterJump.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/CounterJump.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterJump/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterJump/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/CounterLoop.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/CounterLoop.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/CounterLoop.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/CounterLoop.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterLoop/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterLoop/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/CounterOrder.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/CounterOrder.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/CounterOrder.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/CounterOrder.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterOrder/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterOrder/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/CounterRules.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/CounterRules.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/CounterRules.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/CounterRules.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/Moves.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/Moves.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/verdict-3.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/verdict-3.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/verdict-3.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/verdict-3.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterRules/verdict-4.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterRules/verdict-4.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/CounterStart.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/CounterStart.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/CounterStart.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/CounterStart.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStart/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStart/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/CounterStop.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/CounterStop.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/CounterStop.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/CounterStop.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterStop/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterStop/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/CounterTie.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/CounterTie.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/CounterTie.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/CounterTie.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/verdict-3.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/verdict-3.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/verdict-3.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/verdict-3.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTie/verdict-4.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTie/verdict-4.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/CounterTieInGraph.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/CounterTieInGraph.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/CounterTieInGraph.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/CounterTieInGraph.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterTieInGraph/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterTieInGraph/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/CounterView.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/CounterView.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/CounterView.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/CounterView.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/verdict-3.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/verdict-3.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/verdict-3.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/verdict-3.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/verdict-4.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/verdict-4.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/CounterView/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/CounterView/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/DieHard.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/DieHard.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/DieHard.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/DieHard.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/DieHard/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/DieHard/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/FirstRule.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/FirstRule.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/FirstRule.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/FirstRule.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-3.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-3.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-3.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-3.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-4.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-4.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/FirstRule/verdict-4.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/FirstRule/verdict-4.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/HiddenClock.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/HiddenClock.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/HiddenClock.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/HiddenClock.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/HiddenClock/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/HiddenClock/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/Login.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/Login.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/Login.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/Login.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Login/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Login/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/LoginGuarded.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/LoginGuarded.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/LoginGuarded.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/LoginGuarded.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginGuarded/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginGuarded/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/LoginParallel.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/LoginParallel.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/LoginParallel.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/LoginParallel.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/LoginParallel/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/LoginParallel/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/MediaPlayer.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/MediaPlayer.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/MediaPlayer.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/MediaPlayer.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayer/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayer/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/MediaPlayerFixed.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/MediaPlayerFixed.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/MediaPlayerFixed.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/MediaPlayerFixed.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerFixed/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerFixed/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/MediaPlayer.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/MediaPlayer.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/MediaPlayerProps.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/MediaPlayerProps.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/MediaPlayerProps.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/MediaPlayerProps.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-3.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-3.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-4.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-4.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-4.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-4.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-5.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-5.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-5.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-5.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-6.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/verdict-6.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/MediaPlayerProps/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/MediaPlayerProps/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/PickWorker.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/PickWorker.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/PickWorker.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/PickWorker.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/PickWorker/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/PickWorker/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/Shadow.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/Shadow.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/Shadow.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/Shadow.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/ShadowLib.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/ShadowLib.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/ShadowSub.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/ShadowSub.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/Shadow/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/Shadow/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/SpacedNames.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/SpacedNames.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/SpacedNames.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/SpacedNames.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/SpacedNames/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/SpacedNames/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/TwoPhase.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/TwoPhase.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/TwoPhase.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/TwoPhase.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhase/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhase/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/TwoPhaseFixed.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/TwoPhaseFixed.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/TwoPhaseFixed.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/TwoPhaseFixed.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TwoPhaseFixed/view.mjs",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TwoPhaseFixed/view.mjs"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/ChartRun.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/ChartRun.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/TypeGuard.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/TypeGuard.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/TypeGuard.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/TypeGuard.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/TypeGuard/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/TypeGuard/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/ChartRun.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/ChartRun.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/UserNoDeadlock.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/UserNoDeadlock.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/UserNoDeadlock.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/UserNoDeadlock.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/chart.mmd",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/chart.mmd"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/graph.dot",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/graph.dot"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/report.md",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/report.md"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-1.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-1.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-1.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-1.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-2.exit",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-2.exit"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-2.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/corpus/UserNoDeadlock/verdict-2.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/differential.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/differential.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/grid/Grid.cfg",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/grid/Grid.cfg"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/grid/Grid.tla",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/grid/Grid.tla"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/grid/sany.out",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/grid/sany.out"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/java.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/java.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/labels.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/labels.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/messages.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/messages.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/pipeline.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/pipeline.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/plain-tlc.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/plain-tlc.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/render.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/render.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/tlc-out.test.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/tlc-out.test.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/test/tlc.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/test/tlc.ts"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/tsconfig.json",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/tsconfig.json"
+      ]
+    },
+    {
+      "upstream": "skills/statechart/scripts/worker.ts",
+      "class": "copied",
+      "local": [
+        "plugins/swe/skills/statechart/scripts/worker.ts"
+      ]
+    },
+    {
+      "upstream": "skills/swarm/SKILL.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/swarm/SKILL.md"
+      ]
     },
     {
       "upstream": "skills/tdd/SKILL.md",
@@ -1103,13 +3725,6 @@
       ]
     },
     {
-      "upstream": "skills/why/references/synthesizer-prompt.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/why/references/briefs.md"
-      ]
-    },
-    {
       "upstream": "skills/why/references/source-playbook.md",
       "class": "modified",
       "local": [
@@ -1125,20 +3740,6 @@
       ]
     },
     {
-      "upstream": "skills/why/references/sources/linear.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/why/references/sources/linear.md"
-      ]
-    },
-    {
-      "upstream": "skills/why/references/sources/slack.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/skills/why/references/sources/slack.md"
-      ]
-    },
-    {
       "upstream": "skills/why/references/sources/databricks.md",
       "class": "dropped"
     },
@@ -1151,12 +3752,33 @@
       "class": "dropped"
     },
     {
+      "upstream": "skills/why/references/sources/linear.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/sources/linear.md"
+      ]
+    },
+    {
       "upstream": "skills/why/references/sources/notion.md",
       "class": "dropped"
     },
     {
       "upstream": "skills/why/references/sources/sentry.md",
       "class": "dropped"
+    },
+    {
+      "upstream": "skills/why/references/sources/slack.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/sources/slack.md"
+      ]
+    },
+    {
+      "upstream": "skills/why/references/synthesizer-prompt.md",
+      "class": "modified",
+      "local": [
+        "plugins/swe/skills/why/references/briefs.md"
+      ]
     }
   ]
 }

@@ -86,7 +86,7 @@ and give one example prompt.
 | Know why code is shaped this way | [why](../why/SKILL.md) |
 | Catch up on their own recent work on a topic | [recall](../recall/SKILL.md) |
 | Catch up on this chat since their last message, with every waiting call decidable from the reply | [ketchup](../ketchup/SKILL.md) |
-| Catch up like `ketchup`, in a short silent video of slides, with the waiting calls as text under it | [ketchup-video](../ketchup-video/SKILL.md) |
+| Catch up like `ketchup`, in a short subtitled video of slides, with the waiting calls as text under it | [ketchup-video](../ketchup-video/SKILL.md) |
 | Hear the last reply again in plain words | [wait-what](../wait-what/SKILL.md) |
 | Explain a failure, crash, hang, or leak | [diagnose](../diagnose/SKILL.md) |
 | Know what a diff could break outside itself | [blast-radius](../blast-radius/SKILL.md) |
@@ -103,7 +103,7 @@ and give one example prompt.
 | Give agents a scripted way to drive the app | [verification-skill](../verification-skill/SKILL.md) |
 | Formally verify a race, invariant, or other property that tests rarely reach | [create-formal-verification-skill](../create-formal-verification-skill/SKILL.md) |
 | Bring a formal verification back in line after the code it covers changed, and tell drift from a bug | [maintain-formal-verification-skill](../maintain-formal-verification-skill/SKILL.md) |
-| Show a PM or designer what the user sees as a chart checked by a model, with each bug drawn as a numbered path, turn an agreed chart into a TLA+ skeleton, or audit the code against its TLA+ spec | [statechart](../statechart/SKILL.md) |
+| Show a PM or designer what the user sees as a chart checked by a TLA+ model, with the shortest path to each state that breaks a rule | [statechart](../statechart/SKILL.md) |
 | Vet a performance number before reporting it | [benchmark-checklist](../benchmark-checklist/SKILL.md) |
 | Run a large or cross-cutting change, or one to review after stepping away | [figure-it-out](../figure-it-out/SKILL.md) |
 | Keep a decision log during a run | [log-decisions](../log-decisions/SKILL.md) |
@@ -145,8 +145,8 @@ name one directly:
 - "land the stack" runs `ship-stack`.
 - "take over this branch" runs `pick-up-session`.
 - "pause safely" runs `pause-safely`.
-- "full autopilot on this queue" runs `autopilot-full`. "stack them, don't
-  ship" runs `autopilot-stack`.
+- "full autopilot on this queue" runs `autopilot-full`. "autopilot, don't
+  merge" runs `autopilot-stack`.
 
 The Playbooks section of [swe-mode](../swe-mode/SKILL.md) lists every
 playbook and when it applies. Page `06-verify-and-ship.md` covers opening,

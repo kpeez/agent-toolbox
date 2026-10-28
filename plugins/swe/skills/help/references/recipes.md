@@ -41,6 +41,6 @@ Codex, type `$swe:` in place of `/swe:`.
 - `/swe:swe-mode im stepping away. <goal> in a fresh worktree off <base>. done means <checks>. keep a decision log. don't ask me before committing. if you're truly stuck after a few hours, stop and write up why.`
 - `/swe:ketchup` after time away.
 - `/swe:swe-mode full autopilot on this queue. each item is independent.`
-- `/swe:swe-mode autopilot these changes but stack them, don't ship. i'll land the stack.`
+- `/swe:swe-mode autopilot these changes, but don't merge. i'll land them.`
 - `/swe:reflect capture what we learned so the next run doesn't repeat it.` Approve only edits that change a future decision.
 - `/swe:wait-what` restates the last reply in plain words.
