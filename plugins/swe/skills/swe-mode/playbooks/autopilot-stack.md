@@ -1,14 +1,10 @@
 # autopilot-stack
 
-Applies when: a queue of changes to build and verify with full autonomy, delivered as one linear base-chained stack the operator lands ("stack them, don't ship", "build the stack, I'll land it").
+Applies when: a queue of PRs to build and verify with full autonomy, handed to the operator to land ("autopilot, don't merge", "stack them, don't ship", "build the stack, I'll land it").
 
-You own the stack, never the landing. Hand the operator one linear stack of base-chained PRs to review and land.
+Run autopilot-full, but do not merge. Every loop tick re-reads this file, so each tick sees the no-merge rule.
 
-autopilot-full holds except for how verified work leaves. Each tick re-reads both playbooks, and this one wins where they differ. Choose autopilot-full when the PRs are independent and landing authority is granted. Choose autopilot-stack when the operator wants review before landing, the work is sequenced or coupled, or merge authority is withheld.
+1-stop-at-verified: In place of autopilot-full step 8, stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. (autopilot-full)
+2-stack-only-on-dependency: A PR stacks only when it builds on another PR. This is the one exception to autopilot-full step 5. Base that PR on the other PR's branch in place of trunk. In place of the rebase onto trunk, each PR rebases onto its parent PR's branch, and the stack root rebases onto trunk. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)
 
-1-run-owners-minus-landing: Run autopilot-full's owners, minus the landing. Owners report STACK-READY in place of merge-ready. They never rebase onto another branch, trunk included, and never retarget, merge, close a PR, or arm auto-merge. An item that depends on another branches from that item's branch. (autopilot-full)
-2-single-topology-writer: Owners push only their own branches and report each tip and its intended parent. Only you rebase or retarget a link. Append each clean PR in dependency order, with its base set to its parent's branch by `gh pr edit <pr> --base <parent-branch>`. An owner takes your push as its new base and lease, and on a conflict resolves its own slice for you to push. (ship-pr)
-3-absorb-drift-at-root: Until landing starts, apply autopilot-full's merge-prep test to each link and rebase the chain bottom-up where it calls for one. Then apply the patch-id rule link by link, since a link's base is its parent. (ship-stack)
-4-deliver-chain-hands-off: Each link carries its verdict in its PR. Once landing starts, nobody writes to the chain except the post-merge retarget that ship-stack allows. A mid-landing problem goes through you to the operator, and any fix waits for the operator's go. (ship-stack)
-
-Reply: catch the operator up, with links to the stack root and tip, a one-line verdict per link, and anything parked or excluded with the reason. (ketchup)
+Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)

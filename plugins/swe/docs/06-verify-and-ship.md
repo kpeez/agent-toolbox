@@ -92,13 +92,9 @@ A counterexample in model terms convinces you. The person who owns the behavior,
 /swe:statechart what the user sees when they edit a note offline
 ```
 
-The [`statechart`](../skills/statechart/SKILL.md) skill draws a Mermaid statechart of how a system moves between states from a TLA+ model. The system can be a product flow, a protocol, or a service. The labels use the words of the person who reads the chart. The chart comes from the checked model, so the two cannot drift apart. Each rule of the reader, such as "you never see Synced while you are offline", becomes an invariant. Each bug that TLC finds is a numbered path in the reader's words. When you pass a model of a proposed fix, the chart shows which bugs the fix fixes. Before the handoff, the agent reproduces each bug path in the real code, so a modeling error does not reach the reader as a bug. The first run installs TLC and Java with mise, which downloads about 305 MB.
+The [`statechart`](../skills/statechart/SKILL.md) skill checks a TLA+ model of how a system moves between states and draws it as a Mermaid statechart. The system can be a product flow, a protocol, or a service. The labels use the words of the person who reads the chart. The chart comes from the checked model, so the two cannot drift apart. Each rule of the reader, such as "you never see Synced while you are offline", becomes an invariant. The chart marks each state that breaks a rule, and the report gives the shortest path to it in the reader's words. Before the handoff, the agent reproduces each bug path in the real code, so a modeling error does not reach the reader as a bug.
 
-It also works in the other direction. Draw the behavior as a chart and agree on it with the reader. The skill writes a TLA+ skeleton from the chart, and TLC checks the chart's rules before any code exists. When guards from the real code go into the spec, each place where the code departs from the chart shows as a difference for the reader to decide.
-
-When the code already has a TLA+ spec, the skill can audit the code against it. The agent models what the code does and checks that model next to the unchanged spec. The chart marks the steps where the two differ.
-
-The scripts need Node and TLC: set `TLA2TOOLS` to the path of `tla2tools.jar` from a [TLA+ release](https://github.com/tlaplus/tlaplus/releases), and have Java 11 or later.
+The command is TypeScript. It runs on Node 22.18 (22.x) or 23.6 and later, Bun 1.1.5 or later, or Deno 2.0 or later. The first run installs TLC and Java with mise and needs the network. Charts render with Pele.
 
 ## Match a UI to a baseline
 

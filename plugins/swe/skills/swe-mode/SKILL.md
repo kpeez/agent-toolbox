@@ -82,6 +82,13 @@ Where the host has no Skill tool, read the skill's `SKILL.md` instead.
 
 These hold in every playbook and route, in addition to the steps.
 
+- Your first message on a task: tell the user, in your own words, their goal,
+  the problem they solve, and, when the task ships a change, the smallest
+  change you expect to meet it (`in-your-own-words`). Do not wait for
+  confirmation. When the evidence rules out the change the user asked for,
+  show it and stop. Restate the goal in each subagent brief, and open each
+  PR's `## Why` with it. Open each final report with it too, except after a
+  fully specified one-line edit.
 - Any code: name the data shape first, and choose its structure per
   `model-the-domain`.
 - A nontrivial change, an architecture decision, or "are we sure?": run `how`
@@ -173,7 +180,7 @@ it applies. The leaf is `../principle-<slug>/SKILL.md`.
 - `test-behavior-not-implementation`: writing, changing, or keeping a test.
   Assert what users observe: fail when behavior breaks, pass when internals
   change.
-- `explain-the-number`: before you trust, report, or act on a measured number.
+- `explain-the-number`: before you measure, and before you trust, report, or act on a measured number.
   Name what limits it, with run count and spread.
 
 **Delegation**
@@ -303,8 +310,8 @@ Long runs and sessions:
   deliverable.
 - `autopilot-full`: a queue of independent PRs run to merged, one owner per
   PR.
-- `autopilot-stack`: a queue of changes delivered as one linear stack the user
-  lands.
+- `autopilot-stack`: autopilot-full without the merge. Verified PRs the user
+  lands, stacked only where one builds on another.
 - `run-program`: a standing multi-day program with many PRs and subagents
   under one coordinator.
 - `pick-up-session`: resume a prior agent's in-flight work from its handoff

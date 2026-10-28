@@ -71,7 +71,7 @@ When you come back to a chat after the agent worked for a while, type:
 
 [`ketchup`](../skills/ketchup/SKILL.md) tells you what changed since your last message. It opens with what waits on you. It shows screenshots and diagrams first, then one line for each thing you asked for, then every decision only you can make, each with its recommendation, evidence, and risk. It never cuts a waiting decision to stay short, so you can decide each one from the reply alone. It changes nothing while it reports.
 
-To watch the catch-up instead, type `/swe:ketchup-video`. [`ketchup-video`](../skills/ketchup-video/SKILL.md) shows what happened in a short silent video of slides, and lists the calls waiting on you as text under it.
+To watch the catch-up instead, type `/swe:ketchup-video`. [`ketchup-video`](../skills/ketchup-video/SKILL.md) shows what happened in a short subtitled video of slides, and lists the calls waiting on you as text under it.
 
 ## Ask for a simpler answer with wait-what
 

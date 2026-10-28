@@ -121,7 +121,7 @@ def check(path: str) -> tuple[list[str], list[str]]:
         lines.append(Line(n, text, code))
         if code:
             continue
-        prose = re.sub(r"`[^`]*`", "`", text)
+        prose = re.sub(r"(?<!`)(`+)(?!`)(.*?)(?<!`)\1(?!`)", "`", text)
         prose = re.sub(r"!\[[^\]]*\]\([^)]*\)", "", prose)
         prose = re.sub(r"\]\([^)]*\)", "]", prose)
         if re.search("[\u2013\u2014]", prose):
