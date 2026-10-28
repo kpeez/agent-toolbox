@@ -41,6 +41,13 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | --- | --- | --- |
 | `statechart` | Kyle approved. Node scripts kept, not ported to Python: upstream code keeps its own language. Class `copied`. | #198 |
 | `ketchup-video` | Kyle approved. Class `copied`. | #200 |
+| `statechart` TypeScript compiler (cursor/plugins#977) | Kyle approved the full tree with the test corpus. It replaces the 26 `.mjs` scripts. Class `copied`. | #201 |
+
+## Deleted swe content
+
+| swe | Why | PR |
+| --- | --- | --- |
+| `swe-mode/references/run-program.md` (program store, inbox, ledger, frontier) | Upstream made orchestrate agentic (cursor/plugins#1043). Kyle approved the port and the deletion. | #201 |
 
 ## Skipped upstream changes
 

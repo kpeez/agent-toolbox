@@ -170,7 +170,7 @@ them, such as `/swe:how`.
 | [`/swe:figure-it-out <task>`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
 | [`/swe:create-formal-verification-skill [area or bug]`](./skills/create-formal-verification-skill/SKILL.md) | Tests cannot reach the case that breaks a race, retry, state machine, or parser |
 | [`/swe:maintain-formal-verification-skill [verify skill or area]`](./skills/maintain-formal-verification-skill/SKILL.md) | Code that a formal verification covers changed without a recheck |
-| [`/swe:statechart [behavior or spec]`](./skills/statechart/SKILL.md) | Someone must see how a system moves between states, such as a product flow, a protocol, or a service, as a chart checked by a TLA+ model, with each bug as a numbered path |
+| [`/swe:statechart [behavior or spec]`](./skills/statechart/SKILL.md) | Someone must see how a system moves between states, such as a product flow, a protocol, or a service, as a chart checked by a TLA+ model, with the shortest path to each state that breaks a rule |
 | [`/swe:benchmark-checklist <number and how you measured it>`](./skills/benchmark-checklist/SKILL.md) | You measured a number and want it vetted before you report it |
 | [`/swe:go-deeper <task>`](./skills/go-deeper/SKILL.md) | You want a task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. It also runs on its own at the start of a new task |
 | [`/swe:no-comments [path or diff]`](./skills/no-comments/SKILL.md) | You want comments that do not explain a non-obvious why removed |

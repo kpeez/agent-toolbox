@@ -103,7 +103,7 @@ and give one example prompt.
 | Give agents a scripted way to drive the app | [verification-skill](../verification-skill/SKILL.md) |
 | Formally verify a race, invariant, or other property that tests rarely reach | [create-formal-verification-skill](../create-formal-verification-skill/SKILL.md) |
 | Bring a formal verification back in line after the code it covers changed, and tell drift from a bug | [maintain-formal-verification-skill](../maintain-formal-verification-skill/SKILL.md) |
-| Show a PM or designer what the user sees as a chart checked by a model, with each bug drawn as a numbered path, turn an agreed chart into a TLA+ skeleton, or audit the code against its TLA+ spec | [statechart](../statechart/SKILL.md) |
+| Show a PM or designer what the user sees as a chart checked by a TLA+ model, with the shortest path to each state that breaks a rule | [statechart](../statechart/SKILL.md) |
 | Vet a performance number before reporting it | [benchmark-checklist](../benchmark-checklist/SKILL.md) |
 | Run a large or cross-cutting change, or one to review after stepping away | [figure-it-out](../figure-it-out/SKILL.md) |
 | Keep a decision log during a run | [log-decisions](../log-decisions/SKILL.md) |
