@@ -1,11 +1,14 @@
 ---
 name: principle-explain-the-number
-description: "Before you trust, report, or act on a number you measured, such as a speedup, a regression, a throughput, a latency, or an eval result, find what limits it and rule out that it measured something else."
+description: "Before you measure, and before you trust, report, or act on a number you measured, such as a speedup, a regression, a throughput, a latency, or an eval result, find what limits it and rule out that it measured something else."
 disable-model-invocation: true
 ---
 
 # Explain the number
 
+- **Write the decision before you run.** Name the result that would change a
+  decision, and the noise floor. Stop when the run-to-run spread is larger
+  than the effect.
 - **Ask "why not double?"** Name the resource or code path that bounds the
   result, such as a core, a lock, the disk, the network, or the load generator
   itself. Get it from a profile or from system counters taken during a run,
@@ -25,8 +28,9 @@ For a performance number, run the full procedure with the
 Did every run do the task? Does the gap hold across trials and models? Does
 the scenario matter?
 
-You skipped this when the evidence behind a number has no run count, no
-spread, or no named limiter, or when the time saved is larger than the time
-the changed part took.
+You skipped this when a run started without the result that would change a
+decision, when the evidence behind a number has no run count, no spread, or
+no named limiter, or when the time saved is larger than the time the changed
+part took.
 
 Distinct from [prove-it-works](../principle-prove-it-works/SKILL.md), which checks that an output is real.

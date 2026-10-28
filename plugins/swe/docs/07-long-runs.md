@@ -94,7 +94,7 @@ The [`autopilot-full`](../skills/swe-mode/playbooks/autopilot-full.md) playbook 
 /swe:swe-mode full autopilot on this queue. each item is independent. merge them when verified.
 ```
 
-The [`autopilot-stack`](../skills/swe-mode/playbooks/autopilot-stack.md) playbook runs the same owners but lands nothing. You get one linear stack with a verdict on each link, and you land it yourself. Pick it when the changes are coupled, or when you want to review before anything merges.
+The [`autopilot-stack`](../skills/swe-mode/playbooks/autopilot-stack.md) playbook is `autopilot-full` without the merge. You get verified PRs, each with its verdict, and you land them yourself. A PR stacks only on a PR it builds on. Pick it when you want to review before anything merges.
 
 ## Run a multi-day program
 

@@ -103,7 +103,7 @@ playbook in the same format. The full rules are in
 | [run-autonomously](./skills/swe-mode/playbooks/run-autonomously.md) | Drive a long task to a checkable exit condition |
 | [plan-multi-phase](./skills/swe-mode/playbooks/plan-multi-phase.md) | Write a plan for work across phases or stacked PRs |
 | [autopilot-full](./skills/swe-mode/playbooks/autopilot-full.md) | A queue of independent PRs, run to merged |
-| [autopilot-stack](./skills/swe-mode/playbooks/autopilot-stack.md) | A queue of changes, delivered as one stack you land |
+| [autopilot-stack](./skills/swe-mode/playbooks/autopilot-stack.md) | Autopilot-full without the merge: verified PRs you land |
 | [run-program](./skills/swe-mode/playbooks/run-program.md) | A standing multi-day program under one coordinator |
 | [pick-up-session](./skills/swe-mode/playbooks/pick-up-session.md) | Resume a prior agent's in-flight work |
 | [pause-safely](./skills/swe-mode/playbooks/pause-safely.md) | Stop in-flight work so a new session can resume it |
@@ -175,7 +175,7 @@ them, such as `/swe:how`.
 | [`/swe:go-deeper <task>`](./skills/go-deeper/SKILL.md) | You want a task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. It also runs on its own at the start of a new task |
 | [`/swe:no-comments [path or diff]`](./skills/no-comments/SKILL.md) | You want comments that do not explain a non-obvious why removed |
 | [`/swe:ketchup`](./skills/ketchup/SKILL.md) | You come back after time away and want to catch up |
-| [`/swe:ketchup-video`](./skills/ketchup-video/SKILL.md) | You want the catch-up as a short silent video of slides, with the waiting calls as text under it |
+| [`/swe:ketchup-video`](./skills/ketchup-video/SKILL.md) | You want the catch-up as a short subtitled video of slides, with the waiting calls as text under it |
 | [`/swe:recall [topic]`](./skills/recall/SKILL.md) | You want recent context rebuilt from chat history and the handoff file |
 | [`/swe:reflect`](./skills/reflect/SKILL.md) | You want a session reviewed for agent mistakes |
 | [`/swe:in-your-own-words`](./skills/in-your-own-words/SKILL.md) | You want the agent to restate your goal before it starts |
