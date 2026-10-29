@@ -89,7 +89,7 @@ The final reply ends with a Steps section. It gives every step with its state. A
 9-check-blast-radius skip: the change keeps the public signature
 ```
 
-Typing `/swe:swe-mode` does not let the agent publish. The agent commits, pushes, and opens a draft PR only when your request or your standing instructions (for example, your `CLAUDE.md`) allow it. Without that, it verifies the change, leaves it local, and reports. It always pauses before an irreversible write, such as a force-push to a shared branch or a deploy. See [`ship-pr`](../skills/ship-pr/SKILL.md#publication-authority).
+A request to build, change, or fix something lets the agent commit, push, open a draft PR, and merge once the work is verified and checks pass. Say "local only" or name a hold point to stop it earlier. A question, a review, or an investigation does not publish: the agent verifies, leaves the work local, and reports. It always pauses before an irreversible write, such as a force-push to a shared branch or a deploy. See [`ship-pr`](../skills/ship-pr/SKILL.md#publication-authority).
 
 If you do not know which skill fits, ask [`/swe:help`](../skills/help/SKILL.md). It answers with a prompt you can send and a link to the file that holds the answer.
 

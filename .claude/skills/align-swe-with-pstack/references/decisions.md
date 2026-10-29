@@ -58,3 +58,9 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `reflect`: never open a PR or push after a skill edit (cursor/plugins#800) | swe defaults allow task-scoped commits and draft PRs. swe ports only the rule against edits in a plugin cache. | #200 |
 | `interrogate`: adversaries keep only findings a run proves (cursor/plugins#986) | swe dropped `interrogate`. The review brief also serves prose and design reviews, where a run cannot prove a finding. | #201 |
 | `poteto-mode`: `run_in_background: true` on a steer or resume (cursor/plugins#986) | Claude Code runs subagents in the background by default. Codex has no such flag. | #201 |
+
+## Different defaults
+
+| pstack | swe | Why | PR |
+| --- | --- | --- | --- |
+| `poteto-mode` Autonomy and `opening-a-pr`: PRs open ready; merge only in Shipping on request | `ship-pr` Publication authority: an implementation request covers commits, pushes, a draft PR, and a merge without review once verified and checks pass; local-only or a hold point overrides | Kyle moved this rule from his global agent rules into swe (dotfiles#73). | #203 |

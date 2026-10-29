@@ -208,8 +208,11 @@ loaded in this session.
 - **Do it.** Load [ship-pr](../ship-pr/SKILL.md) before the first commit. Its
   rules govern each commit, push, pull request, merge, and release effect.
   Reversible work proceeds without asking: edit code, write a file, start a
-  branch, push your own branch, open or update a draft PR, start an eval. Then
-  report what you did and why, so the user can correct it.
+  branch, start an eval. An implementation request also covers pushing your
+  own branch, opening or updating a draft PR, and merging once the work is
+  verified and checks pass, per ship-pr's Publication authority. A local-only
+  request or an explicit hold point stops publication. Report what you did
+  and why, so the user can correct it.
 - **Always pause** before an irreversible write: a force-push to a shared
   branch, a history rewrite on a branch you did not create, a deploy, deleting
   a branch or data, or a message to people outside the project.
