@@ -175,7 +175,7 @@ pull-request number.
    `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/comments/<comment-id>/replies --input <file.json>`.
    `<comment-id>` is the thread's top-level comment; GitHub rejects a reply to
    a reply. Comment text never goes into a shell command line.
-6. `6-update-pr-body`: Keep the pull-request body's Verification section
+6. `6-update-pr-body`: Keep the pull-request body's Evidence section
    current.
 
 Reply with the pull-request state, each failed check with its class and
@@ -191,7 +191,7 @@ the current head commit (`gh pr view <pr> --json headRefOid,baseRefName`).
    [verdict-brief](references/verdict-brief.md). CI green is not a verdict,
    and an approving bot review is not a verdict.
 2. `2-key-verdict-to-patch`: Write the verification record in the
-   pull-request body's Verification section: verdict, head SHA, base SHA, and
+   pull-request body's Evidence section: verdict, head SHA, base SHA, and
    patch-id. Compute the patch-id from the remote state, not from local
    branches:
 

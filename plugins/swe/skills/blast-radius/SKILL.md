@@ -80,7 +80,7 @@ application ships and calls the exact function in question.
   bug, including your probe.
 
 Write the hand-back through the [prose rules](../writing/references/prose.md) and cite real code.
-This write-up feeds the Blast Radius section of the
+This write-up feeds the Risk section of the
 [PR body](../ship-pr/references/pr-body.md). Before any part of it goes into a
 branch, commit, or PR body, apply the privacy rule in
 [ship-pr](../ship-pr/SKILL.md).

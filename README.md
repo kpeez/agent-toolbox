@@ -71,7 +71,9 @@ New here? Ask `/swe:help` which skill fits, or read the
   The [swe guide](./plugins/swe/docs/README.md) follows the layout of the pstack guide.
 - Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
   [skills](https://github.com/mattpocock/skills).
-- The `ship-pr` PR-body menu of visuals comes from Dex Horthy's
+- The `ship-pr` PR-body template copies Matt Pocock's
+  [`pr` skill](https://github.com/mattpocock/skills/blob/main/skills/engineering/pr/SKILL.md),
+  which adapts Dex Horthy's
   [`show-me` skill](https://github.com/humanlayer/skills/blob/main/plugins/show-me/skills/show-me/SKILL.md).
 - The audit mode of `swe/skills/testing-code` adapts the OpenClaw
   [test-audit skill](https://github.com/openclaw/openclaw/tree/80930af448ebabc84174146b56bc106d37fab3b4/.agents/skills/test-audit).

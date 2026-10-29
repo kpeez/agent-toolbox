@@ -13,7 +13,7 @@ apply the [prose rules](references/prose.md) to every surface.
 | --- | --- |
 | README, docs page, plugin guide | [human docs](references/human-docs.md) |
 | Skill, `AGENTS.md`, `CLAUDE.md`, agent brief | [writing-for-agents](../writing-for-agents/SKILL.md), and the ASD-STE100 section of the prose rules |
-| PR body, commit message | [PR body](../ship-pr/references/pr-body.md) and [show-me](references/show-me.md) |
+| PR body, commit message | [PR body](../ship-pr/references/pr-body.md) |
 | Handoff, plan | its rules ([handoff](../handoff/SKILL.md), [plan-multi-phase](../swe-mode/references/plan-multi-phase.md)), [show-me](references/show-me.md) for a design or a change, and the ASD-STE100 section |
 | Reply to the user | the ASD-STE100 section; [show-me](references/show-me.md) when the reply explains a design |
 | Code comment | only a non-obvious why ([no-comments](../no-comments/SKILL.md)) |
@@ -24,8 +24,8 @@ apply the [prose rules](references/prose.md) to every surface.
   stable ids), sentence rhythm, the STE and Global English rules, and the
   ASD-STE100 rules for replies and agent-facing text.
 - [show-me](references/show-me.md) owns the visuals that explain code: real
-  code, pseudocode, call trees, file trees, Mermaid, diff sketches, and the
-  one-way or two-way door.
+  code, pseudocode, call trees, file trees, Mermaid, and diff sketches. The
+  [PR body](../ship-pr/references/pr-body.md) has its own copy of the menu.
 - When a new jargon word turns up, propose it and its replacement in your
   reply as an addition to rule 26, with the diff.
 
