@@ -93,7 +93,6 @@ and give one example prompt.
 | Settle types and module shape before code that crosses a function boundary | [architect](../architect/SKILL.md) |
 | Design a new interface, or review module boundaries | [codebase-design](../codebase-design/SKILL.md) |
 | Run parallel checks over slices, or race workers | [swarm](../swarm/SKILL.md) |
-| Delegate to OpenCode or Copilot | [orchestrate](../orchestrate/SKILL.md) |
 | Run a swarm of OpenCode workers | [opencode](../opencode/SKILL.md) |
 | Gate, design, or audit tests | [testing-code](../testing-code/SKILL.md) |
 | Apply TypeScript rules to `.ts` or `.tsx` work | [typescript-best-practices](../typescript-best-practices/SKILL.md) |
@@ -130,9 +129,8 @@ Close calls:
 - `figure-it-out` designs one rigorous run. The `run-program` playbook runs a
   program across days and many PRs. The `run-autonomously` playbook drives
   one task to an exit condition.
-- `swarm` fans out native subagents. `orchestrate` sends work to an external
-  provider the user named. `opencode` runs several one-shot OpenCode
-  workers on any model OpenCode can reach.
+- `swarm` fans out native subagents. `opencode` runs several one-shot
+  OpenCode workers on any model OpenCode can reach, Copilot included.
 
 ## Playbooks and principles
 

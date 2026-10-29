@@ -106,7 +106,7 @@ These hold in every playbook and route, in addition to the steps.
   the user has not made: `interview-user` on those decisions only.
 - Nontrivial multi-step work: write the throughput checkpoint
   (`build-feature` step 5).
-- Parallel fan-out: `swarm`. Delegation to an external provider: `orchestrate`.
+- Parallel fan-out: `swarm`. OpenCode workers the user asked for: `opencode`.
 - Any prose surface, the reply included: `writing`. It routes each surface
   (docs, skills, PR bodies, handoffs, plans, replies) to its rules. Write
   replies to the user and agent-facing text in ASD-STE100 Simplified
@@ -238,7 +238,7 @@ loaded in this session.
   algorithms); `sonnet` for routine code; `haiku` for mechanical edits. In
   Codex, raise or lower reasoning effort the same way.
 - A second opinion is the same brief on a different model: another Claude
-  model, or an external provider through `orchestrate`. Agreement is a strong
+  model, or OpenCode through `opencode` when the user asked for it. Agreement is a strong
   signal.
 - Fresh subagents by default. A fix round, a retry, or a follow-up goes to a
   fresh subagent with the full scope: the original brief, every later
@@ -336,7 +336,7 @@ Long runs and sessions:
 - Catch the user up after time away: `ketchup`.
 - The user corrects a mistake agents have made before: `correct`.
 - Review a session for agent mistakes: `reflect`.
-- Delegate to an external provider the user named: `orchestrate`.
+- Run OpenCode workers the user asked for: `opencode`.
 - Build or audit the project's own skill that drives its app for
   verification: `verification-skill`.
 

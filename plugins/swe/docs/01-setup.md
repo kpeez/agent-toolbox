@@ -52,18 +52,6 @@ swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless
 
 Without these lines, type `$swe:swe-mode <task>` to start the router in Codex.
 
-## Add the orchestrate rule (optional)
-
-The [`implement`](../skills/implement/SKILL.md) skill sends large work with independent parts to [`orchestrate`](../skills/orchestrate/SKILL.md). To make that choice before the agent picks a skill, add this rule to your user-level `CLAUDE.md` (Claude Code) or `AGENTS.md` (Codex):
-
-```text
-For substantial work with independently executable parts, use
-`swe:orchestrate` to delegate them. Keep tightly coupled work with one agent.
-Send a single independent review directly to one fresh subagent.
-```
-
-Start a new session after you add it.
-
 ## Know where the tokens go
 
 swe spends extra tokens on subagents. Code goes to delegates, reviews go to a fresh reviewer, and `how` and `why` can fan out to several explorers. That is the price of independent checks.
