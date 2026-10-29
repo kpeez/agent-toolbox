@@ -56,8 +56,10 @@ first real task, from setup and prompts through verification and long runs.
 
 ## Usage
 
-Start a task with `/swe:swe-mode`. The router reads your request, picks a
-playbook, and runs the other skills as the steps need them.
+`/swe:swe-mode` is the front door to swe. You give it a goal. It matches one
+of 22 playbooks, or the one skill that owns the task, copies the steps into
+the task list, and loads the other skills as the steps need them. In Codex,
+type `$swe:swe-mode` instead.
 
 ```text
 /swe:swe-mode users get two notifications after a retry. repro first, then fix and verify.
@@ -67,19 +69,167 @@ playbook, and runs the other skills as the steps need them.
 /swe:swe-mode i'm stepping away. migrate every caller to the async store, keep behavior identical, and log your decisions.
 ```
 
-When you start it, the router:
+### Know what happens to your prompt
 
-1. Matches your task to a playbook, or to the one skill that owns the task,
-   and copies the steps into the task list.
-2. Loads each step's skills and principles when that step starts.
-3. Applies its rules in every step: triggers, autonomy, and subagent choice.
-4. Ends with the result, the evidence, the principles that changed a decision,
-   and a Steps section with the state of every step.
+```mermaid
+sequenceDiagram
+  actor You
+  participant Hook as SessionStart hook
+  participant Router as swe-mode router
+  participant Steps as Task list steps
+  participant Sub as Subagents
+  participant PR as Branch and draft PR
 
-When no playbook fits, or the work is large, `figure-it-out` writes a bespoke
-playbook in the same format. The full rules are in
-[`swe-mode/SKILL.md`](./skills/swe-mode/SKILL.md), and
-[Route work](./docs/02-route-work.md) shows the flow as a diagram.
+  alt typed command
+    You->>Router: /swe:swe-mode task
+  else plain prompt in Claude Code
+    You->>Hook: task
+    Hook->>Router: start the router
+  end
+  Router->>Router: go-deeper rewrites the task
+  alt one skill owns the task
+    Router->>Steps: route to that skill
+  else a playbook fits
+    Router->>Steps: copy the playbook steps
+  else large work or no match
+    Router->>Steps: figure-it-out writes a bespoke playbook
+  end
+  loop each step
+    Steps->>Steps: load the step's skills and principles
+    Steps->>Sub: send bulk work, under the router rules
+    Sub-->>Steps: summary
+  end
+  Steps->>Steps: verify on the real surface, independent review
+  opt code change, and publication is allowed
+    Steps->>PR: commit, push, update the draft PR
+  end
+  Steps-->>You: result, evidence, principles cited, and Steps
+```
+
+The [router](./skills/swe-mode/SKILL.md#match) first runs
+[`go-deeper`](./skills/go-deeper/SKILL.md) on a new task, then matches the
+rewritten task in this order:
+
+1. When one skill owns the whole task, it routes to that skill. "Explain how a
+   subsystem works, no code change" goes to `how`, for example.
+2. Otherwise it picks the first playbook whose line fits. The list runs from
+   narrow to broad, so `fix-bug` comes before `build-feature`.
+3. Large or cross-cutting work, work you step away from, or work that no
+   playbook fits goes to [`figure-it-out`](./skills/figure-it-out/SKILL.md).
+   It writes a bespoke playbook in the same step format.
+
+The router says its choice in one line, such as
+`Playbook: fix-bug. Reason: a reported defect.` In every step it applies its
+rules for triggers, autonomy, and subagent choice. A step it skips stays in
+the list as `skip: <reason>`. The final reply gives the result, the evidence,
+the principles that changed a decision, and a Steps section with the state of
+every step. The full rules are in
+[`swe-mode/SKILL.md`](./skills/swe-mode/SKILL.md).
+
+### Say the goal, not the ceremony
+
+You do not write a spec. Say what is wrong or what you want, plus anything
+you already know that saves the agent time. The first prompt above routes to
+`fix-bug`. "repro first" is a real constraint, and the playbook keeps it.
+Watch the task list fill with steps such as `1-reproduce-failure` and
+`9-verify-original-repro`.
+
+### Put up to five things in a prompt
+
+A useful prompt carries up to five things. Each one fits in a sentence:
+
+- **The goal.** Say what is wrong, or what you want.
+- **The done check.** It must be able to pass or fail. "Make it better" is
+  not a check.
+- **The proof you want.** Ask for command output, a video, a stored value, or
+  a before-and-after number.
+- **What you know.** A symptom, a repro step, a log line, or a link saves the
+  agent a search.
+- **The constraints.** "repro first", "no code change yet", "zero behavior
+  change", and "let me review before you go on" each change what the agent
+  does.
+
+Here is one prompt with all five:
+
+```text
+/swe:swe-mode the csv export drops its last row since yesterday's deploy. failing job id is 4812. repro first, then fix. done means the 60k-row fixture exports every row. show me the row counts before and after.
+```
+
+Leave the how out. Say what to achieve, and let the agent find a better path
+than the one you would pick. Hold back your theory of the cause at first,
+because a stated guess narrows the search to where you pointed.
+
+### Follow up short
+
+When the conversation already holds the context, a follow-up can be one
+line, such as `continue` or `keep going until done`. Short works because the
+playbook holds the structure. In Claude Code, the SessionStart hook keeps the
+router rule in context, so the agent loads the router again for a new task
+without the slash command.
+
+### Switch tasks with "new task"
+
+A long chat collects context from the last task. When you change subjects,
+say so:
+
+```text
+/swe:swe-mode new task. figure out why the cache entry survives logout. don't change any code yet.
+```
+
+"new task" makes the router match again instead of continuing the earlier
+playbook. "don't change any code yet" keeps this task on a read-only route,
+such as the `investigate-question` playbook or the `diagnose` skill.
+
+### Give parallel work its own worktree
+
+Two agents that write to one working tree overwrite each other's files. The
+PR step gives each writer its own worktree. When your branch holds unrelated
+dirty work, it leaves that work in place and starts a fresh worktree from the
+base. To pick the base or the place yourself, say so:
+
+```text
+/swe:swe-mode new task. branch off <base> in a fresh worktree, then port the parser change there.
+```
+
+Worktrees use disk. When disk gets tight, ask:
+
+```text
+/swe:swe-mode what's using my disk? prune the worktrees that are safe to prune.
+```
+
+The [`clean-worktrees`](./skills/swe-mode/playbooks/clean-worktrees.md)
+playbook runs [worktree_audit.sh](./scripts/worktree_audit.sh) to sort each
+worktree by merge state and uncommitted work. It asks you which sessions still
+use a worktree, and that answer wins over the audit. It pauses before it
+removes any worktree with uncommitted edits.
+
+### Leave it running
+
+When you step away, say what done means and go:
+
+```text
+/swe:swe-mode going to bed. keep going until the migration check reports zero old callers. log your decisions.
+```
+
+"going to bed", "run until done", and "don't stop" tell the router to keep
+going and decide each call itself. A long task routes to
+[`run-autonomously`](./skills/swe-mode/playbooks/run-autonomously.md). It
+states the exit condition as a check before the first iteration and keeps a
+decision log with [`log-decisions`](./skills/log-decisions/SKILL.md). In
+Claude Code, it uses `/loop` to wake itself. Codex has no wake mechanism, so
+you start the next run yourself. [Run long work](./docs/07-long-runs.md)
+covers the full contract.
+
+### Avoid listing skills in your prompt
+
+Do not write "use how, then architect, then blast-radius". The playbook
+already orders the skills, and a list you write by hand usually drops or
+reorders steps that the playbook keeps. Name a skill only when you want to
+override one choice.
+
+### Playbooks
+
+The [playbook directory](./skills/swe-mode/playbooks) has the full set.
 
 <details>
 <summary>The 22 playbooks</summary>

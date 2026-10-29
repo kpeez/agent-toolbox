@@ -61,7 +61,7 @@
       "upstream": "docs/guide/02-poteto-mode.md",
       "class": "modified",
       "local": [
-        "plugins/swe/docs/02-route-work.md"
+        "plugins/swe/README.md"
       ]
     },
     {

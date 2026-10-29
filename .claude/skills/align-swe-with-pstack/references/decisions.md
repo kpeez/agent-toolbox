@@ -20,6 +20,7 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `technical-writing`, `unslop` | `writing` | One writing hub with prose, ASD-STE100, and show-me references. | #176 |
 | `create-verification-skill`, `maintain-verification-skill` | `verification-skill` | One skill creates the skill, or audits it when it exists. | #174 |
 | `interrogate` | `references/review-brief.md` | Cross-model review adds little when only Claude runs. Callers start a fresh reviewer subagent with the brief. | #175 |
+| `docs/guide/02-poteto-mode.md` | swe `README.md` Usage section | Kyle wants the full routing detail in the swe README. Sequence diagram, not flowchart. | #202 |
 
 ## Dropped
 
