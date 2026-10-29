@@ -1,6 +1,6 @@
 # Understand the code before you change it
 
-This page shows you how to make the agent understand the code, and you, before it edits anything. Agents usually fail in one of two ways. They misread what you want, or they lack the context to do the work right. [Put up to five things in a prompt](02-route-work.md#put-up-to-five-things-in-a-prompt) handles the first. This page handles the second.
+This page shows you how to make the agent understand the code, and you, before it edits anything. Agents usually fail in one of two ways. They misread what you want, or they lack the context to do the work right. [Put up to five things in a prompt](../README.md#put-up-to-five-things-in-a-prompt) handles the first. This page handles the second.
 
 swe gives you several ways in. `how` explains what the code does now. `why` finds the reasons it has this shape. `recall` and `ketchup` rebuild context you lost. `in-your-own-words`, `go-deeper`, and `wait-what` check that you and the agent mean the same thing. Each one makes the agent explain itself in words you can check.
 

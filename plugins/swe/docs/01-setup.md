@@ -105,4 +105,4 @@ Typing `/swe:swe-mode` does not let the agent publish. The agent commits, pushes
 
 If you do not know which skill fits, ask [`/swe:help`](../skills/help/SKILL.md). It answers with a prompt you can send and a link to the file that holds the answer.
 
-Next: [Route work through `/swe:swe-mode`](02-route-work.md).
+Next: [Know what happens to your prompt](../README.md#know-what-happens-to-your-prompt) in the swe README, then [Understand the code](03-understand.md).
