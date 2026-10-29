@@ -63,7 +63,7 @@ the steps need them. A step it skips stays in the list as `skip: <reason>`. A
 good prompt states the goal and how to tell it is done. It does not list
 skills, because a hand-written order tends to drop or reorder steps that the
 playbook keeps. Read [references/prompting.md](references/prompting.md)
-before you help word one. Page `02-route-work.md` has examples.
+before you help word one. The swe `README.md` Usage section has examples.
 
 Mid-chat, "new task" makes the router match a fresh playbook. The router
 gives code work to the `daedalus` agent, and gives it the router's path so it
