@@ -241,8 +241,8 @@ loaded in this session.
   algorithms); `sonnet` for routine code; `haiku` for mechanical edits. In
   Codex, raise or lower reasoning effort the same way.
 - A second opinion is the same brief on a different model: another Claude
-  model, or OpenCode through `opencode` when the user asked for it. Agreement is a strong
-  signal.
+  model, or OpenCode through `opencode` when the user asked for it.
+  Agreement is a strong signal.
 - Fresh subagents by default. A fix round, a retry, or a follow-up goes to a
   fresh subagent with the full scope: the original brief, every later
   directive, and the prior agent's report and branch. Resume an agent only
