@@ -110,7 +110,7 @@ To find the cause of a leak, a CPU spin, or a glitch in a running process, the [
 /swe:swe-mode open the pr. small ordered commits, evidence in the description.
 ```
 
-The [`ship-pr`](../skills/ship-pr/SKILL.md) skill owns commits, pushes, and PRs. A request to build, change, or fix something authorizes it, unless you say "local only" or name a hold point. It verifies the work, commits small ordered groups, pushes without force, and opens a draft PR. The title uses the Conventional Commits form, such as `fix(parser): reject empty headers`. The body follows the [PR body template](../skills/ship-pr/references/pr-body.md), with three sections. Summary shows the change as a diagram, diff sketch, or tree. Evidence shows a before and after. Risk says if the change is pencil (a revert undoes it) or ink (a revert leaves a mark), and names its blast radius.
+The [`ship-pr`](../skills/ship-pr/SKILL.md) skill owns commits, pushes, and PRs. A request to build, change, or fix something authorizes it, unless you say "local only" or name a hold point. It verifies the work, commits small ordered groups, pushes without force, and opens a draft PR. The title uses the Conventional Commits form, such as `fix(parser): reject empty headers`. The body follows the [PR body template](../skills/ship-pr/references/pr-body.md), with three sections. Summary shows the change as a diagram, diff sketch, or tree. Evidence shows a before and after. Risk says if a revert fully undoes the change, and names its blast radius.
 
 Opening a PR does not start a babysit. The agent posts the URL and keeps building.
 

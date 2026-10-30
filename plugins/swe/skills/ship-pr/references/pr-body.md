@@ -14,7 +14,7 @@ Use this template for writing the PR body:
 
 ## Risk
 
-**Undo:** <pencil or ink>
+**Reversible:** <yes, or no: what a revert leaves behind>
 
 <optional: description>
 
@@ -158,7 +158,7 @@ Lint, type-check, build, and full test-suite runs are not evidence: every PR mus
 
 ### Risk
 
-Say whether the change is written in pencil or in ink. Pencil erases: a revert undoes it cleanly. Ink stays after a revert: deleted data, a migration, a published release, a sent message, or a decision other work will build on. A pencil PR is lower risk. Name the ink parts and what protects them.
+Say whether a revert fully undoes the merge. Write `yes` when it does. Write `no` and name what stays after a revert: deleted data, a migration, a published release, a sent message, or a decision other work will build on. Name what protects those parts.
 
 The blast radius is the potential impact or scope of the changes introduced by this PR. Consider all possibilities. Examples are layout shift, breakages for consumers, mobile responsiveness, etc.
 
