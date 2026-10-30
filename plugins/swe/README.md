@@ -295,7 +295,6 @@ Each of these also starts on its own when its task comes up.
 | [`/swe:blast-radius [diff, branch, or PR]`](./skills/blast-radius/SKILL.md) | You want to know what a change could break beyond its diff |
 | [`/swe:why <code, config, or decision>`](./skills/why/SKILL.md) | You want to know why code or a decision exists |
 | [`/swe:correct <repeated mistake>`](./skills/correct/SKILL.md) | Agents keep making the same mistake |
-| [`/swe:orchestrate <task>`](./skills/orchestrate/SKILL.md) | You want work split across subagents, or sent to another provider |
 | [`/swe:ship-pr [PR number or action]`](./skills/ship-pr/SKILL.md) | You want a commit, a push, and a draft PR driven to green |
 | [`/swe:verification-skill [app or surface]`](./skills/verification-skill/SKILL.md) | Your project has no scripted way to run and observe the real app |
 | [`/swe:writing <document or path>`](./skills/writing/SKILL.md) | You write prose: docs, PR bodies, handoffs, plans, or replies |

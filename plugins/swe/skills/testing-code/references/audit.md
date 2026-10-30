@@ -35,7 +35,7 @@ or types directly.
 Keep discovery read-only and report evidence before editing. For broad scope,
 split discovery into parallel read-only lanes along production owner
 boundaries, plus one cross-cutting junk-pattern sweep; use
-[orchestrate](../../orchestrate/SKILL.md) when delegation is available. Outside
+[swarm](../../swarm/SKILL.md) when delegation is available. Outside
 campaign mode, prefer a few high-confidence candidates over a large speculative
 inventory.
 

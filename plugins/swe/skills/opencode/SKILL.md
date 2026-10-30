@@ -10,8 +10,7 @@ disable-model-invocation: true
 The lead is this Claude session. It splits the work, writes each worker's
 brief, runs the workers through
 [opencode_run.py](../../scripts/opencode_run.py), and owns every result.
-[orchestrate](../orchestrate/SKILL.md) owns the brief fields and the
-external-provider rules. [swarm](../swarm/SKILL.md) owns the shapes and the
+[swarm](../swarm/SKILL.md) owns the shapes, the brief fields, and the
 single report. `<plugin-root>` is two folders above this skill's directory.
 
 OpenCode reaches models through the providers the user connected: OpenCode

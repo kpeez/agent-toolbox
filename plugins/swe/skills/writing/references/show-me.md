@@ -1,9 +1,9 @@
 # Show me: visuals that explain code
 
-Use one small visual to show a change or a design: in a PR body, a handoff, a
-plan, or a reply that explains a design. Do not use it in docs pages (they
-follow the Diataxis modes), in code comments, or in a short reply that needs no
-picture.
+Use one small visual to show a change or a design: in a handoff, a plan, or a
+reply that explains a design. Do not use it in docs pages (they follow the
+Diataxis modes), in code comments, or in a short reply that needs no picture.
+A PR body uses the menu in the [PR body template](../../ship-pr/references/pr-body.md).
 
 Pick the smallest view that makes the key point clear. Show real code when
 the reader needs to see the code; use a sketch when the point is a shape that
@@ -112,10 +112,3 @@ already exists. Match the diff to the shape of the topic, such as a call tree:
 Show the whole block instead when most of it is new, when omitted context
 would hide ownership or order, or when the reader needs a copyable target
 shape.
-
-## Merge danger
-
-Say whether the change is a one-way door or a two-way door. A two-way door is
-cheap to walk back: a revert undoes it. A one-way door is hard to reverse:
-deleted data, a migration, a published release, or a decision other work will
-build on. Name the one-way parts and what protects them.

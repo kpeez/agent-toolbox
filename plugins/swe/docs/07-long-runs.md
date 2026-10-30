@@ -112,7 +112,7 @@ The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playboo
 
 The router's Subagents section sets the rules. The chat that runs the playbook owns it, code goes to delegates, and each new round goes to a fresh subagent. In Claude Code the router picks `opus` for judgment and the hardest code, `sonnet` for routine code, and `haiku` for mechanical edits. In Codex it sets reasoning effort the same way.
 
-`implement` sends large work with independent parts to [`orchestrate`](../skills/orchestrate/SKILL.md). [Set up swe](01-setup.md#add-the-orchestrate-rule-optional) gives the rule that makes this choice before a skill is picked. Code delegates go to the [`daedalus`](../agents/daedalus.md) agent, which publishes nothing without explicit authority. The swe README lists [both swe agents](../README.md#agents).
+`implement` fans out large work with independent parts through [`swarm`](../skills/swarm/SKILL.md). Code delegates go to the [`daedalus`](../agents/daedalus.md) agent, which publishes nothing without explicit authority. The swe README lists [both swe agents](../README.md#agents).
 
 Reviews and searches use the host's own subagents, with the rules in the [review brief](../references/review-brief.md). By default a reviewer fixes small, sure findings and reports each fix. A landing verdict edits nothing.
 

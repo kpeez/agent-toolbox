@@ -7,10 +7,14 @@ disable-model-invocation: true
 
 # Swarm
 
-Swarm owns the fan-out shape. [orchestrate](../orchestrate/SKILL.md) owns the
-delegation contract. Apply its delegation preflight and brief fields to every
-worker. Use its external-provider mode when a worker runs on a provider the
-user named.
+Swarm owns the fan-out shape, the worker briefs, and the single report. The
+lead keeps requirements, decisions, synthesis, and final acceptance. Do not
+split tightly coupled work, and do not split work only to add workers.
+
+Before you launch, check each worker's model, provider, tools, and write scope
+against the user's and the project's constraints. A role name does not prove
+them. When a permitted route is not available, say so. Do not fall back to
+another model or provider without telling the user.
 
 ## Shapes
 
@@ -44,9 +48,8 @@ Open the host's task list with one entry per phase before you launch anything.
    workers, `haiku` for mechanical lanes, and `opus` for judgment or the
    hardest code. In Codex, set reasoning effort the same way. For a model
    race, name each arm's model up front. A diversity arm can run on a
-   different Claude model, or on an external provider through orchestrate.
-   For OpenCode workers, use
-   [opencode](../opencode/SKILL.md). If
+   different Claude model, or on OpenCode through
+   [opencode](../opencode/SKILL.md) when the user asked for it. If
    the host rejects a model, use the host default and say so.
 4. Give each worker its own writable output when it writes. Use a worktree
    per worker or disjoint paths. When workers verify or measure commits, each
@@ -78,8 +81,11 @@ computer.
 When a worker must start from a non-default branch, push that branch and
 name it in the brief. The worker creates its worktree from it.
 
-Every brief stands alone. Include the goal, scope, exact slice or race arm,
-how to verify, and what to report. Reports use `PASS`, `ISSUES`, or `BLOCKED`
+Every brief stands alone. Include the goal, the scope (paths it may and may
+not write, and its worktree or branch), the context it cannot see (paste
+source text and upstream reports), the exact slice or race arm, checkable
+acceptance criteria, how to verify, a timebox, forbidden actions, and what to
+report. Reports use `PASS`, `ISSUES`, or `BLOCKED`
 with evidence. A worker that can prove a defect reports `ISSUES` and lists
 every issue it can prove, not only the first.
 

@@ -38,9 +38,9 @@ unless it already ran. Do not start the run until you can state:
   **prove-it-works** principle.
 - The scope, quantified. Give rough units and effort, plus the blockers that
   grounding surfaced.
-- The rigor level, biased high. One-way doors and a high blast radius get
-  more. Reversible low-stakes steps get less. Rigor is gates and artifacts,
-  not "try harder".
+- The rigor level, biased high. Ink decisions (hard to reverse) and a high
+  blast radius get more. Reversible low-stakes steps get less. Rigor is
+  gates and artifacts, not "try harder".
 
 Present the framing and tradeoffs before you commit to a long run. Reversible
 work proceeds, per the **never-block-on-the-human** principle. A multi-hour
@@ -54,12 +54,12 @@ the **foundational-thinking** principle.
 
 - Build the verification harness before the work. Capture the baseline from
   the pre-change state, so the check reads as "old value vs new value".
-- For a one-way-door design decision, add a step that runs
+- For an ink design decision (hard to reverse), add a step that runs
   [architect](../architect/SKILL.md). Skip it for mechanical work whose shape
   is already concrete. A second architect run over a settled design is
   over-engineering, per the **laziness-protocol** principle.
 - Decide what fans out. Parallelize only across seams, through
-  [swarm](../swarm/SKILL.md) or [orchestrate](../orchestrate/SKILL.md). Give
+  [swarm](../swarm/SKILL.md). Give
   each worker its own worktree or branch, per the
   **separate-before-serializing-shared-state** principle. Do not over-fan.
   Pick each worker's model by role. In Claude Code, use `opus` for judgment

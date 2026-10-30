@@ -1,103 +1,167 @@
 # Pull-request body template
 
-The body is a one-minute briefing for a reviewer who has the diff, not a lab
-notebook. It says why the change exists, what it leaves out, what it could
-break, and how you proved it works. The body becomes the squash commit body,
-so keep it under about 40 lines. End with the issue line from `6-link-issue`
-of the Publish procedure when one applies.
+Use this template for writing the PR body:
 
-Write for a reviewer without session context. Write short, simple sentences
-with few identifiers and no walls of text. Use the project's domain terms and
-apply the [prose rules](../../writing/references/prose.md). Use
-`##` headings, not bold lead-ins, in the order below. Drop a section that has
-nothing to say, except Scope, which is always present.
+```markdown
+## Summary
 
-- **Why:** the problem and the approach, in 1 to 3 short sentences. No SHAs,
-  rebase history, or "based on main" preamble.
-- **What changed:** 1 to 3 short bullets, the most important change first.
-  Name a real symbol or path only when it carries the change. Name both sides
-  of a rename or retarget. Add the smallest visual that makes the point when
-  the diff is not small enough to read in order.
-- **Scope:** 1 to 3 short items on what the PR covers and what it leaves out
-  on purpose, such as a follow-up or a known gap. No symbols, paths, or
-  file-by-file essay.
-- **Tradeoffs:** only rejected alternatives a reviewer would otherwise ask
-  about. Skip it when there was no real choice.
-- **Blast Radius:** 1 or 2 sentences: a one-way or two-way door
-  ([merge danger](../../writing/references/show-me.md#merge-danger)), who or
-  what the merge touches, and why that is safe or risky. When trunk is red, state the cost of leaving it red.
-- **Verification:** 1 to 3 bullets, each a real run path and its outcome, as
-  a before and after. For performance, give one primary number with its unit,
-  `before -> after`, and link the run directory for the rest.
+<diagram, diff-sketch, or tree>
 
-After the sections, attach screenshots or videos when they prove a claim.
-Full SHAs, swarm lane recitals, file-by-file checklists, metric tables, and
-"CLEAN" verdicts go in a linked artifact, not the body. The one exception is
-the verification record below.
+## Evidence
 
-Keep the text self-contained. Beyond the closing `Fixes` line, public text
-does not reveal tracker URLs, issue or plan content, or internal workflow
-commentary.
+- **Before:** <screenshot/output/failing test run>
+  **After:** <screenshot/output/passing test run>
 
-````markdown
-## Why
+## Risk
 
-<the problem and the approach, 1 to 3 sentences>
+**Undo:** <pencil or ink>
 
-## What changed
+<optional: description>
 
-- <most important change first>
+**Blast Radius:** <one-word description>
 
-<optional real code excerpt, diagram, diff sketch, or tree, each with a one-line caption>
+<optional: potential ramifications of merge>
+```
 
-## Scope
+## Sections
 
-- <what this covers; what it leaves out on purpose>
+Skip all preambles and keep prose brief. Use the project's domain terms.
 
-## Tradeoffs
+### Summary
 
-- <rejected alternative and why it lost>
+Pick the smallest view that makes the key point clear.
 
-## Blast Radius
+- Show logic or an algorithm as pseudocode:
 
-<one-way or two-way door; who or what the merge touches; why that is safe or risky>
+```text
+on(save)
+  if content is unchanged
+    return cached result
+  write new content
+  return fresh result
+```
 
-## Verification
+- Show runtime control flow as a call tree:
 
-- <run path>: before <observed>, after <observed>
+```text
+submitForm
+  createSession
+    persistPrompt
+    launchAgent
+  navigateToSession
+```
 
-Verification record (optional): <PASS | PASS+NOTES | FAIL>; head `<sha>`;
-base `<sha>`; patch-id `<id>`.
-````
+- Show UI structure as a component tree, including state and module boundaries that matter:
 
-## What changed
+```text
+<SessionPage> (apps/example/src/routes/session.tsx)
+  useSessionEvents()
+  <SessionToolbar>
+    <RunSkillButton> (packages/ui)
+```
 
-Pick the smallest view that makes the key point clear, from the visual menu in
-[show-me](../../writing/references/show-me.md).
+- Show file responsibility or a broad refactor as a shallow file tree:
 
-## Verification
+```text
+src/
+├── commands/       # parses user actions
+├── sessions/       # owns session state
+└── transport/      # sends API requests
+```
 
-Show concrete proof that each claimed behavior works, as a before and after.
-Prefer a screenshot when the change is visual and the environment can capture
-one. Otherwise show execution: the command a reviewer can paste with its
-observed output, or the named test that failed before and passes after, with
-its assertion sketched as pseudocode. When no reproducible demonstration
-exists, say so and name what the reviewer should inspect instead.
+- Show component interaction, control flow, or data flow with Mermaid:
 
-Never list lint, type-check, build, or test-suite runs as evidence. Every PR
-must pass them, so they prove nothing about this one. State known gaps and
-pre-existing failures, and distinguish recorded prior results from checks run
-in the current workspace.
+```mermaid
+sequenceDiagram
+    participant User
+    participant UI
+    participant Daemon
+    User->>UI: choose command
+    UI->>Daemon: send expanded prompt
+    Daemon-->>UI: stream result
+```
 
-When an independent verdict gates landing, add the verification record in the
-template's form, and nothing else.
-The Land procedure in [ship-pr](../SKILL.md) (`2-key-verdict-to-patch` and
-`3-recheck-before-landing`) says how to compute it and when to recompute it.
-Replace the record when it changes; keep one current record.
+- Use `diff` when the point is what changes and the surrounding shape already exists. Match the diff shape to the topic.
 
-## Blast Radius
+For a component change:
 
-Name what the merge can affect. Consider every consumer: callers and
-downstream packages, installed plugins and hooks, layout and mobile rendering,
-stored data, and other agents or providers. Call out any effect a revert would
-not undo, such as deleted data, a migration, or something already published.
+```diff
+ <SessionPage>
+   useSessionEvents()
+   <SessionToolbar>
++    <RunSkillButton />
+   <SessionTimeline>
++    <SkillResultCard />
+```
+
+For a file-layout change:
+
+```diff
+ src/
+ ├── commands/
++│   └── show-me.ts       # expands the slash command
+ ├── sessions/
+-└── transport.ts
++└── transport/
++    ├── client.ts
++    └── stream.ts
+```
+
+For a call-tree or call-stack change:
+
+```diff
+ submitForm
+   createSession
+     persistPrompt
++    expandSkillMention
+     launchAgent
+-  navigateToSession
++  navigateToSession
++    subscribeToEvents
+```
+
+For a state or control-flow change:
+
+```diff
+ on(save)
+-  write content
++  if content is unchanged
++    return cached result
++  write new content
++  invalidate cache
+```
+
+- Show the whole block when most of it is new, when omitted context would hide ownership or order, or when the user needs a copyable target shape:
+
+```ts
+function expandSkill(command: string): string {
+  const skillName = command.slice(1);
+  return `use the ${skillName} skill`;
+}
+```
+
+#### Guidance
+
+Place each visual next to the short text it supports. Keep only the calls, files, props, states, and boundaries needed to answer the user's current question or the options to resolve the current discussion point.
+
+You may use one of these, you may use several, it is unlikely you will use all of them. Use your judgement and don't overwhelm the user.
+
+### Evidence
+
+Concrete evidence that the change works. Show a before and after.
+
+Screenshots are S-tier - when the environment is set up for it and the change is visual.
+
+Execution-based evidence is A-tier. Test results, console output. Show the exact test that now fails and passes, using pseudocode.
+
+Lint, type-check, build, and full test-suite runs are not evidence: every PR must pass them. When an independent verdict gates landing, add one line under Evidence: `Verification record: <PASS | PASS+NOTES | FAIL>; head <sha>; base <sha>; patch-id <id>.` The Land procedure in [ship-pr](../SKILL.md) says how to compute it and when to replace it.
+
+### Risk
+
+Say whether the change is written in pencil or in ink. Pencil erases: a revert undoes it cleanly. Ink stays after a revert: deleted data, a migration, a published release, a sent message, or a decision other work will build on. A pencil PR is lower risk. Name the ink parts and what protects them.
+
+The blast radius is the potential impact or scope of the changes introduced by this PR. Consider all possibilities. Examples are layout shift, breakages for consumers, mobile responsiveness, etc.
+
+## Closing line
+
+End the body with `Fixes #123` (or `Part of #123`) when the work has an issue. See `6-link-issue` in [ship-pr](../SKILL.md).
