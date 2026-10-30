@@ -38,8 +38,8 @@ unless it already ran. Do not start the run until you can state:
   **prove-it-works** principle.
 - The scope, quantified. Give rough units and effort, plus the blockers that
   grounding surfaced.
-- The rigor level, biased high. Ink decisions (hard to reverse) and a high
-  blast radius get more. Reversible low-stakes steps get less. Rigor is
+- The rigor level, biased high. Decisions that a revert cannot undo and a
+  high blast radius get more. Reversible low-stakes steps get less. Rigor is
   gates and artifacts, not "try harder".
 
 Present the framing and tradeoffs before you commit to a long run. Reversible
@@ -54,7 +54,7 @@ the **foundational-thinking** principle.
 
 - Build the verification harness before the work. Capture the baseline from
   the pre-change state, so the check reads as "old value vs new value".
-- For an ink design decision (hard to reverse), add a step that runs
+- For a design decision that a revert cannot undo, add a step that runs
   [architect](../architect/SKILL.md). Skip it for mechanical work whose shape
   is already concrete. A second architect run over a settled design is
   over-engineering, per the **laziness-protocol** principle.

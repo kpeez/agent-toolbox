@@ -1,7 +1,7 @@
 {
   "name": "swe",
   "description": "SWE skills for AI coding agents: an SWE router that runs a task through a step-by-step playbook, design interviews, short handoff plans, behavioral verification, CI triage and verified landing, and more",
-  "version": "1.21.22",
+  "version": "1.21.23",
   "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
