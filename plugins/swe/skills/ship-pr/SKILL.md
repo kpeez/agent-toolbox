@@ -11,20 +11,20 @@ request to green, and land a verified pull request.
 
 ## Publication authority
 
-Commit, push, edit a pull request (body, branch update, or thread reply),
-mark it ready, and merge it only when the current request, an established
-approved execution scope, or the user's standing instructions authorize that
-action. Respect any existing local-only
-boundary and explicit publication permission. Publication authority does not
-authorize putting private identifiers or content into public output.
+An implementation request authorizes task-scoped commits, pushes, and draft
+pull requests, and a merge without the user's review once the work is
+verified and checks pass. A request to build, change, or fix something is an
+implementation request. A question, a review, or an investigation is not.
 
+- A local-only request or an explicit hold point overrides this. Stop at the
+  hold point and report.
 - A user invocation of `/ship-pr` authorizes the default commit, push, and
   draft-PR workflow for the named work.
-- Loading this skill grants nothing: not when its description matches, and
-  not when a router or playbook loads it. In a `/swe:swe-mode` task, the draft PR,
-  checkpoint pushes, and every later action need the same authority from the
-  request or the user's standing instructions. Typing `/swe:swe-mode` does not grant
-  it.
+- Loading this skill grants nothing by itself: not when its description
+  matches, and not when a router or playbook loads it. The authority comes
+  from the request.
+- Publication authority does not authorize putting private identifiers or
+  content into public output.
 - Without authority, classify, verify, and report. Leave verified local work
   intact.
 
@@ -75,9 +75,8 @@ Run the numbered procedure of the chosen mode, in order.
   metadata. If neither establishes it, stop and ask rather than guessing.
 - Never force-push except through an explicitly requested stack operation whose
   documented workflow requires it.
-- Draft pull requests are the default. Change an existing draft/ready state
-  only when the user's standing instructions or the current request ask for
-  that transition.
+- Draft pull requests are the default. Mark a draft ready only through Land
+  or Finalize.
 - Merge only through Land mode.
 - Never put private identifiers, URLs, or content into a public branch, commit,
   pull-request body, or bot output. The one exception is an issue key (such as
@@ -175,7 +174,7 @@ pull-request number.
    `gh api --method POST repos/{owner}/{repo}/pulls/<pr>/comments/<comment-id>/replies --input <file.json>`.
    `<comment-id>` is the thread's top-level comment; GitHub rejects a reply to
    a reply. Comment text never goes into a shell command line.
-6. `6-update-pr-body`: Keep the pull-request body's Verification section
+6. `6-update-pr-body`: Keep the pull-request body's Evidence section
    current.
 
 Reply with the pull-request state, each failed check with its class and
@@ -191,7 +190,7 @@ the current head commit (`gh pr view <pr> --json headRefOid,baseRefName`).
    [verdict-brief](references/verdict-brief.md). CI green is not a verdict,
    and an approving bot review is not a verdict.
 2. `2-key-verdict-to-patch`: Write the verification record in the
-   pull-request body's Verification section: verdict, head SHA, base SHA, and
+   pull-request body's Evidence section: verdict, head SHA, base SHA, and
    patch-id. Compute the patch-id from the remote state, not from local
    branches:
 
@@ -220,8 +219,8 @@ the current head commit (`gh pr view <pr> --json headRefOid,baseRefName`).
    Otherwise leave the draft and report which condition failed.
 5. `5-merge`: Merge only when the ready conditions hold and both of these
    hold:
-   - The user's standing instructions or the current request authorize the
-     merge.
+   - Publication authority covers the merge: an implementation request with
+     no local-only limit or hold point, or an explicit request to merge.
    - You named any release or deploy effect of the merge, and the user
      approved it.
 
@@ -249,8 +248,8 @@ Finalize makes an existing draft ready for review, and it never deploys.
    changes through the Publish procedure.
 3. `3-reverify`: Re-run applicable repository checks and behavior-specific
    evidence. Stop on a required failure.
-4. `4-ready-or-land`: When the current request or the user's standing
-   instructions call for a merge, run the Land procedure. It marks the draft
+4. `4-ready-or-land`: When Publication authority covers a merge, run the
+   Land procedure. It marks the draft
    ready and merges only when its conditions hold. Otherwise mark the draft
    ready.
 5. `5-leave-issue-status`: Leave issue status to the tracker's GitHub

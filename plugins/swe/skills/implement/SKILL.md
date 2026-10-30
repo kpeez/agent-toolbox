@@ -67,8 +67,8 @@ affected documentation left stale and the reason.
   accepted requirements, and relevant verification evidence. Ask it to report
   only gaps in correctness or the stated requirements.
 
-For substantial work with independently executable parts, use
-[orchestrate](../orchestrate/SKILL.md) before implementation. The lead remains
+For substantial work with independently executable parts, fan it out with
+[swarm](../swarm/SKILL.md) before implementation. The lead remains
 responsible for decisions, integration, and final verification. A bounded
 worker reports to its caller rather than dispatching more agents unless its
 assignment authorizes that.

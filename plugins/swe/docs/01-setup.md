@@ -52,18 +52,6 @@ swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless
 
 Without these lines, type `$swe:swe-mode <task>` to start the router in Codex.
 
-## Add the orchestrate rule (optional)
-
-The [`implement`](../skills/implement/SKILL.md) skill sends large work with independent parts to [`orchestrate`](../skills/orchestrate/SKILL.md). To make that choice before the agent picks a skill, add this rule to your user-level `CLAUDE.md` (Claude Code) or `AGENTS.md` (Codex):
-
-```text
-For substantial work with independently executable parts, use
-`swe:orchestrate` to delegate them. Keep tightly coupled work with one agent.
-Send a single independent review directly to one fresh subagent.
-```
-
-Start a new session after you add it.
-
 ## Know where the tokens go
 
 swe spends extra tokens on subagents. Code goes to delegates, reviews go to a fresh reviewer, and `how` and `why` can fan out to several explorers. That is the price of independent checks.
@@ -101,7 +89,7 @@ The final reply ends with a Steps section. It gives every step with its state. A
 9-check-blast-radius skip: the change keeps the public signature
 ```
 
-Typing `/swe:swe-mode` does not let the agent publish. The agent commits, pushes, and opens a draft PR only when your request or your standing instructions (for example, your `CLAUDE.md`) allow it. Without that, it verifies the change, leaves it local, and reports. It always pauses before an irreversible write, such as a force-push to a shared branch or a deploy. See [`ship-pr`](../skills/ship-pr/SKILL.md#publication-authority).
+A request to build, change, or fix something lets the agent commit, push, open a draft PR, and merge once the work is verified and checks pass. Say "local only" or name a hold point to stop it earlier. A question, a review, or an investigation does not publish: the agent verifies, leaves the work local, and reports. It always pauses before an irreversible write, such as a force-push to a shared branch or a deploy. See [`ship-pr`](../skills/ship-pr/SKILL.md#publication-authority).
 
 If you do not know which skill fits, ask [`/swe:help`](../skills/help/SKILL.md). It answers with a prompt you can send and a link to the file that holds the answer.
 

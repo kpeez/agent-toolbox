@@ -51,10 +51,9 @@ worktree, or in its own subdirectory under the sketch directory when no
 worktree is available. What matters is independence between candidates.
 
 Run at least two runners on different models. In Claude Code, run one on
-`opus` and one on `sonnet`. For more diversity, add a runner on an external
-provider the user named, through the
-[orchestrate](../orchestrate/SKILL.md) external-provider mode. In Codex, vary
-the reasoning effort, or add an external provider the same way.
+`opus` and one on `sonnet`. For more diversity, add an OpenCode runner through
+[opencode](../opencode/SKILL.md) when the user asked for it. In Codex, vary
+the reasoning effort, or add an OpenCode runner the same way.
 
 Design it twice. Require at least two structurally distinct candidates before
 synthesis, even when the first looks sufficient. This is the

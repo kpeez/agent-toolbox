@@ -106,7 +106,7 @@ These hold in every playbook and route, in addition to the steps.
   the user has not made: `interview-user` on those decisions only.
 - Nontrivial multi-step work: write the throughput checkpoint
   (`build-feature` step 5).
-- Parallel fan-out: `swarm`. Delegation to an external provider: `orchestrate`.
+- Parallel fan-out: `swarm`. OpenCode workers the user asked for: `opencode`.
 - Any prose surface, the reply included: `writing`. It routes each surface
   (docs, skills, PR bodies, handoffs, plans, replies) to its rules. Write
   replies to the user and agent-facing text in ASD-STE100 Simplified
@@ -208,8 +208,11 @@ loaded in this session.
 - **Do it.** Load [ship-pr](../ship-pr/SKILL.md) before the first commit. Its
   rules govern each commit, push, pull request, merge, and release effect.
   Reversible work proceeds without asking: edit code, write a file, start a
-  branch, push your own branch, open or update a draft PR, start an eval. Then
-  report what you did and why, so the user can correct it.
+  branch, start an eval. An implementation request also covers pushing your
+  own branch, opening or updating a draft PR, and merging once the work is
+  verified and checks pass, per ship-pr's Publication authority. A local-only
+  request or an explicit hold point stops publication. Report what you did
+  and why, so the user can correct it.
 - **Always pause** before an irreversible write: a force-push to a shared
   branch, a history rewrite on a branch you did not create, a deploy, deleting
   a branch or data, or a message to people outside the project.
@@ -238,8 +241,8 @@ loaded in this session.
   algorithms); `sonnet` for routine code; `haiku` for mechanical edits. In
   Codex, raise or lower reasoning effort the same way.
 - A second opinion is the same brief on a different model: another Claude
-  model, or an external provider through `orchestrate`. Agreement is a strong
-  signal.
+  model, or OpenCode through `opencode` when the user asked for it.
+  Agreement is a strong signal.
 - Fresh subagents by default. A fix round, a retry, or a follow-up goes to a
   fresh subagent with the full scope: the original brief, every later
   directive, and the prior agent's report and branch. Resume an agent only
@@ -336,7 +339,7 @@ Long runs and sessions:
 - Catch the user up after time away: `ketchup`.
 - The user corrects a mistake agents have made before: `correct`.
 - Review a session for agent mistakes: `reflect`.
-- Delegate to an external provider the user named: `orchestrate`.
+- Run OpenCode workers the user asked for: `opencode`.
 - Build or audit the project's own skill that drives its app for
   verification: `verification-skill`.
 
