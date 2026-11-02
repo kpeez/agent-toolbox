@@ -42,7 +42,7 @@ Do not accept self-ratings. Learners overestimate what they know.
 2. Run `place <id> pass` or `place <id> fail`. A pass gives conditional credit to the topic and its ancestors. A fail removes conditional credit from the topic and its descendants.
 3. Move down after a fail and up after a pass. Stop when the frontier is stable or after about 20 questions.
 
-A conditional topic counts as met. It gets a review 3 days later. A failed review or placement removes its credit and the credit of its conditional descendants.
+A conditional topic counts as met. It gets a review 3 days later. A failed review or placement removes its credit and the credit of its conditional descendants. When a mastered topic goes back to `learning`, its conditional descendants lose their credit too.
 
 ## 3. Teach only from the frontier
 
@@ -61,7 +61,7 @@ The script prints the next rung after each failed `record`:
 1. A KP goes badly: add questions, up to 5.
 2. The lesson fails: stop it. Teach another frontier topic. Retry later with new questions.
 3. The retry fails: review the topic's key prerequisites, one `record` each.
-4. A key prerequisite fails its review: the script sends it back to `learning`. Reteach it. Every topic above it stays locked until then, and its ladder starts again.
+4. A key prerequisite fails its review: the script sends it back to `learning`. Reteach it. Every topic above it stays locked until then, and its ladder starts again. A placed (conditional) topic above it loses its credit and is taught as a lesson later.
 5. The prerequisites pass and the topic fails again: the topic is too big or an edge is missing. Split the topic or add the edge.
 
 Do not re-explain the same way again and again. Do not lower the check.

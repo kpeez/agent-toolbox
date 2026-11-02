@@ -72,7 +72,7 @@ The script writes it beside the graph. Do not edit it by hand.
 | --- | --- |
 | `unseen` | Not taught or placed. |
 | `learning` | Taught or retaught, not yet passed without help. |
-| `conditional` | Placed by the diagnostic. Counts as met until a failed review or placement. |
+| `conditional` | Placed by the diagnostic. Counts as met until its own failed review or placement, or until a topic below it goes back to `learning` or `unseen`. |
 | `mastered` | Passed without help. Has review dates. A mastered topic stays mastered when a topic below it fails; its own reviews test it. |
 
 `reps` counts repetitions, with fractional credit from encompassing topics. `due` is the next review date. `log` keeps every result, helped or not, so a tutor can see the learner's history.
