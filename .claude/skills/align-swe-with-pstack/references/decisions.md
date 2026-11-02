@@ -65,4 +65,4 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | pstack | swe | Why | PR |
 | --- | --- | --- | --- |
 | `poteto-mode` Autonomy and `opening-a-pr`: PRs open ready; merge only in Shipping on request | `ship-pr` Publication authority: an implementation request covers commits, pushes, a draft PR, and a merge without review once verified and checks pass; local-only or a hold point overrides | Kyle moved this rule from his global agent rules into swe (dotfiles#73). | #203 |
-| `bug-fix` playbook: no step encodes the bug; `correct` counts a class at its second occurrence | `fix-bug` step `10-encode-bug-class` turns a bug that the code alone shows into a type, lint rule, or check; `correct` counts such a bug at its first occurrence | Kyle wants each found bug to become a lint rule. | this PR |
+| `bug-fix` playbook: no step encodes the bug; `correct` counts a class at its second occurrence | `fix-bug` step `10-encode-bug-class` turns a bug that the code alone shows into a type, lint rule, or check; `correct` counts such a bug at its first occurrence | Kyle wants each found bug to become a lint rule. | #207 |
