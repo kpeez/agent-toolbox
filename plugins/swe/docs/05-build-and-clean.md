@@ -32,7 +32,7 @@ Each prompt routes to its playbook:
 
 | Playbook | What it adds to your prompt |
 | --- | --- |
-| [`fix-bug`](../skills/swe-mode/playbooks/fix-bug.md) | Reproduce on the reported surface, binary search the cause, sweep for the same pattern, apply the smallest fix, run the original repro again |
+| [`fix-bug`](../skills/swe-mode/playbooks/fix-bug.md) | Reproduce on the reported surface, binary search the cause, sweep for the same pattern, apply the smallest fix, run the original repro again, make the bug class fail the build |
 | [`build-feature`](../skills/swe-mode/playbooks/build-feature.md) | Map the subsystem, name the data shape, explore designs, write a throughput checkpoint, build and verify one unit at a time |
 | [`refactor-structure`](../skills/swe-mode/playbooks/refactor-structure.md) | Pin behavior with a characterization test or snapshot, subtract first, move every caller and delete the old API, prove equivalence, revert if reader load did not fall |
 | [`improve-performance`](../skills/swe-mode/playbooks/improve-performance.md) | Capture a baseline with run count and spread, name the limiting resource, try the performance mantras cheapest first, change one thing at a time |

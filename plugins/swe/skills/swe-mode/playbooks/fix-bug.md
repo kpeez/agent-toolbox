@@ -15,9 +15,10 @@ Delegate the investigation and the fix to subagents and stay in the lead. Be sci
 7-commit-failing-repro: When the bug has a cheap local test path, commit the failing repro before the fix. Skip when the test is expensive, integration-heavy, or unclear. (testing-code, sequence-verifiable-units)
 8-apply-smallest-fix: Apply the smallest fix the evidence justifies, nothing more. (implement, subtract-before-you-add, laziness-protocol)
 9-verify-original-repro: Run the original reproduction again on the same surface. Inconclusive or wrong-surface is not a pass. Unit tests show branch behavior, not bug absence. (prove-it-works)
-10-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)
-11-clean-the-diff: Self-review the diff and keep a comment only for a non-obvious why. (no-comments, writing)
-12-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
-13-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
+10-encode-bug-class: When the code alone shows the faulty pattern, make it fail the build at the highest level that works: a type, a lint rule, or a check. The error names what to write instead. Run the enforcer on the bug and on the fix, and keep the failing-then-passing output. Skip when only runtime state shows the bug. (correct, encode-lessons-in-structure)
+11-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)
+12-clean-the-diff: Self-review the diff and keep a comment only for a non-obvious why. (no-comments, writing)
+13-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
+14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
 
-Reply: what broke, the root cause, the fix, how you verified it, and the failing-then-passing repro output verbatim.
+Reply: what broke, the root cause, the fix, how you verified it, the failing-then-passing repro output verbatim, and the new enforcer or why the bug has none.
