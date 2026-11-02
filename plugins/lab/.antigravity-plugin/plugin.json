@@ -1,0 +1,16 @@
+{
+  "name": "lab",
+  "description": "Source-backed research, reproducible experiment loops, and data visualization guidance",
+  "version": "1.5.8",
+  "author": {
+    "name": "kpeez",
+    "url": "https://github.com/kpeez"
+  },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "suggestedPrompts": [
+    "Research or deep-research this question with primary sources.",
+    "Autoresearch this optimization with a defined metric.",
+    "Critique this figure for clarity and honesty."
+  ]
+}
