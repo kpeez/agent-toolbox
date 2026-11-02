@@ -26,3 +26,15 @@ jobs:
             done
           done
           exit $status
+      - name: Antigravity rules match the session-start hook
+        run: |
+          # Antigravity CLI skips hooks/hooks.json and loads rules/AGENTS.md
+          # instead. The eval harness rejects symlinks, so it is a copy.
+          status=0
+          for plugin in swe lab uni; do
+            if ! diff "plugins/$plugin/hooks/session-start.md" "plugins/$plugin/rules/AGENTS.md"; then
+              echo "::error::plugins/$plugin/rules/AGENTS.md differs from plugins/$plugin/hooks/session-start.md"
+              status=1
+            fi
+          done
+          exit $status
