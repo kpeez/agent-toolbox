@@ -1,7 +1,7 @@
 # agent-toolbox
 
-Plugins of skills for AI coding agents, for Claude Code and Codex CLI. Install
-the plugins you need. Each one works alone.
+Plugins of skills for AI coding agents, for Claude Code, Codex CLI, and
+Antigravity CLI. Install the plugins you need. Each one works alone.
 
 | Plugin | What it does |
 | --- | --- |
@@ -34,6 +34,20 @@ codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 codex plugin add uni@agent-toolbox
 ```
+
+Antigravity CLI (`agy`), from a clone. Link each plugin into agy's plugins
+folder:
+
+```text
+git clone https://github.com/kpeez/agent-toolbox ~/code/agent-toolbox
+mkdir -p ~/.gemini/config/plugins
+ln -s ~/code/agent-toolbox/plugins/swe ~/.gemini/config/plugins/swe
+ln -s ~/code/agent-toolbox/plugins/lab ~/.gemini/config/plugins/lab
+ln -s ~/code/agent-toolbox/plugins/uni ~/.gemini/config/plugins/uni
+```
+
+agy loads the skills and the session-start rule. It runs no hooks and skips
+the swe agents.
 
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), one
 plugin per command:

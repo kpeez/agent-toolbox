@@ -1,8 +1,9 @@
 # Repository rules
 
 - Preserve unrelated working-tree changes.
-- When a plugin has both `.claude-plugin/plugin.json` and
-  `.codex-plugin/plugin.json`, keep their versions identical.
+- When a plugin has more than one of `.claude-plugin/plugin.json`,
+  `.codex-plugin/plugin.json`, and `.antigravity-plugin/plugin.json`, keep
+  their versions identical.
 - Bump plugin versions by patch by default, including when adding a skill.
   A minor or major bump requires explicit permission in the request;
   precedent in the git history is not permission.
