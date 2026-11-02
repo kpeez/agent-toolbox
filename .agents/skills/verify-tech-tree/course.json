@@ -1,0 +1,13 @@
+{
+  "course": "verify-tech-tree",
+  "topics": [
+    {"id": "base", "title": "Base", "goal": "Learner does the base skill.", "check": "Base items.",
+     "requires": {}, "kps": [{"title": "Base step", "key": []}]},
+    {"id": "middle", "title": "Middle", "goal": "Learner does the middle skill.", "check": "Middle items.",
+     "requires": {"base": "uses base"}, "kps": [{"title": "Middle step", "key": ["base"]}],
+     "encompasses": {"base": 1.0}},
+    {"id": "top", "title": "Top", "goal": "Learner does the top skill.", "check": "Top items.",
+     "requires": {"middle": "uses middle"}, "kps": [{"title": "Top step", "key": ["base", "middle"]}],
+     "encompasses": {"middle": 0.5}}
+  ]
+}

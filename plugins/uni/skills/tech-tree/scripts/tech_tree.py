@@ -312,6 +312,9 @@ def cmd_record(g, progress, tid, passed, helped, today):
                      and tid in g.key_prerequisites(t)]
             if stuck or s["fails"] >= 2:
                 s["status"], s["due"] = "learning", None
+                for d in g.descendants(tid):
+                    if state[d]["status"] == "conditional":
+                        state[d].update(status="unseen", reps=0, due=None)
                 notes.append(f"{tid}: reteach the lesson; locked until then: {', '.join(stuck) or 'its dependents'}")
             else:
                 notes.append(f"{tid}: review again tomorrow")

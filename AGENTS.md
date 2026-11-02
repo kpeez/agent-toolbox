@@ -33,3 +33,10 @@
   release also runs the link, plugin-validation, agent-config, eval, unit-test,
   and Codex-load checks in [docs/release-checks.md](docs/release-checks.md).
 - Do not require `pyproject.toml`, a lockfile, or a test suite.
+- After a change to `plugins/uni/skills/tech-tree/scripts/tech_tree.py` or
+  the rules in its `SKILL.md` or `GRAPH-FORMAT.md`, run
+  `python3 .agents/skills/verify-tech-tree/scripts/check.py`. It checks the
+  gate and scheduling rules in every reachable state. The
+  `verify-tech-tree` skill says what it covers. Claude Code sees that skill
+  through an uncommitted link; make it once with
+  `ln -sfn ../../.agents/skills/verify-tech-tree .claude/skills/verify-tech-tree`.
