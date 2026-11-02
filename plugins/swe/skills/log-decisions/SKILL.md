@@ -100,8 +100,9 @@ a row.
 ## Review the trail with another model
 
 Before you hand back, start a reviewer subagent on a different model from the
-one that did the work: another Claude model in Claude Code, or an OpenCode
-model through [opencode](../opencode/SKILL.md) when the user asked for it.
+one that did the work: another Claude model in Claude Code, or a model on
+another agent CLI through [external-agents](../external-agents/SKILL.md) when
+the user asked for it.
 Your own review does not replace it.
 The reviewer reads the log and the run's transcript and flags what the user
 should look at. It does not redo the work. It looks for:

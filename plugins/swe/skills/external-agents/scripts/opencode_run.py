@@ -18,13 +18,9 @@ family and no version number in its ID, such as ``cat-jam-free``.
 ``$XDG_CONFIG_HOME/swe/opencode.json`` (default ``~/.config``). It never
 writes OpenCode's own config.
 
-``run`` reads a JSON list of tasks and runs one ``opencode run --format json``
-per task, at most ``--parallel`` at a time. Each task is an object:
-
-    {"id": "auth-review", "prompt": "...", "model": "provider/model",
-     "dir": "/abs/worktree", "files": ["/abs/file"]}
-
-Only ``id`` and ``prompt`` are required. A task without ``model`` takes the
+``run`` reads a task file (see ``workers.py``) and runs one
+``opencode run --format json`` per task, at most ``--parallel`` at a time.
+A model is ``provider/model``. A task without ``model`` takes the
 next model from the pool in turn, and a failed task runs once more on the next
 model in the pool, because free models often hit rate limits. The pool is
 ``--models``, else the user's ``prefs``. With neither, the pool is every live
@@ -43,17 +39,14 @@ every other tool is denied, the 2.x code-mode ``execute`` tool included.
 ``dir``, such as a git worktree. Shell, web, and nested subagents stay denied
 in both modes. This is OpenCode's own permission config, not an OS sandbox.
 
-``run`` prints one JSON line per task: ``id``, ``model``, ``effort`` (the
-variant used, or null), ``status`` (``ok``,
-``error``, or ``timeout``), ``exit``, ``seconds``, ``attempts``, ``text`` (the
-worker's final answer), ``error``, and ``session``. ``--out DIR`` also keeps
-each attempt's raw event stream as ``DIR/<id>.<attempt>.jsonl``.
+``run`` prints the result line from ``workers.py`` per task; ``effort`` is the
+variant used, or null. ``--out DIR`` also keeps each attempt's raw event
+stream as ``DIR/<id>.<attempt>.jsonl``.
 
 Usage: python3 opencode_run.py {models,prefs,run} --help
 """
 
 import argparse
-from concurrent.futures import ThreadPoolExecutor
 import itertools
 import json
 import os
@@ -62,12 +55,11 @@ import re
 import shutil
 import subprocess
 import sys
-import threading
-import time
+
+from workers import EFFORTS, load_tasks, nearest, run_all, spawn
 
 READ_TOOLS = ("read", "grep", "glob", "list")
 FALLBACK_MODEL = "opencode/deepseek-v4.1-flash-free"
-EFFORTS = ("none", "minimal", "low", "medium", "high", "xhigh", "max")
 
 
 def policy(edit: bool) -> dict:
@@ -154,16 +146,6 @@ def model_pool(args, catalog: list[dict]) -> tuple[list[str], str | None]:
     return stealth or [FALLBACK_MODEL], FALLBACK_MODEL
 
 
-def variant(effort: str | None, variants: list[str]) -> str | None:
-    """The model's variant nearest to the effort, preferring the higher one."""
-    known = [v for v in variants if v in EFFORTS]
-    if not effort or not known:
-        return None
-    want = EFFORTS.index(effort)
-    return min(known, key=lambda v: (abs(EFFORTS.index(v) - want),
-                                     -EFFORTS.index(v)))
-
-
 def parse_events(stream: str) -> tuple[str, str, str]:
     """Return the final answer, the first error, and the session id."""
     texts, error, session = [], "", ""
@@ -183,7 +165,7 @@ def parse_events(stream: str) -> tuple[str, str, str]:
 
 
 def attempt(args, task: dict, model: str, n: int) -> dict:
-    level = variant(task.get("effort") or args.effort,
+    level = nearest(task.get("effort") or args.effort,
                     args.variants.get(model, []))
     if args.major >= 2:
         cmd = [args.opencode, "run", "--standalone", "--format", "json",
@@ -195,29 +177,20 @@ def attempt(args, task: dict, model: str, n: int) -> dict:
     for f in task.get("files", []):
         cmd += ["-f", f]
     cmd += ["--", task["prompt"]]
-    start = time.monotonic()
-    proc = subprocess.Popen(cmd, stdin=subprocess.DEVNULL, stdout=subprocess.PIPE,
-                            stderr=subprocess.PIPE,
-                            text=True, env=child_env(args.edit),
-                            cwd=task.get("dir", args.dir), start_new_session=True)
-    try:
-        stdout, stderr = proc.communicate(timeout=args.timeout)
-        status = None
-    except subprocess.TimeoutExpired:
-        os.killpg(proc.pid, 9)
-        stdout, stderr = proc.communicate()
-        status = "timeout"
+    proc = spawn(cmd, task.get("dir", args.dir), child_env(args.edit), args.timeout)
+    stdout, stderr = proc["stdout"], proc["stderr"]
+    status = "timeout" if proc["timed_out"] else None
     if args.out:
         (args.out / f"{task['id']}.{n}.jsonl").write_text(stdout)
     text, error, session = parse_events(stdout)
     if status is None:
-        status = "ok" if proc.returncode == 0 and not error and text else "error"
+        status = "ok" if proc["exit"] == 0 and not error and text else "error"
     if status == "timeout" and not error:
         error = f"no answer after {args.timeout}s" + ("" if stdout else ", no events")
     if status == "error" and not error:
         error = stderr.strip()[-2000:] or "no answer"
     return {"id": task["id"], "model": model, "effort": level, "status": status,
-            "exit": proc.returncode, "seconds": round(time.monotonic() - start, 1),
+            "exit": proc["exit"], "seconds": proc["seconds"],
             "text": text, "error": error, "session": session}
 
 
@@ -229,29 +202,6 @@ def run_task(args, task: dict, model: str, fallback: str) -> dict:
         tried.append(fallback)
     result["attempts"] = tried
     return result
-
-
-def load_tasks(path: str, edit: bool) -> list[dict]:
-    raw = sys.stdin.read() if path == "-" else Path(path).read_text()
-    tasks = json.loads(raw)
-    if not isinstance(tasks, list) or not tasks:
-        sys.exit("tasks: expected a non-empty JSON list")
-    ids, dirs = set(), set()
-    for task in tasks:
-        if not isinstance(task, dict) or not task.get("id") or not task.get("prompt"):
-            sys.exit(f"tasks: every task needs id and prompt: {task!r}")
-        if task.get("effort") not in (None, *EFFORTS):
-            sys.exit(f"tasks: effort must be one of {' '.join(EFFORTS)}: {task['id']}")
-        if not re.fullmatch(r"[A-Za-z0-9._-]+", task["id"]) or task["id"] in ids:
-            sys.exit(f"tasks: id must be a unique slug: {task['id']!r}")
-        ids.add(task["id"])
-        if edit:
-            if not task.get("dir"):
-                sys.exit(f"tasks: --edit needs a dir per task: {task['id']}")
-            if task["dir"] in dirs:
-                sys.exit(f"tasks: --edit needs a distinct dir per task: {task['dir']}")
-            dirs.add(task["dir"])
-    return tasks
 
 
 def cmd_models(args) -> None:
@@ -287,19 +237,7 @@ def cmd_run(args) -> None:
         i = next(turn)
         model = task.get("model") or pool[i]
         plans.append((task, model, fallback or pool[(i + 1) % len(pool)]))
-    lock = threading.Lock()
-    failed = 0
-
-    def work(plan):
-        nonlocal failed
-        result = run_task(args, *plan)
-        with lock:
-            failed += result["status"] != "ok"
-            print(json.dumps(result), flush=True)
-
-    with ThreadPoolExecutor(args.parallel) as executor:
-        list(executor.map(work, plans))
-    sys.exit(1 if failed else 0)
+    run_all(plans, lambda plan: run_task(args, *plan), args.parallel)
 
 
 def main() -> None:
