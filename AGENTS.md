@@ -1,8 +1,9 @@
 # Repository rules
 
 - Preserve unrelated working-tree changes.
-- When a plugin has both `.claude-plugin/plugin.json` and
-  `.codex-plugin/plugin.json`, keep their versions identical.
+- When a plugin has more than one of `.claude-plugin/plugin.json`,
+  `.codex-plugin/plugin.json`, and `.antigravity-plugin/plugin.json`, keep
+  their versions identical.
 - Bump plugin versions by patch by default, including when adding a skill.
   A minor or major bump requires explicit permission in the request;
   precedent in the git history is not permission.
@@ -32,3 +33,10 @@
   release also runs the link, plugin-validation, agent-config, eval, unit-test,
   and Codex-load checks in [docs/release-checks.md](docs/release-checks.md).
 - Do not require `pyproject.toml`, a lockfile, or a test suite.
+- After a change to `plugins/uni/skills/tech-tree/scripts/tech_tree.py` or
+  the rules in its `SKILL.md` or `GRAPH-FORMAT.md`, run
+  `python3 .agents/skills/verify-tech-tree/scripts/check.py`. It checks the
+  gate and scheduling rules in every reachable state. The
+  `verify-tech-tree` skill says what it covers. Claude Code sees that skill
+  through an uncommitted link; make it once with
+  `ln -sfn ../../.agents/skills/verify-tech-tree .claude/skills/verify-tech-tree`.

@@ -66,13 +66,28 @@ The playbook names the one decision, builds throwaway variants in a scratch dire
 
 In Claude Code, when you type `/swe:swarm`, ask for a workflow, or turn on ultracode, `swarm` runs the fan-out as one Workflow script: a `pipeline()` over the slices, a result schema per worker, and a log line for each dropped lane. Otherwise, and in Codex, it spawns workers with the Agent tool.
 
-## Fan out OpenCode workers
+## Run workers on another agent CLI
 
 ```text
-/swe:opencode find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
+/swe:external-agents find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
 ```
 
-`opencode` runs three to five OpenCode workers on any model OpenCode can reach: OpenCode Zen, OpenCode Go, GitHub Copilot, or another provider you connected. The lead writes a JSON task list, and [opencode_run.py](../scripts/opencode_run.py) runs one `opencode run` per task in parallel, gives the tasks the pool's models in turn, and retries a failed task once on the next model. The pool is your saved choice, kept per user in `~/.config/swe/opencode.json`. With no saved pool, the workers rotate over every live OpenCode Zen stealth model, and a failed worker falls back to `opencode/deepseek-v4.1-flash-free`, all free. The lead sets each worker's effort level (`low` to `max`), and the script maps it to the nearest variant the model offers. To save a pool, name the models in your prompt, or run `python3 <plugin-root>/scripts/opencode_run.py prefs --models <a,b>`. A paid model runs only when you name it. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports. It needs OpenCode 2.x (`@opencode/cli`) or 1.x (`opencode-ai`) on your computer. Providers can keep your prompts, so use the skill only on code you agree to send to them.
+`external-agents` runs three to five one-shot workers on another agent CLI and checks their answers. It supports OpenCode, which reaches OpenCode Zen, OpenCode Go, GitHub Copilot, and any other provider you connected, and Antigravity (`agy`), which runs Gemini models. Name the CLI in your prompt; with no name, it uses OpenCode. The lead writes one JSON task list, and the CLI's script in [scripts/](../skills/external-agents/scripts/) runs the tasks in parallel, rotates them over a model pool, and retries a failed task once on the next model. The lead sets each worker's effort level (`low` to `max`), and the script maps it to the nearest level the model offers. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports.
+
+For a large task, hand one worker a whole spec:
+
+```text
+/swe:external-agents give antigravity the spec in docs/specs/csv-import.md to implement, then review it
+```
+
+In delegate mode, the lead makes a worktree and runs one worker there with the CLI's own permission bypass (`agy --dangerously-skip-permissions` or `opencode run --auto`), so a denied tool cannot end the run early. The worker can run any command in that mode. When it ends, the lead checks each spec requirement against the diff, runs the build and tests itself, fixes the gaps, and reports a requirement table and the branch.
+
+Each CLI has a reference in [references/](../skills/external-agents/references/):
+
+- [OpenCode](../skills/external-agents/references/opencode.md): needs OpenCode 2.x (`@opencode/cli`) or 1.x (`opencode-ai`). The pool is your saved choice in `~/.config/swe/opencode.json`. With no saved pool, the workers rotate over every live OpenCode Zen stealth model, all free. A paid model runs only when you name it.
+- [Antigravity](../skills/external-agents/references/antigravity.md): needs `agy`, signed in once in an interactive session. The workers use your agy model unless you name model slugs.
+
+Providers can keep your prompts, so use the skill only on code you agree to send to them.
 
 ## Get an independent review
 
