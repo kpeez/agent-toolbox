@@ -38,8 +38,10 @@ alone shows counts at its first occurrence; the `fix-bug` playbook encodes it.
    the repository already runs, such as ESLint `no-restricted-syntax`, Ruff
    `banned-api`, or Clippy `disallowed-methods`. When that linter cannot
    express the pattern, write an ast-grep rule with a rule test that
-   `ast-grep test` runs, or a short check script in the repository's language,
-   and run it where the other linters run.
+   `ast-grep test` runs, or a short check script in the repository's language.
+   Commit each rule to the repository: ast-grep rules in `lint/rules/`, their
+   tests in `lint/rule-tests/`, both named in a root `sgconfig.yml`. Run the
+   rule and its test where the other linters run: CI and pre-commit.
 4. `test`: test the behavior. Fix or delete any test that still passes when
    the behavior it checks breaks, or that fails when only the internals
    change. Every new permanent test goes
