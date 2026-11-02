@@ -30,7 +30,7 @@ EXPECTED = {
     "NextIsLegal": True,
     "MetHasDue": True,
     "UnmetHasNoDue": True,
-    "ConditionalNeedsMetAncestors": False,
+    "ConditionalNeedsMetAncestors": True,
 }
 
 
@@ -193,11 +193,27 @@ def mutant_fail_keeps_due(tt):
     tt.cmd_record = record
 
 
+def mutant_retaught_keeps_placement(tt):
+    original = tt.cmd_record
+
+    def record(g, progress, tid, passed, helped, today):
+        before = copy.deepcopy(progress["topics"])
+        out = original(g, progress, tid, passed, helped, today)
+        if before[tid]["status"] == "mastered" and progress["topics"][tid]["status"] == "learning":
+            for d in g.descendants(tid):
+                if before[d]["status"] == "conditional":
+                    progress["topics"][d] = before[d]
+        return out
+
+    tt.cmd_record = record
+
+
 MUTANTS = {
     "LessonGate": mutant_gate,
     "NextIsLegal": mutant_frontier,
     "MetHasDue": mutant_place_due,
     "UnmetHasNoDue": mutant_fail_keeps_due,
+    "ConditionalNeedsMetAncestors": mutant_retaught_keeps_placement,
 }
 
 
