@@ -55,7 +55,13 @@ the workspace and denies writes and shell commands. The user's
 `~/.gemini/antigravity-cli/settings.json` can loosen that, so the script
 passes `--settings` with deny rules for `write_file(*)`, `command(*)`,
 `read_url(*)`, `execute_url(*)`, and `mcp(*)`. `--settings` applies to one run
-and is never saved. Deny rules beat ask and allow rules.
+and is never saved. Deny rules beat ask and allow rules. A deny-rule hit does
+not appear in `denied_actions`; the model sees the error and answers around
+it.
+
+No permission rule stops the `search_web` tool: runs with `read_url(*)` and
+`search_web(*)` denied still searched the web. The prompt note is the only
+guard, so send no secret in a prompt that a search query could leak.
 
 `--edit` drops the `write_file` deny, allows writes in the task's `dir`, and
 adds `--mode accept-edits`. Commands, web, and MCP stay denied. This is agy's
@@ -64,8 +70,9 @@ shell commands, which the script never allows.
 
 The user's global rules (`~/.gemini/config/AGENTS.md`) still load. A rule that
 tells the model to use a shell tool makes it try a command, which headless
-mode denies. The script adds a read-only note to each prompt so the model
-stays on read and search tools.
+mode denies, and the answer can come back empty. The script adds a read-only
+note to each prompt so the model stays on read and search tools. A worker
+that refuses a write in plain text still has status `ok`, so read its text.
 
 ## Other headless features
 
@@ -79,3 +86,4 @@ stays on read and search tools.
   `{"event":"user","message":{"content":"..."}}` lines to stdin and close
   stdin to end it.
 - Parallel runs in one directory work. Each run gets its own conversation.
+- Result lines print in completion order, not task order.

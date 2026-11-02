@@ -21,11 +21,12 @@ and status ``SUCCESS``. The result line reads them from the envelope:
 answer, and the ``denied_actions`` in ``error``.
 
 Workers are read-only by default. Headless agy auto-denies every tool that
-needs approval, and ``--settings`` adds deny rules for writes, commands, web,
-and MCP for the run only. ``--edit`` runs in ``accept-edits`` mode with writes
-allowed, and then every task needs its own ``dir``. Commands, web, and MCP
-stay denied in both modes. This is agy's permission engine, not an OS
-sandbox.
+needs approval, and ``--settings`` adds deny rules for writes, commands, URL
+reads, browser actions, and MCP for the run only. ``--edit`` runs in
+``accept-edits`` mode with writes allowed, and then every task needs its own
+``dir``. Commands, URL reads, browser actions, and MCP stay denied in both
+modes. No rule denies agy's ``search_web`` tool; only the prompt note keeps a
+worker off the web. This is agy's permission engine, not an OS sandbox.
 
 ``--out DIR`` keeps each attempt's envelope as ``DIR/<id>.<attempt>.json``.
 
