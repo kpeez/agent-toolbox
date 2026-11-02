@@ -297,6 +297,7 @@ Each of these also starts on its own when its task comes up.
 | [`/swe:correct <repeated mistake>`](./skills/correct/SKILL.md) | Agents keep making the same mistake |
 | [`/swe:ship-pr [PR number or action]`](./skills/ship-pr/SKILL.md) | You want a commit, a push, and a draft PR driven to green |
 | [`/swe:verification-skill [app or surface]`](./skills/verification-skill/SKILL.md) | Your project has no scripted way to run and observe the real app |
+| [`/swe:external-agents <task>`](./skills/external-agents/SKILL.md) | You want workers on another agent CLI: OpenCode (Zen, Go, Copilot) or Antigravity (Gemini) |
 | [`/swe:writing <document or path>`](./skills/writing/SKILL.md) | You write prose: docs, PR bodies, handoffs, plans, or replies |
 | [`/swe:writing-for-agents <skill or AGENTS.md path>`](./skills/writing-for-agents/SKILL.md) | You write a skill, `AGENTS.md`, or `CLAUDE.md` |
 | [`/swe:wait-what`](./skills/wait-what/SKILL.md) | You want the last message again in simpler words |
@@ -315,7 +316,6 @@ them, such as `/swe:how`.
 | [`/swe:how <subsystem or question>`](./skills/how/SKILL.md) | You want a walkthrough of how a subsystem works |
 | [`/swe:architect <feature or interface>`](./skills/architect/SKILL.md) | You want competing designs explored before code |
 | [`/swe:swarm <task>`](./skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
-| [`/swe:opencode <task>`](./skills/opencode/SKILL.md) | You want parallel OpenCode workers on Zen, Go, Copilot, or other models |
 | [`/swe:figure-it-out <task>`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
 | [`/swe:create-formal-verification-skill [area or bug]`](./skills/create-formal-verification-skill/SKILL.md) | Tests cannot reach the case that breaks a race, retry, state machine, or parser |
 | [`/swe:maintain-formal-verification-skill [verify skill or area]`](./skills/maintain-formal-verification-skill/SKILL.md) | Code that a formal verification covers changed without a recheck |
