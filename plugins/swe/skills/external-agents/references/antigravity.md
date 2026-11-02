@@ -64,7 +64,8 @@ No permission rule stops the `search_web` tool: runs with `read_url(*)` and
 guard, so send no secret in a prompt that a search query could leak.
 
 `--edit` drops the `write_file` deny, allows writes in the task's `dir`, and
-adds `--mode accept-edits`. Commands, web, and MCP stay denied. This is agy's
+adds `--mode accept-edits`. Commands, URL reads, browser actions, and MCP
+stay denied. This is agy's
 permission engine, not an OS sandbox. `--sandbox` adds OS containment for
 shell commands, which the script never allows.
 
