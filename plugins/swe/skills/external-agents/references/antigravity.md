@@ -65,9 +65,8 @@ guard, so send no secret in a prompt that a search query could leak.
 
 `--edit` drops the `write_file` deny, allows writes in the task's `dir`, and
 adds `--mode accept-edits`. Commands, URL reads, browser actions, and MCP
-stay denied. This is agy's
-permission engine, not an OS sandbox. `--sandbox` adds OS containment for
-shell commands, which the script never allows.
+stay denied. This is agy's permission engine, not an OS sandbox. `--sandbox`
+adds OS containment for shell commands, which the script never allows.
 
 The user's global rules (`~/.gemini/config/AGENTS.md`) still load. A rule that
 tells the model to use a shell tool makes it try a command, which headless
