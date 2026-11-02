@@ -48,3 +48,20 @@ sandbox.
 - Some models are slow. A worker can take several minutes; `--timeout` is
   600 seconds per attempt by default.
 - `--out <dir>` keeps each attempt's raw event stream for a failed worker.
+
+## Delegate
+
+Run one worker in the worktree with OpenCode's own bypass flag. In OpenCode
+2.2.5, `opencode run --help` says: "--auto  Auto-approve permissions that are
+not explicitly denied". OpenCode 1.19.5 has the same flag. Deny rules in the
+user's OpenCode config still apply.
+
+```sh
+cd <worktree>
+opencode run --standalone --auto --format json -m <provider/model> \
+  -- "<prompt>" < /dev/null > <out>/delegate.jsonl
+```
+
+On OpenCode 1.x, use `--pure` in place of `--standalone`. The last `text`
+event holds the final answer, and an `error` event holds a failure. Wrap the
+run in `timeout 3600` so a stalled model cannot hold it forever.

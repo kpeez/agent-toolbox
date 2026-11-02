@@ -297,7 +297,7 @@ Each of these also starts on its own when its task comes up.
 | [`/swe:correct <repeated mistake>`](./skills/correct/SKILL.md) | Agents keep making the same mistake |
 | [`/swe:ship-pr [PR number or action]`](./skills/ship-pr/SKILL.md) | You want a commit, a push, and a draft PR driven to green |
 | [`/swe:verification-skill [app or surface]`](./skills/verification-skill/SKILL.md) | Your project has no scripted way to run and observe the real app |
-| [`/swe:external-agents <task>`](./skills/external-agents/SKILL.md) | You want workers on another agent CLI: OpenCode (Zen, Go, Copilot) or Antigravity (Gemini) |
+| [`/swe:external-agents <task>`](./skills/external-agents/SKILL.md) | You want workers on another agent CLI, OpenCode (Zen, Go, Copilot) or Antigravity (Gemini): a swarm of small questions, or a whole spec to build that Claude then reviews |
 | [`/swe:writing <document or path>`](./skills/writing/SKILL.md) | You write prose: docs, PR bodies, handoffs, plans, or replies |
 | [`/swe:writing-for-agents <skill or AGENTS.md path>`](./skills/writing-for-agents/SKILL.md) | You write a skill, `AGENTS.md`, or `CLAUDE.md` |
 | [`/swe:wait-what`](./skills/wait-what/SKILL.md) | You want the last message again in simpler words |

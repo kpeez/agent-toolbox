@@ -87,3 +87,20 @@ that refuses a write in plain text still has status `ok`, so read its text.
   stdin to end it.
 - Parallel runs in one directory work. Each run gets its own conversation.
 - Result lines print in completion order, not task order.
+
+## Delegate
+
+Run one worker in the worktree with agy's own bypass flag. In agy 1.4.12,
+`agy --help` says: "--dangerously-skip-permissions  Auto-approve all tool
+permission requests without prompting".
+
+```sh
+cd <worktree>
+agy --print="<prompt>" --dangerously-skip-permissions \
+  --model <slug> --output-format json --print-timeout 60m \
+  < /dev/null > <out>/delegate.json
+```
+
+Read `status`, `finished_reason`, and `response` from the envelope as in
+[Headless behavior](#headless-behavior). `--output-format stream-json` in
+place of `json` shows each tool step while the run goes on.

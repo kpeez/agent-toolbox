@@ -1,15 +1,21 @@
 ---
 name: external-agents
-description: "Run one-shot workers on another agent CLI, such as OpenCode (Zen, Go, Copilot models) or Antigravity `agy` (Gemini models), then verify their results. Use when the user asks for OpenCode, Antigravity, agy, or Gemini workers, a swarm on one of them, or a second opinion from one."
+description: "Run workers on another agent CLI, such as OpenCode (Zen, Go, Copilot models) or Antigravity `agy` (Gemini models): a swarm of small read-only questions, or a whole spec delegated for implementation that Claude then reviews and fixes. Use when the user asks for OpenCode, Antigravity, agy, or Gemini workers, a swarm or second opinion on one, or to hand one a spec to build."
 argument-hint: "<task>"
 ---
 
 # External agents
 
-The lead is this session. It splits the work, writes each worker's brief,
-runs the workers through the harness script, and owns every result.
-[swarm](../swarm/SKILL.md) owns the shapes, the brief fields, and the single
-report. `<skill-dir>` is this skill's directory.
+The lead is this session. It writes each worker's brief, runs the workers
+through the harness script, and owns every result. `<skill-dir>` is this
+skill's directory.
+
+The skill has two modes:
+
+- **Swarm**: three to five workers, each with one bounded read-only question.
+  The lead checks every claim.
+- **Delegate**: one worker builds a whole spec in its own worktree. The lead
+  then reviews the work against the spec and finishes it.
 
 ## Harnesses
 
@@ -34,7 +40,7 @@ line per task with `id`, `model`, `effort`, `status` (`ok`, `error`, or
 `timeout`), `exit`, `seconds`, `attempts`, `text` (the final answer), `error`,
 and `session`. [workers.py](scripts/workers.py) holds this contract.
 
-## Steps
+## Swarm
 
 1. **Check the harness.** Run the version check in the reference.
 2. **Choose models.** Follow the reference. Use a paid model only when the
@@ -57,10 +63,38 @@ and `session`. [workers.py](scripts/workers.py) holds this contract.
    `timeout` is a gap, not a pass.
 7. **Report.** Give one report per [swarm](../swarm/SKILL.md#phase-d-report):
    the verified results, the harness and model of each worker, and the gaps.
+   [swarm](../swarm/SKILL.md) owns the shapes and the brief fields.
 
-## Edits
+Use `--edit` only when a swarm worker must write files. Every task then needs
+its own `dir`, such as a git worktree from `git worktree add`. The reference
+says what the harness allows.
 
-Use `--edit` only when a worker must write files. Every task then needs its
-own `dir`, such as a git worktree from `git worktree add`. The reference says
-what the harness allows in each mode. Review each worktree's diff as you
-would a stranger's patch before you take any of it.
+## Delegate
+
+1. **Check the harness and choose the model** as in the swarm steps. Pick a
+   strong model at `high` effort or above.
+2. **Fix the spec.** The spec is a file the worker can read. It names each
+   requirement, the files in scope, and the commands that build and test the
+   work. Number the requirements, such as `R1-csv-bom`. A spec with an open
+   product decision goes back to the user first.
+3. **Make the worktree.** Run
+   `git worktree add -b <branch> <path> <base>`. The worker gets this path as
+   its `dir`, and nothing else.
+4. **Run the worker.** Run the delegate command in the harness reference,
+   in the worktree. It calls the CLI directly with its own permission
+   bypass, because a denied tool ends a headless run early. The worker can
+   then run any command and reach the network. The prompt points to the
+   spec, says to build and test every requirement, and asks for a final list
+   of each requirement with `done` or `not done`.
+5. **Review against the spec.** Read the whole diff in the worktree. Mark
+   each requirement met, partly met, or missing, with `path:line` evidence.
+   Look for changes outside the spec's scope. The worker's own list is a
+   claim, not evidence.
+6. **Run the checks yourself.** Run the spec's build and test commands in the
+   worktree. A check the worker says passed counts only when your run passes.
+7. **Finish the work.** Fix each gap and failure yourself in the worktree.
+   When the gaps are large, send one more worker round with the open
+   requirements and your findings, then go back to step 5.
+8. **Report.** Give the requirement table, the changes you made after the
+   worker, the check results, and the branch. Publish the branch per
+   [ship-pr](../ship-pr/SKILL.md).
