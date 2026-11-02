@@ -81,7 +81,7 @@ python3 -m unittest discover -s evals/skills/tests
 
 ## Fork the plugin
 
-swe is plain Markdown, scripts, and two JSON manifests. To change a playbook, a router rule, or a skill for your own use, fork the repository and install from your fork:
+swe is plain Markdown, scripts, and three JSON manifests. To change a playbook, a router rule, or a skill for your own use, fork the repository and install from your fork:
 
 ```text
 /plugin marketplace add <you>/agent-toolbox
