@@ -92,7 +92,7 @@ In Codex, run `codex plugin marketplace add <checkout>`, then `codex plugin add 
 
 Follow the repository rules in [AGENTS.md](../../../AGENTS.md) and [contributing](../../../docs/contributing.md) when you change the fork:
 
-- Keep the versions in `plugins/swe/.claude-plugin/plugin.json` and `plugins/swe/.codex-plugin/plugin.json` identical, and bump the patch number.
+- Keep the versions in `plugins/swe/.claude-plugin/plugin.json`, `plugins/swe/.codex-plugin/plugin.json`, and `plugins/swe/.antigravity-plugin/plugin.json` identical, and bump the patch number.
 - Keep every skill reference pointed at a file that exists in the plugin.
 - When you add or rename a playbook, add its line to the Playbooks list in the [router](../skills/swe-mode/SKILL.md#playbooks). The router matches only the playbooks it lists.
 - Run the [release checks](../../../docs/release-checks.md) before a broad release.

@@ -18,12 +18,24 @@ This page is for people who change this repository. Agent rules live in
 
 ## Versions
 
-Set each plugin's version by hand in both manifests, and keep them the same:
+Set each plugin's version by hand in all three manifests, and keep them the
+same:
 
 - `plugins/<plugin>/.claude-plugin/plugin.json`
 - `plugins/<plugin>/.codex-plugin/plugin.json`
+- `plugins/<plugin>/.antigravity-plugin/plugin.json`
 
 A mod has the Claude manifest only. Bump the patch number by default.
+
+Antigravity CLI (agy) reads plugin hooks only from `hooks.json` at the plugin
+root, so it skips `hooks/hooks.json`. Instead, `rules/AGENTS.md` is a symlink
+to `hooks/session-start.md`, and agy loads it as a plugin rule.
+
+`agy plugin validate plugins/swe` reports errors for the agents in
+`plugins/swe/agents/`. agy accepts only its own model tiers and a YAML list
+for `tools`, so it skips these agents and loads the rest of the plugin. Keep
+the Claude values (`model: opus`, `model: sonnet`, comma-separated `tools`):
+changing them to suit agy changes which model Claude Code runs.
 
 ## Checks
 
