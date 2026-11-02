@@ -22,7 +22,7 @@ When you correct agents for the same mistake again and again, the fix belongs in
 
 1. `architecture` removes the mistake. One owner per piece of state, one supported path per task, and no dead code for an agent to copy.
 2. `types` make the bad state impossible to write.
-3. `lint-or-check` fails the build with an error that names what to use instead.
+3. `lint-or-check` fails the build with an error that names what to use instead. It uses the linter the repository already runs, or an ast-grep rule with a rule test when that linter cannot express the pattern.
 4. `test` checks the behavior.
 5. `docs-last` writes a doc or agent rule, only for a judgment call. Nothing fails when an agent skips a doc.
 
@@ -30,7 +30,7 @@ When you correct agents for the same mistake again and again, the fix belongs in
 /swe:correct agents keep calling the database client directly instead of going through the repository layer
 ```
 
-correct reads the current correction, recent commits and reverts, review comments, and comments that explain workarounds. It groups the mistakes into classes. A class counts at its second occurrence. It fixes the most frequent classes first, one commit per class. It proves that each new enforcer fails on a real past mistake and passes on the fix. When a structural fix works, it removes the instruction that the fix replaces.
+correct reads the current correction, recent commits and reverts, review comments, and comments that explain workarounds. It groups the mistakes into classes. A class counts at its second occurrence. A bug that the code alone shows counts at its first: the `fix-bug` playbook turns it into a type, lint rule, or check right after the fix. correct fixes the most frequent classes first, one commit per class. It proves that each new enforcer fails on a real past mistake and passes on the fix. When a structural fix works, it removes the instruction that the fix replaces.
 
 correct also keeps a rule-to-enforcer table. In this repository the table is [docs/agent-rule-enforcers.md](../../../docs/agent-rule-enforcers.md), and a line in `AGENTS.md` points to it. Each row names the rule, the past mistakes, the level, the enforcer, and the command that runs it. When you correct a mistake whose rule is already in the table, correct checks that the enforcer still exists and still fails. An enforcer that stopped working counts as a repeat, so the fix moves to a higher level. In a project with no table, correct creates one in a docs file and adds one `AGENTS.md` line that points to it.
 
