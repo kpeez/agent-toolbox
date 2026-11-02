@@ -22,7 +22,7 @@ When you correct agents for the same mistake again and again, the fix belongs in
 
 1. `architecture` removes the mistake. One owner per piece of state, one supported path per task, and no dead code for an agent to copy.
 2. `types` make the bad state impossible to write.
-3. `lint-or-check` fails the build with an error that names what to use instead. It uses the linter the repository already runs, or an ast-grep rule with a rule test when that linter cannot express the pattern. Each rule is committed to the project, in `lint/rules/` with its test in `lint/rule-tests/`, and runs where the other linters run.
+3. `lint-or-check` fails the build with an error that names what to use instead. It uses the linter the repository already runs, or an ast-grep rule with a rule test when that linter cannot express the pattern. Each rule is committed to the project and runs where the other linters run. An ast-grep rule goes in `lint/rules/` with its test in `lint/rule-tests/` when the repository has no ast-grep config.
 4. `test` checks the behavior.
 5. `docs-last` writes a doc or agent rule, only for a judgment call. Nothing fails when an agent skips a doc.
 
