@@ -1,6 +1,6 @@
 ---
 name: learn-review
-description: Revisit user-selected or recently learned concepts through active recall and focused exercises in chat. Use for a review or concept drill, one real learner response at a time.
+description: Review concepts that the user selects or met earlier in the chat, with active recall and focused drills, one answer at a time. Use when the user asks to review, drill, or refresh what they learned.
 argument-hint: "[concepts]"
 ---
 

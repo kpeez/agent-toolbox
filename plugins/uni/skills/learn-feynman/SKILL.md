@@ -1,6 +1,6 @@
 ---
 name: learn-feynman
-description: Diagnose and improve the learner's own explanation of an already encountered concept. Ask for a from-memory explanation, check mechanisms and precision, teach gaps, and request revision or application.
+description: "Check and improve the learner's own from-memory explanation of a concept they have already met. Use when the learner wants to explain an idea back to you, or asks \"check my understanding\" or \"did I get this right?\"."
 argument-hint: "<concept>"
 ---
 

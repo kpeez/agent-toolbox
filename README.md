@@ -7,7 +7,7 @@ Antigravity CLI. Install the plugins you need. Each one works alone.
 | --- | --- |
 | [`swe`](./plugins/swe/README.md) | A router that runs software work through playbooks, skills, and principles, and ends with evidence |
 | [`lab`](./plugins/lab/README.md) | Cited research memos and reports, experiment loops, and plot guidance |
-| [`uni`](./plugins/uni/README.md) | Interactive lessons with questions, recall, and exercises |
+| [`uni`](./plugins/uni/README.md) | Interactive lessons, quizzes, reviews, and prerequisite-gated courses |
 
 The [Claude Code mods](./docs/mods.md) add live panes for tool calls,
 subagents, and the session.
