@@ -1,6 +1,6 @@
 ---
 name: teach
-description: Teach the user a new skill or concept, within this workspace.
+description: "Build a persistent learning workspace in this folder: mission, HTML lessons, references, and learning records, gated by a tech tree."
 disable-model-invocation: true
 argument-hint: "[topic]"
 ---

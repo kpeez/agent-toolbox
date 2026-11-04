@@ -1,6 +1,6 @@
 ---
 name: learn-refute
-description: Tutor through criticism and repair of a learner's conjecture, explanation, proof sketch, or algorithm. Test assumptions and counterexamples while distinguishing false claims, invalid arguments, and empirical uncertainty.
+description: "Test and repair the learner's claim, proof sketch, argument, or algorithm with counterexamples and checks of its assumptions. Use when the learner asks you to critique or check their proof, argument, or solution (\"is my solution wrong?\")."
 argument-hint: "<claim or argument>"
 ---
 

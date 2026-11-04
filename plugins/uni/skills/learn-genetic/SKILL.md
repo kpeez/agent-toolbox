@@ -1,6 +1,6 @@
 ---
 name: learn-genetic
-description: Help a learner reconstruct the need for an idea from a concrete problem and the limits of familiar approaches. Use for why a concept or representation exists, with adaptive guidance and explicit consolidation.
+description: Lead the learner to rediscover why an idea exists, from a concrete problem where familiar approaches fail. Use when the learner asks why a concept, rule, or representation is needed, or how someone could have invented it.
 argument-hint: "<concept>"
 ---
 

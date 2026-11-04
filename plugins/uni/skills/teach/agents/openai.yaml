@@ -1,2 +1,5 @@
+interface:
+  display_name: "Teaching workspace"
+  short_description: "Build HTML lessons and references in a folder"
 policy:
   allow_implicit_invocation: false

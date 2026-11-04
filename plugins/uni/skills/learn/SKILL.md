@@ -1,6 +1,6 @@
 ---
 name: learn
-description: Teach interactive lessons with questions, active recall, and exercises that deepen understanding and application. Choose useful uni methods without requiring pedagogical labels. Do not turn ordinary coding or answer requests into a lesson.
+description: "Tutor the user through an interactive lesson with questions, active recall, and exercises that build understanding. Use when the user asks to learn a topic, to be taught, or to understand how or why something works (\"teach me\", \"help me understand\", \"I am rusty on\"). Answer coding and direct-answer requests normally."
 argument-hint: "<topic>"
 ---
 
