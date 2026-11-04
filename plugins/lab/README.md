@@ -21,6 +21,12 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add lab@agent-toolbox
 ```
 
+Antigravity CLI (`agy`):
+
+```text
+agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/lab
+```
+
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), for
 Claude Code, Codex, and other agents that read Agent Skills:
 
@@ -38,6 +44,7 @@ To update:
   `claude plugin update lab@agent-toolbox`.
 - Codex: `codex plugin marketplace upgrade agent-toolbox`, then
   `codex plugin add lab@agent-toolbox` again.
+- agy: run the `agy plugin install` command again. It replaces the old copy.
 - npx skills: `npx skills update`.
 
 ## Go deeper on each new task
@@ -47,7 +54,8 @@ The Claude Code plugin adds a SessionStart hook. It tells the agent to run
 sources, real methods, and an outside check, then the rewritten task. swe, lab,
 and uni each carry an identical copy, so each plugin works alone.
 
-Codex plugins and the skills-only install have no hooks. Add this line to
+agy runs no hooks, but it loads the same rule from
+[`rules/AGENTS.md`](./rules/AGENTS.md). Codex plugins and the skills-only install have no hooks. Add this line to
 `AGENTS.md` or `CLAUDE.md` to get the same behavior:
 
 ```text

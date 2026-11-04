@@ -4,6 +4,12 @@ Mods add panes and bands to the Claude Code interface. They run only in Claude
 Code, so only the Claude catalog lists them. Each mod is its own plugin under
 [`claude-mods/`](../claude-mods/).
 
+Add the marketplace once, then install each mod you want:
+
+```text
+claude plugin marketplace add kpeez/agent-toolbox
+```
+
 | Mod | Install | Open | What it shows |
 | --- | --- | --- | --- |
 | `activity` | `claude plugin install activity@agent-toolbox` | `/activity` | Each tool call with its status and duration. Click a call for its full input and error. |
