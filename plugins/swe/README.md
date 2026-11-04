@@ -24,6 +24,15 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 ```
 
+Antigravity CLI (`agy`), from a clone. Link the plugin into agy's plugins
+folder:
+
+```text
+git clone https://github.com/kpeez/agent-toolbox ~/code/agent-toolbox
+mkdir -p ~/.gemini/config/plugins
+ln -s ~/code/agent-toolbox/plugins/swe ~/.gemini/config/plugins/swe
+```
+
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), for
 Claude Code, Codex, and other agents that read Agent Skills:
 
@@ -43,12 +52,15 @@ To update:
   `claude plugin update swe@agent-toolbox`.
 - Codex: `codex plugin marketplace upgrade agent-toolbox`, then
   `codex plugin add swe@agent-toolbox` again.
+- agy: `git -C ~/code/agent-toolbox pull`.
 - npx skills: `npx skills update`.
 
 In Claude Code, a SessionStart hook tells the agent to start the router for
 each new software task, so you can also type the task without the command.
-Codex plugins have no hooks. [Set up swe](./docs/01-setup.md) gives the lines
-to put in `AGENTS.md`.
+agy runs no hooks, but it loads the same rule from
+[`rules/AGENTS.md`](./rules/AGENTS.md). It skips the swe agents. Codex plugins
+have no hooks. [Set up swe](./docs/01-setup.md) gives the lines to put in
+`AGENTS.md`.
 
 New here? Ask [`/swe:help`](./skills/help/SKILL.md) a question, such as "which
 skill reviews a PR?". The [swe guide](./docs/README.md) walks you through a

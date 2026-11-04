@@ -1,6 +1,6 @@
 # Set up swe
 
-This page shows you how to install the `swe` plugin in Claude Code or Codex, make every session use the router, and run your first task. Setup is two commands and, in Codex, a few lines in `AGENTS.md`.
+This page shows you how to install the `swe` plugin in Claude Code, Codex, or Antigravity CLI (`agy`), make every session use the router, and run your first task. Setup is two or three commands and, in Codex, a few lines in `AGENTS.md`.
 
 ## Install the plugin
 
@@ -18,9 +18,17 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 ```
 
+In agy, clone the repository and link the plugin into agy's plugins folder:
+
+```text
+git clone https://github.com/kpeez/agent-toolbox ~/code/agent-toolbox
+mkdir -p ~/.gemini/config/plugins
+ln -s ~/code/agent-toolbox/plugins/swe ~/.gemini/config/plugins/swe
+```
+
 Start a new session after you install. The plugin needs no setup step, no config file, and no generated `AGENTS.md`.
 
-To update, run `claude plugin marketplace update agent-toolbox`, then `claude plugin update swe@agent-toolbox`. In Codex, run `codex plugin marketplace upgrade agent-toolbox`, then `codex plugin add swe@agent-toolbox` again.
+To update, run `claude plugin marketplace update agent-toolbox`, then `claude plugin update swe@agent-toolbox`. In Codex, run `codex plugin marketplace upgrade agent-toolbox`, then `codex plugin add swe@agent-toolbox` again. In agy, run `git -C ~/code/agent-toolbox pull`.
 
 ## Install the skills only
 
@@ -41,6 +49,8 @@ The plugin adds a SessionStart hook. At the start of every session, it puts a sh
 So you do not have to type `/swe:swe-mode` each time. The agent starts the router itself, also after a short prompt such as "continue". The rule does not apply to chat, quick factual answers, and work that is not software.
 
 The plugin also adds a PostCompact hook that saves a session summary to the branch's handoff file. [Run long work](07-long-runs.md) covers it.
+
+agy runs no hooks. It loads the same rule from [rules/AGENTS.md](../rules/AGENTS.md) at the start of every session, so the router starts the same way. agy has no PostCompact hook and skips the `daedalus` and `comment-sicko` agents, so delegated work uses agy's own subagents.
 
 ## Add the router rule to AGENTS.md (Codex)
 
