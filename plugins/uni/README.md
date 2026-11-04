@@ -60,13 +60,6 @@ Codex invocation uses `$learn`; Claude Code uses `/uni:learn`.
 
 Each install path brings every uni skill. Shared references stay inside the
 plugin; no separate installer or runtime is needed.
-If you previously copied the chat skills into a project, preserve any edits
-before removing those copies to avoid duplicate discovery.
-
-`teach` was previously a standalone skill. After updating Uni, remove only a
-legacy `~/.codex/skills/teach` or `~/.agents/skills/teach` symlink that points to
-the former repository path. Preserve independently edited directories. Its
-workflow, templates, upstream license, and explicit-only invocation are intact.
 
 ## Go deeper on each new task
 
@@ -190,7 +183,7 @@ ignored `artifacts/uni-build/` directory; they are not distributed with the plug
 
 ## Files
 
-- `skills/*/SKILL.md`: ten operational entry points and UI metadata.
+- `skills/*/SKILL.md`: eleven entry points and UI metadata.
 - `skills/tech-tree/`: graph format, edge review brief, design notes, and the
   `tech_tree.py` gating script (Python standard library only).
 - `skills/learn/references/`: shared contract, examples, and evidence notes.

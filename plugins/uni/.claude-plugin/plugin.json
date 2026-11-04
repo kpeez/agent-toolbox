@@ -1,10 +1,10 @@
 {
   "name": "uni",
-  "description": "Interactive lessons with questions, active recall, and concept exercises",
-  "version": "0.1.11",
+  "description": "Interactive lessons, quizzes, reviews, and prerequisite-gated courses",
+  "version": "0.1.12",
   "author": { "name": "kpeez", "email": "krpuhger@gmail.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",
   "license": "MIT",
-  "keywords": ["learning", "tutoring", "active-recall", "exercises", "understanding"]
+  "keywords": ["learning", "tutoring", "teaching", "quiz", "active-recall", "exercises", "curriculum", "prerequisites"]
 }

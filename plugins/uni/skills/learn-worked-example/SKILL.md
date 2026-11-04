@@ -1,6 +1,6 @@
 ---
 name: learn-worked-example
-description: Teach through a small worked example, selective explanation prompts, completion problems, and independent attempts. Use for missing prerequisites, stalled discovery, unfamiliar procedures, or requested instruction.
+description: "Teach a procedure through a small worked example, then completion problems, then an independent attempt. Use when the learner is stuck, lacks a prerequisite, or asks \"show me how\" or for an example."
 argument-hint: "<procedure or concept>"
 ---
 

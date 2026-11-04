@@ -1,6 +1,6 @@
 ---
 name: learn-quiz
-description: Administer source-grounded retrieval and diagnostic questions one at a time, with private answer preparation, fair grading, feedback, and adaptive follow-up. Use for an interactive quiz rather than a worksheet or simulated dialogue.
+description: "Quiz the learner with one source-grounded question at a time, graded fairly, with feedback and adaptive follow-up. Use when the user says \"quiz me\" or \"test me\" on a topic or a source."
 argument-hint: "<topic or source>"
 ---
 
