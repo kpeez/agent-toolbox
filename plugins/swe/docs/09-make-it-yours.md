@@ -88,7 +88,7 @@ swe is plain Markdown, scripts, and three JSON manifests. To change a playbook, 
 /plugin install swe@agent-toolbox
 ```
 
-In Codex, run `codex plugin marketplace add <checkout>`, then `codex plugin add swe@agent-toolbox`. The Codex install is a copy, so add the plugin again after each source edit. To try a local edit in Claude Code, start `claude --plugin-dir <checkout>/plugins/swe`. In agy, link `<checkout>/plugins/swe` into `~/.gemini/config/plugins/swe` as [Set up swe](01-setup.md#install-the-plugin) shows; a new session reads each edit.
+In Codex, run `codex plugin marketplace add <checkout>`, then `codex plugin add swe@agent-toolbox`. The Codex install is a copy, so add the plugin again after each source edit. To try a local edit in Claude Code, start `claude --plugin-dir <checkout>/plugins/swe`. In agy, `agy plugin install <checkout>/plugins/swe` also makes a copy. To have each new session read your edits, link the folder instead: `ln -s <checkout>/plugins/swe ~/.gemini/config/plugins/swe`.
 
 Follow the repository rules in [AGENTS.md](../../../AGENTS.md) and [contributing](../../../docs/contributing.md) when you change the fork:
 

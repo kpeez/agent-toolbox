@@ -24,13 +24,10 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 ```
 
-Antigravity CLI (`agy`), from a clone. Link the plugin into agy's plugins
-folder:
+Antigravity CLI (`agy`):
 
 ```text
-git clone https://github.com/kpeez/agent-toolbox ~/code/agent-toolbox
-mkdir -p ~/.gemini/config/plugins
-ln -s ~/code/agent-toolbox/plugins/swe ~/.gemini/config/plugins/swe
+agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe
 ```
 
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), for
@@ -52,7 +49,7 @@ To update:
   `claude plugin update swe@agent-toolbox`.
 - Codex: `codex plugin marketplace upgrade agent-toolbox`, then
   `codex plugin add swe@agent-toolbox` again.
-- agy: `git -C ~/code/agent-toolbox pull`.
+- agy: run the `agy plugin install` command again. It replaces the old copy.
 - npx skills: `npx skills update`.
 
 In Claude Code, a SessionStart hook tells the agent to start the router for

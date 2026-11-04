@@ -35,19 +35,17 @@ codex plugin add lab@agent-toolbox
 codex plugin add uni@agent-toolbox
 ```
 
-Antigravity CLI (`agy`), from a clone. Link each plugin into agy's plugins
-folder:
+Antigravity CLI (`agy`):
 
 ```text
-git clone https://github.com/kpeez/agent-toolbox ~/code/agent-toolbox
-mkdir -p ~/.gemini/config/plugins
-ln -s ~/code/agent-toolbox/plugins/swe ~/.gemini/config/plugins/swe
-ln -s ~/code/agent-toolbox/plugins/lab ~/.gemini/config/plugins/lab
-ln -s ~/code/agent-toolbox/plugins/uni ~/.gemini/config/plugins/uni
+agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe
+agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/lab
+agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/uni
 ```
 
-agy loads the skills and the session-start rule. It runs no hooks and skips
-the swe agents.
+`agy plugin install https://github.com/kpeez/agent-toolbox` installs all
+three. agy loads the skills and the session-start rule. It runs no hooks and
+skips the swe agents.
 
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), one
 plugin per command:

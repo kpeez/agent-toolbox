@@ -18,17 +18,15 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 ```
 
-In agy, clone the repository and link the plugin into agy's plugins folder:
+In Antigravity CLI, run:
 
 ```text
-git clone https://github.com/kpeez/agent-toolbox ~/code/agent-toolbox
-mkdir -p ~/.gemini/config/plugins
-ln -s ~/code/agent-toolbox/plugins/swe ~/.gemini/config/plugins/swe
+agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/swe
 ```
 
 Start a new session after you install. The plugin needs no setup step, no config file, and no generated `AGENTS.md`.
 
-To update, run `claude plugin marketplace update agent-toolbox`, then `claude plugin update swe@agent-toolbox`. In Codex, run `codex plugin marketplace upgrade agent-toolbox`, then `codex plugin add swe@agent-toolbox` again. In agy, run `git -C ~/code/agent-toolbox pull`.
+To update, run `claude plugin marketplace update agent-toolbox`, then `claude plugin update swe@agent-toolbox`. In Codex, run `codex plugin marketplace upgrade agent-toolbox`, then `codex plugin add swe@agent-toolbox` again. In agy, run the `agy plugin install` command again; it replaces the old copy.
 
 ## Install the skills only
 
