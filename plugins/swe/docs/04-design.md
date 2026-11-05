@@ -72,7 +72,7 @@ In Claude Code, when you type `/swe:swarm`, ask for a workflow, or turn on ultra
 /swe:external-agents find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
 ```
 
-`external-agents` runs three to five one-shot workers on another agent CLI, OpenCode or Antigravity (`agy`), and checks every answer in the code before it reports. Name the CLI in your prompt; with no name, it uses OpenCode. There is no runner script: the lead starts each worker with the command in the CLI's reference. An agy worker runs its commands in agy's OS sandbox with no network. An OpenCode worker has no sandbox and can do anything you can. In Claude Code auto mode, see [host-permissions.md](../skills/external-agents/references/host-permissions.md) first.
+`external-agents` runs three to five one-shot workers on another agent CLI, OpenCode or Antigravity (`agy`), and checks every answer in the code before it reports. Name the CLI in your prompt; with no name, it uses OpenCode. There is no runner script: the lead starts each worker with the command in the CLI's reference. An agy worker runs its commands in agy's OS sandbox with no network. An OpenCode worker has no sandbox and can do anything you can. In questions mode, the workers share a throwaway worktree, so they cannot change your files or the lead's. In Claude Code auto mode, see [host-permissions.md](../skills/external-agents/references/host-permissions.md) first.
 
 For a large task, hand one worker a whole spec:
 

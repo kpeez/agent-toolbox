@@ -48,11 +48,13 @@ harness reference before step 1.
   user's main checkout, make one with `git worktree add` and work there.
   Every worker in the run shares it. The worktree is only the worker's
   working directory, not a boundary: an OpenCode worker can reach the main
-  checkout, and every worktree shares one `.git` and one stash list.
+  checkout, and every worktree shares one `.git` and one stash list. In
+  questions mode, the workers get their own throwaway worktree instead
+  (questions step 5).
 - **Run folder.** Make the run folder with `mktemp -d`, outside the
   repository. Below, `<run>` is its real absolute path, as `realpath` prints
-  it, `<id>` is the worker's slug, and `<worktree>` is the real path of your
-  current directory, as `pwd -P` prints it.
+  it, `<id>` is the worker's slug, and `<worktree>` is the real path of the
+  directory the worker runs in, as `pwd -P` prints it.
 - **Brief as a file.** Write each brief to `<run>/<id>.md`, so the brief
   needs no shell quoting and stays out of the diff. A worker sees no chat,
   so the brief names the goal, the paths to read, the commands it may need,
@@ -75,22 +77,30 @@ harness reference before step 1.
 3. **Frame the questions.** Pick a shape from [swarm](../swarm/SKILL.md): a
    coverage matrix for one slice per worker, or a race for one brief on
    several models. Keep three to five workers, each with one bounded
-   question. The workers share your worktree, so each brief also says not to
-   change files.
+   question. Each brief says not to change files.
 4. **Write the briefs and set the effort.** Pick an effort per worker as you
    would for a native subagent: `low` for mechanical lookups, `medium` for
    routine reading, `high` or above for judgment. The reference says how to
    set it.
-5. **Run it.** If you have uncommitted work you cannot lose, commit it
-   first. Keep the output of `git rev-parse HEAD`, `git stash list`, and
-   `git status --short`. Then start every worker with the command in the
-   reference.
+5. **Run it in a throwaway worktree.**
+   1. Workers see only committed code. If the questions are about
+      uncommitted work, commit it first.
+   2. Add `/.external-agents/` to the file that
+      `git rev-parse --git-path info/exclude` names, if it is not there.
+   3. Run `git worktree add --detach .external-agents/<name> HEAD`, where
+      `<name>` is the last part of `<run>`.
+   4. Keep the output of `git rev-parse HEAD` and `git stash list`.
+   5. `cd` into the new worktree. Start every worker there with the command
+      in the reference.
 6. **Verify.** Read each answer. Check each claim in the code before you use
    it. Drop claims you cannot confirm. For a race, apply the selection rule
    you declared in step 3.
-7. **Check for changes.** Run the three commands from step 5 again. A
-   change since then is a worker's: noise, not a result. Undo it, and say so
-   in the report.
+7. **Check for changes and clean up.**
+   1. `cd` back to your worktree.
+   2. Run `git rev-parse HEAD` and `git stash list` again. A difference is a
+      worker's git change. Undo it, and say so in the report.
+   3. Run `git worktree remove --force .external-agents/<name>`. This
+      discards every file change the workers made.
 8. **Report.** Give one report per [swarm](../swarm/SKILL.md#phase-d-report):
    the verified results, the harness and model of each worker, and the gaps.
 

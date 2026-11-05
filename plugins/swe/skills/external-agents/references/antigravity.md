@@ -39,13 +39,15 @@ denied. On macOS, `$TMPDIR` is under `/var`, a link to `/private/var`.
 {
   "toolPermission": "proceed-in-sandbox",
   "permissions": {
-    "allow": ["read_file(<run>)", "write_file(<worktree>)"]
+    "allow": ["read_file(<run>)", "write_file(<worktree>)"],
+    "deny": ["mcp(*)", "execute_url(*)"]
   }
 }
 ```
 
-The same command serves a questions worker and a delegate. Run it from your
-worktree as one plain command, with no `cd` or `env` in front, so that a
+The same command serves a questions worker and a delegate. Run it from the
+worker's worktree, the throwaway worktree for a questions worker or your own
+worktree for a delegate, as one plain command, with no `cd` or `env` in front, so that a
 narrow permission rule for `agy` can match it (see
 [host-permissions.md](host-permissions.md)). Put either `--model <slug>` or
 `--effort <level>` where the command shows `<model or effort>`.
@@ -58,6 +60,8 @@ agy --print="Read <run>/<id>.md and follow it. End with your answer as plain tex
   OS sandbox with no prompt: Seatbelt on macOS, kernel namespaces on Linux.
   Tested on agy 1.5.1: a command could write in the worktree, could not
   write outside it, and had no network.
+- The deny rules block MCP tools and browser actions, which the sandbox
+  does not cover. Shell commands and file edits stay allowed.
 - The file tools may read the workspace by default. The allow rules add the
   run folder, for the brief, and writes in the worktree. Headless mode
   denies any other read or write, because it cannot ask. `--add-dir` alone

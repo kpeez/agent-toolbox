@@ -42,8 +42,9 @@ it has none. This rerun is not the worker's one retry.
 
 ## Run a worker
 
-The same command serves a questions worker and a delegate. Run it from your
-worktree as one plain command, with no `cd`, `env`, or `timeout` in front,
+The same command serves a questions worker and a delegate. Run it from the
+worker's worktree, the throwaway worktree for a questions worker or your own
+worktree for a delegate, as one plain command, with no `cd`, `env`, or `timeout` in front,
 so that a narrow permission rule for `opencode run` can match it (see
 [host-permissions.md](host-permissions.md)).
 
