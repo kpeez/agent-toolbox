@@ -86,9 +86,11 @@ These hold in every playbook and route, in addition to the steps.
   the problem they solve, and, when the task ships a change, the smallest
   change you expect to meet it (`in-your-own-words`). Do not wait for
   confirmation. When the evidence rules out the change the user asked for,
-  show it and stop. Restate the goal in each subagent brief, and open each
-  PR's `## Why` with it. Open each final report with it too, except after a
-  fully specified one-line edit.
+  show it and stop. Restate the goal in each subagent brief and at the start
+  of each final report, except after a fully specified one-line edit. This
+  restatement is for the chat only. A PR body follows the
+  [PR body template](../ship-pr/references/pr-body.md) and never names the
+  requester or the chat.
 - Any code: name the data shape first, and choose its structure per
   `model-the-domain`.
 - A nontrivial change, an architecture decision, or "are we sure?": run `how`

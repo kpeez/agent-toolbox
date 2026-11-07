@@ -21,6 +21,18 @@
           }
         ]
       }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Bash",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "python3 \"$CLAUDE_PLUGIN_ROOT\"/skills/ship-pr/scripts/pr_body.py hook",
+            "timeout": 10
+          }
+        ]
+      }
     ]
   }
 }

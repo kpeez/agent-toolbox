@@ -171,7 +171,7 @@
     {
       "upstream": "skills/arena/",
       "class": "dropped",
-      "note": "Kyle dropped arena; evals run through swarm"
+      "note": "arena dropped; evals run through swarm"
     },
     {
       "upstream": "skills/automate-me/",

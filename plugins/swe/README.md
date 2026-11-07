@@ -54,6 +54,8 @@ To update:
 
 In Claude Code, a SessionStart hook tells the agent to start the router for
 each new software task, so you can also type the task without the command.
+A PreToolUse hook blocks `gh pr create` and `gh pr edit` unless the body is
+the filled `ship-pr` template, built with `pr_body.py render`.
 agy runs no hooks, but it loads the same rule from
 [`rules/AGENTS.md`](./rules/AGENTS.md). It skips the swe agents. Codex plugins
 have no hooks. [Set up swe](./docs/01-setup.md) gives the lines to put in
