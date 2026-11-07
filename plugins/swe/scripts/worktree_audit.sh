@@ -17,6 +17,14 @@
 # (merged into the base, or its PR is closed or merged), review (none of
 # these).
 #
+# After the table it lists the folders under .agents/scratch (the link is
+# resolved), one row each, in three groups: merged (the folder name matches a
+# local branch merged into the base, by ancestry or by a merged PR, so safe to
+# delete), orphan (no local branch has that name), stale (a live branch, but
+# the folder mtime is older than 30 days). The folder name is the branch name
+# with "/" replaced by "-". It removes nothing; step 6 of clean-worktrees
+# deletes the merged folders.
+#
 # The session scan reads only this repository's Claude Code project folders
 # under ~/.claude/projects/: the main checkout's and each worktree's.
 set -u
@@ -160,3 +168,31 @@ git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}'
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
 		"$size" "$age" "$merged" "$dirty" "$remote" "$pr" "$last" "$bucket" "$wt"
 done | sort -t$'\t' -k1,1 -rh
+
+# Scratch folders. .agents/scratch is a link to one folder shared by every
+# checkout, so resolving it from the main checkout covers them all.
+scratch=$(cd -P "$main_wt/.agents/scratch" 2>/dev/null && pwd -P)
+if [ -n "$scratch" ]; then
+	echo
+	echo "# scratch: $scratch"
+	printf "GROUP\tSIZE\tAGE\tPATH\n"
+	for dir in "$scratch"/*/; do
+		[ -d "$dir" ] || continue
+		dir="${dir%/}"
+		name="${dir##*/}"
+		found=no; unmerged=no
+		while IFS= read -r b; do
+			[ "$(printf '%s' "$b" | tr / -)" = "$name" ] || continue
+			found=yes
+			git merge-base --is-ancestor "refs/heads/$b" "$base" 2>/dev/null \
+				|| awk -F'\t' -v b="$b" '$1 == b && $2 ~ /\/merged$/ {f=1} END {exit !f}' "$prs" \
+				|| unmerged=yes
+		done < <(git for-each-ref --format='%(refname:short)' refs/heads)
+		mt=$(mtime "$dir"); age=$(( (now - ${mt:-$now}) / 86400 ))
+		if [ "$found" = no ]; then group=orphan
+		elif [ "$unmerged" = no ]; then group=merged
+		elif [ "$age" -gt 30 ]; then group=stale
+		else continue; fi
+		printf "%s\t%s\t%sd\t%s\n" "$group" "$(du -sh "$dir" 2>/dev/null | awk '{print $1}')" "$age" "$dir"
+	done | sort -t$'\t' -k1,1
+fi
