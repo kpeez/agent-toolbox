@@ -159,7 +159,8 @@ it applies. The leaf is `../principle-<slug>/SKILL.md`.
 **Architecture**
 
 - `model-the-domain`: stateful logic, heavy branching, or one shape assumption
-  repeated across files. Encode the domain in a structure.
+  repeated across files. Encode the domain in a structure. In existing
+  code, find implicit state machines and make them explicit.
 - `boundary-discipline`: validation, error handling, or framework adapters.
   Guard at the system edge and trust internal types.
 - `type-system-discipline`: types or signatures in a typed language. Make
