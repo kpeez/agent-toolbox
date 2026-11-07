@@ -19,5 +19,6 @@ mkdir -p ~/agent-scratch/<repo>
 ln -s ~/agent-scratch/<repo> .agents/scratch
 ```
 
-Git ignores `.agents/scratch`. Delete your own scratch folder when the task
-ends. The `clean-worktrees` playbook removes the folders of merged branches.
+Git ignores `.agents/scratch`. Keep your scratch folder until the branch
+merges, so its evidence outlives the worktree. The `clean-worktrees` playbook
+removes the folders of merged branches.

@@ -19,8 +19,9 @@
 #
 # After the table it lists the folders under .agents/scratch (the link is
 # resolved), one row each, in three groups: merged (the folder name matches a
-# local branch merged into the base, by ancestry or by a merged PR, so safe to
-# delete), orphan (no local branch has that name), stale (a live branch, but
+# local branch merged into the base, by ancestry or by a merged PR, or a merged
+# PR whose branch is gone, so safe to delete), orphan (no branch or merged PR
+# has that name), stale (a live branch, but
 # the folder mtime is older than 30 days). The folder name is the branch name
 # with "/" replaced by "-". It removes nothing; step 6 of clean-worktrees
 # deletes the merged folders.
@@ -188,6 +189,10 @@ if [ -n "$scratch" ]; then
 				|| awk -F'\t' -v b="$b" '$1 == b && $2 ~ /\/merged$/ {f=1} END {exit !f}' "$prs" \
 				|| unmerged=yes
 		done < <(git for-each-ref --format='%(refname:short)' refs/heads)
+		# A branch deleted after its PR merged leaves no local ref.
+		[ "$found" = no ] && awk -F'\t' -v n="$name" \
+			'{h = $1; gsub("/", "-", h)} h == n && $2 ~ /\/merged$/ {f=1} END {exit !f}' "$prs" \
+			&& found=yes
 		mt=$(mtime "$dir"); age=$(( (now - ${mt:-$now}) / 86400 ))
 		if [ "$found" = no ]; then group=orphan
 		elif [ "$unmerged" = no ]; then group=merged
