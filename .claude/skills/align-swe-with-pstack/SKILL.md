@@ -43,11 +43,15 @@ path). Run it from the repository root.
    Decide for each change:
    - **Port** it when its intent applies to swe. Write it in the swe file's
      style. Keep swe names, swe host terms, draft-first PRs, and swe decisions.
+     Keep the `ship-pr` PR body template: never port a clause that adds a PR
+     heading or puts the requester or the chat into a PR body.
    - **Skip** it when it is Cursor-only, already in swe, or conflicts with a
      swe decision.
    Keep this review brief. Port the intent, not the upstream wording. Write
    one line per file: ported or skipped, and why. Add each skip that is not
-   a wording change to `references/decisions.md`.
+   a wording change to `references/decisions.md`. Write each reason as a
+   fact about swe, such as "swe names skills with verbs", never as what a
+   person wants or approved.
 5. `5-classify-new`: For each `new` file, import it (add an item) or drop it
    (add a `dropped` item). For a deleted upstream file, delete its swe content
    or keep it as swe-only, and remove its item. Ask the user before you import
@@ -57,8 +61,8 @@ path). Run it from the repository root.
    `upstream.json` and to the README Credits link. Then run `check` again.
 7. `7-ship`: Bump the swe patch version in both plugin manifests. Run the
    checks that `AGENTS.md` names for the changed files. Open a draft PR with
-   the `ship-pr` skill. List the upstream commit range and the step 4 lines
-   in the PR body.
+   the `ship-pr` skill. Put the upstream commit range and the step 4 lines
+   in the body's Summary section. The template allows no extra headings.
 
 ## Rules
 

@@ -1,27 +1,53 @@
 # Pull-request body template
 
-Use this template for writing the PR body:
+A PR body describes the change as it will merge. The reader is a reviewer who
+never saw the chat. Write it from the diff, the base branch, and the linked
+issue, not from the conversation.
 
-```markdown
-## Summary
+## How the body is built
 
-<diagram, diff-sketch, or tree>
+The agent never writes the body or its headings. It writes one file per slot
+of [templates/pr-body.md](../templates/pr-body.md), and the script fills the
+template:
 
-## Evidence
+| Slot file | Content |
+| --- | --- |
+| `summary.md` | Motivation in one or two sentences, as a problem in the system, then the visual. See [Summary](#summary). |
+| `evidence.md` | Before and after. See [Evidence](#evidence). |
+| `reversible.md` | `yes`, or `no:` and what a revert leaves behind. See [Risk](#risk). |
+| `blast_radius.md` | One word, then optional ramifications. See [Risk](#risk). |
 
-- **Before:** <screenshot/output/failing test run>
-  **After:** <screenshot/output/passing test run>
-
-## Risk
-
-**Reversible:** <yes, or no: what a revert leaves behind>
-
-<optional: description>
-
-**Blast Radius:** <one-word description>
-
-<optional: potential ramifications of merge>
+```bash
+python3 <ship-pr>/scripts/pr_body.py render <slot-folder> --link "Fixes ABC-123" -o body.md
+gh pr create --draft --title "<title>" --body-file body.md
 ```
+
+`<ship-pr>` is this skill's directory. `render` refuses a slot that is
+missing or empty, holds a heading, or names the requester or the chat. A
+swe `PreToolUse` hook runs the same check before every `gh pr create` and
+`gh pr edit`. It blocks an inline `--body`, `--fill`, and any body file that
+is not the filled template. In a repo with its own
+`pull_request_template.md`, follow that template; the hook then checks
+only for requester attribution. Fix the content; never work around the hook.
+
+## Rules for slot content
+
+1. Never name the requester, the user, or the chat. No "the user asked", "the
+   user wants", "as requested", "per your request", or "in this session". A
+   decision is a fact about the change.
+2. Describe the net change only. Leave out abandoned attempts, the order of
+   work, and the commands you ran.
+3. Write from the diff, the base branch, and the linked issue, not from the
+   conversation.
+
+Bad `summary.md`:
+
+> The user asked for a faster cache, as discussed in the chat.
+
+Good `summary.md`:
+
+> Each save rewrites the whole cache, so a large project takes 4 s to save.
+> Write only the changed entries.
 
 ## Sections
 
@@ -164,4 +190,4 @@ The blast radius is the potential impact or scope of the changes introduced by t
 
 ## Closing line
 
-End the body with `Fixes #123` (or `Part of #123`) when the work has an issue. See `6-link-issue` in [ship-pr](../SKILL.md).
+Pass `--link "Fixes #123"` (or `--link "Part of #123"`) to `render` when the work has an issue. See `6-link-issue` in [ship-pr](../SKILL.md).

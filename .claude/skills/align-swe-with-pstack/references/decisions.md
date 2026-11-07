@@ -14,19 +14,19 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `poteto-mode` | `swe-mode` and the SessionStart hook | swe name. The hook replaces the Cursor Custom Mode. | #174, #182 |
 | `poteto-help` | `help` | swe name. | #182 |
 | `sharpen` | `go-deeper` | go-deeper frames each new task and then does it. It also has a prompt-only mode. One copy each in swe, lab, and uni. | #192 |
-| `show-me-your-work` | `log-decisions` | Kyle wants verb names. JSONL log, not TSV. | #171 |
+| `show-me-your-work` | `log-decisions` | swe names skills with verbs. JSONL log, not TSV. | #171 |
 | `bro` | `wait-what` | Existing swe name. | #174 |
 | `tdd` | `testing-code` | swe already had a test skill. The failing-test-first cadence is merged into it. | #174 |
 | `technical-writing`, `unslop` | `writing` | One writing hub with prose, ASD-STE100, and show-me references. | #176 |
 | `create-verification-skill`, `maintain-verification-skill` | `verification-skill` | One skill creates the skill, or audits it when it exists. | #174 |
 | `interrogate` | `references/review-brief.md` | Cross-model review adds little when only Claude runs. Callers start a fresh reviewer subagent with the brief. | #175 |
-| `docs/guide/02-poteto-mode.md` | swe `README.md` Usage section | Kyle wants the full routing detail in the swe README. Sequence diagram, not flowchart. | #202 |
+| `docs/guide/02-poteto-mode.md` | swe `README.md` Usage section | The swe README carries the full routing detail. Sequence diagram, not flowchart. | #202 |
 
 ## Dropped
 
 | pstack | Why | PR |
 | --- | --- | --- |
-| `arena` | Kyle dropped it. The eval playbook runs candidates and the blinded judge through `swarm`. | #174 |
+| `arena` | Dropped. The eval playbook runs candidates and the blinded judge through `swarm`. | #174 |
 | `teach` | The uni plugin owns teaching. | #174 |
 | `automate-me`, `make-bot-ui` | Persona and Cursor UI. | #174 |
 | `setup-pstack` | Cursor setup. swe installs as a plugin. | #174 |
@@ -40,15 +40,15 @@ line for each entry, with the PR. Do not record a skipped wording change.
 
 | pstack | Why | PR |
 | --- | --- | --- |
-| `statechart` | Kyle approved. Node scripts kept, not ported to Python: upstream code keeps its own language. Class `copied`. | #198 |
-| `ketchup-video` | Kyle approved. Class `copied`. | #200 |
-| `statechart` TypeScript compiler (cursor/plugins#977) | Kyle approved the full tree with the test corpus. It replaces the 26 `.mjs` scripts. Class `copied`. | #201 |
+| `statechart` | Imported on owner approval. Node scripts kept, not ported to Python: upstream code keeps its own language. Class `copied`. | #198 |
+| `ketchup-video` | Imported on owner approval. Class `copied`. | #200 |
+| `statechart` TypeScript compiler (cursor/plugins#977) | Full tree imported with the test corpus, on owner approval. It replaces the 26 `.mjs` scripts. Class `copied`. | #201 |
 
 ## Deleted swe content
 
 | swe | Why | PR |
 | --- | --- | --- |
-| `swe-mode/references/run-program.md` (program store, inbox, ledger, frontier) | Upstream made orchestrate agentic (cursor/plugins#1043). Kyle approved the port and the deletion. | #201 |
+| `swe-mode/references/run-program.md` (program store, inbox, ledger, frontier) | Upstream made orchestrate agentic (cursor/plugins#1043). Port and deletion made on owner approval. | #201 |
 
 ## Skipped upstream changes
 
@@ -64,5 +64,6 @@ line for each entry, with the PR. Do not record a skipped wording change.
 
 | pstack | swe | Why | PR |
 | --- | --- | --- | --- |
-| `poteto-mode` Autonomy and `opening-a-pr`: PRs open ready; merge only in Shipping on request | `ship-pr` Publication authority: an implementation request covers commits, pushes, a draft PR, and a merge without review once verified and checks pass; local-only or a hold point overrides | Kyle moved this rule from his global agent rules into swe (dotfiles#73). | #203 |
-| `bug-fix` playbook: no step encodes the bug; `correct` counts a class at its second occurrence | `fix-bug` step `10-encode-bug-class` turns a bug that the code alone shows into a type, lint rule, or check; `correct` counts such a bug at its first occurrence | Kyle wants each found bug to become a lint rule. | #207 |
+| `poteto-mode` Autonomy and `opening-a-pr`: PRs open ready; merge only in Shipping on request | `ship-pr` Publication authority: an implementation request covers commits, pushes, a draft PR, and a merge without review once verified and checks pass; local-only or a hold point overrides | The rule moved from global agent rules into swe (dotfiles#73). | #203 |
+| `bug-fix` playbook: no step encodes the bug; `correct` counts a class at its second occurrence | `fix-bug` step `10-encode-bug-class` turns a bug that the code alone shows into a type, lint rule, or check; `correct` counts such a bug at its first occurrence | swe turns each found bug into a lint rule. | #207 |
+| `poteto-mode` first-message trigger: open each PR's `## Why` with the user's goal (ported in #201) | The goal restatement stays in the chat and subagent briefs. `ship-pr` builds the PR body from `templates/pr-body.md` with `pr_body.py render`, and a `PreToolUse` hook blocks any other body | The ported clause made PR bodies open with `## Why` and requester attribution (#207, #212). Do not port it again. | fix/pr-body-guard |
