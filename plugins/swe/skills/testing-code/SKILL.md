@@ -134,8 +134,8 @@ instead.
 
 ## Probe when useful
 
-Use a safe available scratch location, such as `artifacts/temp/`, when the
-behavior, interface, or oracle is uncertain. Do not require an ignore-file edit
+Use `.agents/scratch/<branch-slug>/` ([agent scratch](../../references/agent-scratch.md))
+when the behavior, interface, or oracle is uncertain. Do not require an ignore-file edit
 just to run a probe. Exercise real imports, types, and call sites. Give the
 probe one command, a meaningful exit status, and enough output to distinguish
 the result. Delete task-owned probes after they become stable evidence or their

@@ -51,8 +51,10 @@ harness reference before step 1.
   checkout, and every worktree shares one `.git` and one stash list. In
   questions mode, the workers get their own throwaway worktree instead
   (questions step 5).
-- **Run folder.** Make the run folder with `mktemp -d`, outside the
-  repository. Below, `<run>` is its real absolute path, as `realpath` prints
+- **Run folder.** Make the run folder
+  `.agents/scratch/<branch-slug>/external-agents/<stamp>/`
+  ([agent scratch](../../references/agent-scratch.md)), where `<stamp>` is a
+  timestamp. Below, `<run>` is its real absolute path, as `realpath` prints
   it, `<id>` is the worker's slug, and `<worktree>` is the real path of the
   directory the worker runs in, as `pwd -P` prints it.
 - **Brief as a file.** Write each brief to `<run>/<id>.md`, so the brief
@@ -87,8 +89,7 @@ harness reference before step 1.
       uncommitted work, commit it first.
    2. Add `/.external-agents/` to the file that
       `git rev-parse --git-path info/exclude` names, if it is not there.
-   3. Run `git worktree add --detach .external-agents/<name> HEAD`, where
-      `<name>` is the last part of `<run>`.
+   3. Run `git worktree add --detach .external-agents/<stamp> HEAD`.
    4. Keep the output of `git rev-parse HEAD` and `git stash list`.
    5. `cd` into the new worktree. Start every worker there with the command
       in the reference.
@@ -99,7 +100,7 @@ harness reference before step 1.
    1. `cd` back to your worktree.
    2. Run `git rev-parse HEAD` and `git stash list` again. A difference is a
       worker's git change. Undo it, and say so in the report.
-   3. Run `git worktree remove --force .external-agents/<name>`. This
+   3. Run `git worktree remove --force .external-agents/<stamp>`. This
       discards every file change the workers made.
 8. **Report.** Give one report per [swarm](../swarm/SKILL.md#phase-d-report):
    the verified results, the harness and model of each worker, and the gaps.

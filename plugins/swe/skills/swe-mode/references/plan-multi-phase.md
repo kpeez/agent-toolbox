@@ -107,7 +107,7 @@ Each live lane runs in its own worktree or cloud session at the PR head. Drive t
 - [ ] `git fetch origin <head-branch> && git checkout <head SHA>`.
 - [ ] <Start the backend and the surface. Wait for ready.>
 - [ ] <Deliver input only through the verification skill's commands. Name the read-only diagnostics.>
-- [ ] Save every screenshot to `/tmp/swarm-<pr-id>/worker-<n>/<slug>.png` and return the paths with the report.
+- [ ] Save every screenshot to `.agents/scratch/<branch-slug>/swarm-<pr-id>/worker-<n>/<slug>.png` ([agent scratch](../../../references/agent-scratch.md)) and return the paths with the report.
 
 ## <Task as a verb phrase> (<PR id>)
 

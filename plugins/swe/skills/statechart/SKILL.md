@@ -11,7 +11,7 @@ The chart shows how a system moves between states, in the words of the person wh
 
 ## Run
 
-Work in a scratch folder outside the repo. Write a TLA+ spec and its config. Then run:
+Work in `.agents/scratch/<branch-slug>/` ([agent scratch](../../references/agent-scratch.md)). Write a TLA+ spec and its config. Then run:
 
 ```sh
 <skill dir>/scripts/statechart SPEC.tla [--config FILE] [--view FILE] [--out DIR]
