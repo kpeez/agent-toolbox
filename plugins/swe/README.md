@@ -213,7 +213,7 @@ playbook runs [worktree_audit.sh](./scripts/worktree_audit.sh) to sort each
 worktree by merge state and uncommitted work. It asks you which sessions still
 use a worktree, and that answer wins over the audit. It pauses before it
 removes any worktree with uncommitted edits. It also lists the agent scratch
-folders and deletes those of merged branches after the same confirmation.
+folders and deletes those of merged branches after you confirm that list.
 
 ### Leave it running
 

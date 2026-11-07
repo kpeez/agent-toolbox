@@ -106,7 +106,7 @@ The [`run-program`](../skills/swe-mode/playbooks/run-program.md) playbook is for
 /swe:swe-mode clean up merged worktrees.
 ```
 
-The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playbook runs [`worktree_audit.sh`](../scripts/worktree_audit.sh), asks you which sessions are in use, and pauses on uncommitted work. It removes only confirmed worktrees, deletes the agent scratch folders of merged branches, and reports `df -h /` before and after.
+The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playbook runs [`worktree_audit.sh`](../scripts/worktree_audit.sh), asks you which sessions are in use, and pauses on uncommitted work. It removes only confirmed worktrees, deletes the agent scratch folders of merged branches that you confirm, and reports `df -h /` before and after.
 
 ## Delegate work
 
