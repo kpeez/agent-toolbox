@@ -72,7 +72,7 @@ In Claude Code, when you type `/swe:swarm`, ask for a workflow, or turn on ultra
 /swe:external-agents find every caller of parse_config under src/ and say which ones ignore its error. one worker per package.
 ```
 
-`external-agents` runs three to five one-shot workers on another agent CLI and checks their answers. It supports OpenCode, which reaches OpenCode Zen, OpenCode Go, GitHub Copilot, and any other provider you connected, and Antigravity (`agy`), which runs Gemini models. Name the CLI in your prompt; with no name, it uses OpenCode. The lead writes one JSON task list, and the CLI's script in [scripts/](../skills/external-agents/scripts/) runs the tasks in parallel, rotates them over a model pool, and retries a failed task once on the next model. The lead sets each worker's effort level (`low` to `max`), and the script maps it to the nearest level the model offers. Workers are read-only unless you ask for edits, and then each worker gets its own worktree. The lead checks every worker claim in the code before it reports.
+`external-agents` runs three to five one-shot workers on another agent CLI, OpenCode or Antigravity (`agy`), and checks every answer in the code before it reports. Name the CLI in your prompt; with no name, it uses OpenCode. There is no runner script: the lead starts each worker with the command in the CLI's reference. An agy worker runs its commands in agy's OS sandbox with no network. An OpenCode worker has no sandbox and can do anything you can. In questions mode, the workers share a throwaway worktree, so they cannot change your files or the lead's. In Claude Code auto mode, see [host-permissions.md](../skills/external-agents/references/host-permissions.md) first.
 
 For a large task, hand one worker a whole spec:
 
@@ -80,11 +80,11 @@ For a large task, hand one worker a whole spec:
 /swe:external-agents give antigravity the spec in docs/specs/csv-import.md to implement, then review it
 ```
 
-In delegate mode, the lead makes a worktree and runs one worker there with the CLI's own permission bypass (`agy --dangerously-skip-permissions` or `opencode run --auto`), so a denied tool cannot end the run early. The worker can run any command in that mode. When it ends, the lead checks each spec requirement against the diff, runs the build and tests itself, fixes the gaps, and reports a requirement table and the branch.
+In delegate mode, the lead commits its own changes first, so the worker's diff stands alone, then runs one worker with a longer time limit. When it ends, the lead checks each spec requirement against the diff, runs the build and tests itself, fixes the gaps, and reports a requirement table and the branch.
 
 Each CLI has a reference in [references/](../skills/external-agents/references/):
 
-- [OpenCode](../skills/external-agents/references/opencode.md): needs OpenCode 2.x (`@opencode/cli`) or 1.x (`opencode-ai`). The pool is your saved choice in `~/.config/swe/opencode.json`. With no saved pool, the workers rotate over every live OpenCode Zen stealth model, all free. A paid model runs only when you name it.
+- [OpenCode](../skills/external-agents/references/opencode.md): needs OpenCode 2.x (`@opencode/cli`). The pool is your saved choice in `~/.config/swe/opencode.json`. With no saved pool, the workers use the free `opencode/deepseek-v4.1-flash-free`. A paid model runs only when you name it.
 - [Antigravity](../skills/external-agents/references/antigravity.md): needs `agy`, signed in once in an interactive session. The workers use your agy model unless you name model slugs.
 
 Providers can keep your prompts, so use the skill only on code you agree to send to them.
