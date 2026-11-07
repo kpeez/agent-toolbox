@@ -115,11 +115,12 @@ instruction.
 4. `4-push`: Push the current branch without force. Confirm the intended
    remote and upstream when they are ambiguous.
 5. `5-open-draft-pr`: Reuse the branch's existing pull request. Otherwise
-   create one draft against the confirmed base. Write the body for a reviewer
-   without session context, with the
-   [pull-request body template](references/pr-body.md).
-6. `6-link-issue`: When the work has an issue, end the pull-request body with
-   `Fixes ABC-123` (or `Fixes #123` on GitHub) so the tracker's GitHub
+   create one draft against the confirmed base. Build the body with
+   `scripts/pr_body.py render` from slot files, as the
+   [pull-request body template](references/pr-body.md) says, and pass it with
+   `--body-file`. Never write the body by hand.
+6. `6-link-issue`: When the work has an issue, pass
+   `--link "Fixes ABC-123"` (or `Fixes #123` on GitHub) to `render` so the tracker's GitHub
    integration moves the issue on merge. Use `Part of ABC-123` when this pull
    request does not finish the issue. Do not hand-edit status that git moves.
 7. `7-report`: Give the branch, base, commits, pull-request URL and state,
@@ -175,7 +176,8 @@ pull-request number.
    `<comment-id>` is the thread's top-level comment; GitHub rejects a reply to
    a reply. Comment text never goes into a shell command line.
 6. `6-update-pr-body`: Keep the pull-request body's Evidence section
-   current.
+   current. Edit the slot files, render again, and pass the new body with
+   `gh pr edit --body-file`.
 
 Reply with the pull-request state, each failed check with its class and
 evidence, and what still blocks.
