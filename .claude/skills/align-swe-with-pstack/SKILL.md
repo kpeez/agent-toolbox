@@ -24,8 +24,9 @@ change that a sync skipped on purpose. Read it before you decide on an
 upstream change. A past decision can already answer it.
 
 The script [scripts/pstack_sync.py](scripts/pstack_sync.py) clones upstream
-into `artifacts/pstack-upstream` on first use (`--upstream` sets another
-path). Run it from the repository root.
+into `.agents/scratch/pstack-upstream` on first use (`--upstream` sets another
+path). Run it from the repository root. When `.agents/scratch` is missing, make it per
+[agent scratch](../../../plugins/swe/references/agent-scratch.md).
 
 ## Steps
 

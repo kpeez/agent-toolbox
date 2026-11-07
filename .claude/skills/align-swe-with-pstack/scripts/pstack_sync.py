@@ -192,7 +192,7 @@ def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--upstream",
-        default=str(REPO / "artifacts" / "pstack-upstream"),
+        default=str(REPO / ".agents" / "scratch" / "pstack-upstream"),
         help="local clone of the upstream repo (cloned on first use)",
     )
     sub = parser.add_subparsers(dest="command", required=True)

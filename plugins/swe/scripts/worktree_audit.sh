@@ -17,6 +17,17 @@
 # (merged into the base, or its PR is closed or merged), review (none of
 # these).
 #
+# After the table it lists the folders under .agents/scratch (the link is
+# resolved), one row each, in three groups. The folder name is the branch
+# name with "/" replaced by "-". A folder is merged (safe to delete) only when
+# all are true: a merged PR has that head name; no open or draft PR has it;
+# every local branch with that name has its tip at a merged PR's head commit;
+# and the name is not the base branch or a branch checked out in any
+# worktree. Without gh data no folder is merged. orphan: no local branch and
+# no merged PR has the name. stale: any other folder with mtime older than 30
+# days. It removes nothing; step 6 of clean-worktrees deletes the merged
+# folders.
+#
 # The session scan reads only this repository's Claude Code project folders
 # under ~/.claude/projects/: the main checkout's and each worktree's.
 set -u
@@ -56,14 +67,14 @@ origin/*) git fetch origin "+refs/heads/${base#origin/}:refs/remotes/$base" --qu
 esac
 git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 || { echo "error: base ref not found: $base" >&2; exit 1; }
 
-# PR state by branch, fetched once as "<head>\t#<number>/<state>" lines with a
-# lowercase state. Empty when gh cannot read this repository's PRs.
+# PR state by branch, fetched once as "<head>\t#<number>/<state>\t<head-oid>"
+# lines with a lowercase state. Empty when gh cannot read this repository's PRs.
 prs=$(mktemp)
 trap 'rm -f "$prs"' EXIT
 if command -v gh >/dev/null 2>&1; then
 	gh pr list --author "@me" --state all --limit 1000 \
-		--json number,state,isDraft,headRefName \
-		--jq '.[] | "\(.headRefName)\t#\(.number)/\(if .isDraft and .state == "OPEN" then "draft" else (.state | ascii_downcase) end)"' \
+		--json number,state,isDraft,headRefName,headRefOid \
+		--jq '.[] | "\(.headRefName)\t#\(.number)/\(if .isDraft and .state == "OPEN" then "draft" else (.state | ascii_downcase) end)\t\(.headRefOid)"' \
 		> "$prs" 2>/dev/null || : > "$prs"
 	[ -s "$prs" ] || echo "warn: gh returned no PRs; PR column is empty" >&2
 else
@@ -160,3 +171,40 @@ git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}'
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
 		"$size" "$age" "$merged" "$dirty" "$remote" "$pr" "$last" "$bucket" "$wt"
 done | sort -t$'\t' -k1,1 -rh
+
+# Scratch folders. .agents/scratch is a link to one folder shared by every
+# checkout, so resolving it from the main checkout covers them all.
+scratch=$(cd -P "$main_wt/.agents/scratch" 2>/dev/null && pwd -P)
+if [ -n "$scratch" ]; then
+	echo
+	echo "# scratch: $scratch"
+	printf "GROUP\tSIZE\tAGE\tPATH\n"
+	live=$( { printf '%s\n' "$base" "${base#*/}"
+		git worktree list --porcelain | awk '/^branch refs\/heads\//{sub(/^branch refs\/heads\//, ""); print}'
+	} | tr / -)
+	for dir in "$scratch"/*/; do
+		[ -d "$dir" ] || continue
+		dir="${dir%/}"
+		name="${dir##*/}"
+		mt=$(mtime "$dir"); age=$(( (now - ${mt:-$now}) / 86400 ))
+		merged_oids=$(awk -F'\t' -v n="$name" '{h = $1; gsub("/", "-", h)} h == n && $2 ~ /\/merged$/ {print $3}' "$prs")
+		tips=$(git for-each-ref --format='%(refname:lstrip=2) %(objectname)' refs/heads \
+			| awk -v n="$name" '{h = $1; gsub("/", "-", h)} h == n {print $2}')
+		group=""
+		# A false merged deletes data, so every check must pass.
+		if [ -n "$merged_oids" ] \
+			&& ! awk -F'\t' -v n="$name" '{h = $1; gsub("/", "-", h)} h == n && $2 ~ /\/(open|draft)$/ {f=1} END {exit !f}' "$prs" \
+			&& ! printf '%s\n' "$live" | grep -qxF -- "$name"; then
+			group=merged
+			for t in $tips; do
+				printf '%s\n' "$merged_oids" | grep -qxF -- "$t" || group=""
+			done
+		fi
+		if [ -z "$group" ]; then
+			if [ -z "$tips" ] && [ -z "$merged_oids" ]; then group=orphan
+			elif [ "$age" -gt 30 ]; then group=stale
+			else continue; fi
+		fi
+		printf "%s\t%s\t%sd\t%s\n" "$group" "$(du -sh "$dir" 2>/dev/null | awk '{print $1}')" "$age" "$dir"
+	done | sort -t$'\t' -k1,1
+fi
