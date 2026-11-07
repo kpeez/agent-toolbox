@@ -379,7 +379,7 @@ a prompt to steer the agent, as in "fix the root cause, not the symptom".
 | [experience-first](./skills/principle-experience-first/SKILL.md) | core | Choose the user's experience over implementation convenience. |
 | [exhaust-the-design-space](./skills/principle-exhaust-the-design-space/SKILL.md) | core | With no precedent, build two or three competing prototypes and compare them. |
 | [build-the-lever](./skills/principle-build-the-lever/SKILL.md) | core | Build the script, codemod, or generator that does or proves the work. |
-| [model-the-domain](./skills/principle-model-the-domain/SKILL.md) | architecture | Encode the domain in a data structure instead of scattered conditionals. |
+| [model-the-domain](./skills/principle-model-the-domain/SKILL.md) | architecture | Encode the domain in a data structure instead of scattered conditionals. Find implicit state machines in existing code. |
 | [boundary-discipline](./skills/principle-boundary-discipline/SKILL.md) | architecture | Guard at system boundaries, trust internal types, keep business logic pure. |
 | [type-system-discipline](./skills/principle-type-system-discipline/SKILL.md) | architecture | Make the compiler reject impossible states and unhandled variants. |
 | [make-operations-idempotent](./skills/principle-make-operations-idempotent/SKILL.md) | architecture | Make every rerun reach the same end state. |

@@ -17,6 +17,10 @@ experience friction:
 - Where have pure functions been extracted just for testability, but the real bugs hide in how they're called?
 - Where do tightly-coupled modules leak across their seams?
 - Which parts are untested, or hard to test through their current interface?
+- Where does state live in scattered flags, status strings, and repeated
+  guards? Find implicit state machines with the signs in
+  [model-the-domain](../../principle-model-the-domain/SKILL.md#find-implicit-state-machines),
+  and report each one as a candidate with its states and transitions.
 
 Apply the **deletion test** to anything you suspect is shallow.
 
