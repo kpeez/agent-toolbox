@@ -51,9 +51,10 @@ harness reference before step 1.
   checkout, and every worktree shares one `.git` and one stash list. In
   questions mode, the workers get their own throwaway worktree instead
   (questions step 5).
-- **Run folder.** Make the run folder with `mktemp -d`, outside the
-  repository. Below, `<run>` is its real absolute path, as `realpath` prints
-  it, `<id>` is the worker's slug, and `<worktree>` is the real path of the
+- **Run folder.** Make the run folder
+  `.agents/scratch/<branch-slug>/external-agents/<run>/`
+  ([agent scratch](../../references/agent-scratch.md)). Below, `<run>` is its
+  real absolute path, as `realpath` prints it, `<id>` is the worker's slug, and `<worktree>` is the real path of the
   directory the worker runs in, as `pwd -P` prints it.
 - **Brief as a file.** Write each brief to `<run>/<id>.md`, so the brief
   needs no shell quoting and stays out of the diff. A worker sees no chat,

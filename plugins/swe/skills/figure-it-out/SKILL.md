@@ -92,7 +92,7 @@ Reply: <what the reply gives>.
   step 1.
 - A code-changing playbook ends with a `publish-draft-pr` step (ship-pr).
 
-Save the file in the session scratch directory. For a long run, commit it
+Save the file in `.agents/scratch/<branch-slug>/` ([agent scratch](../../references/agent-scratch.md)). For a long run, commit it
 beside the decision log so the reviewer reads it in the PR.
 
 Then execute the design. Add one task per designed step to the host's task

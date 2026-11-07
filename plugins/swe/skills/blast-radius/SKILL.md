@@ -58,8 +58,8 @@ application ships and calls the exact function in question.
    evidence rules of `why`. Cite a real `file:line`; a search that finds
    nothing is an answer too. Never invent a caller or an API.
 5. `5-prove-the-fact`: Write a probe that runs the real code, run it, and
-   paste the result. Put the probe in a scratch location such as
-   `artifacts/temp/`. It becomes a permanent test only through the admission
+   paste the result. Put the probe in `.agents/scratch/<branch-slug>/`
+   ([agent scratch](../../references/agent-scratch.md)). It becomes a permanent test only through the admission
    gate in [testing-code](../testing-code/SKILL.md).
 6. `6-optional-independent-review`: For a large or wide change, give the
    change and your write-up to a reviewer with the
