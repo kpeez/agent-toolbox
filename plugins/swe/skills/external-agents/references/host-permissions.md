@@ -28,6 +28,10 @@ cannot ship settings that lift this, and the classifier does not read
    worker commands start with `opencode run` or `agy` and have no `cd`,
    `env`, or `timeout` prefix.
 
+   Run worker commands as plain `opencode run ...` or `agy ...`, never inside
+   `nu -c`, `bash -c`, or another wrapper. A wrapper prevents the allow rule
+   from matching, even when your own rules say to use `nu -c`.
+
    ```json
    "permissions": {
      "allow": ["Bash(opencode run *)", "Bash(agy *)"]
@@ -44,10 +48,12 @@ cannot ship settings that lift this, and the classifier does not read
    "autoMode": {
      "allow": [
        "$defaults",
-       "External Agent Workers: Starting `opencode run --auto` or `agy --sandbox` with `proceed-in-sandbox` settings for the swe external-agents skill is expected. Each worker runs in the lead's own git worktree for the task, not in the user's main checkout, on repository content the user chose to send to that provider. A worker in the user's main checkout, or a brief that holds secrets, is not covered."
+       "External Agent Workers: Starting `opencode run --auto` or `agy --sandbox` with `proceed-in-sandbox` settings for the swe external-agents skill is expected. An OpenCode scout whose config denies edit and shell tools may run in any directory, including the user's main checkout. Builders and agy workers run in the lead's own git worktree for the task, not in the user's main checkout. Workers use only repository content the user chose to send to that provider. A builder or agy worker in the user's main checkout, or a brief that holds secrets, is not covered."
      ]
    }
    ```
+
+A user who added the older `autoMode.allow` entry must update it by hand.
 
 Run `/permissions` and open the Recently blocked tab to see a block and its
 reason. `claude auto-mode config` prints the rules in effect.

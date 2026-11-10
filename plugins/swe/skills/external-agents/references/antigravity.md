@@ -47,7 +47,8 @@ denied. On macOS, `$TMPDIR` is under `/var`, a link to `/private/var`.
 
 The same command serves a questions worker and a delegate. Run it from the
 worker's worktree, the throwaway worktree for a questions worker or your own
-worktree for a delegate, as one plain command, with no `cd` or `env` in front, so that a
+worktree for a delegate, as one plain command, with no `cd` or `env` in front and no `nu -c` or
+`bash -c` around it, so that a
 narrow permission rule for `agy` can match it (see
 [host-permissions.md](host-permissions.md)). Put either `--model <slug>` or
 `--effort <level>` where the command shows `<model or effort>`.
