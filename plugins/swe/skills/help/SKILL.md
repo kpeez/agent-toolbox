@@ -129,7 +129,7 @@ Close calls:
 - `figure-it-out` designs one rigorous run. The `run-program` playbook runs a
   program across days and many PRs. The `run-autonomously` playbook drives
   one task to an exit condition.
-- `swarm` fans out native subagents. `external-agents` runs one-shot workers
+- `swarm` fans out native subagents. `external-agents` runs workers
   on another agent CLI, such as OpenCode or Antigravity.
 
 ## Playbooks and principles
