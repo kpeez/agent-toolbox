@@ -7,14 +7,12 @@ provider takes the same command.
 ## Check
 
 Run `opencode --version`. The skill needs OpenCode 2.x (npm `@opencode/cli`)
-and was tested on 2.2.5 and 2.2.6. OpenCode 1.x has different flags; ask the user to
-upgrade with `opencode upgrade`.
+and was tested on 2.2.5 and 2.2.6. OpenCode 1.x has different flags; ask the
+user to upgrade with `opencode upgrade`.
 
-Run `opencode service status`. When the service runs, it prints its local URL
-(such as `http://127.0.0.1:49374`). The background service starts workers
-faster (1–2s start) and keeps prompt caching across fix rounds. If it is
-stopped, start it once with `opencode service start`, or pass `--standalone`
-to start a private server per run.
+Workers run on OpenCode's background service. `opencode service status`
+prints its local URL, or `stopped`. A stopped service needs no action: the
+run then uses a private server and starts about 1.5 s slower.
 
 Run `opencode debug config` and confirm that agents named `scout` and `builder`
 exist. If either is missing, stop and show the user these definitions to add
@@ -65,9 +63,8 @@ or role is missing, or its list is empty, omit `-m` and use the agent's model.
 `opencode models` lists available model IDs. Never write OpenCode's own config.
 
 To see a model's effort variants, read `variants` in its entry in
-`opencode api model.list` (or `opencode api --standalone model.list` if the
-service is stopped). The output is large JSON, so filter it for the model;
-do not read it whole.
+`opencode api model.list`. The output is large JSON, so filter it for the
+model; do not read it whole.
 
 ## Effort
 
@@ -93,9 +90,9 @@ opencode run --auto --format json --agent <scout-or-builder> -m <provider/model>
 - When the background service runs, `opencode run` connects to it
   automatically. The daemon executes the worker in the client's working
   directory, so parallel workers stay isolated.
-- Pass `--standalone` only when the background service is stopped and you do
-  not want to start it, in CI or disposable containers, or when you need hard
-  process-level crash isolation.
+- Pass `--standalone` only in CI or a disposable container, or when a
+  worker must not stop if the service restarts. Put it directly after `run`:
+  `opencode run --standalone --auto ...`.
 - Omit `-m` when the role has no list. For delegate sessions and review
   rounds, see [Sessions](#sessions) below.
 - For a questions worker whose output should stay out of the user's interactive
@@ -120,26 +117,21 @@ opencode run --auto --format json --agent <scout-or-builder> -m <provider/model>
 
 ## Sessions
 
-OpenCode manages sessions on the background service. Each session has an ID
-starting with `ses_` and its own conversation history.
+Each run is a session with its own history. Every JSON event carries its
+`sessionID`.
 
-- **Session ID format.** A session ID must start with `ses_` (such as
-  `--session ses_<stamp>_<id>`). OpenCode rejects any other prefix.
 - **Start a delegate session.** On a builder's first run, pass
-  `--session ses_<stamp>_<id> --title "<title>"`.
-- **Resume a session.** For a review round or follow-up turn, pass the same
-  `--session ses_<stamp>_<id>` and attach only `<run>/<id>-review-<n>.md` with
-  `-f`. Do not re-send the original brief. The worker remembers all previous
-  turns, tool results, and git commits. Resuming on the running service hits
-  prompt cache and starts in 1–2 seconds.
-- **List sessions.** Run `opencode session list` to inspect top-level
-  sessions in the current project directory.
-- **Export session history.** Run `opencode session export <session-id>` to
-  export turns, tool calls, and token counts as JSON. Pass `--sanitize` to
-  redact sensitive content.
-- **Delete a session.** Run `opencode session delete <session-id>` to remove
-  a finished worker session and its child sessions from daemon memory and
-  disk.
+  `--session ses_<stamp>_<id> --title "<title>"`, so you know the ID for
+  later rounds.
+- **Resume a session.** For a review round, pass the same `--session` and
+  attach only `<run>/<id>-review-<n>.md` with `-f`. Do not send the original
+  brief again; the session keeps the earlier turns and tool results.
+- **Read a session's history.** `opencode session export <session-id>`
+  prints its turns, tool calls, and token counts as JSON.
+- **Delete a session.** When the report is done, run
+  `opencode session delete <session-id>` for each worker session. Delete a
+  builder session only after the last review round, because a resume needs
+  it.
 
 ## Read the result
 
