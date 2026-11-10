@@ -7,8 +7,14 @@ provider takes the same command.
 ## Check
 
 Run `opencode --version`. The skill needs OpenCode 2.x (npm `@opencode/cli`)
-and was tested on 2.2.5. OpenCode 1.x has different flags; ask the user to
+and was tested on 2.2.5 and 2.2.6. OpenCode 1.x has different flags; ask the user to
 upgrade with `opencode upgrade`.
+
+Run `opencode service status`. When the service runs, it prints its local URL
+(such as `http://127.0.0.1:49374`). The background service starts workers
+faster (1–2s start) and keeps prompt caching across fix rounds. If it is
+stopped, start it once with `opencode service start`, or pass `--standalone`
+to start a private server per run.
 
 Run `opencode debug config` and confirm that agents named `scout` and `builder`
 exist. If either is missing, stop and show the user these definitions to add
@@ -59,8 +65,9 @@ or role is missing, or its list is empty, omit `-m` and use the agent's model.
 `opencode models` lists available model IDs. Never write OpenCode's own config.
 
 To see a model's effort variants, read `variants` in its entry in
-`opencode api --standalone model.list`. The output is large JSON, so filter
-it for the model; do not read it whole.
+`opencode api model.list` (or `opencode api --standalone model.list` if the
+service is stopped). The output is large JSON, so filter it for the model;
+do not read it whole.
 
 ## Effort
 
@@ -80,31 +87,59 @@ in front and no `nu -c` or `bash -c` around it, so a narrow permission rule for 
 [host-permissions.md](host-permissions.md)).
 
 ```sh
-opencode run --standalone --auto --format json --agent <scout-or-builder> -m <provider/model>#<effort> -f <run>/<id>.md -- "Follow the attached brief." < /dev/null > <run>/<id>.json 2> <run>/<id>.log
+opencode run --auto --format json --agent <scout-or-builder> -m <provider/model>#<effort> -f <run>/<id>.md -- "Follow the attached brief." < /dev/null > <run>/<id>.json 2> <run>/<id>.log
 ```
 
-- Omit `-m` when the role has no list. For a builder's first run, add
-  `--session ses_<stamp>_<id> --title <title>`. For a review round, use the
-  same session ID and attach only `<run>/<id>-review-<n>.md` with `-f`.
-  Use a distinct output and log file for each run, so earlier evidence stays.
+- When the background service runs, `opencode run` connects to it
+  automatically. The daemon executes the worker in the client's working
+  directory, so parallel workers stay isolated.
+- Pass `--standalone` only when the background service is stopped and you do
+  not want to start it, in CI or disposable containers, or when you need hard
+  process-level crash isolation.
+- Omit `-m` when the role has no list. For delegate sessions and review
+  rounds, see [Sessions](#sessions) below.
+- For a questions worker whose output should stay out of the user's interactive
+  session list, add `--archived`.
 - OpenCode has no OS sandbox. The scout cannot edit or run shell commands;
   the builder has full tools subject to its config. The worktree is only its
   working directory. Send only content the user agreed to send to the provider.
-- `--standalone` starts a private server, so parallel workers share none.
 - `--auto` approves every tool that the user's OpenCode config does not
   deny. In OpenCode 2.2.5, `opencode run --help` says: "Auto-approve
   permissions that are not explicitly denied". Without it, a tool that needs
   approval cannot run headless.
 - OpenCode has no time limit of its own. Some models take several minutes.
   Stop a questions worker after 10 minutes and a delegate after 60: stop
-  its background command with your host's tool for that. Then run
-  `pgrep -fl "opencode run --standalone"`, and stop any process left from
-  that worker, because its private server can outlive the command.
+  its background command with your host's tool for that. When running with
+  `--standalone`, also run `pgrep -fl "opencode run --standalone"` and stop any
+  leftover process, because a private server can outlive the command.
 - Before the first run, check every OpenCode config that applies for
   `"share": "auto"`: the user's (`~/.config/opencode/opencode.json` or
   `.jsonc`), the project's `opencode.json`, and the file that
   `$OPENCODE_CONFIG` names. With it, every session is published as a link;
   ask the user before you run.
+
+## Sessions
+
+OpenCode manages sessions on the background service. Each session has an ID
+starting with `ses_` and its own conversation history.
+
+- **Session ID format.** A session ID must start with `ses_` (such as
+  `--session ses_<stamp>_<id>`). OpenCode rejects any other prefix.
+- **Start a delegate session.** On a builder's first run, pass
+  `--session ses_<stamp>_<id> --title "<title>"`.
+- **Resume a session.** For a review round or follow-up turn, pass the same
+  `--session ses_<stamp>_<id>` and attach only `<run>/<id>-review-<n>.md` with
+  `-f`. Do not re-send the original brief. The worker remembers all previous
+  turns, tool results, and git commits. Resuming on the running service hits
+  prompt cache and starts in 1–2 seconds.
+- **List sessions.** Run `opencode session list` to inspect top-level
+  sessions in the current project directory.
+- **Export session history.** Run `opencode session export <session-id>` to
+  export turns, tool calls, and token counts as JSON. Pass `--sanitize` to
+  redact sensitive content.
+- **Delete a session.** Run `opencode session delete <session-id>` to remove
+  a finished worker session and its child sessions from daemon memory and
+  disk.
 
 ## Read the result
 
