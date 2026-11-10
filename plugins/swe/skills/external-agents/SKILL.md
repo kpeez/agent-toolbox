@@ -111,6 +111,7 @@ harness reference before step 1.
    every file change the workers made.
 8. **Report.** Give one report per [swarm](../swarm/SKILL.md#phase-d-report):
    the verified results, the harness and model of each worker, and the gaps.
+   Then delete each OpenCode worker session as the reference says.
 
 ## Delegate
 
@@ -150,4 +151,5 @@ harness reference before step 1.
    your own commits on top.
 7. **Report.** Give the requirement table, rounds used, builder and lead
    commits, check results, and branch. Publish per [ship-pr](../ship-pr/SKILL.md)
-   only when the user asks.
+   only when the user asks. Then delete the OpenCode builder session as the
+   reference says.
