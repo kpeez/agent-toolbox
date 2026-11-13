@@ -66,7 +66,8 @@ harness reference before step 1.
   and how to stop a worker.
 - **A pane the user watches.** In Rex, when the user asks to watch an
   OpenCode worker or names a pane for it, follow the Rex pane section of
-  the OpenCode reference instead.
+  the OpenCode reference instead. A pane worker can ask the user for
+  approval, and it has no time limit.
 - **Status.** Classify each result using the reference. Both harnesses use
   `ok`, `error`, and `timeout`. Only OpenCode uses `rate_limited` and
   `auth_failed`. A non-`ok` result is a gap, not a pass. OpenCode

@@ -7,7 +7,7 @@ provider takes the same command.
 ## Check
 
 Run `opencode --version`. The skill needs OpenCode 2.x (npm `@opencode/cli`)
-and was tested on 2.2.5 and 2.2.6. OpenCode 1.x has different flags; ask the
+and was tested on 2.2.5, 2.2.6, and 2.2.7. OpenCode 1.x has different flags; ask the
 user to upgrade with `opencode upgrade`.
 
 Workers run on OpenCode's background service. `opencode service status`
@@ -144,6 +144,11 @@ rex split -b <block> --split=below --focus=false --label "<agent> · <id>" -c <w
   any error, as in [Read the result](#read-the-result).
 - `rex wait` does not work here: it reports the pane's process, which stays
   open.
+- An effort the model does not have gives no exit code here. Look for
+  `Variant unavailable` in the pane, then start the worker again at the
+  nearest level, as in [Effort](#effort).
+- A watched worker has no time limit. The user watches it and stops it with
+  `esc` in the pane.
 - Leave the pane open for the user. Delete the session only after the
   report, as in [Sessions](#sessions).
 
