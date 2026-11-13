@@ -115,6 +115,38 @@ opencode run --auto --format json --agent <scout-or-builder> -m <provider/model>
   `$OPENCODE_CONFIG` names. With it, every session is published as a link;
   ask the user before you run.
 
+## Run in a Rex pane
+
+When `REX_SESSION` is set and the user asks to watch a worker, or names a
+pane for it, run the worker in OpenCode's interactive `mini` interface in a
+Rex pane instead of with `opencode run`. The user then watches the worker
+think and answer, and can type into the session or stop it. Use this only
+when the user asks. Never use a pane to get around a host that blocked
+`opencode run`.
+
+Split the pane the user named, or your own pane (`$REX_BLOCK`), and start
+`mini` in the scout's or builder's directory:
+
+```sh
+rex split -b <block> --split=below --focus=false --label "<agent> · <id>" -c <worktree> -- opencode mini --agent <scout-or-builder> -m <provider/model>#<effort> --session ses_<stamp>_<id> --prompt "Follow the brief at <run>/<id>.md."
+```
+
+- `mini` sends `--prompt` as the first message. It has no `-f`, so the
+  prompt names the brief's path.
+- `mini` has no `--auto`. A tool that the config does not allow asks for
+  approval in the pane, and the user answers it there. A scout's web fetches
+  ran without a prompt in OpenCode 2.2.7.
+- `mini` stays open after the answer. Read the result with
+  `opencode session export ses_<stamp>_<id>`. A turn is done when
+  `info.time.idle` is at least `info.time.busy`. While a turn runs,
+  `info.outcome` still holds the previous turn's value, so check it only
+  after the turn is done. Then classify the result from the last text and
+  any error, as in [Read the result](#read-the-result).
+- `rex wait` does not work here: it reports the pane's process, which stays
+  open.
+- Leave the pane open for the user. Delete the session only after the
+  report, as in [Sessions](#sessions).
+
 ## Sessions
 
 Each run is a session with its own history. Every JSON event carries its
