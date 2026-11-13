@@ -146,9 +146,9 @@ rex split -b <block> --split=below --focus=false --label "<agent> · <id>" -c <w
   open.
 - An effort the model does not have gives no exit code here. Look for
   `Variant unavailable` in the pane, then start the worker again at the
-  nearest level, as in [Effort](#effort).
-- A watched worker has no time limit. The user watches it and stops it with
-  `esc` in the pane.
+  nearest level, as in [Effort](#effort), with a new session ID.
+- A watched worker has no time limit. The user interrupts a turn from the
+  pane with the key its footer shows.
 - Leave the pane open for the user. Delete the session only after the
   report, as in [Sessions](#sessions).
 
