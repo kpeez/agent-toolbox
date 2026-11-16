@@ -49,7 +49,7 @@ For sustained work on one metric, the [hillclimb-metric playbook](../skills/swe-
 /swe:swe-mode hillclimb p50 parse time on the 60k-row fixture. target 400ms. try at least 15 ideas before you stop.
 ```
 
-It freezes one measurement command, records a baseline, and then tests one hypothesis per attempt. It keeps a change only when the metric moves past noise and the regression gate stays green. Otherwise it reverts the change in full. Each attempt gets a row in a gitignored `decision.tsv`. When the `lab:autoresearch` skill is installed, the playbook runs its loop through that skill.
+It freezes one measurement command, records a baseline, and then tests one hypothesis per attempt. It keeps a change only when the metric moves past noise and the regression gate stays green. Otherwise it reverts the change in full. Each attempt gets a row in a gitignored `decision.tsv`.
 
 Both performance playbooks vet their numbers with [`benchmark-checklist`](../skills/benchmark-checklist/SKILL.md). [Verify and ship](06-verify-and-ship.md) shows when to run it yourself.
 

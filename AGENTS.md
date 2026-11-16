@@ -11,7 +11,13 @@
 - `plugins/` holds plugins every supported agent can use. `claude-mods/` holds
   Claude Code function-hook mods, which only the Claude catalog lists.
 - Keep every skill reference pointed at a resource or script that exists in
-  the same plugin.
+  the same plugin. A plugin never names another plugin's skill, agent, or
+  playbook, not even "when it is installed". Write the rule inline. Copy a
+  skill into each plugin, as with `go-deeper`, only when every plugin needs
+  it, it is not specific to one domain, and a few inline lines cannot replace
+  it.
+  `python3 .github/scripts/plugin_isolation.py` catches `<plugin>:<name>`
+  references; a bare name such as `interview-user` in lab is yours to catch.
 - `go-deeper` lives in `plugins/swe`, `plugins/lab`, and `plugins/uni` so each
   plugin installs alone. Edit all three copies together; the `shared-skills`
   workflow fails when they differ.

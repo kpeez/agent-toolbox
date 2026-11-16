@@ -47,8 +47,8 @@ file; never hand-edit a figure. Move superseded outputs to the trash, not `rm`.
 
 ## Tests
 
-Add a test only when it passes the admission gate in `swe:testing-code`: a
-credible plotting bug would break it and nothing cheaper catches it.
+Add a test only when a credible plotting bug would break it and nothing
+cheaper catches it.
 
 - The strongest candidates are guards on the results a figure shows: mixed
   populations raise, unknown entities raise, oracle rows reach no figure,

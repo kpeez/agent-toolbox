@@ -26,6 +26,8 @@ jobs:
             done
           done
           exit $status
+      - name: No plugin names another plugin's skills
+        run: python3 .github/scripts/plugin_isolation.py
       - name: Antigravity rules match the session-start hook
         run: |
           # Antigravity CLI skips hooks/hooks.json and loads rules/AGENTS.md

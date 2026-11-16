@@ -86,8 +86,8 @@ Reply: <what the reply gives>.
 - Each step is one line. Its handle is the step number and a short kebab-case
   verb phrase.
 - The parentheses name what the step loads. Each name is a swe skill, a
-  principle slug without the `principle-` prefix, `reviewer agent`, a playbook
-  slug, or another plugin's skill such as `lab:autoresearch`.
+  principle slug without the `principle-` prefix, `reviewer agent`, or a
+  playbook slug.
 - Rules that are not steps go in a short paragraph between the owner line and
   step 1.
 - A code-changing playbook ends with a `publish-draft-pr` step (ship-pr).

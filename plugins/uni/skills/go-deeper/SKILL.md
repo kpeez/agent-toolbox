@@ -43,9 +43,10 @@ Always keep one outside check.
 ## Constraints only the user can set
 
 When an answer depends on a product or preference constraint that no
-observation can settle, ask the user about those constraints only. Use the
-`interview-user` skill when it is installed. Otherwise ask one round, each
-question with your recommended answer. Do not ask for a fact you can look up.
+observation can settle, ask the user about those constraints only. Ask in
+rounds. Each round asks every open decision whose prerequisites are settled,
+each with your recommended answer. Repeat until no decision is open. Do not
+ask for a fact you can look up.
 
 ## Output
 

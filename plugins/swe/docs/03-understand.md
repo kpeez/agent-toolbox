@@ -99,7 +99,7 @@ For a noisy report, such as a long thread or a vague bug, make the restatement t
 /swe:go-deeper make the search page feel faster
 ```
 
-[`go-deeper`](../skills/go-deeper/SKILL.md) answers four questions before the work starts. What would a top expert do here that you did not ask for? What raw material would they start from? Which methods and tools would they use? What check, outside the agent and you, shows the result is right? It gives those answers and the rewritten task in five lines or fewer, then does the rewritten task. It rejects additions that only make the task bigger. When an answer depends on a preference only you can set, it asks you through `interview-user`.
+[`go-deeper`](../skills/go-deeper/SKILL.md) answers four questions before the work starts. What would a top expert do here that you did not ask for? What raw material would they start from? Which methods and tools would they use? What check, outside the agent and you, shows the result is right? It gives those answers and the rewritten task in five lines or fewer, then does the rewritten task. It rejects additions that only make the task bigger. When an answer depends on a preference only you can set, it asks you in rounds, each question with its recommended answer, until no decision is open.
 
 You seldom type it. The SessionStart hook and the router run it on every new task, and skip chat, quick facts, and fully specified mechanical edits. lab and uni have their own identical copy, so each plugin works alone.
 

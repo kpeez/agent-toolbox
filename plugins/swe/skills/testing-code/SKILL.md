@@ -10,8 +10,8 @@ One skill owns all work on tests. Pick the mode from the request:
 
 - **New tests and probes:** adding, rewriting, or judging a test, a probe, TDD,
   regression coverage, or testing strategy. Follow the rest of this file down to
-  the autoresearch pointer. This mode has no numbered procedure; its section
-  headings are its steps.
+  "Audit mode". This mode has no numbered procedure; its section headings are
+  its steps.
 - **Audit:** reviewing or pruning existing tests, a test-suite sweep, or a
   pruning campaign. Follow "Audit mode" at the end of this file.
 
@@ -189,9 +189,9 @@ real code or faithful local substitutes for dependencies you control. At
 service or message boundaries, exercise the consumer's real client and assert
 only facts that matter to that consumer.
 
-For a long-running autonomous exploration with a metric target and many
-experiments, use `lab:autoresearch`. A scratch probe answers a bounded question
-in one sitting.
+For a long-running exploration with a metric target and many attempts, use
+the `hillclimb-metric` playbook of the `swe-mode` router. A scratch probe
+answers a bounded question in one sitting.
 
 ## Audit mode
 

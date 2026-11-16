@@ -73,8 +73,6 @@ Load a name this way:
   [implement](../implement/SKILL.md#plans-and-issues) says.
 - A playbook slug: read `playbooks/<slug>.md` as reference for that step. Its
   steps do not join the list, and the step text sets the scope.
-- A skill of another plugin, such as `lab:autoresearch`: the Skill tool, by
-  that name.
 
 Where the host has no Skill tool, read the skill's `SKILL.md` instead.
 
