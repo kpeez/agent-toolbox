@@ -20,7 +20,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
     "implement", "diagnose", "testing-code", "test-audit",
-    "improve-codebase-architecture", "ship-pr", "grill")}
+    "improve-codebase-architecture", "ship-pr", "grill")} | {"lab:making-plots"}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
 # The swe consolidation merged these skills into a successor. The corpus keeps the old
 # names so every arm runs byte-identical cases; a name the catalog lacks scores as its
@@ -33,7 +33,8 @@ RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md).
 # Anything else is coverage loss until a raw audit adds it here.
 CLAUDE_LINE_TYPES = {"user", "assistant", "attachment", "system", "queue-operation",
-                     "atis-latch", "last-prompt", "cost-state"}
+                     "atis-latch", "last-prompt", "cost-state", "session-owner", "api-request-shape",
+                     "api-request-blob", "api-request", "tools-used"}
 CLAUDE_SYSTEM_SUBTYPES = {"stop_hook_summary"}
 CLAUDE_ATTACHMENT_TYPES = {
     "advisor_tool", "agent_listing_delta", "command_permissions", "credential_org", "date",
@@ -315,7 +316,7 @@ def claude_lines(path, label, issues):
 def claude_session(rows, label, sid, agent, issues):
     """Index one transcript file: tool calls, their results, linked skill bodies, and lineage."""
     uses, results, bodies, starts = {}, {}, {}, {}
-    seen, children = set(), Counter()
+    seen, children, message_of = set(), Counter(), {}
     first = None
     for line, row in rows:
         where = f"{label} line {line}"
@@ -343,7 +344,12 @@ def claude_session(rows, label, sid, agent, issues):
         elif parent is not None and parent not in seen:
             issues.append(f"{where}: parent not in this transcript (resume or compaction)")
         elif parent is not None:
-            children[parent] += 1
+            # Parallel tool calls split one API message over several lines; each continuation
+            # line is a child of the previous line, beside that line's tool_result.
+            message_id = (row.get("message") or {}).get("id") if typ == "assistant" else None
+            message_of[uuid] = message_id
+            continuation = message_id is not None and message_of.get(parent) == message_id
+            children[parent] += 0 if continuation else 1
             if children[parent] > 1:
                 issues.append(f"{where}: branch in the message chain")
         seen.add(uuid)
@@ -439,6 +445,11 @@ def claude_proof(load, use, result, body, frozen, manifest):
             return load
         load["skill"] = skill
         expected = manifest["skills"][skill]["body_sha256"]
+        # Claude Code appends Skill call arguments to a body that has no $ARGUMENTS placeholder.
+        suffix = "\n\nARGUMENTS: " + str(use["input"].get("args") or "")
+        if use["input"].get("args") and text.endswith(suffix) and digest(text[:-len(suffix)].encode()) == expected:
+            text = text[:-len(suffix)]
+            load["transform"] += "_arguments_suffix_removed"
         mismatch = None if separator and digest(text.encode()) == expected else "body digest mismatch"
         completed = max(result["line"], body["line"])
     else:

@@ -1535,6 +1535,238 @@
       "forbidden_skills": [],
       "relevant_action": "Ask the first round of questions about empty-poll handling before any code edit.",
       "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "lab-making-plots-updated-figures",
+      "target": "lab:making-plots",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "make sure we have updated figures. I want the full suite of what we plotted. Like the \"model table\" you see from frontier labs, the TPR curves, the known/stranger distribution, etc."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:making-plots"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:visualizing-data"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Run or edit figures.py to produce the table, curve, and distribution figures.",
+      "rationale": "The first request of the failed session: regenerate result figures with an existing command, including a model table."
+    },
+    {
+      "id": "lab-making-plots-transpose-table",
+      "target": "lab:making-plots",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "You should transpose the table so that we have the metrics on the top and each row is a model."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:making-plots"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:visualizing-data"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Edit draw_table in figures.py to put models in rows.",
+      "rationale": "The second request of the failed session: a result table is a figure the skill owns, though the request never says plot."
+    },
+    {
+      "id": "lab-making-plots-crowded-curves",
+      "target": "lab:making-plots",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "the DET plot is unreadable once all the models are on it. can you make it so I can actually see which model wins at FPR 0.01?"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:making-plots"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:visualizing-data"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Edit draw_det in figures.py.",
+      "rationale": "Revising a crowded result curve is figure design work."
+    },
+    {
+      "id": "lab-making-plots-regenerate",
+      "target": "lab:making-plots",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "rerun the figures command on the new summary.csv and tell me if anything looks off"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:making-plots"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:visualizing-data"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Run figures.py and inspect the PNGs it writes.",
+      "rationale": "Rerunning an existing renderer and reviewing its output is in scope, though it does not feel like making a plot."
+    },
+    {
+      "id": "lab-making-plots-visual-design",
+      "target": "lab:making-plots",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "how did the fine-tuned models do against zero-shot?"
+        },
+        {
+          "role": "assistant",
+          "content": "Fine-tuning helps every backbone. large leads: TPR at FPR 0.1 is 0.598 fine-tuned against 0.602 zero-shot, and AUROC is 0.543 against 0.821. figures/results_table.png has the full table."
+        },
+        {
+          "role": "user",
+          "content": "That table looks bad. Please use this visual design: white background, a dark rule above and below the header, thin grey rules between rows, a grey column that labels the fine-tuned and zero-shot groups, and the best value in each column shaded light blue."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:making-plots"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:visualizing-data"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Edit draw_table in figures.py to apply the requested design.",
+      "rationale": "The third request of the failed session, after an analysis turn: a restyle of a result table."
+    },
+    {
+      "id": "lab-making-plots-headline-figure",
+      "target": "lab:making-plots",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "which model should we put forward in the paper?"
+        },
+        {
+          "role": "assistant",
+          "content": "large fine-tuned. It leads on TPR at both operating points and on AUROC. distilled fine-tuned is close on rank-1 (0.669 against 0.753)."
+        },
+        {
+          "role": "user",
+          "content": "ok, make the headline figure for the paper: those two plus the best zero-shot model, on the four metrics."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:making-plots"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:visualizing-data"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Add a headline figure to figures.py.",
+      "rationale": "A new publication figure requested after an analysis turn."
+    },
+    {
+      "id": "lab-making-plots-read-table",
+      "target": "lab:making-plots",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Which model has the highest rank-1 in results/summary.csv, and by how much over the runner-up?"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "lab:making-plots"
+      ],
+      "relevant_action": "Read summary.csv and answer without drawing or editing anything.",
+      "rationale": "A factual question about a results table asks for no figure."
+    },
+    {
+      "id": "lab-making-plots-crash-diagnosis",
+      "target": "lab:making-plots",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "figures.py fails with KeyError: 'tpr_fpr_0.1' on last night's CSV. Explain why; do not change anything yet."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:diagnose"
+      ],
+      "forbidden_skills": [
+        "lab:making-plots"
+      ],
+      "relevant_action": "Read figures.py and summary.csv and explain the failure without edits.",
+      "rationale": "A crash diagnosis in plotting code changes no figure design."
+    },
+    {
+      "id": "lab-making-plots-pipeline-diagram",
+      "target": "lab:making-plots",
+      "category": "negative",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Add a mermaid diagram to the README that shows how summary.csv flows through figures.py into the PNGs."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "lab:making-plots"
+      ],
+      "relevant_action": "Edit README.md to add the diagram.",
+      "rationale": "A pipeline diagram is not a result figure."
+    },
+    {
+      "id": "lab-making-plots-explicit",
+      "target": "lab:making-plots",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /lab:making-plots to redraw figures/results_table.png so the fine-tuned and zero-shot groups are easy to tell apart."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:making-plots"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:visualizing-data"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Edit draw_table in figures.py.",
+      "rationale": "Explicit invocation is a control case."
     }
   ]
 }

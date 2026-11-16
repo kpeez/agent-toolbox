@@ -1,6 +1,6 @@
 ---
 name: making-plots
-description: Create or revise publication- or report-quality scientific result figures and their plotting code. Use for benchmark, training, and evaluation figures; not ordinary tabulation, general dashboard critique, or UI mockups.
+description: Make, redraw, restyle, or review scientific result figures and results tables, and the plotting code behind them. Use for model and benchmark tables, metric plots, training and evaluation curves, DET and ROC curves, histograms, and score distributions. Also use when you rerun an existing plotting command to regenerate figures, transpose or reorder a results table, apply a reference visual design, fix a figure that looks bad, or brief a subagent on figure work. Not for diagrams, dashboards, or UI mockups.
 argument-hint: "<results or figure>"
 ---
 
@@ -18,6 +18,13 @@ about, if there is one. A **baseline** is what it is compared against. The
 **unit of replication** is what the uncertainty is computed over (partitions,
 seeds, subjects, runs). Examples in this skill come from model benchmarks; the
 rules do not depend on them.
+
+## When this applies
+
+Drawing is only one part of figure work. Load this skill before you rerun an
+existing figure command, before you accept rendered output as done, and before
+you hand figure work to a subagent. A figure brief names this skill, tells the
+worker to load it first, and gives the path of any reference image to match.
 
 ## Procedure
 

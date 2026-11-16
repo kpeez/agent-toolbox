@@ -183,8 +183,8 @@ class OfflineCLIContract(unittest.TestCase):
         """Write a minimal transcript in the audited Claude Code shape (EVIDENCE.md) and score it."""
         lines, sid = [], "claude-session"
 
-        def add(row):
-            row = {"uuid": f"line-{len(lines)}", "parentUuid": lines[-1]["uuid"] if lines else None,
+        def add(row, parent=None):
+            row = {"uuid": f"line-{len(lines)}", "parentUuid": parent or (lines[-1]["uuid"] if lines else None),
                    "sessionId": sid, "isSidechain": False, **row}
             lines.append(row)
 
@@ -193,9 +193,12 @@ class OfflineCLIContract(unittest.TestCase):
             if kind == "call":
                 add({"type": "assistant", "message": {"id": message_id, "content": [
                     {"type": "tool_use", "id": tool_use_id, "name": payload["name"], "input": payload["input"]}]}})
-            elif kind == "result":
+            elif kind in {"result", "sibling-result"}:
+                # A sibling result answers an earlier call of one API message, so it branches from that call.
+                parent = next(r["uuid"] for r in lines if tool_use_id in json.dumps(r["message"])) \
+                    if kind == "sibling-result" else None
                 add({"type": "user", "toolUseResult": payload, "message": {"role": "user", "content": [
-                    {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}})
+                    {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}}, parent)
             else:
                 add({"type": "user", "isMeta": True, "sourceToolUseID": tool_use_id, "message": {
                     "role": "user", "content": [{"type": "text", "text": payload}]}})
@@ -215,7 +218,10 @@ class OfflineCLIContract(unittest.TestCase):
         expected = {"skill-body": ("complete", "loaded", "before"), "skill-without-body": unresolved,
                     "skill-in-action-message": ("complete", "loaded", "late"), "full-read": ("complete", "loaded", "before"),
                     "sliced-read": unresolved, "bare-name-without-body": unresolved,
-                    "name-differs-from-body": ("partial", "unavailable", "unavailable")}
+                    "name-differs-from-body": ("partial", "unavailable", "unavailable"),
+                    "skill-with-arguments": ("complete", "loaded", "before"),
+                    "parallel-calls": ("complete", "loaded", "before"),
+                    "parallel-calls-split-message": ("partial", "loaded", "unavailable")}
         for name, outcome in expected.items():
             with self.subTest(name=name):
                 run, skill, text = self.prepare("claude-" + name)
@@ -226,6 +232,15 @@ class OfflineCLIContract(unittest.TestCase):
                 skill_call = [("call", "message-skill", "use-skill",
                                {"name": "Skill", "input": {"skill": requested.get(name, "swe:implement")}}),
                               ("result", None, "use-skill", {"success": True, "commandName": "swe:implement"})]
+                arguments = "rename it"
+                with_arguments = [("call", "message-skill", "use-skill",
+                                   {"name": "Skill", "input": {"skill": "swe:implement", "args": arguments}}),
+                                  skill_call[1], ("body", None, "use-skill", body + "\n\nARGUMENTS: " + arguments)]
+                parallel = [skill_call[0], ("call", "message-skill", "use-glob", {"name": "Glob", "input": {"pattern": "*"}}),
+                            ("result", None, "use-glob", {"filenames": []}),
+                            ("sibling-result",) + skill_call[1][1:], ("body", None, "use-skill", body)]
+                # A different message id on the second call makes the same shape a real branch.
+                split = [parallel[0], ("call", "message-other", "use-glob", parallel[1][3])] + parallel[2:]
                 read_call = [("call", "message-read", "use-read", {"name": "Read", "input": {"file_path": skill["path"]}})]
                 shown = len(lines) if name == "full-read" else 3
                 read_result = [("result", None, "use-read", {"type": "text", "file": {
@@ -235,7 +250,9 @@ class OfflineCLIContract(unittest.TestCase):
                          "skill-without-body": skill_call, "bare-name-without-body": skill_call,
                          "name-differs-from-body": skill_call + [("body", None, "use-skill", body)],
                          "skill-in-action-message": skill_call + [("body", None, "use-skill", body)],
-                         "full-read": read_call + read_result, "sliced-read": read_call + read_result}[name]
+                         "full-read": read_call + read_result, "sliced-read": read_call + read_result,
+                         "skill-with-arguments": with_arguments, "parallel-calls": parallel,
+                         "parallel-calls-split-message": split}[name]
                 # The Edit shares the Skill call's API message only in skill-in-action-message.
                 edit_message = "message-skill" if name == "skill-in-action-message" else "message-edit"
                 steps += [("call", edit_message, "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),

@@ -62,6 +62,14 @@ agy runs no hooks, but it loads the same rule from
 lab: Before you act on a new task of any kind, run `lab:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it.
 ```
 
+## Figure reminder
+
+The Claude Code plugin also adds a PostToolUse hook,
+[`hooks/figure-reminder.py`](./hooks/figure-reminder.py). When a shell command,
+an edit, or a write touches plotting code, figures, or a PNG, it tells the
+agent to load `making-plots`. It fires at most once per session, and never after
+the skill has loaded. It needs `python3` on `PATH`.
+
 ## Skills
 
 Each command shows its arguments: `<x>` is required and `[x]` is optional.
@@ -74,7 +82,7 @@ in place of `/`.
 | [`/lab:research <question>`](./skills/research/SKILL.md) | One cited memo for a bounded question or a source audit |
 | [`/lab:deep-research <topic>`](./skills/deep-research/SKILL.md) | A multi-lane research program with briefs, lane evidence, and an audited report |
 | [`/lab:autoresearch <metric goal>, or cleanup <run tag>`](./skills/autoresearch/SKILL.md) | A bounded experiment loop against an approved metric and evaluator, and its cleanup |
-| [`/lab:making-plots <results or figure>`](./skills/making-plots/SKILL.md) | Publication-quality result figures and their plotting code |
+| [`/lab:making-plots <results or figure>`](./skills/making-plots/SKILL.md) | Make, rerun, restyle, or review result figures and results tables, and their plotting code |
 | [`/lab:visualizing-data <plot or plotting code>`](./skills/visualizing-data/SKILL.md) | Review plots for honest scales and accessibility |
 
 ## Autoresearch files

@@ -11,6 +11,11 @@ has four natural requests, two contextual requests, three nearby negatives, and
 one explicit invocation control. Some negatives are direct diff-review requests,
 which expect no `swe` skill.
 
+The `lab-making-plots-*` family adds ten cases for `lab:making-plots` in the
+same mix, on the `classifier-figures` fixture. Three of its natural and contextual
+requests repeat a real session in which the skill did not load: regenerate the
+figures, transpose the results table, and apply a reference visual design.
+
 The swe consolidation merged `test-audit` into `testing-code` and
 `improve-codebase-architecture` into `codebase-design`. The corpus keeps the
 old names, so every arm runs byte-identical cases. On a catalog without an old
@@ -160,10 +165,15 @@ Use `PYTHONDONTWRITEBYTECODE=1` for unittest and place explicit compilation cach
 under `artifacts/skill-evals/`, so run output stays out of source directories.
 
 Native scoring supports Claude Code session transcripts from the audited
-version (2.1.296, headless): `Skill`-tool loads, by full or bare name, proved
+version (2.1.296, headless), plus the 2.1.325 additions: five metadata record
+types (`session-owner`, `api-request`, `api-request-shape`, `api-request-blob`,
+`tools-used`) that carry no skill load, and parallel tool calls whose one API
+message spans several lines. It supports `Skill`-tool loads, by full or bare name, proved
 by the linked delivered body, full `Read` loads of a frozen `SKILL.md`, root versus sidechain scope,
-labeled action timing, and end coverage from stream-json. It does not support
-typed slash-command loads, `Skill` calls with arguments, compaction, resumes,
+labeled action timing, and end coverage from stream-json. A `Skill` call with
+arguments counts when Claude Code appended them to the body as
+`ARGUMENTS: <args>`. It does not support typed slash-command loads, arguments
+substituted into a `$ARGUMENTS` placeholder, compaction, resumes,
 repeat-load notes, Codex traces, unlabeled actions, or step-list extraction.
 These leave the session partial or the load unproved; they never count as a
 miss. EVIDENCE.md holds the contract and the raw-event audit.
