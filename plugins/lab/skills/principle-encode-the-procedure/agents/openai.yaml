@@ -1,0 +1,4 @@
+interface:
+  display_name: "Encode the Procedure"
+policy:
+  allow_implicit_invocation: false

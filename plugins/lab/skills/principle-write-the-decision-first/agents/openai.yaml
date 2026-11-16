@@ -1,0 +1,4 @@
+interface:
+  display_name: "Write the Decision First"
+policy:
+  allow_implicit_invocation: false

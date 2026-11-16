@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 70 authored scenarios: ten each for `implement`, `diagnose`,
+The corpus has 90 authored scenarios. Seventy are swe cases: ten each for `implement`, `diagnose`,
 `testing-code`, `test-audit`, `improve-codebase-architecture`, `ship-pr`, and
 `grill` (family prefix `HO`). Each family
 has four natural requests, two contextual requests, three nearby negatives, and
@@ -15,6 +15,11 @@ The `lab-making-plots-*` family adds ten cases for `lab:making-plots` in the
 same mix, on the `classifier-figures` fixture. Three of its natural and contextual
 requests repeat a real session in which the skill did not load: regenerate the
 figures, transpose the results table, and apply a reference visual design.
+
+The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
+the same fixture. The scorer checks only that the router loads. Each case
+names the playbook it should pick in `relevant_action`, but no field scores
+that choice.
 
 The swe consolidation merged `test-audit` into `testing-code` and
 `improve-codebase-architecture` into `codebase-design`. The corpus keeps the

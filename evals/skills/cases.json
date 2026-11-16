@@ -1767,6 +1767,251 @@
       "forbidden_skills": [],
       "relevant_action": "Edit draw_table in figures.py.",
       "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "lab-mode-appraise-paper",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Is this paper's claim legit? https://arxiv.org/abs/0000.00000 says backbone features work for retrieval without fine-tuning. Our zero-shot backbone rows in results/summary.csv look much worse than the fine-tuned ones."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:research",
+        "lab:go-deeper"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Judge the paper's claim against its evidence and the local results; playbook appraise-source.",
+      "rationale": "One source and one claim to judge: the router should pick appraise-source."
+    },
+    {
+      "id": "lab-mode-review-literature",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What does the literature say about thresholded face retrieval for subject? Which metrics do people report, and what TPR at FPR 0.01 counts as good?"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:research",
+        "lab:deep-research",
+        "lab:go-deeper"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Search and synthesize prior work; playbook review-literature.",
+      "rationale": "A question about a body of work: the router should pick review-literature."
+    },
+    {
+      "id": "lab-mode-analyze-results",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "here are the results from last night's runs in results/summary.csv. what do they show?"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:go-deeper",
+        "lab:making-plots"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Read summary.csv and state a graded conclusion; playbook analyze-results.",
+      "rationale": "Existing results need a conclusion: the router should pick analyze-results."
+    },
+    {
+      "id": "lab-mode-run-experiment",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "test whether a lower learning rate for fine-tuning base helps TPR at FPR 0.01"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:go-deeper",
+        "lab:making-plots"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Design one comparison with a fixed metric before any run; playbook run-experiment.",
+      "rationale": "One designed comparison: the router should pick run-experiment."
+    },
+    {
+      "id": "lab-mode-route-autoresearch",
+      "target": "lab:lab-mode",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "how far is fine-tuned ViT-B from ViT-L at FPR 0.01?"
+        },
+        {
+          "role": "assistant",
+          "content": "ViT-B reaches 0.595 and ViT-L 0.994, a gap of 0.057 in TPR at FPR 0.01."
+        },
+        {
+          "role": "user",
+          "content": "keep tuning the ViT-B fine-tuning recipe until TPR at FPR 0.01 stops improving"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:autoresearch",
+        "lab:go-deeper"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "Route to autoresearch with one metric and a stop rule.",
+      "rationale": "Repeated keep-or-discard runs against one metric: the router should route to autoresearch."
+    },
+    {
+      "id": "lab-mode-analyze-after-run",
+      "target": "lab:lab-mode",
+      "category": "contextual",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "did the new run finish?"
+        },
+        {
+          "role": "assistant",
+          "content": "Yes. results/summary.csv now has the zero-shot large row: TPR at FPR 0.1 is 0.203."
+        },
+        {
+          "role": "user",
+          "content": "so does fine-tuning matter more than backbone size? give me a conclusion I can put in the update."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:go-deeper",
+        "lab:making-plots"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "State a graded conclusion from summary.csv; playbook analyze-results.",
+      "rationale": "A claim drawn from existing results: the router should pick analyze-results."
+    },
+    {
+      "id": "lab-mode-code-fix",
+      "target": "lab:lab-mode",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "figures.py crashes when the parent of the --out directory does not exist. Make it create the parents."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:implement",
+        "lab:go-deeper"
+      ],
+      "forbidden_skills": [
+        "lab:lab-mode"
+      ],
+      "relevant_action": "Change the mkdir call in figures.py.",
+      "rationale": "A plain code fix makes no empirical claim."
+    },
+    {
+      "id": "lab-mode-rename-column",
+      "target": "lab:lab-mode",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Rename the regime column to setting in results/summary.csv and everywhere figures.py reads it."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:implement",
+        "lab:go-deeper"
+      ],
+      "forbidden_skills": [
+        "lab:lab-mode"
+      ],
+      "relevant_action": "Edit summary.csv and figures.py.",
+      "rationale": "A mechanical rename in a research repository is not research work."
+    },
+    {
+      "id": "lab-mode-define-metric",
+      "target": "lab:lab-mode",
+      "category": "negative",
+      "split": "holdout_candidate",
+      "messages": [
+        {
+          "role": "user",
+          "content": "In one paragraph, what does TPR at FPR 0.01 mean?"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "lab:go-deeper"
+      ],
+      "forbidden_skills": [
+        "lab:lab-mode"
+      ],
+      "relevant_action": "Answer the definition directly.",
+      "rationale": "A quick factual answer needs no workflow."
+    },
+    {
+      "id": "lab-mode-explicit",
+      "target": "lab:lab-mode",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /lab:lab-mode to work out whether distilled really beats backbone on rank-1."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [
+        "lab:go-deeper"
+      ],
+      "forbidden_skills": [],
+      "relevant_action": "State the route and its first step before any analysis.",
+      "rationale": "Explicit invocation is a control case."
     }
   ]
 }

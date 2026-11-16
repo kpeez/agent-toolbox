@@ -1,0 +1,5 @@
+interface:
+  display_name: "research-skill"
+  short_description: "Create or maintain a project's research skills"
+policy:
+  allow_implicit_invocation: true

@@ -20,7 +20,7 @@ HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
     "implement", "diagnose", "testing-code", "test-audit",
-    "improve-codebase-architecture", "ship-pr", "grill")} | {"lab:making-plots"}
+    "improve-codebase-architecture", "ship-pr", "grill")} | {"lab:making-plots", "lab:lab-mode"}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
 # The swe consolidation merged these skills into a successor. The corpus keeps the old
 # names so every arm runs byte-identical cases; a name the catalog lacks scores as its

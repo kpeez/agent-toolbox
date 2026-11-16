@@ -1,0 +1,4 @@
+interface:
+  display_name: "Grade the Evidence"
+policy:
+  allow_implicit_invocation: false

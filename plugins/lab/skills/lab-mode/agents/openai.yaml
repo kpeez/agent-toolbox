@@ -1,0 +1,5 @@
+interface:
+  display_name: "lab-mode"
+  short_description: "Route a research task to its playbook"
+policy:
+  allow_implicit_invocation: true
