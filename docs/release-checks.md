@@ -8,7 +8,8 @@ offline checks:
   changed plugin.
 - Load each `agents/*.toml` with Python's `tomllib.load` and each
   `agents/openai.yaml` with `nu -c 'open <file>'`.
-- Run `python3 evals/skills/skill_eval.py validate` and
+- Run `python3 evals/skills/skill_eval.py validate`,
+  `python3 evals/skills/facets.py check`, and
   `python3 -m unittest discover -s evals/skills/tests`.
 - Load each changed plugin under `plugins/` in Codex with a new temporary
   `HOME` and `CODEX_HOME` set to `$HOME/.codex`:

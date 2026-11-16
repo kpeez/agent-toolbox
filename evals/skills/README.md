@@ -34,8 +34,9 @@ Five negatives also change meaning on the new catalog. `TA-08` and `TA-09`
 now forbid `testing-code`, and `AR-07` to `AR-09` now forbid
 `codebase-design`. On the old catalog, a load of those skills there was only
 unexpected, and `codebase-design` could load legitimately. Report these five
-cases' false activations as their own stratum, not in a pooled comparison. `verification-skill`
-and `wait-what` have no family yet.
+cases' false activations as their own stratum, not in a pooled comparison. The
+"Activation facets with no case" list in [FACETS.md](FACETS.md) names each
+model-invocable skill that has no family yet.
 
 The `ship-pr` family exists because `ship-pr` became model-invoked on the
 `swe-router-rewrite` branch. On main it is user-only, so main scores zero recall
@@ -129,6 +130,43 @@ The offline runtime example deliberately says `not-run`. For any future native
 run, replace it with verified model ID, effort, CLI/version, permissions, tools,
 catalog scope, context delivery, and harness deltas before materializing.
 
+## Facet map
+
+A facet is one workflow behavior that a transcript can show. Examples are a
+skill load, a route line, a full playbook read, a step load, and the Steps
+section. `facets.py` derives every facet from the skill sources: the routers,
+the playbooks, the session-start hooks, and the skill frontmatter. It also
+reads the eval corpus (`cases.json`) and the targets in `skill_eval.py` to
+find the cases that cover each facet. `facets.json` holds one record per
+facet. `FACETS.md` shows the same data as tables, with a legend for each
+facet kind. Do not edit either file by hand.
+
+Regenerate both files after you change a skill, a router, a playbook, a hook,
+or an eval case:
+
+```sh
+python3 evals/skills/facets.py write
+```
+
+CI runs `python3 evals/skills/facets.py check`. The check fails when a skill
+change leaves the map stale. `write` also fails when a playbook step names a
+skill, principle, playbook, or reference that does not exist.
+
+Each facet has a scorer status:
+
+- `scored`: a case field scores it.
+- `recorded`: the scorer records the load, but no case field scores it.
+- `invisible`: the scorer drops the event.
+- `unsupported`: the harness removes the trigger. Materialize deletes hooks.
+
+The headline of `FACETS.md` counts the always-required facets that no case
+scores. That count is the measurement gap.
+
+One known limit: the generator labels a whole step `conditional` when the
+step starts with "When " or says "Skip when" or "Skip for". A step that has
+one unconditional name and one conditional name gets the same label for both
+names.
+
 ## Metrics and evidence
 
 See [EVIDENCE.md](EVIDENCE.md) for the exact observation contract, the synthetic
@@ -161,7 +199,9 @@ or justify a single pooled efficacy percentage.
 synthetic traces and minimal Claude-shaped transcripts. It checks leakage/isolation
 of fixtures, strict body identity, ordering, incomplete/failed reads, missing
 native evidence, aggregate denominators, and the Claude load proofs and message
-order. This verifies harness behavior only.
+order. This verifies harness behavior only. `test_facets.py` runs `facets.py`
+on a copied catalog. It checks that `check` fails on a stale map and that
+`write` rejects a step name that nothing owns.
 The retained verification record is
 `artifacts/skill-evals/2026-09-30-offline-verification/verification.json`.
 Four inspectable synthetic examples and their raw evidence are retained at

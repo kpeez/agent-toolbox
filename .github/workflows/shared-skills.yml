@@ -40,3 +40,5 @@ jobs:
             fi
           done
           exit $status
+      - name: Eval facet map matches the skill sources
+        run: python3 evals/skills/facets.py check
