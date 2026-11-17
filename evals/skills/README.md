@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 90 authored scenarios. Seventy are swe cases: ten each for `implement`, `diagnose`,
+The corpus has 131 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:
@@ -19,10 +19,24 @@ same mix, on the `classifier-figures` fixture. Three of its natural and contextu
 requests repeat a real session in which the skill did not load: regenerate the
 figures, transpose the results table, and apply a reference visual design.
 
+The `swe-mode-*` family adds ten cases for `swe:swe-mode` in the same mix. Its seven positives
+are router-load cases that also set `expected_route`, so each scores the route line, the read of
+the playbook, and the Steps section. Its three negatives are a closing remark, a quick fact that
+needs no repository, and a task outside software. A load of the router there is a false
+activation.
+
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
 the same fixture. Six of them set `expected_route`, the route the agent should
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
+
+The two route-choice families, `swe-route-choice` (25 cases) and `lab-route-choice` (6), cover
+each playbook and single-skill route that no other case covers, with one case per route. They have
+no fixed mix, because a negative cannot set `expected_route` and so cannot score a route. Every
+case instead resembles a neighbouring route and belongs to its own: the `rationale` names the
+near miss. Cases on a route with modes set `expected_mode`. A route-choice case holds one correct
+route that the router's own text supports. Where two router lines overlap, such as the PR-status
+trigger and the `ship-pr` route, the case uses wording that only one of them matches.
 
 The "Activation facets with no case" list in [FACETS.md](FACETS.md) names each
 model-invocable skill that has no family yet.
