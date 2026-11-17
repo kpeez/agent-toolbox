@@ -28,7 +28,7 @@
 - Put repo-local skills in `.agents/skills/`. `.claude/skills` is a committed
   link to that folder, so Claude Code and Codex read one copy.
 - To pull upstream pstack changes into swe, use the repo-local
-  `align-swe-with-pstack` skill.
+  `sync-pstack-upstream` skill.
 - Before you add a rule for a repeated agent mistake, read
   [docs/agent-rule-enforcers.md](docs/agent-rule-enforcers.md) and follow the
   `correct` skill in `plugins/swe`.

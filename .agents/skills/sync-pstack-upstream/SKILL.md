@@ -1,6 +1,6 @@
 ---
-name: align-swe-with-pstack
-description: "Pull upstream pstack changes into the swe plugin since the pinned commit. Merge copied files directly, review modified files, then move the pin. Use when asked to sync, update, or align swe with pstack."
+name: sync-pstack-upstream
+description: "Align with upstream pstack plugin. Pull upstream pstack changes into the swe plugin since the pinned commit. Merge copied files directly, review modified files, then move the pin. Use when asked to sync, update, or align swe with pstack."
 metadata:
   internal: true
 ---
@@ -30,7 +30,7 @@ path). Run it from the repository root. When `.agents/scratch` is missing, make 
 
 ## Steps
 
-1. `1-check-the-record`: Run `uv run .agents/skills/align-swe-with-pstack/scripts/pstack_sync.py check`.
+1. `1-check-the-record`: Run `uv run .agents/skills/sync-pstack-upstream/scripts/pstack_sync.py check`.
    Fix each problem before you continue. Below, `pstack_sync.py` means this
    script path.
 2. `2-list-changes`: Run `pstack_sync.py status`. It lists the upstream

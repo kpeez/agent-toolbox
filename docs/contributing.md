@@ -14,7 +14,7 @@ This page is for people who change this repository. Agent rules live in
 | `evals/skills/` | offline skill-activation evals ([README](../evals/skills/README.md)) |
 | `.claude-plugin/marketplace.json` | the Claude catalog |
 | `.agents/plugins/marketplace.json` | the Codex catalog |
-| `.agents/skills/align-swe-with-pstack/` | the repo-local skill that syncs swe with upstream pstack, and its sync record |
+| `.agents/skills/sync-pstack-upstream/` | the repo-local skill that syncs swe with upstream pstack, and its sync record |
 
 ## Versions
 
