@@ -149,6 +149,25 @@ def inventory(root):
     return result
 
 
+def freeze_resources(inputs):
+    resources = {}
+    for facet in read_json(HERE / "facets.json")["facets"]:
+        rel_path = facet.get("path")
+        if not rel_path or facet.get("kind") == "router-contract" or rel_path.startswith(".agents/"):
+            continue
+        if posixpath.basename(rel_path) == "SKILL.md":
+            continue
+        plugin = facet["plugin"]
+        res_id = f"{plugin}:{rel_path}"
+        if res_id in resources:
+            continue
+        file = contained(inputs / "plugins" / plugin, rel_path)
+        if not file.is_file():
+            raise ValueError(f"missing resource in snapshot: {res_id}")
+        resources[res_id] = {"path": str(file.absolute()), "sha256": digest(file.read_bytes())}
+    return resources
+
+
 def materialize(args):
     cases = corpus(args.corpus)
     case = next((c for c in cases if c["id"] == args.case), None)
@@ -208,18 +227,19 @@ def materialize(args):
         body = delivered_body(file.read_text(encoding="utf-8"))
         skills[skill] = {"path": str(file.absolute()), "sha256": digest(file.read_bytes()),
                          "body_sha256": None if body is None else digest(body.encode())}
+    resources = freeze_resources(inputs)
     prompt = "\n\n".join(f"{m['role'].upper()}:\n{m['content']}" for m in case["messages"])
     (inputs / "prompt.txt").write_text(prompt + "\n", encoding="utf-8")
     save_json(inputs / "messages.json", case["messages"])
     save_json(output / "manifest.json", {
         "schema_version": 1, "case_id": case["id"], "corpus_sha256": digest(Path(args.corpus).read_bytes()),
-        "runtime": runtime, "plugin_versions": versions, "skills": skills,
+        "runtime": runtime, "plugin_versions": versions, "skills": skills, "resources": resources,
         "input_files": inventory(inputs), "fixture_files": inventory(workspace),
         "fixture_catalog_files": inventory(HERE / "fixtures"),
         "source_catalog_files": source_catalog_files, "removed_bindings": removed,
         "isolation": "prepared_only_not_provider_verified", "harness_sha256": digest(Path(__file__).read_bytes()),
     })
-    return {"run": str(output), "case_id": case["id"], "skills": len(skills), "state": "prepared"}
+    return {"run": str(output), "case_id": case["id"], "skills": len(skills), "resources": len(resources), "state": "prepared"}
 
 
 def verify_inputs(run):
@@ -230,7 +250,7 @@ def verify_inputs(run):
 
 
 def declared_snapshot(path, manifest):
-    """A --plugin-dir the session loaded; its SKILL.md files must equal the frozen catalog byte for byte."""
+    """A --plugin-dir the session loaded; its SKILL.md files and frozen resources must match the catalog."""
     if not os.path.isabs(path):
         raise ValueError(f"--plugin-dir must be the absolute path given to claude: {path}")
     root = Path(path)
@@ -239,6 +259,13 @@ def declared_snapshot(path, manifest):
     frozen = {skill: entry["sha256"] for skill, entry in manifest["skills"].items() if skill.split(":")[0] == plugin}
     if not found or found != frozen:
         raise ValueError(f"--plugin-dir does not match the frozen catalog: {path}")
+    for res_id, entry in manifest.get("resources", {}).items():
+        res_plugin, rel_path = res_id.split(":", 1)
+        if res_plugin != plugin:
+            continue
+        file = contained(root, rel_path)
+        if not file.is_file() or digest(file.read_bytes()) != entry["sha256"]:
+            raise ValueError(f"--plugin-dir resource does not match the frozen catalog: {path} ({rel_path})")
     return {"plugin": plugin, "path": path, "realpath": os.path.realpath(path)}
 
 
@@ -418,7 +445,42 @@ def claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues):
     return load
 
 
+def claude_full_read(requested_path, result, expected_sha256):
+    if result is None:
+        return {"detail": "no tool_result"}
+    if result["is_error"]:
+        return {"status": "failed", "detail": "tool_result is_error", "completed_seq": result["line"],
+                "ordering": "source_sequence"}
+    detail = result["detail"]
+    file = detail.get("file") if isinstance(detail, dict) else None
+    if not isinstance(file, dict) or not isinstance(file.get("content"), str):
+        return {"detail": "tool_result lacks toolUseResult.file content"}
+    if posixpath.normpath(str(file.get("filePath"))) != posixpath.normpath(requested_path):
+        return {"detail": "result path differs from the requested path"}
+    text = file["content"]
+    full = file.get("startLine") == 1 and isinstance(file.get("numLines"), int) and file["numLines"] == file.get("totalLines")
+    mismatch = ("sliced read" if not full else
+                None if digest(text.encode()) == expected_sha256 else "content digest mismatch")
+    return {"status": "partial" if mismatch else "success", "detail": mismatch,
+            "body_sha256": digest(text.encode()), "completed_seq": result["line"], "ordering": "source_sequence"}
+
+
+def claude_resource_read(tool_use_id, session, frozen_resources, manifest, sid, agent):
+    use = session["uses"][tool_use_id]
+    result = session["results"].get(tool_use_id)
+    path = use["input"].get("file_path")
+    res_id = frozen_resources[posixpath.normpath(path)]
+    record = {"resource": res_id, "path": path, "status": "unavailable", "detail": None, "body_sha256": None,
+              "completed_seq": None, "session_id": sid, "agent_id": agent, "proof": "full_body_read",
+              "ordering": "unknown", "evidence": [use["ref"]] + ([result["ref"]] if result else [])}
+    record.update(claude_full_read(path, result, manifest["resources"][res_id]["sha256"]))
+    return record
+
+
 def claude_proof(load, use, result, body, frozen, manifest):
+    if use["name"] != "Skill":
+        load.update(claude_full_read(load["skill_path"], result, manifest["skills"][load["skill"]]["sha256"]))
+        return load
     if result is None:
         load["detail"] = "no tool_result"
         return load
@@ -427,60 +489,56 @@ def claude_proof(load, use, result, body, frozen, manifest):
                     ordering="source_sequence")
         return load
     detail = result["detail"]
-    if use["name"] == "Skill":
-        if not (isinstance(detail, dict) and detail.get("success") is True):
-            load["detail"] = "tool_result lacks toolUseResult.success"
-            return load
-        if body is None:
-            load.update(status="partial", detail="no skill body linked by sourceToolUseID")
-            return load
-        base_dir, separator, text = body["text"][len(CLAUDE_BASE_PREFIX):].partition("\n\n")
-        load["skill_path"] = posixpath.join(base_dir, "SKILL.md")
-        skill = frozen.get(posixpath.normpath(load["skill_path"]))
-        if skill is None:
-            load["detail"] = "base directory outside the declared snapshot"
-            return load
-        if load["skill"] != skill:
-            load["detail"] = "requested skill differs from the delivered base directory"
-            return load
-        load["skill"] = skill
-        expected = manifest["skills"][skill]["body_sha256"]
-        # Claude Code appends Skill call arguments to a body that has no $ARGUMENTS placeholder.
-        suffix = "\n\nARGUMENTS: " + str(use["input"].get("args") or "")
-        if use["input"].get("args") and text.endswith(suffix) and digest(text[:-len(suffix)].encode()) == expected:
-            text = text[:-len(suffix)]
-            load["transform"] += "_arguments_suffix_removed"
-        mismatch = None if separator and digest(text.encode()) == expected else "body digest mismatch"
-        completed = max(result["line"], body["line"])
-    else:
-        file = detail.get("file") if isinstance(detail, dict) else None
-        if not isinstance(file, dict) or not isinstance(file.get("content"), str):
-            load["detail"] = "tool_result lacks toolUseResult.file content"
-            return load
-        if posixpath.normpath(str(file.get("filePath"))) != posixpath.normpath(load["skill_path"]):
-            load["detail"] = "result path differs from the requested path"
-            return load
-        text = file["content"]
-        full = file.get("startLine") == 1 and isinstance(file.get("numLines"), int) and file["numLines"] == file.get("totalLines")
-        mismatch = ("sliced read" if not full else
-                    None if digest(text.encode()) == manifest["skills"][load["skill"]]["sha256"] else "content digest mismatch")
-        completed = result["line"]
+    if not (isinstance(detail, dict) and detail.get("success") is True):
+        load["detail"] = "tool_result lacks toolUseResult.success"
+        return load
+    if body is None:
+        load.update(status="partial", detail="no skill body linked by sourceToolUseID")
+        return load
+    base_dir, separator, text = body["text"][len(CLAUDE_BASE_PREFIX):].partition("\n\n")
+    load["skill_path"] = posixpath.join(base_dir, "SKILL.md")
+    skill = frozen.get(posixpath.normpath(load["skill_path"]))
+    if skill is None:
+        load["detail"] = "base directory outside the declared snapshot"
+        return load
+    if load["skill"] != skill:
+        load["detail"] = "requested skill differs from the delivered base directory"
+        return load
+    load["skill"] = skill
+    expected = manifest["skills"][skill]["body_sha256"]
+    # Claude Code appends Skill call arguments to a body that has no $ARGUMENTS placeholder.
+    suffix = "\n\nARGUMENTS: " + str(use["input"].get("args") or "")
+    if use["input"].get("args") and text.endswith(suffix) and digest(text[:-len(suffix)].encode()) == expected:
+        text = text[:-len(suffix)]
+        load["transform"] += "_arguments_suffix_removed"
+    mismatch = None if separator and digest(text.encode()) == expected else "body digest mismatch"
     load.update(status="partial" if mismatch else "success", detail=mismatch, body_sha256=digest(text.encode()),
-                completed_seq=completed, ordering="source_sequence")
+                completed_seq=max(result["line"], body["line"]), ordering="source_sequence")
     return load
 
 
 def normalize_claude(run, manifest, capture_info, base, relevant_kind):
     """Claude Code transcript adapter; see EVIDENCE.md "Claude transcript adapter"."""
-    base.update(provider="claude-code", adapter_version="claude-transcript-v1", child_loads=[])
+    base.update(provider="claude-code", adapter_version="claude-transcript-v1")
     issues = base["issues"]
-    frozen = {}
+    frozen, frozen_resources = {}, {}
     for snapshot in capture_info["plugin_dirs"]:
         for root in {snapshot["path"], snapshot["realpath"]}:
             for skill in manifest["skills"]:
                 plugin, name = skill.split(":", 1)
                 if plugin == snapshot["plugin"]:
                     frozen[posixpath.normpath(posixpath.join(root, "skills", name, "SKILL.md"))] = skill
+            for res_id in manifest.get("resources", {}):
+                plugin, rel_path = res_id.split(":", 1)
+                if plugin == snapshot["plugin"]:
+                    frozen_resources[posixpath.normpath(posixpath.join(root, rel_path))] = res_id
+    bash_targets = [
+        (kind, target_id, p, re.compile(re.escape(p) + r"(?![\w./-])"))
+        for kind, target_id, p in (
+            [("skill", skill_id, p) for p, skill_id in sorted(frozen.items())]
+            + [("resource", res_id, p) for p, res_id in sorted(frozen_resources.items())]
+        )
+    ]
     rows = claude_lines(run / capture_info["path"], capture_info["path"], issues)
     session_ids = {row.get("sessionId") for _, row in rows}
     if len(session_ids) != 1 or not isinstance(next(iter(session_ids), None), str):
@@ -505,9 +563,22 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
     for agent, session in sessions:
         for tool_use_id, use in session["uses"].items():
             path = use["input"].get("file_path") if use["name"] == "Read" else None
-            if use["name"] == "Skill" or (isinstance(path, str) and posixpath.normpath(path) in frozen):
+            norm_path = posixpath.normpath(path) if isinstance(path, str) else None
+            if use["name"] == "Skill" or norm_path in frozen:
                 load = claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues)
                 base["loads" if agent is None else "child_loads"].append(load)
+            elif norm_path in frozen_resources:
+                rec = claude_resource_read(tool_use_id, session, frozen_resources, manifest, sid, agent)
+                base["resource_reads" if agent is None else "child_resource_reads"].append(rec)
+            elif use["name"] == "Bash" and isinstance(use["input"].get("command"), str):
+                command = use["input"]["command"]
+                seen_targets = set()
+                for kind, target_id, match_path, pattern in bash_targets:
+                    if pattern.search(command) and (kind, target_id) not in seen_targets:
+                        seen_targets.add((kind, target_id))
+                        base["unproved_reads"].append({
+                            "path": match_path, kind: target_id, "session_id": sid, "agent_id": agent,
+                            "proof": "bash_command_mentions_path", "status": "unproved", "evidence": [use["ref"]]})
     stream = capture_info["stream"]
     if stream:
         events = claude_lines(retained(run, stream["path"], stream["sha256"]), stream["path"], issues)
@@ -533,6 +604,43 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
     return base
 
 
+SYNTHETIC_TARGETS = {
+    ("skill", True): "loads",
+    ("skill", False): "child_loads",
+    ("resource", True): "resource_reads",
+    ("resource", False): "child_resource_reads",
+}
+
+
+def synthetic_read_status(entry, req_path, event):
+    body = event.get("body")
+    body_sha = digest(body.encode()) if isinstance(body, str) else None
+    valid_identity = bool(entry and req_path == entry["path"])
+    matched = isinstance(body, str) and bool(entry) and body_sha == entry["sha256"]
+    exit_code = event.get("exit_code")
+    if valid_identity and type(exit_code) is int and exit_code != 0:
+        return "failed", "nonzero exit_code", body_sha
+    if type(exit_code) is int and exit_code == 0 and valid_identity:
+        if event.get("body_complete") is True and matched:
+            return "success", None, body_sha
+        detail = "body_complete is not true" if event.get("body_complete") is not True else "content digest mismatch"
+        return "partial", detail, body_sha
+    detail = "unknown identity or path mismatch" if not valid_identity else "missing or non-integer exit_code"
+    return "unavailable", detail, body_sha
+
+
+def synthetic_record(kind, req, event_sid, status, detail, body_sha, completed_seq, evidence):
+    ordering = "source_sequence" if completed_seq is not None else "unknown"
+    if kind == "skill":
+        return {"skill": req.get("skill"), "skill_path": req.get("path"), "status": status,
+                "body_sha256": body_sha, "completed_seq": completed_seq, "session_id": event_sid,
+                "proof": "full_body_read", "ordering": ordering, "evidence": evidence}
+    return {"resource": req.get("resource"), "path": req.get("path"), "status": status,
+            "detail": detail, "body_sha256": body_sha, "completed_seq": completed_seq,
+            "session_id": event_sid, "agent_id": None, "proof": "full_body_read",
+            "ordering": ordering, "evidence": evidence}
+
+
 def normalize(run, relevant_kind=None):
     """Dispatch to the adapter that capture.json names; unknown native formats stay unscored."""
     manifest = verify_inputs(run)
@@ -543,7 +651,8 @@ def normalize(run, relevant_kind=None):
             "session_state": capture_info["state"], "evidence_coverage": "unavailable",
             "coverage": {key: False for key in ("start", "end", "skill_delivery", "relevant_actions")},
             "raw_trace": {"path": raw.name, "sha256": capture_info["sha256"]},
-            "loads": [], "actions": [], "issues": []}
+            "loads": [], "child_loads": [], "resource_reads": [], "child_resource_reads": [],
+            "unproved_reads": [], "actions": [], "issues": []}
     if capture_info["format"] == "claude-transcript" and capture_info["evidence_kind"] == "native":
         return normalize_claude(run, manifest, capture_info, base, relevant_kind)
     if capture_info["format"] != "synthetic-contract-v1" or capture_info["evidence_kind"] != "synthetic":
@@ -566,62 +675,71 @@ def normalize(run, relevant_kind=None):
         return base
     start_line, start = starts[0]
     sid = base["session_id"] = start["session_id"]
+    child_sids = {
+        e["session_id"] for _, e in events
+        if e.get("type") == "session.started" and e.get("parent_session_id") == sid
+        and isinstance(e.get("session_id"), str) and e["session_id"] and e["session_id"] != sid
+    }
     last_root_line = max(line for line, event in events if event.get("session_id") == sid)
     base["coverage"]["start"] = start_line == 1
     requests = {}
     ended = False
     for line, event in events:
-        if event.get("session_id") != sid:
-            # Child events are preserved in raw capture but never score a root load.
+        event_sid = event.get("session_id")
+        is_root = event_sid == sid
+        if not is_root and event_sid not in child_sids:
             continue
         typ = event.get("type")
         ref = {"event_id": event["event_id"], "line": line}
-        if ended:
+        if is_root and ended:
             base["issues"].append("root event after terminal")
         if typ == "session.started":
             continue
-        if typ == "skill_read.request":
+        if typ in {"skill_read.request", "resource_read.request"}:
+            kind = "skill" if typ == "skill_read.request" else "resource"
             request_id = event.get("request_id")
-            if not request_id or request_id in requests:
+            req_key = (event_sid, request_id)
+            if not request_id or req_key in requests:
                 base["issues"].append("invalid/duplicate request ID")
             else:
-                requests[request_id] = (event, ref)
-        elif typ == "skill_read.result":
-            request = requests.pop(event.get("request_id"), None)
-            if request is None:
+                requests[req_key] = (kind, event, ref)
+        elif typ in {"skill_read.result", "resource_read.result"}:
+            kind = "skill" if typ == "skill_read.result" else "resource"
+            req_key = (event_sid, event.get("request_id"))
+            pending = requests.get(req_key)
+            if pending is None or pending[0] != kind:
                 base["issues"].append("unmatched read result")
                 continue
-            req, request_ref = request
-            skill = manifest["skills"].get(req.get("skill"))
-            body = event.get("body")
-            valid_identity = skill and req.get("path") == skill["path"]
-            matched = isinstance(body, str) and skill and digest(body.encode()) == skill["sha256"]
-            status = "unavailable"
-            if valid_identity and type(event.get("exit_code")) is int and event["exit_code"] != 0:
-                status = "failed"
-            elif type(event.get("exit_code")) is int and event["exit_code"] == 0 and valid_identity:
-                status = "success" if event.get("body_complete") is True and matched else "partial"
-            base["loads"].append({"skill": req.get("skill"), "skill_path": req.get("path"), "status": status,
-                                  "body_sha256": digest(body.encode()) if isinstance(body, str) else None,
-                                  "completed_seq": line, "session_id": sid, "proof": "full_body_read",
-                                  "ordering": "source_sequence", "evidence": [request_ref, ref]})
+            requests.pop(req_key)
+            _, req, request_ref = pending
+            if kind == "skill":
+                entry = manifest["skills"].get(req.get("skill"))
+            else:
+                entry = manifest.get("resources", {}).get(req.get("resource"))
+            status, detail, body_sha = synthetic_read_status(entry, req.get("path"), event)
+            base[SYNTHETIC_TARGETS[(kind, is_root)]].append(
+                synthetic_record(kind, req, event_sid, status, detail, body_sha, line, [request_ref, ref]))
         elif typ == "action.started":
+            if not is_root:
+                continue
             if not isinstance(event.get("kind"), str):
                 base["issues"].append("action missing semantic boundary")
             else:
                 base["actions"].append({"kind": event["kind"], "seq": line, "session_id": sid,
                                          "ordering": "source_sequence", "evidence": [ref]})
         elif typ == "session.completed":
+            if not is_root:
+                continue
             ended = True
             base["coverage"]["end"] = line == last_root_line
             for field in ("skill_delivery", "relevant_actions"):
                 base["coverage"][field] = event.get("coverage", {}).get(field) is True
         elif typ not in {"message", "skill.mention"}:
             base["issues"].append(f"unknown record: {typ}")
-    for req, ref in requests.values():
-        base["loads"].append({"skill": req.get("skill"), "skill_path": req.get("path"), "status": "unavailable",
-                              "body_sha256": None, "completed_seq": None, "session_id": sid,
-                              "proof": "full_body_read", "ordering": "unknown", "evidence": [ref]})
+    for (req_sid, _), (kind, req, ref) in requests.items():
+        detail = None if kind == "skill" else "no resource_read.result"
+        base[SYNTHETIC_TARGETS[(kind, req_sid == sid)]].append(
+            synthetic_record(kind, req, req_sid, "unavailable", detail, None, None, [ref]))
     if all(base["coverage"].values()) and not base["issues"] and capture_info["state"] == "completed":
         base["evidence_coverage"] = "complete"
     else:
@@ -673,6 +791,10 @@ def score(args):
                                              if l["status"] in {"partial", "unavailable"}} - observed),
               "false_activation": True if observed & forbidden else False if complete and not ambiguous_forbidden else None,
               "unexpected_skills": sorted(observed - allowed),
+              "observed_resources": sorted({r["resource"] for r in evidence["resource_reads"] if r["status"] == "success"}),
+              "child_observed_skills": sorted({l["skill"] for l in evidence["child_loads"] if l["status"] == "success"}),
+              "child_observed_resources": sorted({r["resource"] for r in evidence["child_resource_reads"] if r["status"] == "success"}),
+              "unproved_read_count": len(evidence["unproved_reads"]),
               "load_status_counts": dict(Counter(l["status"] for l in evidence["loads"])),
               "raw_trace": evidence["raw_trace"], "manifest_sha256": digest((run / "manifest.json").read_bytes()),
               "measured_efficacy": False}

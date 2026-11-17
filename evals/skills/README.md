@@ -155,7 +155,7 @@ skill, principle, playbook, or reference that does not exist.
 Each facet has a scorer status:
 
 - `scored`: a case field scores it.
-- `recorded`: the scorer records the load, but no case field scores it.
+- `recorded`: the scorer records the load, resource read, or subagent read, but no case field scores it.
 - `invisible`: the scorer drops the event.
 - `unsupported`: the harness removes the trigger. Materialize deletes hooks.
 
@@ -214,7 +214,9 @@ version (2.1.296, headless), plus the 2.1.325 additions: five metadata record
 types (`session-owner`, `api-request`, `api-request-shape`, `api-request-blob`,
 `tools-used`) that carry no skill load, and parallel tool calls whose one API
 message spans several lines. It supports `Skill`-tool loads, by full or bare name, proved
-by the linked delivered body, full `Read` loads of a frozen `SKILL.md`, root versus sidechain scope,
+by the linked delivered body, full `Read` reads of frozen `SKILL.md` and plugin resource files
+(playbooks and references named in `facets.json`), root versus subagent records (`child_loads` and
+`child_resource_reads`), `Bash` commands mentioning frozen paths in `unproved_reads`,
 labeled action timing, and end coverage from stream-json. A `Skill` call with
 arguments counts when Claude Code appended them to the body as
 `ARGUMENTS: <args>`. It does not support typed slash-command loads, arguments

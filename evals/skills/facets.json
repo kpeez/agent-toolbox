@@ -958,7 +958,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`analyze-results`: results or logs that exist and need a conclusion.",
       "subject": "analyze-results"
     },
@@ -978,7 +978,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge.",
       "subject": "appraise-source"
     },
@@ -998,7 +998,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`bootstrap-project`: a request to set up a research project's `research-context` and first procedure skill. A missing `research-context` does not select it by itself; route the task on its own terms.",
       "subject": "bootstrap-project"
     },
@@ -1018,7 +1018,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`codify-procedure`: a request to turn a procedure, done in this session or named by the user, into a project skill.",
       "subject": "codify-procedure"
     },
@@ -1038,7 +1038,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`maintain-project-skills`: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.",
       "subject": "maintain-project-skills"
     },
@@ -1058,7 +1058,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`review-literature`: what a body of work shows on a question, from a bounded question to a multi-lane survey.",
       "subject": "review-literature"
     },
@@ -1078,7 +1078,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`run-experiment`: one designed comparison, ablation, or eval run.",
       "subject": "run-experiment"
     },
@@ -1098,7 +1098,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`author-skill`: write or edit a skill, `AGENTS.md`, or `CLAUDE.md`.",
       "subject": "author-skill"
     },
@@ -1118,7 +1118,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`autopilot-full`: a queue of independent PRs run to merged, one owner per PR.",
       "subject": "autopilot-full"
     },
@@ -1138,7 +1138,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, stacked only where one builds on another.",
       "subject": "autopilot-stack"
     },
@@ -1158,7 +1158,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`babysit-pr`: drive a PR or stack to merge-ready: conflicts, review threads, CI.",
       "subject": "babysit-pr"
     },
@@ -1178,7 +1178,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`build-feature`: new or changed behavior.",
       "subject": "build-feature"
     },
@@ -1198,7 +1198,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`build-prototype`: a throwaway sketch to settle a design or an empirical fork by observation.",
       "subject": "build-prototype"
     },
@@ -1218,7 +1218,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
       "subject": "clean-worktrees"
     },
@@ -1238,7 +1238,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`diagnose-runtime`: diagnose a live runtime symptom (leak, spin, glitch) from instrumentation. No fix.",
       "subject": "diagnose-runtime"
     },
@@ -1258,7 +1258,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`diagnose-trace`: diagnose a captured profile, trace, or heap snapshot. No fix.",
       "subject": "diagnose-trace"
     },
@@ -1278,7 +1278,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`evaluate-agent-change`: measure how a skill or prompt change affects agent behavior.",
       "subject": "evaluate-agent-change"
     },
@@ -1298,7 +1298,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`fix-bug`: a reported defect to reproduce, root-cause, and fix.",
       "subject": "fix-bug"
     },
@@ -1318,7 +1318,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`hillclimb-metric`: sustained improvement of one metric against a target, with one keep-or-revert decision per attempt.",
       "subject": "hillclimb-metric"
     },
@@ -1338,7 +1338,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`improve-performance`: a measured slowness to improve against a baseline.",
       "subject": "improve-performance"
     },
@@ -1358,7 +1358,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`investigate-question`: a read-only question with a cited answer, including \"how does X work\" and \"why was this built this way\".",
       "subject": "investigate-question"
     },
@@ -1378,7 +1378,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`match-visual-parity`: pixel-exact UI equivalence against a baseline.",
       "subject": "match-visual-parity"
     },
@@ -1398,7 +1398,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`pause-safely`: stop in-flight work cleanly so a new session can resume it.",
       "subject": "pause-safely"
     },
@@ -1418,7 +1418,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`pick-up-session`: resume a prior agent's in-flight work from its handoff file, decision log, transcript, or branch.",
       "subject": "pick-up-session"
     },
@@ -1438,7 +1438,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`plan-multi-phase`: work that spans phases or stacked PRs. The plan is the deliverable.",
       "subject": "plan-multi-phase"
     },
@@ -1458,7 +1458,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`refactor-structure`: change structure, keep behavior.",
       "subject": "refactor-structure"
     },
@@ -1478,7 +1478,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`run-autonomously`: a long task to drive to a checkable exit condition without stopping.",
       "subject": "run-autonomously"
     },
@@ -1498,7 +1498,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`run-program`: a standing multi-day program with many PRs and subagents under one coordinator.",
       "subject": "run-program"
     },
@@ -1518,7 +1518,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "`ship-stack`: verify a green stack independently, then land the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
@@ -4590,7 +4590,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "1-locate-raw-results: Find the logs, predictions, and configs, and link each number you will report to its raw file. Check the Provenance section. (claim-checklist)",
       "subject": "analyze-results"
     },
@@ -4682,7 +4682,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "3-check-the-run-ran: Check for errors, skipped items, crashed seeds, and truncated outputs, and confirm that item counts match the dataset. Follow the project's procedure skill when one covers the run. Check the Raw data section. (claim-checklist)",
       "subject": "analyze-results"
     },
@@ -4728,7 +4728,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "5-measure-noise: For each number, record the run count and the spread, and compare each gap to the noise floor. Check the Noise section. (claim-checklist)",
       "subject": "analyze-results"
     },
@@ -4751,7 +4751,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "6-check-comparison: For each \"A beats B\" result, confirm that both sides got the same data, compute, and tuning. Check the Comparison section. (claim-checklist)",
       "subject": "analyze-results"
     },
@@ -4774,7 +4774,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "7-read-examples: Read raw inputs and outputs from both sides of each aggregate, including failures. Check the Raw data section. (claim-checklist)",
       "subject": "analyze-results"
     },
@@ -4797,7 +4797,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "8-rule-out-rivals: List the other explanations, such as leakage, contamination, a metric artifact, or a confound, and mark each as ruled out or open. Check the Rivals section. (claim-checklist)",
       "subject": "analyze-results"
     },
@@ -4843,7 +4843,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "1-get-the-original: Open the latest version with its appendix, code, and data, and record the version you read. Check the Source section. (claim-checklist)",
       "subject": "appraise-source"
     },
@@ -4866,7 +4866,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-extract-claims: List each central claim with the table or figure offered for it, and write each claim at the scope its evidence supports. Check the Scope section. (claim-checklist)",
       "subject": "appraise-source"
     },
@@ -4889,7 +4889,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "3-check-comparisons: For each \"A beats B\" claim, confirm that both sides got the same data, compute, and tuning, and that an ablation isolates the credited part. Check the Comparison section. (claim-checklist)",
       "subject": "appraise-source"
     },
@@ -4912,7 +4912,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "4-check-noise: For each number behind a claim, find the run count, the spread, and the noise floor, or note that the source gives none. Check the Noise section. (claim-checklist)",
       "subject": "appraise-source"
     },
@@ -4935,7 +4935,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "5-list-rivals: For each claim, list the other explanations, such as leakage, contamination, a metric artifact, or a confound, and mark each as ruled out or open. Check the Rivals section. (claim-checklist)",
       "subject": "appraise-source"
     },
@@ -4958,7 +4958,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "6-read-examples: Read the qualitative examples and any released data or outputs, and note each case that fits or breaks a claim. Check the Raw data section. (claim-checklist)",
       "subject": "appraise-source"
     },
@@ -4981,7 +4981,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "7-search-follow-ups: Search forward citations, replications, critiques, and public reviews, and record what each finds for each claim. Check the Contrary evidence section. (claim-checklist)",
       "subject": "appraise-source"
     },
@@ -5143,7 +5143,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "5-codify-the-top-procedure: Run the playbook on the top procedure. A skill for it exists at the end. (codify-procedure)",
       "subject": "bootstrap-project",
       "target_handles": [
@@ -5170,7 +5170,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "5-codify-the-top-procedure: Run the playbook on the top procedure. A skill for it exists at the end. (codify-procedure)",
       "subject": "bootstrap-project"
     },
@@ -5352,7 +5352,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-load-the-context: When no `research-context` skill exists, first run steps 1 to 3 of bootstrap-project. Then load the project's data facts and conventions from it. (bootstrap-project, research-context)",
       "subject": "codify-procedure"
     },
@@ -5427,7 +5427,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "4-collect-validity-checks: List the checks from `research-context`, from domain conventions with a source for each, and from each user correction. Each check is a command with a pass or fail result. (claim-checklist)",
       "subject": "codify-procedure"
     },
@@ -5634,7 +5634,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-search-both-directions: Write a search plan with queries for and against the claim, plus forward and backward citations, and run it. Check the Contrary evidence section. (claim-checklist)",
       "subject": "review-literature"
     },
@@ -5657,7 +5657,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "3-screen-sources: Apply the inclusion criteria, record each exclusion with its reason, and group the kept sources by independent origin. Check the Source section. (claim-checklist, grade-the-evidence)",
       "subject": "review-literature"
     },
@@ -5703,7 +5703,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "4-appraise-key-sources: Give each source that a conclusion rests on to one subagent to run appraise-source steps 2 to 8, and name the claim-checklist sections in each brief. (appraise-source)",
       "subject": "review-literature"
     },
@@ -5727,7 +5727,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "4-appraise-key-sources: Give each source that a conclusion rests on to one subagent to run appraise-source steps 2 to 8, and name the claim-checklist sections in each brief. (appraise-source)",
       "subject": "review-literature",
       "target_handles": [
@@ -5810,7 +5810,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "6-write-the-report: Write the report with a bounded question in research, or with a multi-lane survey in deep-research. Finish its citation audit and trace each claim to its primary source. Check the Source and Provenance sections. (research, deep-research, claim-checklist)",
       "subject": "review-literature"
     },
@@ -5925,7 +5925,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-check-prior-work: Do a short search for an existing answer. When a source already answers the question, stop and report that answer with its grade. (review-literature)",
       "subject": "run-experiment"
     },
@@ -5948,7 +5948,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "3-tune-the-baseline: Give the baseline the same data, compute, and tuning effort as the change, and write down each setting. Check the Comparison section. (claim-checklist)",
       "subject": "run-experiment"
     },
@@ -5971,7 +5971,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "4-pilot-small: Follow the project's procedure skill when one covers the run, and run its known-good check first. Run the smallest job that exercises the full pipeline, read what the model receives and returns, and estimate the cost of the full run. When no skill covers the pipeline, feed it data with a known answer and confirm the answer returns before the full run. (simulate-before-you-trust, claim-checklist)",
       "subject": "run-experiment"
     },
@@ -6017,7 +6017,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "5-measure-noise-floor: Repeat the baseline across seeds, and record the run count and the spread. Check the Noise section. (claim-checklist)",
       "subject": "run-experiment"
     },
@@ -6040,7 +6040,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "6-run-with-provenance: Run the full experiment, and link each result to its command, config, commit, and data version. Check the Provenance section. (claim-checklist)",
       "subject": "run-experiment"
     },
@@ -6063,7 +6063,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "7-analyze: Run steps 3 to 10 of analyze-results on the results. (analyze-results)",
       "subject": "run-experiment"
     },
@@ -6087,7 +6087,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "7-analyze: Run steps 3 to 10 of analyze-results on the results. (analyze-results)",
       "subject": "run-experiment",
       "target_handles": [
@@ -6202,7 +6202,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "8-record-the-result: Record the result against the decision rule, with each deviation from the written plan. Record null and negative results too. Check the Provenance section. (claim-checklist, write-the-decision-first)",
       "subject": "run-experiment"
     },
@@ -6386,7 +6386,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "6-plan-activation-check: When the change is structural or a model-invoked description changes, add or update a test case. Skip for a subjective change. (evaluate-agent-change)",
       "subject": "author-skill"
     },
@@ -6455,7 +6455,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-spawn-owner-per-pr: Spawn one owner per PR. It builds, opens its PR early so CI and bots run alongside the work, proves the change on the real artifact, babysits to green, and merges once steps 6 and 8 clear it. (ship-pr, babysit-pr, prove-it-works)",
       "subject": "autopilot-full"
     },
@@ -6662,7 +6662,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "8-merge-only-verified: Green CI alone never authorizes a merge. Merge prep rebases onto current trunk, reports the new head, and waits for green CI. Right before the merge, fetch trunk and ask whether its changes can affect the patch. Rebase and wait for CI on a conflict, a file both sides changed, or a change to which checks run. Run the patch's checks on the merge result when trunk changed a caller or a dependency of the patch. A lockfile both sides changed needs no rebase when a frozen install passes on the merge result. Before a third rebase past merge prep, hold and report to the root. (ship-pr, ship-stack)",
       "subject": "autopilot-full"
     },
@@ -6708,7 +6708,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "1-stop-at-verified: In place of autopilot-full step 8, stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. (autopilot-full)",
       "subject": "autopilot-stack"
     },
@@ -6754,7 +6754,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-stack-only-on-dependency: A PR stacks only when it builds on another PR. This is the one exception to autopilot-full step 5. Base that PR on the other PR's branch in place of trunk. In place of the rebase onto trunk, each PR rebases onto its parent PR's branch, and the stack root rebases onto trunk. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
       "subject": "autopilot-stack"
     },
@@ -6800,7 +6800,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "10-stop-at-human-line: Treat a missing owner approval as a wait, not a blocker. Babysitting never authorizes a merge. Route an explicit request to merge, land, or ship to ship-stack. Surface each escalation and keep working the rest. (ship-stack)",
       "subject": "babysit-pr"
     },
@@ -6823,7 +6823,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "4-keep-the-topology: Never retarget a base, rebase, force-push, or submit the whole stack from a babysit. Fix on the owning branch and report anything rebase-shaped to the owner. When the owning PR has merged, the fix becomes a new PR on top of the stack, the one change to the frozen list. An autopilot owner babysitting its own PR is the owner. (autopilot-full, autopilot-stack)",
       "subject": "babysit-pr"
     },
@@ -6846,7 +6846,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "4-keep-the-topology: Never retarget a base, rebase, force-push, or submit the whole stack from a babysit. Fix on the owning branch and report anything rebase-shaped to the owner. When the owning PR has merged, the fix becomes a new PR on top of the stack, the one change to the frozen list. An autopilot owner babysitting its own PR is the owner. (autopilot-full, autopilot-stack)",
       "subject": "babysit-pr"
     },
@@ -7145,7 +7145,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-interview-on-open-decisions: When scope or behavior rests on a product or preference decision the user has not made, run interview-user on those decisions only. Settle facts a run can show by prototype instead. (interview-user, build-prototype)",
       "subject": "build-feature"
     },
@@ -7559,7 +7559,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "6-recommend-direction: Present the alternatives, tradeoffs, and a recommendation. Hand the chosen direction to build-feature, or to architect for its shape. (build-feature, architect)",
       "subject": "build-prototype"
     },
@@ -8686,7 +8686,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "5-ground-each-hypothesis: Name a specific mechanism for each hypothesis. For a perf metric, order hypotheses by the performance mantras, but not their stop rule. (improve-performance)",
       "subject": "hillclimb-metric"
     },
@@ -9606,7 +9606,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "2-settle-by-prototype: Settle each open question by a prototype before you write, and keep its branch, SHA, and screenshots for Appendix A. Settle a product or preference call no run can settle with interview-user. (build-prototype, never-block-on-the-human, interview-user)",
       "subject": "plan-multi-phase"
     },
@@ -10411,7 +10411,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "1-frame-program: State the done predicate as a count, such as all 126 units merged and each verified. Quantify units, effort, and the wall-clock budget. When one agent could finish inside the budget, run run-autonomously instead. Present the framing once. (in-your-own-words, run-autonomously, log-decisions)",
       "subject": "run-program"
     },
@@ -10434,7 +10434,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "10-check-live-state: Check a PR's live state with `gh pr view` and `gh pr checks` before you report on it, not the worker's last report. Account for every worker you spawned as done, replaced, or absorbed into another worker's scope. (babysit-pr)",
       "subject": "run-program"
     },
@@ -10755,7 +10755,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "A claim from a paper, a log, or your own run: check it against the `claim-checklist`.",
       "subject": "lab-mode"
     },
@@ -10865,7 +10865,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "A PR-status request (\"check on PR X\", \"get it green\", \"address the review comments\"): the `babysit-pr` playbook. Opening a PR does not start it.",
       "subject": "swe-mode"
     },
@@ -10909,7 +10909,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "Nontrivial multi-step work: write the throughput checkpoint (`build-feature` step 5).",
       "subject": "swe-mode"
     },
@@ -10931,7 +10931,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "A fork you want to ask about (\"which approach\", \"what should this do\"): classify it first. When a run can show the answer (behavior, timing, layout, output, performance), it is not the user's question. Settle it with the `build-prototype` playbook. In a read-only investigation, answer from the evidence instead. Ask the user only a product or preference call that no experiment can settle (`never-block-on-the-human`).",
       "subject": "swe-mode"
     },
@@ -11151,7 +11151,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "invisible",
+      "scorer": "recorded",
       "source_text": "A request to land or ship a green stack: the `ship-stack` playbook. Green is not safe. Nothing lands before an independent verdict per PR.",
       "subject": "swe-mode"
     },
@@ -11210,7 +11210,7 @@
       "unsupported": 5
     },
     "playbook-read": {
-      "invisible": 29
+      "recorded": 29
     },
     "principle-read": {
       "recorded": 29
@@ -11225,12 +11225,12 @@
       "invisible": 25
     },
     "step-load": {
-      "invisible": 54,
-      "recorded": 211
+      "invisible": 10,
+      "recorded": 255
     },
     "trigger-load": {
-      "invisible": 7,
-      "recorded": 14
+      "invisible": 2,
+      "recorded": 19
     }
   }
 }

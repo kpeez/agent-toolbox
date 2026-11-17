@@ -22,11 +22,24 @@ The successor test protects scoring after the swe consolidation merged two
 target skills. The credible regression is a silent miss on every case of a
 merged family; it was seen red with the successor lookup removed from the
 activation loop.
+
+The resource-read and child-record tests protect frozen playbook/reference
+verification, Claude and synthetic resource proofs, subagent record routing,
+Bash unproved-read recording, and isolation of existing activation metrics.
+Credible regressions are dropping non-SKILL.md reads, failing to verify frozen
+resources in declared_snapshot, accepting a content-mismatched or sliced
+playbook read or a failed or incomplete synthetic resource_read as success,
+recording a non-frozen file Read in any evidence list, matching a suffixed path
+in Bash or counting Bash cat as a load or success, leaking child or unrelated
+non-root reads into root activation, colliding root and child requests that
+share one request_id, or changing existing score fields when resource reads
+appear.
 """
 from __future__ import annotations
 
 import json
 from pathlib import Path
+import shutil
 import subprocess
 import sys
 import tempfile
@@ -179,32 +192,46 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(scores["TA-01"]["unexpected_skills"], [])
         self.assertTrue(scores["TA-09"]["false_activation"])
 
-    def claude_trace(self, run, steps, relevant):
+    def claude_trace(self, run, steps, relevant, sidechains=None):
         """Write a minimal transcript in the audited Claude Code shape (EVIDENCE.md) and score it."""
-        lines, sid = [], "claude-session"
+        sid = "claude-session"
 
-        def add(row, parent=None):
-            row = {"uuid": f"line-{len(lines)}", "parentUuid": parent or (lines[-1]["uuid"] if lines else None),
-                   "sessionId": sid, "isSidechain": False, **row}
-            lines.append(row)
+        def build_lines(seq_steps, is_sidechain=False, agent_id=None):
+            rows = []
 
-        add({"type": "user", "message": {"role": "user", "content": "rename it"}})
-        for kind, message_id, tool_use_id, payload in steps:
-            if kind == "call":
-                add({"type": "assistant", "message": {"id": message_id, "content": [
-                    {"type": "tool_use", "id": tool_use_id, "name": payload["name"], "input": payload["input"]}]}})
-            elif kind in {"result", "sibling-result"}:
-                # A sibling result answers an earlier call of one API message, so it branches from that call.
-                parent = next(r["uuid"] for r in lines if tool_use_id in json.dumps(r["message"])) \
-                    if kind == "sibling-result" else None
-                add({"type": "user", "toolUseResult": payload, "message": {"role": "user", "content": [
-                    {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}}, parent)
-            else:
-                add({"type": "user", "isMeta": True, "sourceToolUseID": tool_use_id, "message": {
-                    "role": "user", "content": [{"type": "text", "text": payload}]}})
+            def add(row, parent=None):
+                extra = {"agentId": agent_id} if agent_id is not None else {}
+                row = {"uuid": f"{agent_id or 'root'}-{len(rows)}",
+                       "parentUuid": parent or (rows[-1]["uuid"] if rows else None),
+                       "sessionId": sid, "isSidechain": is_sidechain, **extra, **row}
+                rows.append(row)
+
+            add({"type": "user", "message": {"role": "user", "content": "rename it"}})
+            for kind, message_id, tool_use_id, payload in seq_steps:
+                if kind == "call":
+                    add({"type": "assistant", "message": {"id": message_id, "content": [
+                        {"type": "tool_use", "id": tool_use_id, "name": payload["name"], "input": payload["input"]}]}})
+                elif kind in {"result", "sibling-result"}:
+                    # A sibling result answers an earlier call of one API message, so it branches from that call.
+                    parent = next(r["uuid"] for r in rows if tool_use_id in json.dumps(r["message"])) \
+                        if kind == "sibling-result" else None
+                    add({"type": "user", "toolUseResult": payload, "message": {"role": "user", "content": [
+                        {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}}, parent)
+                else:
+                    add({"type": "user", "isMeta": True, "sourceToolUseID": tool_use_id, "message": {
+                        "role": "user", "content": [{"type": "text", "text": payload}]}})
+            return rows
+
+        lines = build_lines(steps)
         source = self.root / (run.name + ".jsonl")
         source.write_text("".join(json.dumps(row) + "\n" for row in lines)
                           + json.dumps({"type": "cost-state", "sessionId": sid}) + "\n")
+        if sidechains:
+            subdir = source.with_suffix("") / "subagents"
+            subdir.mkdir(parents=True, exist_ok=True)
+            for agent_id, sub_steps in sidechains.items():
+                sub_lines = build_lines(sub_steps, is_sidechain=True, agent_id=agent_id)
+                (subdir / f"agent-{agent_id}.jsonl").write_text("".join(json.dumps(row) + "\n" for row in sub_lines))
         stream = self.root / (run.name + ".stream.jsonl")
         stream.write_text(json.dumps({"type": "result", "subtype": "success", "is_error": False, "session_id": sid}) + "\n")
         self.cli("capture", "--run", run, "--source", source, "--state", "completed", "--format", "claude-transcript",
@@ -296,6 +323,290 @@ class OfflineCLIContract(unittest.TestCase):
         source.write_text("")
         self.cli("capture", "--run", run3, "--source", source, "--state", "incomplete", ok=False)
         self.assertFalse((run3 / "raw.jsonl").exists())
+
+    def test_claude_resource_reads_sidechain_and_bash(self):
+        res_id = "swe:skills/swe-mode/playbooks/fix-bug.md"
+        unchanged_keys = ("activation", "timing", "observed_skills", "expected_skills", "allowed_skills",
+                          "unresolved_skills", "false_activation", "unexpected_skills",
+                          "load_status_counts", "evidence_coverage", "session_state")
+
+        def skill_and_edit(skill, text):
+            body = ("Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n"
+                    + text.split("\n---\n", 1)[1].lstrip("\n"))
+            return [
+                ("call", "message-skill", "use-skill", {"name": "Skill", "input": {"skill": "swe:implement"}}),
+                ("result", None, "use-skill", {"success": True, "commandName": "swe:implement"}),
+                ("body", None, "use-skill", body),
+            ], [
+                ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+                ("result", None, "use-edit", {"filePath": "calc.py"}),
+            ]
+
+        base_run, base_skill, base_text = self.prepare("res-baseline")
+        skill_steps, edit_steps = skill_and_edit(base_skill, base_text)
+        baseline_score = self.claude_trace(base_run, skill_steps + edit_steps, "use-edit")
+
+        full_run, full_skill, full_text = self.prepare("res-full")
+        manifest = json.loads((full_run / "manifest.json").read_text())
+        self.assertIn("lab:skills/lab-mode/references/claim-checklist.md", manifest["resources"])
+        playbook = manifest["resources"][res_id]
+        pb_text = Path(playbook["path"]).read_text()
+        pb_lines = pb_text.split("\n")
+        s_steps, e_steps = skill_and_edit(full_skill, full_text)
+        non_frozen = str(full_run / "workspace" / "calc.py")
+        pb_read = [
+            ("call", "message-pb", "use-pb", {"name": "Read", "input": {"file_path": playbook["path"]}}),
+            ("result", None, "use-pb", {"type": "text", "file": {
+                "filePath": playbook["path"], "content": pb_text,
+                "startLine": 1, "numLines": len(pb_lines), "totalLines": len(pb_lines)}}),
+            ("call", "message-other", "use-other", {"name": "Read", "input": {"file_path": non_frozen}}),
+            ("result", None, "use-other", {"type": "text", "file": {
+                "filePath": non_frozen, "content": "x = 1\n",
+                "startLine": 1, "numLines": 1, "totalLines": 1}}),
+        ]
+        full_score = self.claude_trace(full_run, s_steps + pb_read + e_steps, "use-edit")
+        full_ev = json.loads((full_run / "evidence.json").read_text())
+        self.assertEqual(full_score["observed_resources"], [res_id])
+        self.assertEqual(len(full_ev["resource_reads"]), 1)
+        self.assertEqual(full_ev["resource_reads"][0]["status"], "success")
+        self.assertEqual(full_ev["resource_reads"][0]["resource"], res_id)
+        self.assertEqual(full_ev["resource_reads"][0]["body_sha256"], playbook["sha256"])
+        self.assertEqual(len(full_ev["loads"]), 1)
+        self.assertEqual(full_ev["child_loads"], [])
+        self.assertEqual(full_ev["child_resource_reads"], [])
+        self.assertEqual(full_ev["unproved_reads"], [])
+        for key in unchanged_keys:
+            self.assertEqual(full_score[key], baseline_score[key])
+
+        mismatch_run, _, _ = self.prepare("res-mismatch")
+        pb = json.loads((mismatch_run / "manifest.json").read_text())["resources"][res_id]
+        pb_text = Path(pb["path"]).read_text()
+        pb_l = pb_text.split("\n")
+        mismatch_steps = [
+            ("call", "message-pb", "use-pb", {"name": "Read", "input": {"file_path": pb["path"]}}),
+            ("result", None, "use-pb", {"type": "text", "file": {
+                "filePath": pb["path"], "content": pb_text + "mismatch\n",
+                "startLine": 1, "numLines": len(pb_l), "totalLines": len(pb_l)}}),
+            ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+            ("result", None, "use-edit", {"filePath": "calc.py"}),
+        ]
+        mismatch_score = self.claude_trace(mismatch_run, mismatch_steps, "use-edit")
+        mismatch_ev = json.loads((mismatch_run / "evidence.json").read_text())
+        self.assertEqual(mismatch_ev["resource_reads"][0]["status"], "partial")
+        self.assertEqual(mismatch_ev["resource_reads"][0]["detail"], "content digest mismatch")
+        self.assertEqual(mismatch_score["observed_resources"], [])
+
+        sliced_run, _, _ = self.prepare("res-sliced")
+        pb = json.loads((sliced_run / "manifest.json").read_text())["resources"][res_id]
+        pb_l = Path(pb["path"]).read_text().split("\n")
+        sliced_steps = [
+            ("call", "message-pb", "use-pb", {"name": "Read", "input": {"file_path": pb["path"]}}),
+            ("result", None, "use-pb", {"type": "text", "file": {
+                "filePath": pb["path"], "content": "\n".join(pb_l[:2]),
+                "startLine": 1, "numLines": 2, "totalLines": len(pb_l)}}),
+            ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+            ("result", None, "use-edit", {"filePath": "calc.py"}),
+        ]
+        sliced_score = self.claude_trace(sliced_run, sliced_steps, "use-edit")
+        sliced_ev = json.loads((sliced_run / "evidence.json").read_text())
+        self.assertEqual(sliced_ev["resource_reads"][0]["status"], "partial")
+        self.assertEqual(sliced_ev["resource_reads"][0]["detail"], "sliced read")
+        self.assertEqual(sliced_score["observed_resources"], [])
+
+        child_run, _, _ = self.prepare("res-sidechain")
+        pb = json.loads((child_run / "manifest.json").read_text())["resources"][res_id]
+        pb_text = Path(pb["path"]).read_text()
+        pb_l = pb_text.split("\n")
+        root_steps = [
+            ("call", "message-agent", "use-agent", {"name": "Agent", "input": {"prompt": "check"}}),
+            ("result", None, "use-agent", {"agentId": "sub1"}),
+            ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+            ("result", None, "use-edit", {"filePath": "calc.py"}),
+        ]
+        sub_steps = [
+            ("call", "sub-msg", "sub-read", {"name": "Read", "input": {"file_path": pb["path"]}}),
+            ("result", None, "sub-read", {"type": "text", "file": {
+                "filePath": pb["path"], "content": pb_text,
+                "startLine": 1, "numLines": len(pb_l), "totalLines": len(pb_l)}}),
+        ]
+        child_score = self.claude_trace(child_run, root_steps, "use-edit", sidechains={"sub1": sub_steps})
+        child_ev = json.loads((child_run / "evidence.json").read_text())
+        self.assertEqual(child_ev["resource_reads"], [])
+        self.assertEqual(child_score["observed_resources"], [])
+        self.assertEqual(child_score["child_observed_resources"], [res_id])
+        self.assertEqual(len(child_ev["child_resource_reads"]), 1)
+        self.assertEqual(child_ev["child_resource_reads"][0]["status"], "success")
+        self.assertEqual(child_ev["child_resource_reads"][0]["agent_id"], "sub1")
+
+        bash_run, _, _ = self.prepare("res-bash")
+        pb = json.loads((bash_run / "manifest.json").read_text())["resources"][res_id]
+        bash_steps = [
+            ("call", "message-bash", "use-bash", {"name": "Bash", "input": {"command": f"cat {pb['path']}"}}),
+            ("result", None, "use-bash", {"stdout": ""}),
+            ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+            ("result", None, "use-edit", {"filePath": "calc.py"}),
+        ]
+        bash_score = self.claude_trace(bash_run, bash_steps, "use-edit")
+        bash_ev = json.loads((bash_run / "evidence.json").read_text())
+        self.assertEqual(bash_ev["loads"], [])
+        self.assertEqual(bash_ev["resource_reads"], [])
+        self.assertEqual(bash_ev["child_loads"], [])
+        self.assertEqual(bash_ev["child_resource_reads"], [])
+        self.assertEqual(bash_score["observed_skills"], [])
+        self.assertEqual(bash_score["observed_resources"], [])
+        self.assertEqual(bash_score["unproved_read_count"], 1)
+        self.assertEqual(bash_ev["unproved_reads"][0]["resource"], res_id)
+        self.assertEqual(bash_ev["unproved_reads"][0]["proof"], "bash_command_mentions_path")
+        self.assertEqual(bash_ev["unproved_reads"][0]["status"], "unproved")
+
+        bak_run, _, _ = self.prepare("res-bash-bak")
+        pb = json.loads((bak_run / "manifest.json").read_text())["resources"][res_id]
+        bak_steps = [
+            ("call", "message-bash", "use-bash", {"name": "Bash", "input": {"command": f"cat {pb['path']}.bak"}}),
+            ("result", None, "use-bash", {"stdout": ""}),
+            ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+            ("result", None, "use-edit", {"filePath": "calc.py"}),
+        ]
+        bak_score = self.claude_trace(bak_run, bak_steps, "use-edit")
+        bak_ev = json.loads((bak_run / "evidence.json").read_text())
+        self.assertEqual(bak_ev["unproved_reads"], [])
+        self.assertEqual(bak_score["unproved_read_count"], 0)
+
+        tamper_run, _, _ = self.prepare("res-tamper")
+        tampered_dir = self.root / "tampered-swe"
+        shutil.copytree(tamper_run / "inputs" / "plugins" / "swe", tampered_dir)
+        (tampered_dir / "skills" / "swe-mode" / "playbooks" / "fix-bug.md").write_text("tampered\n")
+        tamper_source = self.root / "tamper.jsonl"
+        tamper_source.write_text("")
+        tamper_err = self.cli("capture", "--run", tamper_run, "--source", tamper_source, "--state", "incomplete",
+                              "--format", "claude-transcript", "--plugin-dir", tampered_dir, ok=False)
+        self.assertIn("resource does not match the frozen catalog", tamper_err.stderr)
+        self.assertIn("fix-bug.md", tamper_err.stderr)
+
+    def test_synthetic_resource_read_and_child_skill(self):
+        ref_id = "lab:skills/lab-mode/references/claim-checklist.md"
+        base_run, base_skill, base_body = self.prepare("syn-baseline")
+        base_events = [
+            {"type": "session.started"},
+            {"type": "skill_read.request", "request_id": "s-1", "skill": "swe:implement", "path": base_skill["path"]},
+            {"type": "skill_read.result", "request_id": "s-1", "exit_code": 0, "body": base_body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ]
+        baseline_score = self.trace(base_run, base_events)
+
+        res_run, res_skill, res_body = self.prepare("syn-resource")
+        ref = json.loads((res_run / "manifest.json").read_text())["resources"][ref_id]
+        ref_body = Path(ref["path"]).read_text()
+        res_events = [
+            {"type": "session.started"},
+            {"type": "skill_read.request", "request_id": "s-1", "skill": "swe:implement", "path": res_skill["path"]},
+            {"type": "skill_read.result", "request_id": "s-1", "exit_code": 0, "body": res_body, "body_complete": True},
+            {"type": "resource_read.request", "request_id": "r-1", "resource": ref_id, "path": ref["path"]},
+            {"type": "resource_read.result", "request_id": "r-1", "exit_code": 0, "body": ref_body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ]
+        res_score = self.trace(res_run, res_events)
+        res_ev = json.loads((res_run / "evidence.json").read_text())
+        self.assertEqual(res_score["observed_resources"], [ref_id])
+        self.assertEqual(res_ev["resource_reads"][0]["status"], "success")
+        for key in ("activation", "timing", "observed_skills", "expected_skills", "allowed_skills",
+                    "unresolved_skills", "false_activation", "unexpected_skills",
+                    "load_status_counts", "evidence_coverage", "session_state"):
+            self.assertEqual(res_score[key], baseline_score[key])
+
+        child_run, child_skill, child_body = self.prepare("syn-child")
+        child_events = [
+            {"type": "session.started"},
+            {"type": "session.started", "session_id": "child-1", "parent_session_id": "root"},
+            {"type": "skill_read.request", "session_id": "child-1", "request_id": "c-1",
+             "skill": "swe:implement", "path": child_skill["path"]},
+            {"type": "skill_read.result", "session_id": "child-1", "request_id": "c-1",
+             "exit_code": 0, "body": child_body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ]
+        child_score = self.trace(child_run, child_events)
+        child_ev = json.loads((child_run / "evidence.json").read_text())
+        self.assertEqual(child_ev["loads"], [])
+        self.assertEqual(len(child_ev["child_loads"]), 1)
+        self.assertEqual(child_ev["child_loads"][0]["status"], "success")
+        self.assertEqual(child_ev["child_loads"][0]["session_id"], "child-1")
+        self.assertEqual(child_score["activation"]["swe:implement"], "miss")
+        self.assertEqual(child_score["timing"]["swe:implement"], "unavailable")
+        self.assertEqual(child_score["observed_skills"], [])
+        self.assertEqual(child_score["child_observed_skills"], ["swe:implement"])
+
+        for name, complete, code, expected_status in (
+            ("syn-res-partial", False, 0, "partial"),
+            ("syn-res-failed", True, 1, "failed"),
+        ):
+            with self.subTest(name=name):
+                run, _, _ = self.prepare(name)
+                ref = json.loads((run / "manifest.json").read_text())["resources"][ref_id]
+                ref_body = Path(ref["path"]).read_text()
+                score = self.trace(run, [
+                    {"type": "session.started"},
+                    {"type": "resource_read.request", "request_id": "r-1", "resource": ref_id, "path": ref["path"]},
+                    {"type": "resource_read.result", "request_id": "r-1", "exit_code": code,
+                     "body": ref_body, "body_complete": complete},
+                    {"type": "action.started", "kind": self.case["relevant_action"]},
+                    {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+                ])
+                ev = json.loads((run / "evidence.json").read_text())
+                self.assertEqual(ev["resource_reads"][0]["status"], expected_status)
+                self.assertEqual(score["observed_resources"], [])
+
+        other_run, other_skill, other_body = self.prepare("syn-other-parent")
+        other_ref = json.loads((other_run / "manifest.json").read_text())["resources"][ref_id]
+        other_ref_body = Path(other_ref["path"]).read_text()
+        other_score = self.trace(other_run, [
+            {"type": "session.started"},
+            {"type": "session.started", "session_id": "other-child", "parent_session_id": "other-root"},
+            {"type": "skill_read.request", "session_id": "other-child", "request_id": "o-1",
+             "skill": "swe:implement", "path": other_skill["path"]},
+            {"type": "skill_read.result", "session_id": "other-child", "request_id": "o-1",
+             "exit_code": 0, "body": other_body, "body_complete": True},
+            {"type": "resource_read.request", "session_id": "other-child", "request_id": "o-2",
+             "resource": ref_id, "path": other_ref["path"]},
+            {"type": "resource_read.result", "session_id": "other-child", "request_id": "o-2",
+             "exit_code": 0, "body": other_ref_body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ])
+        other_ev = json.loads((other_run / "evidence.json").read_text())
+        for field in ("loads", "child_loads", "resource_reads", "child_resource_reads", "unproved_reads"):
+            self.assertEqual(other_ev[field], [])
+        self.assertEqual(other_score["observed_skills"], [])
+        self.assertEqual(other_score["child_observed_skills"], [])
+        self.assertEqual(other_score["observed_resources"], [])
+        self.assertEqual(other_score["child_observed_resources"], [])
+
+        shared_run, shared_skill, shared_body = self.prepare("syn-shared-reqid")
+        shared_score = self.trace(shared_run, [
+            {"type": "session.started"},
+            {"type": "session.started", "session_id": "child-1", "parent_session_id": "root"},
+            {"type": "skill_read.request", "request_id": "shared-1",
+             "skill": "swe:implement", "path": shared_skill["path"]},
+            {"type": "skill_read.request", "session_id": "child-1", "request_id": "shared-1",
+             "skill": "swe:implement", "path": shared_skill["path"]},
+            {"type": "skill_read.result", "request_id": "shared-1",
+             "exit_code": 0, "body": shared_body, "body_complete": True},
+            {"type": "skill_read.result", "session_id": "child-1", "request_id": "shared-1",
+             "exit_code": 0, "body": shared_body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ])
+        shared_ev = json.loads((shared_run / "evidence.json").read_text())
+        self.assertEqual(len(shared_ev["loads"]), 1)
+        self.assertEqual(shared_ev["loads"][0]["status"], "success")
+        self.assertEqual(shared_ev["loads"][0]["session_id"], "root")
+        self.assertEqual(len(shared_ev["child_loads"]), 1)
+        self.assertEqual(shared_ev["child_loads"][0]["status"], "success")
+        self.assertEqual(shared_ev["child_loads"][0]["session_id"], "child-1")
+        self.assertEqual(shared_score["observed_skills"], ["swe:implement"])
+        self.assertEqual(shared_score["child_observed_skills"], ["swe:implement"])
 
 
 if __name__ == "__main__":

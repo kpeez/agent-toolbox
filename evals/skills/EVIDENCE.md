@@ -6,19 +6,20 @@ it does not accept an execution agent's self-report as a grade.
 
 The normalized record has `schema_version`, `provider`, `adapter_version`,
 `evidence_kind`, `session_id`, `session_state`, `evidence_coverage`, `coverage`,
-`raw_trace`, `loads`, `actions`, and `issues`. The Claude transcript adapter
-adds `child_loads`, and its load records add `agent_id`, `detail`, and
-`transform`.
+`raw_trace`, `loads`, `child_loads`, `resource_reads`, `child_resource_reads`,
+`unproved_reads`, `actions`, and `issues`. In the Claude transcript adapter,
+load records add `agent_id`, `detail`, and `transform`.
 
 `raw_trace` contains a relative path and SHA-256 digest. Each evidence reference
 contains a stable `event_id` and a one-based raw JSONL `line`; a Claude reference
 also names its `file`, because one session spans several files. Array order is
 source order; timestamps are not used to infer order. This intentionally small
-interface is for one root session. Child-session events remain in the raw trace
-but cannot satisfy root-session activation. In the synthetic envelope, a
-trailing child event does not invalidate the root terminal; end coverage is
-checked against the last root event. The Claude adapter takes end coverage from
-the stream `result` event instead (see "Claude transcript adapter").
+interface is for one root session. Child-session reads go to `child_loads` and
+`child_resource_reads`, and cannot satisfy root-session activation or timing.
+In the synthetic envelope, a trailing child event does not invalidate the root
+terminal; end coverage is checked against the last root event. The Claude adapter
+takes end coverage from the stream `result` event instead (see "Claude
+transcript adapter").
 
 Load records contain:
 
@@ -31,6 +32,17 @@ Load records contain:
   instruction body). The synthetic adapter uses only `full_body_read`.
 - `ordering`: `source_sequence` or `unknown`. Completion means delivery ended,
   rather than the read request started.
+
+Resource read records (`resource_reads` and `child_resource_reads`) contain
+`resource` (`<plugin>:<plugin-relative path>`), `path`, `status`, `detail`,
+`body_sha256`, `completed_seq`, `session_id`, `agent_id`, `proof`
+(`full_body_read`), `ordering`, and `evidence`. Resource reads never enter
+`loads` or `child_loads` and do not affect activation metrics.
+
+Unproved read records (`unproved_reads`) contain `path`, the matching `skill`
+or `resource` ID, `session_id`, `agent_id`, `proof`
+(`bash_command_mentions_path`), `status` (`unproved`), and `evidence`. They
+never become loads or resource reads and never count as success.
 
 Action records contain `kind`, `seq`, `session_id`, `ordering`, and `evidence`.
 `seq` is the start of the first case-defined relevant action. Each case's
@@ -56,16 +68,24 @@ Every event has a unique string `event_id`, `session_id`, and `type`.
 | `session.started` | root `session_id`, optional `parent_session_id` |
 | `skill_read.request` | `request_id`, `skill`, exact frozen `path` |
 | `skill_read.result` | matching `request_id`, integer `exit_code`, delivered `body`, Boolean `body_complete` |
+| `resource_read.request` | `request_id`, `resource`, exact frozen `path` |
+| `resource_read.result` | matching `request_id`, integer `exit_code`, delivered `body`, Boolean `body_complete` |
 | `action.started` | `kind`, matching case boundary |
 | `session.completed` | `coverage: {skill_delivery: true, relevant_actions: true}` |
 | `message`, `skill.mention` | text ignored by activation scoring |
 
 Sequence numbers are one-based lines. A successful read requires integer zero
-exit status, matching skill ID/path, `body_complete: true`, and an exact digest
-of the delivered UTF-8 body against the materialized catalog. A nonzero exit
-status is failed even if the output contains a skill body. Unknown identity or
-missing status is unavailable. A successful but incomplete/mismatched body is
-partial. A result before its request cannot count as a load.
+exit status, matching skill or resource ID/path, `body_complete: true`, and an
+exact digest of the delivered UTF-8 body against the materialized catalog. A
+nonzero exit status is failed even if the output contains a body. Unknown
+identity or missing status is unavailable. A successful but
+incomplete/mismatched body is partial. A result before its request cannot count
+as a load or resource read. Child sessions whose `session.started` sets
+`parent_session_id` equal to the root `session_id` record their reads into
+`child_loads` and `child_resource_reads`. Child-session events get the same
+envelope checks as root events: an unknown child record type, duplicate child
+request ID, or unmatched child read result adds an issue and makes the session
+partial. Events of any other non-root session stay ignored.
 
 Capture metadata must identify both `format: synthetic-contract-v1` and
 `evidence_kind: synthetic` to enable this adapter. A trace captured as
@@ -102,9 +122,9 @@ Capture inputs:
   file in the sibling `<session>/subagents/` directory to `raw-subagents/` and
   records each digest.
 - `--plugin-dir`: each absolute path given to `claude --plugin-dir`. Capture
-  refuses a directory whose `skills/*/SKILL.md` files differ from the frozen
-  catalog in name or bytes. A run that uses the materialized catalog passes
-  `<run>/inputs/plugins/<plugin>` to both commands.
+  refuses a directory whose `skills/*/SKILL.md` files or frozen resources differ
+  from the frozen catalog in name or bytes. A run that uses the materialized
+  catalog passes `<run>/inputs/plugins/<plugin>` to both commands.
 - `--stream`: the session's stream-json output. Only its `result` event shows
   that the session ended.
 - `--relevant-action`: the root `tool_use` id where the case's relevant action
@@ -117,7 +137,7 @@ Load proofs:
 | Proof | Raw lines | Success needs |
 |---|---|---|
 | `skill_body_delivery` | An assistant `tool_use` named `Skill`; the user `tool_result` with the same `tool_use_id`; an `isMeta` user line whose `sourceToolUseID` is that id and whose only text block starts `Base directory for this skill: ` | No `is_error`; `toolUseResult.success` is `true`; the base directory plus `/SKILL.md` is a frozen path inside a declared plugin directory; the requested name is that skill (a bare name resolves to the one declared skill with that name); the text after the base-directory line and one blank line matches the manifest `body_sha256` |
-| `full_body_read` | An assistant `tool_use` named `Read` whose `file_path` is a frozen `SKILL.md` path; its `tool_result` | No `is_error`; `toolUseResult.file.filePath` is the same path; `startLine` is 1 and `numLines` equals `totalLines`; the `content` digest matches the manifest whole-file `sha256` |
+| `full_body_read` | An assistant `tool_use` named `Read` whose `file_path` is a frozen `SKILL.md` or frozen resource path; its `tool_result` | No `is_error`; `toolUseResult.file.filePath` is the same path; `startLine` is 1 and `numLines` equals `totalLines`; the `content` digest matches the manifest whole-file `sha256` |
 
 `body_sha256` is the digest of `SKILL.md` with its frontmatter removed and its
 leading newlines stripped. The load record names this transform. A failed
@@ -129,6 +149,11 @@ line and the body line. A root load that is not proved and whose name is not a
 frozen skill keeps the name as given, so it cannot match an answer key. That
 case is an issue, as listed below.
 
+A `Bash` `tool_use` whose `command` contains a frozen `SKILL.md` or resource
+path (as declared or as its real path) goes to `unproved_reads` with
+`proof: "bash_command_mentions_path"` and `status: "unproved"`. The adapter
+matches the path text only without parsing shell syntax.
+
 Paths match after `posixpath.normpath`, against the declared path as given and
 its real path at capture time. Scoring does not read the file system.
 
@@ -137,9 +162,14 @@ that holds the labeled `tool_use`. Claude writes one line per content block and
 can write a tool result between two blocks of one message. So a call written
 after a skill body can still come from a message that started before it.
 
-Only root-file lines score. Sidechain loads go to `child_loads` and never
-satisfy root activation. In the audited version, sidechain `tool_result` lines
-carry no `toolUseResult`, so every child load is `unavailable`.
+Only root-file lines score. Sidechain loads go to `child_loads` and sidechain
+resource reads go to `child_resource_reads`. Neither satisfies root activation
+or root timing. In 2.1.296 sidechain results had no `toolUseResult`. In local
+sidechain transcripts from Claude Code 2.1.316, 2.1.318, 2.1.321 to 2.1.323,
+2.1.325, and 2.1.326, successful `Read` results carry `toolUseResult.file` with
+`filePath`, `content`, `startLine`, `numLines`, and `totalLines`, so a child
+full read can be proved there. No sidechain `Read` was seen for the other
+versions in that range.
 
 Coverage: `start` needs the first line with a `uuid` to be a user line with a
 null `parentUuid`. `end` needs exactly one stream `result` event for this

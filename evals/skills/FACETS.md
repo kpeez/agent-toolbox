@@ -29,7 +29,7 @@
 | `final-reply-section` | A section of the final reply. |
 | `hook-delivery` | The session-start hook text reaches the model, then the named skill loads. |
 
-Every read can also happen through Bash (`cat`, `sed`). The scorer cannot see such a read, so a read through Bash is `invisible` for every read facet.
+Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bash read that mentions a frozen path as `unproved`, and never counts it.
 
 | requirement | meaning |
 |---|---|
@@ -41,7 +41,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer cannot see su
 | scope | meaning |
 |---|---|
 | `root` | Only the main chat satisfies it. |
-| `delegate-allowed` | A load inside a subagent the step delegates to also satisfies it. The scorer ignores subagent loads today. |
+| `delegate-allowed` | A load inside a subagent the step delegates to also satisfies it. The scorer records subagent loads, but no case scores them. |
 
 | scorer | meaning |
 |---|---|
@@ -58,9 +58,9 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer cannot see su
 | hook-load | 0 | 0 | 0 | 5 | 5 |
 | route | 0 | 0 | 49 | 0 | 49 |
 | route-load | 0 | 20 | 0 | 0 | 20 |
-| playbook-read | 0 | 0 | 29 | 0 | 29 |
-| step-load | 0 | 211 | 54 | 0 | 265 |
-| trigger-load | 0 | 14 | 7 | 0 | 21 |
+| playbook-read | 0 | 29 | 0 | 0 | 29 |
+| step-load | 0 | 255 | 10 | 0 | 265 |
+| trigger-load | 0 | 19 | 2 | 0 | 21 |
 | principle-read | 0 | 29 | 0 | 0 | 29 |
 | router-contract | 0 | 0 | 25 | 0 | 25 |
 
@@ -514,10 +514,10 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer cannot see su
 | name | name class | evidence | scorer | trigger |
 |---|---|---|---|---|
 | architect | hidden-skill | full-read | recorded | Code that crosses a function boundary: run `architect` before you build. |
-| babysit-pr | playbook | full-read | invisible | A PR-status request ("check on PR X", "get it green", "address the review comments"): the `babysit-pr` playbook. Opening a PR does not start it. |
+| babysit-pr | playbook | full-read | recorded | A PR-status request ("check on PR X", "get it green", "address the review comments"): the `babysit-pr` playbook. Opening a PR does not start it. |
 | benchmark-checklist | hidden-skill | full-read | recorded | A number you measured (a speedup, a regression, latency, an eval result): `benchmark-checklist` before you report or act on it. |
-| build-feature | playbook | full-read | invisible | Nontrivial multi-step work: write the throughput checkpoint (`build-feature` step 5). |
-| build-prototype | playbook | full-read | invisible | A fork you want to ask about ("which approach", "what should this do"): classify it first. When a run can show the answer (behavior, timing, layout, output, performance), it is not the user's question. Settle it with the `build-prototype` playbook. In a read-only investigation, answer from the evidence instead. Ask the user only a product or preference call that no experiment can settle (`never-block-on-the-human`). |
+| build-feature | playbook | full-read | recorded | Nontrivial multi-step work: write the throughput checkpoint (`build-feature` step 5). |
+| build-prototype | playbook | full-read | recorded | A fork you want to ask about ("which approach", "what should this do"): classify it first. When a run can show the answer (behavior, timing, layout, output, performance), it is not the user's question. Settle it with the `build-prototype` playbook. In a read-only investigation, answer from the evidence instead. Ask the user only a product or preference call that no experiment can settle (`never-block-on-the-human`). |
 | external-agents | visible-skill | skill-call | recorded | Parallel fan-out: `swarm`. Workers on another agent CLI (OpenCode, Antigravity) that the user asked for: `external-agents`. |
 | how | hidden-skill | full-read | recorded | A nontrivial change, an architecture decision, or "are we sure?": run `how` over the affected subsystem first. |
 | in-your-own-words | hidden-skill | full-read | recorded | Your first message on a task: tell the user, in your own words, their goal, the problem they solve, and, when the task ships a change, the smallest change you expect to meet it (`in-your-own-words`). Do not wait for confirmation. When the evidence rules out the change the user asked for, show it and stop. Restate the goal in each subagent brief and at the start of each final report, except after a fully specified one-line edit. This restatement is for the chat only. A PR body follows the PR body template and never names the requester or the chat. |
@@ -527,7 +527,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer cannot see su
 | never-block-on-the-human | principle | full-read | recorded | A fork you want to ask about ("which approach", "what should this do"): classify it first. When a run can show the answer (behavior, timing, layout, output, performance), it is not the user's question. Settle it with the `build-prototype` playbook. In a read-only investigation, answer from the evidence instead. Ask the user only a product or preference call that no experiment can settle (`never-block-on-the-human`). |
 | no-comments | hidden-skill | full-read | recorded | Before review: `no-comments` over the diff. |
 | reviewer agent | reviewer-agent | agent-spawn | invisible | A contested design: give the design and its evidence to a `reviewer agent` before you ship. |
-| ship-stack | playbook | full-read | invisible | A request to land or ship a green stack: the `ship-stack` playbook. Green is not safe. Nothing lands before an independent verdict per PR. |
+| ship-stack | playbook | full-read | recorded | A request to land or ship a green stack: the `ship-stack` playbook. Green is not safe. Nothing lands before an independent verdict per PR. |
 | swarm | hidden-skill | full-read | recorded | Parallel fan-out: `swarm`. Workers on another agent CLI (OpenCode, Antigravity) that the user asked for: `external-agents`. |
 | writing | visible-skill | skill-call | recorded | Any prose surface, the reply included: `writing`. It routes each surface (docs, skills, PR bodies, handoffs, plans, replies) to its rules. Write replies to the user and agent-facing text in ASD-STE100 Simplified Technical English. |
 
@@ -684,7 +684,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer cannot see su
 
 | name | name class | evidence | scorer | trigger |
 |---|---|---|---|---|
-| claim-checklist | reference | full-read | invisible | A claim from a paper, a log, or your own run: check it against the `claim-checklist`. |
+| claim-checklist | reference | full-read | recorded | A claim from a paper, a log, or your own run: check it against the `claim-checklist`. |
 | encode-the-procedure | principle | full-read | recorded | You repeat a procedure, or the user corrects one: `encode-the-procedure`. |
 | research-context | project-skill | skill-call-or-full-read | invisible | The repository has a `research-context` project skill: load it before the first step. A project procedure skill covers a step: follow it, and run its known-good check before you trust its output. |
 | simulate-before-you-trust | principle | full-read | recorded | A pipeline, analysis, or metric whose output you will trust: `simulate-before-you-trust`. |

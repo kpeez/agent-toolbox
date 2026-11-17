@@ -50,7 +50,7 @@ KINDS = {
     },
     "playbook-read": {
         "evidence": "full-read",
-        "scorer": "invisible",
+        "scorer": "recorded",
         "scope": "root",
         "about": "The agent reads the chosen playbook file in full.",
     },
@@ -107,7 +107,7 @@ REQUIREMENTS = {
 SCOPES = {
     "root": "Only the main chat satisfies it.",
     "delegate-allowed": "A load inside a subagent the step delegates to also satisfies it. "
-    "The scorer ignores subagent loads today.",
+    "The scorer records subagent loads, but no case scores them.",
 }
 SCORERS = {
     "scored": "A case field scores it.",
@@ -382,7 +382,7 @@ class Plugin:
                 name in self.playbooks,
                 "playbook",
                 "full-read",
-                "invisible",
+                "recorded",
                 self.plugin_path(self.playbooks[name])
                 if name in self.playbooks
                 else None,
@@ -391,7 +391,7 @@ class Plugin:
                 name in self.references,
                 "reference",
                 "full-read",
-                "invisible",
+                "recorded",
                 self.plugin_path(self.references[name])
                 if name in self.references
                 else None,
@@ -979,8 +979,9 @@ def render(data, unreached):
     out += table(["evidence", "meaning"], [(f"`{k}`", v) for k, v in EVIDENCE.items()])
     out += [
         (
-            "Every read can also happen through Bash (`cat`, `sed`). The scorer cannot see such a read, "
-            "so a read through Bash is `invisible` for every read facet."
+            "Every read can also happen through Bash (`cat`, `sed`). "
+            "The scorer records a Bash read that mentions a frozen path as `unproved`, "
+            "and never counts it."
         ),
         "",
     ]
