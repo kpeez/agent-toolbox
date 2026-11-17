@@ -5,7 +5,8 @@
 # ///
 """Native runner for the skill activation evals: materialize, headless claude, capture, score, aggregate.
 
-Dry run by default. `--execute` launches a model and needs an approval record in the runtime file.
+Dry run by default. `--canaries` and `--execute` launch a model and need an approval record in the runtime file.
+`--execute` also needs a passed canary record.
 The pipeline steps are `skill_eval.py` functions; this file only orders them and adds the launch.
 """
 
@@ -59,15 +60,28 @@ EFFECTIVE_FIELDS = (
     "mcp_servers",
     "plugins",
 )
+INTERRUPTS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
+CANARIES = (
+    ("read-outside", "hook-off"),
+    ("write-outside", "hook-off"),
+    ("network", "hook-off"),
+    ("playbook-read", "hook-off"),
+    ("hook-on", "hook-on"),
+    ("hook-off", "hook-off"),
+)
 LIVE_STEPS = [
-    "canary: ask the agent to read a file outside the fixture; expect the read to be refused",
-    "canary: ask the agent to write a file outside the fixture; expect the write to be refused",
-    "canary: ask the agent to fetch a URL; expect no network tool",
-    "canary: ask the agent to Read a plugin playbook under inputs/plugins; expect success when restricted",
-    "first run: read the init event of the stream and freeze it as effective-session.json",
-    "first hook-on run: confirm the stream shows the SessionStart hook started and finished",
-    "first hook-off run: confirm the stream shows no hook event",
+    "--canaries: a read and a write outside the fixture must be refused; no network tool; a plugin playbook must "
+    "read under --restricted; the hook-on stream must show every plugin's SessionStart hook and the hook-off "
+    "stream none; each canary's cost must stay within the per-run budget",
+    "--execute refuses until canaries.json holds a pass for every canary under the same frozen configuration",
+    "first pilot run: read the init event of the stream and freeze it as effective-session.json",
 ]
+
+
+class Interrupted(Exception):
+    def __init__(self, signum):
+        super().__init__(signal.Signals(signum).name)
+        self.signum = signum
 
 
 def claude_path():
@@ -272,7 +286,7 @@ def cli(args, env, timeout=60):
 
 
 def preflight(runtime, backup_dir):
-    """Checks that need no model call. A `fail` blocks --execute."""
+    """Checks that need no model call. A `fail` blocks --execute and --canaries."""
     checks = []
     problems = runtime_problems(runtime)
     checks.append(
@@ -312,7 +326,7 @@ def preflight(runtime, backup_dir):
             )
         )
         options = parse_help(cli(["--help"], env).stdout)
-        sample = claude_argv(runtime, "x", "x", [], "x", "x")
+        sample = claude_argv(runtime, "x", "x", ["x"], "x", "x")
         absent = sorted({t for t in sample if t.startswith("--")} - options.keys())
         checks.append(
             check(
@@ -475,7 +489,7 @@ def build_pilot(args, runtime, cases):
 
 def spend(root, per_run_budget):
     known, unknown = 0.0, 0
-    for record in root.glob("runs/*/run.json"):
+    for record in [*root.glob("runs/*/run.json"), *root.glob("canaries/*/run.json")]:
         cost = (se.read_json(record).get("usage") or {}).get("cost_usd")
         if isinstance(cost, (int, float)) and not isinstance(cost, bool):
             known += cost
@@ -495,8 +509,8 @@ def run_state(run):
     if not record.is_file():
         return "absent" if not run.exists() else "never_launched"
     data = se.read_json(record)
-    if data.get("outcome") == "unscorable":
-        return "unscorable"
+    if data.get("outcome") in {"unscorable", "aborted"}:
+        return data["outcome"]
     return "launched_unfinished" if data.get("ended_at") else "aborted"
 
 
@@ -584,26 +598,29 @@ def hook_summary(events, hooks):
     return summary
 
 
-def arm_violations(arm, summary):
+def arm_violations(arm, summary, plugins):
+    """`plugins` names every plugin whose SessionStart hook the hook-on manifest froze."""
     if arm == "hook-off":
         return [
-            f"arm violation: hook-off run, but a {h['name']} hook ran" for h in summary if h["started"]
+            f"arm violation: hook-off run, but a {h['name']} hook ran"
+            for h in summary
+            if h["started"] or h["completed"]
         ]
-    ok = [
-        h
+    succeeded = {
+        h["plugin"]
         for h in summary
         if h["event"] == "SessionStart"
         and h["completed"]
         and h["outcome"] == "success"
-        and h["plugin"]
-    ]
+    }
+    missing = sorted(set(plugins) - succeeded) if plugins else ["(no plugin hook frozen)"]
     return (
-        []
-        if ok
-        else [
-            "arm violation: hook-on run, but no plugin SessionStart hook started and succeeded"
-            f" (hook events seen: {[(h['name'], h['outcome']) for h in summary]})"
+        [
+            f"arm violation: hook-on run, but no SessionStart hook started and succeeded for {missing}"
+            f" (hook events seen: {[(h['name'], h['outcome'], h['plugin']) for h in summary]})"
         ]
+        if missing
+        else []
     )
 
 
@@ -666,22 +683,40 @@ def effective(init):
 
 
 def launch(argv, env, cwd, timeout, stdout, stderr):
-    with stdout.open("wb") as out, stderr.open("wb") as err:
-        proc = subprocess.Popen(
-            argv,
-            cwd=cwd,
-            env=env,
-            stdin=subprocess.DEVNULL,
-            stdout=out,
-            stderr=err,
-            start_new_session=True,
-        )
-        try:
+    """Run claude in its own process group. An interrupt kills the whole group, then raises Interrupted."""
+
+    def interrupt(signum, _frame):
+        raise Interrupted(signum)
+
+    previous = {s: signal.signal(s, interrupt) for s in INTERRUPTS}
+    proc = None
+    try:
+        with stdout.open("wb") as out, stderr.open("wb") as err:
+            proc = subprocess.Popen(
+                argv,
+                cwd=cwd,
+                env=env,
+                stdin=subprocess.DEVNULL,
+                stdout=out,
+                stderr=err,
+                start_new_session=True,
+            )
             return proc.wait(timeout=timeout), False
-        except subprocess.TimeoutExpired:
-            os.killpg(proc.pid, signal.SIGKILL)
+    except subprocess.TimeoutExpired:
+        os.killpg(proc.pid, signal.SIGKILL)
+        proc.wait()
+        return None, True
+    except Interrupted:
+        if proc is not None:
+            try:
+                os.killpg(proc.pid, signal.SIGKILL)
+            except ProcessLookupError:
+                pass
             proc.wait()
-            return None, True
+        raise
+    finally:
+        for number, handler in previous.items():
+            signal.signal(number, handler)
 
 
 def finish_run(ctx, run, record):
@@ -735,17 +770,12 @@ def finish_run(ctx, run, record):
     se.save_json(run / "run.json", record)
 
 
-def run_one(ctx, item):
-    run = ctx["root"] / "runs" / item["rid"]
-    state = run_state(run)
-    if state == "never_launched":
-        shutil.rmtree(run)
-    elif state == "aborted":
-        run.rename(run.with_name(f"{run.name}.aborted-{int(time.time())}"))
-    if run.exists():
-        record = se.read_json(run / "run.json")
-        finish_run(ctx, run, record)
-        return record, False
+def now():
+    return time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+
+
+def launch_run(ctx, run, item, prompt=None):
+    """Materialize `run` and launch claude once. A failure after the launch records the run as aborted."""
     se.materialize(
         Namespace(
             case=item["case"],
@@ -753,6 +783,7 @@ def run_one(ctx, item):
             runtime=ctx["runtime_path"],
             output=run,
             hook_arm=item["arm"],
+            output_root=ctx["output_root"],
         )
     )
     manifest = se.read_json(run / "manifest.json")
@@ -770,7 +801,12 @@ def run_one(ctx, item):
         run / "inputs" / "plugins" / p
         for p in sorted({s.split(":")[0] for s in manifest["skills"]})
     ]
-    prompt = (run / "inputs" / "prompt.txt").read_text(encoding="utf-8")
+    prompt_ref = "inputs/prompt.txt"
+    if prompt is None:
+        prompt = (run / prompt_ref).read_text(encoding="utf-8")
+    else:
+        prompt_ref = "launch/prompt.txt"
+        (run / prompt_ref).write_text(prompt, encoding="utf-8")
     argv = claude_argv(
         ctx["runtime"],
         prompt,
@@ -781,45 +817,80 @@ def run_one(ctx, item):
     )
     env = launch_env(home)
     record["launch"] = {
-        "argv": argv[:2] + ["<prompt in inputs/prompt.txt>"] + argv[3:],
+        "argv": argv[:2] + [f"<prompt in {prompt_ref}>"] + argv[3:],
         "env_keys": sorted(env),
         "cwd": str(run / "workspace"),
         "session_id": sid,
     }
-    record["started_at"] = time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime())
+    record["started_at"] = now()
     se.save_json(run / "run.json", record)
     began = time.monotonic()
-    code, timed_out = launch(
-        argv,
-        env,
-        run / "workspace",
-        ctx["runtime"]["timeout_seconds"],
-        run / "launch" / "stream.jsonl",
-        run / "launch" / "stderr.txt",
-    )
     stream = run / "launch" / "stream.jsonl"
-    init = init_event(stream)
-    hooks = hook_summary(
-        hook_events(stream), manifest.get("hooks", {}) if item["arm"] == "hook-on" else {}
-    )
-    record.update(
-        ended_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
-        exit_code=code,
-        timed_out=timed_out,
-        duration_s=round(time.monotonic() - began, 3),
-        usage=usage_of(last_event(stream, "result")),
-        stdout_sha256=se.digest(stream.read_bytes()),
-        stderr_sha256=se.digest((run / "launch" / "stderr.txt").read_bytes()),
-        effective_session=effective(init) if init else None,
-        hook_events=hooks,
-        violations=(
-            violations(init, ctx["runtime"], home) + arm_violations(item["arm"], hooks)
-            if init
-            else []
-        ),
-    )
+    try:
+        code, timed_out = launch(
+            argv,
+            env,
+            run / "workspace",
+            ctx["runtime"]["timeout_seconds"],
+            stream,
+            run / "launch" / "stderr.txt",
+        )
+    except Interrupted as stop:
+        record.update(
+            ended_at=now(),
+            exit_code=None,
+            timed_out=False,
+            duration_s=round(time.monotonic() - began, 3),
+            outcome="aborted",
+            error=f"interrupted by {stop}; the child's process group was killed",
+        )
+        se.save_json(run / "run.json", record)
+        raise
+    ended = {
+        "ended_at": now(),
+        "exit_code": code,
+        "timed_out": timed_out,
+        "duration_s": round(time.monotonic() - began, 3),
+    }
+    try:
+        init = init_event(stream)
+        hooks = hook_summary(
+            hook_events(stream),
+            manifest.get("hooks", {}) if item["arm"] == "hook-on" else {},
+        )
+        record.update(
+            ended,
+            usage=usage_of(last_event(stream, "result")),
+            stdout_sha256=se.digest(stream.read_bytes()),
+            stderr_sha256=se.digest((run / "launch" / "stderr.txt").read_bytes()),
+            effective_session=effective(init) if init else None,
+            hook_events=hooks,
+            violations=(
+                violations(init, ctx["runtime"], home)
+                + arm_violations(item["arm"], hooks, list(manifest.get("hooks", {})))
+                if init
+                else []
+            ),
+        )
+    except (ValueError, KeyError, TypeError, OSError) as error:
+        record.update(
+            ended, outcome="aborted", error=f"after the launch: {error}"
+        )
     se.save_json(run / "run.json", record)
-    finish_run(ctx, run, record)
+    return record
+
+
+def run_one(ctx, item):
+    run = ctx["root"] / "runs" / item["rid"]
+    if run_state(run) == "never_launched":
+        shutil.rmtree(run)
+    if run.exists():
+        record = se.read_json(run / "run.json")
+        finish_run(ctx, run, record)
+        return record, False
+    record = launch_run(ctx, run, item)
+    if record.get("outcome") != "aborted":
+        finish_run(ctx, run, record)
     return record, True
 
 
@@ -849,17 +920,37 @@ def may_launch(ctx, failures):
     return None
 
 
+def settle_aborted(run):
+    """A launched run without a recorded end is final. Record that once; never launch it again."""
+    record = se.read_json(run / "run.json")
+    if "outcome" not in record:
+        se.save_json(
+            run / "run.json",
+            record
+            | {
+                "outcome": "aborted",
+                "error": "the runner stopped after the launch and recorded no end",
+            },
+        )
+
+
 def execute(ctx):
     stop, failures, skipped, launched = None, 0, 0, 0
     for item in ctx["plan"]:
         run = ctx["root"] / "runs" / item["rid"]
-        if run_state(run) in {"scored", "unscorable"}:
+        state = run_state(run)
+        if state == "aborted":
+            settle_aborted(run)
+        if state in {"scored", "unscorable", "aborted"}:
             skipped += 1
             continue
         stop = may_launch(ctx, failures)
         if stop:
             break
-        record, started = run_one(ctx, item)
+        try:
+            record, started = run_one(ctx, item)
+        except Interrupted as interrupt:
+            return f"interrupted by {interrupt}", launched + 1, skipped
         launched += started
         failed = record.get("outcome") != "scored" or record.get("exit_code") != 0
         failures = failures + 1 if failed else 0
@@ -877,6 +968,189 @@ def execute(ctx):
         if stop:
             break
     return stop, launched, skipped
+
+
+def stream_calls(stream):
+    """(tool_use block, its tool_result block or None) for each tool call in the stream."""
+    uses, results = {}, {}
+    for line in stream.read_bytes().split(b"\n"):
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        content = (event.get("message") or {}).get("content") if isinstance(event, dict) else None
+        for block in content if isinstance(content, list) else []:
+            if not isinstance(block, dict):
+                continue
+            if event.get("type") == "assistant" and block.get("type") == "tool_use":
+                uses[block.get("id")] = block
+            elif event.get("type") == "user" and block.get("type") == "tool_result":
+                results[block.get("tool_use_id")] = block
+    return [(use, results.get(key)) for key, use in uses.items()]
+
+
+def result_text(result):
+    content = (result or {}).get("content")
+    if isinstance(content, list):
+        return " ".join(str(b.get("text", "")) for b in content if isinstance(b, dict))
+    return str(content or "")
+
+
+def canary_setup(name, ctx, run):
+    """The canary's prompt and the file it targets (None when it targets none)."""
+    outside = ctx["root"] / "canaries" / "outside"
+    outside.mkdir(parents=True, exist_ok=True)
+    if name == "read-outside":
+        target = outside / f"sentinel-{uuid.uuid4().hex[:8]}.txt"
+        target.write_text(f"CANARY-{uuid.uuid4().hex}\n")
+        return f"CANARY read-outside: Use the Read tool on PATH={target} and report its first line. Use no other tool.", target
+    if name == "write-outside":
+        target = outside / "write-target.txt"
+        target.unlink(missing_ok=True)
+        return f"CANARY write-outside: Use the Write tool to create PATH={target} with the content canary. Use no other tool.", target
+    if name == "network":
+        return "CANARY network: Fetch https://example.com with a web tool and report its title. If you have no web tool, say so.", None
+    if name == "playbook-read":
+        target = run / "inputs" / "plugins" / "swe" / "skills" / "swe-mode" / "playbooks" / "fix-bug.md"
+        return f"CANARY playbook-read: Use the Read tool on PATH={target} and report its first heading. Use no other tool.", target
+    return "CANARY hook: reply with the word ok.", None
+
+
+def canary_verdict(name, stream, record, target):
+    """Judge a canary from its stream. Returns (passed, detail)."""
+    calls = stream_calls(stream)
+    tools = {base_tool(t) for t in record["effective_session"]["tools"]}
+    touching = [
+        (use, result)
+        for use, result in calls
+        if target is not None and target.name in json.dumps(use.get("input"))
+    ]
+    refused = lambda pairs: all(r and r.get("is_error") for _, r in pairs)
+    if name == "read-outside":
+        reads = [(u, r) for u, r in touching if u.get("name") == "Read"]
+        leaked = target.read_text().strip().encode() in stream.read_bytes()
+        return (
+            bool(reads) and refused(reads) and not leaked,
+            f"{len(reads)} Read call(s) on the sentinel outside the fixture, all refused={refused(reads)}, "
+            f"sentinel text in the stream={leaked}",
+        )
+    if name == "write-outside":
+        writes = [(u, r) for u, r in touching if u.get("name") in {"Write", "Edit"}]
+        return (
+            bool(writes) and refused(writes) and not target.exists(),
+            f"{len(writes)} write call(s) outside the fixture, all refused={refused(writes)}, "
+            f"file created={target.exists()}",
+        )
+    if name == "network":
+        banned = sorted(tools & (SHELL_TOOLS | NETWORK_TOOLS))
+        used = [
+            u.get("name")
+            for u, r in calls
+            if base_tool(u.get("name", "")) in SHELL_TOOLS | NETWORK_TOOLS
+            and not (r and r.get("is_error"))
+        ]
+        return (
+            not banned and not used,
+            f"shell or network tools in the session={banned}, such calls that succeeded={used}",
+        )
+    if name == "playbook-read":
+        reads = [
+            (u, r)
+            for u, r in touching
+            if u.get("name") == "Read"
+            and r
+            and not r.get("is_error")
+            and result_text(r).strip()
+        ]
+        return bool(reads), f"{len(reads)} successful Read call(s) on the plugin playbook under --restricted"
+    return True, "no arm violation in the hook events"
+
+
+def run_canary(ctx, name, arm):
+    run = ctx["root"] / "canaries" / name
+    done = run / "canary.json"
+    if done.is_file():
+        return se.read_json(done)
+    result = {"canary": name, "arm": arm}
+    if (run / "run.json").is_file():
+        result |= {
+            "passed": False,
+            "detail": "launched earlier and never judged; a launched run is never launched again",
+        }
+    else:
+        if run.exists():
+            shutil.rmtree(run)
+        prompt, target = canary_setup(name, ctx, run)
+        item = {"rid": f"canary-{name}", "case": ctx["plan"][0]["case"], "arm": arm}
+        record = launch_run(ctx, run, item, prompt)
+        budget = ctx["runtime"]["max_budget_usd_per_run"]
+        cost = (record.get("usage") or {}).get("cost_usd")
+        within = cost is not None and cost <= budget
+        problems = []
+        if record.get("outcome") == "aborted":
+            problems.append(f"run aborted: {record['error']}")
+        elif not record.get("effective_session"):
+            problems.append("no init event in the stream")
+        else:
+            problems += record["violations"] + [
+                d for d in [drift(ctx, record)] if d
+            ]
+            passed, detail = canary_verdict(
+                name, run / "launch" / "stream.jsonl", record, target
+            )
+            if not passed:
+                problems.append(detail)
+        if not within:
+            problems.append(
+                f"cost {cost} is not known and within the per-run budget {budget}; "
+                "the cost cap assumes --max-budget-usd is a hard ceiling"
+            )
+        result |= {
+            "passed": not problems,
+            "detail": "; ".join(problems) or detail,
+            "cost_usd": cost,
+            "budget_usd": budget,
+            "within_budget": within,
+            "target": str(target) if target else None,
+            "exit_code": record.get("exit_code"),
+        }
+    se.save_json(done, result)
+    return result
+
+
+def run_canaries(ctx):
+    results, stop = {}, None
+    for name, arm in CANARIES:
+        done = ctx["root"] / "canaries" / name / "canary.json"
+        if not done.is_file():
+            stop = may_launch(ctx, 0)
+            if stop:
+                break
+        results[name] = run_canary(ctx, name, arm)
+    summary = {
+        "schema_version": 1,
+        "config_sha256": ctx["pilot"]["config_sha256"],
+        "recorded_at": now(),
+        "stopped": stop,
+        "canaries": results,
+    }
+    se.save_json(ctx["root"] / "canaries.json", summary)
+    return summary
+
+
+def canary_blockers(root, pilot):
+    path = root / "canaries.json"
+    if not path.is_file():
+        return ["canaries: no canary record; run --canaries first"]
+    record = se.read_json(path)
+    if record.get("config_sha256") != pilot["config_sha256"]:
+        return ["canaries: the record belongs to a different frozen configuration"]
+    failed = [
+        name
+        for name, _ in CANARIES
+        if not (record.get("canaries", {}).get(name) or {}).get("passed")
+    ]
+    return [f"canaries: not passed or not run: {failed}"] if failed else []
 
 
 def report(ctx, stop):
@@ -914,9 +1188,12 @@ def dry_plan(args, runtime, cases, excluded, pilot, checks, plan):
         blockers.append("max-cost-usd-not-set")
     if not args.pilot_id_given:
         blockers.append("pilot-id-not-set")
-    states = [run_state(OUTPUT_ROOT / args.pilot_id / "runs" / r["rid"]) for r in plan]
+    root = args.output_root / args.pilot_id
+    if args.pilot_id_given and canary_blockers(root, pilot):
+        blockers.append("canaries-not-passed")
+    states = [run_state(root / "runs" / r["rid"]) for r in plan]
     budget = runtime.get("max_budget_usd_per_run") or 0
-    todo = sum(s not in {"scored", "unscorable"} for s in states)
+    todo = sum(s not in {"scored", "unscorable", "aborted"} for s in states)
     shown = plan if args.list_runs else plan[:6]
     sample = (
         claude_argv(
@@ -963,7 +1240,13 @@ def main():
     parser.add_argument("--repeats", type=int, default=10, help="runs per case and arm")
     parser.add_argument(
         "--pilot-id",
-        help="output folder name under artifacts/skill-evals/; needed to execute",
+        help="output folder name under --output-root; needed to execute or run canaries",
+    )
+    parser.add_argument(
+        "--output-root",
+        type=Path,
+        default=OUTPUT_ROOT,
+        help="folder that holds the pilot folders; default artifacts/skill-evals",
     )
     parser.add_argument(
         "--max-cost-usd",
@@ -976,8 +1259,16 @@ def main():
     parser.add_argument(
         "--list-runs", action="store_true", help="dry run: print every planned run"
     )
-    parser.add_argument(
-        "--execute", action="store_true", help="launch the model; default is a dry run"
+    mode = parser.add_mutually_exclusive_group()
+    mode.add_argument(
+        "--canaries",
+        action="store_true",
+        help="launch the model for the live canaries only, and record the result in the pilot folder",
+    )
+    mode.add_argument(
+        "--execute",
+        action="store_true",
+        help="launch the model for the pilot; needs a passed canary record. Default is a dry run",
     )
     args = parser.parse_args()
     args.pilot_id_given = args.pilot_id is not None
@@ -994,7 +1285,7 @@ def main():
         pilot = build_pilot(args, runtime, cases)
         plan = plan_runs(args.pilot_id, cases, args.arms, args.repeats)
         checks = preflight(runtime, args.backup_dir)
-        if not args.execute:
+        if not (args.execute or args.canaries):
             print(
                 json.dumps(
                     dry_plan(args, runtime, cases, excluded, pilot, checks, plan),
@@ -1005,13 +1296,17 @@ def main():
         blockers = [
             c["check"] + ": " + c["detail"] for c in checks if c["status"] == "fail"
         ]
+        root = args.output_root / args.pilot_id
         if not args.pilot_id_given or args.max_cost_usd is None:
-            blockers.append("--pilot-id and --max-cost-usd are required with --execute")
+            blockers.append(
+                "--pilot-id and --max-cost-usd are required with --execute or --canaries"
+            )
         elif args.max_cost_usd < runtime["max_budget_usd_per_run"]:
             blockers.append("--max-cost-usd is below one run's budget")
+        if args.execute:
+            blockers += canary_blockers(root, pilot)
         if blockers:
-            raise ValueError("refusing to execute: " + " | ".join(blockers))
-        root = OUTPUT_ROOT / args.pilot_id
+            raise ValueError("refusing to launch: " + " | ".join(blockers))
         root.mkdir(parents=True, exist_ok=True)
         if (root / "pilot.json").exists():
             if (
@@ -1038,10 +1333,20 @@ def main():
             "plan": plan,
             "runtime": runtime,
             "corpus": args.corpus,
+            "output_root": args.output_root,
             "runtime_path": root / "runtime.json",
             "mcp_config": root / "mcp-empty.json",
             "backup_dir": args.backup_dir,
         }
+        if args.canaries:
+            summary = run_canaries(ctx)
+            print(json.dumps(summary, indent=2, sort_keys=True))
+            sys.exit(
+                0
+                if len(summary["canaries"]) == len(CANARIES)
+                and all(c["passed"] for c in summary["canaries"].values())
+                else 3
+            )
         stop, launched, skipped = execute(ctx)
         summary = report(ctx, stop) | {
             "launched_now": launched,
@@ -1060,6 +1365,8 @@ def main():
                     shutil.copy2(root / name, target / name)
         print(json.dumps(summary, indent=2, sort_keys=True))
         sys.exit(3 if stop else 0)
+    except Interrupted as stop:
+        parser.exit(3, f"run-eval: interrupted by {stop}; the child was killed and the run recorded as aborted\n")
     except (
         ValueError,
         KeyError,
