@@ -108,7 +108,7 @@ skill, or a project skill. A principle is a short skill named
 until a step reads it. There are four:
 
 - `encode-the-procedure`: the second time you do a procedure, or after a
-  correction, make or update a project skill.
+  correction, propose or update a project skill.
 - `simulate-before-you-trust`: run data with a known answer through the
   pipeline before you trust it on real data.
 - `write-the-decision-first`: write the hypothesis, the metric, and the

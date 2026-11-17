@@ -118,7 +118,7 @@ uv run <skill-dir>/scripts/cleanup.py <run-directory> --apply --acknowledge-stop
 
 The first command inspects readiness without changing the run. Use the second
 only after the evidence review and stopped-run checks above. Read `--help` for
-additional active-marker checks. Readiness checks require Python 3, `zstd`, and
+additional active-marker checks. Readiness checks require uv, `zstd`, and
 recoverable `trash` or `trash-put`, just as apply does. Missing tools or
 insufficient space block cleanup without a permanent deletion fallback. Use
 the explicit `_archive.tar.zst` naming convention.

@@ -67,7 +67,7 @@ This delivery difference is frozen and must be reported with results.
 
 ## Local workflow
 
-Run from the repository root with Python 3.10+ and Git. Run output belongs under
+Run from the repository root with uv and Git. Run output belongs under
 `artifacts/skill-evals/`. Choose a fresh output directory; existing runs are never
 overwritten. The repository already provides its ignored artifacts location.
 

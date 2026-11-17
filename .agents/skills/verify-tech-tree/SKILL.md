@@ -25,7 +25,7 @@ From the repository root:
 uv run .agents/skills/verify-tech-tree/scripts/check.py
 ```
 
-It needs Python 3 and nothing else. It takes about one minute. It exits 0 only
+It needs uv and nothing else. It takes about one minute. It exits 0 only
 when each rule's result matches `EXPECTED` in `scripts/check.py`, and each
 mutant breaks the rule it targets, so each rule is shown able to fail. For a
 rule that breaks, it prints the shortest event path.

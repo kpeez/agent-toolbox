@@ -148,7 +148,7 @@ remediation ladder: retry later, review key prerequisites, reteach them, then
 fix the graph. Mastered topics get review dates.
 
 A small Python script, `skills/tech-tree/scripts/tech_tree.py`, keeps the gate
-and writes your state to `progress.json` beside the graph. It needs Python 3
+and writes your state to `progress.json` beside the graph. It needs uv
 and nothing else. `teach` builds a tech tree before its first lesson, and
 `learn` and `learn-review` follow one when a course folder has it. The
 [design notes](skills/tech-tree/references/design-notes.md) give the sources and
