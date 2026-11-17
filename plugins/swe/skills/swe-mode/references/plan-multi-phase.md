@@ -87,8 +87,8 @@ Tests alone are not sufficient verification. A PR is verified only when its unit
 
 ### PR mechanics, for every PR
 
-- [ ] Use `gh` for every PR operation. Never require `gt`.
-- [ ] Open the PR as a draft per the swe `ship-pr` skill, with `gh pr create --draft --base <base-branch>`. A stack child targets its parent branch.
+- [ ] Use `gh` and `gh stack` (when available) for PR operations.
+- [ ] Open independent PRs as drafts against the confirmed base per the swe `ship-pr` skill. For a dependent stack in a `gh stack` repository, subagents commit locally in worktrees and the coordinator publishes with `gh stack link`, then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>`. Fall back to `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable.
 - [ ] Run the repo's lint and typecheck once before the PR-facing push. Push with hooks on.
 - [ ] Run the `writing` prose rules and a self-review of the diff before each commit, and `no-comments` before review.
 - [ ] Triage every review-bot and security-reviewer comment per the `ship-pr` bot-triage reference.

@@ -1119,7 +1119,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, stacked only where one builds on another.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another.",
       "subject": "autopilot-stack"
     },
     {
@@ -1499,7 +1499,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`ship-stack`: verify a green stack independently, then land the contiguous verified run bottom-up.",
+      "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
     {
@@ -3121,7 +3121,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, stacked only where one builds on another.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another.",
       "subject": "autopilot-stack"
     },
     {
@@ -3983,7 +3983,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`ship-stack`: verify a green stack independently, then land the contiguous verified run bottom-up.",
+      "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
     {
@@ -6807,7 +6807,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "2-stack-only-on-dependency: A PR stacks only when it builds on another PR. This is the one exception to autopilot-full step 5. Base that PR on the other PR's branch in place of trunk. In place of the rebase onto trunk, each PR rebases onto its parent PR's branch, and the stack root rebases onto trunk. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
+      "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
       "subject": "autopilot-stack"
     },
     {
@@ -6830,7 +6830,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "2-stack-only-on-dependency: A PR stacks only when it builds on another PR. This is the one exception to autopilot-full step 5. Base that PR on the other PR's branch in place of trunk. In place of the rebase onto trunk, each PR rebases onto its parent PR's branch, and the stack root rebases onto trunk. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
+      "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
       "subject": "autopilot-stack"
     },
     {
@@ -6899,7 +6899,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "4-keep-the-topology: Never retarget a base, rebase, force-push, or submit the whole stack from a babysit. Fix on the owning branch and report anything rebase-shaped to the owner. When the owning PR has merged, the fix becomes a new PR on top of the stack, the one change to the frozen list. An autopilot owner babysitting its own PR is the owner. (autopilot-full, autopilot-stack)",
+      "source_text": "4-keep-the-topology: Never retarget a base, rebase, force-push, or submit or sync the whole stack from a babysit. Fix on the owning branch and report anything rebase-shaped to the owner. When the owning PR has merged, the fix becomes a new PR on top of the stack, the one change to the frozen list. An autopilot owner babysitting its own PR is the owner. (autopilot-full, autopilot-stack)",
       "subject": "babysit-pr"
     },
     {
@@ -6922,7 +6922,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "4-keep-the-topology: Never retarget a base, rebase, force-push, or submit the whole stack from a babysit. Fix on the owning branch and report anything rebase-shaped to the owner. When the owning PR has merged, the fix becomes a new PR on top of the stack, the one change to the frozen list. An autopilot owner babysitting its own PR is the owner. (autopilot-full, autopilot-stack)",
+      "source_text": "4-keep-the-topology: Never retarget a base, rebase, force-push, or submit or sync the whole stack from a babysit. Fix on the owning branch and report anything rebase-shaped to the owner. When the owning PR has merged, the fix becomes a new PR on top of the stack, the one change to the frozen list. An autopilot owner babysitting its own PR is the owner. (autopilot-full, autopilot-stack)",
       "subject": "babysit-pr"
     },
     {
@@ -10806,10 +10806,10 @@
         "locator": "4-land-bottom-up",
         "path": "plugins/swe/skills/swe-mode/playbooks/ship-stack.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "4-land-bottom-up: Merge the run's lowest unmerged PR with `gh pr merge <pr> --squash --match-head-commit <sha>`, or the repository's merge method. Read it back with `gh pr view <pr> --json state,mergedAt,baseRefName`, since a queued PR or an armed auto-merge is not a merge. Then retarget the next PR to trunk with `gh pr edit <pr> --base <trunk>`, move its patch onto the merge result, push with `--force-with-lease`, and merge it once its checks pass and its verdict survives step 3. (ship-pr)",
+      "source_text": "4-land-bottom-up: When every PR in the stack is verified and `gh stack` is available, mark each draft ready with `gh pr ready <pr>`, run `gh stack merge <stack> --yes --squash` (or the repository's merge method), confirm each PR reads merged with `gh pr view <pr> --json state,mergedAt,baseRefName`, and delete the merged remote branches afterward. For a partial run stopping at step 2's ceiling, or when `gh stack` is unavailable, merge the run's lowest unmerged PR with `gh pr merge <pr> --squash --match-head-commit <sha>` (or the repository's merge method), read it back with `gh pr view <pr> --json state,mergedAt,baseRefName`, retarget the next PR to trunk with `gh pr edit <pr> --base <trunk>`, move its patch onto the merge result, push with `--force-with-lease`, and merge it once its checks pass and its verdict survives step 3. (ship-pr)",
       "subject": "ship-stack"
     },
     {

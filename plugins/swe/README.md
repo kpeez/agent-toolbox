@@ -55,7 +55,9 @@ To update:
 In Claude Code, a SessionStart hook tells the agent to start the router for
 each new software task, so you can also type the task without the command.
 A PreToolUse hook blocks `gh pr create` and `gh pr edit` unless the body is
-the filled `ship-pr` template, built with `pr_body.py render`.
+the filled `ship-pr` template, built with `pr_body.py render`. When the
+repository uses `gh-stack`, it also blocks a `gh pr create` or `gh pr edit`
+whose `--base` is not trunk.
 agy runs no hooks, but it loads the same rule from
 [`rules/AGENTS.md`](./rules/AGENTS.md). It skips the swe agents. Codex plugins
 have no hooks. [Set up swe](./docs/01-setup.md) gives the lines to put in
@@ -261,7 +263,7 @@ The [playbook directory](./skills/swe-mode/playbooks) has the full set.
 | [build-feature](./skills/swe-mode/playbooks/build-feature.md) | New or changed behavior |
 | [investigate-question](./skills/swe-mode/playbooks/investigate-question.md) | A read-only question with a cited answer |
 | [babysit-pr](./skills/swe-mode/playbooks/babysit-pr.md) | Drive a PR or stack to merge-ready |
-| [ship-stack](./skills/swe-mode/playbooks/ship-stack.md) | Verify a green stack, then land the verified run |
+| [ship-stack](./skills/swe-mode/playbooks/ship-stack.md) | Verify a green stack, then land it with `gh stack merge` or bottom-up to the ceiling |
 | [run-autonomously](./skills/swe-mode/playbooks/run-autonomously.md) | Drive a long task to a checkable exit condition |
 | [plan-multi-phase](./skills/swe-mode/playbooks/plan-multi-phase.md) | Write a plan for work across phases or stacked PRs |
 | [autopilot-full](./skills/swe-mode/playbooks/autopilot-full.md) | A queue of independent PRs, run to merged |

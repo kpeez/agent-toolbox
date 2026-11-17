@@ -138,13 +138,13 @@ Green is not safe. When you want the change merged, say so:
 /swe:swe-mode land the stack.
 ```
 
-The [`ship-stack`](../skills/swe-mode/playbooks/ship-stack.md) playbook gives each PR its own verifier, an agent that did not write the code. The verifier runs the change as a user would and records `PASS`, `PASS+NOTES`, or `FAIL`, keyed to the patch-id. Then ship-stack lands the contiguous verified run from the bottom, one PR at a time, and stops at the first unverified PR. A verified PR above an unverified one waits.
+The [`ship-stack`](../skills/swe-mode/playbooks/ship-stack.md) playbook gives each PR its own verifier, an agent that did not write the code. The verifier runs the change as a user would and records `PASS`, `PASS+NOTES`, or `FAIL`, keyed to the patch-id. When every PR in the stack is verified and `gh stack` is available, `ship-stack` marks each draft ready and lands the stack with `gh stack merge`. For a partial run or when `gh stack` is unavailable, it lands the contiguous verified run from the bottom, one PR at a time, and stops at the first unverified PR. A verified PR above an unverified one waits.
 
 ```mermaid
 flowchart LR
-  publish["ship-pr<br/>draft PR"] --> babysit["babysit-pr<br/>merge-ready"]
+  publish["ship-pr or gh stack link<br/>draft PRs"] --> babysit["babysit-pr<br/>merge-ready"]
   babysit --> verify["ship-stack<br/>verdict per PR"]
-  verify --> land["merge bottom-up<br/>to the ceiling"]
+  verify --> land["gh stack merge, or<br/>bottom-up to ceiling"]
 ```
 
 To mark a draft ready for human review without a merge, type `/swe:ship-pr finalize`.

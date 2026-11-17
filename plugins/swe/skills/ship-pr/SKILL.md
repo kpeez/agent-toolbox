@@ -73,8 +73,8 @@ Run the numbered procedure of the chosen mode, in order.
   branch solely to impose this skill's preferred format.
 - Resolve the base branch from confirmed repository configuration or remote
   metadata. If neither establishes it, stop and ask rather than guessing.
-- Never force-push except through an explicitly requested stack operation whose
-  documented workflow requires it.
+- Force-push with `--force-with-lease` is allowed on your own unmerged stack
+  branches. Never force-push on trunk or on branches that other people own.
 - Draft pull requests are the default. Mark a draft ready only through Land
   or Finalize.
 - Merge only through Land mode.
@@ -86,8 +86,10 @@ Run the numbered procedure of the chosen mode, in order.
 - Before committing, confirm applicable repository checks and runnable
   behavior-specific evidence pass under the verification rule in
   `2-verify`. Report failures as failures.
-- Use [stacked pull requests](references/stacked.md) only when the user or
-  established task design calls for a dependent branch chain.
+- Use [stacked pull requests](references/stacked.md) only when changes depend
+  on each other and the user or established task design calls for a dependent
+  branch chain. Keep stacks shallow, and publish with `gh stack` when
+  available.
 
 ## Publish
 
@@ -118,7 +120,13 @@ instruction.
    create one draft against the confirmed base. Build the body with
    `scripts/pr_body.py render` from slot files, as the
    [pull-request body template](references/pr-body.md) says, and pass it with
-   `--body-file`. Never write the body by hand.
+   `--body-file`. Never write the body by hand. For a dependent stack in a
+   `gh stack` repository, do not hand-chain `--base`: the coordinator runs
+   `gh stack link` (see [stacked pull requests](references/stacked.md)), then
+   runs `gh pr edit <n> --title "<title>" --body-file <rendered>` on each pull
+   request because `gh stack` writes its own titles and bodies, and verifies
+   each published body with
+   `gh pr view <n> --json body --jq .body | python3 <ship-pr>/scripts/pr_body.py check -`.
 6. `6-link-issue`: When the work has an issue, pass
    `--link "Fixes ABC-123"` (or `Fixes #123` on GitHub) to `render` so the tracker's GitHub
    integration moves the issue on merge. Use `Part of ABC-123` when this pull
@@ -233,9 +241,13 @@ the current head commit (`gh pr view <pr> --json headRefOid,baseRefName`).
    condition fails, leave the pull request ready and report which condition
    failed.
 
-For a stack, land only the contiguous run of verified pull requests from the
-bottom, one at a time, through
-[stacked pull requests](references/stacked.md). Recompute the next pull
+For a stack where every pull request holds a valid verdict and `gh stack` is
+available, mark each draft ready (`gh pr ready <n>`), land the stack with
+`gh stack merge <stack> --yes --squash` (or the repository's merge method),
+and delete the merged remote branches afterward. When only a bottom prefix is
+verified or `gh stack` is unavailable, land only the contiguous run of
+verified pull requests from the bottom, one at a time, through
+[stacked pull requests](references/stacked.md), recomputing the next pull
 request's record after each merge.
 
 Reply with the verdict, patch-id, and landing state.

@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-407 of 483 facets are always required and have no scoring case.
+406 of 483 facets are always required and have no scoring case.
 
 ## Legend
 
@@ -485,7 +485,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 1-verify-each-pr | reviewer agent | reviewer-agent | agent-spawn | always | - |
 | 1-verify-each-pr | ship-pr | visible-skill | skill-call | always | - |
 | 3-recheck-patch-ids | ship-pr | visible-skill | skill-call | always | - |
-| 4-land-bottom-up | ship-pr | visible-skill | skill-call | always | - |
+| 4-land-bottom-up | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Route loads
 

@@ -305,8 +305,8 @@ PRs:
 
 - `babysit-pr`: drive a PR or stack to merge-ready: conflicts, review
   threads, CI.
-- `ship-stack`: verify a green stack independently, then land the contiguous
-  verified run bottom-up.
+- `ship-stack`: verify a green stack independently, then land the full stack
+  with `gh stack merge` or the contiguous verified run bottom-up.
 
 Long runs and sessions:
 
@@ -317,7 +317,7 @@ Long runs and sessions:
 - `autopilot-full`: a queue of independent PRs run to merged, one owner per
   PR.
 - `autopilot-stack`: autopilot-full without the merge. Verified PRs the user
-  lands, stacked only where one builds on another.
+  lands, linked as a stack only where one builds on another.
 - `run-program`: a standing multi-day program with many PRs and subagents
   under one coordinator.
 - `pick-up-session`: resume a prior agent's in-flight work from its handoff
