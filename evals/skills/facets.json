@@ -68,6 +68,7 @@
           "lab-mode-rename-column"
         ],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-analyze-after-run",
           "lab-mode-analyze-results",
           "lab-mode-appraise-paper",
@@ -478,6 +479,13 @@
           "swe-mode-quick-fact"
         ],
         "positive": [
+          "swe-fallback-autopilot-full",
+          "swe-fallback-autopilot-stack",
+          "swe-fallback-build-prototype",
+          "swe-fallback-fix-bug",
+          "swe-fallback-hillclimb-metric",
+          "swe-fallback-plan-multi-phase",
+          "swe-fallback-refactor-structure",
           "swe-mode-evaluate-agent-change",
           "swe-mode-improve-performance",
           "swe-mode-investigate-question",
@@ -1124,6 +1132,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -1168,6 +1177,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -1190,6 +1200,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -1260,6 +1271,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-build-prototype",
           "swe-route-build-prototype"
         ]
       },
@@ -1373,7 +1385,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -1395,6 +1408,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -1527,6 +1541,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-plan-multi-phase",
           "swe-mode-plan-multi-phase"
         ]
       },
@@ -1549,6 +1564,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -1614,7 +1630,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-fallback-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/lab/encode-the-procedure",
@@ -1638,14 +1656,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`encode-the-procedure`: you do a project procedure a second time, or the user corrects how you did it. Propose or update a project skill.",
       "subject": "encode-the-procedure"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-fallback-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/lab/grade-the-evidence",
@@ -1667,14 +1687,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`grade-the-evidence`: any claim you pass on. Give it a grade from the strength and independence of its evidence. Only that principle's file defines the grades.",
       "subject": "grade-the-evidence"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-fallback-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/lab/simulate-before-you-trust",
@@ -1697,14 +1719,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`simulate-before-you-trust`: before you trust a pipeline, an analysis, or a metric on real data. Feed it data with a known answer and confirm the answer comes back.",
       "subject": "simulate-before-you-trust"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-fallback-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/lab/write-the-decision-first",
@@ -1723,7 +1747,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`write-the-decision-first`: before an experiment or analysis runs. Write the hypothesis, the metric, and the result that would change a decision.",
       "subject": "write-the-decision-first"
     },
@@ -1752,7 +1776,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-fix-bug"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/attack-the-premise",
@@ -1769,7 +1795,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`attack-the-premise`: two or more fixes that share one premise failed the same check. Write the premise down and test it before the next fix.",
       "subject": "attack-the-premise"
     },
@@ -1798,7 +1824,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/build-the-lever",
@@ -1818,14 +1846,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`build-the-lever`: many similar edits, a migration, an analysis, or a check. Build the script, codemod, or generator a reviewer can rerun.",
       "subject": "build-the-lever"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-plan-multi-phase"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/encode-lessons-in-structure",
@@ -1844,14 +1874,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`encode-lessons-in-structure`: you write the same instruction a second time. Encode it as a lint, flag, check, or script instead.",
       "subject": "encode-lessons-in-structure"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-build-prototype"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/exhaust-the-design-space",
@@ -1868,7 +1900,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`exhaust-the-design-space`: a novel interaction or architecture with no precedent. Build 2 or 3 competing sketches and compare.",
       "subject": "exhaust-the-design-space"
     },
@@ -1897,7 +1929,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-hillclimb-metric"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/explain-the-number",
@@ -1921,14 +1955,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`explain-the-number`: before you measure, and before you trust, report, or act on a measured number. Name what limits it, with run count and spread.",
       "subject": "explain-the-number"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-fix-bug"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/fix-root-causes",
@@ -1948,14 +1984,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`fix-root-causes`: debugging. Trace each symptom to the first place the system went wrong and fix it there. A guard is a fix only for a legitimate state.",
       "subject": "fix-root-causes"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/foundational-thinking",
@@ -1973,14 +2011,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`foundational-thinking`: before logic. Core types and data structures, scaffold-before-feature order, and what concurrent actors share.",
       "subject": "foundational-thinking"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-plan-multi-phase"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/guard-the-context-window",
@@ -2001,14 +2041,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`guard-the-context-window`: large outputs, long files, or fan-out planning. Send bulk to subagents and keep summaries in the main thread.",
       "subject": "guard-the-context-window"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/laziness-protocol",
@@ -2028,7 +2070,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`laziness-protocol`: refactoring, sizing a diff, or tempted to add abstractions or layers. Bias to deletion and the smallest change.",
       "subject": "laziness-protocol"
     },
@@ -2057,7 +2099,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/migrate-callers-then-delete-legacy-apis",
@@ -2074,14 +2118,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`migrate-callers-then-delete-legacy-apis`: a new internal API while old callers exist. Migrate and delete in one change.",
       "subject": "migrate-callers-then-delete-legacy-apis"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/minimize-reader-load",
@@ -2098,14 +2144,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`minimize-reader-load`: code that is hard to trace. Count layers and hidden state, and collapse layers that do not pay for themselves.",
       "subject": "minimize-reader-load"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/model-the-domain",
@@ -2124,14 +2172,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`model-the-domain`: stateful logic, heavy branching, or one shape assumption repeated across files. Encode the domain in a structure. In existing code, find implicit state machines and make them explicit.",
       "subject": "model-the-domain"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-plan-multi-phase"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/never-block-on-the-human",
@@ -2148,7 +2198,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`never-block-on-the-human`: tempted to ask \"should I do X?\" on reversible work. Do it, report it, and let the user correct it.",
       "subject": "never-block-on-the-human"
     },
@@ -2177,7 +2227,11 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-build-prototype",
+          "swe-fallback-fix-bug",
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/prove-it-works",
@@ -2210,14 +2264,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`prove-it-works`: before you say a change works. Verify on the real artifact and give a VERIFIED, NOT VERIFIED, or INCONCLUSIVE verdict.",
       "subject": "prove-it-works"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/redesign-from-first-principles",
@@ -2235,14 +2291,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`redesign-from-first-principles`: a new requirement meets an existing design. Redesign as if it had been there from day one.",
       "subject": "redesign-from-first-principles"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-hillclimb-metric"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/separate-before-serializing-shared-state",
@@ -2261,14 +2319,17 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`separate-before-serializing-shared-state`: two actors could write the same file, branch, key, or object. Remove the sharing before you add a lock.",
       "subject": "separate-before-serializing-shared-state"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-plan-multi-phase",
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/sequence-verifiable-units",
@@ -2293,14 +2354,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`sequence-verifiable-units`: multi-step work and how you stack commits and PRs. Check each unit before the next.",
       "subject": "sequence-verifiable-units"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-refactor-structure"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/subtract-before-you-add",
@@ -2318,14 +2381,16 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`subtract-before-you-add`: sequencing an addition, refactor, or rewrite. Remove dead weight first.",
       "subject": "subtract-before-you-add"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-fix-bug"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/test-behavior-not-implementation",
@@ -2343,7 +2408,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`test-behavior-not-implementation`: writing, changing, or keeping a test. Assert what users observe: fail when behavior breaks, pass when internals change.",
       "subject": "test-behavior-not-implementation"
     },
@@ -2372,7 +2437,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-autopilot-full"
+        ]
       },
       "evidence": "full-read",
       "handle": "Reply",
@@ -2388,14 +2455,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Reply: catch the operator up, covering each PR's state and verdict, what merged, countersigns and why, open operator gates, and parked follow-ups, with links to each PR and each decision log. (ketchup)",
       "subject": "autopilot-full"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-autopilot-stack"
+        ]
       },
       "evidence": "full-read",
       "handle": "Reply",
@@ -2411,7 +2480,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)",
       "subject": "autopilot-stack"
     },
@@ -3209,6 +3278,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -3335,6 +3405,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -3371,6 +3442,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -3504,6 +3576,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-build-prototype",
           "swe-route-build-prototype"
         ]
       },
@@ -3849,7 +3922,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "assistant-text",
@@ -3916,6 +3990,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -4166,6 +4241,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-plan-multi-phase",
           "swe-mode-plan-multi-phase"
         ]
       },
@@ -4196,6 +4272,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -6534,6 +6611,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6559,6 +6637,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6584,6 +6663,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6609,6 +6689,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6634,6 +6715,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6659,6 +6741,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6684,6 +6767,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6709,6 +6793,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6734,6 +6819,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6768,6 +6854,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6798,6 +6885,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6856,6 +6944,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6881,6 +6970,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -6906,6 +6996,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "lab-fallback-run-experiment",
           "lab-mode-run-experiment"
         ]
       },
@@ -7106,6 +7197,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7131,6 +7223,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7156,6 +7249,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7181,6 +7275,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7206,6 +7301,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7231,6 +7327,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7256,6 +7353,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7281,6 +7379,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7306,6 +7405,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7331,6 +7431,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7356,6 +7457,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7381,6 +7483,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -7406,6 +7509,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -7431,6 +7535,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -8178,6 +8283,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-build-prototype",
           "swe-route-build-prototype"
         ]
       },
@@ -8203,6 +8309,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-build-prototype",
           "swe-route-build-prototype"
         ]
       },
@@ -8228,6 +8335,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-build-prototype",
           "swe-route-build-prototype"
         ]
       },
@@ -8253,6 +8361,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-build-prototype",
           "swe-route-build-prototype"
         ]
       },
@@ -8709,7 +8818,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -8736,7 +8846,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -8763,7 +8874,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -8790,7 +8902,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -8817,7 +8930,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -8844,7 +8958,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -8871,7 +8986,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -8898,7 +9014,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -8925,7 +9042,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -8952,7 +9070,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -8979,7 +9098,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9006,7 +9126,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -9033,7 +9154,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9060,7 +9182,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9087,7 +9210,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9114,7 +9238,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9141,7 +9266,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -9168,7 +9294,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9195,7 +9322,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -9222,7 +9350,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9249,7 +9378,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -9276,7 +9406,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "skill-call",
@@ -9303,7 +9434,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9330,7 +9462,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9357,7 +9490,8 @@
         "positive": [
           "IM-03",
           "IM-05",
-          "IM-06"
+          "IM-06",
+          "swe-fallback-fix-bug"
         ]
       },
       "evidence": "full-read",
@@ -9382,6 +9516,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9407,6 +9542,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9432,6 +9568,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9457,6 +9594,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9482,6 +9620,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9507,6 +9646,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9532,6 +9672,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9557,6 +9698,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9582,6 +9724,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9607,6 +9750,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9632,6 +9776,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -9657,6 +9802,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-hillclimb-metric",
           "swe-route-hillclimb-metric"
         ]
       },
@@ -10382,6 +10528,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-plan-multi-phase",
           "swe-mode-plan-multi-phase"
         ]
       },
@@ -10407,6 +10554,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-plan-multi-phase",
           "swe-mode-plan-multi-phase"
         ]
       },
@@ -10432,6 +10580,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-plan-multi-phase",
           "swe-mode-plan-multi-phase"
         ]
       },
@@ -10457,6 +10606,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-plan-multi-phase",
           "swe-mode-plan-multi-phase"
         ]
       },
@@ -10482,6 +10632,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-plan-multi-phase",
           "swe-mode-plan-multi-phase"
         ]
       },
@@ -10507,6 +10658,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10532,6 +10684,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10557,6 +10710,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10582,6 +10736,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10607,6 +10762,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10632,6 +10788,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10657,6 +10814,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10682,6 +10840,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10707,6 +10866,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10732,6 +10892,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10757,6 +10918,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10782,6 +10944,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10807,6 +10970,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10832,6 +10996,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10857,6 +11022,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10882,6 +11048,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10907,6 +11074,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -10932,6 +11100,7 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-fallback-refactor-structure",
           "swe-mode-refactor-structure"
         ]
       },
@@ -11659,10 +11828,11 @@
       "scored": 28
     },
     "principle-read": {
-      "recorded": 29
+      "recorded": 6,
+      "scored": 23
     },
     "reply-load": {
-      "recorded": 2
+      "scored": 2
     },
     "route": {
       "scored": 47

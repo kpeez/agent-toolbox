@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 129 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
+The corpus has 139 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:
@@ -42,6 +42,14 @@ route that the router's own text supports, and its fixture holds every input tha
 For example, `swe-route-diagnose-runtime` runs a worker script that spins, `swe-route-ship-pr` has a conflicted
 `receipt.py`, and `lab-route-maintain-project-skills` has project skills and a renamed column. Where two router lines overlap, such as the PR-status
 trigger and the `ship-pr` route, the case uses wording that only one of them matches.
+
+The `hidden-skill-fallback` family (eight cases) targets the skills and principles that the Skill tool
+refuses because the model's list hides them. A playbook step names them, and the agent must read
+`../<name>/SKILL.md` or `../principle-<slug>/SKILL.md` by path. Each case sets `expected_route` and lists in
+`facets` the `principle-read` and `reply-load` facets that its route needs. It words the request so that the
+step which names each principle applies, for example two failed fixes before `attack-the-premise`.
+A listed facet scores `loaded` or `miss` whether or not the agent marks its step done.
+The family has no fixed mix and no negatives.
 
 The "Activation facets with no case" list in [FACETS.md](FACETS.md) names each
 model-invocable skill that has no family yet.

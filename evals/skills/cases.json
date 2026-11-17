@@ -3147,6 +3147,226 @@
       ],
       "relevant_action": "Answer in one reply without loading a workflow.",
       "rationale": "A writing task outside software. The router routes software tasks. The swe session-start hook still sends the reply through the writing skill."
+    },
+    {
+      "id": "swe-fallback-fix-bug",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "wait_for_item in poller.py drops a job that arrives exactly at the timeout. I tried two fixes: reading the clock again after the loop, and moving the pop above the loop condition. Both still fail the boundary check."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/fix-bug",
+      "facets": [
+        "principle-read/swe/attack-the-premise",
+        "principle-read/swe/fix-root-causes",
+        "principle-read/swe/test-behavior-not-implementation",
+        "principle-read/swe/prove-it-works"
+      ],
+      "relevant_action": "Say Playbook: fix-bug and read the playbook before any other step.",
+      "rationale": "Two failed fixes on one premise make the fix-bug step name attack-the-premise. The principles are hidden from the skill list, so the agent reads each one by path."
+    },
+    {
+      "id": "swe-fallback-refactor-structure",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Replace the three provider adapters with one function that builds the address label, and move the map and delivery screens onto it. Behavior must stay identical. Delete the adapters when no caller is left, and script the repeated edit across the screens."
+        }
+      ],
+      "fixture": "location-routing",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/refactor-structure",
+      "facets": [
+        "principle-read/swe/model-the-domain",
+        "principle-read/swe/foundational-thinking",
+        "principle-read/swe/redesign-from-first-principles",
+        "principle-read/swe/subtract-before-you-add",
+        "principle-read/swe/laziness-protocol",
+        "principle-read/swe/sequence-verifiable-units",
+        "principle-read/swe/build-the-lever",
+        "principle-read/swe/migrate-callers-then-delete-legacy-apis",
+        "principle-read/swe/minimize-reader-load",
+        "principle-read/swe/prove-it-works"
+      ],
+      "relevant_action": "Say Playbook: refactor-structure and read the playbook before any other step.",
+      "rationale": "Every principle that the refactor-structure steps name applies: callers move and the old API goes, and a repeated edit gets a script. The agent reads each principle by path."
+    },
+    {
+      "id": "swe-fallback-build-prototype",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Build a throwaway sketch of three variants of how the search view lists recent records, behind one switch, and show me the output of each variant."
+        }
+      ],
+      "fixture": "sable-search",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/build-prototype",
+      "facets": [
+        "principle-read/swe/exhaust-the-design-space",
+        "principle-read/swe/prove-it-works"
+      ],
+      "relevant_action": "Say Playbook: build-prototype and read the playbook before any other step.",
+      "rationale": "Competing variants behind one switch are what the build-prototype step names exhaust-the-design-space for."
+    },
+    {
+      "id": "swe-fallback-plan-multi-phase",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Plan, across four stacked PRs, how both shipment entrypoints move onto one validation module and how the old copies are deleted. The approach is settled. Write it as a checklist an owner can run box by box, and do not implement."
+        }
+      ],
+      "fixture": "shipment-service",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/plan-multi-phase",
+      "facets": [
+        "principle-read/swe/encode-lessons-in-structure",
+        "principle-read/swe/never-block-on-the-human",
+        "principle-read/swe/guard-the-context-window",
+        "principle-read/swe/sequence-verifiable-units"
+      ],
+      "relevant_action": "Say Playbook: plan-multi-phase and read the playbook before any other step.",
+      "rationale": "Four PRs keep the plan past the skip-small-change step, so the plan steps run and name their principles."
+    },
+    {
+      "id": "swe-fallback-hillclimb-metric",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Bring the preview refresh under 2 seconds for 18,000 tiles. Try independent ideas in parallel worktrees, change one thing per attempt, measure each with the same command, and say whether each gain is more than noise."
+        }
+      ],
+      "fixture": "tile-renderer",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/hillclimb-metric",
+      "facets": [
+        "principle-read/swe/explain-the-number",
+        "principle-read/swe/separate-before-serializing-shared-state"
+      ],
+      "relevant_action": "Say Playbook: hillclimb-metric and read the playbook before any other step.",
+      "rationale": "Parallel worktrees and a noise question make the hillclimb-metric steps name both principles."
+    },
+    {
+      "id": "swe-fallback-autopilot-full",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Autopilot these two independent PRs to merged: fix the minus sign on negative totals, and strip the trailing colon from line labels."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/autopilot-full",
+      "facets": [
+        "reply-load/swe/autopilot-full/reply/ketchup"
+      ],
+      "relevant_action": "Say Playbook: autopilot-full and read the playbook before any other step.",
+      "rationale": "The Reply line of autopilot-full names ketchup, a skill hidden from the list. The agent reads it by path before the final reply."
+    },
+    {
+      "id": "swe-fallback-autopilot-stack",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Build and verify these two independent PRs with full autonomy, but stop before the merge so I can land them: fix the minus sign on negative totals, and strip the trailing colon from line labels."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/autopilot-stack",
+      "facets": [
+        "reply-load/swe/autopilot-stack/reply/ketchup"
+      ],
+      "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
+      "rationale": "The Reply line of autopilot-stack names ketchup, a skill hidden from the list. The agent reads it by path before the final reply."
+    },
+    {
+      "id": "lab-fallback-run-experiment",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "hidden-skill-fallback",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Does halving the fine-tuning learning rate change TPR at FPR 0.1 for ViT-B? Run the comparison."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/lab/run-experiment",
+      "facets": [
+        "principle-read/lab/write-the-decision-first",
+        "principle-read/lab/simulate-before-you-trust",
+        "principle-read/lab/grade-the-evidence",
+        "principle-read/lab/encode-the-procedure"
+      ],
+      "relevant_action": "Say Playbook: run-experiment and read the playbook before any other step.",
+      "rationale": "The run-experiment steps and its analysis steps name all four lab principles. Lab principles are hidden from the skill list, so the agent reads each by path."
     }
   ]
 }
