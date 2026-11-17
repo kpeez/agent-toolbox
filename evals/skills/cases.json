@@ -3185,7 +3185,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Replace the three provider adapters with one function that builds the address label, and move the map and delivery screens onto it. Behavior must stay identical. Delete the adapters when no caller is left, and script the repeated edit across the screens."
+          "content": "Replace the two provider adapters with one function that builds the address label, and move the map and delivery screens onto it. Behavior must stay identical. Delete the adapters when no caller is left, and script the repeated edit across the screens."
         }
       ],
       "fixture": "location-routing",
@@ -3245,10 +3245,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "Plan, across four stacked PRs, how both shipment entrypoints move onto one validation module and how the old copies are deleted. The approach is settled. Write it as a checklist an owner can run box by box, and do not implement."
+          "content": "We settled it: add localized_names beside display_name, keep display_name for two releases, move the website, the CSV export, and the two reports onto the new field one at a time, then retire the old field. Plan that as four stacked PRs, as a checklist an owner can run box by box. Do not implement."
         }
       ],
-      "fixture": "shipment-service",
+      "fixture": "catalog-migration",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -3256,13 +3256,11 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/plan-multi-phase",
       "facets": [
-        "principle-read/swe/encode-lessons-in-structure",
-        "principle-read/swe/never-block-on-the-human",
-        "principle-read/swe/guard-the-context-window",
-        "principle-read/swe/sequence-verifiable-units"
+        "principle-read/swe/sequence-verifiable-units",
+        "principle-read/swe/prove-it-works"
       ],
       "relevant_action": "Say Playbook: plan-multi-phase and read the playbook before any other step.",
-      "rationale": "Four PRs keep the plan past the skip-small-change step, so the plan steps run and name their principles."
+      "rationale": "Four callers over several PRs, and a README that expects more than one session, keep the plan past the skip-small-change step. The write-plan-file and require-real-verification steps run on every correct plan, and they name sequence-verifiable-units and prove-it-works. The settled approach leaves step 2 nothing to prototype, so no principle from it is listed."
     },
     {
       "id": "swe-fallback-hillclimb-metric",
@@ -3360,13 +3358,10 @@
       "forbidden_skills": [],
       "expected_route": "route/lab/run-experiment",
       "facets": [
-        "principle-read/lab/write-the-decision-first",
-        "principle-read/lab/simulate-before-you-trust",
-        "principle-read/lab/grade-the-evidence",
-        "principle-read/lab/encode-the-procedure"
+        "principle-read/lab/write-the-decision-first"
       ],
       "relevant_action": "Say Playbook: run-experiment and read the playbook before any other step.",
-      "rationale": "The run-experiment steps and its analysis steps name all four lab principles. Lab principles are hidden from the skill list, so the agent reads each by path."
+      "rationale": "Step 1 writes the hypothesis, the metric, and the decision rule before any run, on any fixture. This fixture holds no training pipeline, so a correct run may skip the pilot, the noise floor, the full run, and the analysis steps. No principle from those steps is listed."
     }
   ]
 }

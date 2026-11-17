@@ -1630,9 +1630,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "lab-fallback-run-experiment"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "principle-read/lab/encode-the-procedure",
@@ -1656,16 +1654,14 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`encode-the-procedure`: you do a project procedure a second time, or the user corrects how you did it. Propose or update a project skill.",
       "subject": "encode-the-procedure"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "lab-fallback-run-experiment"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "principle-read/lab/grade-the-evidence",
@@ -1687,16 +1683,14 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`grade-the-evidence`: any claim you pass on. Give it a grade from the strength and independence of its evidence. Only that principle's file defines the grades.",
       "subject": "grade-the-evidence"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "lab-fallback-run-experiment"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "principle-read/lab/simulate-before-you-trust",
@@ -1719,7 +1713,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`simulate-before-you-trust`: before you trust a pipeline, an analysis, or a metric on real data. Feed it data with a known answer and confirm the answer comes back.",
       "subject": "simulate-before-you-trust"
     },
@@ -1853,9 +1847,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-fallback-plan-multi-phase"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "principle-read/swe/encode-lessons-in-structure",
@@ -1874,7 +1866,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`encode-lessons-in-structure`: you write the same instruction a second time. Encode it as a lint, flag, check, or script instead.",
       "subject": "encode-lessons-in-structure"
     },
@@ -2018,9 +2010,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-fallback-plan-multi-phase"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "principle-read/swe/guard-the-context-window",
@@ -2041,7 +2031,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`guard-the-context-window`: large outputs, long files, or fan-out planning. Send bulk to subagents and keep summaries in the main thread.",
       "subject": "guard-the-context-window"
     },
@@ -2179,9 +2169,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-fallback-plan-multi-phase"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "principle-read/swe/never-block-on-the-human",
@@ -2198,7 +2186,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`never-block-on-the-human`: tempted to ask \"should I do X?\" on reversible work. Do it, report it, and let the user correct it.",
       "subject": "never-block-on-the-human"
     },
@@ -2230,6 +2218,7 @@
         "positive": [
           "swe-fallback-build-prototype",
           "swe-fallback-fix-bug",
+          "swe-fallback-plan-multi-phase",
           "swe-fallback-refactor-structure"
         ]
       },
@@ -11828,8 +11817,8 @@
       "scored": 28
     },
     "principle-read": {
-      "recorded": 6,
-      "scored": 23
+      "recorded": 12,
+      "scored": 17
     },
     "reply-load": {
       "scored": 2
