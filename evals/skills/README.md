@@ -43,7 +43,7 @@ For example, `swe-route-diagnose-runtime` runs a worker script that spins, `swe-
 `receipt.py`, and `lab-route-maintain-project-skills` has project skills and a renamed column. Where two router lines overlap, such as the PR-status
 trigger and the `ship-pr` route, the case uses wording that only one of them matches.
 
-The `hidden-skill-fallback` family (eight cases) targets the skills and principles that the Skill tool
+The family `hidden-skill-fallback` (8 cases) targets the skills and principles that the Skill tool
 refuses because the model's list hides them. A playbook step names them, and the agent must read
 `../<name>/SKILL.md` or `../principle-<slug>/SKILL.md` by path. Each case sets `expected_route` and lists in
 `facets` the `principle-read` and `reply-load` facets that its route needs. It words the request so that the
