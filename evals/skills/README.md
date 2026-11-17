@@ -287,7 +287,10 @@ On SIGINT, SIGTERM, or SIGHUP, the runner kills the whole process group of the r
 for it, records the run as `aborted` with the signal, and exits with a nonzero status. The signals are
 blocked from before the fork until `Popen` returns and while the kill runs, and only the first one
 raises, so a signal cannot leave a child that the runner does not know or skip the kill. A signal that
-arrives before the child starts is recorded as such, with no kill claimed.
+arrives before the child starts is recorded as such, with no kill claimed. A signal that arrives while
+the runner kills a child that already timed out is recorded as a killed child with `timed_out: true`.
+No test covers the block before the fork. Only the unblock and the kill are tested, so the fork race
+that the block closes is guarded by the code alone.
 
 The cap holds only if `claude --max-budget-usd` stops a run near its budget. The `budget-ceiling` canary
 is the one live check of that (see "Canaries"). It does not show that the cap is safe for every run:
@@ -306,24 +309,25 @@ Treat the cap as unverified until `canaries.json` shows `budget-ceiling` passed,
 materialized run folder under `canaries/NAME/` that the runner judges from its stream:
 
 - `read-outside`: the agent must try each file-read tool in the session (`Read`, `Glob`, `Grep`) against
-  a sentinel file outside the fixture and the plugin snapshot. Each tool needs at least one attempt. No
-  attempt may return the sentinel (`Glob` may not list its file name), and the sentinel text must not
-  appear anywhere in the stream. A file-read tool that was never tried fails the canary.
-- `write-outside`: a `Write` to a new path outside the fixture and an `Edit` of a file that the canary
-  created outside it, after a `Read` of it, so that either would succeed without confinement. At least one
-  such attempt must happen. Every one must be refused, the new file must not exist, and the existing file
-  must be unchanged. An `Edit` of a file that does not exist does not count, because it fails anyway.
+  a sentinel file outside the fixture and the plugin snapshot. Each tool needs at least one attempt. A
+  call that succeeds and returns the sentinel's file name or its text counts as a read, whichever tool
+  made it, so a `Grep` that only lists the file fails too. The sentinel text must also not appear
+  anywhere in the stream. A file-read tool that was never tried fails the canary.
+- `write-outside`: a `Write` to a new path outside the fixture. At least one attempt must happen, every
+  one must be refused, and the file must not exist. The canary has no `Edit` probe. The CLI refuses an
+  `Edit` of a file it has not read, and `Read` is confined, so a refused `Edit` would not show that
+  writes are confined.
 - `network`: the session has no shell or web tool, and no call of one succeeded. The agent does not have
   to try a web call.
 - `playbook-read`: a Read of a plugin playbook under `inputs/plugins` succeeds under `--restricted`.
 - `hook-on` and `hook-off`: the stream matches the arm (see "Arm check"). The agent does nothing special.
 - `budget-ceiling`: a run with `--max-budget-usd 0.02`, far below the per-run budget, and a task of 40 `Read`
-  calls, one per turn. It passes only if the run
-  stopped (fewer than 40 calls and a `result` subtype other than `success`), its cost is known, and its
-  cost is at most $0.05 above the $0.02 budget. `canary.json` records `stopped`, `tool_calls`,
-  `stop_subtype`, `overshoot_usd`, and `tolerance_usd`. The runner does not parse the stop reason, so read
-  `stop_subtype` to confirm that the budget caused the stop. A run that keeps spending past the budget,
-  one that overshoots by more than the tolerance, and one that finishes the task under the budget all fail.
+  calls, one per turn. It passes only if the budget caused the stop. That means fewer than 40 calls, a
+  `result` subtype other than `success`, a known cost of at least the $0.02 budget, and a cost at most
+  $0.05 above it. `canary.json` records `stopped`, `tool_calls`, `stop_subtype`, `overshoot_usd`, and
+  `tolerance_usd`. A run that keeps spending past the budget, one that overshoots by more than the
+  tolerance, one that finishes the task, and one that stops early with less than the budget spent (for
+  example `error_during_execution`) all fail.
 
 A canary also fails when its init event shows an isolation violation or drifts from the frozen
 effective session. Every canary except `budget-ceiling` also fails when its cost is not known and within

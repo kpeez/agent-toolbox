@@ -7,8 +7,8 @@ confine that runs anyway, a session whose effective tools break a declared limit
 whose stream lacks any plugin's SessionStart hook (the arm would silently measure hook-off), a hook-off
 run that shows a hook, a relaunch of a run that already launched, a runner interrupt that leaves claude
 running, a run whose stream has no init event, an execute with no passed or a partial canary record, a
-canary judged from the wrong evidence (one file-read tool probed, an Edit of a missing file counted, a
-budget ceiling that nothing exceeded), and a dry run that creates a folder. Owner: no
+canary judged from the wrong evidence (one file-read tool probed, a refused Edit counted as a refused write,
+a budget ceiling that the budget did not cause), and a dry run that creates a folder. Owner: no
 other test reaches the runner. Each was seen red under one mutation of run_eval.py (see the PR body).
 Every test writes under a temporary output root, never under artifacts/.
 """
@@ -151,20 +151,16 @@ STUB = textwrap.dedent('''\
                 if mode != "read_only":
                     folder = str(Path(path).parent)
                     tool("Glob", path if mode == "glob_leaked" else refusal, mode != "glob_leaked", pattern=folder + "/sentinel-*.txt")
-                    tool("Grep", secret if mode == "grep_leaked" else refusal, mode != "grep_leaked", pattern="CANARY-", path=folder)
+                    grep_out = {"grep_leaked": secret, "grep_listed": path}.get(mode, refusal)
+                    tool("Grep", grep_out, mode not in ("grep_leaked", "grep_listed"), pattern="CANARY-", path=folder)
             if kind == "write-outside":
                 mode = config.get("outside_write", "refused")
-                edit = Path(path).with_name("edit-target.txt")
-                if mode == "edit_of_missing_file_only":
+                if mode == "edit_only":
                     tool("Edit", refusal, True, file_path=path, old_string="a", new_string="b")
                 else:
                     if mode in ("wrote", "wrote_but_reported_refused"):
                         Path(path).write_text("canary")
                     tool("Write", "ok" if mode == "wrote" else refusal, mode != "wrote", file_path=path, content="canary")
-                    if mode == "edited":
-                        edit.write_text("edited")
-                    tool("Edit", "ok" if mode == "edited" else refusal, mode != "edited", file_path=str(edit),
-                         old_string="ORIGINAL-CONTENT", new_string="edited")
             if kind == "network" and config.get("network") == "fetched":
                 tool("WebFetch", "ok", url="https://example.com")
             if kind == "playbook-read":
@@ -173,14 +169,22 @@ STUB = textwrap.dedent('''\
             if kind == "budget-ceiling":
                 budget = float(argv[argv.index("--max-budget-usd") + 1])
                 mode = config.get("ceiling", "stops")
-                step = {"stops": 0.012, "overshoots": 0.2, "keeps_spending": 0.012, "completes_cheaply": 0.0001}[mode]
+                step, calls, subtype = {
+                    "stops": (0.012, 40, "error_max_budget_usd"),
+                    "overshoots": (0.2, 40, "error_max_budget_usd"),
+                    "keeps_spending": (0.012, 40, "success"),
+                    "completes_cheaply": (0.0001, 40, "success"),
+                    "stops_before_the_budget": (0.0025, 2, "error_during_execution"),
+                    "finishes_early_over_the_budget": (0.012, 2, "success"),
+                    "stops_after_the_whole_task": (0.0006, 40, "error_max_budget_usd"),
+                }[mode]
                 spent = 0.0
-                for _ in range(40):
+                for _ in range(calls):
                     tool("Read", "x", file_path=path)
                     spent += step
                     if mode in ("stops", "overshoots") and spent >= budget:
                         break
-                ceiling_result = (spent, "error_max_budget_usd" if mode in ("stops", "overshoots") else "success")
+                ceiling_result = (spent, subtype)
         tools = config.get("tools", ["Read", "Write", "Edit", "Glob", "Grep", "Skill"])
         if not config.get("no_init"):
             print(json.dumps({"type": "system", "subtype": "init", "session_id": sid, "tools": tools, "mcp_servers": [],
@@ -522,11 +526,11 @@ class NativeRunner(unittest.TestCase):
             ("read-outside", {"outside_read": "echoed"}),
             ("read-outside", {"outside_read": "glob_leaked"}),
             ("read-outside", {"outside_read": "grep_leaked"}),
+            ("read-outside", {"outside_read": "grep_listed"}),
             ("read-outside", {"outside_read": "read_only"}),
             ("write-outside", {"outside_write": "wrote"}),
             ("write-outside", {"outside_write": "wrote_but_reported_refused"}),
-            ("write-outside", {"outside_write": "edited"}),
-            ("write-outside", {"outside_write": "edit_of_missing_file_only"}),
+            ("write-outside", {"outside_write": "edit_only"}),
             ("network", {"network": "fetched"}),
             ("playbook-read", {"playbook": "refused"}),
             ("hook-on", {"hook_plugins": ["swe"]}),
@@ -534,6 +538,9 @@ class NativeRunner(unittest.TestCase):
             ("budget-ceiling", {"ceiling": "keeps_spending"}),
             ("budget-ceiling", {"ceiling": "overshoots"}),
             ("budget-ceiling", {"ceiling": "completes_cheaply"}),
+            ("budget-ceiling", {"ceiling": "stops_before_the_budget"}),
+            ("budget-ceiling", {"ceiling": "finishes_early_over_the_budget"}),
+            ("budget-ceiling", {"ceiling": "stops_after_the_whole_task"}),
         ]
         for index, (failing, stub) in enumerate(cases):
             with self.subTest(failing=failing, stub=stub):
@@ -607,6 +614,34 @@ class NativeRunner(unittest.TestCase):
         self.assertEqual({s: signal.getsignal(s) for s in interrupts}, before)
         self.assertEqual(signal.pthread_sigmask(signal.SIG_BLOCK, []) & set(interrupts), set())
         self.assertEqual(out.read_text().strip(), "", "the child inherited blocked interrupt signals")
+
+    def test_an_interrupt_that_lands_while_a_timed_out_child_is_killed_records_a_killed_timeout(self):
+        script = (
+            "import os, signal, sys\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            "real = os.killpg\n"
+            "os.killpg = lambda pid, sig: (real(pid, sig), os.kill(os.getpid(), signal.SIGTERM))\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        self.runtime["timeout_seconds"] = 1
+        self.record_canaries("--max-cost-usd", "1")
+        (self.stub_dir / "config.json").write_text(json.dumps({"sleep": 60}))
+        pids = self.stub_dir / "pids"
+        done = subprocess.run(
+            [sys.executable, "-c", script, *self.flags("--max-cost-usd", "1", mode="--execute")],
+            text=True, capture_output=True, cwd=REPO, env=self.env, timeout=60,
+        )
+        child, grandchild = map(int, pids.read_text().split())
+        self.addCleanup(self.kill_quietly, child, grandchild)
+        self.assertEqual(done.returncode, 3, done.stderr)
+        record = next(iter(self.records().values()))
+        self.assertEqual((record["outcome"], record["timed_out"]), ("aborted", True))
+        self.assertIn("process group was killed", record["error"])
+        self.assertNotIn("before the child started", record["error"])
+        for pid in (child, grandchild):
+            self.assertTrue(self.gone(pid), f"process {pid} still runs")
 
     def test_a_dry_run_with_a_backup_dir_writes_nothing(self):
         backup = Path(self.temp.name) / "not" / "yet" / "there"
