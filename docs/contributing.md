@@ -31,7 +31,7 @@ Antigravity CLI (agy) reads plugin hooks only from `hooks.json` at the plugin
 root, so it skips `hooks/hooks.json`. agy loads `rules/AGENTS.md` as a plugin
 rule instead. That file is a copy of `hooks/session-start.md`, not a symlink,
 because the skill-eval harness rejects symlinks. Edit both files together: the
-`identical-copies` workflow fails when they differ. agy has no replacement for
+`checks` workflow fails when they differ. agy has no replacement for
 the swe `PostCompact` hook (`scripts/handoff.py hook`).
 
 `agy plugin validate plugins/swe` reports errors for the agents in

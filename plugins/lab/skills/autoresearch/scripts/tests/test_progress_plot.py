@@ -38,7 +38,7 @@ class ProgressPlotTests(unittest.TestCase):
             "".join(json.dumps(record) + "\n" for record in self.records))
 
     def invoke(self, *args):
-        return subprocess.run([sys.executable, str(SCRIPT), str(self.run), *args],
+        return subprocess.run(["uv", "run", "--script", str(SCRIPT), str(self.run), *args],
                               capture_output=True, text=True)
 
     def test_reads_latest_ledger_without_export_and_preserves_inputs(self):

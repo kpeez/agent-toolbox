@@ -23,7 +23,7 @@
   `uv run .github/scripts/plugin_isolation.py` catches `<plugin>:<name>`
   references; a bare name such as `interview-user` in lab is yours to catch.
 - `go-deeper` lives in `plugins/swe`, `plugins/lab`, and `plugins/uni` so each
-  plugin installs alone. Edit all three copies together; the `shared-skills`
+  plugin installs alone. Edit all three copies together; the `checks`
   workflow fails when they differ.
 - To pull upstream pstack changes into swe, use the repo-local
   `align-swe-with-pstack` skill in `.claude/skills/`.
