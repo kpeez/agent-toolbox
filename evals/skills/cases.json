@@ -2227,6 +2227,939 @@
       "forbidden_skills": [],
       "relevant_action": "State the route and its first step before any analysis.",
       "rationale": "Explicit invocation is a control case."
+    },
+    {
+      "id": "swe-route-author-skill",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write an AGENTS.md for this repo. It should tell agents to run python3 -m unittest before every commit and to keep parsed CSV keys free of a byte-order mark."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/author-skill",
+      "relevant_action": "Say Playbook: author-skill and read the playbook before any other step.",
+      "rationale": "The router names AGENTS.md in the author-skill line. The writing route covers other prose, so it is the near miss."
+    },
+    {
+      "id": "swe-route-autopilot-full",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Full autopilot on this queue of three independent PRs for the receipt helpers: the minus sign on negative totals, the trailing colon on line labels, and the failing python 3.8 check. Build and verify each one, and merge each when it passes."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/autopilot-full",
+      "relevant_action": "Say Playbook: autopilot-full and read the playbook before any other step.",
+      "rationale": "A queue of independent PRs with full autonomy and a merge. The autopilot-stack playbook differs only by its no-merge rule."
+    },
+    {
+      "id": "swe-route-autopilot-stack",
+      "target": "swe:swe-mode",
+      "category": "contextual",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Three independent changes are queued for the receipt helpers: the minus sign on negative totals, the trailing colon on line labels, and the failing python 3.8 check."
+        },
+        {
+          "role": "assistant",
+          "content": "I can take them one at a time, or run the whole queue."
+        },
+        {
+          "role": "user",
+          "content": "Run the whole queue with full autonomy: build and verify all three, but do not merge anything. I will land them myself."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/autopilot-stack",
+      "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
+      "rationale": "The same queue as the autopilot-full case, with an explicit no-merge rule. Only autopilot-stack stops before the merge."
+    },
+    {
+      "id": "swe-route-babysit-pr",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Babysit PR 12 until it is merge-ready. The CI log and the review threads are in the repo."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/babysit-pr",
+      "relevant_action": "Say Playbook: babysit-pr and read the playbook before any other step.",
+      "rationale": "The user says babysit and asks for a merge-ready PR. The ship-pr route covers a single conflict, thread, or check; the router's PR-status trigger sends a babysit request to this playbook."
+    },
+    {
+      "id": "swe-route-build-prototype",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "I cannot tell which ranking looks right. Sketch two throwaway versions of the search view, one that lists prefix matches first and one that lists recently opened records first, and show me what each prints for the same three queries."
+        }
+      ],
+      "fixture": "sable-search",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/build-prototype",
+      "relevant_action": "Say Playbook: build-prototype and read the playbook before any other step.",
+      "rationale": "A run can show which ranking is better, so the router sends the fork to build-prototype. The interview-user route covers a preference no run can settle."
+    },
+    {
+      "id": "swe-route-clean-worktrees",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "My disk is almost full. Check which of my old git worktrees are merged or abandoned, and prune the safe ones."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/clean-worktrees",
+      "relevant_action": "Say Playbook: clean-worktrees and read the playbook before any other step.",
+      "rationale": "Reclaiming disk by pruning worktrees is the only task clean-worktrees owns. No other playbook deletes user state."
+    },
+    {
+      "id": "swe-route-diagnose-runtime",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The poller process sits at 100% CPU while the queue is empty. Attach to the running process, instrument it, and find where it spins. I only want the diagnosis, no fix."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/diagnose-runtime",
+      "relevant_action": "Say Playbook: diagnose-runtime and read the playbook before any other step.",
+      "rationale": "A live symptom diagnosed from instrumentation of the running process. The diagnose route and diagnose-trace cover failures read from evidence that already exists."
+    },
+    {
+      "id": "swe-route-hillclimb-metric",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Keep improving the preview refresh time until it is under 2 seconds for 18,000 tiles. Change one thing at a time, measure after each change, and revert any change that does not help."
+        }
+      ],
+      "fixture": "tile-renderer",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/hillclimb-metric",
+      "relevant_action": "Say Playbook: hillclimb-metric and read the playbook before any other step.",
+      "rationale": "A loop of measured attempts against one target with keep or revert. The improve-performance playbook covers one measured slowness."
+    },
+    {
+      "id": "swe-route-match-visual-parity",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Replace the inline styles of the old badge page with the new stylesheet. The new page must render pixel-identical to the old one. Check it with an image diff, not by eye, and do not touch the old page."
+        }
+      ],
+      "fixture": "badge-parity",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/match-visual-parity",
+      "relevant_action": "Say Playbook: match-visual-parity and read the playbook before any other step.",
+      "rationale": "Pixel-exact equivalence against a baseline. The refactor-structure playbook keeps behavior but has no image-diff rule."
+    },
+    {
+      "id": "swe-route-pick-up-session",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Take over from the previous agent. Its handoff file is HANDOFF.md. Resume from where it stopped, and do not redo what it finished."
+        }
+      ],
+      "fixture": "resumed-work",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/pick-up-session",
+      "relevant_action": "Say Playbook: pick-up-session and read the playbook before any other step.",
+      "rationale": "Resuming a prior agent's work from its handoff file. The fix-bug playbook would start by reproducing the bug again."
+    },
+    {
+      "id": "swe-route-run-autonomously",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Going to bed. Keep going until python3 -m unittest passes, and do not stop to ask me anything."
+        }
+      ],
+      "fixture": "status-labels",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/run-autonomously",
+      "relevant_action": "Say Playbook: run-autonomously and read the playbook before any other step.",
+      "rationale": "One task driven to a checkable exit condition without stopping. The fix-bug playbook would fix the defect but does not own the exit condition."
+    },
+    {
+      "id": "swe-route-run-program",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Own the move of every pipeline adapter to streaming reads as a program. It will take about a week, with many stacked PRs and several subagents, and I will check in only a few times. You are the coordinator: decide which agent does each piece and check what each one produces."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/run-program",
+      "relevant_action": "Say Playbook: run-program and read the playbook before any other step.",
+      "rationale": "A multi-day program with many PRs and few human turns. The run-autonomously playbook drives one task to one predicate, and figure-it-out writes one bespoke workflow."
+    },
+    {
+      "id": "swe-route-architect",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Before anyone writes code, sketch two or three competing designs for how the map and delivery screens should share one address label, and compare them."
+        }
+      ],
+      "fixture": "location-routing",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/architect",
+      "relevant_action": "Say Route: architect and load the skill before any other step.",
+      "rationale": "Competing designs before code. The codebase-design route reviews the boundaries that exist today."
+    },
+    {
+      "id": "swe-route-blast-radius",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What could the checkout change break beyond its diff? Name the one fact it is safe because of, and prove it by running real code."
+        }
+      ],
+      "fixture": "checkout-diff",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/blast-radius",
+      "relevant_action": "Say Route: blast-radius and load the skill before any other step.",
+      "rationale": "The question is the blast radius of a change. The regression review in the negative cases reports defects in the diff only."
+    },
+    {
+      "id": "swe-route-correct",
+      "target": "swe:swe-mode",
+      "category": "contextual",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The importer test failed again: the first CSV key still has a byte-order mark in it."
+        },
+        {
+          "role": "assistant",
+          "content": "I will strip the byte-order mark when the file opens."
+        },
+        {
+          "role": "user",
+          "content": "That is the third time an agent has missed this. Stop it from happening again, and fix the cause at the highest level that works."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/correct",
+      "relevant_action": "Say Route: correct and load the skill before any other step.",
+      "rationale": "The user corrects a mistake that agents have made before and asks to stop its class. A fix-bug run would patch this one failure."
+    },
+    {
+      "id": "swe-route-external-agents",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Hand this spec to an OpenCode worker to build: make the CSV adapter skip blank lines. Then review what it builds and fix what is wrong."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/external-agents",
+      "expected_mode": "delegate",
+      "relevant_action": "Say Route: external-agents and load the skill before any other step.",
+      "rationale": "A whole spec goes to a worker on another agent CLI and comes back for review, which is the delegate mode. The questions mode covers a few small parallel questions."
+    },
+    {
+      "id": "swe-route-figure-it-out",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Rework the whole pipeline to read streams instead of files: every adapter, the validator, the normalizer, all callers and tests, while the nightly import keeps working. No playbook fits this, so work out your own workflow for it and run it."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/figure-it-out",
+      "relevant_action": "Say Route: figure-it-out and load the skill before any other step.",
+      "rationale": "Large cross-cutting work that no playbook fits. The refactor-structure playbook sends large structural work here."
+    },
+    {
+      "id": "swe-route-handoff",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Write down where this work stands, so a new session can continue it tomorrow."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/handoff",
+      "relevant_action": "Say Route: handoff and load the skill before any other step.",
+      "rationale": "The user asks for the state of the work in a file. The pause-safely playbook runs only on an explicit pause."
+    },
+    {
+      "id": "swe-route-how",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Explain how run_import picks the CSV or JSON adapter and what each stage hands to the next. Do not change anything."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/how",
+      "relevant_action": "Say Route: how and load the skill before any other step.",
+      "rationale": "A how-it-works question with no code change. The investigate-question playbook covers a cited answer about why the code is built this way."
+    },
+    {
+      "id": "swe-route-interview-user",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Writers should be able to edit documents, but I have not decided whether they can edit published ones or other writers' drafts. Interview me until the rules are settled."
+        }
+      ],
+      "fixture": "access-control",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/interview-user",
+      "relevant_action": "Say Route: interview-user and load the skill before any other step.",
+      "rationale": "Open product decisions that no run can settle, and the user asks to be interviewed. The build-prototype playbook covers a fork a run can show."
+    },
+    {
+      "id": "swe-route-ketchup",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "I am back after a long weekend. Catch me up on where things stand."
+        }
+      ],
+      "fixture": "notification-service",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/ketchup",
+      "relevant_action": "Say Route: ketchup and load the skill before any other step.",
+      "rationale": "A catch-up after time away. The handoff route writes state for a new session, not for the user."
+    },
+    {
+      "id": "swe-route-reflect",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Review the last session for agent mistakes: what did the agents get wrong, and what should change?"
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/reflect",
+      "relevant_action": "Say Route: reflect and load the skill before any other step.",
+      "rationale": "A review of a session for agent mistakes. The correct route fixes a mistake class the user has just named."
+    },
+    {
+      "id": "swe-route-ship-pr",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "My open PR has a merge conflict with main in receipt.py. Resolve it and push the result."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/ship-pr",
+      "expected_mode": "drive-to-green",
+      "relevant_action": "Say Route: ship-pr and load the skill before any other step.",
+      "rationale": "One conflict on one open PR, with no request for status. The babysit-pr playbook covers a babysit or get-it-green request."
+    },
+    {
+      "id": "swe-route-verification-skill",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Create this project's verification skill: a reusable way to launch run_import, drive it with real input, and observe the output, plus a map of its features."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/verification-skill",
+      "expected_mode": "create",
+      "relevant_action": "Say Route: verification-skill and load the skill before any other step.",
+      "rationale": "The project's own skill for driving its app. The author-skill playbook writes any other skill."
+    },
+    {
+      "id": "swe-route-writing",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Rewrite the README so a new contributor can install, run the importer, and run its tests in five minutes."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/writing",
+      "relevant_action": "Say Route: writing and load the skill before any other step.",
+      "rationale": "A README is prose, which the writing route owns. AGENTS.md goes to author-skill."
+    },
+    {
+      "id": "lab-route-bootstrap-project",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "lab-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Set up this research project's context: read the repo, write down what the data is and how it was produced, and make the first procedure skill."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/lab/bootstrap-project",
+      "relevant_action": "Say Playbook: bootstrap-project and read the playbook before any other step.",
+      "rationale": "A request to set up research-context and a first skill. The codify-procedure playbook starts from a procedure that already ran."
+    },
+    {
+      "id": "lab-route-codify-procedure",
+      "target": "lab:lab-mode",
+      "category": "contextual",
+      "split": "development",
+      "family": "lab-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "regenerate the figures from results/summary.csv"
+        },
+        {
+          "role": "assistant",
+          "content": "Done. I ran figures.py with --results results/summary.csv --out figures/ and it wrote the table, the DET curves, and the histograms."
+        },
+        {
+          "role": "user",
+          "content": "You got the column handling wrong twice and I corrected it each time. Turn this procedure into a project skill that keeps those corrections as checks."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/lab/codify-procedure",
+      "relevant_action": "Say Playbook: codify-procedure and read the playbook before any other step.",
+      "rationale": "A procedure done in this session becomes a project skill. The research-skill route needs a procedure that is already clear."
+    },
+    {
+      "id": "lab-route-maintain-project-skills",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "lab-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The regime column in results/summary.csv is now called setting. Check whether our project skills still run and are still true."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/lab/maintain-project-skills",
+      "relevant_action": "Say Playbook: maintain-project-skills and read the playbook before any other step.",
+      "rationale": "A check of the project's skills after the data changed. The bootstrap-project playbook creates the kit."
+    },
+    {
+      "id": "lab-route-making-plots",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "lab-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Make the DET curve figure for the results update."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/lab/making-plots",
+      "relevant_action": "Say Route: making-plots and load the skill before any other step.",
+      "rationale": "A result figure to make. The visualizing-data route reviews a plot that exists."
+    },
+    {
+      "id": "lab-route-visualizing-data",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "lab-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Review the plots figures.py draws: are the scales honest, and can a color-blind reader tell the models apart?"
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/lab/visualizing-data",
+      "relevant_action": "Say Route: visualizing-data and load the skill before any other step.",
+      "rationale": "A plot to review for honest scales and accessibility. The making-plots route makes or revises a figure."
+    },
+    {
+      "id": "lab-route-research-skill",
+      "target": "lab:lab-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "lab-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Add a project skill for this procedure, which is already clear: run figures.py with --results results/summary.csv --out figures/, then check that one DET curve exists for each model."
+        }
+      ],
+      "fixture": "classifier-figures",
+      "expected_skills": [
+        "lab:lab-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/lab/research-skill",
+      "expected_mode": "create",
+      "relevant_action": "Say Route: research-skill and load the skill before any other step.",
+      "rationale": "The user writes down the procedure, so one skill owns the task. The codify-procedure playbook reconstructs a procedure from a session."
+    },
+    {
+      "id": "swe-mode-refactor-structure",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Move the shipment field validation into one module that both entrypoints call. The behavior must stay exactly as it is; the existing tests pin it."
+        }
+      ],
+      "fixture": "shipment-service",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/refactor-structure",
+      "relevant_action": "Say Playbook: refactor-structure and read the playbook before any other step.",
+      "rationale": "A structure change that keeps behavior. The codebase-design route only proposes, and build-feature changes behavior."
+    },
+    {
+      "id": "swe-mode-improve-performance",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The preview refresh takes 12.4 s for 18,000 tiles. Make it faster, and show me the numbers before and after."
+        }
+      ],
+      "fixture": "tile-renderer",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/improve-performance",
+      "relevant_action": "Say Playbook: improve-performance and read the playbook before any other step.",
+      "rationale": "One measured slowness to improve against a baseline. The hillclimb-metric playbook is a loop toward a target."
+    },
+    {
+      "id": "swe-mode-investigate-question",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Why does the payment gateway create a new request token on every retry? Give me a cited answer from the repository. Do not change anything."
+        }
+      ],
+      "fixture": "parcel-gateway",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/investigate-question",
+      "relevant_action": "Say Playbook: investigate-question and read the playbook before any other step.",
+      "rationale": "A read-only why question with a cited answer. The how route explains how code works and has no why or citation duty."
+    },
+    {
+      "id": "swe-mode-plan-multi-phase",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "We decided: keep display_name for two releases, add localized_names beside it, and backfill with a script. Write the plan for the migration across stacked PRs, as a checklist an owner can run box by box. Do not implement."
+        }
+      ],
+      "fixture": "catalog-migration",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/plan-multi-phase",
+      "relevant_action": "Say Playbook: plan-multi-phase and read the playbook before any other step.",
+      "rationale": "The plan is the deliverable and the decisions are made. The interview-user route would apply if the decisions were open."
+    },
+    {
+      "id": "swe-mode-pause-safely",
+      "target": "swe:swe-mode",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "I am making the poller return a job that arrives at the timeout boundary."
+        },
+        {
+          "role": "assistant",
+          "content": "I changed the loop condition and have not run the test yet."
+        },
+        {
+          "role": "user",
+          "content": "I have to leave now and will be offline for a day. Pause this safely so another session can resume it."
+        }
+      ],
+      "fixture": "worker-queue",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/pause-safely",
+      "relevant_action": "Say Playbook: pause-safely and read the playbook before any other step.",
+      "rationale": "An explicit pause with work in flight. The handoff route writes state but does not stop work cleanly."
+    },
+    {
+      "id": "swe-mode-ship-stack",
+      "target": "swe:swe-mode",
+      "category": "contextual",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "CI is green on all three receipt PRs and the review threads are resolved."
+        },
+        {
+          "role": "assistant",
+          "content": "I agree. Nothing is outstanding on any of them."
+        },
+        {
+          "role": "user",
+          "content": "Then land the stack."
+        }
+      ],
+      "fixture": "receipt-totals",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/ship-stack",
+      "relevant_action": "Say Playbook: ship-stack and read the playbook before any other step.",
+      "rationale": "An explicit request to land a green stack. The babysit-pr playbook ends where this one begins."
+    },
+    {
+      "id": "swe-mode-evaluate-agent-change",
+      "target": "swe:swe-mode",
+      "category": "explicit",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Use /swe:swe-mode to measure whether the rewritten description of the implement skill makes agents load it more often on feature requests."
+        }
+      ],
+      "fixture": "pipeline",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/evaluate-agent-change",
+      "relevant_action": "Say Playbook: evaluate-agent-change and read the playbook before any other step.",
+      "rationale": "Measuring the effect of a skill change on agent behavior. The author-skill playbook writes the change."
+    },
+    {
+      "id": "swe-mode-chat",
+      "target": "swe:swe-mode",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Thanks, that makes sense. I will read it over lunch."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:swe-mode"
+      ],
+      "relevant_action": "Answer in one reply without loading a workflow.",
+      "rationale": "A closing remark holds no task to route."
+    },
+    {
+      "id": "swe-mode-quick-fact",
+      "target": "swe:swe-mode",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "What is the default port of PostgreSQL?"
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:swe-mode"
+      ],
+      "relevant_action": "Answer in one reply without loading a workflow.",
+      "rationale": "A quick fact that needs no repository read and no playbook."
+    },
+    {
+      "id": "swe-mode-non-software",
+      "target": "swe:swe-mode",
+      "category": "negative",
+      "split": "development",
+      "messages": [
+        {
+          "role": "user",
+          "content": "My landlord wants to raise the rent by 8%. Draft a short, polite email that asks which lease clause allows it."
+        }
+      ],
+      "fixture": "harbor-importer",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:swe-mode"
+      ],
+      "relevant_action": "Answer in one reply without loading a workflow.",
+      "rationale": "A writing task outside software. The router routes software tasks."
     }
   ]
 }

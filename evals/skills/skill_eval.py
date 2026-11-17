@@ -23,7 +23,8 @@ import subprocess
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
-    "implement", "diagnose", "testing-code", "codebase-design", "ship-pr", "interview-user")} | {"lab:making-plots", "lab:lab-mode"}
+    "implement", "diagnose", "testing-code", "codebase-design", "ship-pr", "interview-user",
+    "swe-mode")} | {"lab:making-plots", "lab:lab-mode"}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
 # A case belongs to the family named by its `family` field, else by its target. Each family
 # in MIX_FAMILIES holds exactly COUNTS. An open family holds only positive cases that set
