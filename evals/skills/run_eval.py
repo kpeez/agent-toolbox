@@ -65,6 +65,8 @@ LIVE_STEPS = [
     "canary: ask the agent to fetch a URL; expect no network tool",
     "canary: ask the agent to Read a plugin playbook under inputs/plugins; expect success when restricted",
     "first run: read the init event of the stream and freeze it as effective-session.json",
+    "first hook-on run: confirm the stream shows the SessionStart hook started and finished",
+    "first hook-off run: confirm the stream shows no hook event",
 ]
 
 
@@ -98,6 +100,7 @@ def claude_argv(runtime, prompt, sid, plugin_dirs, mcp_config, add_dir):
         "--output-format",
         "stream-json",
         "--verbose",
+        "--include-hook-events",
         "--session-id",
         sid,
         "--model",
@@ -442,7 +445,7 @@ def build_pilot(args, runtime, cases):
             "cost cap",
             "consecutive failures",
             "effective session drifts from the first run's",
-            "isolation violation in the init event",
+            "isolation violation in the init event or an arm violation in the hook events",
         ],
         "order": "repeat-major, then case, then arm",
     }
@@ -522,6 +525,86 @@ def init_event(stream):
         ):
             return event
     return None
+
+
+def hook_events(stream):
+    """One entry per hook id, from the hook_started and hook_response stream events.
+
+    The events name the hook (`SessionStart:startup`) but not its plugin, so a
+    hook that completed is attributed to the plugin whose frozen hook text its
+    output carries.
+    """
+    seen = {}
+    for line in stream.read_bytes().split(b"\n"):
+        try:
+            event = json.loads(line)
+        except ValueError:
+            continue
+        if (
+            not isinstance(event, dict)
+            or event.get("type") != "system"
+            or event.get("subtype") not in {"hook_started", "hook_response"}
+        ):
+            continue
+        key = event.get("hook_id") or event.get("uuid")
+        entry = seen.setdefault(
+            key,
+            {
+                "event": event.get("hook_event")
+                or str(event.get("hook_name", "")).split(":")[0],
+                "name": event.get("hook_name"),
+                "started": False,
+                "completed": False,
+                "outcome": None,
+                "output": "",
+            },
+        )
+        if event["subtype"] == "hook_started":
+            entry["started"] = True
+        else:
+            entry["completed"] = True
+            entry["outcome"] = event.get("outcome")
+            entry["output"] = event.get("output") or event.get("stdout") or ""
+    return list(seen.values())
+
+
+def hook_summary(events, hooks):
+    """`hooks` maps each plugin to its frozen session-start.md path (hook-on only)."""
+    texts = {
+        plugin: Path(frozen["path"]).read_text(encoding="utf-8").strip()
+        for plugin, frozen in hooks.items()
+    }
+    summary = []
+    for event in events:
+        out = event["output"].strip()
+        plugin = next(
+            (p for p, text in texts.items() if out and text.startswith(out)), None
+        )
+        summary.append({k: v for k, v in event.items() if k != "output"} | {"plugin": plugin})
+    return summary
+
+
+def arm_violations(arm, summary):
+    if arm == "hook-off":
+        return [
+            f"arm violation: hook-off run, but a {h['name']} hook ran" for h in summary if h["started"]
+        ]
+    ok = [
+        h
+        for h in summary
+        if h["event"] == "SessionStart"
+        and h["completed"]
+        and h["outcome"] == "success"
+        and h["plugin"]
+    ]
+    return (
+        []
+        if ok
+        else [
+            "arm violation: hook-on run, but no plugin SessionStart hook started and succeeded"
+            f" (hook events seen: {[(h['name'], h['outcome']) for h in summary]})"
+        ]
+    )
 
 
 def usage_of(result):
@@ -716,6 +799,9 @@ def run_one(ctx, item):
     )
     stream = run / "launch" / "stream.jsonl"
     init = init_event(stream)
+    hooks = hook_summary(
+        hook_events(stream), manifest.get("hooks", {}) if item["arm"] == "hook-on" else {}
+    )
     record.update(
         ended_at=time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         exit_code=code,
@@ -725,7 +811,12 @@ def run_one(ctx, item):
         stdout_sha256=se.digest(stream.read_bytes()),
         stderr_sha256=se.digest((run / "launch" / "stderr.txt").read_bytes()),
         effective_session=effective(init) if init else None,
-        violations=violations(init, ctx["runtime"], home) if init else [],
+        hook_events=hooks,
+        violations=(
+            violations(init, ctx["runtime"], home) + arm_violations(item["arm"], hooks)
+            if init
+            else []
+        ),
     )
     se.save_json(run / "run.json", record)
     finish_run(ctx, run, record)

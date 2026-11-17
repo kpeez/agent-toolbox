@@ -221,7 +221,7 @@ Each check needs no model call. A `fail` blocks `--execute`.
 
 - `runtime-complete`, `approval-recorded`: every field is set, and a person approved the model and effort.
 - `cli-version`: the installed CLI equals the frozen version.
-- `flags-in-help`: `claude --help` defines every flag the runner passes. The runner passes only flags that help lists.
+- `flags-in-help`: `claude --help` defines every flag the runner passes, `--include-hook-events` among them. The runner passes only flags that help lists.
 - `effort-allowed`, `permission_mode-allowed`, `permission_prompts-allowed`: the values are in the help's choices.
 - `config-home-isolated`: a fresh `CLAUDE_CONFIG_DIR` lists no installed plugin, so host plugins and
   skills stay out. The run uses one such directory per run.
@@ -239,13 +239,30 @@ no shell or web tool under a confined limit, and the auto-memory path inside the
 check that fails stops the pilot. Every later run must match the first run's effective session, which
 also freezes the bundled skills that the checked-out catalog does not list.
 
+### Arm check
+
+`--restricted` changes which settings load, so a `hook-on` run proves nothing unless its SessionStart
+hook ran. The runner passes `--include-hook-events`, reads the `hook_started` and `hook_response`
+events from `launch/stream.jsonl`, and records one entry per hook in `run.json` as `hook_events`:
+event, name, plugin, started, completed, outcome. The events carry no plugin name, so the runner
+attributes a completed hook to the plugin whose frozen `hooks/session-start.md` starts with the hook's
+output. An arm violation stops the pilot, like an init-event violation:
+
+- `hook-on`: no plugin SessionStart hook started and succeeded.
+- `hook-off`: any hook started.
+
+The event shape comes from a stream-json capture in an earlier session transcript (`type: system`,
+`subtype: hook_started` or `hook_response`, `hook_id`, `hook_name` such as `SessionStart:startup`,
+`hook_event`, and on the response `output`, `exit_code`, `outcome`). That capture came from another CLI
+version, so the first runs of the pilot confirm it (see the live steps).
+
 ### Stopping rule and cost
 
 The rule is fixed in `pilot.json` before the first launch. Runs go repeat by repeat, then case, then
 arm, so any stop leaves the arms within one run of each other. The runner launches a run only when the
 known spend, plus the per-run budget of each run with unknown cost, plus the next run's per-run budget,
-stays within `--max-cost-usd`. It also stops after three failed runs in a row, on drift, and on an
-isolation violation. Cost comes from the stream's `result` event. A missing cost stays `null`, counts at
+stays within `--max-cost-usd`. It also stops after three failed runs in a row, on drift, on an
+isolation violation, and on an arm violation. Cost comes from the stream's `result` event. A missing cost stays `null`, counts at
 the per-run budget for the cap, and shows in `report.json` as `unknown_cost_runs`. A run that already
 launched is never launched again: a rerun skips a run with `score.json`, rescores a run that finished
 without one, and moves an interrupted run aside.

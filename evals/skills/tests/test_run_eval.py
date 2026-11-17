@@ -3,7 +3,8 @@
 Admission: protects the spend and isolation promises of `run_eval.py` at its CLI. The credible
 regressions are a dry run that launches the model, a rerun that launches finished runs again, a cost
 cap checked after the launch or one that counts unknown cost as zero, a configuration the CLI cannot
-confine that runs anyway, and a session whose effective tools break a declared limit. Owner: no other
+confine that runs anyway, a session whose effective tools break a declared limit, and a hook-on run
+whose stream shows no SessionStart hook (the arm would silently measure hook-off). Owner: no other
 test reaches the runner. Each was seen red under one mutation of run_eval.py (see the PR body).
 """
 
@@ -36,6 +37,7 @@ STUB = textwrap.dedent('''\
       -p, --print                           Print response and exit
       --output-format <format>              Output format
       --verbose                             Override the verbose setting
+      --include-hook-events                 Include all hook lifecycle events in the output stream
       --session-id <uuid>                   Use a specific session ID
       --model <model>                       Model for the current session.
       --effort <level>                      Effort level for the current session
@@ -88,6 +90,13 @@ STUB = textwrap.dedent('''\
         target = Path(home) / "projects" / "p" / (sid + ".jsonl")
         target.parent.mkdir(parents=True)
         target.write_text("".join(json.dumps(r) + "\\n" for r in rows))
+        hook = plugin / "hooks" / "session-start.md"
+        if hook.is_file() and config.get("hook_events", True):
+            ident = {"hook_id": "h1", "hook_name": "SessionStart:startup", "hook_event": "SessionStart", "session_id": sid}
+            print(json.dumps({"type": "system", "subtype": "hook_started", **ident}))
+            out = hook.read_text()
+            print(json.dumps({"type": "system", "subtype": "hook_response", **ident, "output": out, "stdout": out,
+                              "stderr": "", "exit_code": 0, "outcome": "success"}))
         tools = config.get("tools", ["Read", "Write", "Edit", "Glob", "Grep", "Skill"])
         print(json.dumps({"type": "system", "subtype": "init", "session_id": sid, "tools": tools, "mcp_servers": [],
                           "skills": ["swe:implement"], "model": "stub-model", "permissionMode": "dontAsk",
@@ -263,6 +272,26 @@ class NativeRunner(unittest.TestCase):
         self.assertEqual(done.returncode, 3, done.stderr)
         self.assertIn("isolation violation", json.loads(done.stdout)["stopped"])
         self.assertEqual(len(self.model_calls()), 1)
+
+
+    def test_a_hook_on_run_whose_stream_shows_no_session_start_hook_stops_the_pilot(self):
+        done = self.run_eval(
+            "--repeats", "2", "--max-cost-usd", "1", stub={"hook_events": False}
+        )
+        self.assertEqual(done.returncode, 3, done.stderr)
+        self.assertIn("arm violation", json.loads(done.stdout)["stopped"])
+        on = next(r for r in self.records().values() if r["arm"] == "hook-on")
+        self.assertEqual(on["hook_events"], [])
+
+    def test_each_run_records_the_hook_events_its_arm_allows(self):
+        done = self.run_eval("--max-cost-usd", "1")
+        self.assertEqual(done.returncode, 0, done.stderr)
+        by_arm = {r["arm"]: r["hook_events"] for r in self.records().values()}
+        self.assertEqual(by_arm["hook-off"], [])
+        self.assertEqual(
+            [(h["event"], h["completed"], h["plugin"]) for h in by_arm["hook-on"]],
+            [("SessionStart", True, "swe")],
+        )
 
 
 if __name__ == "__main__":
