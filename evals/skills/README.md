@@ -174,8 +174,9 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
   follow (`<handle>: done, note`). `skip` needs a reason after it
   (`skip: reason`, `skip (reason)`, `skip - reason`). Any other word, or a
   `skip` with no reason, lists the handle in `unclear_handles`. The reply
-  splits into blocks at each line that starts with `Steps`, ignoring `#`, `*`,
-  and space. The text before the first such line is its own block. The section
+  splits into blocks at each line that starts with `Steps` in the first column,
+  ignoring `#`, `*`, and the space after them. An indented line, such as a
+  nested `  Steps 3 to 10 of analyze-results:`, stays inside its block. The text before the first such line is its own block. The section
   is the block with the most entries for this route's handles, and the last
   one on a tie. A block with no entry never wins over one with entries, so a
   second block for another playbook, or a prose line that starts with `Steps`,
@@ -187,7 +188,13 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
 - `step_loads`: for each step the agent marked `done`, the loads its step line
   names. `always` and `conditional` names are `required`, because a step marked
   done says its condition held. A `one-of` step needs any one name.
-  A `transitive` name (a step that runs steps of another playbook) is `required` when its `conditional` is false, because the router says such a step also loads the names in those steps. A `transitive` name with `conditional` true is reported in `transitive` and never fails, because the outer Steps section cannot show whether the inner condition held. A reference or playbook needs
+  A `transitive` name (a step that runs steps of another playbook) is `required` when its `conditional` is false, because the router says such a step also loads the names in those steps. A `transitive` name with `conditional` true is reported in `transitive` and never fails, because the outer Steps section cannot show whether the inner condition held. The scorer does not honor a skip in a nested breakdown. The router
+  ties the load to the outer step ("when a step runs steps of another playbook,
+  also load the names in those steps") and says the playbook's steps "do not
+  join the list", so the Steps section lists only the outer handle. A
+  `9-make-figures: skip` under `7-analyze` therefore still requires
+  `making-plots`. An agent that skips all of those steps marks the outer step
+  `skip:` with its reason. A reference or playbook needs
   a full read. A skill or principle needs a load. A subagent load or read counts
   for a `delegate-allowed` facet. A project skill or the reviewer agent is not
   scorable. A step marked `skip:` requires nothing. A step load has no timing check: a load

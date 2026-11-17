@@ -1019,7 +1019,7 @@ def steps_entry(line, handles):
 
 def steps_section(reply, handles, complete):
     lines = (reply or "").split("\n")
-    headings = [i for i, line in enumerate(lines) if STEPS_HEADING.match(line.strip("#* \t"))]
+    headings = [i for i, line in enumerate(lines) if not line[:1].isspace() and STEPS_HEADING.match(line.strip("#* \t"))]
     starts = [0, *(i + 1 for i in headings)]
     ends = [*headings, len(lines)]
     segments = [[e for e in (steps_entry(line, handles) for line in lines[a:b]) if e] for a, b in zip(starts, ends)]

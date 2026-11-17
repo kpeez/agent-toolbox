@@ -53,7 +53,10 @@ counting a missing playbook read or a missing principle read as followed,
 requiring the names of a skipped step, failing to read a backticked route line
 in a real Claude text block, and flagging the router's step skills as
 unexpected. Each was seen red under one mutation of skill_eval.py: the backtick
-strip, the done-only step filter, and the allowed credit.
+strip, the done-only step filter, and the allowed credit. Three more rules
+were seen red the same way: a nested indented `Steps` line must not split the
+block, the last of two equal blocks wins, and a conditional transitive name
+stays optional.
 """
 from __future__ import annotations
 
@@ -972,8 +975,9 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual((counts["route_line_match"], counts["route_line_wrong"]), (1, 1))
         self.assertEqual(counts["route_steps_complete"], 2)
 
-    def test_a_done_step_that_runs_another_playbook_requires_its_unconditional_names(self):
-        case = self.case_named("lab-mode-run-experiment")
+    RUN_EXPERIMENT_LINE = "Playbook: run-experiment. Reason: the user wants a run."
+
+    def run_experiment_loads(self):
         facets = [f for f in json.loads((HERE / "facets.json").read_text())["facets"]
                   if f["plugin"] == "lab" and f["subject"] == "run-experiment"]
         handles = next(f for f in facets if f["kind"] == "route")["handles"]
@@ -989,18 +993,51 @@ class OfflineCLIContract(unittest.TestCase):
             else:
                 load = ("resource", f"lab:{path}")
             loads[f.get("name") or "playbook"] = load
+        return self.case_named("lab-mode-run-experiment"), handles, loads
+
+    def reads_without(self, loads, name):
+        return list(dict.fromkeys(load for key, load in loads.items() if key != name))
+
+    def test_a_done_step_that_runs_another_playbook_requires_its_unconditional_names(self):
+        case, handles, loads = self.run_experiment_loads()
         reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
-        line = "Playbook: run-experiment. Reason: the user wants a run."
+        line = self.RUN_EXPERIMENT_LINE
         full = self.route_run("route-transitive-all", case, list(dict.fromkeys(loads.values())), line, reply)
         self.assertEqual(full["steps_section"]["status"], "complete")
         self.assertTrue(full["followed"])
         self.assertEqual(full["step_loads"]["required"]["grade-the-evidence"], "loaded")
         for name in ("grade-the-evidence", "making-plots"):
-            reads = [load for key, load in loads.items() if key != name]
-            route = self.route_run(f"route-transitive-no-{name}", case, list(dict.fromkeys(reads)), line, reply)
+            route = self.route_run(f"route-transitive-no-{name}", case, self.reads_without(loads, name), line, reply)
             self.assertEqual(route["step_loads"]["required"][name], "miss", name)
             self.assertNotIn(name, route["step_loads"]["transitive"])
             self.assertFalse(route["followed"], name)
+
+    def test_a_conditional_transitive_name_stays_optional(self):
+        case, handles, loads = self.run_experiment_loads()
+        reply = "Steps:\n" + "\n".join(f"{h}: skip: the pilot already ran" if h.startswith("4-") else f"{h}: done"
+                                       for h in handles)
+        name = "simulate-before-you-trust"
+        route = self.route_run("route-transitive-conditional", case, self.reads_without(loads, name),
+                               self.RUN_EXPERIMENT_LINE, reply)
+        self.assertEqual(route["step_loads"]["transitive"][name], "miss")
+        self.assertNotIn(name, route["step_loads"]["required"])
+        self.assertTrue(route["followed"])
+
+    def test_an_indented_nested_breakdown_keeps_the_block_and_does_not_waive_its_names(self):
+        case, handles, loads = self.run_experiment_loads()
+        nested = ("  Steps 3 to 10 of analyze-results:\n"
+                  "  3-check-the-run-ran: done\n"
+                  "  9-make-figures: skip: no figure is needed")
+        lines = [f"{h}: done" + (f"\n{nested}" if h.startswith("7-") else "") for h in handles]
+        reply = "Steps:\n" + "\n".join(lines)
+        line = self.RUN_EXPERIMENT_LINE
+        route = self.route_run("route-nested-all", case, list(dict.fromkeys(loads.values())), line, reply)
+        self.assertEqual(route["steps_section"]["status"], "complete")
+        self.assertTrue(route["followed"])
+        skipped = self.route_run("route-nested-skip", case, self.reads_without(loads, "making-plots"), line, reply)
+        self.assertEqual(skipped["steps_section"]["status"], "complete")
+        self.assertEqual(skipped["step_loads"]["required"]["making-plots"], "miss")
+        self.assertFalse(skipped["followed"])
 
     def test_steps_section_accepts_labelled_headings_and_noted_done_entries(self):
         note = " (inline: I read skill_eval.py in full)"
@@ -1177,6 +1214,18 @@ class OfflineCLIContract(unittest.TestCase):
                 route, _ = self.route_trace(f"route-blocks-{name}", **kwargs)
                 self.assertEqual(route["steps_section"]["status"], "complete")
                 self.assertTrue(route["followed"])
+
+    def test_equal_blocks_resolve_to_the_last_one(self):
+        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+                       if f["id"] == "route/lab/analyze-results")["handles"]
+        flawed = "Steps (draft):\n" + "\n".join(f"{h}: done" if h != handles[-1] else f"{h}: pending" for h in handles)
+        good = "Steps (final):\n" + "\n".join(f"{h}: done" for h in handles)
+        case, line = self.case_named(self.ROUTE_CASE), "Playbook: analyze-results. Reason: it fits."
+        flawed_last = self.route_run("route-tie-flawed-last", case, [], line, good + "\n\n" + flawed)["steps_section"]
+        self.assertEqual(flawed_last["status"], "incomplete")
+        self.assertEqual(flawed_last["unclear_handles"], [handles[-1]])
+        good_last = self.route_run("route-tie-good-last", case, [], line, flawed + "\n\n" + good)["steps_section"]
+        self.assertEqual(good_last["status"], "complete")
 
     def test_steps_section_refuses_a_reordered_or_repeated_entry(self):
         handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
