@@ -38,7 +38,7 @@ appear.
 The hook-on-arm tests protect selective SessionStart retention, arm separation
 in frozen configurations and aggregate groups, synthetic hook.delivered checks,
 and Claude hook_success delivery proofs and hook-off isolation. Credible
-regressions are leaving non-SessionStart hooks or figure-reminder.py in a
+regressions are leaving non-SessionStart hooks in a
 hook-on snapshot, pooling hook-on and hook-off runs in aggregate, accepting a
 tampered, undeclared, duplicate, or post-user hook delivery without an issue,
 recording a post-user hook row as a delivery, missing a declared plugin with no
@@ -648,15 +648,12 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(on_manifest["hook_arm"], "hook-on")
         self.assertEqual(set(on_manifest["hooks"]), {"lab", "swe", "uni"})
         self.assertTrue(any("rules/AGENTS.md" in d for d in on_manifest["known_deltas"]))
-        self.assertFalse((on_run / "inputs" / "plugins" / "lab" / "hooks" / "figure-reminder.py").exists())
         for plugin in ("swe", "lab", "uni"):
             hooks_dir = on_run / "inputs" / "plugins" / plugin / "hooks"
             self.assertEqual(sorted(p.name for p in hooks_dir.iterdir()), ["hooks.json", "session-start.md"])
             hooks_cfg = json.loads((hooks_dir / "hooks.json").read_text())["hooks"]
             self.assertEqual(list(hooks_cfg), ["SessionStart"])
         self.assertEqual(on_manifest["removed_bindings"], [
-            "plugins/lab/hooks/figure-reminder.py",
-            "plugins/lab/hooks/hooks.json:PostToolUse",
             "plugins/swe/hooks/hooks.json:PostCompact",
             "plugins/swe/hooks/hooks.json:PreToolUse",
         ])

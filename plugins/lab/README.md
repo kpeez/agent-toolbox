@@ -47,20 +47,17 @@ To update:
 - agy: run the `agy plugin install` command again. It replaces the old copy.
 - npx skills: `npx skills update`.
 
-## Go deeper, then route each research task
+## Route each research task
 
-The Claude Code plugin adds a SessionStart hook with two rules:
+The Claude Code plugin adds a SessionStart hook with one reminder: for
+research work, such as reading or judging sources, designing or analyzing a
+model experiment, or improving a project's own research skills,
+[`lab-mode`](./skills/lab-mode/SKILL.md) routes the task to a playbook. The
+hook does not load the skill. The agent loads it when a task fits. lab-mode
+then runs [`go-deeper`](./skills/go-deeper/SKILL.md) and tracks each step. A
+plain figure request goes straight to `making-plots`.
 
-- Run [`go-deeper`](./skills/go-deeper/SKILL.md) on each new task: expert
-  moves, raw sources, real methods, and an outside check, then the rewritten
-  task. swe, lab, and uni each carry an identical copy, so each plugin works
-  alone.
-- Load [`lab-mode`](./skills/lab-mode/SKILL.md) on each research task: reading
-  or judging sources, an experiment or eval, or a project's own research
-  skills. It routes the task to a playbook and tracks each step. A plain
-  figure request goes straight to `making-plots`.
-
-agy runs no hooks, but it loads the same rules from
+agy runs no hooks, but it loads the same reminder from
 [`rules/AGENTS.md`](./rules/AGENTS.md). Codex plugins and the skills-only
 install have no hooks. Copy the line in
 [`hooks/session-start.md`](./hooks/session-start.md) into `AGENTS.md` or
@@ -121,14 +118,6 @@ Use a principle's name to steer a run in one phrase:
 simulate before you trust. run the GLM on null data 200 times and show me the false-positive rate.
 ```
 
-## Figure reminder
-
-The Claude Code plugin also adds a PostToolUse hook,
-[`hooks/figure-reminder.py`](./hooks/figure-reminder.py). When a shell command,
-an edit, or a write touches plotting code, figures, or a PNG, it tells the
-agent to load `making-plots`. It fires at most once per session, and never after
-the skill has loaded. It needs `python3` on `PATH`.
-
 ## Skills
 
 Each command shows its arguments: `<x>` is required and `[x]` is optional.
@@ -137,8 +126,8 @@ in place of `/`.
 
 | Command | Use for |
 | --- | --- |
-| [`/lab:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. Runs on its own at the start of a new task |
-| [`/lab:lab-mode <task>`](./skills/lab-mode/SKILL.md) | Route a research task to its playbook and track each step. The session-start hook loads it for research tasks |
+| [`/lab:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. lab-mode runs it at the start of a research task |
+| [`/lab:lab-mode <task>`](./skills/lab-mode/SKILL.md) | Route a research task to its playbook and track each step. The session-start hook reminds the agent of it |
 | [`/lab:research-skill [procedure, or context]`](./skills/research-skill/SKILL.md) | Create or maintain a project's own research skills: its `research-context` and one skill per recurring procedure |
 | [`/lab:research <question>`](./skills/research/SKILL.md) | One cited memo for a bounded question or a source audit |
 | [`/lab:deep-research <topic>`](./skills/deep-research/SKILL.md) | A multi-lane research program with briefs, lane evidence, and an audited report |

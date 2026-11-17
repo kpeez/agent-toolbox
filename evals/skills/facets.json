@@ -848,26 +848,6 @@
         "positive": []
       },
       "evidence": "hook-delivery",
-      "id": "hook-load/lab/go-deeper",
-      "kind": "hook-load",
-      "path": null,
-      "plugin": "lab",
-      "required_by": {
-        "locator": "lab:go-deeper",
-        "path": "plugins/lab/hooks/session-start.md"
-      },
-      "requirement": "conditional",
-      "scope": "root",
-      "scorer": "recorded",
-      "source_text": "lab: Before you act on a new task of any kind, run `lab:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it.",
-      "subject": "go-deeper"
-    },
-    {
-      "cases": {
-        "negative": [],
-        "positive": []
-      },
-      "evidence": "hook-delivery",
       "id": "hook-load/lab/lab-mode",
       "kind": "hook-load",
       "path": null,
@@ -879,7 +859,7 @@
       "requirement": "conditional",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "Before you act on a new research task, load the `lab:lab-mode` skill and follow the playbook or skill it routes to.",
+      "source_text": "lab: When a task is research work, such as reading or judging papers and sources, designing or analyzing a model experiment, or improving a research project's own skills, the `lab:lab-mode` skill routes it to a playbook.",
       "subject": "lab-mode"
     },
     {
@@ -11207,7 +11187,7 @@
       "scored": 8
     },
     "hook-load": {
-      "recorded": 5
+      "recorded": 4
     },
     "playbook-read": {
       "recorded": 29
