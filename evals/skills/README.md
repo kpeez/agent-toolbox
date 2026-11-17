@@ -23,16 +23,18 @@ The `swe-mode-*` family adds ten cases for `swe:swe-mode` in the same mix. Its s
 are router-load cases that also set `expected_route`, so each scores the route line, the read of
 the playbook, and the Steps section. Its three negatives are a closing remark, a quick fact that
 needs no repository, and a task outside software. A load of the router there is a false
-activation.
+activation. The closing remark and the quick fact also forbid `swe:go-deeper`, because its skip rule
+excludes chat and quick facts. The software-free task allows it, because the session-start rule
+runs `go-deeper` on a task of any kind.
 
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
 the same fixture. Six of them set `expected_route`, the route the agent should
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
 
-The two route-choice families, `swe-route-choice` (25 cases) and `lab-route-choice` (6), cover
+The two route-choice families, `swe-route-choice` (23 cases) and `lab-route-choice` (6), cover
 each playbook and single-skill route that no other case covers, with one case per route. They have
-no fixed mix, because a negative cannot set `expected_route` and so cannot score a route. Every
+no fixed mix: `validate` rejects a negative case, and a case with no `expected_route`, in an open family, because a route-choice case scores one route. A negative in a mix family may set `expected_route`. Every
 case instead resembles a neighbouring route and belongs to its own: the `rationale` names the
 near miss. Cases on a route with modes set `expected_mode`. A route-choice case holds one correct
 route that the router's own text supports. Where two router lines overlap, such as the PR-status
@@ -144,8 +146,8 @@ catalog scope, context delivery, and harness deltas before materializing.
 
 A case may set four optional fields. `expected_route` is the id of a `route`
 facet in `facets.json`, such as `route/lab/analyze-results`. It must belong to the plugin of the
-case's target. A negative case may set it, unless the case forbids the plugin's router, because
-a route needs the router. `family` names the case's family (see above). `expected_mode` names the mode of a
+case's target. A negative case in a mix family may set it, unless the case forbids the plugin's router, because
+a route needs the router. An open family holds no negative case. `family` names the case's family (see above). `expected_mode` names the mode of a
 single-skill route whose skill has modes, such as `publish` for `route/swe/ship-pr`. A route
 with modes needs it, and any other route rejects it. `facets` lists facet ids whose evidence is `skill-call` or
 `full-read`. `score.json` then holds `route` (null without `expected_route`)
