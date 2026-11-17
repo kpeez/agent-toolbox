@@ -47,6 +47,14 @@ CLAUDE_ATTACHMENT_TYPES = {
     "deferred_tools_delta", "deferred_tools_record", "environment", "instructions",
     "mcp_instructions_delta", "model", "prompt_snapshot", "remote_session_change",
     "session_context", "skill_listing", "total_tokens_reminder"}
+ROUTERS = {"swe": "swe-mode", "lab": "lab-mode"}
+LINE_KIND = {"Playbook": "playbook", "Route": "skill"}
+ROUTE_LINE = re.compile(r"^\s*(?:[-*+]\s+)?\**(Playbook|Route)(?::\**|\*\*:)\s*`?(?:[a-z]+:)?([a-z0-9-]+)`?", re.M)
+STEPS_HEADING = re.compile(r"Steps\b")
+ENTRY_PREFIX = r"\s*(?:(?:[-*+]|\d+\.)\s+)?[`*]*"
+STATE_WORD = re.compile(r"[\w-]+")
+STATE_SEPARATORS = ":\u2014-*` \t"
+REASON_SEPARATORS = ":(-\u2014 \t"
 CLAUDE_BASE_PREFIX = "Base directory for this skill: "
 # A delivered body that names another skill, or comes from outside the frozen catalog, breaks isolation.
 CLAUDE_IDENTITY_LOSS = {"base directory outside the declared snapshot",
@@ -100,8 +108,13 @@ def excluded(case, resolve, skills):
     return None
 
 
+def load_facets():
+    return {f["id"]: f for f in read_json(HERE / "facets.json")["facets"]}
+
+
 def corpus(path=HERE / "cases.json"):
     data = read_json(path)
+    facets = load_facets()
     if data.get("schema_version") != 1:
         raise ValueError("unsupported corpus schema")
     cases = data["cases"]
@@ -135,6 +148,15 @@ def corpus(path=HERE / "cases.json"):
         for message in case["messages"]:
             if message["role"] not in {"user", "assistant"} or not message["content"].strip():
                 raise ValueError("invalid conversation message")
+        route = case.get("expected_route")
+        if route is not None and (case["category"] == "negative" or facets.get(route, {}).get("kind") != "route"
+                                  or facets[route]["plugin"] != case["target"].split(":")[0]):
+            raise ValueError("expected_route must name a route facet of the target's plugin and no negative case may set it")
+        listed = case.get("facets", [])
+        if not isinstance(listed, list) or len(set(listed)) != len(listed) or any(
+                facets.get(f, {}).get("evidence") not in {"skill-call", "full-read"}
+                or facets[f]["kind"] == "router-contract" or load_target(facets[f]) is None for f in listed):
+            raise ValueError("facets must list unique load facets with skill-call or full-read evidence")
         if not case["relevant_action"].strip() or not case["rationale"].strip():
             raise ValueError("missing oracle/action boundary")
         fixture = contained(HERE / "fixtures", case["fixture"])
@@ -295,6 +317,7 @@ def materialize(args):
     save_json(inputs / "messages.json", case["messages"])
     manifest_data = {
         "schema_version": 1, "case_id": case["id"], "corpus_sha256": digest(Path(args.corpus).read_bytes()),
+        "facets_sha256": digest((HERE / "facets.json").read_bytes()),
         "hook_arm": hook_arm, "runtime": runtime, "plugin_versions": versions, "skills": skills,
         "resources": resources, "input_files": inventory(inputs), "fixture_files": inventory(workspace),
         "fixture_catalog_files": inventory(HERE / "fixtures"), "source_catalog_files": source_catalog_files,
@@ -438,7 +461,7 @@ def claude_start_covered(chain, hook_arm):
 
 def claude_session(rows, label, sid, agent, issues, hook_arm="hook-off"):
     """Index one transcript file: tool calls, their results, linked skill bodies, and lineage."""
-    uses, results, bodies, starts = {}, {}, {}, {}
+    uses, results, bodies, starts, said = {}, {}, {}, {}, []
     seen, children, message_of = set(), Counter(), {}
     chain, hook_rows = [], []
     saw_non_hook = False
@@ -506,6 +529,8 @@ def claude_session(rows, label, sid, agent, issues, hook_arm="hook-off"):
             # One API message spans several lines. Every tool call in it was decided at its first line.
             starts.setdefault(message_id, line)
             for block in content:
+                if isinstance(block, dict) and block.get("type") == "text" and isinstance(block.get("text"), str):
+                    said.append({"seq": line, "text": block["text"], "session_id": sid, "evidence": [ref]})
                 if isinstance(block, dict) and block.get("type") == "tool_use":
                     if block.get("id") in uses:
                         issues.append(f"{where}: duplicate tool_use id")
@@ -533,7 +558,8 @@ def claude_session(rows, label, sid, agent, issues, hook_arm="hook-off"):
                     bodies[source] = {"line": line, "ref": ref, "text": texts[0]}
         elif typ == "user" and row.get("isMeta") and isinstance(content, str) and content.startswith(CLAUDE_BASE_PREFIX):
             issues.append(f"{where}: skill body in an unaudited message shape")
-    return {"uses": uses, "results": results, "bodies": bodies, "chain": chain, "hook_rows": hook_rows}
+    return {"uses": uses, "results": results, "bodies": bodies, "chain": chain, "hook_rows": hook_rows,
+            "texts": said}
 
 
 def claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues):
@@ -632,6 +658,13 @@ def claude_proof(load, use, result, body, frozen, manifest):
     return load
 
 
+def final_reply(texts, call_seqs):
+    """The root texts written after the last root tool call, or None."""
+    last_call = max(call_seqs, default=0)
+    tail = [t["text"] for t in texts if t["seq"] > last_call]
+    return "\n\n".join(tail) if tail else None
+
+
 def normalize_claude(run, manifest, capture_info, base, relevant_kind):
     """Claude Code transcript adapter; see EVIDENCE.md "Claude transcript adapter"."""
     base.update(provider="claude-code", adapter_version="claude-transcript-v1")
@@ -667,6 +700,8 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
         return base
     sid = base["session_id"] = session_ids.pop()
     root = claude_session(rows, capture_info["path"], sid, None, issues, hook_arm)
+    base["texts"] = root["texts"]
+    base["final_reply"] = final_reply(root["texts"], [use["line"] for use in root["uses"].values()])
     base["coverage"]["start"] = claude_start_covered(root["chain"], hook_arm)
     if hook_arm == "hook-on":
         seen_success = set()
@@ -798,7 +833,8 @@ def normalize(run, relevant_kind=None):
             "coverage": {key: False for key in ("start", "end", "skill_delivery", "relevant_actions")},
             "raw_trace": {"path": raw.name, "sha256": capture_info["sha256"]},
             "loads": [], "child_loads": [], "resource_reads": [], "child_resource_reads": [],
-            "unproved_reads": [], "hook_deliveries": [], "actions": [], "issues": []}
+            "unproved_reads": [], "hook_deliveries": [], "actions": [], "issues": [],
+            "texts": [], "final_reply": None}
     if capture_info["format"] == "claude-transcript" and capture_info["evidence_kind"] == "native":
         return normalize_claude(run, manifest, capture_info, base, relevant_kind)
     if capture_info["format"] != "synthetic-contract-v1" or capture_info["evidence_kind"] != "synthetic":
@@ -829,6 +865,7 @@ def normalize(run, relevant_kind=None):
     last_root_line = max(line for line, event in events if event.get("session_id") == sid)
     base["coverage"]["start"] = start_line == 1
     requests = {}
+    root_calls = []
     ended = False
     for line, event in events:
         event_sid = event.get("session_id")
@@ -867,6 +904,8 @@ def normalize(run, relevant_kind=None):
                 base["issues"].append("invalid/duplicate request ID")
             else:
                 requests[req_key] = (kind, event, ref)
+                if is_root:
+                    root_calls.append(line)
         elif typ in {"skill_read.result", "resource_read.result"}:
             kind = "skill" if typ == "skill_read.result" else "resource"
             req_key = (event_sid, event.get("request_id"))
@@ -886,6 +925,7 @@ def normalize(run, relevant_kind=None):
         elif typ == "action.started":
             if not is_root:
                 continue
+            root_calls.append(line)
             if not isinstance(event.get("kind"), str):
                 base["issues"].append("action missing semantic boundary")
             else:
@@ -898,8 +938,12 @@ def normalize(run, relevant_kind=None):
             base["coverage"]["end"] = line == last_root_line
             for field in ("skill_delivery", "relevant_actions"):
                 base["coverage"][field] = event.get("coverage", {}).get(field) is True
-        elif typ not in {"message", "skill.mention"}:
+        elif typ == "message":
+            if is_root and event.get("role") == "assistant" and isinstance(event.get("text"), str):
+                base["texts"].append({"seq": line, "text": event["text"], "session_id": sid, "evidence": [ref]})
+        elif typ != "skill.mention":
             base["issues"].append(f"unknown record: {typ}")
+    base["final_reply"] = final_reply(base["texts"], root_calls)
     for (req_sid, _), (kind, req, ref) in requests.items():
         detail = None if kind == "skill" else "no resource_read.result"
         base[SYNTHETIC_TARGETS[(kind, req_sid == sid)]].append(
@@ -911,11 +955,152 @@ def normalize(run, relevant_kind=None):
     return base
 
 
+def load_target(facet):
+    """The evidence list and key that prove a load facet, or None when no scorer can see it."""
+    plugin, path = facet["plugin"], facet.get("path")
+    if facet.get("name_class") == "project-skill":
+        return None
+    if path and path.endswith("/SKILL.md"):
+        return "skill", f"{plugin}:{posixpath.basename(posixpath.dirname(path))}"
+    if facet["evidence"] == "skill-call":
+        return "skill", f"{plugin}:{facet.get('name') or facet['subject']}"
+    if facet["evidence"] == "full-read" and path:
+        return "resource", f"{plugin}:{path}"
+    return None
+
+
+def load_status(evidence, facet, complete):
+    target = load_target(facet)
+    if target is None:
+        return None
+    kind, key = target
+    field, name = ("loads", "skill") if kind == "skill" else ("resource_reads", "resource")
+    records = [r for r in evidence[field] if r[name] == key]
+    if facet["scope"] == "delegate-allowed":
+        records += [r for r in evidence["child_" + field] if r[name] == key]
+    if any(r["status"] == "success" for r in records):
+        return "loaded"
+    ambiguous = any(r["status"] in {"partial", "unavailable"} for r in records)
+    return "miss" if complete and not ambiguous else "unavailable"
+
+
+def route_line(texts, route, complete):
+    for text in texts:
+        found = ROUTE_LINE.search(text["text"])
+        if found:
+            same = LINE_KIND[found.group(1)] == route["route_type"] and found.group(2) == route["subject"]
+            return {"status": "match" if same else "wrong", "observed": found.group(2)}
+    return {"status": "missing" if complete else "unavailable", "observed": None}
+
+
+def steps_entry(line, handles):
+    for handle in sorted(handles, key=len, reverse=True):
+        found = re.match(ENTRY_PREFIX + re.escape(handle) + r"(?![\w-])", line)
+        if not found:
+            continue
+        rest = line[found.end():].lstrip(STATE_SEPARATORS)
+        word = STATE_WORD.match(rest)
+        state = word.group() if word else ""
+        if state == "done":
+            return handle, "done", None
+        if state == "skip":
+            raw = rest[word.end():]
+            tail = raw.lstrip(REASON_SEPARATORS)
+            reason = tail.rstrip()
+            if "(" in raw[:len(raw) - len(tail)]:
+                reason = reason.removesuffix(")").rstrip()
+            return (handle, "skip", reason) if reason else (handle, "unclear", None)
+        return handle, "unclear", None
+    return None
+
+
+def steps_section(reply, handles, complete):
+    lines = (reply or "").split("\n")
+    headings = [i for i, line in enumerate(lines) if STEPS_HEADING.match(line.strip("#* \t"))]
+    starts = [0, *(i + 1 for i in headings)]
+    ends = [*headings, len(lines)]
+    segments = [[e for e in (steps_entry(line, handles) for line in lines[a:b]) if e] for a, b in zip(starts, ends)]
+    entries = max(reversed(segments), key=len)
+    result = {"status": "missing" if complete else "unavailable", "heading": bool(headings), "done": [],
+              "skipped": {}, "unclear_handles": [], "missing_handles": [], "out_of_order": False}
+    if not entries:
+        return result
+    seen = [handle for handle, _, _ in entries]
+    first_seen = list(dict.fromkeys(seen))
+    result.update(
+        done=[h for h, state, _ in entries if state == "done"],
+        skipped={h: reason for h, state, reason in entries if state == "skip"},
+        unclear_handles=[h for h, state, _ in entries if state == "unclear"],
+        missing_handles=[h for h in handles if h not in seen],
+        out_of_order=first_seen != [h for h in handles if h in first_seen])
+    whole = (not result["missing_handles"] and not result["unclear_handles"] and not result["out_of_order"]
+             and len(seen) == len(handles))
+    result["status"] = "complete" if whole else "incomplete"
+    return result
+
+
+def route_facets(facets, route):
+    return [f for f in facets.values() if f["plugin"] == route["plugin"] and f["subject"] == route["subject"]]
+
+
+def route_allowed(facets, route):
+    allowed = {f"{route['plugin']}:{ROUTERS[route['plugin']]}"}
+    if route["route_type"] == "skill":
+        allowed.add(f"{route['plugin']}:{route['subject']}")
+    for f in route_facets(facets, route):
+        target = load_target(f) if f["kind"] in {"step-load", "reply-load"} else None
+        if target and target[0] == "skill":
+            allowed.add(target[1])
+    return allowed
+
+
+def route_score(case, facets, evidence, complete):
+    route = facets[case["expected_route"]]
+    plugin, slug = route["plugin"], route["subject"]
+    own = route_facets(facets, route)
+    playbook = route["route_type"] == "playbook"
+    read = next(f for f in own if f["kind"] == ("playbook-read" if playbook else "route-load"))
+    status = load_status(evidence, read, complete)
+    section = steps_section(evidence["final_reply"], route["handles"], complete) if playbook else {
+        "status": "not_scorable", "heading": False, "done": [], "skipped": {}, "unclear_handles": [],
+        "missing_handles": [], "out_of_order": False}
+    required, one_of, transitive = {}, {}, {}
+    for f in own:
+        if f["kind"] != "step-load" or f["handle"] not in section["done"]:
+            continue
+        found = load_status(evidence, f, complete)
+        if found is None:
+            continue
+        if f["requirement"] == "one-of":
+            group = one_of.setdefault(f["handle"], [])
+            group.append(found)
+        elif f["requirement"] == "transitive" and f["conditional"]:
+            transitive.setdefault(f["name"], found)
+        else:
+            required.setdefault(f["name"], found)
+    one_of = {h: "loaded" if "loaded" in found else "unavailable" if "unavailable" in found else "miss"
+              for h, found in one_of.items()}
+    transitive = {n: v for n, v in transitive.items() if n not in required}
+    line = route_line(evidence["texts"], route, complete)
+    checks = [line["status"], section["status"], status, *required.values(), *one_of.values()]
+    failed = {"wrong", "missing", "miss", "incomplete"} & set(checks)
+    unknown = {"unavailable"} & set(checks)
+    return {"expected": case["expected_route"], "type": route["route_type"], "line": line,
+            "playbook_read": {"loaded": "read"}.get(status, status) if playbook else None,
+            "route_load": None if playbook else status,
+            "steps_section": section,
+            "step_loads": {"required": required, "one_of": one_of, "transitive": transitive},
+            "followed": False if failed else None if unknown else True}
+
+
 def score(args):
     run = Path(args.run).absolute()
     manifest = verify_inputs(run)
     if digest(Path(args.corpus).read_bytes()) != manifest["corpus_sha256"]:
         raise ValueError("answer-key corpus changed since materialization")
+    facets_sha256 = manifest.get("facets_sha256")
+    if facets_sha256 is not None and digest((HERE / "facets.json").read_bytes()) != facets_sha256:
+        raise ValueError("facet map changed since materialization")
     case = next(c for c in corpus(args.corpus) if c["id"] == manifest["case_id"])
     resolve = resolver(manifest["skills"])
     reason = excluded(case, resolve, manifest["skills"])
@@ -927,11 +1112,14 @@ def score(args):
     configuration = {field: manifest[field] for field in ("runtime", "plugin_versions", "source_catalog_files",
                                                          "removed_bindings", "corpus_sha256", "fixture_catalog_files",
                                                          "harness_sha256")}
-    configuration.update(hook_arm=hook_arm, adapter_version=evidence["adapter_version"], scorer_sha256=scorer_sha256)
+    configuration.update(hook_arm=hook_arm, facets_sha256=facets_sha256, adapter_version=evidence["adapter_version"], scorer_sha256=scorer_sha256)
     configuration_sha256 = digest(json.dumps(configuration, sort_keys=True).encode())
     save_json(run / "evidence.json", evidence)
     observed = {load["skill"] for load in evidence["loads"] if load["status"] == "success"}
     allowed = set(map(resolve, case["expected_skills"] + case["acceptable_auxiliaries"]))
+    facets = load_facets()
+    route_allowed_skills = route_allowed(facets, facets[case["expected_route"]]) if case.get("expected_route") else set()
+    allowed |= route_allowed_skills
     forbidden = set(map(resolve, case["forbidden_skills"]))
     complete = evidence["evidence_coverage"] == "complete" and evidence["session_state"] == "completed"
     ambiguous_forbidden = any(l["skill"] in forbidden and l["status"] in {"partial", "unavailable"}
@@ -945,6 +1133,7 @@ def score(args):
         activation[skill] = "loaded" if loads else "miss" if complete and not ambiguous else "unavailable"
         action_coverage = evidence["coverage"]["start"] and evidence["coverage"]["relevant_actions"] and not evidence["issues"]
         timing[skill] = ("before" if min(loads) < min(actions) else "late") if loads and actions and action_coverage else "unavailable"
+    route = route_score(case, facets, evidence, complete) if case.get("expected_route") else None
     result = {"schema_version": 1, "case_id": case["id"], "target": case["target"], "category": case["category"],
               "hook_arm": hook_arm, "configuration_sha256": configuration_sha256, "scorer_sha256": scorer_sha256,
               "runtime": manifest["runtime"], "adapter_version": evidence["adapter_version"],
@@ -962,6 +1151,8 @@ def score(args):
               "unproved_read_count": len(evidence["unproved_reads"]),
               "load_status_counts": dict(Counter(l["status"] for l in evidence["loads"])),
               "raw_trace": evidence["raw_trace"], "manifest_sha256": digest((run / "manifest.json").read_bytes()),
+              "route": route, "route_allowed_skills": sorted(route_allowed_skills),
+              "facets": {f: load_status(evidence, facets[f], complete) for f in case.get("facets", [])},
               "measured_efficacy": False}
     save_json(run / "score.json", result)
     return result
@@ -974,6 +1165,7 @@ def aggregate(args):
     groups = {}
     confusion = defaultdict(Counter)
     strata_rows = defaultdict(list)
+    others = defaultdict(lambda: defaultdict(Counter))
     for row in rows:
         key = (row["configuration_sha256"], row.get("hook_arm", "hook-off"), row["evidence_kind"],
                row["split"], row["target"], "explicit_control" if row["category"] == "explicit" else "implicit")
@@ -984,6 +1176,16 @@ def aggregate(args):
         complete = row["evidence_coverage"] == "complete" and row["session_state"] == "completed"
         group["complete_sessions"] += int(complete)
         strata_rows[key].append((row, complete))
+        if row.get("route"):
+            route = row["route"]
+            group[f"route_followed_{str(route['followed']).lower() if route['followed'] is not None else 'null'}"] += 1
+            group["route_line_" + route["line"]["status"]] += 1
+            group["route_steps_" + route["steps_section"]["status"]] += 1
+            group["route_read_" + (route["playbook_read"] or route["route_load"])] += 1
+        if complete:
+            for skill in row["expected_skills"]:
+                if skill != row["target"]:
+                    others[key][skill][row["activation"].get(skill, "unavailable")] += 1
         if row["category"] == "negative":
             if row["false_activation"] is True:
                 group["observed_forbidden_runs"] += 1
@@ -1002,7 +1204,11 @@ def aggregate(args):
         negatives = counts["negative_scorable"]
         report.append({"configuration_sha256": key[0], "hook_arm": key[1], "runtime": strata_rows[key][0][0]["runtime"],
                        "evidence_kind": key[2], "split": key[3], "target": key[4], "experiment": key[5],
-                       "counts": dict(counts), "recall": counts["positive_loaded"] / denominator if denominator else None,
+                       "counts": dict(counts),
+                       "other_expected": [{"skill": skill, **{state: found[state] for state in
+                                                              ("loaded", "miss", "unavailable")}}
+                                          for skill, found in sorted(others[key].items())],
+                       "recall": counts["positive_loaded"] / denominator if denominator else None,
                        "recall_denominator": denominator,
                        "false_activation_rate": counts["false_activations"] / negatives if negatives else None,
                        "false_activation_denominator": negatives})

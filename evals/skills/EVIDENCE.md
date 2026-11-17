@@ -14,6 +14,12 @@ transcript adapter, load records add `agent_id`, `detail`, and `transform`.
 `score.json`. `aggregate` adds `hook_arm` to its group key and to every
 `groups` and `confusion` row, so the two arms never pool.
 
+`manifest.json` records `corpus_sha256` and `facets_sha256`, the digests of
+`cases.json` and `facets.json` at materialization. `score` refuses a run when
+the answer-key corpus or the facet map changed since then. A manifest without
+`facets_sha256` still scores. Both digests enter `configuration_sha256`, so runs
+scored under different maps never pool in `aggregate`.
+
 `raw_trace` contains a relative path and SHA-256 digest. Each evidence reference
 contains a stable `event_id` and a one-based raw JSONL `line`; a Claude reference
 also names its `file`, because one session spans several files. Array order is
@@ -81,7 +87,8 @@ Every event has a unique string `event_id`, `session_id`, and `type`.
 | `hook.delivered` | `plugin`, `body` (in `hook-on`, `body` SHA-256 must match the frozen `session-start.md`; in `hook-off`, any `hook.delivered` is an issue) |
 | `action.started` | `kind`, matching case boundary |
 | `session.completed` | `coverage: {skill_delivery: true, relevant_actions: true}` |
-| `message`, `skill.mention` | text ignored by activation scoring |
+| `message` | `role`, `text`; a root assistant message is recorded in `texts` (see "Assistant text and the final reply") |
+| `skill.mention` | text ignored by scoring |
 
 Sequence numbers are one-based lines. A successful read requires integer zero
 exit status, matching skill or resource ID/path, `body_complete: true`, and an
@@ -231,6 +238,29 @@ makes the session partial:
 are not stated there. Only the typed form was seen to append arguments to the
 body, so a `Skill` body that arguments changed is `partial`. No probe exercised
 compaction or resume, so only the chain checks above detect them.
+
+## Assistant text and the final reply
+
+`evidence.json` carries two fields beyond the load and read lists.
+
+- `texts`: the root assistant text in source order. Each record is
+  `{"seq", "text", "session_id", "evidence"}`. Child-session text is not
+  recorded.
+- `final_reply`: the texts after the last root tool call, joined with a blank
+  line, or `null` when none follow it.
+
+A root tool call is a Claude `tool_use` line. In the synthetic envelope it is a
+`skill_read.request`, a `resource_read.request`, or an `action.started` of the
+root session. A synthetic text is a root `message` event with `role:
+"assistant"`. A Claude text is each `{"type": "text"}` block of a root
+(non-sidechain) `assistant` row, and its `seq` is the line. The real shape:
+
+```json
+{"type": "assistant", "message": {"id": "msg_01", "content": [
+  {"type": "text", "text": "Playbook: `fix-bug`. Reason: a reported defect."}]}}
+```
+
+Real transcripts put backticks around the slug. The route scorer strips them.
 
 ## Claude transcript audit (2026-10-13)
 

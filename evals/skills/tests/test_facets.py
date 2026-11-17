@@ -69,6 +69,14 @@ class FacetMapContract(unittest.TestCase):
         for fragment in (playbook, "15-extra-step", "no-such-skill"):
             self.assertIn(fragment, result.stderr)
 
+    def test_write_rejects_a_name_that_two_classes_own(self):
+        playbook = "plugins/swe/skills/swe-mode/playbooks/build-feature.md"
+        self.append_step(playbook, "15-extra-step: Do the extra step. (plan-multi-phase)")
+        result = self.cli("write")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("plan-multi-phase", result.stderr)
+        self.assertIn("more than one class", result.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()

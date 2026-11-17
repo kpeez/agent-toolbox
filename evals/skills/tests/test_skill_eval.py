@@ -45,9 +45,19 @@ recording a post-user hook row as a delivery, missing a declared plugin with no
 delivery row, accepting a non-null parentUuid on the first hook row for start
 coverage, skipping hook verification in declared_snapshot, or allowing
 hook_success or hook_additional_context in hook-off.
+
+The route tests protect the claim that an agent followed its router: the route
+line, the full playbook read, the loads of each step marked done, and the Steps
+section. Credible regressions are scoring a wrong route line as followed,
+counting a missing playbook read or a missing principle read as followed,
+requiring the names of a skipped step, failing to read a backticked route line
+in a real Claude text block, and flagging the router's step skills as
+unexpected. Each was seen red under one mutation of skill_eval.py: the backtick
+strip, the done-only step filter, and the allowed credit.
 """
 from __future__ import annotations
 
+import hashlib
 import json
 from pathlib import Path
 import shutil
@@ -68,11 +78,13 @@ class OfflineCLIContract(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory(prefix="contract-", dir=root)
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
+        self.corpus = None
         self.case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"]
                          if c["target"] == "swe:implement" and c["category"] == "natural")
 
     def cli(self, *args, ok=True):
-        result = subprocess.run([sys.executable, str(SCRIPT), *map(str, args)],
+        corpus = ["--corpus", str(self.corpus)] if self.corpus else []
+        result = subprocess.run([sys.executable, str(SCRIPT), *corpus, *map(str, args)],
                                 text=True, capture_output=True, cwd=REPO)
         if ok:
             self.assertEqual(result.returncode, 0, result.stderr)
@@ -235,6 +247,8 @@ class OfflineCLIContract(unittest.TestCase):
                         {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}}, parent)
                 elif kind == "attachment":
                     add({"type": "attachment", "attachment": payload})
+                elif kind == "text":
+                    add({"type": "assistant", "message": {"id": message_id, "content": [{"type": "text", "text": payload}]}})
                 else:
                     add({"type": "user", "isMeta": True, "sourceToolUseID": tool_use_id, "message": {
                         "role": "user", "content": [{"type": "text", "text": payload}]}})
@@ -888,6 +902,327 @@ class OfflineCLIContract(unittest.TestCase):
             ctx_ev = json.loads((ctx_run / "evidence.json").read_text())
             self.assertEqual(ctx_score["evidence_coverage"], "partial")
             self.assertTrue(any("hook_additional_context" in issue for issue in ctx_ev["issues"]))
+
+    ROUTE_CASE = "lab-mode-analyze-results"
+    PLAYBOOK = "lab:skills/lab-mode/playbooks/analyze-results.md"
+    CHECKLIST = "lab:skills/lab-mode/references/claim-checklist.md"
+    STEP_SKILLS = ["lab:principle-write-the-decision-first", "lab:principle-grade-the-evidence",
+                   "lab:principle-encode-the-procedure", "lab:making-plots"]
+
+    def route_trace(self, name, line="Playbook: analyze-results. Reason: the user wants a graded conclusion.",
+                    read_playbook=True, unread=(), step_4="skip: the pipeline is the shared one",
+                    text_after_tools=True, heading="Steps:", done_note="", entries=None,
+                    state="completed", before="", after=""):
+        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == self.ROUTE_CASE)
+        run, _, _ = self.prepare(name, case)
+        manifest = json.loads((run / "manifest.json").read_text())
+        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+                       if f["id"] == "route/lab/analyze-results")["handles"]
+        steps = "\n".join(entries(h) if entries else f"{h} {step_4}" if h.startswith("4-") and step_4 != "done"
+                          else f"{h}: done{done_note}" for h in handles)
+        events = [{"type": "session.started"}, {"type": "message", "role": "assistant", "text": line}]
+        reads = ([("resource", self.PLAYBOOK)] if read_playbook else []) + [("resource", self.CHECKLIST)]
+        reads += [("skill", skill) for skill in self.STEP_SKILLS if skill not in unread]
+        if step_4 == "done":
+            reads.append(("skill", "lab:principle-simulate-before-you-trust"))
+        for index, (kind, ident) in enumerate(reads):
+            entry = manifest["resources" if kind == "resource" else "skills"][ident]
+            events += [{"type": f"{kind}_read.request", "request_id": f"r-{index}", kind: ident, "path": entry["path"]},
+                       {"type": f"{kind}_read.result", "request_id": f"r-{index}", "exit_code": 0,
+                        "body": Path(entry["path"]).read_text(), "body_complete": True}]
+        events += [{"type": "action.started", "kind": case["relevant_action"]},
+                   {"type": "message", "role": "assistant", "text": "The conclusion is graded.\n\n" + before + (heading + "\n" if heading else "") + "```text\n" + steps + "\n```" + after},
+                   {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}}]
+        return self.trace(run, events, state=state)["route"], run
+
+    def test_route_scoring_follows_the_route_line_read_steps_and_loads(self):
+        followed, run = self.route_trace("route-followed")
+        score = json.loads((run / "score.json").read_text())
+        self.assertEqual(followed["line"], {"status": "match", "observed": "analyze-results"})
+        self.assertEqual(followed["playbook_read"], "read")
+        self.assertEqual(followed["steps_section"]["status"], "complete")
+        self.assertEqual(followed["steps_section"]["skipped"], {"4-check-the-pipeline": "the pipeline is the shared one"})
+        self.assertEqual(sorted(followed["step_loads"]["required"]),
+                         ["claim-checklist", "encode-the-procedure", "grade-the-evidence", "making-plots",
+                          "write-the-decision-first"])
+        self.assertTrue(followed["followed"])
+        self.assertEqual(score["unexpected_skills"], [])
+        self.assertIn("lab:principle-grade-the-evidence", score["route_allowed_skills"])
+
+        wrong, wrong_run = self.route_trace("route-wrong-line", line="Playbook: run-experiment. Reason: it fits.")
+        self.assertEqual(wrong["line"], {"status": "wrong", "observed": "run-experiment"})
+        self.assertFalse(wrong["followed"])
+
+        unread, _ = self.route_trace("route-no-playbook-read", read_playbook=False)
+        self.assertEqual(unread["playbook_read"], "miss")
+        self.assertFalse(unread["followed"])
+
+        no_principle, _ = self.route_trace("route-no-principle", unread=("lab:principle-grade-the-evidence",))
+        self.assertEqual(no_principle["step_loads"]["required"]["grade-the-evidence"], "miss")
+        self.assertFalse(no_principle["followed"])
+
+        done, _ = self.route_trace("route-step-done", step_4="done")
+        self.assertEqual(done["step_loads"]["required"]["simulate-before-you-trust"], "loaded")
+        self.assertTrue(done["followed"])
+        self.assertNotIn("simulate-before-you-trust", followed["step_loads"]["required"])
+
+        report = self.cli("aggregate", run / "score.json", wrong_run / "score.json")
+        counts = report["groups"][0]["counts"]
+        self.assertEqual((counts["route_followed_true"], counts["route_followed_false"]), (1, 1))
+        self.assertEqual((counts["route_line_match"], counts["route_line_wrong"]), (1, 1))
+        self.assertEqual(counts["route_steps_complete"], 2)
+
+    def test_a_done_step_that_runs_another_playbook_requires_its_unconditional_names(self):
+        case = self.case_named("lab-mode-run-experiment")
+        facets = [f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+                  if f["plugin"] == "lab" and f["subject"] == "run-experiment"]
+        handles = next(f for f in facets if f["kind"] == "route")["handles"]
+        loads = {}
+        for f in facets:
+            if f["kind"] not in {"playbook-read", "step-load"}:
+                continue
+            path = f.get("path")
+            if path and path.endswith("/SKILL.md"):
+                load = ("skill", "lab:" + path.split("/")[-2])
+            elif f["evidence"] == "skill-call":
+                load = ("skill", f"lab:{f['name']}")
+            else:
+                load = ("resource", f"lab:{path}")
+            loads[f.get("name") or "playbook"] = load
+        reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
+        line = "Playbook: run-experiment. Reason: the user wants a run."
+        full = self.route_run("route-transitive-all", case, list(dict.fromkeys(loads.values())), line, reply)
+        self.assertEqual(full["steps_section"]["status"], "complete")
+        self.assertTrue(full["followed"])
+        self.assertEqual(full["step_loads"]["required"]["grade-the-evidence"], "loaded")
+        for name in ("grade-the-evidence", "making-plots"):
+            reads = [load for key, load in loads.items() if key != name]
+            route = self.route_run(f"route-transitive-no-{name}", case, list(dict.fromkeys(reads)), line, reply)
+            self.assertEqual(route["step_loads"]["required"][name], "miss", name)
+            self.assertNotIn(name, route["step_loads"]["transitive"])
+            self.assertFalse(route["followed"], name)
+
+    def test_steps_section_accepts_labelled_headings_and_noted_done_entries(self):
+        note = " (inline: I read skill_eval.py in full)"
+        for name, heading in (("bold-label", "**Steps (analyze-results)**"), ("hash-label", "## Steps (analyze-results)"),
+                              ("colon-label", "Steps (analyze-results):")):
+            route, _ = self.route_trace(f"route-steps-{name}", heading=heading, done_note=note)
+            self.assertEqual(route["steps_section"]["status"], "complete", heading)
+            self.assertEqual(route["steps_section"]["skipped"], {"4-check-the-pipeline": "the pipeline is the shared one"})
+            self.assertNotIn("4-check-the-pipeline", route["steps_section"]["done"])
+            self.assertTrue(route["steps_section"]["done"])
+        dashed, _ = self.route_trace("route-steps-dash-note", done_note=" - the load is above")
+        self.assertEqual(dashed["steps_section"]["status"], "complete")
+        for name, suffix in (("doneish", "ish"), ("done-x", "-x")):
+            glued, _ = self.route_trace(f"route-steps-{name}", done_note=suffix)
+            self.assertEqual(glued["steps_section"]["status"], "incomplete")
+            self.assertEqual(glued["steps_section"]["done"], [])
+
+    def case_named(self, case_id):
+        return next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == case_id)
+
+    def route_run(self, name, case, reads, line, final=None, full=False):
+        run, _, _ = self.prepare(name, case)
+        manifest = json.loads((run / "manifest.json").read_text())
+        events = [{"type": "session.started"}]
+        for index, (kind, ident) in enumerate(reads):
+            entry = manifest["resources" if kind == "resource" else "skills"][ident]
+            events += [{"type": f"{kind}_read.request", "request_id": f"r-{index}", kind: ident, "path": entry["path"]},
+                       {"type": f"{kind}_read.result", "request_id": f"r-{index}", "exit_code": 0,
+                        "body": Path(entry["path"]).read_text(), "body_complete": True}]
+        events += [{"type": "message", "role": "assistant", "text": line},
+                   {"type": "action.started", "kind": case["relevant_action"]}]
+        events += [{"type": "message", "role": "assistant", "text": final}] if final else []
+        events += [{"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}}]
+        score = self.trace(run, events)
+        return (score, run) if full else score["route"]
+
+    def test_route_line_accepts_bold_and_bulleted_labels(self):
+        for index, line in enumerate(("**Playbook:** analyze-results. Reason: it fits.",
+                                      "**Playbook**: `lab:analyze-results`. Reason: it fits.",
+                                      "- Playbook: analyze-results. Reason: it fits.")):
+            route, _ = self.route_trace(f"route-label-{index}", line=line)
+            self.assertEqual(route["line"], {"status": "match", "observed": "analyze-results"}, line)
+
+    def test_skill_route_scores_the_line_and_the_routed_skill_load(self):
+        case = self.case_named("lab-mode-route-autoresearch")
+        line = "Route: autoresearch. Reason: the user wants a bounded experiment loop."
+        route = self.route_run("route-skill", case, [("skill", "lab:autoresearch")], line)
+        self.assertEqual((route["type"], route["route_load"], route["playbook_read"]), ("skill", "loaded", None))
+        self.assertEqual(route["steps_section"]["status"], "not_scorable")
+        self.assertEqual(route["line"], {"status": "match", "observed": "autoresearch"})
+        self.assertTrue(route["followed"])
+        unloaded = self.route_run("route-skill-unloaded", case, [], line)
+        self.assertEqual(unloaded["route_load"], "miss")
+        self.assertFalse(unloaded["followed"])
+
+    def test_route_followed_is_null_when_evidence_is_partial(self):
+        route, _ = self.route_trace("route-partial", read_playbook=False, state="incomplete")
+        self.assertEqual(route["playbook_read"], "unavailable")
+        self.assertIsNone(route["followed"])
+
+    def test_a_project_skill_step_load_is_never_required(self):
+        case = dict(self.case_named(self.ROUTE_CASE), expected_route="route/lab/bootstrap-project")
+        corpus = json.loads((HERE / "cases.json").read_text())
+        corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
+        self.corpus = self.root / "corpus.json"
+        self.corpus.write_text(json.dumps(corpus))
+        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+                       if f["id"] == "route/lab/bootstrap-project")["handles"]
+        reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
+        route = self.route_run("route-project-skill", case, [], "Playbook: bootstrap-project. Reason: it fits.", reply)
+        self.assertIn("3-prove-the-context", route["steps_section"]["done"])
+        self.assertNotIn("research-context", route["step_loads"]["required"])
+
+    def test_corpus_rejects_a_bad_expected_route_and_a_bad_facet_listing(self):
+        for name, change in (
+                ("route-not-a-route", {"expected_route": "step-load/lab/bootstrap-project/3-prove-the-context/research-context"}),
+                ("route-unknown", {"expected_route": "route/lab/no-such-playbook"}),
+                ("route-other-plugin", {"expected_route": "route/lab/analyze-results"}),
+                ("facet-router-contract", {"facets": ["router-contract/lab/pick-one-rule"]}),
+                ("facet-unknown", {"facets": ["step-load/lab/none/none/none"]})):
+            corpus = json.loads((HERE / "cases.json").read_text())
+            corpus["cases"][0].update(change)
+            self.corpus = self.root / f"{name}.json"
+            self.corpus.write_text(json.dumps(corpus))
+            self.assertIn("skill-eval:", self.cli("validate", ok=False).stderr, name)
+
+    SKIP_REASON = "the pipeline is shared"
+    ENTRY_FORMS = (
+        ("Steps", "{h}: done, read in full", "{h}: skip: " + SKIP_REASON),
+        ("**Steps** (author-skill)", "{h}: done.", "{h}: skip (" + SKIP_REASON + ")"),
+        ("**Steps** (Playbook: build-feature)", "- `{h}`: done", "- `{h}` skip: " + SKIP_REASON),
+        ("**Steps:**", "* **{h}** \u2014 done", "* **{h}** \u2014 skip \u2014 " + SKIP_REASON),
+        ("## Steps:", "1. {h} - done", "+ {h}: skip - " + SKIP_REASON),
+        ("", "{h}: done", "{h}: skip: " + SKIP_REASON),
+    )
+
+    def test_steps_section_anchors_on_the_route_handles_in_any_entry_form(self):
+        for index, (heading, done, skip) in enumerate(self.ENTRY_FORMS):
+            route, _ = self.route_trace(
+                f"route-form-{index}", heading=heading,
+                entries=lambda h: (skip if h.startswith("4-") else done).format(h=h))
+            section = route["steps_section"]
+            self.assertEqual(section["status"], "complete", (heading, done, skip))
+            self.assertEqual(section["heading"], bool(heading))
+            self.assertEqual(section["skipped"], {"4-check-the-pipeline": self.SKIP_REASON})
+            self.assertEqual(section["unclear_handles"], [])
+            self.assertNotIn("4-check-the-pipeline", section["done"])
+            self.assertTrue(route["followed"], (heading, done, skip))
+
+    def test_steps_section_reads_the_block_with_the_most_route_entries(self):
+        other = "\n\nSteps (ship-pr Publish):\n1-commit: done\n2-push: done"
+        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+                       if f["id"] == "route/lab/analyze-results")["handles"]
+        nested = "Steps (nested run):\n" + "\n".join(f"{h}: done" for h in handles[:2]) + "\n\n"
+        for name, kwargs in (("another-playbook-after", {"after": other}),
+                             ("trailing-prose", {"after": "\n\nSteps 3 to 6 need GPU time next week."}),
+                             ("route-block-second", {"before": other.lstrip() + "\n\n"}),
+                             ("partial-block-first", {"before": nested})):
+            with self.subTest(name):
+                route, _ = self.route_trace(f"route-blocks-{name}", **kwargs)
+                self.assertEqual(route["steps_section"]["status"], "complete")
+                self.assertTrue(route["followed"])
+
+    def test_steps_section_refuses_a_reordered_or_repeated_entry(self):
+        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+                       if f["id"] == "route/lab/analyze-results")["handles"]
+        broken = {
+            "out-of-order": lambda h: f"{handles[1]}: done\n{h}: done" if h == handles[0]
+            else "" if h == handles[1] else f"{h}: done",
+            "duplicate": lambda h: f"{h}: done\n{h}: done" if h == handles[0] else f"{h}: done",
+        }
+        for name, entries in broken.items():
+            route, _ = self.route_trace(f"route-{name}", entries=entries)
+            self.assertEqual(route["steps_section"]["status"], "incomplete", name)
+            self.assertEqual(route["steps_section"]["out_of_order"], name == "out-of-order")
+            self.assertFalse(route["followed"], name)
+
+    def test_listed_facets_and_other_expected_skills_are_scored(self):
+        case = dict(self.case_named(self.ROUTE_CASE), expected_skills=["lab:lab-mode", "lab:making-plots"],
+                    facets=["step-load/lab/analyze-results/10-grade-the-conclusion/grade-the-evidence",
+                            "step-load/lab/analyze-results/4-check-the-pipeline/simulate-before-you-trust"])
+        corpus = json.loads((HERE / "cases.json").read_text())
+        corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
+        self.corpus = self.root / "listed.json"
+        self.corpus.write_text(json.dumps(corpus))
+        line = "Playbook: analyze-results. Reason: it fits."
+        grade = ("skill", "lab:principle-grade-the-evidence")
+        both, both_run = self.route_run("listed-both", case, [grade, ("skill", "lab:making-plots")], line, full=True)
+        one, one_run = self.route_run("listed-one", case, [grade], line, full=True)
+        self.assertEqual(both["facets"], dict(zip(case["facets"], ("loaded", "miss"))))
+        report = self.cli("aggregate", both_run / "score.json", one_run / "score.json")
+        self.assertEqual(report["groups"][0]["other_expected"],
+                         [{"skill": "lab:making-plots", "loaded": 1, "miss": 1, "unavailable": 0}])
+
+    def test_steps_section_refuses_unclear_and_lookalike_entries(self):
+        broken = {
+            "doneish": lambda h: f"{h}: doneish" if h.startswith("1-") else f"{h}: done",
+            "unknown-state": lambda h: f"{h}: pending" if h.startswith("1-") else f"{h}: done",
+            "empty-skip": lambda h: f"{h}: skip:" if h.startswith("1-") else f"{h}: done",
+            "empty-skip-parens": lambda h: f"{h}: skip ()" if h.startswith("1-") else f"{h}: done",
+        }
+        for name, entries in broken.items():
+            route, _ = self.route_trace(f"route-broken-{name}", entries=entries)
+            section = route["steps_section"]
+            first = next(h for h in section["unclear_handles"])
+            self.assertEqual(section["status"], "incomplete", name)
+            self.assertTrue(first.startswith("1-"), name)
+            self.assertNotIn(first, section["done"])
+            self.assertNotIn(first, section["skipped"])
+        prefix, _ = self.route_trace(
+            "route-prefix-handle", entries=lambda h: "4-check: done" if h.startswith("4-") else f"{h}: done")
+        self.assertEqual(prefix["steps_section"]["status"], "incomplete")
+        self.assertEqual(prefix["steps_section"]["missing_handles"], ["4-check-the-pipeline"])
+        self.assertNotIn("4-check", prefix["steps_section"]["done"])
+
+    def test_score_refuses_a_facet_map_that_changed_since_materialization(self):
+        run, skill, body = self.prepare("facets-frozen")
+        manifest_path = run / "manifest.json"
+        manifest = json.loads(manifest_path.read_text())
+        self.assertEqual(manifest["facets_sha256"], hashlib.sha256((HERE / "facets.json").read_bytes()).hexdigest())
+        events = [
+            {"type": "session.started"},
+            {"type": "skill_read.request", "request_id": "s-1", "skill": "swe:implement", "path": skill["path"]},
+            {"type": "skill_read.result", "request_id": "s-1", "exit_code": 0, "body": body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ]
+        score = self.trace(run, events)
+        manifest["facets_sha256"] = "0" * 64
+        manifest_path.write_text(json.dumps(manifest))
+        refused = self.cli("score", "--run", run, ok=False)
+        self.assertIn("facet map changed since materialization", refused.stderr)
+        del manifest["facets_sha256"]
+        manifest_path.write_text(json.dumps(manifest))
+        legacy = self.cli("score", "--run", run)
+        self.assertEqual(legacy["evidence_coverage"], "complete")
+        self.assertNotEqual(legacy["configuration_sha256"], score["configuration_sha256"])
+
+    def test_claude_text_block_with_backticked_route_line(self):
+        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == self.ROUTE_CASE)
+        run, _, _ = self.prepare("claude-route-line", case)
+        score = self.claude_trace(run, [
+            ("text", "message-text", None, "Playbook: `analyze-results`. Reason: the user wants a graded conclusion."),
+            ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+            ("result", None, "use-edit", {"filePath": "calc.py"})],
+            "use-edit", plugin_dirs=[run / "inputs" / "plugins" / "lab"])
+        self.assertEqual(score["route"]["line"], {"status": "match", "observed": "analyze-results"})
+        evidence = json.loads((run / "evidence.json").read_text())
+        self.assertEqual([t["seq"] for t in evidence["texts"]], [2])
+        self.assertIsNone(evidence["final_reply"])
+
+    def test_claude_final_reply_is_the_text_after_the_last_root_tool_call(self):
+        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == self.ROUTE_CASE)
+        run, _, _ = self.prepare("claude-final-reply", case)
+        self.claude_trace(run, [
+            ("text", "message-text", None, "Playbook: `analyze-results`. Reason: the user wants a graded conclusion."),
+            ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+            ("result", None, "use-edit", {"filePath": "calc.py"}),
+            ("text", "message-final", None, "Steps:\n1-locate-raw-results: done")],
+            "use-edit", plugin_dirs=[run / "inputs" / "plugins" / "lab"])
+        evidence = json.loads((run / "evidence.json").read_text())
+        self.assertEqual(evidence["final_reply"], "Steps:\n1-locate-raw-results: done")
 
 
 if __name__ == "__main__":

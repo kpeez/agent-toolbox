@@ -1773,6 +1773,7 @@
       "target": "lab:lab-mode",
       "category": "natural",
       "split": "development",
+      "expected_route": "route/lab/appraise-source",
       "messages": [
         {
           "role": "user",
@@ -1796,6 +1797,7 @@
       "target": "lab:lab-mode",
       "category": "natural",
       "split": "development",
+      "expected_route": "route/lab/review-literature",
       "messages": [
         {
           "role": "user",
@@ -1820,6 +1822,7 @@
       "target": "lab:lab-mode",
       "category": "natural",
       "split": "holdout_candidate",
+      "expected_route": "route/lab/analyze-results",
       "messages": [
         {
           "role": "user",
@@ -1843,6 +1846,7 @@
       "target": "lab:lab-mode",
       "category": "natural",
       "split": "development",
+      "expected_route": "route/lab/run-experiment",
       "messages": [
         {
           "role": "user",
@@ -1866,6 +1870,7 @@
       "target": "lab:lab-mode",
       "category": "contextual",
       "split": "development",
+      "expected_route": "route/lab/autoresearch",
       "messages": [
         {
           "role": "user",
@@ -1897,6 +1902,7 @@
       "target": "lab:lab-mode",
       "category": "contextual",
       "split": "holdout_candidate",
+      "expected_route": "route/lab/analyze-results",
       "messages": [
         {
           "role": "user",

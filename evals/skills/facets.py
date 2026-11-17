@@ -64,6 +64,12 @@ KINDS = {
         "scope": "delegate-allowed",
         "about": "Before a playbook step, the agent loads each name in the step's parentheses.",
     },
+    "reply-load": {
+        "evidence": None,
+        "scorer": None,
+        "scope": "delegate-allowed",
+        "about": "Before the final reply, the agent loads each name in the playbook's Reply line parentheses.",
+    },
     "trigger-load": {
         "evidence": None,
         "scorer": None,
@@ -407,7 +413,13 @@ class Plugin:
                 f".agents/skills/{name}/SKILL.md",
             ),
         )
-        return next((Resolution(*row[1:]) for row in classes if row[0]), None)
+        matches = [row for row in classes if row[0]]
+        if len(matches) > 1:
+            raise FacetError(
+                f"{name!r} in {self.name} matches more than one class: "
+                f"{', '.join(row[1] for row in matches)}"
+            )
+        return Resolution(*matches[0][1:]) if matches else None
 
 
 def make(
@@ -451,12 +463,29 @@ def coverage():
     skills = skill_eval.catalog_skills()
     resolve = skill_eval.resolver(skills)
     cases = defaultdict(lambda: {"positive": [], "negative": []})
+    routes, listed = defaultdict(list), defaultdict(list)
     for case in skill_eval.corpus():
         if skill_eval.excluded(case, resolve, skills):
             continue
         side = "negative" if case["category"] == "negative" else "positive"
         cases[resolve(case["target"])][side].append(case["id"])
-    return {resolve(t) for t in skill_eval.TARGETS}, cases
+        if case.get("expected_route"):
+            routes[tuple(case["expected_route"].split("/")[1:])].append(case["id"])
+        for facet_id in case.get("facets", []):
+            listed[facet_id].append(case["id"])
+    return {resolve(t) for t in skill_eval.TARGETS}, cases, routes, listed
+
+
+def mark_scored(facets, routes, listed):
+    """A case's expected_route scores its route facets; its facets field scores the ones it lists."""
+    for f in facets:
+        ids = listed.get(f["id"], [])
+        conditional_load = f["kind"] == "step-load" and f.get("requirement") == "transitive" and f.get("conditional")
+        if f["kind"] in {"route", "route-load", "playbook-read", "step-load"} and not conditional_load:
+            ids = ids + routes.get((f["plugin"], f["subject"]), [])
+        if ids and (f["kind"] == "route" or f["scorer"] == "recorded"):
+            f["scorer"] = "scored"
+            f["cases"] = {"positive": sorted(set(ids)), "negative": []}
 
 
 def activation_facets(plugin, targets, cases):
@@ -484,12 +513,17 @@ def hook_facets(plugin):
         return
     text = hook.read_text(encoding="utf-8")
     sentences = re.split(r"(?<=\.)\s+", norm(text))
-    for owner, skill in re.findall(r"`([a-z]+):([a-z][a-z0-9-]*)`", text):
+    named = re.findall(r"`([a-z]+):([a-z][a-z0-9-]*)`", text) + [
+        (plugin.name, skill) for skill in re.findall(r"the `([a-z][a-z0-9-]*)` skill", text)
+    ]
+    for owner, skill in dict.fromkeys(named):
         if owner != plugin.name or skill not in plugin.visible | plugin.hidden:
             raise FacetError(
                 f"{rel(hook)}: names `{owner}:{skill}`, which is not a {plugin.name} skill"
             )
-        sentence = next(s for s in sentences if f"`{owner}:{skill}`" in s)
+        sentence = next(
+            s for s in sentences if f"`{owner}:{skill}`" in s or f"the `{skill}` skill" in s
+        )
         yield make(
             "hook-load",
             plugin.name,
@@ -676,7 +710,7 @@ def playbook_facets(plugin, steps):
                     else "always"
                 )
                 facet = load_facet(
-                    "step-load",
+                    "reply-load" if handle == "Reply" else "step-load",
                     plugin,
                     slug,
                     (handle, name),
@@ -901,7 +935,7 @@ def principle_facets(plugin, loads):
 
 
 def build():
-    targets, cases = coverage()
+    targets, cases, routes, listed = coverage()
     facets, unreached = [], {}
     for root in sorted(p for p in PLUGINS.iterdir() if (p / "skills").is_dir()):
         plugin = Plugin(root.name)
@@ -915,7 +949,7 @@ def build():
         reached = {
             f["name"]
             for f in own
-            if f["kind"] in {"step-load", "trigger-load", "route-load"}
+            if f["kind"] in {"step-load", "reply-load", "trigger-load", "route-load"}
         }
         unreached[plugin.name] = sorted(set(plugin.hidden) - reached)
         facets += own
@@ -927,6 +961,7 @@ def build():
     dangling = sorted(f["id"] for f in facets if "via" in f and f["via"] not in ids)
     if dangling:
         raise FacetError(f"transitive facets whose via is no facet: {dangling}")
+    mark_scored(facets, routes, listed)
     facets.sort(key=lambda f: f["id"])
     summary = defaultdict(Counter)
     for f in facets:
@@ -962,8 +997,19 @@ def render(data, unreached):
     by_kind = defaultdict(list)
     for f in facets:
         by_kind[f["kind"]].append(f)
+    behaviors = defaultdict(list)
+    for f in facets:
+        if f["requirement"] == "always":
+            key = (
+                (f["plugin"], f["subject"], f["name"])
+                if f["kind"] == "step-load"
+                else f["id"]
+            )
+            behaviors[key].append(f)
     uncovered = [
-        f for f in facets if f["requirement"] == "always" and not sum(count(f["cases"]))
+        key
+        for key, group in behaviors.items()
+        if not any(sum(count(f["cases"])) for f in group)
     ]
     scorers = list(SCORERS)
     out = [
@@ -971,7 +1017,9 @@ def render(data, unreached):
         "",
         "# Eval facet map",
         "",
-        f"{len(uncovered)} of {len(facets)} facets are always required and have no scoring case.",
+        f"{len(uncovered)} of {len(behaviors)} always-required behaviors have no scoring case. "
+        "The count is approximate. A step load counts once per playbook and name. "
+        "A condition in the middle of a step leaves its names `always`.",
         "",
         "## Legend",
         "",
@@ -1048,7 +1096,7 @@ def render(data, unreached):
                 (
                     s
                     for s in mine
-                    if s["kind"] == "step-load" and s["subject"] == f["subject"]
+                    if s["kind"] in {"step-load", "reply-load"} and s["subject"] == f["subject"]
                 ),
                 key=lambda s: handles[f["subject"]].index(s["handle"]),
             )

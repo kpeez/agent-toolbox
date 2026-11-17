@@ -17,9 +17,9 @@ requests repeat a real session in which the skill did not load: regenerate the
 figures, transpose the results table, and apply a reference visual design.
 
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
-the same fixture. The scorer checks only that the router loads. Each case
-names the playbook it should pick in `relevant_action`, but no field scores
-that choice.
+the same fixture. Six of them set `expected_route`, the route the agent should
+pick, and the scorer checks whether the agent followed it (see "Route scoring").
+The others set no route.
 
 The swe consolidation merged `test-audit` into `testing-code` and
 `improve-codebase-architecture` into `codebase-design`. The corpus keeps the
@@ -113,7 +113,12 @@ starts, or `none`. Any other native trace, captured with the default
 `--format native`, is retained but stays unscored. Interrupted capture
 uses `--state timeout` or `--state incomplete`. Import retains the raw bytes,
 capture digest, and final fixture files. Inputs and raw trace digests are checked
-before scoring. Each score points to raw evidence and its frozen manifest.
+before scoring. Materialize records `corpus_sha256` and `facets_sha256`, the
+digests of `cases.json` and `facets.json`. `score` refuses a run when either file
+changed since materialization, because route scores read both. A manifest made
+before `facets_sha256` existed still scores. Both digests enter the frozen
+configuration, so runs scored under different maps never pool in `aggregate`.
+Each score points to raw evidence and its frozen manifest.
 Synthetic read requests must use the exact paths in that run's `manifest.json`
 and the corresponding complete bodies. A raw trace from another run will not
 prove a load of the newly materialized catalog.
@@ -138,6 +143,63 @@ on a real host. A native pilot must freeze and verify that complete effective se
 The offline runtime example deliberately says `not-run`. For any future native
 run, replace it with verified model ID, effort, CLI/version, permissions, tools,
 catalog scope, context delivery, and harness deltas before materializing.
+
+## Route scoring
+
+A case may set two optional fields. `expected_route` is the id of a `route`
+facet in `facets.json`, such as `route/lab/analyze-results`. It must belong to the plugin of the
+case's target, and a negative case must not set it. `facets` lists facet ids whose evidence is `skill-call` or
+`full-read`. `score.json` then holds `route` (null without `expected_route`)
+and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
+
+`route` scores the agent against its router:
+
+- `line`: the first root text with a `Playbook: <slug>` or `Route: <skill>`
+  line. `Playbook` must name a playbook route and `Route` a single-skill route.
+  The label may be bold (`**Playbook:**`, `**Playbook**:`) or bulleted
+  (`- Playbook:`). The slug may be in backticks, with or without its plugin
+  prefix. The status is `match`, `wrong`, `missing`, or `unavailable`.
+- `playbook_read` (playbook routes) or `route_load` (skill routes): a root
+  full read of the playbook, or a root load of the routed skill.
+- `steps_section`: the Steps entries of the final reply (`evidence.json`
+  `final_reply`). The parser anchors on the route's handles. An entry is a line
+  that starts with a handle, after optional space, a bullet (`-`, `*`, `+`,
+  `1.`), backticks, or `**`. The handle must end at a character that is not a
+  word character or a hyphen, so `4-check` is not `4-check-the-pipeline`. The
+  first word after the handle sets the state, once separators (`:`, `-`, a long
+  dash, `**`, backticks, space) are stripped. `done` is done, and a note may
+  follow (`<handle>: done, note`). `skip` needs a reason after it
+  (`skip: reason`, `skip (reason)`, `skip - reason`). Any other word, or a
+  `skip` with no reason, lists the handle in `unclear_handles`. The reply
+  splits into blocks at each line that starts with `Steps`, ignoring `#`, `*`,
+  and space. The text before the first such line is its own block. The section
+  is the block with the most entries for this route's handles, and the last
+  one on a tie. A block with no entry never wins over one with entries, so a
+  second block for another playbook, or a prose line that starts with `Steps`,
+  does not hide the route's block. `heading` records whether any such line
+  exists. The status is `complete` when every handle appears once, in
+  order, each done or skipped with a reason, and none is unclear. It is
+  `missing` (or `unavailable` on partial evidence) with no entry, and
+  `incomplete` otherwise. Skill routes are `not_scorable` until their handles
+  exist.
+- `step_loads`: for each step the agent marked `done`, the loads its step line
+  names. `always` and `conditional` names are `required`, because a step marked
+  done says its condition held. A `one-of` step needs any one name.
+  A `transitive` name (a step that runs steps of another playbook) is `required` when its `conditional` is false, because the router says such a step also loads the names in those steps. A `transitive` name with `conditional` true is reported in `transitive` and never fails, because the outer Steps section cannot show whether the inner condition held. A reference or playbook needs
+  a full read. A skill or principle needs a load. A subagent load or read counts
+  for a `delegate-allowed` facet. A project skill or the reviewer agent is not
+  scorable. A step marked `skip:` requires nothing. A step load has no timing check: a load
+  anywhere in the session counts. A `Bash` read of a step resource earns no credit and
+  scores `miss`, as in activation scoring.
+- `followed`: `false` when any check fails, else `null` when any is unavailable,
+  else `true`.
+
+The router, the routed skill, and every skill or principle that a step or
+reply line names count as allowed for that case (`route_allowed_skills`), so they are not
+`unexpected_skills`. `aggregate` adds `route_followed_*`, `route_line_*`,
+`route_steps_*`, and `route_read_*` counts to each group. It also adds
+`other_expected`, the loaded, missed, and unavailable counts of each expected
+skill that is not the target, over complete sessions.
 
 ## Facet map
 
@@ -167,8 +229,12 @@ Each facet has a scorer status:
 - `recorded`: the scorer records the load, resource read, subagent read, or hook delivery, but no case field scores it.
 - `invisible`: the scorer drops the event.
 
-The headline of `FACETS.md` counts the always-required facets that no case
-scores. That count is the measurement gap.
+The headline of `FACETS.md` counts the always-required behaviors that no case
+scores. That count is the measurement gap. It is approximate: a step load
+counts once per playbook and name, and a condition in the middle of a step
+leaves its names `always`. The scoring policy follows from that: a step the
+agent marks `done` requires all of its names. A case marks its route's facets
+`scored` through `expected_route`, and the facets that it lists through `facets`.
 
 One known limit: the generator labels a whole step `conditional` when the
 step starts with "When " or says "Skip when" or "Skip for". A step that has

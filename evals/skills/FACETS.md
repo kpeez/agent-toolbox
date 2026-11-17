@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-406 of 483 facets are always required and have no scoring case.
+324 of 361 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -14,6 +14,7 @@
 | `route-load` | When the router routes to a skill, the agent loads that skill. |
 | `playbook-read` | The agent reads the chosen playbook file in full. |
 | `step-load` | Before a playbook step, the agent loads each name in the step's parentheses. |
+| `reply-load` | Before the final reply, the agent loads each name in the playbook's Reply line parentheses. |
 | `trigger-load` | When a router trigger applies, the agent loads the name the trigger gives. |
 | `principle-read` | The agent reads a principle's SKILL.md in full before it applies the principle. |
 | `router-contract` | A rule of the router itself, pinned to an anchor phrase in the router file. Its scorer status is `invisible` even when a Skill call or Read proves the load, because the rule also sets an order or a context, such as "before match" or "the one it picks", that the scorer cannot see. |
@@ -54,11 +55,12 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | kind | scored | recorded | invisible | total |
 |---|---|---|---|---|
 | activation | 8 | 29 | 0 | 37 |
-| hook-load | 0 | 4 | 0 | 4 |
-| route | 0 | 0 | 49 | 49 |
-| route-load | 0 | 20 | 0 | 20 |
-| playbook-read | 0 | 29 | 0 | 29 |
-| step-load | 0 | 259 | 10 | 269 |
+| hook-load | 0 | 5 | 0 | 5 |
+| route | 5 | 0 | 44 | 49 |
+| route-load | 1 | 19 | 0 | 20 |
+| playbook-read | 4 | 25 | 0 | 29 |
+| step-load | 46 | 211 | 10 | 267 |
+| reply-load | 0 | 2 | 0 | 2 |
 | trigger-load | 0 | 19 | 2 | 21 |
 | principle-read | 0 | 29 | 0 | 29 |
 | router-contract | 0 | 0 | 25 | 25 |
@@ -553,16 +555,16 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | route | handles | positive cases | negative cases |
 |---|---|---|---|
-| playbook `analyze-results` | 1-locate-raw-results, 2-state-the-decision, 3-check-the-run-ran, 4-check-the-pipeline, 5-measure-noise, 6-check-comparison, 7-read-examples, 8-rule-out-rivals, 9-make-figures, 10-grade-the-conclusion, 11-feed-the-flywheel | 0 | 0 |
-| playbook `appraise-source` | 1-get-the-original, 2-extract-claims, 3-check-comparisons, 4-check-noise, 5-list-rivals, 6-read-examples, 7-search-follow-ups, 8-grade-each-claim, 9-feed-the-flywheel | 0 | 0 |
-| skill `autoresearch` | - | 0 | 0 |
+| playbook `analyze-results` | 1-locate-raw-results, 2-state-the-decision, 3-check-the-run-ran, 4-check-the-pipeline, 5-measure-noise, 6-check-comparison, 7-read-examples, 8-rule-out-rivals, 9-make-figures, 10-grade-the-conclusion, 11-feed-the-flywheel | 2 | 0 |
+| playbook `appraise-source` | 1-get-the-original, 2-extract-claims, 3-check-comparisons, 4-check-noise, 5-list-rivals, 6-read-examples, 7-search-follow-ups, 8-grade-each-claim, 9-feed-the-flywheel | 1 | 0 |
+| skill `autoresearch` | - | 1 | 0 |
 | playbook `bootstrap-project` | 1-survey-the-repo, 2-write-research-context, 3-prove-the-context, 4-rank-procedures, 5-codify-the-top-procedure, 6-list-the-rest | 0 | 0 |
 | playbook `codify-procedure` | 1-name-the-procedure, 2-load-the-context, 3-run-it-as-is, 4-collect-validity-checks, 5-build-the-known-good-run, 6-write-the-skill, 7-prove-the-skill, 8-register-the-skill | 0 | 0 |
 | playbook `maintain-project-skills` | 1-list-project-skills, 2-rerun-known-good-runs, 3-compare-with-the-pipeline, 4-fix-or-retire, 5-refresh-the-context | 0 | 0 |
 | skill `making-plots` | - | 0 | 0 |
 | skill `research-skill` | - | 0 | 0 |
-| playbook `review-literature` | 1-frame-question, 2-search-both-directions, 3-screen-sources, 4-appraise-key-sources, 5-synthesize-by-claim, 6-write-the-report, 7-feed-the-flywheel | 0 | 0 |
-| playbook `run-experiment` | 1-write-the-decision, 2-check-prior-work, 3-tune-the-baseline, 4-pilot-small, 5-measure-noise-floor, 6-run-with-provenance, 7-analyze, 8-record-the-result, 9-feed-the-flywheel | 0 | 0 |
+| playbook `review-literature` | 1-frame-question, 2-search-both-directions, 3-screen-sources, 4-appraise-key-sources, 5-synthesize-by-claim, 6-write-the-report, 7-feed-the-flywheel | 1 | 0 |
+| playbook `run-experiment` | 1-write-the-decision, 2-check-prior-work, 3-tune-the-baseline, 4-pilot-small, 5-measure-noise-floor, 6-run-with-provenance, 7-analyze, 8-record-the-result, 9-feed-the-flywheel | 1 | 0 |
 | skill `visualizing-data` | - | 0 | 0 |
 
 ### Playbook `analyze-results` step loads
@@ -678,7 +680,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | skill | name class | evidence | scorer | route |
 |---|---|---|---|---|
-| autoresearch | visible-skill | skill-call | recorded | Single-skill routes: autoresearch |
+| autoresearch | visible-skill | skill-call | scored | Single-skill routes: autoresearch |
 | making-plots | visible-skill | skill-call | recorded | Single-skill routes: making-plots |
 | research-skill | visible-skill | skill-call | recorded | Single-skill routes: research-skill |
 | visualizing-data | visible-skill | skill-call | recorded | Single-skill routes: visualizing-data |
@@ -751,6 +753,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | lab | lab-mode | recorded | lab: When a task is research work, such as reading or judging papers and sources, designing or analyzing a model experiment, or improving a research project's own skills, the `lab:lab-mode` skill routes it to a playbook. |
 | swe | go-deeper | recorded | swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
 | swe | swe-mode | recorded | Before you act on a new software task, load the `swe:swe-mode` skill and follow the playbook or skill it routes to. |
+| swe | writing | recorded | Write replies to the user and agent-facing text in ASD-STE100 Simplified Technical English (the `writing` skill). |
 | uni | go-deeper | recorded | uni: Before you act on a new task of any kind, run `uni:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
 
 ## Hidden skills that nothing reaches

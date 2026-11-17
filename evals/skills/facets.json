@@ -908,6 +908,26 @@
         "positive": []
       },
       "evidence": "hook-delivery",
+      "id": "hook-load/swe/writing",
+      "kind": "hook-load",
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "swe:writing",
+        "path": "plugins/swe/hooks/session-start.md"
+      },
+      "requirement": "conditional",
+      "scope": "root",
+      "scorer": "recorded",
+      "source_text": "Write replies to the user and agent-facing text in ASD-STE100 Simplified Technical English (the `writing` skill).",
+      "subject": "writing"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "hook-delivery",
       "id": "hook-load/uni/go-deeper",
       "kind": "hook-load",
       "path": null,
@@ -925,7 +945,10 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/lab/analyze-results",
@@ -938,14 +961,16 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`analyze-results`: results or logs that exist and need a conclusion.",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/lab/appraise-source",
@@ -958,7 +983,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge. For your own results, use `analyze-results`.",
       "subject": "appraise-source"
     },
@@ -1025,7 +1050,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/lab/review-literature",
@@ -1038,14 +1065,16 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`review-literature`: what a body of work shows on a question, from a bounded question to a multi-lane survey.",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/lab/run-experiment",
@@ -1058,7 +1087,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`run-experiment`: one designed comparison, ablation, or eval run.",
       "subject": "run-experiment"
     },
@@ -2274,6 +2303,54 @@
         "negative": [],
         "positive": []
       },
+      "evidence": "full-read",
+      "handle": "Reply",
+      "id": "reply-load/swe/autopilot-full/reply/ketchup",
+      "kind": "reply-load",
+      "name": "ketchup",
+      "name_class": "hidden-skill",
+      "path": "skills/ketchup/SKILL.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Reply",
+        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-full.md"
+      },
+      "requirement": "always",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "Reply: catch the operator up, covering each PR's state and verdict, what merged, countersigns and why, open operator gates, and parked follow-ups, with links to each PR and each decision log. (ketchup)",
+      "subject": "autopilot-full"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "full-read",
+      "handle": "Reply",
+      "id": "reply-load/swe/autopilot-stack/reply/ketchup",
+      "kind": "reply-load",
+      "name": "ketchup",
+      "name_class": "hidden-skill",
+      "path": "skills/ketchup/SKILL.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Reply",
+        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
+      },
+      "requirement": "always",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)",
+      "subject": "autopilot-stack"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": [
+          "lab-mode-route-autoresearch"
+        ]
+      },
       "evidence": "skill-call",
       "id": "route-load/lab/autoresearch",
       "kind": "route-load",
@@ -2287,7 +2364,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Repeated keep-or-discard runs against one metric, or cleanup of such a run: `autoresearch`.",
       "subject": "autoresearch"
     },
@@ -2712,7 +2789,10 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -2739,14 +2819,16 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`analyze-results`: results or logs that exist and need a conclusion.",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -2771,14 +2853,16 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge. For your own results, use `analyze-results`.",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-route-autoresearch"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [],
@@ -2793,7 +2877,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "Repeated keep-or-discard runs against one metric, or cleanup of such a run: `autoresearch`.",
       "subject": "autoresearch"
     },
@@ -2932,7 +3016,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -2955,14 +3041,16 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`review-literature`: what a body of work shows on a question, from a bounded question to a multi-lane survey.",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -2987,7 +3075,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`run-experiment`: one designed comparison, ablation, or eval run.",
       "subject": "run-experiment"
     },
@@ -4555,7 +4643,10 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-locate-raw-results",
@@ -4571,14 +4662,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-locate-raw-results: Find the logs, predictions, and configs, and link each number you will report to its raw file. Check the Provenance section. (claim-checklist)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "10-grade-the-conclusion",
@@ -4594,14 +4688,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "10-grade-the-conclusion: Give the conclusion one grade, and state the claim at the scope the evidence supports. (grade-the-evidence)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "11-feed-the-flywheel",
@@ -4617,14 +4714,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "11-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-state-the-decision",
@@ -4640,14 +4740,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-state-the-decision: Write the decision this analysis feeds. Follow the written plan when one exists. Label each new analysis exploratory. (write-the-decision-first)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-check-the-run-ran",
@@ -4663,14 +4766,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-check-the-run-ran: Check for errors, skipped items, crashed seeds, and truncated outputs, and confirm that item counts match the dataset. Follow the project's procedure skill when one covers the run. Check the Raw data section. (claim-checklist)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-check-the-pipeline",
@@ -4686,14 +4792,17 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-check-the-pipeline: When a project skill with a known-good run covers the pipeline, run that check. When none does and no simulation ran, feed the pipeline data with a known answer and confirm the answer returns. (simulate-before-you-trust)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "5-measure-noise",
@@ -4709,14 +4818,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-measure-noise: For each number, record the run count and the spread, and compare each gap to the noise floor. Check the Noise section. (claim-checklist)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "6-check-comparison",
@@ -4732,14 +4844,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-check-comparison: For each \"A beats B\" result, confirm that both sides got the same data, compute, and tuning. Check the Comparison section. (claim-checklist)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "7-read-examples",
@@ -4755,14 +4870,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-read-examples: Read raw inputs and outputs from both sides of each aggregate, including failures. Check the Raw data section. (claim-checklist)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "full-read",
       "handle": "8-rule-out-rivals",
@@ -4778,14 +4896,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-rule-out-rivals: List the other explanations, such as leakage, contamination, a metric artifact, or a confound, and mark each as ruled out or open. Check the Rivals section. (claim-checklist)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-analyze-after-run",
+          "lab-mode-analyze-results"
+        ]
       },
       "evidence": "skill-call",
       "handle": "9-make-figures",
@@ -4801,14 +4922,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "9-make-figures: Make one figure or table for each result you report, with its spread shown. (making-plots)",
       "subject": "analyze-results"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-get-the-original",
@@ -4824,14 +4947,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-get-the-original: Open the latest version with its appendix, code, and data, and record the version you read. Check the Source section. (claim-checklist)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-extract-claims",
@@ -4847,14 +4972,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-extract-claims: List each central claim with the table or figure offered for it, and write each claim at the scope its evidence supports. Check the Scope section. (claim-checklist)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-check-comparisons",
@@ -4870,14 +4997,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-check-comparisons: For each \"A beats B\" claim, confirm that both sides got the same data, compute, and tuning, and that an ablation isolates the credited part. Check the Comparison section. (claim-checklist)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-check-noise",
@@ -4893,14 +5022,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-check-noise: For each number behind a claim, find the run count, the spread, and the noise floor, or note that the source gives none. Check the Noise section. (claim-checklist)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "5-list-rivals",
@@ -4916,14 +5047,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-list-rivals: For each claim, list the other explanations, such as leakage, contamination, a metric artifact, or a confound, and mark each as ruled out or open. Check the Rivals section. (claim-checklist)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "6-read-examples",
@@ -4939,14 +5072,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-read-examples: Read the qualitative examples and any released data or outputs, and note each case that fits or breaks a claim. Check the Raw data section. (claim-checklist)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "7-search-follow-ups",
@@ -4962,14 +5097,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-search-follow-ups: Search forward citations, replications, critiques, and public reviews, and record what each finds for each claim. Check the Contrary evidence section. (claim-checklist)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "8-grade-each-claim",
@@ -4985,14 +5122,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-grade-each-claim: Give each claim one grade from the strength and independence of its evidence. (grade-the-evidence)",
       "subject": "appraise-source"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-appraise-paper"
+        ]
       },
       "evidence": "full-read",
       "handle": "9-feed-the-flywheel",
@@ -5008,7 +5147,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "appraise-source"
     },
@@ -5670,7 +5809,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "skill-call",
       "handle": "1-frame-question",
@@ -5686,14 +5827,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-frame-question: Write the question, scope, recency, and inclusion criteria, and confirm that each criterion can sort a source in or out. (go-deeper)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-search-both-directions",
@@ -5709,14 +5852,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-search-both-directions: Write a search plan with queries for and against the claim, plus forward and backward citations, and run it. Check the Contrary evidence section. (claim-checklist)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-screen-sources",
@@ -5732,14 +5877,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-screen-sources: Apply the inclusion criteria, record each exclusion with its reason, and group the kept sources by independent origin. Check the Source section. (claim-checklist, grade-the-evidence)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-screen-sources",
@@ -5755,14 +5902,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-screen-sources: Apply the inclusion criteria, record each exclusion with its reason, and group the kept sources by independent origin. Check the Source section. (claim-checklist, grade-the-evidence)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-appraise-key-sources",
@@ -5778,14 +5927,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-appraise-key-sources: Give each source that a conclusion rests on to one subagent to run appraise-source steps 2 to 8, and name the claim-checklist sections in each brief. (appraise-source)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "conditional": false,
       "evidence": "full-read",
@@ -5802,7 +5953,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-appraise-key-sources: Give each source that a conclusion rests on to one subagent to run appraise-source steps 2 to 8, and name the claim-checklist sections in each brief. (appraise-source)",
       "subject": "review-literature",
       "target_handles": [
@@ -5818,7 +5969,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "conditional": false,
       "evidence": "full-read",
@@ -5835,7 +5988,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-appraise-key-sources: Give each source that a conclusion rests on to one subagent to run appraise-source steps 2 to 8, and name the claim-checklist sections in each brief. (appraise-source)",
       "subject": "review-literature",
       "target_handles": [
@@ -5846,7 +5999,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "handle": "5-synthesize-by-claim",
@@ -5862,14 +6017,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-synthesize-by-claim: Organize by claim, not by paper. For each claim, give the agreement, the contradictions, the gaps, and a grade. (grade-the-evidence)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "handle": "6-write-the-report",
@@ -5885,14 +6042,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-write-the-report: Write the report with a bounded question in research, or with a multi-lane survey in deep-research. Finish its citation audit and trace each claim to its primary source. Check the Source and Provenance sections. (research, deep-research, claim-checklist)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "skill-call",
       "handle": "6-write-the-report",
@@ -5908,14 +6067,16 @@
       },
       "requirement": "one-of",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-write-the-report: Write the report with a bounded question in research, or with a multi-lane survey in deep-research. Finish its citation audit and trace each claim to its primary source. Check the Source and Provenance sections. (research, deep-research, claim-checklist)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "skill-call",
       "handle": "6-write-the-report",
@@ -5931,14 +6092,16 @@
       },
       "requirement": "one-of",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-write-the-report: Write the report with a bounded question in research, or with a multi-lane survey in deep-research. Finish its citation audit and trace each claim to its primary source. Check the Source and Provenance sections. (research, deep-research, claim-checklist)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-review-literature"
+        ]
       },
       "evidence": "full-read",
       "handle": "7-feed-the-flywheel",
@@ -5954,14 +6117,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "review-literature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-write-the-decision",
@@ -5977,14 +6142,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-write-the-decision: Write the hypothesis, the metric, and the decision rule that names the result that would change a decision. (write-the-decision-first)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-check-prior-work",
@@ -6000,14 +6167,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-check-prior-work: Do a short search for an existing answer. When a source already answers the question, stop and report that answer with its grade. (review-literature)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-tune-the-baseline",
@@ -6023,14 +6192,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-tune-the-baseline: Give the baseline the same data, compute, and tuning effort as the change, and write down each setting. Check the Comparison section. (claim-checklist)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-pilot-small",
@@ -6046,14 +6217,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-pilot-small: Follow the project's procedure skill when one covers the run, and run its known-good check first. Run the smallest job that exercises the full pipeline, read what the model receives and returns, and estimate the cost of the full run. When no skill covers the pipeline, feed it data with a known answer and confirm the answer returns before the full run. (simulate-before-you-trust, claim-checklist)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-pilot-small",
@@ -6069,14 +6242,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-pilot-small: Follow the project's procedure skill when one covers the run, and run its known-good check first. Run the smallest job that exercises the full pipeline, read what the model receives and returns, and estimate the cost of the full run. When no skill covers the pipeline, feed it data with a known answer and confirm the answer returns before the full run. (simulate-before-you-trust, claim-checklist)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "5-measure-noise-floor",
@@ -6092,14 +6267,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-measure-noise-floor: Repeat the baseline across seeds, and record the run count and the spread. Check the Noise section. (claim-checklist)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "6-run-with-provenance",
@@ -6115,14 +6292,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-run-with-provenance: Run the full experiment, and link each result to its command, config, commit, and data version. Check the Provenance section. (claim-checklist)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "7-analyze",
@@ -6138,14 +6317,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-analyze: Run steps 3 to 10 of analyze-results on the results. (analyze-results)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "conditional": false,
       "evidence": "full-read",
@@ -6162,7 +6343,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-analyze: Run steps 3 to 10 of analyze-results on the results. (analyze-results)",
       "subject": "run-experiment",
       "target_handles": [
@@ -6177,7 +6358,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "conditional": false,
       "evidence": "full-read",
@@ -6194,7 +6377,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-analyze: Run steps 3 to 10 of analyze-results on the results. (analyze-results)",
       "subject": "run-experiment",
       "target_handles": [
@@ -6205,7 +6388,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "conditional": false,
       "evidence": "skill-call",
@@ -6222,7 +6407,7 @@
       },
       "requirement": "transitive",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-analyze: Run steps 3 to 10 of analyze-results on the results. (analyze-results)",
       "subject": "run-experiment",
       "target_handles": [
@@ -6261,7 +6446,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "8-record-the-result",
@@ -6277,14 +6464,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-record-the-result: Record the result against the decision rule, with each deviation from the written plan. Record null and negative results too. Check the Provenance section. (claim-checklist, write-the-decision-first)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "8-record-the-result",
@@ -6300,14 +6489,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-record-the-result: Record the result against the decision rule, with each deviation from the written plan. Record null and negative results too. Check the Provenance section. (claim-checklist, write-the-decision-first)",
       "subject": "run-experiment"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "lab-mode-run-experiment"
+        ]
       },
       "evidence": "full-read",
       "handle": "9-feed-the-flywheel",
@@ -6323,7 +6514,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "run-experiment"
     },
@@ -6747,29 +6938,6 @@
         "positive": []
       },
       "evidence": "full-read",
-      "handle": "Reply",
-      "id": "step-load/swe/autopilot-full/reply/ketchup",
-      "kind": "step-load",
-      "name": "ketchup",
-      "name_class": "hidden-skill",
-      "path": "skills/ketchup/SKILL.md",
-      "plugin": "swe",
-      "required_by": {
-        "locator": "Reply",
-        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-full.md"
-      },
-      "requirement": "always",
-      "scope": "delegate-allowed",
-      "scorer": "recorded",
-      "source_text": "Reply: catch the operator up, covering each PR's state and verdict, what merged, countersigns and why, open operator gates, and parked follow-ups, with links to each PR and each decision log. (ketchup)",
-      "subject": "autopilot-full"
-    },
-    {
-      "cases": {
-        "negative": [],
-        "positive": []
-      },
-      "evidence": "full-read",
       "handle": "1-stop-at-verified",
       "id": "step-load/swe/autopilot-stack/1-stop-at-verified/autopilot-full",
       "kind": "step-load",
@@ -6831,29 +6999,6 @@
       "scope": "delegate-allowed",
       "scorer": "recorded",
       "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
-      "subject": "autopilot-stack"
-    },
-    {
-      "cases": {
-        "negative": [],
-        "positive": []
-      },
-      "evidence": "full-read",
-      "handle": "Reply",
-      "id": "step-load/swe/autopilot-stack/reply/ketchup",
-      "kind": "step-load",
-      "name": "ketchup",
-      "name_class": "hidden-skill",
-      "path": "skills/ketchup/SKILL.md",
-      "plugin": "swe",
-      "required_by": {
-        "locator": "Reply",
-        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
-      },
-      "requirement": "always",
-      "scope": "delegate-allowed",
-      "scorer": "recorded",
-      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)",
       "subject": "autopilot-stack"
     },
     {
@@ -11282,26 +11427,33 @@
       "scored": 8
     },
     "hook-load": {
-      "recorded": 4
+      "recorded": 5
     },
     "playbook-read": {
-      "recorded": 29
+      "recorded": 25,
+      "scored": 4
     },
     "principle-read": {
       "recorded": 29
     },
+    "reply-load": {
+      "recorded": 2
+    },
     "route": {
-      "invisible": 49
+      "invisible": 44,
+      "scored": 5
     },
     "route-load": {
-      "recorded": 20
+      "recorded": 19,
+      "scored": 1
     },
     "router-contract": {
       "invisible": 25
     },
     "step-load": {
       "invisible": 10,
-      "recorded": 259
+      "recorded": 211,
+      "scored": 46
     },
     "trigger-load": {
       "invisible": 2,
