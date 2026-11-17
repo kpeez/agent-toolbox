@@ -94,9 +94,7 @@ REPO = HERE.parents[1]
 
 class OfflineCLIContract(unittest.TestCase):
     def setUp(self):
-        root = REPO / "artifacts" / "skill-evals"
-        root.mkdir(parents=True, exist_ok=True)
-        self.temp = tempfile.TemporaryDirectory(prefix="contract-", dir=root)
+        self.temp = tempfile.TemporaryDirectory(prefix="contract-")
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.corpus = None
@@ -105,6 +103,8 @@ class OfflineCLIContract(unittest.TestCase):
 
     def cli(self, *args, ok=True):
         corpus = ["--corpus", str(self.corpus)] if self.corpus else []
+        if args[0] == "materialize":
+            args = (*args, "--output-root", self.root)
         result = subprocess.run([sys.executable, str(SCRIPT), *corpus, *map(str, args)],
                                 text=True, capture_output=True, cwd=REPO)
         if ok:

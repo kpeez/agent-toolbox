@@ -248,7 +248,8 @@ def materialize(args):
         raise ValueError("this slice supports serialized conversation, not native multi-turn replay")
     hook_arm = args.hook_arm
     output = Path(args.output).absolute()
-    output.resolve().relative_to((REPO / "artifacts" / "skill-evals").resolve())
+    allowed = getattr(args, "output_root", None) or REPO / "artifacts" / "skill-evals"
+    output.resolve().relative_to(Path(allowed).resolve())
     source_catalog_files = inventory(REPO / "plugins")
     output.mkdir(parents=True, exist_ok=False)
     workspace = output / "workspace"
@@ -1237,6 +1238,7 @@ def main():
     prep.add_argument("--case", required=True)
     prep.add_argument("--runtime", required=True, type=Path)
     prep.add_argument("--output", required=True, type=Path)
+    prep.add_argument("--output-root", type=Path, help="folder that --output must sit under; default artifacts/skill-evals")
     prep.add_argument("--hook-arm", choices=("hook-off", "hook-on"), default="hook-off",
                       help="hook-off removes all plugin hooks; hook-on keeps each plugin's SessionStart hook")
     cap = commands.add_parser("capture", help="retain an existing trace byte-for-byte; never invoke a provider")
