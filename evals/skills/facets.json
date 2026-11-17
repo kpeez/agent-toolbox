@@ -2010,7 +2010,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-fallback-hillclimb-metric"
+        ]
       },
       "evidence": "full-read",
       "id": "principle-read/swe/guard-the-context-window",
@@ -2031,7 +2033,7 @@
       "requirement": "always",
       "router_only": false,
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`guard-the-context-window`: large outputs, long files, or fan-out planning. Send bulk to subagents and keep summaries in the main thread.",
       "subject": "guard-the-context-window"
     },
@@ -11817,8 +11819,8 @@
       "scored": 28
     },
     "principle-read": {
-      "recorded": 12,
-      "scored": 17
+      "recorded": 11,
+      "scored": 18
     },
     "reply-load": {
       "scored": 2

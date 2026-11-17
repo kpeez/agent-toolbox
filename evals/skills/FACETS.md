@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-64 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+63 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -62,7 +62,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | step-load | 231 | 2 | 9 | 242 |
 | reply-load | 2 | 0 | 0 | 2 |
 | trigger-load | 0 | 16 | 2 | 18 |
-| principle-read | 17 | 12 | 0 | 29 |
+| principle-read | 18 | 11 | 0 | 29 |
 | router-contract | 0 | 0 | 25 | 25 |
 
 ## Activation

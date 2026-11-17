@@ -3283,10 +3283,11 @@
       "expected_route": "route/swe/hillclimb-metric",
       "facets": [
         "principle-read/swe/explain-the-number",
-        "principle-read/swe/separate-before-serializing-shared-state"
+        "principle-read/swe/separate-before-serializing-shared-state",
+        "principle-read/swe/guard-the-context-window"
       ],
       "relevant_action": "Say Playbook: hillclimb-metric and read the playbook before any other step.",
-      "rationale": "Parallel worktrees and a noise question make the hillclimb-metric steps name both principles."
+      "rationale": "Parallel worktrees and a noise question make the hillclimb-metric steps name all three principles. Step 6 hands each attempt to a subagent and keeps the findings in the main thread, so it names guard-the-context-window beside separate-before-serializing-shared-state."
     },
     {
       "id": "swe-fallback-autopilot-full",
