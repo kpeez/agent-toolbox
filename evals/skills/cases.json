@@ -1871,6 +1871,7 @@
       "category": "contextual",
       "split": "development",
       "expected_route": "route/lab/autoresearch",
+      "expected_mode": "run",
       "messages": [
         {
           "role": "user",

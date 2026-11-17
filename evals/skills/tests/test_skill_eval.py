@@ -1049,12 +1049,66 @@ class OfflineCLIContract(unittest.TestCase):
         line = "Route: autoresearch. Reason: the user wants a bounded experiment loop."
         route = self.route_run("route-skill", case, [("skill", "lab:autoresearch")], line)
         self.assertEqual((route["type"], route["route_load"], route["playbook_read"]), ("skill", "loaded", None))
-        self.assertEqual(route["steps_section"]["status"], "not_scorable")
+        self.assertEqual(route["steps_section"]["status"], "missing")
         self.assertEqual(route["line"], {"status": "match", "observed": "autoresearch"})
-        self.assertTrue(route["followed"])
+        self.assertFalse(route["followed"])
         unloaded = self.route_run("route-skill-unloaded", case, [], line)
         self.assertEqual(unloaded["route_load"], "miss")
         self.assertFalse(unloaded["followed"])
+
+    def route_facet(self, subject):
+        return next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+                    if f["id"] == f"route/lab/{subject}")
+
+    def skill_route_run(self, name, subject, mode, handles):
+        case = dict(self.case_named("lab-mode-route-autoresearch"), expected_route=f"route/lab/{subject}")
+        case.pop("expected_mode", None)
+        if mode:
+            case["expected_mode"] = mode
+        corpus = json.loads((HERE / "cases.json").read_text())
+        corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
+        self.corpus = self.root / f"{name}.json"
+        self.corpus.write_text(json.dumps(corpus))
+        reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
+        return self.route_run(name, case, [("skill", f"lab:{subject}")], f"Route: {subject}. Reason: it fits.", reply)
+
+    def test_skill_route_scores_the_steps_section_of_its_skill(self):
+        handles = self.route_facet("making-plots")["handles"]
+        followed = self.skill_route_run("skill-steps-complete", "making-plots", None, handles)
+        self.assertEqual(followed["steps_section"]["status"], "complete")
+        self.assertTrue(followed["followed"])
+        missing = self.skill_route_run("skill-steps-missing", "making-plots", None, handles[:-1])
+        self.assertEqual(missing["steps_section"]["missing_handles"], handles[-1:])
+        self.assertFalse(missing["followed"])
+        reordered = self.skill_route_run("skill-steps-reordered", "making-plots", None, [handles[1], handles[0], *handles[2:]])
+        self.assertTrue(reordered["steps_section"]["out_of_order"])
+        self.assertFalse(reordered["followed"])
+
+    def test_moded_skill_route_scores_the_steps_of_the_expected_mode(self):
+        modes = self.route_facet("autoresearch")["modes"]
+        followed = self.skill_route_run("mode-steps-run", "autoresearch", "run", modes["run"])
+        self.assertEqual(followed["steps_section"]["status"], "complete")
+        self.assertTrue(followed["followed"])
+        other = self.skill_route_run("mode-steps-other-mode", "autoresearch", "run", modes["cleanup"])
+        self.assertEqual(other["steps_section"]["status"], "missing")
+        self.assertFalse(other["followed"])
+        cleanup = self.skill_route_run("mode-steps-cleanup", "autoresearch", "cleanup", modes["cleanup"])
+        self.assertTrue(cleanup["followed"])
+        short = self.skill_route_run("mode-steps-short", "autoresearch", "run", modes["run"][:-1])
+        self.assertFalse(short["followed"])
+
+    def test_corpus_rejects_a_missing_unknown_or_stray_expected_mode(self):
+        for name, route, mode in (("mode-missing", "autoresearch", None), ("mode-unknown", "autoresearch", "no-such-mode"),
+                                  ("mode-stray", "making-plots", "run")):
+            case = dict(self.case_named("lab-mode-route-autoresearch"), expected_route=f"route/lab/{route}")
+            case.pop("expected_mode", None)
+            if mode:
+                case["expected_mode"] = mode
+            corpus = json.loads((HERE / "cases.json").read_text())
+            corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
+            self.corpus = self.root / f"{name}.json"
+            self.corpus.write_text(json.dumps(corpus))
+            self.assertIn("expected_mode", self.cli("validate", ok=False).stderr, name)
 
     def test_route_followed_is_null_when_evidence_is_partial(self):
         route, _ = self.route_trace("route-partial", read_playbook=False, state="incomplete")

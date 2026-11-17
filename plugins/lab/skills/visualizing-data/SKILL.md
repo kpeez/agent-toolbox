@@ -15,14 +15,14 @@ For production of publication- or report-quality scientific result figures,
 use `making-plots` for its replication, comparability, and figure-family rules.
 Do not load its full style workflow for a general chart review.
 
-## Frame the task
+## 1-frame-the-task
 
 Before choosing or changing a chart, identify the exact question, audience,
 variables, units, x-axis ordering, and whether uncertainty, missingness, or
 sample size materially affect interpretation. If the request is vague, state
 the inferred analytical task in one sentence.
 
-## Choose and encode
+## 2-choose-and-encode
 
 Use the simplest chart that makes the intended comparison easy. Load
 [chart selection](references/chart-selection.md) when the chart family is not
@@ -45,7 +45,7 @@ Keep scales, baselines, and transformations meaningful and explicit:
   improve reading; sort categories when rank is the question, but preserve
   semantic or matched order across related panels.
 
-## Make it honest and accessible
+## 3-make-it-honest-and-accessible
 
 Make the figure self-contained with a useful title or caption, labeled axes and
 units, and source, timeframe, transformation, threshold, outlier, or regime
@@ -57,7 +57,7 @@ direct labels when categories matter, and keep essential marks legible against
 the background. Load [color and accessibility](references/color-accessibility.md)
 when palette, contrast, grayscale, or color-vision concerns are relevant.
 
-## Review the result
+## 4-review-the-result
 
 When the task changes rendered visual output, inspect the rendered result at
 the intended display size. Load [the review checklist](references/review-checklist.md)

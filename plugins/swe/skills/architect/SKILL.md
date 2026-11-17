@@ -22,13 +22,19 @@ A principle named here is a swe principle skill. Load it by reading
 
 ## Start
 
-Open the host's task list with one entry per phase before you start.
+Open the host's task list with one entry per step before you start.
 
-1. Ground
-2. Sketch
-3. Agree
-4. Implement
-5. Scrap
+1. `1-ground-the-problem`: Build a real mental model of every system the new
+   code touches (Phase A).
+2. `2-sketch-competing-designs`: Race competing designs and synthesize one
+   (Phase B).
+3. `3-agree-on-the-design`: Go straight to implementation with the synthesized
+   design. Pause for sign-off only when the invoker asked for a checkpoint
+   (Phase C).
+4. `4-implement-against-the-sketch`: Fill in code against the synthesized
+   sketch (Phase D).
+5. `5-scrap-a-wrong-architecture`: Throw the sketch out when implementation
+   shows the architecture is wrong (Phase E).
 
 ## Phase A: Ground the problem
 

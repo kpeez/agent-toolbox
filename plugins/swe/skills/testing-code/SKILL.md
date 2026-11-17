@@ -10,14 +10,26 @@ One skill owns all work on tests. Pick the mode from the request:
 
 - **New tests and probes:** adding, rewriting, or judging a test, a probe, TDD,
   regression coverage, or testing strategy. Follow the rest of this file down to
-  "Audit mode". This mode has no numbered procedure; its section headings are
-  its steps.
+  "Audit mode".
 - **Audit:** reviewing or pruning existing tests, a test-suite sweep, or a
   pruning campaign. Follow "Audit mode" at the end of this file.
 
 Both modes share one value bar: [references/test-value.md](references/test-value.md).
 
 ## New tests and probes
+
+Follow these steps. The sections below give the detail of each.
+
+1. `1-name-the-contract`: Name the promised behavior, the independent oracle,
+   and the narrowest stable public seam. Probe first when any is unclear.
+2. `2-pass-the-admission-gate`: Answer all six gate questions. A missing or
+   weak answer means no permanent test.
+3. `3-choose-the-evidence`: Choose the smallest evidence mode that settles the
+   risk, and tie each claim to its oracle. The mode can be no permanent test.
+4. `4-see-it-fail`: Watch each new test fail for the intended reason, on the
+   pre-fix code for a regression.
+5. `5-clean-up-and-report`: Remove task-owned scratch work. Report the contract
+   each test guards and how it was seen red.
 
 Default to no new permanent test. A test is a maintenance cost that must be
 repaid by protecting behavior nothing cheaper already protects. Use scratch

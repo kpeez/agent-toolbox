@@ -37,6 +37,31 @@ convention. Existing runs keep the absolute paths recorded in their approved
 program; resuming does not move their files. The configured vault receives the
 human closeout and only figures embedded there as references.
 
+## Cleanup mode
+
+Use this mode for `/autoresearch cleanup`. The cleanup reference holds the
+detail.
+
+1. `1-recover-the-evidence`: Establish which records belong to the run, then
+   make sure `program.md` and `EXPERIMENT_SUMMARY.md` exist at the run root.
+2. `2-render-the-progress-plot`: Render the progress plot of the optimized
+   metric from comparable attempts, and leave the original records unchanged.
+3. `3-archive-and-retain`: Confirm the run has stopped, run the cleanup helper,
+   and verify the three-file layout.
+
+## Run mode
+
+Use this mode for every other request.
+
+1. `1-set-up-the-program`: Run go-deeper on the goal, draft `program.md`, and
+   get it approved. When you resume, reconcile the interrupted run first.
+2. `2-establish-the-baseline`: Complete any required calibration, then record
+   the comparable baseline as the first `keep`.
+3. `3-run-the-candidate-loop`: Repeat the candidate loop until the approved
+   stop condition.
+4. `4-wrap-up`: Render the summaries and the declared figure, and report the
+   run.
+
 ## Experiment boundaries
 
 Everything inside the editable paths is available for experiments. Do not:

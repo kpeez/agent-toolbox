@@ -12,7 +12,7 @@ edits or structural fixes.
 Skip when the session is trivial, off-topic, or already covered by a skill
 the agent followed correctly. A one-off is not a learning.
 
-## 1. Locate the active transcript
+## 1-locate-the-transcript
 
 Find this session's transcript before you fan out. Read only this project's
 transcripts. Never glob across `~/.claude/projects/*/` or all of
@@ -35,7 +35,7 @@ sessions of unrelated projects.
 
 If none matches, pass a tight digest of the session instead.
 
-## 2. Start three reviewers in parallel
+## 2-start-three-reviewers
 
 Start the three reviewers in one message, as general-purpose subagents that
 can run tools. Reviewers need tool and MCP access to look up the tickets,
@@ -51,21 +51,21 @@ Pass each template verbatim, with the transcript path or the digest
 substituted where marked. Each reviewer returns its findings in its final
 report.
 
-## 3. Synthesize
+## 3-synthesize
 
 Start one more subagent on `opus` (Codex: high reasoning effort) with
 [synthesizer](references/synthesizer.md) verbatim and each reviewer's full
 output inlined where marked. It spot-checks citations with the same tools and
 returns an Accepted, Rejected, and Backlog list.
 
-## 4. Structural enforcement check
+## 4-check-structural-enforcement
 
 Move to Backlog any Accepted item that a lint rule, script, type, metadata
 flag, or runtime check would enforce more reliably than prose. The
 encode-lessons-in-structure principle explains why. The
 [correct](../correct/SKILL.md) skill applies those fixes.
 
-## 5. Apply
+## 5-apply-approved-edits
 
 Present the synthesizer's full Accepted, Rejected, and Backlog output. Wait
 for explicit approval before you apply any Accepted edit. The user picks the
@@ -100,7 +100,7 @@ Follow each approved row's Routing exactly:
 Run the repository's skill and plugin checks on every touched skill before
 you declare done.
 
-## 6. Summarize for the user
+## 6-summarize-for-the-user
 
 Give a short list, with no preamble:
 

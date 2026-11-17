@@ -19,7 +19,7 @@ does judgment and prose, so run it on `opus`. In Codex, give explorers medium
 reasoning effort and the explainer high. If the host rejects a model, use the
 host default and say so.
 
-## 1. Assess complexity
+## 1-assess-complexity
 
 If the scope is ambiguous, state your interpretation and explore. The user can
 redirect.
@@ -34,19 +34,23 @@ redirect.
 
 When in doubt, take the simple path.
 
-## 2. Explore (complex only)
+## 2-explore
+
+Complex questions only.
 
 Split the question into 2 to 4 angles. Each angle is a distinct slice of the
 subsystem. Spawn all explorers in a single message. Build each prompt from
 [the explorer prompt](references/explorer-prompt.md) with its angle filled in.
 
-## 3. Synthesize (complex only)
+## 3-synthesize
+
+Complex questions only.
 
 When all explorers have returned, spawn one explainer. Build its prompt from
 [the explainer prompt](references/explainer-prompt.md) with every explorer's
 findings filled in.
 
-## 4. Present
+## 4-present
 
 Present the explainer's output. Light edits for clarity or for context from the
 conversation are fine. Do not substantially rewrite it.

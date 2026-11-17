@@ -256,6 +256,8 @@ CONTRACTS = [
 
 STEP = re.compile(r"(\d+-[a-z0-9-]+): (.+)")
 REPLY = re.compile(r"Reply: (.+)")
+SKILL_STEP_ITEM = re.compile(r"\d+\. `(\d+-[a-z0-9-]+)`:")
+SKILL_STEP_HEADING = re.compile(r"\d+-[a-z0-9-]+")
 PARENS = re.compile(r"\(([^()]+)\)\s*$")
 NAME = re.compile(r"[a-z][a-z0-9-]*|reviewer agent")
 CONDITIONAL = re.compile(r"^When |\bSkip (when|for)\b")
@@ -549,6 +551,36 @@ def parse_playbook(plugin, slug, file):
     return rows
 
 
+def skill_steps(file):
+    """Read a routed skill's steps: the `N. `N-slug`:` items, or the `## N-slug` headings.
+
+    Items belong to the nearest `##` heading above them. One group is the skill's steps. Several
+    groups are its modes, keyed by the heading in lowercase with hyphens and without a trailing
+    `mode`. Fenced blocks are skipped.
+    """
+    groups, mode, fenced = defaultdict(list), "", False
+    for line in file.read_text(encoding="utf-8").split("\n"):
+        if line.startswith("```"):
+            fenced = not fenced
+        heading = None if fenced else re.fullmatch(r"(#{2,4}) (.+)", line)
+        if heading and len(heading.group(1)) == 2 and SKILL_STEP_HEADING.fullmatch(heading.group(2)):
+            groups[None].append(heading.group(2))
+        elif heading and len(heading.group(1)) == 2:
+            mode = re.sub(r"-mode$", "", re.sub(r"[^a-z0-9]+", "-", heading.group(2).lower()).strip("-"))
+        elif item := None if fenced else SKILL_STEP_ITEM.match(line):
+            groups[mode].append(item.group(1))
+    if not groups:
+        raise FacetError(f"{rel(file)}: a routed skill must state its steps as `N. `N-slug`:` items or `## N-slug` headings")
+    if None in groups and len(groups) > 1:
+        raise FacetError(f"{rel(file)}: step headings and step lists must not mix")
+    for key, handles in groups.items():
+        if [int(h.split("-")[0]) for h in handles] != list(range(1, len(handles) + 1)) or len(set(handles)) != len(handles):
+            raise FacetError(f"{rel(file)}: step handles of {key or 'the skill'} are not numbered 1..n in order")
+    if len(groups) == 1:
+        return next(iter(groups.values())), {}
+    return [], dict(groups)
+
+
 def step_names(plugin, file, handle, text):
     match = PARENS.search(text)
     names = match.group(1).split(", ") if match else []
@@ -832,6 +864,7 @@ def router_facets(plugin):
         (f"Single-skill routes: {skill}", skill, " | ".join(texts))
         for skill, texts in routes.items()
     ] + [(f"Match: {skill}", skill, anchor) for skill, anchor in extra.items()]:
+        handles, modes = skill_steps((plugin.visible | plugin.hidden)[skill])
         yield make(
             "route",
             plugin.name,
@@ -840,7 +873,8 @@ def router_facets(plugin):
             locator=locator,
             source_text=source_text,
             route_type="skill",
-            handles=[],
+            handles=handles,
+            modes=modes,
         )
         yield load_facet(
             "route-load",
@@ -1077,7 +1111,9 @@ def render(data, unreached):
             [
                 (
                     f"{f['route_type']} `{f['subject']}`",
-                    ", ".join(f["handles"]) or "-",
+                    ", ".join(f["handles"])
+                    or "; ".join(f"{m}: {', '.join(h)}" for m, h in f.get("modes", {}).items())
+                    or "-",
                     *count(f["cases"]),
                 )
                 for f in mine

@@ -39,11 +39,11 @@ read it. Put this file's absolute path in every delegate's brief.
 
 1. For a playbook, read `playbooks/<slug>.md` in full. A limit in its Reply
    line, such as "No PR", holds for the whole task. For a route, load the
-   skill. Its numbered procedure is the steps; a numbered list of criteria,
-   levels, or rungs is not a procedure. When the skill has modes, use the
-   procedure of the mode that fits the task. When the chosen skill or mode has
-   no numbered procedure, its section headings are the steps. Each step's
-   title is its handle.
+   skill. Its steps are the list items that start with a handle
+   (``1. `1-name`: ...``) and the headings that are a handle (`## 1-name`);
+   other numbered lists are criteria, levels, or rungs, not steps. When the
+   skill has modes, each mode has its own list under its heading: use the list
+   of the mode that fits the task. Each step's title is its handle.
 2. When the host has a task-list tool, create one task per step right after
    you read the playbook or load the routed skill. Copy each playbook step line
    byte for byte; for a routed skill, copy each handle with its first

@@ -152,6 +152,9 @@ def corpus(path=HERE / "cases.json"):
         if route is not None and (case["category"] == "negative" or facets.get(route, {}).get("kind") != "route"
                                   or facets[route]["plugin"] != case["target"].split(":")[0]):
             raise ValueError("expected_route must name a route facet of the target's plugin and no negative case may set it")
+        modes = facets[route].get("modes", {}) if route else {}
+        if case.get("expected_mode") not in (modes or {None}):
+            raise ValueError("expected_mode must name a mode of the expected route, and only a route with modes takes one")
         listed = case.get("facets", [])
         if not isinstance(listed, list) or len(set(listed)) != len(listed) or any(
                 facets.get(f, {}).get("evidence") not in {"skill-call", "full-read"}
@@ -1061,9 +1064,8 @@ def route_score(case, facets, evidence, complete):
     playbook = route["route_type"] == "playbook"
     read = next(f for f in own if f["kind"] == ("playbook-read" if playbook else "route-load"))
     status = load_status(evidence, read, complete)
-    section = steps_section(evidence["final_reply"], route["handles"], complete) if playbook else {
-        "status": "not_scorable", "heading": False, "done": [], "skipped": {}, "unclear_handles": [],
-        "missing_handles": [], "out_of_order": False}
+    handles = route["modes"][case["expected_mode"]] if route.get("modes") else route["handles"]
+    section = steps_section(evidence["final_reply"], handles, complete)
     required, one_of, transitive = {}, {}, {}
     for f in own:
         if f["kind"] != "step-load" or f["handle"] not in section["done"]:

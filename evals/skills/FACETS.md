@@ -145,44 +145,44 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | route | handles | positive cases | negative cases |
 |---|---|---|---|
-| skill `architect` | - | 0 | 0 |
+| skill `architect` | 1-ground-the-problem, 2-sketch-competing-designs, 3-agree-on-the-design, 4-implement-against-the-sketch, 5-scrap-a-wrong-architecture | 0 | 0 |
 | playbook `author-skill` | 1-choose-invocation, 2-single-source-check, 3-cut-to-decisions, 4-validate-skill, 5-check-packaging, 6-plan-activation-check, 7-publish-draft-pr | 0 | 0 |
 | playbook `autopilot-full` | 1-honor-operator-gates, 2-spawn-owner-per-pr, 3-report-code-ready-head, 4-assume-the-session-dies, 5-run-owners-in-parallel, 6-swarm-verify-once, 7-send-findings-to-owner, 8-merge-only-verified, 9-countersign-loosened-gates, 10-arm-audit-loop, 11-stand-down-on-stop | 0 | 0 |
 | playbook `autopilot-stack` | 1-stop-at-verified, 2-stack-only-on-dependency | 0 | 0 |
 | playbook `babysit-pr` | 1-declare-mode, 2-claim-the-stack, 3-work-the-frontier, 4-keep-the-topology, 5-conflicts-then-threads-then-ci, 6-read-github-verdict, 7-classify-ci-first, 8-triage-review-bots, 9-stop-at-merge-ready, 10-stop-at-human-line, 11-sweep-triage-patterns | 0 | 0 |
-| skill `blast-radius` | - | 0 | 0 |
+| skill `blast-radius` | 1-read-the-change, 2-find-safety-fact, 3-look-past-grep, 4-rate-each-risk, 5-prove-the-fact, 6-optional-independent-review | 0 | 0 |
 | playbook `build-feature` | 1-map-subsystem, 2-interview-on-open-decisions, 3-name-data-shape, 4-explore-designs, 5-write-throughput-checkpoint, 6-build-one-unit, 7-decide-tests, 8-verify-on-surface, 9-check-blast-radius, 10-review-if-contested, 11-independent-review, 12-order-commits, 13-update-obsolete-docs, 14-publish-draft-pr | 0 | 0 |
 | playbook `build-prototype` | 1-scope-the-decision, 2-gather-references, 3-build-throwaway, 4-switch-between-variants, 5-observe-on-surface, 6-recommend-direction | 0 | 0 |
 | playbook `clean-worktrees` | 1-snapshot-and-audit, 2-cross-check-in-use, 3-verify-usage, 4-pause-on-loss, 5-prune-confirmed-set, 6-prune-merged-scratch, 7-other-reclaimers | 0 | 0 |
-| skill `codebase-design` | - | 0 | 0 |
-| skill `correct` | - | 0 | 0 |
-| skill `diagnose` | - | 0 | 0 |
+| skill `codebase-design` | design: 1-map-the-callers, 2-weigh-the-trade-offs, 3-specify-the-interface, 4-compare-interfaces; review: 1-explore-friction, 2-apply-deletion-test, 3-report-candidates, 4-interview-on-chosen-design | 0 | 0 |
+| skill `correct` | 1-find-the-mistake-classes, 2-fix-each-class, 3-fix-and-prove, 4-keep-the-rule-table | 0 | 0 |
+| skill `diagnose` | 1-state-exact-failure, 2-build-feedback-loop, 3-seed-from-history, 4-rank-hypotheses, 5-label-confidence, 6-remove-instrumentation | 0 | 0 |
 | playbook `diagnose-runtime` | 1-capture-live-signal, 2-reduce-to-smoking-gun, 3-prove-mechanism, 4-map-to-source, 5-note-throughput | 0 | 0 |
 | playbook `diagnose-trace` | 1-identify-format, 2-make-it-queryable, 3-narrow-to-cause, 4-attribute-to-source, 5-confirm-with-pair, 6-note-throughput | 0 | 0 |
 | playbook `evaluate-agent-change` | 1-frame-variant, 2-preregister-criteria, 3-freeze-configuration, 4-sanitize-environments, 5-blind-the-candidate, 6-run-all-arms, 7-blind-the-judge, 8-verify-chain-from-transcripts, 9-read-every-output, 10-report-with-spread | 0 | 0 |
-| skill `external-agents` | - | 0 | 0 |
-| skill `figure-it-out` | - | 0 | 0 |
+| skill `external-agents` | questions: 1-check-the-harness, 2-choose-models, 3-frame-the-questions, 4-write-the-briefs, 5-run-the-workers, 6-verify-the-answers, 7-check-for-changes-and-clean-up, 8-report; delegate: 1-check-and-choose, 2-fix-the-spec, 3-start-clean, 4-run-the-builder, 5-review-the-round, 6-close-gaps, 7-report | 0 | 0 |
+| skill `figure-it-out` | 1-read-principles, 2-frame-the-run, 3-design-the-playbook, 4-run-the-loop, 5-keep-the-audit-trail, 6-verify-and-hand-back | 0 | 0 |
 | playbook `fix-bug` | 1-reproduce-failure, 2-binary-search-cause, 3-confirm-mechanism, 4-sweep-for-pattern, 5-plan-fix, 6-decide-regression-test, 7-commit-failing-repro, 8-apply-smallest-fix, 9-verify-original-repro, 10-encode-bug-class, 11-check-blast-radius, 12-clean-the-diff, 13-update-obsolete-docs, 14-publish-draft-pr | 0 | 0 |
-| skill `handoff` | - | 0 | 0 |
+| skill `handoff` | 1-find-the-file, 2-write-the-file | 0 | 0 |
 | playbook `hillclimb-metric` | 1-ground-workload, 2-fix-metric-and-stop, 3-freeze-harness, 4-open-decision-log, 5-ground-each-hypothesis, 6-delegate-attempt, 7-measure-and-decide, 8-commit-and-log, 9-push-past-plateau, 10-stop-on-predicate, 11-publish-draft-pr | 0 | 0 |
-| skill `how` | - | 0 | 0 |
+| skill `how` | 1-assess-complexity, 2-explore, 3-synthesize, 4-present | 0 | 0 |
 | playbook `improve-performance` | 1-measure-baseline, 2-ground-hypotheses, 3-name-limiter, 4-try-mantras, 5-plan-fix, 6-change-one-thing, 7-compare-artifacts, 8-explain-the-gain, 9-verify-behavior-unchanged, 10-update-obsolete-docs, 11-publish-draft-pr | 0 | 0 |
-| skill `interview-user` | - | 0 | 0 |
+| skill `interview-user` | 1-ask-a-round, 2-find-facts-and-leave-decisions, 3-confirm-the-shared-understanding | 0 | 0 |
 | playbook `investigate-question` | 1-restate-question, 2-map-with-how, 3-trace-rationale, 4-note-throughput, 5-shape-the-answer, 6-label-each-claim, 7-check-reply-prose | 0 | 0 |
-| skill `ketchup` | - | 0 | 0 |
+| skill `ketchup` | 1-gather-what-changed, 2-write-the-reply | 0 | 0 |
 | playbook `match-visual-parity` | 1-establish-baseline, 2-migrate-shared-primitives, 3-migrate-one-component, 4-diff-each-component, 5-publish-draft-pr | 0 | 0 |
 | playbook `pause-safely` | 1-stop-at-safe-boundary, 2-take-no-irreversible-action, 3-commit-wip, 4-write-handoff | 0 | 0 |
 | playbook `pick-up-session` | 1-locate-prior-trail, 2-reconstruct-state, 3-diff-done-vs-pending, 4-route-remaining-work, 5-verify-inherited-claims | 0 | 0 |
 | playbook `plan-multi-phase` | 1-skip-small-change, 2-settle-by-prototype, 3-explore-in-subagents, 4-fill-skeleton, 5-write-as-how-to, 6-run-plan-check, 7-hand-back | 0 | 0 |
 | playbook `refactor-structure` | 1-pin-behavior, 2-name-missing-structure, 3-name-target-shape, 4-subtract-first, 5-move-in-small-steps, 6-migrate-then-delete, 7-prove-equivalence, 8-confirm-reader-gain, 9-independent-review, 10-order-commits, 11-update-obsolete-docs, 12-publish-draft-pr | 0 | 0 |
-| skill `reflect` | - | 0 | 0 |
+| skill `reflect` | 1-locate-the-transcript, 2-start-three-reviewers, 3-synthesize, 4-check-structural-enforcement, 5-apply-approved-edits, 6-summarize-for-the-user | 0 | 0 |
 | playbook `run-autonomously` | 1-state-exit-predicate, 2-pick-wake-mechanism, 3-open-decision-log, 4-iterate-smallest-change, 5-own-mid-run-discoveries, 6-log-each-iteration, 7-stop-on-predicate, 8-publish-draft-pr | 0 | 0 |
 | playbook `run-program` | 1-frame-program, 2-one-owner-per-pr, 3-fresh-worker-per-task, 4-sub-coordinator-only-when-wide, 5-fork-for-built-state, 6-verify-each-pr, 7-start-with-one-unit, 8-name-the-evidence, 9-read-the-work, 10-check-live-state, 11-replace-stalled-workers, 12-ask-only-for-decisions | 0 | 0 |
-| skill `ship-pr` | - | 0 | 0 |
+| skill `ship-pr` | publish: 1-inspect, 2-verify, 3-group-and-commit, 4-push, 5-open-draft-pr, 6-link-issue, 7-report; drive-to-green: 1-resolve-conflicts, 2-triage-review-threads, 3-classify-ci-failures, 4-push-one-wave, 5-reply-to-threads, 6-update-pr-body; land: 1-get-independent-verdict, 2-key-verdict-to-patch, 3-recheck-before-landing, 4-mark-ready, 5-merge; finalize: 1-locate-pr, 2-account-for-local-changes, 3-reverify, 4-ready-or-land, 5-leave-issue-status, 6-report | 0 | 0 |
 | playbook `ship-stack` | 1-verify-each-pr, 2-find-verified-run, 3-recheck-patch-ids, 4-land-bottom-up, 5-hands-off-while-landing, 6-stop-at-ceiling | 0 | 0 |
-| skill `testing-code` | - | 0 | 0 |
-| skill `verification-skill` | - | 0 | 0 |
-| skill `writing` | - | 0 | 0 |
+| skill `testing-code` | new-tests-and-probes: 1-name-the-contract, 2-pass-the-admission-gate, 3-choose-the-evidence, 4-see-it-fail, 5-clean-up-and-report; audit: 1-record-suite-baseline, 2-mark-candidates, 3-edit-in-small-batches, 4-mutate-changed-contracts, 5-independent-preservation-review, 6-publish-draft-pr | 0 | 0 |
+| skill `verification-skill` | create: 1-interview-the-repo, 2-fix-the-checkout, 3-generate-the-skill, 4-seed-the-feature-map, 5-prove-the-generated-skill, 6-hand-over; maintain: 1-clean-the-index, 2-run-the-source-wave, 3-reconcile, 4-run-the-live-pass, 5-triage, 6-ship-or-stop | 0 | 0 |
+| skill `writing` | 1-find-the-surface, 2-read-its-row, 3-apply-the-prose-rules, 4-run-the-check | 0 | 0 |
 
 ### Playbook `author-skill` step loads
 
@@ -557,15 +557,15 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|---|
 | playbook `analyze-results` | 1-locate-raw-results, 2-state-the-decision, 3-check-the-run-ran, 4-check-the-pipeline, 5-measure-noise, 6-check-comparison, 7-read-examples, 8-rule-out-rivals, 9-make-figures, 10-grade-the-conclusion, 11-feed-the-flywheel | 2 | 0 |
 | playbook `appraise-source` | 1-get-the-original, 2-extract-claims, 3-check-comparisons, 4-check-noise, 5-list-rivals, 6-read-examples, 7-search-follow-ups, 8-grade-each-claim, 9-feed-the-flywheel | 1 | 0 |
-| skill `autoresearch` | - | 1 | 0 |
+| skill `autoresearch` | cleanup: 1-recover-the-evidence, 2-render-the-progress-plot, 3-archive-and-retain; run: 1-set-up-the-program, 2-establish-the-baseline, 3-run-the-candidate-loop, 4-wrap-up | 1 | 0 |
 | playbook `bootstrap-project` | 1-survey-the-repo, 2-write-research-context, 3-prove-the-context, 4-rank-procedures, 5-codify-the-top-procedure, 6-list-the-rest | 0 | 0 |
 | playbook `codify-procedure` | 1-name-the-procedure, 2-load-the-context, 3-run-it-as-is, 4-collect-validity-checks, 5-build-the-known-good-run, 6-write-the-skill, 7-prove-the-skill, 8-register-the-skill | 0 | 0 |
 | playbook `maintain-project-skills` | 1-list-project-skills, 2-rerun-known-good-runs, 3-compare-with-the-pipeline, 4-fix-or-retire, 5-refresh-the-context | 0 | 0 |
-| skill `making-plots` | - | 0 | 0 |
-| skill `research-skill` | - | 0 | 0 |
+| skill `making-plots` | 1-name-the-question, 2-pick-the-figure-type, 3-set-the-style, 4-validate-and-draw, 5-render-and-look, 6-review-the-figure | 0 | 0 |
+| skill `research-skill` | context: 1-survey-the-repo, 2-write-research-context, 3-prove-it, 4-hand-over; create: 1-pin-the-procedure, 2-run-it-as-it-is, 3-collect-validity-checks, 4-build-the-known-good-run, 5-write-the-skill, 6-prove-the-skill, 7-hand-over; maintain: 1-rerun-the-known-good-run, 2-compare-with-the-pipeline, 3-fold-in-corrections, 4-report-the-outcome | 0 | 0 |
 | playbook `review-literature` | 1-frame-question, 2-search-both-directions, 3-screen-sources, 4-appraise-key-sources, 5-synthesize-by-claim, 6-write-the-report, 7-feed-the-flywheel | 1 | 0 |
 | playbook `run-experiment` | 1-write-the-decision, 2-check-prior-work, 3-tune-the-baseline, 4-pilot-small, 5-measure-noise-floor, 6-run-with-provenance, 7-analyze, 8-record-the-result, 9-feed-the-flywheel | 1 | 0 |
-| skill `visualizing-data` | - | 0 | 0 |
+| skill `visualizing-data` | 1-frame-the-task, 2-choose-and-encode, 3-make-it-honest-and-accessible, 4-review-the-result | 0 | 0 |
 
 ### Playbook `analyze-results` step loads
 

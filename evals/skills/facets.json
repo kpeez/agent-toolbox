@@ -2868,6 +2868,19 @@
       "handles": [],
       "id": "route/lab/autoresearch",
       "kind": "route",
+      "modes": {
+        "cleanup": [
+          "1-recover-the-evidence",
+          "2-render-the-progress-plot",
+          "3-archive-and-retain"
+        ],
+        "run": [
+          "1-set-up-the-program",
+          "2-establish-the-baseline",
+          "3-run-the-candidate-loop",
+          "4-wrap-up"
+        ]
+      },
       "path": null,
       "plugin": "lab",
       "required_by": {
@@ -2975,9 +2988,17 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-name-the-question",
+        "2-pick-the-figure-type",
+        "3-set-the-style",
+        "4-validate-and-draw",
+        "5-render-and-look",
+        "6-review-the-figure"
+      ],
       "id": "route/lab/making-plots",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "lab",
       "required_by": {
@@ -3000,6 +3021,29 @@
       "handles": [],
       "id": "route/lab/research-skill",
       "kind": "route",
+      "modes": {
+        "context": [
+          "1-survey-the-repo",
+          "2-write-research-context",
+          "3-prove-it",
+          "4-hand-over"
+        ],
+        "create": [
+          "1-pin-the-procedure",
+          "2-run-it-as-it-is",
+          "3-collect-validity-checks",
+          "4-build-the-known-good-run",
+          "5-write-the-skill",
+          "6-prove-the-skill",
+          "7-hand-over"
+        ],
+        "maintain": [
+          "1-rerun-the-known-good-run",
+          "2-compare-with-the-pipeline",
+          "3-fold-in-corrections",
+          "4-report-the-outcome"
+        ]
+      },
       "path": null,
       "plugin": "lab",
       "required_by": {
@@ -3085,9 +3129,15 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-frame-the-task",
+        "2-choose-and-encode",
+        "3-make-it-honest-and-accessible",
+        "4-review-the-result"
+      ],
       "id": "route/lab/visualizing-data",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "lab",
       "required_by": {
@@ -3107,9 +3157,16 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-ground-the-problem",
+        "2-sketch-competing-designs",
+        "3-agree-on-the-design",
+        "4-implement-against-the-sketch",
+        "5-scrap-a-wrong-architecture"
+      ],
       "id": "route/swe/architect",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3252,9 +3309,17 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-read-the-change",
+        "2-find-safety-fact",
+        "3-look-past-grep",
+        "4-rate-each-risk",
+        "5-prove-the-fact",
+        "6-optional-independent-review"
+      ],
       "id": "route/swe/blast-radius",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3373,6 +3438,20 @@
       "handles": [],
       "id": "route/swe/codebase-design",
       "kind": "route",
+      "modes": {
+        "design": [
+          "1-map-the-callers",
+          "2-weigh-the-trade-offs",
+          "3-specify-the-interface",
+          "4-compare-interfaces"
+        ],
+        "review": [
+          "1-explore-friction",
+          "2-apply-deletion-test",
+          "3-report-candidates",
+          "4-interview-on-chosen-design"
+        ]
+      },
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3392,9 +3471,15 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-find-the-mistake-classes",
+        "2-fix-each-class",
+        "3-fix-and-prove",
+        "4-keep-the-rule-table"
+      ],
       "id": "route/swe/correct",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3414,9 +3499,17 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-state-exact-failure",
+        "2-build-feedback-loop",
+        "3-seed-from-history",
+        "4-rank-hypotheses",
+        "5-label-confidence",
+        "6-remove-instrumentation"
+      ],
       "id": "route/swe/diagnose",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3529,6 +3622,27 @@
       "handles": [],
       "id": "route/swe/external-agents",
       "kind": "route",
+      "modes": {
+        "delegate": [
+          "1-check-and-choose",
+          "2-fix-the-spec",
+          "3-start-clean",
+          "4-run-the-builder",
+          "5-review-the-round",
+          "6-close-gaps",
+          "7-report"
+        ],
+        "questions": [
+          "1-check-the-harness",
+          "2-choose-models",
+          "3-frame-the-questions",
+          "4-write-the-briefs",
+          "5-run-the-workers",
+          "6-verify-the-answers",
+          "7-check-for-changes-and-clean-up",
+          "8-report"
+        ]
+      },
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3548,9 +3662,17 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-read-principles",
+        "2-frame-the-run",
+        "3-design-the-playbook",
+        "4-run-the-loop",
+        "5-keep-the-audit-trail",
+        "6-verify-and-hand-back"
+      ],
       "id": "route/swe/figure-it-out",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3607,9 +3729,13 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-find-the-file",
+        "2-write-the-file"
+      ],
       "id": "route/swe/handoff",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3663,9 +3789,15 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-assess-complexity",
+        "2-explore",
+        "3-synthesize",
+        "4-present"
+      ],
       "id": "route/swe/how",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3719,9 +3851,14 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-ask-a-round",
+        "2-find-facts-and-leave-decisions",
+        "3-confirm-the-shared-understanding"
+      ],
       "id": "route/swe/interview-user",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3771,9 +3908,13 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-gather-what-changed",
+        "2-write-the-reply"
+      ],
       "id": "route/swe/ketchup",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -3941,9 +4082,17 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-locate-the-transcript",
+        "2-start-three-reviewers",
+        "3-synthesize",
+        "4-check-structural-enforcement",
+        "5-apply-approved-edits",
+        "6-summarize-for-the-user"
+      ],
       "id": "route/swe/reflect",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -4032,6 +4181,40 @@
       "handles": [],
       "id": "route/swe/ship-pr",
       "kind": "route",
+      "modes": {
+        "drive-to-green": [
+          "1-resolve-conflicts",
+          "2-triage-review-threads",
+          "3-classify-ci-failures",
+          "4-push-one-wave",
+          "5-reply-to-threads",
+          "6-update-pr-body"
+        ],
+        "finalize": [
+          "1-locate-pr",
+          "2-account-for-local-changes",
+          "3-reverify",
+          "4-ready-or-land",
+          "5-leave-issue-status",
+          "6-report"
+        ],
+        "land": [
+          "1-get-independent-verdict",
+          "2-key-verdict-to-patch",
+          "3-recheck-before-landing",
+          "4-mark-ready",
+          "5-merge"
+        ],
+        "publish": [
+          "1-inspect",
+          "2-verify",
+          "3-group-and-commit",
+          "4-push",
+          "5-open-draft-pr",
+          "6-link-issue",
+          "7-report"
+        ]
+      },
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -4083,6 +4266,23 @@
       "handles": [],
       "id": "route/swe/testing-code",
       "kind": "route",
+      "modes": {
+        "audit": [
+          "1-record-suite-baseline",
+          "2-mark-candidates",
+          "3-edit-in-small-batches",
+          "4-mutate-changed-contracts",
+          "5-independent-preservation-review",
+          "6-publish-draft-pr"
+        ],
+        "new-tests-and-probes": [
+          "1-name-the-contract",
+          "2-pass-the-admission-gate",
+          "3-choose-the-evidence",
+          "4-see-it-fail",
+          "5-clean-up-and-report"
+        ]
+      },
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -4105,6 +4305,24 @@
       "handles": [],
       "id": "route/swe/verification-skill",
       "kind": "route",
+      "modes": {
+        "create": [
+          "1-interview-the-repo",
+          "2-fix-the-checkout",
+          "3-generate-the-skill",
+          "4-seed-the-feature-map",
+          "5-prove-the-generated-skill",
+          "6-hand-over"
+        ],
+        "maintain": [
+          "1-clean-the-index",
+          "2-run-the-source-wave",
+          "3-reconcile",
+          "4-run-the-live-pass",
+          "5-triage",
+          "6-ship-or-stop"
+        ]
+      },
       "path": null,
       "plugin": "swe",
       "required_by": {
@@ -4124,9 +4342,15 @@
         "positive": []
       },
       "evidence": "assistant-text",
-      "handles": [],
+      "handles": [
+        "1-find-the-surface",
+        "2-read-its-row",
+        "3-apply-the-prose-rules",
+        "4-run-the-check"
+      ],
       "id": "route/swe/writing",
       "kind": "route",
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {

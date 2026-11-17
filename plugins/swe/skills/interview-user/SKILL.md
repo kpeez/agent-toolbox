@@ -20,7 +20,7 @@ with your recommended answer, then wait for the answers. Each answer moves the
 frontier outward; recompute it and ask the next round. A question that depends
 on another question still open in this round belongs to a later round.
 
-## Asking a round
+## 1-ask-a-round
 
 When the host has a built-in tool for asking the user questions, ask the round
 through it: one question per frontier decision, your recommendation as the
@@ -44,7 +44,7 @@ accepts your recommendation:
 ➡️ <recommended answer>
 ```
 
-## Facts and decisions
+## 2-find-facts-and-leave-decisions
 
 Finding facts is your job, never the user's. When a frontier question needs a
 fact from the code, documents, or tools, look it up, and dispatch a subagent for
@@ -57,7 +57,7 @@ The decisions are the user's: put each one to them and wait.
 When a term is vague or overloaded, propose one precise term as a frontier
 question.
 
-## Done
+## 3-confirm-the-shared-understanding
 
 The session is done when the frontier is empty: every branch visited, nothing
 silently assumed. Summarize the settled decisions, the alternatives rejected and

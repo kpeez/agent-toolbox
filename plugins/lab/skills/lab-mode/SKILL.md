@@ -52,7 +52,9 @@ must show, and what the result means.
 ## Track
 
 1. For a playbook, read `playbooks/<slug>.md` in full. For a route, load the
-   skill; its numbered procedure, or else its section headings, are the steps.
+   skill. Its steps are the list items that start with a handle
+   (``1. `1-name`: ...``) and the headings that are a handle (`## 1-name`).
+   When the skill has modes, use the list of the mode that fits the task.
 2. When the host has a task-list tool, create one task per step. Copy each
    playbook step line byte for byte, in file order.
 3. Before a step, load each name in its parentheses that you have not loaded

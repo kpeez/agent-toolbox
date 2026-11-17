@@ -83,17 +83,17 @@ harness reference before step 1.
 
 ## Questions
 
-1. **Check the harness.** Run the checks in the reference.
-2. **Choose models.** Follow the reference for the worker role.
-3. **Frame the questions.** Pick a shape from [swarm](../swarm/SKILL.md): a
+1. `1-check-the-harness`: Run the checks in the reference.
+2. `2-choose-models`: Follow the reference for the worker role.
+3. `3-frame-the-questions`: Pick a shape from [swarm](../swarm/SKILL.md): a
    coverage matrix for one slice per worker, or a race for one brief on
    several models. Keep three to five workers, each with one bounded
    question. Each brief says not to change files.
-4. **Write the briefs and set the effort.** Pick an effort per worker as you
-   would for a native subagent: `low` for mechanical lookups, `medium` for
-   routine reading, `high` or above for judgment. The reference says how to
-   set it.
-5. **Run the workers.** An OpenCode scout runs in your current directory and
+4. `4-write-the-briefs`: Write each brief and set its effort. Pick an effort
+   per worker as you would for a native subagent: `low` for mechanical
+   lookups, `medium` for routine reading, `high` or above for judgment. The
+   reference says how to set it.
+5. `5-run-the-workers`: An OpenCode scout runs in your current directory and
    sees uncommitted work. It needs no commit or throwaway worktree. Start each
    scout there with the reference command. For agy or any worker that is not
    a scout, use a throwaway worktree:
@@ -104,39 +104,39 @@ harness reference before step 1.
    3. Run `git worktree add --detach .external-agents/<stamp> HEAD`.
    4. Keep the output of `git rev-parse HEAD` and `git stash list`.
    5. Change to the new worktree and start the workers with the reference command.
-6. **Verify.** Read each answer. Check each claim in the code before you use
-   it. Drop claims you cannot confirm. For a race, apply the selection rule
-   you declared in step 3.
-7. **Check for changes and clean up.** For a throwaway worktree, return to
+6. `6-verify-the-answers`: Read each answer. Check each claim in the code
+   before you use it. Drop claims you cannot confirm. For a race, apply the
+   selection rule you declared in step 3.
+7. `7-check-for-changes-and-clean-up`: For a throwaway worktree, return to
    your worktree. Run `git rev-parse HEAD` and `git stash list` again and
    compare them with the saved outputs. A difference is a worker's git change.
    Undo it, and say so in the report.
    Run `git worktree remove --force .external-agents/<stamp>`. This discards
    every file change the workers made.
-8. **Report.** Give one report per [swarm](../swarm/SKILL.md#phase-d-report):
+8. `8-report`: Give one report per [swarm](../swarm/SKILL.md#phase-d-report):
    the verified results, the harness and model of each worker, and the gaps.
    Then delete each OpenCode worker session as the reference says.
 
 ## Delegate
 
-1. **Check the harness and choose the model** as in the questions steps.
-   Use `high` effort or above when the model supports it.
-2. **Fix the spec.** The spec is a file the worker can read. It names each
+1. `1-check-and-choose`: Check the harness and choose the model as in the
+   questions steps. Use `high` effort or above when the model supports it.
+2. `2-fix-the-spec`: The spec is a file the worker can read. It names each
    requirement, the files in scope, and the commands that build and test the
    work. Number the requirements, such as `R1-csv-bom`. A spec with an open
    product decision goes back to the user first.
-3. **Start clean.** The worker's diff must stand alone. Commit your own
+3. `3-start-clean`: The worker's diff must stand alone. Commit your own
    changes first, or use a new task worktree.
    Record the base commit and previous HEAD with `git rev-parse HEAD`. Record
    the branch with `git branch --show-current` and the output of `git stash list`.
-4. **Run the builder.** At the delegate time limit, start an OpenCode builder
+4. `4-run-the-builder`: At the delegate time limit, start an OpenCode builder
    with `--session ses_<stamp>_<id>` and `--title`. The brief points to the
    spec, asks it to build and test every requirement, and says to commit on
    the current branch in small commits. It asks for each requirement marked
    `done` or `not done` at the end. An agy delegate cannot commit. Keep the
    `conversation_id` from its result. At the end of the round, inspect and
    commit its changes yourself with a message that names the round.
-5. **Review the round.** Check that HEAD is a descendant of the previous HEAD
+5. `5-review-the-round`: Check that HEAD is a descendant of the previous HEAD
    with `git merge-base --is-ancestor <previous-head> HEAD`. Check that the
    branch and `git stash list` match the saved values. If a check fails, stop
    and ask the user. Record the new HEAD for the next round. Review
@@ -146,14 +146,15 @@ harness reference before step 1.
    partly met, or missing with `path:line` evidence. Run the spec's checks
    yourself. Write each gap as `path:line: finding` in
    `<run>/<id>-review-<n>.md`.
-6. **Close gaps.** If gaps remain, resume the same OpenCode builder session
+6. `6-close-gaps`: If gaps remain, resume the same OpenCode builder session
    and attach only the review file. For agy, resume its conversation with
-   `--conversation <id>` and point it only to the review file. At the end of each agy round, inspect and
-   commit its changes yourself with a message that names the round. Repeat
+   `--conversation <id>` and point it only to the review file. At the end of
+   each agy round, inspect and commit its changes yourself with a message that
+   names the round. Repeat
    step 5. Stop after three review rounds. Then finish any open gaps yourself
    or bring them to the user. Never edit the builder's commits in place; add
    your own commits on top.
-7. **Report.** Give the requirement table, rounds used, builder and lead
+7. `7-report`: Give the requirement table, rounds used, builder and lead
    commits, check results, and branch. Publish per [ship-pr](../ship-pr/SKILL.md)
    only when the user asks. Then delete the OpenCode builder session as the
    reference says.

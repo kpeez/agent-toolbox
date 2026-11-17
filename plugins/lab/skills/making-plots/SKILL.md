@@ -28,20 +28,24 @@ worker to load it first, and gives the path of any reference image to match.
 
 ## Procedure
 
-1. Name the question the figure answers in one sentence and the unit of
-   replication in another. If the question needs two sentences, it is two
-   figures.
-2. Pick the figure type from the catalog below. A table is a valid answer.
-3. For a set of related figures, load `references/style-module.md` and use a
-   shared style module when it prevents drift. For one figure or an established
-   coherent renderer, keep its existing style rather than adding scaffolding.
-   Keep rcParams in one place within that renderer.
-4. Validate inputs (finite, no duplicate keys, positive on log axes), then
-   draw. Scale axes to the data unless the mark encodes magnitude as length or
-   area from a baseline (`references/axes-and-scales.md`).
-5. Render the PNG and look at it. Fix collisions, clipped marks, and empty
-   space before calling the work done.
-6. Apply the general [plot review checklist](../visualizing-data/references/review-checklist.md)
+1. `1-name-the-question`: Name the question the figure answers in one sentence
+   and the unit of replication in another. If the question needs two
+   sentences, it is two figures.
+2. `2-pick-the-figure-type`: Pick the figure type from the catalog below. A
+   table is a valid answer.
+3. `3-set-the-style`: For a set of related figures, load
+   `references/style-module.md` and use a shared style module when it prevents
+   drift. For one figure or an established coherent renderer, keep its
+   existing style rather than adding scaffolding. Keep rcParams in one place
+   within that renderer.
+4. `4-validate-and-draw`: Validate inputs (finite, no duplicate keys, positive
+   on log axes), then draw. Scale axes to the data unless the mark encodes
+   magnitude as length or area from a baseline
+   (`references/axes-and-scales.md`).
+5. `5-render-and-look`: Render the PNG and look at it. Fix collisions, clipped
+   marks, and empty space before calling the work done.
+6. `6-review-the-figure`: Apply the general
+   [plot review checklist](../visualizing-data/references/review-checklist.md)
    and the scientific checks in `references/review-checklist.md`.
 
 ## Universal rules

@@ -9,7 +9,7 @@ A handoff file holds the current state of one piece of work. A new session
 reads it and continues. It is a handoff, not a record: after the pull request
 merges, delete the file.
 
-## Find the file
+## 1-find-the-file
 
 Run `uv run ../../scripts/handoff.py path --session "${CLAUDE_SESSION_ID}"` in
 the target repository. Resolve the script from this skill's directory, not the
@@ -20,7 +20,7 @@ changed to `-`. On `main`, `master`, or a detached HEAD the name is
 
 When the file exists, read it first. It can hold a plan or an earlier handoff.
 
-## Write the file
+## 2-write-the-file
 
 Overwrite the file with the current state. Do not append a log. Use these
 sections, in this order, and write "None" in an empty section:

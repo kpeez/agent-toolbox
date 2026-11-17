@@ -80,10 +80,10 @@ When the target is unclear and several skills could fit, ask which one, and name
 
 Maintain only skills in the "Procedure skills" list of `research-context`, and leave every other skill under `.agents/skills/` alone.
 
-1. Rerun the known-good run. A failure is a finding.
-2. Compare the skill's commands, paths, and conventions with the pipeline as it is now.
-3. Fold each new user correction into the skill as a check or a gotcha, in the user's terms.
-4. End with one outcome for each skill, and say which: unchanged, updated, or retired. Delete a retired skill's folder and remove it from the "Procedure skills" list in `research-context`.
+1. `1-rerun-the-known-good-run`: Rerun the known-good run. A failure is a finding.
+2. `2-compare-with-the-pipeline`: Compare the skill's commands, paths, and conventions with the pipeline as it is now.
+3. `3-fold-in-corrections`: Fold each new user correction into the skill as a check or a gotcha, in the user's terms.
+4. `4-report-the-outcome`: End with one outcome for each skill, and say which: unchanged, updated, or retired. Delete a retired skill's folder and remove it from the "Procedure skills" list in `research-context`.
 
 Edit only project skill folders. When the pipeline's output looks wrong, report it. Do not hide it with a skill edit.
 

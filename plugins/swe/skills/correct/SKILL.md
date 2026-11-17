@@ -17,7 +17,7 @@ This skill applies
 [encode-lessons-in-structure](../principle-encode-lessons-in-structure/SKILL.md).
 Run it again each time the user corrects you.
 
-## Find the mistake classes
+## 1-find-the-mistake-classes
 
 Read the current correction, recent commits and reverts, review comments,
 agent instruction files, and comments that explain workarounds. Group the
@@ -25,7 +25,9 @@ mistakes into classes. A class counts at its second occurrence. A first
 occurrence gets its fix and nothing more. A bug whose faulty pattern the code
 alone shows counts at its first occurrence; the `fix-bug` playbook encodes it.
 
-## Fix each class at the highest level that works
+## 2-fix-each-class
+
+Fix each class at the highest level that works:
 
 1. `architecture`: remove the mistake. Give each piece of state one owner and
    each task one supported path. Hide internals so that a wrong import fails.
@@ -54,7 +56,7 @@ alone shows counts at its first occurrence; the `fix-bug` playbook encodes it.
 When a structural fix works, remove the instruction that it replaces. The
 instruction was the symptom.
 
-## Fix and prove
+## 3-fix-and-prove
 
 - Fix the most frequent classes first, one commit per class, when commits are
   authorized.
@@ -64,7 +66,7 @@ instruction was the symptom.
 - An exception sits on the offending line with a reason, an expiry date, and
   the user's approval.
 
-## Keep the rule table
+## 4-keep-the-rule-table
 
 The repository keeps a rule-to-enforcer table in the file that its
 `AGENTS.md` names. When no table exists, create one in a docs file and add one

@@ -6,8 +6,13 @@ argument-hint: "<document or path>"
 
 # Writing
 
-All writing advice lives here. Find the surface, read what its row names, and
-apply the [prose rules](references/prose.md) to every surface.
+All writing advice lives here. Follow these steps.
+
+1. `1-find-the-surface`: Find the surface of the text in the table below.
+2. `2-read-its-row`: Read what its row names.
+3. `3-apply-the-prose-rules`: Apply the [prose rules](references/prose.md) to
+   every surface.
+4. `4-run-the-check`: Hold every item of the Check section.
 
 | Surface | Read |
 | --- | --- |

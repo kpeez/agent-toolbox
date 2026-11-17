@@ -69,6 +69,35 @@ class FacetMapContract(unittest.TestCase):
         for fragment in (playbook, "15-extra-step", "no-such-skill"):
             self.assertIn(fragment, result.stderr)
 
+    def test_write_rejects_a_routed_skill_without_handle_steps(self):
+        skill = "plugins/swe/skills/handoff/SKILL.md"
+        path = self.root / skill
+        path.write_text(
+            path.read_text(encoding="utf-8")
+            .replace("## 1-find-the-file", "## Find the file")
+            .replace("## 2-write-the-file", "## Write the file"),
+            encoding="utf-8",
+        )
+        result = self.cli("write")
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn(skill, result.stderr)
+
+    def test_write_reads_each_mode_of_a_skill_into_its_own_handle_list(self):
+        path = self.root / "plugins/swe/skills/ship-pr/SKILL.md"
+        path.write_text(
+            path.read_text(encoding="utf-8").replace("`5-merge`:", "`5-merge-the-pr`:"),
+            encoding="utf-8",
+        )
+        self.assertEqual(self.cli("write").returncode, 0)
+        route = next(
+            f
+            for f in json.loads((self.root / "evals/skills/facets.json").read_text())["facets"]
+            if f["id"] == "route/swe/ship-pr"
+        )
+        self.assertEqual(route["handles"], [])
+        self.assertEqual(route["modes"]["land"][-1], "5-merge-the-pr")
+        self.assertEqual(route["modes"]["publish"][-1], "7-report")
+
     def test_write_rejects_a_name_that_two_classes_own(self):
         playbook = "plugins/swe/skills/swe-mode/playbooks/build-feature.md"
         self.append_step(playbook, "15-extra-step: Do the extra step. (plan-multi-phase)")

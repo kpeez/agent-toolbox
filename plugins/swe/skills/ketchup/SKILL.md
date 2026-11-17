@@ -22,7 +22,7 @@ branch, or agent by a name the user would know, not by a label you invented.
 If a fact needs context to make sense, give the context or leave the fact
 out. Apply the [prose rules](../writing/references/prose.md) to every line.
 
-## Gather what changed
+## 1-gather-what-changed
 
 Keep this turn read-only. Make visuals only from what you already have. Do
 not change code, start an app or a job, or post anything. Collect your own
@@ -44,7 +44,7 @@ merge. For each item, collect its link, what it changes for users, the
 evidence behind your pick, its risk, and your pick. Write "unknown" for a fact
 the call needs that you do not know. Leave out a link you do not have.
 
-## Write the reply
+## 2-write-the-reply
 
 Spend words on the calls, not on the story. Keep what happened under 100
 words, not counting visuals, and shorter when less happened. Leave out work

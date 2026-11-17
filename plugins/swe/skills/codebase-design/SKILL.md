@@ -53,6 +53,18 @@ Pick the mode:
 
 ## Design mode
 
+Follow these steps. The paragraphs below give the detail of each.
+
+1. `1-map-the-callers`: For a consequential new interface, map representative
+   callers and the behavior they need.
+2. `2-weigh-the-trade-offs`: Weigh the dependency, result, and hidden-complexity
+   options against the real callers, side effects, and external contracts.
+3. `3-specify-the-interface`: Specify invariants, ordering, error modes,
+   defaults, and costs, then show one caller use.
+4. `4-compare-interfaces`: Compare materially different interfaces only when a
+   real trade-off exists. For a design with no precedent in the codebase,
+   always build two or three competing sketches.
+
 Consider, rather than assume, whether the design should:
 
 - accept dependencies at the boundary instead of creating them internally;

@@ -146,9 +146,11 @@ catalog scope, context delivery, and harness deltas before materializing.
 
 ## Route scoring
 
-A case may set two optional fields. `expected_route` is the id of a `route`
+A case may set three optional fields. `expected_route` is the id of a `route`
 facet in `facets.json`, such as `route/lab/analyze-results`. It must belong to the plugin of the
-case's target, and a negative case must not set it. `facets` lists facet ids whose evidence is `skill-call` or
+case's target, and a negative case must not set it. `expected_mode` names the mode of a
+single-skill route whose skill has modes, such as `publish` for `route/swe/ship-pr`. A route
+with modes needs it, and any other route rejects it. `facets` lists facet ids whose evidence is `skill-call` or
 `full-read`. `score.json` then holds `route` (null without `expected_route`)
 and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
 
@@ -162,7 +164,8 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
 - `playbook_read` (playbook routes) or `route_load` (skill routes): a root
   full read of the playbook, or a root load of the routed skill.
 - `steps_section`: the Steps entries of the final reply (`evidence.json`
-  `final_reply`). The parser anchors on the route's handles. An entry is a line
+  `final_reply`). The parser anchors on the route's handles: the playbook's steps,
+  the skill's steps, or the steps of the case's `expected_mode`. An entry is a line
   that starts with a handle, after optional space, a bullet (`-`, `*`, `+`,
   `1.`), backticks, or `**`. The handle must end at a character that is not a
   word character or a hyphen, so `4-check` is not `4-check-the-pipeline`. The
@@ -180,8 +183,7 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
   exists. The status is `complete` when every handle appears once, in
   order, each done or skipped with a reason, and none is unclear. It is
   `missing` (or `unavailable` on partial evidence) with no entry, and
-  `incomplete` otherwise. Skill routes are `not_scorable` until their handles
-  exist.
+  `incomplete` otherwise.
 - `step_loads`: for each step the agent marked `done`, the loads its step line
   names. `always` and `conditional` names are `required`, because a step marked
   done says its condition held. A `one-of` step needs any one name.
@@ -211,6 +213,14 @@ reads the eval corpus (`cases.json`) and the targets in `skill_eval.py` to
 find the cases that cover each facet. `facets.json` holds one record per
 facet. `FACETS.md` shows the same data as tables, with a legend for each
 facet kind. Do not edit either file by hand.
+
+A single-skill route takes its handles from the skill's own `SKILL.md`. A step is a list
+item that starts with a handle (``1. `1-name`: ...``) or a heading that is a handle
+(`## 1-name`). Other numbered lists are not steps. Items belong to the nearest `##` heading
+above them. A skill with one such list has `handles`. A skill with several has `modes`,
+keyed by the heading in lowercase with hyphens and without a trailing "mode" (`## Drive to
+green` is `drive-to-green`, `## Audit mode` is `audit`), and its `handles` is empty. Handles
+count from 1 in order. `write` fails when a routed skill has no steps or breaks these rules.
 
 Regenerate both files after you change a skill, a router, a playbook, a hook,
 or an eval case:
