@@ -48,21 +48,20 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | `scored` | A case field scores it. |
 | `recorded` | The scorer records the load, but no case field scores it. |
 | `invisible` | The scorer drops the event. |
-| `unsupported` | The harness removes the trigger (materialize deletes hooks). |
 
 ## Summary
 
-| kind | scored | recorded | invisible | unsupported | total |
-|---|---|---|---|---|---|
-| activation | 8 | 29 | 0 | 0 | 37 |
-| hook-load | 0 | 0 | 0 | 5 | 5 |
-| route | 0 | 0 | 49 | 0 | 49 |
-| route-load | 0 | 20 | 0 | 0 | 20 |
-| playbook-read | 0 | 29 | 0 | 0 | 29 |
-| step-load | 0 | 255 | 10 | 0 | 265 |
-| trigger-load | 0 | 19 | 2 | 0 | 21 |
-| principle-read | 0 | 29 | 0 | 0 | 29 |
-| router-contract | 0 | 0 | 25 | 0 | 25 |
+| kind | scored | recorded | invisible | total |
+|---|---|---|---|---|
+| activation | 8 | 29 | 0 | 37 |
+| hook-load | 0 | 5 | 0 | 5 |
+| route | 0 | 0 | 49 | 49 |
+| route-load | 0 | 20 | 0 | 20 |
+| playbook-read | 0 | 29 | 0 | 29 |
+| step-load | 0 | 255 | 10 | 265 |
+| trigger-load | 0 | 19 | 2 | 21 |
+| principle-read | 0 | 29 | 0 | 29 |
+| router-contract | 0 | 0 | 25 | 25 |
 
 ## Activation
 
@@ -745,11 +744,11 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | plugin | skill | scorer | hook sentence |
 |---|---|---|---|
-| lab | go-deeper | unsupported | lab: Before you act on a new task of any kind, run `lab:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
-| lab | lab-mode | unsupported | Before you act on a new research task, load the `lab:lab-mode` skill and follow the playbook or skill it routes to. |
-| swe | go-deeper | unsupported | swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
-| swe | swe-mode | unsupported | Before you act on a new software task, load the `swe:swe-mode` skill and follow the playbook or skill it routes to. |
-| uni | go-deeper | unsupported | uni: Before you act on a new task of any kind, run `uni:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
+| lab | go-deeper | recorded | lab: Before you act on a new task of any kind, run `lab:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
+| lab | lab-mode | recorded | Before you act on a new research task, load the `lab:lab-mode` skill and follow the playbook or skill it routes to. |
+| swe | go-deeper | recorded | swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
+| swe | swe-mode | recorded | Before you act on a new software task, load the `swe:swe-mode` skill and follow the playbook or skill it routes to. |
+| uni | go-deeper | recorded | uni: Before you act on a new task of any kind, run `uni:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it. |
 
 ## Hidden skills that nothing reaches
 

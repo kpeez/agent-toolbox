@@ -858,7 +858,7 @@
       },
       "requirement": "conditional",
       "scope": "root",
-      "scorer": "unsupported",
+      "scorer": "recorded",
       "source_text": "lab: Before you act on a new task of any kind, run `lab:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it.",
       "subject": "go-deeper"
     },
@@ -878,7 +878,7 @@
       },
       "requirement": "conditional",
       "scope": "root",
-      "scorer": "unsupported",
+      "scorer": "recorded",
       "source_text": "Before you act on a new research task, load the `lab:lab-mode` skill and follow the playbook or skill it routes to.",
       "subject": "lab-mode"
     },
@@ -898,7 +898,7 @@
       },
       "requirement": "conditional",
       "scope": "root",
-      "scorer": "unsupported",
+      "scorer": "recorded",
       "source_text": "swe: Before you act on a new task of any kind, run `swe:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it.",
       "subject": "go-deeper"
     },
@@ -918,7 +918,7 @@
       },
       "requirement": "conditional",
       "scope": "root",
-      "scorer": "unsupported",
+      "scorer": "recorded",
       "source_text": "Before you act on a new software task, load the `swe:swe-mode` skill and follow the playbook or skill it routes to.",
       "subject": "swe-mode"
     },
@@ -938,7 +938,7 @@
       },
       "requirement": "conditional",
       "scope": "root",
-      "scorer": "unsupported",
+      "scorer": "recorded",
       "source_text": "uni: Before you act on a new task of any kind, run `uni:go-deeper` on it, unless it is chat, a quick factual answer, a fully specified mechanical edit, or go-deeper already ran for it.",
       "subject": "go-deeper"
     },
@@ -11207,7 +11207,7 @@
       "scored": 8
     },
     "hook-load": {
-      "unsupported": 5
+      "recorded": 5
     },
     "playbook-read": {
       "recorded": 29

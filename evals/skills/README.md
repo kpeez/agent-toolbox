@@ -75,7 +75,7 @@ overwritten. The repository already provides its ignored artifacts location.
 python3 evals/skills/skill_eval.py validate
 python3 evals/skills/skill_eval.py materialize \
   --case CASE_ID --runtime evals/skills/runtime.offline.json \
-  --output artifacts/skill-evals/RUN_ID
+  --output artifacts/skill-evals/RUN_ID [--hook-arm {hook-off,hook-on}]
 python3 evals/skills/skill_eval.py capture \
   --run artifacts/skill-evals/RUN_ID --source /absolute/path/to/trace.jsonl \
   --state completed --format synthetic-contract-v1 --evidence-kind synthetic
@@ -121,8 +121,17 @@ prove a load of the newly materialized catalog.
 Materialization creates a standalone disposable Git repository with an empty
 template, never a linked worktree. It snapshots every checked-out plugin body
 and resource, rather than supplying only the target skill. Both original source
-and effective input file hashes are retained. Staged hooks and MCP configuration
-bindings are removed and listed as harness deltas; source plugins are unchanged.
+and effective input file hashes are retained. By default (`--hook-arm hook-off`),
+materialize deletes every plugin `hooks/` directory, MCP configuration file,
+and manifest `hooks` or `mcpServers` key. With `--hook-arm hook-on`, materialize
+keeps each plugin's `hooks/session-start.md` and keeps only the `SessionStart`
+entries in `hooks/hooks.json` that read that file; it deletes all other hook
+files and event bindings. `rules/AGENTS.md` stays in both arms, and
+`manifest.json` records `hook_arm`, `removed_bindings`, and `known_deltas`.
+Source plugins stay unchanged. `score` and `aggregate` record `hook_arm` in the
+frozen configuration and group keys, so the two arms never pool. The hook
+delivery shape comes from local transcripts, and `6-native-pilot` must confirm
+it (see [EVIDENCE.md](EVIDENCE.md)).
 The full checked-out SWE/Lab catalog is not claimed to equal all installed skills
 on a real host. A native pilot must freeze and verify that complete effective set.
 
@@ -155,9 +164,8 @@ skill, principle, playbook, or reference that does not exist.
 Each facet has a scorer status:
 
 - `scored`: a case field scores it.
-- `recorded`: the scorer records the load, resource read, or subagent read, but no case field scores it.
+- `recorded`: the scorer records the load, resource read, subagent read, or hook delivery, but no case field scores it.
 - `invisible`: the scorer drops the event.
-- `unsupported`: the harness removes the trigger. Materialize deletes hooks.
 
 The headline of `FACETS.md` counts the always-required facets that no case
 scores. That count is the measurement gap.

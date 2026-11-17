@@ -7,8 +7,12 @@ it does not accept an execution agent's self-report as a grade.
 The normalized record has `schema_version`, `provider`, `adapter_version`,
 `evidence_kind`, `session_id`, `session_state`, `evidence_coverage`, `coverage`,
 `raw_trace`, `loads`, `child_loads`, `resource_reads`, `child_resource_reads`,
-`unproved_reads`, `actions`, and `issues`. In the Claude transcript adapter,
-load records add `agent_id`, `detail`, and `transform`.
+`unproved_reads`, `hook_deliveries`, `actions`, and `issues`. In the Claude
+transcript adapter, load records add `agent_id`, `detail`, and `transform`.
+
+`score` hashes `hook_arm` into `configuration_sha256` and writes `hook_arm` to
+`score.json`. `aggregate` adds `hook_arm` to its group key and to every
+`groups` and `confusion` row, so the two arms never pool.
 
 `raw_trace` contains a relative path and SHA-256 digest. Each evidence reference
 contains a stable `event_id` and a one-based raw JSONL `line`; a Claude reference
@@ -44,6 +48,10 @@ or `resource` ID, `session_id`, `agent_id`, `proof`
 (`bash_command_mentions_path`), `status` (`unproved`), and `evidence`. They
 never become loads or resource reads and never count as success.
 
+Hook delivery records (`hook_deliveries`) contain `plugin`, `status` (`success`
+or `mismatch`), `sha256`, `session_id`, and `evidence`. They prove whether the
+frozen `hooks/session-start.md` bytes reached the model in the `hook-on` arm.
+
 Action records contain `kind`, `seq`, `session_id`, `ordering`, and `evidence`.
 `seq` is the start of the first case-defined relevant action. Each case's
 `relevant_action` is a semantic boundary, not a substring in a shell command.
@@ -70,6 +78,7 @@ Every event has a unique string `event_id`, `session_id`, and `type`.
 | `skill_read.result` | matching `request_id`, integer `exit_code`, delivered `body`, Boolean `body_complete` |
 | `resource_read.request` | `request_id`, `resource`, exact frozen `path` |
 | `resource_read.result` | matching `request_id`, integer `exit_code`, delivered `body`, Boolean `body_complete` |
+| `hook.delivered` | `plugin`, `body` (in `hook-on`, `body` SHA-256 must match the frozen `session-start.md`; in `hook-off`, any `hook.delivered` is an issue) |
 | `action.started` | `kind`, matching case boundary |
 | `session.completed` | `coverage: {skill_delivery: true, relevant_actions: true}` |
 | `message`, `skill.mention` | text ignored by activation scoring |
@@ -123,8 +132,9 @@ Capture inputs:
   records each digest.
 - `--plugin-dir`: each absolute path given to `claude --plugin-dir`. Capture
   refuses a directory whose `skills/*/SKILL.md` files or frozen resources differ
-  from the frozen catalog in name or bytes. A run that uses the materialized
-  catalog passes `<run>/inputs/plugins/<plugin>` to both commands.
+  from the frozen catalog in name or bytes. In `hook-on`, capture also checks
+  each declared plugin's frozen `hooks/session-start.md` bytes. A run that uses
+  the materialized catalog passes `<run>/inputs/plugins/<plugin>` to both commands.
 - `--stream`: the session's stream-json output. Only its `result` event shows
   that the session ended.
 - `--relevant-action`: the root `tool_use` id where the case's relevant action
@@ -132,12 +142,26 @@ Capture inputs:
   the raw trace and the case's `relevant_action` text. Without it, timing is
   unavailable and the evidence is partial.
 
-Load proofs:
+Load and hook delivery proofs:
 
 | Proof | Raw lines | Success needs |
 |---|---|---|
 | `skill_body_delivery` | An assistant `tool_use` named `Skill`; the user `tool_result` with the same `tool_use_id`; an `isMeta` user line whose `sourceToolUseID` is that id and whose only text block starts `Base directory for this skill: ` | No `is_error`; `toolUseResult.success` is `true`; the base directory plus `/SKILL.md` is a frozen path inside a declared plugin directory; the requested name is that skill (a bare name resolves to the one declared skill with that name); the text after the base-directory line and one blank line matches the manifest `body_sha256` |
 | `full_body_read` | An assistant `tool_use` named `Read` whose `file_path` is a frozen `SKILL.md` or frozen resource path; its `tool_result` | No `is_error`; `toolUseResult.file.filePath` is the same path; `startLine` is 1 and `numLines` equals `totalLines`; the `content` digest matches the manifest whole-file `sha256` |
+| `hook_success` (`hook-on` only) | A root `attachment` row with `attachment.type: "hook_success"` and `attachment.hookEvent: "SessionStart"` | `exitCode` is `0` (when present) and `stdout` bytes equal, byte for byte, the frozen `hooks/session-start.md` of a plugin declared with `--plugin-dir` |
+
+Observed `hook_success` shape: Claude Code 2.1.323 (`entrypoint: "sdk-cli"`) and
+interactive 2.1.326 write one `attachment` row per SessionStart hook. The first
+hook row is the chain root (`parentUuid: null`), each next hook row chains on
+`parentUuid`, and the first `user` row is a child of the last hook row. In those
+rows, `content` holds `stdout` without its final newline, and `command` holds
+`cat "$CLAUDE_PLUGIN_ROOT"/hooks/session-start.md`. Each row's `stdout` equals,
+byte for byte, a `hooks/session-start.md` in the local plugin cache: swe, lab,
+and uni in the 2.1.323 transcript, and swe and lab in the 2.1.326 transcript.
+Hooks that return JSON context write `attachment.type: "hook_additional_context"`,
+which no frozen plugin hook uses and both arms reject as an issue. This
+`hook_success` shape was seen in local transcripts, not in an audited eval probe;
+`6-native-pilot` must confirm it on an audited pilot trace.
 
 `body_sha256` is the digest of `SKILL.md` with its frontmatter removed and its
 leading newlines stripped. The load record names this transform. A failed
@@ -172,7 +196,10 @@ full read can be proved there. No sidechain `Read` was seen for the other
 versions in that range.
 
 Coverage: `start` needs the first line with a `uuid` to be a user line with a
-null `parentUuid`. `end` needs exactly one stream `result` event for this
+null `parentUuid`. In `hook-on`, `start` also accepts a leading run of
+`SessionStart` `hook_success` attachment rows (the first with a null
+`parentUuid`, each next row chained to the one before) followed by the first
+`user` row. `end` needs exactly one stream `result` event for this
 session with `subtype: success` and `is_error: false`. `relevant_actions` needs a
 valid label. `skill_delivery` needs no issues. Each of these is an issue and
 makes the session partial:
@@ -180,6 +207,13 @@ makes the session partial:
 - a line type, `system` subtype, or attachment type that the audit did not see;
   the allowed sets are `CLAUDE_LINE_TYPES`, `CLAUDE_SYSTEM_SUBTYPES`, and
   `CLAUDE_ATTACHMENT_TYPES` in `skill_eval.py`;
+- in `hook-off`, any `hook_success` or `hook_additional_context` attachment row
+  (the isolation failed);
+- in `hook-on`, any `hook_additional_context` row, any `hook_success` row whose
+  `hookEvent` is not `SessionStart` or that appears in a sidechain, any
+  `hook_success` row whose `stdout` bytes do not match a declared plugin's
+  frozen `hooks/session-start.md` (a foreign or tampered hook), or any declared
+  plugin with a frozen hook and no delivery row;
 - a malformed or unterminated line, or a line from another session;
 - a missing or duplicate `uuid`, a second chain root, a parent outside the
   file, or a branch (resume and compaction signs);

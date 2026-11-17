@@ -32,7 +32,7 @@ KINDS = {
     },
     "hook-load": {
         "evidence": "hook-delivery",
-        "scorer": "unsupported",
+        "scorer": "recorded",
         "scope": "root",
         "about": "A session-start hook names a skill to load before a new task.",
     },
@@ -113,7 +113,6 @@ SCORERS = {
     "scored": "A case field scores it.",
     "recorded": "The scorer records the load, but no case field scores it.",
     "invisible": "The scorer drops the event.",
-    "unsupported": "The harness removes the trigger (materialize deletes hooks).",
 }
 ROUTERS = {"swe": "swe-mode", "lab": "lab-mode"}
 PROJECT_SKILL_ANCHORS = {

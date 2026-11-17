@@ -168,6 +168,45 @@ def freeze_resources(inputs):
     return resources
 
 
+def filter_plugin_hooks(hooks_dir, inputs, removed):
+    for item in sorted(hooks_dir.iterdir()):
+        if item.name == "session-start.md":
+            continue
+        if item.name == "hooks.json" and item.is_file():
+            data = read_json(item)
+            raw_hooks = data.get("hooks") if isinstance(data.get("hooks"), dict) else {}
+            kept = []
+            filtered_start = False
+            for event_name, entries in raw_hooks.items():
+                if event_name != "SessionStart":
+                    removed.append(f"{item.relative_to(inputs).as_posix()}:{event_name}")
+                    continue
+                if not isinstance(entries, list):
+                    filtered_start = True
+                    continue
+                for entry in entries:
+                    entry_hooks = entry.get("hooks", []) if isinstance(entry, dict) else []
+                    kept_cmds = [
+                        h for h in entry_hooks
+                        if isinstance(h, dict) and h.get("type") == "command"
+                        and isinstance(h.get("command"), str) and "hooks/session-start.md" in h["command"]
+                    ]
+                    if len(kept_cmds) != len(entry_hooks):
+                        filtered_start = True
+                    if kept_cmds:
+                        kept.append({**entry, "hooks": kept_cmds})
+            if filtered_start:
+                removed.append(f"{item.relative_to(inputs).as_posix()}:SessionStart")
+            if set(raw_hooks) != {"SessionStart"} or filtered_start:
+                save_json(item, {**data, "hooks": {"SessionStart": kept} if kept else {}})
+            continue
+        removed.append(item.relative_to(inputs).as_posix())
+        if item.is_dir():
+            shutil.rmtree(item)
+        else:
+            item.unlink()
+
+
 def materialize(args):
     cases = corpus(args.corpus)
     case = next((c for c in cases if c["id"] == args.case), None)
@@ -183,6 +222,7 @@ def materialize(args):
         raise ValueError("this slice requires the full checked-out competing catalog")
     if runtime["context_delivery"] != "serialized_conversation":
         raise ValueError("this slice supports serialized conversation, not native multi-turn replay")
+    hook_arm = args.hook_arm
     output = Path(args.output).absolute()
     output.resolve().relative_to((REPO / "artifacts" / "skill-evals").resolve())
     source_catalog_files = inventory(REPO / "plugins")
@@ -198,22 +238,38 @@ def materialize(args):
     template.rmdir()
     inputs = output / "inputs"
     inputs.mkdir()
-    # Full bodies and their resources survive; executable integration bindings do not.
+    # Full bodies and their resources survive; executable integration bindings do not (except SessionStart in hook-on).
     shutil.copytree(REPO / "plugins", inputs / "plugins", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
     removed = []
     versions = {}
+    hooks = {}
     for plugin in sorted((inputs / "plugins").iterdir()):
-        for name in (".claude-plugin", ".codex-plugin"):
+        for name in (".claude-plugin", ".codex-plugin", ".antigravity-plugin"):
             manifest = plugin / name / "plugin.json"
-            if manifest.exists():
-                original = read_json(manifest)
+            if not manifest.exists():
+                continue
+            original = read_json(manifest)
+            if name in (".claude-plugin", ".codex-plugin"):
                 versions[f"{plugin.name}/{name}"] = original["version"]
-                for key in ("hooks", "mcpServers"):
-                    if key in original:
-                        removed.append(str(manifest.relative_to(inputs)) + ":" + key)
-                        del original[key]
+            changed = False
+            for key in ("hooks", "mcpServers"):
+                if key in original:
+                    removed.append(str(manifest.relative_to(inputs)) + ":" + key)
+                    del original[key]
+                    changed = True
+            if name in (".claude-plugin", ".codex-plugin") or changed:
                 save_json(manifest, original)
-        for binding in ("hooks", ".mcp.json", "mcp.json"):
+        hooks_dir = plugin / "hooks"
+        if hooks_dir.exists():
+            session_start = hooks_dir / "session-start.md"
+            if hook_arm == "hook-on" and session_start.is_file():
+                hooks[plugin.name] = {"path": str(session_start.absolute()),
+                                      "sha256": digest(session_start.read_bytes())}
+                filter_plugin_hooks(hooks_dir, inputs, removed)
+            else:
+                removed.append(hooks_dir.relative_to(inputs).as_posix())
+                shutil.rmtree(hooks_dir)
+        for binding in (".mcp.json", "mcp.json"):
             path = plugin / binding
             if path.exists():
                 removed.append(path.relative_to(inputs).as_posix())
@@ -231,15 +287,22 @@ def materialize(args):
     prompt = "\n\n".join(f"{m['role'].upper()}:\n{m['content']}" for m in case["messages"])
     (inputs / "prompt.txt").write_text(prompt + "\n", encoding="utf-8")
     save_json(inputs / "messages.json", case["messages"])
-    save_json(output / "manifest.json", {
+    manifest_data = {
         "schema_version": 1, "case_id": case["id"], "corpus_sha256": digest(Path(args.corpus).read_bytes()),
-        "runtime": runtime, "plugin_versions": versions, "skills": skills, "resources": resources,
-        "input_files": inventory(inputs), "fixture_files": inventory(workspace),
-        "fixture_catalog_files": inventory(HERE / "fixtures"),
-        "source_catalog_files": source_catalog_files, "removed_bindings": removed,
+        "hook_arm": hook_arm, "runtime": runtime, "plugin_versions": versions, "skills": skills,
+        "resources": resources, "input_files": inventory(inputs), "fixture_files": inventory(workspace),
+        "fixture_catalog_files": inventory(HERE / "fixtures"), "source_catalog_files": source_catalog_files,
+        "removed_bindings": removed,
+        "known_deltas": [
+            "rules/AGENTS.md stays in the snapshot, so an Antigravity run sees the session-start text through it whatever the arm"
+        ],
         "isolation": "prepared_only_not_provider_verified", "harness_sha256": digest(Path(__file__).read_bytes()),
-    })
-    return {"run": str(output), "case_id": case["id"], "skills": len(skills), "resources": len(resources), "state": "prepared"}
+    }
+    if hook_arm == "hook-on":
+        manifest_data["hooks"] = hooks
+    save_json(output / "manifest.json", manifest_data)
+    return {"run": str(output), "case_id": case["id"], "hook_arm": hook_arm,
+            "skills": len(skills), "resources": len(resources), "state": "prepared"}
 
 
 def verify_inputs(run):
@@ -266,6 +329,10 @@ def declared_snapshot(path, manifest):
         file = contained(root, rel_path)
         if not file.is_file() or digest(file.read_bytes()) != entry["sha256"]:
             raise ValueError(f"--plugin-dir resource does not match the frozen catalog: {path} ({rel_path})")
+    if manifest.get("hook_arm", "hook-off") == "hook-on" and plugin in manifest.get("hooks", {}):
+        hook_file = root / "hooks" / "session-start.md"
+        if not hook_file.is_file() or digest(hook_file.read_bytes()) != manifest["hooks"][plugin]["sha256"]:
+            raise ValueError(f"--plugin-dir hook does not match the frozen catalog: {path} (hooks/session-start.md)")
     return {"plugin": plugin, "path": path, "realpath": os.path.realpath(path)}
 
 
@@ -340,11 +407,35 @@ def claude_lines(path, label, issues):
     return rows
 
 
-def claude_session(rows, label, sid, agent, issues):
+def is_session_start_hook_success(row):
+    if row.get("type") != "attachment":
+        return False
+    att = row.get("attachment") or {}
+    return att.get("type") == "hook_success" and att.get("hookEvent") == "SessionStart"
+
+
+def claude_start_covered(chain, hook_arm):
+    if not chain:
+        return False
+    idx = 0
+    if hook_arm == "hook-on":
+        while idx < len(chain) and is_session_start_hook_success(chain[idx]):
+            expected_parent = None if idx == 0 else chain[idx - 1]["uuid"]
+            if chain[idx].get("parentUuid") != expected_parent:
+                return False
+            idx += 1
+    if idx >= len(chain):
+        return False
+    expected_parent = None if idx == 0 else chain[idx - 1]["uuid"]
+    return chain[idx].get("type") == "user" and chain[idx].get("parentUuid") == expected_parent
+
+
+def claude_session(rows, label, sid, agent, issues, hook_arm="hook-off"):
     """Index one transcript file: tool calls, their results, linked skill bodies, and lineage."""
     uses, results, bodies, starts = {}, {}, {}, {}
     seen, children, message_of = set(), Counter(), {}
-    first = None
+    chain, hook_rows = [], []
+    saw_non_hook = False
     for line, row in rows:
         where = f"{label} line {line}"
         typ = row.get("type")
@@ -355,8 +446,22 @@ def claude_session(rows, label, sid, agent, issues):
             issues.append(f"{where}: sessionId differs from the root session")
         if typ == "system" and row.get("subtype") not in CLAUDE_SYSTEM_SUBTYPES:
             issues.append(f"{where}: unknown system subtype {row.get('subtype')!r}")
-        if typ == "attachment" and (row.get("attachment") or {}).get("type") not in CLAUDE_ATTACHMENT_TYPES:
-            issues.append(f"{where}: unknown attachment type {(row.get('attachment') or {}).get('type')!r}")
+        if typ == "attachment":
+            att = row.get("attachment") or {}
+            att_type = att.get("type")
+            if att_type == "hook_additional_context":
+                issues.append(f"{where}: hook_additional_context attachment is unsupported")
+            elif att_type == "hook_success":
+                if hook_arm != "hook-on":
+                    issues.append(f"{where}: hook_success attachment in hook-off arm (isolation failed)")
+                elif agent is not None:
+                    issues.append(f"{where}: hook_success attachment in sidechain")
+                elif att.get("hookEvent") != "SessionStart":
+                    issues.append(f"{where}: hook_success for unsupported hookEvent {att.get('hookEvent')!r}")
+                elif saw_non_hook:
+                    issues.append(f"{where}: SessionStart hook_success outside leading start run")
+            elif att_type not in CLAUDE_ATTACHMENT_TYPES:
+                issues.append(f"{where}: unknown attachment type {att_type!r}")
         if typ not in {"user", "assistant", "attachment", "system"}:
             continue
         uuid = row.get("uuid")
@@ -380,8 +485,12 @@ def claude_session(rows, label, sid, agent, issues):
             if children[parent] > 1:
                 issues.append(f"{where}: branch in the message chain")
         seen.add(uuid)
-        first = first or row
+        chain.append(row)
         ref = {"file": label, "line": line, "event_id": uuid}
+        if hook_arm == "hook-on" and agent is None and is_session_start_hook_success(row) and not saw_non_hook:
+            hook_rows.append((ref, row.get("attachment") or {}))
+        else:
+            saw_non_hook = True
         content = (row.get("message") or {}).get("content") if typ in {"user", "assistant"} else None
         if typ == "assistant":
             message_id = (row.get("message") or {}).get("id")
@@ -418,7 +527,7 @@ def claude_session(rows, label, sid, agent, issues):
                     bodies[source] = {"line": line, "ref": ref, "text": texts[0]}
         elif typ == "user" and row.get("isMeta") and isinstance(content, str) and content.startswith(CLAUDE_BASE_PREFIX):
             issues.append(f"{where}: skill body in an unaudited message shape")
-    return {"uses": uses, "results": results, "bodies": bodies, "first": first}
+    return {"uses": uses, "results": results, "bodies": bodies, "chain": chain, "hook_rows": hook_rows}
 
 
 def claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues):
@@ -521,6 +630,12 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
     """Claude Code transcript adapter; see EVIDENCE.md "Claude transcript adapter"."""
     base.update(provider="claude-code", adapter_version="claude-transcript-v1")
     issues = base["issues"]
+    hook_arm = manifest.get("hook_arm", "hook-off")
+    declared_plugins = {snapshot["plugin"] for snapshot in capture_info["plugin_dirs"]}
+    expected_hooks = (
+        {p: entry for p, entry in manifest.get("hooks", {}).items() if p in declared_plugins}
+        if hook_arm == "hook-on" else {}
+    )
     frozen, frozen_resources = {}, {}
     for snapshot in capture_info["plugin_dirs"]:
         for root in {snapshot["path"], snapshot["realpath"]}:
@@ -545,16 +660,40 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
         issues.append("root transcript does not carry one sessionId")
         return base
     sid = base["session_id"] = session_ids.pop()
-    root = claude_session(rows, capture_info["path"], sid, None, issues)
-    first = root["first"] or {}
-    base["coverage"]["start"] = first.get("type") == "user" and first.get("parentUuid") is None
+    root = claude_session(rows, capture_info["path"], sid, None, issues, hook_arm)
+    base["coverage"]["start"] = claude_start_covered(root["chain"], hook_arm)
+    if hook_arm == "hook-on":
+        seen_success = set()
+        for ref, att in root["hook_rows"]:
+            stdout = att.get("stdout")
+            exit_ok = att.get("exitCode") in (None, 0)
+            sha = digest(stdout.encode("utf-8")) if isinstance(stdout, str) else None
+            matched = (
+                next((p for p in sorted(expected_hooks) if expected_hooks[p]["sha256"] == sha), None)
+                if exit_ok and sha is not None else None
+            )
+            if matched is not None:
+                if matched in seen_success:
+                    issues.append(f"{ref['file']} line {ref['line']}: duplicate hook delivery for {matched}")
+                seen_success.add(matched)
+                base["hook_deliveries"].append({
+                    "plugin": matched, "status": "success", "sha256": sha, "session_id": sid, "evidence": [ref],
+                })
+            else:
+                base["hook_deliveries"].append({
+                    "plugin": None, "status": "mismatch", "sha256": sha, "session_id": sid, "evidence": [ref],
+                })
+                issues.append(f"{ref['file']} line {ref['line']}: hook_success does not match any declared plugin's frozen session-start.md")
+        for plugin in sorted(expected_hooks):
+            if plugin not in seen_success:
+                issues.append(f"declared plugin {plugin} has a frozen hook but no hook_success delivery row")
     sessions = [(None, root)]
     for name, sha256 in sorted(capture_info["sidechains"].items()):
         if name.startswith("agent-") and name.endswith(".jsonl"):
             file_label = "raw-subagents/" + name
             agent = name[len("agent-"):-len(".jsonl")]
             rows = claude_lines(retained(run, file_label, sha256), file_label, issues)
-            sessions.append((agent, claude_session(rows, file_label, sid, agent, issues)))
+            sessions.append((agent, claude_session(rows, file_label, sid, agent, issues, hook_arm)))
     for tool_use_id, use in root["uses"].items():
         detail = (root["results"].get(tool_use_id) or {}).get("detail")
         if use["name"] in {"Agent", "Task"} and isinstance(detail, dict) and detail.get("agentId"):
@@ -644,6 +783,7 @@ def synthetic_record(kind, req, event_sid, status, detail, body_sha, completed_s
 def normalize(run, relevant_kind=None):
     """Dispatch to the adapter that capture.json names; unknown native formats stay unscored."""
     manifest = verify_inputs(run)
+    hook_arm = manifest.get("hook_arm", "hook-off")
     capture_info = read_json(run / "capture.json")
     raw = retained(run, capture_info["path"], capture_info["sha256"])
     base = {"schema_version": 1, "provider": "offline", "adapter_version": "synthetic-contract-v1",
@@ -652,7 +792,7 @@ def normalize(run, relevant_kind=None):
             "coverage": {key: False for key in ("start", "end", "skill_delivery", "relevant_actions")},
             "raw_trace": {"path": raw.name, "sha256": capture_info["sha256"]},
             "loads": [], "child_loads": [], "resource_reads": [], "child_resource_reads": [],
-            "unproved_reads": [], "actions": [], "issues": []}
+            "unproved_reads": [], "hook_deliveries": [], "actions": [], "issues": []}
     if capture_info["format"] == "claude-transcript" and capture_info["evidence_kind"] == "native":
         return normalize_claude(run, manifest, capture_info, base, relevant_kind)
     if capture_info["format"] != "synthetic-contract-v1" or capture_info["evidence_kind"] != "synthetic":
@@ -695,7 +835,25 @@ def normalize(run, relevant_kind=None):
             base["issues"].append("root event after terminal")
         if typ == "session.started":
             continue
-        if typ in {"skill_read.request", "resource_read.request"}:
+        if typ == "hook.delivered":
+            if not is_root:
+                base["issues"].append("hook.delivered in child session")
+                continue
+            plugin = event.get("plugin")
+            body = event.get("body")
+            body_sha = digest(body.encode()) if isinstance(body, str) else None
+            if hook_arm != "hook-on":
+                base["issues"].append(f"unexpected hook.delivered in {hook_arm} arm")
+                continue
+            entry = manifest.get("hooks", {}).get(plugin) if isinstance(plugin, str) else None
+            matched = entry is not None and body_sha == entry["sha256"]
+            base["hook_deliveries"].append({
+                "plugin": plugin, "status": "success" if matched else "mismatch",
+                "sha256": body_sha, "session_id": sid, "evidence": [ref],
+            })
+            if not matched:
+                base["issues"].append(f"hook.delivered mismatch for {plugin!r}")
+        elif typ in {"skill_read.request", "resource_read.request"}:
             kind = "skill" if typ == "skill_read.request" else "resource"
             request_id = event.get("request_id")
             req_key = (event_sid, request_id)
@@ -759,10 +917,11 @@ def score(args):
         raise ValueError(f"case {case['id']} is excluded on this catalog: {reason}")
     evidence = normalize(run, case["relevant_action"])
     scorer_sha256 = digest(Path(__file__).read_bytes())
+    hook_arm = manifest.get("hook_arm", "hook-off")
     configuration = {field: manifest[field] for field in ("runtime", "plugin_versions", "source_catalog_files",
                                                          "removed_bindings", "corpus_sha256", "fixture_catalog_files",
                                                          "harness_sha256")}
-    configuration.update(adapter_version=evidence["adapter_version"], scorer_sha256=scorer_sha256)
+    configuration.update(hook_arm=hook_arm, adapter_version=evidence["adapter_version"], scorer_sha256=scorer_sha256)
     configuration_sha256 = digest(json.dumps(configuration, sort_keys=True).encode())
     save_json(run / "evidence.json", evidence)
     observed = {load["skill"] for load in evidence["loads"] if load["status"] == "success"}
@@ -781,7 +940,7 @@ def score(args):
         action_coverage = evidence["coverage"]["start"] and evidence["coverage"]["relevant_actions"] and not evidence["issues"]
         timing[skill] = ("before" if min(loads) < min(actions) else "late") if loads and actions and action_coverage else "unavailable"
     result = {"schema_version": 1, "case_id": case["id"], "target": case["target"], "category": case["category"],
-              "configuration_sha256": configuration_sha256, "scorer_sha256": scorer_sha256,
+              "hook_arm": hook_arm, "configuration_sha256": configuration_sha256, "scorer_sha256": scorer_sha256,
               "runtime": manifest["runtime"], "adapter_version": evidence["adapter_version"],
               "split": case["split"], "evidence_kind": evidence["evidence_kind"],
               "session_state": evidence["session_state"], "evidence_coverage": evidence["evidence_coverage"],
@@ -810,8 +969,8 @@ def aggregate(args):
     confusion = defaultdict(Counter)
     strata_rows = defaultdict(list)
     for row in rows:
-        key = (row["configuration_sha256"], row["evidence_kind"], row["split"], row["target"],
-               "explicit_control" if row["category"] == "explicit" else "implicit")
+        key = (row["configuration_sha256"], row.get("hook_arm", "hook-off"), row["evidence_kind"],
+               row["split"], row["target"], "explicit_control" if row["category"] == "explicit" else "implicit")
         group = groups.setdefault(key, Counter())
         group["runs"] += 1
         group["session_" + row["session_state"]] += 1
@@ -835,8 +994,8 @@ def aggregate(args):
     for key, counts in sorted(groups.items()):
         denominator = counts["positive_loaded"] + counts["positive_miss"]
         negatives = counts["negative_scorable"]
-        report.append({"configuration_sha256": key[0], "runtime": strata_rows[key][0][0]["runtime"],
-                       "evidence_kind": key[1], "split": key[2], "target": key[3], "experiment": key[4],
+        report.append({"configuration_sha256": key[0], "hook_arm": key[1], "runtime": strata_rows[key][0][0]["runtime"],
+                       "evidence_kind": key[2], "split": key[3], "target": key[4], "experiment": key[5],
                        "counts": dict(counts), "recall": counts["positive_loaded"] / denominator if denominator else None,
                        "recall_denominator": denominator,
                        "false_activation_rate": counts["false_activations"] / negatives if negatives else None,
@@ -846,8 +1005,8 @@ def aggregate(args):
         denominator = sum(complete and tuple(row["expected_skills"]) == expected
                           and unexpected not in row["allowed_skills"] and unexpected not in row["unresolved_skills"]
                           for row, complete in strata_rows[key])
-        confusion_rows.append({"configuration_sha256": key[0], "evidence_kind": key[1], "split": key[2],
-                               "target": key[3], "experiment": key[4],
+        confusion_rows.append({"configuration_sha256": key[0], "hook_arm": key[1], "evidence_kind": key[2],
+                               "split": key[3], "target": key[4], "experiment": key[5],
                                "expected_skills": list(expected),
                                "unexpected": unexpected, "count": counts["scorable"], "denominator": denominator,
                                "rate": counts["scorable"] / denominator if denominator else None,
@@ -865,6 +1024,8 @@ def main():
     prep.add_argument("--case", required=True)
     prep.add_argument("--runtime", required=True, type=Path)
     prep.add_argument("--output", required=True, type=Path)
+    prep.add_argument("--hook-arm", choices=("hook-off", "hook-on"), default="hook-off",
+                      help="hook-off removes all plugin hooks; hook-on keeps each plugin's SessionStart hook")
     cap = commands.add_parser("capture", help="retain an existing trace byte-for-byte; never invoke a provider")
     cap.add_argument("--run", required=True, type=Path)
     cap.add_argument("--source", required=True, type=Path)

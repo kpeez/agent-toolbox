@@ -34,6 +34,17 @@ in Bash or counting Bash cat as a load or success, leaking child or unrelated
 non-root reads into root activation, colliding root and child requests that
 share one request_id, or changing existing score fields when resource reads
 appear.
+
+The hook-on-arm tests protect selective SessionStart retention, arm separation
+in frozen configurations and aggregate groups, synthetic hook.delivered checks,
+and Claude hook_success delivery proofs and hook-off isolation. Credible
+regressions are leaving non-SessionStart hooks or figure-reminder.py in a
+hook-on snapshot, pooling hook-on and hook-off runs in aggregate, accepting a
+tampered, undeclared, duplicate, or post-user hook delivery without an issue,
+recording a post-user hook row as a delivery, missing a declared plugin with no
+delivery row, accepting a non-null parentUuid on the first hook row for start
+coverage, skipping hook verification in declared_snapshot, or allowing
+hook_success or hook_additional_context in hook-off.
 """
 from __future__ import annotations
 
@@ -69,9 +80,11 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertNotEqual(result.returncode, 0, result.stdout)
         return result
 
-    def prepare(self, name, case=None):
+    def prepare(self, name, case=None, hook_arm=None):
         run = self.root / name
-        self.cli("materialize", "--case", (case or self.case)["id"], "--runtime", HERE / "runtime.offline.json", "--output", run)
+        extra = ["--hook-arm", hook_arm] if hook_arm else []
+        self.cli("materialize", "--case", (case or self.case)["id"], "--runtime", HERE / "runtime.offline.json",
+                 "--output", run, *extra)
         manifest = json.loads((run / "manifest.json").read_text())
         skill = manifest["skills"]["swe:implement"]
         body = Path(skill["path"]).read_text()
@@ -192,7 +205,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(scores["TA-01"]["unexpected_skills"], [])
         self.assertTrue(scores["TA-09"]["false_activation"])
 
-    def claude_trace(self, run, steps, relevant, sidechains=None):
+    def claude_trace(self, run, steps, relevant, sidechains=None, hook_rows=None, plugin_dirs=None, hook_parent=None):
         """Write a minimal transcript in the audited Claude Code shape (EVIDENCE.md) and score it."""
         sid = "claude-session"
 
@@ -206,6 +219,9 @@ class OfflineCLIContract(unittest.TestCase):
                        "sessionId": sid, "isSidechain": is_sidechain, **extra, **row}
                 rows.append(row)
 
+            if not is_sidechain and hook_rows:
+                for idx, att in enumerate(hook_rows):
+                    add({"type": "attachment", "attachment": att}, hook_parent if idx == 0 else None)
             add({"type": "user", "message": {"role": "user", "content": "rename it"}})
             for kind, message_id, tool_use_id, payload in seq_steps:
                 if kind == "call":
@@ -217,6 +233,8 @@ class OfflineCLIContract(unittest.TestCase):
                         if kind == "sibling-result" else None
                     add({"type": "user", "toolUseResult": payload, "message": {"role": "user", "content": [
                         {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}}, parent)
+                elif kind == "attachment":
+                    add({"type": "attachment", "attachment": payload})
                 else:
                     add({"type": "user", "isMeta": True, "sourceToolUseID": tool_use_id, "message": {
                         "role": "user", "content": [{"type": "text", "text": payload}]}})
@@ -234,8 +252,10 @@ class OfflineCLIContract(unittest.TestCase):
                 (subdir / f"agent-{agent_id}.jsonl").write_text("".join(json.dumps(row) + "\n" for row in sub_lines))
         stream = self.root / (run.name + ".stream.jsonl")
         stream.write_text(json.dumps({"type": "result", "subtype": "success", "is_error": False, "session_id": sid}) + "\n")
+        dirs = plugin_dirs if plugin_dirs is not None else [run / "inputs" / "plugins" / "swe"]
+        dir_args = [arg for d in dirs for arg in ("--plugin-dir", d)]
         self.cli("capture", "--run", run, "--source", source, "--state", "completed", "--format", "claude-transcript",
-                 "--plugin-dir", run / "inputs" / "plugins" / "swe", "--stream", stream, "--relevant-action", relevant)
+                 *dir_args, "--stream", stream, "--relevant-action", relevant)
         return self.cli("score", "--run", run)
 
     def test_claude_transcript_load_proof_and_action_order(self):
@@ -607,6 +627,269 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(shared_ev["child_loads"][0]["session_id"], "child-1")
         self.assertEqual(shared_score["observed_skills"], ["swe:implement"])
         self.assertEqual(shared_score["child_observed_skills"], ["swe:implement"])
+
+    def test_hook_arm_materialize_score_and_aggregate(self):
+        off_run, off_skill, off_body = self.prepare("arm-off")
+        off_manifest = json.loads((off_run / "manifest.json").read_text())
+        self.assertEqual(off_manifest["hook_arm"], "hook-off")
+        self.assertNotIn("hooks", off_manifest)
+        self.assertTrue(any("rules/AGENTS.md" in d for d in off_manifest["known_deltas"]))
+        for plugin in ("swe", "lab", "uni"):
+            self.assertFalse((off_run / "inputs" / "plugins" / plugin / "hooks").exists())
+            self.assertTrue((off_run / "inputs" / "plugins" / plugin / "rules" / "AGENTS.md").is_file())
+        self.assertEqual(off_manifest["removed_bindings"], [
+            "plugins/lab/hooks",
+            "plugins/swe/hooks",
+            "plugins/uni/hooks",
+        ])
+
+        on_run, on_skill, on_body = self.prepare("arm-on", hook_arm="hook-on")
+        on_manifest = json.loads((on_run / "manifest.json").read_text())
+        self.assertEqual(on_manifest["hook_arm"], "hook-on")
+        self.assertEqual(set(on_manifest["hooks"]), {"lab", "swe", "uni"})
+        self.assertTrue(any("rules/AGENTS.md" in d for d in on_manifest["known_deltas"]))
+        self.assertFalse((on_run / "inputs" / "plugins" / "lab" / "hooks" / "figure-reminder.py").exists())
+        for plugin in ("swe", "lab", "uni"):
+            hooks_dir = on_run / "inputs" / "plugins" / plugin / "hooks"
+            self.assertEqual(sorted(p.name for p in hooks_dir.iterdir()), ["hooks.json", "session-start.md"])
+            hooks_cfg = json.loads((hooks_dir / "hooks.json").read_text())["hooks"]
+            self.assertEqual(list(hooks_cfg), ["SessionStart"])
+        self.assertEqual(on_manifest["removed_bindings"], [
+            "plugins/lab/hooks/figure-reminder.py",
+            "plugins/lab/hooks/hooks.json:PostToolUse",
+            "plugins/swe/hooks/hooks.json:PostCompact",
+            "plugins/swe/hooks/hooks.json:PreToolUse",
+        ])
+
+        swe_hook_text = Path(on_manifest["hooks"]["swe"]["path"]).read_text()
+        on_score = self.trace(on_run, [
+            {"type": "session.started"},
+            {"type": "hook.delivered", "plugin": "swe", "body": swe_hook_text},
+            {"type": "skill_read.request", "request_id": "s-1", "skill": "swe:implement", "path": on_skill["path"]},
+            {"type": "skill_read.result", "request_id": "s-1", "exit_code": 0, "body": on_body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ])
+        on_ev = json.loads((on_run / "evidence.json").read_text())
+        self.assertEqual(on_score["hook_arm"], "hook-on")
+        self.assertEqual(on_score["evidence_coverage"], "complete")
+        self.assertEqual(on_score["activation"]["swe:implement"], "loaded")
+        self.assertEqual(len(on_ev["hook_deliveries"]), 1)
+        self.assertEqual(on_ev["hook_deliveries"][0]["status"], "success")
+        self.assertEqual(on_ev["hook_deliveries"][0]["sha256"], on_manifest["hooks"]["swe"]["sha256"])
+
+        off_score = self.trace(off_run, [
+            {"type": "session.started"},
+            {"type": "skill_read.request", "request_id": "s-1", "skill": "swe:implement", "path": off_skill["path"]},
+            {"type": "skill_read.result", "request_id": "s-1", "exit_code": 0, "body": off_body, "body_complete": True},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ])
+        self.assertEqual(off_score["hook_arm"], "hook-off")
+        self.assertNotEqual(off_score["configuration_sha256"], on_score["configuration_sha256"])
+
+        report = self.cli("aggregate", off_run / "score.json", on_run / "score.json")
+        self.assertEqual(len(report["groups"]), 2)
+        self.assertEqual({g["hook_arm"] for g in report["groups"]}, {"hook-off", "hook-on"})
+
+        neg_case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"]
+                        if c["target"] == "swe:implement" and c["category"] == "negative" and c["expected_skills"])
+        neg_scores = []
+        for arm in ("hook-off", "hook-on"):
+            neg_run, neg_skill, neg_body = self.prepare("arm-neg-" + arm, neg_case, hook_arm=arm)
+            neg_scores.append(self.trace(neg_run, [
+                {"type": "session.started"},
+                {"type": "skill_read.request", "request_id": "n-1", "skill": "swe:implement", "path": neg_skill["path"]},
+                {"type": "skill_read.result", "request_id": "n-1", "exit_code": 0, "body": neg_body, "body_complete": True},
+                {"type": "action.started", "kind": neg_case["relevant_action"]},
+                {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+            ]))
+            self.assertEqual(neg_scores[-1]["hook_arm"], arm)
+        conf_report = self.cli("aggregate",
+                               self.root / "arm-neg-hook-off" / "score.json",
+                               self.root / "arm-neg-hook-on" / "score.json")
+        self.assertEqual(len(conf_report["confusion"]), 2)
+        self.assertEqual({c["hook_arm"] for c in conf_report["confusion"]}, {"hook-off", "hook-on"})
+
+        bad_on, _, _ = self.prepare("syn-hook-mismatch", hook_arm="hook-on")
+        bad_on_score = self.trace(bad_on, [
+            {"type": "session.started"},
+            {"type": "hook.delivered", "plugin": "swe", "body": "tampered\n"},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ])
+        bad_on_ev = json.loads((bad_on / "evidence.json").read_text())
+        self.assertEqual(bad_on_ev["hook_deliveries"][0]["status"], "mismatch")
+        self.assertTrue(bad_on_ev["issues"])
+        self.assertEqual(bad_on_score["evidence_coverage"], "partial")
+
+        bad_off, _, _ = self.prepare("syn-hook-in-off")
+        bad_off_score = self.trace(bad_off, [
+            {"type": "session.started"},
+            {"type": "hook.delivered", "plugin": "swe", "body": swe_hook_text},
+            {"type": "action.started", "kind": self.case["relevant_action"]},
+            {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}},
+        ])
+        bad_off_ev = json.loads((bad_off / "evidence.json").read_text())
+        self.assertTrue(bad_off_ev["issues"])
+        self.assertEqual(bad_off_score["evidence_coverage"], "partial")
+
+    def test_claude_hook_delivery_proof_and_isolation(self):
+        def make_skill_and_edit(skill, text):
+            body = ("Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n"
+                    + text.split("\n---\n", 1)[1].lstrip("\n"))
+            return [
+                ("call", "message-skill", "use-skill", {"name": "Skill", "input": {"skill": "swe:implement"}}),
+                ("result", None, "use-skill", {"success": True, "commandName": "swe:implement"}),
+                ("body", None, "use-skill", body),
+                ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+                ("result", None, "use-edit", {"filePath": "calc.py"}),
+            ]
+
+        def hook_att(stdout, hook_type="hook_success"):
+            return {
+                "type": hook_type,
+                "hookName": "SessionStart:startup",
+                "hookEvent": "SessionStart",
+                "toolUseID": "hook-1",
+                "content": stdout.rstrip("\n") if hook_type == "hook_success" else [stdout],
+                "stdout": stdout,
+                "stderr": "",
+                "exitCode": 0,
+                "command": "cat \"$CLAUDE_PLUGIN_ROOT\"/hooks/session-start.md",
+                "durationMs": 12,
+            }
+
+        ok_run, ok_skill, ok_text = self.prepare("claude-hook-ok", hook_arm="hook-on")
+        ok_manifest = json.loads((ok_run / "manifest.json").read_text())
+        swe_stdout = Path(ok_manifest["hooks"]["swe"]["path"]).read_text()
+        lab_stdout = Path(ok_manifest["hooks"]["lab"]["path"]).read_text()
+        ok_score = self.claude_trace(
+            ok_run,
+            make_skill_and_edit(ok_skill, ok_text),
+            "use-edit",
+            hook_rows=[hook_att(swe_stdout), hook_att(lab_stdout)],
+            plugin_dirs=[ok_run / "inputs" / "plugins" / "swe", ok_run / "inputs" / "plugins" / "lab"],
+        )
+        ok_ev = json.loads((ok_run / "evidence.json").read_text())
+        self.assertEqual(ok_score["hook_arm"], "hook-on")
+        self.assertEqual(ok_score["evidence_coverage"], "complete")
+        self.assertEqual(ok_score["activation"]["swe:implement"], "loaded")
+        self.assertTrue(ok_ev["coverage"]["start"])
+        self.assertEqual(ok_ev["issues"], [])
+        self.assertEqual([(d["plugin"], d["status"]) for d in ok_ev["hook_deliveries"]],
+                         [("swe", "success"), ("lab", "success")])
+        self.assertEqual(ok_ev["hook_deliveries"][0]["sha256"], ok_manifest["hooks"]["swe"]["sha256"])
+
+        off_run, off_skill, off_text = self.prepare("claude-hook-in-off")
+        off_score = self.claude_trace(
+            off_run,
+            make_skill_and_edit(off_skill, off_text),
+            "use-edit",
+            hook_rows=[hook_att(swe_stdout)],
+        )
+        off_ev = json.loads((off_run / "evidence.json").read_text())
+        self.assertEqual(off_score["evidence_coverage"], "partial")
+        self.assertFalse(off_ev["coverage"]["start"])
+        self.assertTrue(any("hook-off" in issue for issue in off_ev["issues"]))
+
+        mismatch_run, mismatch_skill, mismatch_text = self.prepare("claude-hook-mismatch", hook_arm="hook-on")
+        mismatch_score = self.claude_trace(
+            mismatch_run,
+            make_skill_and_edit(mismatch_skill, mismatch_text),
+            "use-edit",
+            hook_rows=[hook_att("swe: altered hook body\n")],
+        )
+        mismatch_ev = json.loads((mismatch_run / "evidence.json").read_text())
+        self.assertEqual(mismatch_score["evidence_coverage"], "partial")
+        self.assertIsNone(mismatch_ev["hook_deliveries"][0]["plugin"])
+        self.assertEqual(mismatch_ev["hook_deliveries"][0]["status"], "mismatch")
+        self.assertTrue(any("no hook_success delivery row" in issue for issue in mismatch_ev["issues"]))
+
+        dup_run, dup_skill, dup_text = self.prepare("claude-hook-dup", hook_arm="hook-on")
+        dup_score = self.claude_trace(
+            dup_run,
+            make_skill_and_edit(dup_skill, dup_text),
+            "use-edit",
+            hook_rows=[hook_att(swe_stdout), hook_att(swe_stdout)],
+        )
+        dup_ev = json.loads((dup_run / "evidence.json").read_text())
+        self.assertEqual(dup_score["evidence_coverage"], "partial")
+        self.assertEqual([(d["plugin"], d["status"]) for d in dup_ev["hook_deliveries"]],
+                         [("swe", "success"), ("swe", "success")])
+        self.assertTrue(any("duplicate hook delivery for swe" in issue for issue in dup_ev["issues"]))
+
+        late_run, late_skill, late_text = self.prepare("claude-hook-after-user", hook_arm="hook-on")
+        late_score = self.claude_trace(
+            late_run,
+            [("attachment", None, None, hook_att(swe_stdout))] + make_skill_and_edit(late_skill, late_text),
+            "use-edit",
+            hook_rows=[hook_att(swe_stdout)],
+        )
+        late_ev = json.loads((late_run / "evidence.json").read_text())
+        self.assertEqual(late_score["evidence_coverage"], "partial")
+        self.assertEqual(len(late_ev["hook_deliveries"]), 1)
+        self.assertTrue(any("outside leading start run" in issue for issue in late_ev["issues"]))
+
+        nonnull_run, nonnull_skill, nonnull_text = self.prepare("claude-hook-nonnull-parent", hook_arm="hook-on")
+        nonnull_score = self.claude_trace(
+            nonnull_run,
+            make_skill_and_edit(nonnull_skill, nonnull_text),
+            "use-edit",
+            hook_rows=[hook_att(swe_stdout)],
+            hook_parent="stray-parent",
+        )
+        nonnull_ev = json.loads((nonnull_run / "evidence.json").read_text())
+        self.assertEqual(nonnull_score["evidence_coverage"], "partial")
+        self.assertFalse(nonnull_ev["coverage"]["start"])
+
+        uni_stdout = Path(ok_manifest["hooks"]["uni"]["path"]).read_text()
+        undecl_run, undecl_skill, undecl_text = self.prepare("claude-hook-undeclared", hook_arm="hook-on")
+        undecl_score = self.claude_trace(
+            undecl_run,
+            make_skill_and_edit(undecl_skill, undecl_text),
+            "use-edit",
+            hook_rows=[hook_att(swe_stdout), hook_att(uni_stdout)],
+        )
+        undecl_ev = json.loads((undecl_run / "evidence.json").read_text())
+        self.assertEqual(undecl_score["evidence_coverage"], "partial")
+        self.assertEqual([(d["plugin"], d["status"]) for d in undecl_ev["hook_deliveries"]],
+                         [("swe", "success"), (None, "mismatch")])
+        self.assertTrue(any("does not match any declared plugin" in issue for issue in undecl_ev["issues"]))
+
+        tamper_run, _, _ = self.prepare("claude-hook-tamper", hook_arm="hook-on")
+        tampered_dir = self.root / "tampered-hook-swe"
+        shutil.copytree(tamper_run / "inputs" / "plugins" / "swe", tampered_dir)
+        (tampered_dir / "hooks" / "session-start.md").write_text("tampered\n")
+        tamper_source = self.root / "tamper-hook.jsonl"
+        tamper_source.write_text("")
+        tamper_err = self.cli("capture", "--run", tamper_run, "--source", tamper_source, "--state", "incomplete",
+                              "--format", "claude-transcript", "--plugin-dir", tampered_dir, ok=False)
+        self.assertIn("hook does not match the frozen catalog", tamper_err.stderr)
+        self.assertIn("hooks/session-start.md", tamper_err.stderr)
+
+        missing_run, missing_skill, missing_text = self.prepare("claude-hook-missing", hook_arm="hook-on")
+        missing_score = self.claude_trace(
+            missing_run,
+            make_skill_and_edit(missing_skill, missing_text),
+            "use-edit",
+        )
+        missing_ev = json.loads((missing_run / "evidence.json").read_text())
+        self.assertEqual(missing_score["evidence_coverage"], "partial")
+        self.assertEqual(missing_ev["hook_deliveries"], [])
+        self.assertTrue(any("no hook_success delivery row" in issue for issue in missing_ev["issues"]))
+
+        for arm in ("hook-off", "hook-on"):
+            ctx_run, ctx_skill, ctx_text = self.prepare("claude-hook-ctx-" + arm, hook_arm=arm)
+            ctx_score = self.claude_trace(
+                ctx_run,
+                make_skill_and_edit(ctx_skill, ctx_text),
+                "use-edit",
+                hook_rows=[hook_att("extra context", hook_type="hook_additional_context")],
+            )
+            ctx_ev = json.loads((ctx_run / "evidence.json").read_text())
+            self.assertEqual(ctx_score["evidence_coverage"], "partial")
+            self.assertTrue(any("hook_additional_context" in issue for issue in ctx_ev["issues"]))
 
 
 if __name__ == "__main__":
