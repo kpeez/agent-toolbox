@@ -37,7 +37,7 @@ Prefer a tool that the repository's developers can install and run. Tell the use
 
 ## Generate the verify skill
 
-Write a project-local skill in `.agents/skills/<skill-name>/`, and lay it out as [project skill layout](../../references/project-skill-layout.md) says: the model or proof files and the runner scripts in the skill folder, the `.claude/skills` link made by the setup step, one repo-level command for the check, and that command named in `AGENTS.md`. Keep no top-level `formal/` directory. Give the skill frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to:
+Write a project-local skill in `.agents/skills/<skill-name>/`, and lay it out as [project skill layout](../../references/project-skill-layout.md) says: the model or proof files and the runner scripts in the skill folder, the `.claude/skills` link committed with the skill, one repo-level command for the check, and that command named in `AGENTS.md`. Keep no top-level `formal/` directory. Give the skill frontmatter that names the area and says when to use it. Without frontmatter, the skill never registers. From the skill alone, the next agent must be able to:
 
 - tell whether a change touches the verified code,
 - run the check,
@@ -50,7 +50,7 @@ If the check is a TLA+ model, tell the next agent to read every result with the 
 
 ## Prove it before you hand off
 
-Confirm that Git tracks every file of the skill folder and does not track the `.claude/skills` link. Run the setup step, and confirm that `.claude/skills/<skill-name>/SKILL.md` resolves through the link. Follow the generated skill once, as the next agent would, through the repo-level command, on a scratch change that breaks the property in the real code. It must catch the break. Then drop the scratch change and confirm that the check is back where it started: passing, or failing only on the findings you will report. A verify skill that never ran is a draft. If the skill misses the break or a step does not run, fix the skill or the verification, not the scratch change.
+Confirm that Git tracks every file of the skill folder and tracks the link, the folder link or a per-skill link, as a symlink (`git ls-files -s .claude/skills` shows it with mode 120000). Confirm that `.claude/skills/<skill-name>/SKILL.md` resolves through the link. Follow the generated skill once, as the next agent would, through the repo-level command, on a scratch change that breaks the property in the real code. It must catch the break. Then drop the scratch change and confirm that the check is back where it started: passing, or failing only on the findings you will report. A verify skill that never ran is a draft. If the skill misses the break or a step does not run, fix the skill or the verification, not the scratch change.
 
 ## Hand off
 

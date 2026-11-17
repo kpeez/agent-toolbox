@@ -42,7 +42,7 @@ When the target is unclear and several skills could fit, ask which one, and name
 
    Done when all three answers match the files.
 
-4. `4-hand-over`: Confirm that Git tracks every file of `.agents/skills/research-context/` and tracks no link under `.claude/skills`. Confirm that `.claude/skills/research-context/SKILL.md` resolves through the link. Report the path and the three proof answers.
+4. `4-hand-over`: Confirm that Git tracks every file of `.agents/skills/research-context/` and tracks the link, the folder link or a per-skill link, as a symlink (`git ls-files -s .claude/skills` shows it with mode 120000). Confirm that `.claude/skills/research-context/SKILL.md` resolves through the link. Report the path and the three proof answers.
 
    Done when the report states each of these, or names the one that is unverified.
 
@@ -72,7 +72,7 @@ When the target is unclear and several skills could fit, ask which one, and name
 
    Done when one full run followed the text with no unwritten step.
 
-7. `7-hand-over`: Add the skill to the Procedure skills list in `research-context` marked live, or change its proposed entry to live. Confirm that Git tracks every file of the folder and tracks no link under `.claude/skills`, neither the folder link nor a per-skill link. Confirm that `.claude/skills/<procedure>/SKILL.md` resolves through the link. Report the skill path, the checks, and the known-good result.
+7. `7-hand-over`: Add the skill to the Procedure skills list in `research-context` marked live, or change its proposed entry to live. Confirm that Git tracks every file of the folder and tracks the link, the folder link or a per-skill link, as a symlink (`git ls-files -s .claude/skills` shows it with mode 120000). Confirm that `.claude/skills/<procedure>/SKILL.md` resolves through the link. Report the skill path, the checks, and the known-good result.
 
    Done when the report states each of these, or names the one that is unverified.
 

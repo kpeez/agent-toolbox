@@ -28,30 +28,30 @@ A skill that a lab skill generates for a project follows this layout.
 
 ## Claude Code sees it through a link
 
-Claude Code reads project skills only from `.claude/skills/`. Give it the
-skill through the symlink `.claude/skills -> ../.agents/skills`. The
-repository's setup step creates the link. Commit the skill folder, but do
-not commit the link.
+Claude Code reads project skills only from `.claude/skills/`. Give it each
+skill through its own committed symlink,
+`.claude/skills/<skill-name> -> ../../.agents/skills/<skill-name>`. A
+committed link works on clone with no setup step. Do not commit a link for
+the whole `.claude/skills` folder: when a teammate keeps a local, ignored
+`.claude/skills/` directory, their next pull deletes it without a warning.
 
-- Add one line to the setup step that the repository already has, such as
-  `just install` or `make install`:
-
-  ```bash
-  mkdir -p .claude && if [ -L .claude/skills ] || [ ! -e .claude/skills ]; then ln -sfn ../.agents/skills .claude/skills; else echo ".claude/skills is a real directory; link .agents/skills into it by hand"; fi
-  ```
-
-  The line is safe to run again. It replaces only a link, and it never
-  overwrites a real `.claude/skills` directory.
-- Make sure Git ignores the link. When `.gitignore` covers neither `.claude/`
-  nor `.claude/skills`, add `/.claude/skills`.
-- When `.claude/skills` is already a real directory with committed skills,
-  do not replace it. Link the one skill folder instead
-  (`ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`).
-  Add that line to the setup step, so every clone gets the link. Ignore only
-  that link with `/.claude/skills/<skill-name>`, so the team's committed
-  skills stay tracked. Tell the user.
-- Run the setup step once, and confirm that `.claude/skills/<skill-name>/SKILL.md`
-  resolves.
+- When `git ls-files -s .claude/skills` already lists `.claude/skills`
+  itself with mode `120000`, the repository commits a folder link that
+  reaches the skill. Add nothing.
+- When `.claude/skills` is a link that Git does not track
+  (`[ -L .claude/skills ]` and `git ls-files .claude/skills` prints
+  nothing), an older version of this layout made it in a setup step. Delete
+  the link with `rm .claude/skills`, and remove the setup-step line that made
+  it. Leave `.gitignore` as it is.
+- Link the skill:
+  `mkdir -p .claude/skills && ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`.
+- Commit the link with `git add -f .claude/skills/<skill-name>`. The `-f`
+  adds it even when `.gitignore` covers `.claude/`. Git applies no ignore
+  rule to a tracked path, so do not edit `.gitignore` for the link. If the
+  link later leaves the index, add it again with `git add -f`;
+  `git add -A` does not.
+- Confirm that `git ls-files -s .claude/skills` shows the link with mode
+  `120000`, and that `.claude/skills/<skill-name>/SKILL.md` resolves.
 
 ## One repo-level command
 

@@ -104,7 +104,7 @@ pass. Report the failure.
    [project skill layout](../../references/project-skill-layout.md), move it
    into that layout: the skill and its files in `.agents/skills/<skill-name>/`,
    no top-level `formal/` directory, the skill folder committed, the
-   `.claude/skills` link made by the setup step and not committed, and one
+   `.claude/skills` link committed, and one
    repo-level command named in `AGENTS.md`. Then follow
    the verify skill once as the next agent would, through that command, to
    show that its steps still run.
