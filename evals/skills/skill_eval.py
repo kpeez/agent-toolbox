@@ -30,7 +30,9 @@ SUCCESSORS = {"swe:test-audit": "swe:testing-code",
               "swe:grill": "swe:interview-user"}
 RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools",
                   "harness_deltas", "catalog_scope", "context_delivery"}
-# Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md).
+# Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md), plus five
+# metadata record types from 2.1.325 (session-owner, api-request, api-request-shape,
+# api-request-blob, tools-used).
 # Anything else is coverage loss until a raw audit adds it here.
 CLAUDE_LINE_TYPES = {"user", "assistant", "attachment", "system", "queue-operation",
                      "atis-latch", "last-prompt", "cost-state", "session-owner", "api-request-shape",

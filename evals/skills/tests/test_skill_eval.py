@@ -242,8 +242,9 @@ class OfflineCLIContract(unittest.TestCase):
 
         lines = build_lines(steps)
         source = self.root / (run.name + ".jsonl")
+        metadata_types = ["cost-state", "session-owner", "api-request", "api-request-shape", "api-request-blob", "tools-used"]
         source.write_text("".join(json.dumps(row) + "\n" for row in lines)
-                          + json.dumps({"type": "cost-state", "sessionId": sid}) + "\n")
+                          + "".join(json.dumps({"type": kind, "sessionId": sid}) + "\n" for kind in metadata_types))
         if sidechains:
             subdir = source.with_suffix("") / "subagents"
             subdir.mkdir(parents=True, exist_ok=True)
