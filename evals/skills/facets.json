@@ -217,7 +217,8 @@
           "AR-03",
           "AR-04",
           "AR-05",
-          "AR-06"
+          "AR-06",
+          "AR-10"
         ]
       },
       "evidence": "skill-call",
@@ -486,8 +487,10 @@
     {
       "cases": {
         "negative": [
+          "TA-07",
           "TA-08",
           "TA-09",
+          "TC-07",
           "TC-08",
           "TC-09"
         ],
@@ -498,6 +501,7 @@
           "TA-04",
           "TA-05",
           "TA-06",
+          "TA-10",
           "TC-01",
           "TC-02",
           "TC-03",
@@ -1174,7 +1178,13 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/build-feature",
@@ -1187,7 +1197,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`build-feature`: new or changed behavior.",
       "subject": "build-feature"
     },
@@ -1254,7 +1264,10 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-04",
+          "DG-06"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/diagnose-trace",
@@ -1267,7 +1280,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`diagnose-trace`: diagnose a captured profile, trace, or heap snapshot. No fix.",
       "subject": "diagnose-trace"
     },
@@ -1294,7 +1307,11 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/fix-bug",
@@ -1307,7 +1324,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`fix-bug`: a reported defect to reproduce, root-cause, and fix.",
       "subject": "fix-bug"
     },
@@ -2452,7 +2469,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-09"
+        ]
       },
       "evidence": "skill-call",
       "id": "route-load/swe/codebase-design",
@@ -2467,7 +2486,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Propose deepening refactors; no implementation: `codebase-design`.",
       "subject": "codebase-design"
     },
@@ -2496,7 +2515,15 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-01",
+          "DG-02",
+          "DG-03",
+          "DG-05",
+          "DG-10",
+          "IM-07",
+          "TA-08"
+        ]
       },
       "evidence": "skill-call",
       "id": "route-load/swe/diagnose",
@@ -2511,7 +2538,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Explain a failure, crash, hang, or leak; no fix requested: `diagnose`.",
       "subject": "diagnose"
     },
@@ -2672,7 +2699,24 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-08",
+          "IM-09",
+          "TA-01",
+          "TA-02",
+          "TA-03",
+          "TA-04",
+          "TA-05",
+          "TA-06",
+          "TA-10",
+          "TC-01",
+          "TC-02",
+          "TC-03",
+          "TC-04",
+          "TC-05",
+          "TC-06",
+          "TC-10"
+        ]
       },
       "evidence": "skill-call",
       "id": "route-load/swe/testing-code",
@@ -2687,7 +2731,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Design or judge a new test or a disposable probe: `testing-code`. | Prune or review an existing test suite: `testing-code`.",
       "subject": "testing-code"
     },
@@ -3278,7 +3322,13 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -3308,7 +3358,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`build-feature`: new or changed behavior.",
       "subject": "build-feature"
     },
@@ -3374,7 +3424,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-09"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [],
@@ -3403,7 +3455,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "Propose deepening refactors; no implementation: `codebase-design`.",
       "subject": "codebase-design"
     },
@@ -3438,7 +3490,15 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-01",
+          "DG-02",
+          "DG-03",
+          "DG-05",
+          "DG-10",
+          "IM-07",
+          "TA-08"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -3461,7 +3521,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "Explain a failure, crash, hang, or leak; no fix requested: `diagnose`.",
       "subject": "diagnose"
     },
@@ -3496,7 +3556,10 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-04",
+          "DG-06"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -3518,7 +3581,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`diagnose-trace`: diagnose a captured profile, trace, or heap snapshot. No fix.",
       "subject": "diagnose-trace"
     },
@@ -3631,7 +3694,11 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -3661,7 +3728,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`fix-bug`: a reported defect to reproduce, root-cause, and fix.",
       "subject": "fix-bug"
     },
@@ -4134,7 +4201,24 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-08",
+          "IM-09",
+          "TA-01",
+          "TA-02",
+          "TA-03",
+          "TA-04",
+          "TA-05",
+          "TA-06",
+          "TA-10",
+          "TC-01",
+          "TC-02",
+          "TC-03",
+          "TC-04",
+          "TC-05",
+          "TC-06",
+          "TC-10"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [],
@@ -4166,7 +4250,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "Design or judge a new test or a disposable probe: `testing-code`. | Prune or review an existing test suite: `testing-code`.",
       "subject": "testing-code"
     },
@@ -7239,7 +7323,13 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "11-independent-review",
@@ -7255,7 +7345,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "11-independent-review: Give the diff and evidence to an agent that did not write it. (reviewer agent, no-comments)",
       "subject": "build-feature"
     },
@@ -7285,7 +7375,13 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "12-order-commits",
@@ -7301,14 +7397,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "12-order-commits: Shape the work into small ordered commits before you push them, and stack follow-ups. (sequence-verifiable-units)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "skill-call",
       "handle": "13-update-obsolete-docs",
@@ -7324,14 +7426,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "13-update-obsolete-docs: Update documentation this change makes obsolete. (implement)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "skill-call",
       "handle": "14-publish-draft-pr",
@@ -7347,14 +7455,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-interview-on-open-decisions",
@@ -7370,14 +7484,20 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-interview-on-open-decisions: When scope or behavior rests on a product or preference decision the user has not made, run interview-user on those decisions only. Settle facts a run can show by prototype instead. (interview-user, build-prototype)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "skill-call",
       "handle": "2-interview-on-open-decisions",
@@ -7393,14 +7513,20 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-interview-on-open-decisions: When scope or behavior rests on a product or preference decision the user has not made, run interview-user on those decisions only. Settle facts a run can show by prototype instead. (interview-user, build-prototype)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-name-data-shape",
@@ -7416,14 +7542,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. (model-the-domain, foundational-thinking)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-name-data-shape",
@@ -7439,14 +7571,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. (model-the-domain, foundational-thinking)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-explore-designs",
@@ -7462,14 +7600,20 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-explore-designs: When the code crosses a function boundary, run architect for the shape. For a consequential interface, map callers, invariants, and errors. (architect, codebase-design, redesign-from-first-principles)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "skill-call",
       "handle": "4-explore-designs",
@@ -7485,14 +7629,20 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-explore-designs: When the code crosses a function boundary, run architect for the shape. For a consequential interface, map callers, invariants, and errors. (architect, codebase-design, redesign-from-first-principles)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-explore-designs",
@@ -7508,14 +7658,20 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-explore-designs: When the code crosses a function boundary, run architect for the shape. For a consequential interface, map callers, invariants, and errors. (architect, codebase-design, redesign-from-first-principles)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "5-write-throughput-checkpoint",
@@ -7531,14 +7687,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-write-throughput-checkpoint: Add four task items for blocking first steps, independent workstreams, shared mutable state, and the smallest safe decomposition. Mark one that does not apply `n/a: <reason>`. (separate-before-serializing-shared-state)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "skill-call",
       "handle": "6-build-one-unit",
@@ -7554,14 +7716,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-build-one-unit: Delegate each unit with file paths, the data shape, and success criteria, and verify it before the next. Port a shared-primitive improvement to every consumer. Commit liberally. (implement, sequence-verifiable-units, laziness-protocol)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "6-build-one-unit",
@@ -7577,14 +7745,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-build-one-unit: Delegate each unit with file paths, the data shape, and success criteria, and verify it before the next. Port a shared-primitive improvement to every consumer. Commit liberally. (implement, sequence-verifiable-units, laziness-protocol)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "6-build-one-unit",
@@ -7600,14 +7774,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-build-one-unit: Delegate each unit with file paths, the data shape, and success criteria, and verify it before the next. Port a shared-primitive improvement to every consumer. Commit liberally. (implement, sequence-verifiable-units, laziness-protocol)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "7-decide-tests",
@@ -7623,14 +7803,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "skill-call",
       "handle": "7-decide-tests",
@@ -7646,14 +7832,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "full-read",
       "handle": "8-verify-on-surface",
@@ -7669,14 +7861,20 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-verify-on-surface: Run the feature through its real entry point, with the project's verification skill when one exists. Inconclusive or wrong-surface is not a pass. (prove-it-works)",
       "subject": "build-feature"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "AR-07",
+          "IM-01",
+          "IM-02",
+          "IM-04",
+          "IM-10"
+        ]
       },
       "evidence": "skill-call",
       "handle": "9-check-blast-radius",
@@ -7692,7 +7890,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "9-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)",
       "subject": "build-feature"
     },
@@ -7998,7 +8196,10 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-04",
+          "DG-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "1-identify-format",
@@ -8014,14 +8215,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-identify-format: Identify the format and load it with the right tool. Parse large artifacts in a subagent and keep the reduced finding in the main thread. (diagnose, guard-the-context-window)",
       "subject": "diagnose-trace"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-04",
+          "DG-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-identify-format",
@@ -8037,14 +8241,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-identify-format: Identify the format and load it with the right tool. Parse large artifacts in a subagent and keep the reduced finding in the main thread. (diagnose, guard-the-context-window)",
       "subject": "diagnose-trace"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-04",
+          "DG-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-make-it-queryable",
@@ -8060,14 +8267,17 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-make-it-queryable: Load the trace or heap snapshot into sqlite, one row per sample, frame, or node, before you read it. (build-the-lever)",
       "subject": "diagnose-trace"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "DG-04",
+          "DG-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "5-confirm-with-pair",
@@ -8083,7 +8293,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-confirm-with-pair: With a paired capture, diff the before and after artifacts to confirm. Otherwise, label the finding the strongest hypothesis the artifact supports. (explain-the-number)",
       "subject": "diagnose-trace"
     },
@@ -8182,7 +8392,11 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "1-reproduce-failure",
@@ -8198,14 +8412,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-reproduce-failure: Reproduce it yourself on the reported surface, with the project's verification skill when one exists. Ask the user only with a specific reason that surface cannot reach it. If it does not fire, synthesize the trigger, tighten conditions, or instrument until it does. (diagnose, prove-it-works)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-reproduce-failure",
@@ -8221,14 +8439,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-reproduce-failure: Reproduce it yourself on the reported surface, with the project's verification skill when one exists. Ask the user only with a specific reason that surface cannot reach it. If it does not fire, synthesize the trigger, tighten conditions, or instrument until it does. (diagnose, prove-it-works)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "10-encode-bug-class",
@@ -8244,14 +8466,18 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "10-encode-bug-class: When the code alone shows the faulty pattern, make it fail the build at the highest level that works: a type, a lint rule, or a check. The error names what to write instead. Run the enforcer on the bug and on the fix, and keep the failing-then-passing output. Skip when only runtime state shows the bug. (correct, encode-lessons-in-structure)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "10-encode-bug-class",
@@ -8267,14 +8493,18 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "10-encode-bug-class: When the code alone shows the faulty pattern, make it fail the build at the highest level that works: a type, a lint rule, or a check. The error names what to write instead. Run the enforcer on the bug and on the fix, and keep the failing-then-passing output. Skip when only runtime state shows the bug. (correct, encode-lessons-in-structure)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "11-check-blast-radius",
@@ -8290,14 +8520,18 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "11-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "12-clean-the-diff",
@@ -8313,14 +8547,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "12-clean-the-diff: Self-review the diff and keep a comment only for a non-obvious why. (no-comments, writing)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "12-clean-the-diff",
@@ -8336,14 +8574,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "12-clean-the-diff: Self-review the diff and keep a comment only for a non-obvious why. (no-comments, writing)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "13-update-obsolete-docs",
@@ -8359,14 +8601,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "13-update-obsolete-docs: Update documentation this change makes obsolete. (implement)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "14-publish-draft-pr",
@@ -8382,14 +8628,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "2-binary-search-cause",
@@ -8405,14 +8655,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-binary-search-cause: Seed hypotheses with a trace of the affected code and with why. Each pass, take the split that cuts the most problem space, get runtime evidence, and eliminate. Instrument when state is unclear. Do not guess. (why, diagnose, fix-root-causes)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-binary-search-cause",
@@ -8428,14 +8682,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-binary-search-cause: Seed hypotheses with a trace of the affected code and with why. Each pass, take the split that cuts the most problem space, get runtime evidence, and eliminate. Instrument when state is unclear. Do not guess. (why, diagnose, fix-root-causes)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "2-binary-search-cause",
@@ -8451,14 +8709,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-binary-search-cause: Seed hypotheses with a trace of the affected code and with why. Each pass, take the split that cuts the most problem space, get runtime evidence, and eliminate. Instrument when state is unclear. Do not guess. (why, diagnose, fix-root-causes)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-confirm-mechanism",
@@ -8474,14 +8736,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-confirm-mechanism: Confirm the surviving mechanism with runtime evidence before you plan the fix. When two fixes on one premise have failed, question the premise. (fix-root-causes, attack-the-premise)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-confirm-mechanism",
@@ -8497,14 +8763,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-confirm-mechanism: Confirm the surviving mechanism with runtime evidence before you plan the fix. When two fixes on one premise have failed, question the premise. (fix-root-causes, attack-the-premise)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "4-sweep-for-pattern",
@@ -8520,14 +8790,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-sweep-for-pattern: Search for other instances of the same faulty pattern. (fix-root-causes)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "5-plan-fix",
@@ -8543,14 +8817,18 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-plan-fix: When the fix crosses a function boundary, run architect first. Give the code delegate a specific scope. (architect, implement)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "5-plan-fix",
@@ -8566,14 +8844,18 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "5-plan-fix: When the fix crosses a function boundary, run architect first. Give the code delegate a specific scope. (architect, implement)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "6-decide-regression-test",
@@ -8589,14 +8871,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-decide-regression-test: Decide through the admission gate whether the reproduction becomes a permanent test. (testing-code, test-behavior-not-implementation)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "6-decide-regression-test",
@@ -8612,14 +8898,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "6-decide-regression-test: Decide through the admission gate whether the reproduction becomes a permanent test. (testing-code, test-behavior-not-implementation)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "7-commit-failing-repro",
@@ -8635,14 +8925,18 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-commit-failing-repro: When the bug has a cheap local test path, commit the failing repro before the fix. Skip when the test is expensive, integration-heavy, or unclear. (testing-code, sequence-verifiable-units)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "7-commit-failing-repro",
@@ -8658,14 +8952,18 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "7-commit-failing-repro: When the bug has a cheap local test path, commit the failing repro before the fix. Skip when the test is expensive, integration-heavy, or unclear. (testing-code, sequence-verifiable-units)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "skill-call",
       "handle": "8-apply-smallest-fix",
@@ -8681,14 +8979,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-apply-smallest-fix: Apply the smallest fix the evidence justifies, nothing more. (implement, subtract-before-you-add, laziness-protocol)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "8-apply-smallest-fix",
@@ -8704,14 +9006,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-apply-smallest-fix: Apply the smallest fix the evidence justifies, nothing more. (implement, subtract-before-you-add, laziness-protocol)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "8-apply-smallest-fix",
@@ -8727,14 +9033,18 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "8-apply-smallest-fix: Apply the smallest fix the evidence justifies, nothing more. (implement, subtract-before-you-add, laziness-protocol)",
       "subject": "fix-bug"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "IM-03",
+          "IM-05",
+          "IM-06"
+        ]
       },
       "evidence": "full-read",
       "handle": "9-verify-original-repro",
@@ -8750,7 +9060,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "9-verify-original-repro: Run the original reproduction again on the same surface. Inconclusive or wrong-surface is not a pass. Unit tests show branch behavior, not bug absence. (prove-it-works)",
       "subject": "fix-bug"
     },
@@ -10886,8 +11196,8 @@
       "recorded": 5
     },
     "playbook-read": {
-      "recorded": 24,
-      "scored": 4
+      "recorded": 21,
+      "scored": 7
     },
     "principle-read": {
       "recorded": 29
@@ -10896,20 +11206,20 @@
       "recorded": 2
     },
     "route": {
-      "invisible": 42,
-      "scored": 5
+      "invisible": 36,
+      "scored": 11
     },
     "route-load": {
-      "recorded": 18,
-      "scored": 1
+      "recorded": 15,
+      "scored": 4
     },
     "router-contract": {
       "invisible": 25
     },
     "step-load": {
       "invisible": 9,
-      "recorded": 187,
-      "scored": 46
+      "recorded": 139,
+      "scored": 94
     },
     "trigger-load": {
       "invisible": 2,

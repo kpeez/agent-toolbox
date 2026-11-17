@@ -25,7 +25,8 @@
       ],
       "forbidden_skills": [],
       "relevant_action": "Change the CSV read path so a leading UTF-8 BOM does not become part of the first field name.",
-      "rationale": "The user authorizes a small source change and describes observable behavior."
+      "rationale": "The user authorizes a small source change and describes observable behavior.",
+      "expected_route": "route/swe/build-feature"
     },
     {
       "id": "IM-02",
@@ -51,7 +52,8 @@
       ],
       "forbidden_skills": [],
       "relevant_action": "Update the existing search behavior for empty queries while preserving nonempty query matching.",
-      "rationale": "The phrase comes from the source chat and the follow-up makes the implementation request concrete."
+      "rationale": "The phrase comes from the source chat and the follow-up makes the implementation request concrete.",
+      "expected_route": "route/swe/build-feature"
     },
     {
       "id": "IM-03",
@@ -61,7 +63,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Please preserve the selected time zone when a user saves the weekly digest preference; include an offset such as UTC-07:00."
+          "content": "Saving the weekly digest preference drops the offset from the time zone: UTC-07:00 comes back as UTC. Fix it so a saved offset survives the next load."
         }
       ],
       "fixture": "frost-preferences",
@@ -73,7 +75,8 @@
       ],
       "forbidden_skills": [],
       "relevant_action": "Preserve an offset-bearing time-zone value through preference load and save.",
-      "rationale": "This is a direct, bounded feature change with a stated example."
+      "rationale": "A defect report with a stated example and a failing test in the fixture: the router reads it as fix-bug, and the task is still a direct, bounded code change.",
+      "expected_route": "route/swe/fix-bug"
     },
     {
       "id": "IM-04",
@@ -83,7 +86,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "The payment retry currently creates a fresh request token every time. Keep the same token across retries so the gateway can deduplicate; make the change and verify the behavior locally."
+          "content": "Add retry idempotency to the payment gateway: every attempt of one charge should carry the same request token, so the gateway can deduplicate. Make the change and verify the behavior locally."
         }
       ],
       "fixture": "parcel-gateway",
@@ -95,7 +98,8 @@
       ],
       "forbidden_skills": [],
       "relevant_action": "Reuse one idempotency token across retry attempts and verify the observable transport calls.",
-      "rationale": "A materially different payment workflow probes authorized repair and retry semantics. This disclosed candidate is not sealed."
+      "rationale": "A new capability, with no reported defect and no failing test: the router reads it as build-feature. A materially different payment workflow probes authorized change and retry semantics. This disclosed candidate is not sealed.",
+      "expected_route": "route/swe/build-feature"
     },
     {
       "id": "IM-05",
@@ -105,11 +109,11 @@
       "messages": [
         {
           "role": "user",
-          "content": "The poller should return a job that arrives exactly at the timeout boundary. The log and current loop are in the fixture."
+          "content": "The poller returns nothing when a job arrives exactly at the timeout boundary. It should return that job. The log and current loop are in the fixture."
         },
         {
           "role": "user",
-          "content": "Please make that behavior work and run the relevant local check; leave unrelated polling rules alone."
+          "content": "Please fix that and run the relevant local check; leave unrelated polling rules alone."
         }
       ],
       "fixture": "worker-queue",
@@ -121,7 +125,8 @@
       ],
       "forbidden_skills": [],
       "relevant_action": "Correct the timeout-boundary behavior in the poller while preserving other wait behavior.",
-      "rationale": "The second message converts context into a narrow authorized repair."
+      "rationale": "The second message converts context into a narrow authorized repair.",
+      "expected_route": "route/swe/fix-bug"
     },
     {
       "id": "IM-06",
@@ -135,7 +140,7 @@
         },
         {
           "role": "user",
-          "content": "Update the implementation to preserve that API contract; keep the change local."
+          "content": "A cart with two entries, of quantity 3 and 2, now reports 5. Please fix that and keep the change local."
         }
       ],
       "fixture": "checkout-code",
@@ -147,7 +152,8 @@
       ],
       "forbidden_skills": [],
       "relevant_action": "Restore line_count to count cart entries while retaining quantity-based totals.",
-      "rationale": "A context-plus-API-contract repair differs from parser, preferences, and retry examples. This disclosed candidate is not sealed."
+      "rationale": "A context-plus-API-contract repair differs from parser, preferences, and retry examples. This disclosed candidate is not sealed.",
+      "expected_route": "route/swe/fix-bug"
     },
     {
       "id": "IM-07",
@@ -169,7 +175,8 @@
         "swe:implement"
       ],
       "relevant_action": "Use captured evidence to explain the stale response without modifying source.",
-      "rationale": "The user explicitly requests diagnosis only."
+      "rationale": "The user explicitly requests diagnosis only.",
+      "expected_route": "route/swe/diagnose"
     },
     {
       "id": "IM-08",
@@ -184,7 +191,10 @@
       ],
       "fixture": "checkout-diff",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
         "swe:implement"
       ],
@@ -211,7 +221,9 @@
         "swe:implement"
       ],
       "relevant_action": "Decide test value and identify an independent oracle before any production edit.",
-      "rationale": "The requested outcome is test design, not source implementation."
+      "rationale": "The requested outcome is test design, not source implementation.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "IM-10",
@@ -231,9 +243,12 @@
       "acceptable_auxiliaries": [
         "swe:testing-code"
       ],
-      "forbidden_skills": [],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "relevant_action": "Add the requested payload field while preserving existing caller-visible behavior.",
-      "rationale": "Explicit invocation is a control case."
+      "rationale": "Explicit invocation is a control case. The edit is fully specified, so go-deeper is skipped.",
+      "expected_route": "route/swe/build-feature"
     },
     {
       "id": "DG-01",
@@ -253,7 +268,8 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Explain the duplicate delivery using captured event state and log evidence.",
-      "rationale": "This is an ordinary diagnosis-only request."
+      "rationale": "This is an ordinary diagnosis-only request.",
+      "expected_route": "route/swe/diagnose"
     },
     {
       "id": "DG-02",
@@ -273,7 +289,8 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Investigate the exact timeout-boundary symptom and report evidence without edits.",
-      "rationale": "The user asks for focused cause-finding and explicitly withholds repair authorization."
+      "rationale": "The user asks for focused cause-finding and explicitly withholds repair authorization.",
+      "expected_route": "route/swe/diagnose"
     },
     {
       "id": "DG-03",
@@ -293,7 +310,8 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Trace repeated scan behavior to the source of duplicate index entries.",
-      "rationale": "The request is to explain a concrete observed failure."
+      "rationale": "The request is to explain a concrete observed failure.",
+      "expected_route": "route/swe/diagnose"
     },
     {
       "id": "DG-04",
@@ -313,7 +331,8 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Use the profile and implementation to assess the performance hypothesis without changing code.",
-      "rationale": "A performance diagnosis with an explicit competing hypothesis broadens the natural examples. This disclosed candidate is not sealed."
+      "rationale": "A performance diagnosis with an explicit competing hypothesis broadens the natural examples. This disclosed candidate is not sealed.",
+      "expected_route": "route/swe/diagnose-trace"
     },
     {
       "id": "DG-05",
@@ -337,7 +356,8 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Correlate the successful update, cache trace, and stale response.",
-      "rationale": "The follow-up clearly keeps this turn at diagnosis, despite an eventual repair possibility."
+      "rationale": "The follow-up clearly keeps this turn at diagnosis, despite an eventual repair possibility.",
+      "expected_route": "route/swe/diagnose"
     },
     {
       "id": "DG-06",
@@ -361,7 +381,8 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Compare the current cost profile to the reported workload change and identify the likely bottleneck.",
-      "rationale": "This contextual scale change is a distinct performance investigation. This disclosed candidate is not sealed."
+      "rationale": "This contextual scale change is a distinct performance investigation. This disclosed candidate is not sealed.",
+      "expected_route": "route/swe/diagnose-trace"
     },
     {
       "id": "DG-07",
@@ -371,19 +392,21 @@
       "messages": [
         {
           "role": "user",
-          "content": "The existing contract rejects a session at its exact expiry timestamp, but this implementation uses an inclusive comparison. Correct that known boundary and run the existing local test."
+          "content": "Explain how session.py decides whether a session is still valid, and what the now argument is compared against. Answer from the code and change nothing."
         }
       ],
       "fixture": "session-expiry",
-      "expected_skills": [
-        "swe:implement"
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:how"
       ],
-      "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:diagnose"
+        "swe:diagnose",
+        "swe:go-deeper"
       ],
-      "relevant_action": "Change the known inclusive expiry comparison to the specified exclusive boundary and run its existing test.",
-      "rationale": "The user supplies the cause and desired behavior; this is a narrowly specified one-line repair rather than an unresolved diagnosis."
+      "relevant_action": "Read session.py and explain the validity rule from the code, without fixing or diagnosing anything.",
+      "rationale": "The user asks how code works, not why something fails. A correct run explains the code, so no route loads diagnose. The question is quick, so go-deeper is skipped."
     },
     {
       "id": "DG-08",
@@ -405,7 +428,9 @@
         "swe:diagnose"
       ],
       "relevant_action": "Choose an independent oracle and public test seam for workspace isolation.",
-      "rationale": "This asks for test strategy rather than symptom diagnosis."
+      "rationale": "This asks for test strategy rather than symptom diagnosis.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "DG-09",
@@ -420,14 +445,16 @@
       ],
       "fixture": "location-routing",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [
         "swe:diagnose"
       ],
       "relevant_action": "Identify caller friction and propose a boundary change without edits.",
-      "rationale": "The requested deliverable is an architecture review."
+      "rationale": "The requested deliverable is an architecture review.",
+      "expected_route": "route/swe/codebase-design",
+      "expected_mode": "review"
     },
     {
       "id": "DG-10",
@@ -447,7 +474,8 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Investigate and report the failure mode without implementation changes.",
-      "rationale": "Explicit invocation is a control case."
+      "rationale": "Explicit invocation is a control case.",
+      "expected_route": "route/swe/diagnose"
     },
     {
       "id": "TC-01",
@@ -467,7 +495,9 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Decide whether a durable regression is warranted and select an independent public-boundary oracle.",
-      "rationale": "This directly invokes the admission gate without naming the skill."
+      "rationale": "This directly invokes the admission gate without naming the skill.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "TC-02",
@@ -487,7 +517,9 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Protect fee rounding through the public function with an independently calculable expected amount.",
-      "rationale": "The task is to design and add behavioral test coverage."
+      "rationale": "The task is to design and add behavioral test coverage.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "TC-03",
@@ -507,7 +539,9 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Choose a public seam and independent oracle for retry idempotency.",
-      "rationale": "This is an explicit testing-strategy question with behavioral criteria."
+      "rationale": "This is an explicit testing-strategy question with behavioral criteria.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "TC-04",
@@ -527,7 +561,9 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Create one stable parser test that distinguishes record comments from quoted-field content.",
-      "rationale": "This parser edge case is a materially different holdout candidate for test design. This disclosed candidate is not sealed."
+      "rationale": "This parser edge case is a materially different holdout candidate for test design. This disclosed candidate is not sealed.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "TC-05",
@@ -551,7 +587,9 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Select a local substitute and observable retry contract without contacting a provider.",
-      "rationale": "The context introduces a test constraint and asks for test design."
+      "rationale": "The context introduces a test constraint and asks for test design.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "TC-06",
@@ -575,7 +613,9 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Assess the coverage gap and propose an independent oracle at the public reader boundary.",
-      "rationale": "The pre-refactor preservation question differs from adding a defect-specific test. This disclosed candidate is not sealed."
+      "rationale": "The pre-refactor preservation question differs from adding a defect-specific test. This disclosed candidate is not sealed.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "TC-07",
@@ -585,19 +625,20 @@
       "messages": [
         {
           "role": "user",
-          "content": "Remove the duplicate subscription tests and the private helper assertions, keeping only tests with distinct behavior contracts."
+          "content": "Run the subscription tests and list the names of any that fail. Do not edit anything."
         }
       ],
       "fixture": "subscription-tests",
-      "expected_skills": [
-        "swe:test-audit"
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode"
       ],
-      "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:testing-code"
+        "swe:testing-code",
+        "swe:go-deeper"
       ],
-      "relevant_action": "Audit existing test value and consolidate or remove low-value coverage.",
-      "rationale": "The user requests pruning existing tests, which is the audit boundary."
+      "relevant_action": "Run the existing subscription tests and report the failing test names.",
+      "rationale": "Running an existing suite and reporting its results needs no test design and no pruning. Running a named command and reporting its output is mechanical, so go-deeper is skipped."
     },
     {
       "id": "TC-08",
@@ -607,19 +648,21 @@
       "messages": [
         {
           "role": "user",
-          "content": "The pending-status label has a one-letter typo. Change the existing literal from Pendng to Pending and run the test that already checks the public label; do not add another test."
+          "content": "What does test_labels.py check today? Answer from the files and change nothing."
         }
       ],
       "fixture": "status-labels",
-      "expected_skills": [
-        "swe:implement"
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:how"
       ],
-      "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:testing-code"
+        "swe:testing-code",
+        "swe:go-deeper"
       ],
-      "relevant_action": "Correct one existing status-label literal and use the already-present test as the checker.",
-      "rationale": "This is a one-line correction with a failing existing public-behavior test; no new test design or probe is requested."
+      "relevant_action": "Read test_labels.py and say what it asserts, without designing or adding a test.",
+      "rationale": "A factual question about an existing test needs no test design and no suite audit. A correct run answers from the file, so no route loads testing-code. The question is quick, so go-deeper is skipped."
     },
     {
       "id": "TC-09",
@@ -634,7 +677,10 @@
       ],
       "fixture": "invoice-diff",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
         "swe:testing-code"
       ],
@@ -659,11 +705,13 @@
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Apply the test-value gate to the timeout contract.",
-      "rationale": "Explicit invocation is a control case. testing-code is model-only (user-invocable: false), so the request names the skill instead of a slash command."
+      "rationale": "Explicit invocation is a control case. testing-code is model-only (user-invocable: false), so the request names the skill instead of a slash command.",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "new-tests-and-probes"
     },
     {
       "id": "TA-01",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -674,16 +722,19 @@
       ],
       "fixture": "subscription-tests",
       "expected_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Compare existing assertions to their contracts and consolidate proven duplicates.",
-      "rationale": "This is an existing-suite cleanup request."
+      "rationale": "This is an existing-suite cleanup request.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "audit"
     },
     {
       "id": "TA-02",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -694,16 +745,19 @@
       ],
       "fixture": "panel-tests",
       "expected_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Audit implementation-coupled tests and preserve unique public behavior evidence.",
-      "rationale": "The user asks for a scoped audit and deletion batch."
+      "rationale": "The user asks for a scoped audit and deletion batch.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "audit"
     },
     {
       "id": "TA-03",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -714,16 +768,19 @@
       ],
       "fixture": "audit-tests",
       "expected_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Perform read-only discovery for a coherent existing-test audit.",
-      "rationale": "This directly asks for test-suite review and evidence before editing."
+      "rationale": "This directly asks for test-suite review and evidence before editing.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "audit"
     },
     {
       "id": "TA-04",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "natural",
       "split": "holdout_candidate",
       "messages": [
@@ -734,16 +791,19 @@
       ],
       "fixture": "ledger-tests",
       "expected_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Classify existing tests by unique contract and propose only justified consolidation.",
-      "rationale": "A contract-inventory-first audit is a distinct cleanup task. This disclosed candidate is not sealed."
+      "rationale": "A contract-inventory-first audit is a distinct cleanup task. This disclosed candidate is not sealed.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "audit"
     },
     {
       "id": "TA-05",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "contextual",
       "split": "development",
       "messages": [
@@ -758,16 +818,19 @@
       ],
       "fixture": "account-audit",
       "expected_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Inspect existing coverage and identify a reviewable audit batch.",
-      "rationale": "The second message asks for pruning analysis of existing tests."
+      "rationale": "The second message asks for pruning analysis of existing tests.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "audit"
     },
     {
       "id": "TA-06",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "contextual",
       "split": "holdout_candidate",
       "messages": [
@@ -782,38 +845,44 @@
       ],
       "fixture": "audit-tests",
       "expected_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Trace existing test assertions to callers and propose proven keepers before deletion.",
-      "rationale": "This exercises owner-boundary retention reasoning in a different fixture. This disclosed candidate is not sealed."
+      "rationale": "This exercises owner-boundary retention reasoning in a different fixture. This disclosed candidate is not sealed.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "audit"
     },
     {
       "id": "TA-07",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "negative",
       "split": "development",
       "messages": [
         {
           "role": "user",
-          "content": "Add coverage for the case where a reader belongs to a different workspace from the document owner."
+          "content": "Which tests in test_api.py call the private _validate helper directly? Name them and change nothing."
         }
       ],
-      "fixture": "access-control",
-      "expected_skills": [
-        "swe:testing-code"
+      "fixture": "audit-tests",
+      "expected_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:how"
       ],
-      "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:test-audit"
+        "swe:testing-code",
+        "swe:go-deeper"
       ],
-      "relevant_action": "Design or add new behavioral coverage for a workspace-isolation case.",
-      "rationale": "The request adds missing tests rather than pruning existing ones."
+      "relevant_action": "Read test_api.py and name the tests that call _validate, without judging or changing any test.",
+      "rationale": "A lookup in a test file names tests but asks for no audit, no design, and no removal. A correct run answers from the file, so no route loads testing-code. The fact is quick, so go-deeper is skipped.",
+      "family": "testing-code-audit"
     },
     {
       "id": "TA-08",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "negative",
       "split": "development",
       "messages": [
@@ -828,14 +897,16 @@
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "relevant_action": "Investigate a current failure and report its cause without editing tests.",
-      "rationale": "The task is diagnosis, not a suite audit."
+      "rationale": "The task is diagnosis, not a suite audit.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/diagnose"
     },
     {
       "id": "TA-09",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "negative",
       "split": "development",
       "messages": [
@@ -846,36 +917,43 @@
       ],
       "fixture": "invoice-diff",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "relevant_action": "Review a specified code diff against acceptance behavior.",
-      "rationale": "A direct patch review is distinct from pruning the existing suite."
+      "rationale": "A direct patch review is distinct from pruning the existing suite.",
+      "family": "testing-code-audit"
     },
     {
       "id": "TA-10",
-      "target": "swe:test-audit",
+      "target": "swe:testing-code",
       "category": "explicit",
       "split": "development",
       "messages": [
         {
           "role": "user",
-          "content": "Use /swe:test-audit to identify duplicate tests and the evidence that would remain after removing them."
+          "content": "Use /swe:testing-code in audit mode to identify duplicate tests and the evidence that would remain after removing them."
         }
       ],
       "fixture": "subscription-tests",
       "expected_skills": [
-        "swe:test-audit"
+        "swe:testing-code"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
       "relevant_action": "Audit existing tests for redundant contract coverage.",
-      "rationale": "Explicit invocation is a control case."
+      "rationale": "Explicit invocation is a control case.",
+      "family": "testing-code-audit",
+      "expected_route": "route/swe/testing-code",
+      "expected_mode": "audit"
     },
     {
       "id": "AR-01",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -886,16 +964,19 @@
       ],
       "fixture": "pipeline",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Identify caller friction and propose a deepening boundary without implementing it.",
       "rationale": "The user asks for an architecture review of existing modules."
     },
     {
       "id": "AR-02",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -906,16 +987,19 @@
       ],
       "fixture": "location-routing",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Evaluate existing module depth and interface cost for the address-formatting behavior.",
       "rationale": "This is specifically about module boundaries and caller complexity."
     },
     {
       "id": "AR-03",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -926,16 +1010,19 @@
       ],
       "fixture": "shipment-service",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Assess duplicated boundary logic and propose a justified interface-level refactor.",
       "rationale": "The task requests an evidence-backed architecture recommendation."
     },
     {
       "id": "AR-04",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "natural",
       "split": "holdout_candidate",
       "messages": [
@@ -946,16 +1033,19 @@
       ],
       "fixture": "pipeline",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Compare the current module split to its callers and recommend one deepening opportunity.",
       "rationale": "A caller-complexity task with an explicit testability goal is a distinct holdout candidate. This disclosed candidate is not sealed."
     },
     {
       "id": "AR-05",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "contextual",
       "split": "development",
       "messages": [
@@ -970,16 +1060,19 @@
       ],
       "fixture": "shipment-service",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Propose an interface boundary that centralizes a shared contract without source edits.",
       "rationale": "Context establishes both invariants and asks for architecture design only."
     },
     {
       "id": "AR-06",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "contextual",
       "split": "holdout_candidate",
       "messages": [
@@ -994,38 +1087,43 @@
       ],
       "fixture": "location-routing",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Evaluate the adapter seam against actual callers, testability, and module depth.",
       "rationale": "The testability-and-caller-friction framing differs from simple duplication detection. This disclosed candidate is not sealed."
     },
     {
       "id": "AR-07",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "negative",
       "split": "development",
       "messages": [
         {
           "role": "user",
-          "content": "Add a localized display-name option to the website and preserve the existing string field for other callers."
+          "content": "Make monthly_total in quote.py raise ValueError for a negative cents value, the way it already does for zero months. Keep the signature."
         }
       ],
-      "fixture": "catalog-migration",
+      "fixture": "subscription-tests",
       "expected_skills": [
         "swe:implement"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design",
+        "swe:go-deeper"
       ],
-      "relevant_action": "Implement the requested compatibility-preserving product behavior.",
-      "rationale": "The user asks for implementation, not a proposed refactor."
+      "relevant_action": "Add the negative-cents guard to monthly_total and run the existing tests.",
+      "rationale": "A one-function behavior change adds no interface and no module boundary. A correct build-feature run skips its design-exploration step, so it loads no codebase-design. The edit is fully specified, so go-deeper is skipped.",
+      "expected_route": "route/swe/build-feature"
     },
     {
       "id": "AR-08",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "negative",
       "split": "development",
       "messages": [
@@ -1038,16 +1136,19 @@
       "expected_skills": [
         "swe:diagnose"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
       "relevant_action": "Investigate a specific failure without recommending a broad architecture change.",
       "rationale": "The task is a focused diagnosis request."
     },
     {
       "id": "AR-09",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "negative",
       "split": "development",
       "messages": [
@@ -1058,29 +1159,35 @@
       ],
       "fixture": "catalog-diff",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
       "relevant_action": "Review a specified diff for introduced behavioral defects.",
       "rationale": "The user requests direct change review, not an architecture audit."
     },
     {
       "id": "AR-10",
-      "target": "swe:improve-codebase-architecture",
+      "target": "swe:codebase-design",
       "category": "explicit",
       "split": "development",
       "messages": [
         {
           "role": "user",
-          "content": "Use /swe:improve-codebase-architecture to review the current module boundaries and recommend the first worthwhile refactor. Do not implement."
+          "content": "Use /swe:codebase-design to review the current module boundaries and recommend the first worthwhile refactor. Do not implement."
         }
       ],
       "fixture": "pipeline",
       "expected_skills": [
-        "swe:improve-codebase-architecture"
+        "swe:codebase-design"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Assess architecture and recommend a candidate without implementation.",
       "rationale": "Explicit invocation is a control case."
@@ -1100,10 +1207,14 @@
       "expected_skills": [
         "swe:ship-pr"
       ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode"
+      ],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "relevant_action": "Stage the finished receipt change and commit it as one coherent commit.",
-      "rationale": "The user asks to commit finished work and open a draft pull request."
+      "rationale": "The user asks to commit finished work and open a draft pull request. Committing finished work and opening a draft PR is mechanical, so go-deeper is skipped."
     },
     {
       "id": "SP-02",
@@ -1121,7 +1232,9 @@
         "swe:ship-pr"
       ],
       "acceptable_auxiliaries": [
-        "swe:implement"
+        "swe:implement",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Read the failing check log and classify the failure before any rerun or fix commit.",
@@ -1143,7 +1256,9 @@
         "swe:ship-pr"
       ],
       "acceptable_auxiliaries": [
-        "swe:implement"
+        "swe:implement",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Check each review comment's claim against the code before changing anything.",
@@ -1164,10 +1279,14 @@
       "expected_skills": [
         "swe:ship-pr"
       ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode"
+      ],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "relevant_action": "Recheck that the verdict still matches the current patch before marking the PR ready or merging.",
-      "rationale": "The user asks to land a verified pull request and authorizes the merge."
+      "rationale": "The user asks to land a verified pull request and authorizes the merge. The merge is approved and verified, so landing it is mechanical and go-deeper is skipped."
     },
     {
       "id": "SP-05",
@@ -1192,10 +1311,14 @@
       "expected_skills": [
         "swe:ship-pr"
       ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode"
+      ],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "relevant_action": "Inspect the working tree and stage the receipt change as a coherent commit group.",
-      "rationale": "The earlier turns establish finished, verified local work. The last turn asks to publish it."
+      "rationale": "The earlier turns establish finished, verified local work. The last turn asks to publish it. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
     },
     {
       "id": "SP-06",
@@ -1221,11 +1344,14 @@
         "swe:ship-pr"
       ],
       "acceptable_auxiliaries": [
-        "swe:implement"
+        "swe:implement",
+        "swe:swe-mode"
       ],
-      "forbidden_skills": [],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "relevant_action": "Replace the call that python 3.8 lacks and verify locally before any push.",
-      "rationale": "The earlier turns diagnose a failing check. The last turn asks to fix it and update the open pull request."
+      "rationale": "The earlier turns diagnose a failing check. The last turn asks to fix it and update the open pull request. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
     },
     {
       "id": "SP-07",
@@ -1244,7 +1370,9 @@
       ],
       "acceptable_auxiliaries": [
         "swe:testing-code",
-        "swe:diagnose"
+        "swe:diagnose",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [
         "swe:ship-pr"
@@ -1265,7 +1393,10 @@
       ],
       "fixture": "receipt-totals",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
         "swe:ship-pr"
       ],
@@ -1280,17 +1411,21 @@
       "messages": [
         {
           "role": "user",
-          "content": "Read threads.md and tell me which review comments point at a real defect in receipt.py. Do not change code and do not reply to anyone."
+          "content": "A teammate says in chat that format_total puts the minus sign in the wrong place. Read receipt.py and tell me whether that is right. Do not change anything."
         }
       ],
       "fixture": "receipt-totals",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper",
+        "swe:how"
+      ],
       "forbidden_skills": [
         "swe:ship-pr"
       ],
-      "relevant_action": "Check each review comment's claim against the code and report without editing or replying.",
-      "rationale": "A report-only triage of review comments is not pull request work."
+      "relevant_action": "Read receipt.py and answer from the code.",
+      "rationale": "A report-only code question that repeats a reviewer's remark. It names no pull request, thread, or check, so a correct run routes it to no pull request skill."
     },
     {
       "id": "SP-10",
@@ -1307,14 +1442,18 @@
       "expected_skills": [
         "swe:ship-pr"
       ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode"
+      ],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "relevant_action": "Verify the finished change, then group it into a commit.",
-      "rationale": "Explicit invocation is a control case."
+      "rationale": "Explicit invocation is a control case. Committing finished work and opening a draft PR is mechanical, so go-deeper is skipped."
     },
     {
       "id": "HO-01",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -1325,10 +1464,12 @@
       ],
       "fixture": "catalog-migration",
       "expected_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
       "acceptable_auxiliaries": [
-        "swe:codebase-design"
+        "swe:codebase-design",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Name the blocking decision and put the first round of migration questions to the user before any code edit.",
@@ -1336,7 +1477,7 @@
     },
     {
       "id": "HO-02",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -1347,16 +1488,19 @@
       ],
       "fixture": "frost-preferences",
       "expected_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Ask the first round of questions about digest timing and time-zone handling before any code edit.",
       "rationale": "The user uses the figure-out-the-approach phrasing for an undecided design."
     },
     {
       "id": "HO-03",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -1367,16 +1511,19 @@
       ],
       "fixture": "sable-search",
       "expected_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Present the open ranking decisions with recommended answers before any edit to the search code.",
       "rationale": "The user asks to hash out an undecided design before building."
     },
     {
       "id": "HO-04",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "natural",
       "split": "development",
       "messages": [
@@ -1387,16 +1534,19 @@
       ],
       "fixture": "notification-service",
       "expected_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Name the blocking decision in one line and ask the first round of questions before any code edit.",
       "rationale": "The request rests on choices only the user can make: whose hours, how they are stored, and whether a held message is dropped or delayed."
     },
     {
       "id": "HO-05",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "contextual",
       "split": "development",
       "messages": [
@@ -1415,16 +1565,19 @@
       ],
       "fixture": "notification-service",
       "expected_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Ask the first round of questions about message kinds and channel choices before any code edit.",
       "rationale": "The earlier turns establish the current behavior. The last turn asks to settle an undecided design together."
     },
     {
       "id": "HO-06",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "contextual",
       "split": "holdout_candidate",
       "messages": [
@@ -1443,16 +1596,19 @@
       ],
       "fixture": "access-control",
       "expected_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Name the blocking decision in one line and ask the first round of questions about edit rights before any code edit.",
       "rationale": "The request leaves open what writers may edit, whether they see unpublished documents, and what owners and readers may do. This disclosed candidate is not sealed."
     },
     {
       "id": "HO-07",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "negative",
       "split": "development",
       "messages": [
@@ -1466,17 +1622,19 @@
         "swe:implement"
       ],
       "acceptable_auxiliaries": [
-        "swe:testing-code"
+        "swe:testing-code",
+        "swe:swe-mode"
       ],
       "forbidden_skills": [
-        "swe:grill"
+        "swe:interview-user",
+        "swe:go-deeper"
       ],
       "relevant_action": "Change deliver to skip disabled channels and run the local test.",
-      "rationale": "The user states the decision and the behavior. No decision is open."
+      "rationale": "The user states the decision and the behavior. No decision is open. The user states the decision and every constraint of the edit, so go-deeper is skipped."
     },
     {
       "id": "HO-08",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "negative",
       "split": "holdout_candidate",
       "messages": [
@@ -1489,16 +1647,19 @@
       "expected_skills": [
         "swe:diagnose"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
       "relevant_action": "Run or read the failing test and trace the mismatch to its cause in labels.py without asking design questions.",
       "rationale": "Figure out why a test fails is a diagnosis request, not a design decision. This disclosed candidate is not sealed."
     },
     {
       "id": "HO-09",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "negative",
       "split": "development",
       "messages": [
@@ -1511,14 +1672,15 @@
       "expected_skills": [],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:grill"
+        "swe:interview-user",
+        "swe:go-deeper"
       ],
       "relevant_action": "Read policy.py and answer from the code without editing or asking design questions.",
       "rationale": "A factual question about existing code has no open decision."
     },
     {
       "id": "HO-10",
-      "target": "swe:grill",
+      "target": "swe:interview-user",
       "category": "explicit",
       "split": "development",
       "messages": [
@@ -1529,9 +1691,12 @@
       ],
       "fixture": "worker-queue",
       "expected_skills": [
-        "swe:grill"
+        "swe:interview-user"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [],
       "relevant_action": "Ask the first round of questions about empty-poll handling before any code edit.",
       "rationale": "Explicit invocation is a control case."
@@ -1552,7 +1717,11 @@
         "lab:making-plots"
       ],
       "acceptable_auxiliaries": [
-        "lab:visualizing-data"
+        "lab:visualizing-data",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Run or edit figures.py to produce the table, curve, and distribution figures.",
@@ -1574,7 +1743,11 @@
         "lab:making-plots"
       ],
       "acceptable_auxiliaries": [
-        "lab:visualizing-data"
+        "lab:visualizing-data",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Edit draw_table in figures.py to put models in rows.",
@@ -1596,7 +1769,11 @@
         "lab:making-plots"
       ],
       "acceptable_auxiliaries": [
-        "lab:visualizing-data"
+        "lab:visualizing-data",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Edit draw_det in figures.py.",
@@ -1618,7 +1795,11 @@
         "lab:making-plots"
       ],
       "acceptable_auxiliaries": [
-        "lab:visualizing-data"
+        "lab:visualizing-data",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Run figures.py and inspect the PNGs it writes.",
@@ -1648,7 +1829,11 @@
         "lab:making-plots"
       ],
       "acceptable_auxiliaries": [
-        "lab:visualizing-data"
+        "lab:visualizing-data",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Edit draw_table in figures.py to apply the requested design.",
@@ -1678,7 +1863,11 @@
         "lab:making-plots"
       ],
       "acceptable_auxiliaries": [
-        "lab:visualizing-data"
+        "lab:visualizing-data",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Add a headline figure to figures.py.",
@@ -1699,7 +1888,10 @@
       "expected_skills": [],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "lab:making-plots"
+        "lab:making-plots",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:go-deeper"
       ],
       "relevant_action": "Read summary.csv and answer without drawing or editing anything.",
       "rationale": "A factual question about a results table asks for no figure."
@@ -1718,10 +1910,13 @@
       "fixture": "classifier-figures",
       "expected_skills": [],
       "acceptable_auxiliaries": [
-        "swe:diagnose"
+        "swe:diagnose",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [
-        "lab:making-plots"
+        "lab:making-plots",
+        "lab:lab-mode"
       ],
       "relevant_action": "Read figures.py and summary.csv and explain the failure without edits.",
       "rationale": "A crash diagnosis in plotting code changes no figure design."
@@ -1739,9 +1934,13 @@
       ],
       "fixture": "classifier-figures",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:swe-mode",
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
-        "lab:making-plots"
+        "lab:making-plots",
+        "lab:lab-mode"
       ],
       "relevant_action": "Edit README.md to add the diagram.",
       "rationale": "A pipeline diagram is not a result figure."
@@ -1762,7 +1961,11 @@
         "lab:making-plots"
       ],
       "acceptable_auxiliaries": [
-        "lab:visualizing-data"
+        "lab:visualizing-data",
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "Edit draw_table in figures.py.",
@@ -1945,7 +2148,9 @@
       "expected_skills": [],
       "acceptable_auxiliaries": [
         "swe:implement",
-        "lab:go-deeper"
+        "lab:go-deeper",
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [
         "lab:lab-mode"
@@ -1968,10 +2173,12 @@
       "expected_skills": [],
       "acceptable_auxiliaries": [
         "swe:implement",
-        "lab:go-deeper"
+        "swe:swe-mode"
       ],
       "forbidden_skills": [
-        "lab:lab-mode"
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:go-deeper"
       ],
       "relevant_action": "Edit summary.csv and figures.py.",
       "rationale": "A mechanical rename in a research repository is not research work."
@@ -1989,11 +2196,11 @@
       ],
       "fixture": "classifier-figures",
       "expected_skills": [],
-      "acceptable_auxiliaries": [
-        "lab:go-deeper"
-      ],
+      "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "lab:lab-mode"
+        "lab:lab-mode",
+        "lab:go-deeper",
+        "swe:go-deeper"
       ],
       "relevant_action": "Answer the definition directly.",
       "rationale": "A quick factual answer needs no workflow."
@@ -2014,7 +2221,8 @@
         "lab:lab-mode"
       ],
       "acceptable_auxiliaries": [
-        "lab:go-deeper"
+        "lab:go-deeper",
+        "swe:go-deeper"
       ],
       "forbidden_skills": [],
       "relevant_action": "State the route and its first step before any analysis.",

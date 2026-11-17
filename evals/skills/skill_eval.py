@@ -23,15 +23,13 @@ import subprocess
 HERE = Path(__file__).resolve().parent
 REPO = HERE.parents[1]
 TARGETS = {"swe:" + name for name in (
-    "implement", "diagnose", "testing-code", "test-audit",
-    "improve-codebase-architecture", "ship-pr", "grill")} | {"lab:making-plots", "lab:lab-mode"}
+    "implement", "diagnose", "testing-code", "codebase-design", "ship-pr", "interview-user")} | {"lab:making-plots", "lab:lab-mode"}
 COUNTS = {"natural": 4, "contextual": 2, "negative": 3, "explicit": 1}
-# The swe consolidation merged these skills into a successor. The corpus keeps the old
-# names so every arm runs byte-identical cases; a name the catalog lacks scores as its
-# successor. On such a catalog, a case the merge makes meaningless is excluded.
-SUCCESSORS = {"swe:test-audit": "swe:testing-code",
-              "swe:improve-codebase-architecture": "swe:codebase-design",
-              "swe:grill": "swe:interview-user"}
+# A case belongs to the family named by its `family` field, else by its target. Each family
+# in MIX_FAMILIES holds exactly COUNTS. An open family holds only positive cases that set
+# `expected_route`, one or two per route, so it has no fixed mix.
+MIX_FAMILIES = TARGETS | {"testing-code-audit"}
+OPEN_FAMILIES = {"swe-route-choice", "lab-route-choice", "hidden-skill-fallback"}
 RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools",
                   "harness_deltas", "catalog_scope", "context_delivery"}
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md), plus five
@@ -48,6 +46,11 @@ CLAUDE_ATTACHMENT_TYPES = {
     "mcp_instructions_delta", "model", "prompt_snapshot", "remote_session_change",
     "session_context", "skill_listing", "total_tokens_reminder"}
 ROUTERS = {"swe": "swe-mode", "lab": "lab-mode"}
+# What a router-first run loads on any task its router takes. go-deeper: Match step 2 of each router and
+# the swe session-start hook ("a new task of any kind"), which a lab task also receives. writing: the swe
+# router's prose trigger ("the reply included") and the same hook. A forbidden_skills entry withholds a credit.
+ALWAYS_ON = {"swe": {"swe:go-deeper", "swe:writing"},
+             "lab": {"lab:go-deeper", "swe:go-deeper", "swe:writing"}}
 LINE_KIND = {"Playbook": "playbook", "Route": "skill"}
 ROUTE_LINE = re.compile(r"^\s*(?:[-*+]\s+)?\**(Playbook|Route)(?::\**|\*\*:)\s*`?(?:[a-z]+:)?([a-z0-9-]+)`?", re.M)
 STEPS_HEADING = re.compile(r"Steps\b")
@@ -95,19 +98,6 @@ def catalog_skills():
     return {f"{p.parents[2].name}:{p.parent.name}" for p in (REPO / "plugins").glob("*/skills/*/SKILL.md")}
 
 
-def resolver(skills):
-    return lambda name: SUCCESSORS[name] if name not in skills and name in SUCCESSORS else name
-
-
-def excluded(case, resolve, skills):
-    if set(map(resolve, case["expected_skills"])) & set(map(resolve, case["forbidden_skills"])):
-        return "the merge makes it expect and forbid one skill"
-    named = {"swe:" + n for m in case["messages"] for n in re.findall(r"\bswe:([a-z0-9-]+)", m["content"])}
-    if case["category"] == "explicit" and named - set(skills):
-        return "it names a skill this catalog lacks"
-    return None
-
-
 def load_facets():
     return {f["id"]: f for f in read_json(HERE / "facets.json")["facets"]}
 
@@ -121,22 +111,25 @@ def corpus(path=HERE / "cases.json"):
     ids = set()
     groups = defaultdict(Counter)
     skills = catalog_skills()
-    resolve = resolver(skills)
     for case in cases:
         if not re.fullmatch(r"[A-Za-z0-9-]+", case["id"]) or case["id"] in ids:
             raise ValueError("invalid or duplicate case ID")
         ids.add(case["id"])
         if case["target"] not in TARGETS or case["category"] not in COUNTS:
             raise ValueError("unknown target/category")
-        groups[case["target"]][case["category"]] += 1
+        family = case.get("family", case["target"])
+        if family not in MIX_FAMILIES | OPEN_FAMILIES or (family in OPEN_FAMILIES and (
+                case["category"] == "negative" or not case.get("expected_route"))):
+            raise ValueError("unknown family, or an open-family case that is negative or sets no expected_route")
+        groups[family][case["category"]] += 1
         if case["split"] not in {"development", "holdout_candidate"}:
             raise ValueError("unknown split")
         for field in ("expected_skills", "acceptable_auxiliaries", "forbidden_skills"):
             if not isinstance(case[field], list) or len(set(case[field])) != len(case[field]):
                 raise ValueError(f"invalid {field}")
-            if set(map(resolve, case[field])) - skills:
+            if set(case[field]) - skills:
                 raise ValueError(f"unknown skill in {field}")
-        if set(case["expected_skills"]) & set(case["forbidden_skills"]):
+        if set(case["expected_skills"] + case["acceptable_auxiliaries"]) & set(case["forbidden_skills"]):
             raise ValueError("contradictory answer key")
         if case["category"] == "negative":
             if case["target"] not in case["forbidden_skills"]:
@@ -149,9 +142,10 @@ def corpus(path=HERE / "cases.json"):
             if message["role"] not in {"user", "assistant"} or not message["content"].strip():
                 raise ValueError("invalid conversation message")
         route = case.get("expected_route")
-        if route is not None and (case["category"] == "negative" or facets.get(route, {}).get("kind") != "route"
-                                  or facets[route]["plugin"] != case["target"].split(":")[0]):
-            raise ValueError("expected_route must name a route facet of the target's plugin and no negative case may set it")
+        plugin = case["target"].split(":")[0]
+        if route is not None and (facets.get(route, {}).get("kind") != "route" or facets[route]["plugin"] != plugin
+                                  or f"{plugin}:{ROUTERS[plugin]}" in case["forbidden_skills"]):
+            raise ValueError("expected_route must name a route facet of the target's plugin, and a case that forbids the router may not set it")
         modes = facets[route].get("modes", {}) if route else {}
         if case.get("expected_mode") not in (modes or {None}):
             raise ValueError("expected_mode must name a mode of the expected route, and only a route with modes takes one")
@@ -165,8 +159,9 @@ def corpus(path=HERE / "cases.json"):
         fixture = contained(HERE / "fixtures", case["fixture"])
         if not fixture.is_dir():
             raise ValueError(f"missing fixture: {fixture}")
-    if set(groups) != TARGETS or any(dict(counts) != COUNTS for counts in groups.values()):
-        raise ValueError("expected the declared targets, each with 4/2/3/1 cases")
+    if set(groups) - OPEN_FAMILIES != MIX_FAMILIES or any(
+            dict(groups[family]) != COUNTS for family in MIX_FAMILIES):
+        raise ValueError("expected the declared families, each with 4/2/3/1 cases")
     return cases
 
 
@@ -243,9 +238,6 @@ def materialize(args):
     case = next((c for c in cases if c["id"] == args.case), None)
     if case is None:
         raise ValueError("unknown case")
-    reason = excluded(case, resolver(catalog_skills()), catalog_skills())
-    if reason:
-        raise ValueError(f"case {case['id']} is excluded on this catalog: {reason}")
     runtime = read_json(args.runtime)
     if RUNTIME_FIELDS - runtime.keys() or any(runtime[k] is None for k in RUNTIME_FIELDS):
         raise ValueError("runtime must freeze model, effort, CLI, permissions, tools and harness deltas")
@@ -1104,10 +1096,6 @@ def score(args):
     if facets_sha256 is not None and digest((HERE / "facets.json").read_bytes()) != facets_sha256:
         raise ValueError("facet map changed since materialization")
     case = next(c for c in corpus(args.corpus) if c["id"] == manifest["case_id"])
-    resolve = resolver(manifest["skills"])
-    reason = excluded(case, resolve, manifest["skills"])
-    if reason:
-        raise ValueError(f"case {case['id']} is excluded on this catalog: {reason}")
     evidence = normalize(run, case["relevant_action"])
     scorer_sha256 = digest(Path(__file__).read_bytes())
     hook_arm = manifest.get("hook_arm", "hook-off")
@@ -1118,11 +1106,15 @@ def score(args):
     configuration_sha256 = digest(json.dumps(configuration, sort_keys=True).encode())
     save_json(run / "evidence.json", evidence)
     observed = {load["skill"] for load in evidence["loads"] if load["status"] == "success"}
-    allowed = set(map(resolve, case["expected_skills"] + case["acceptable_auxiliaries"]))
+    forbidden = set(case["forbidden_skills"])
+    plugin = case["target"].split(":")[0]
     facets = load_facets()
-    route_allowed_skills = route_allowed(facets, facets[case["expected_route"]]) if case.get("expected_route") else set()
-    allowed |= route_allowed_skills
-    forbidden = set(map(resolve, case["forbidden_skills"]))
+    route_allowed_skills = set()
+    if case.get("expected_route"):
+        route_allowed_skills = (route_allowed(facets, facets[case["expected_route"]]) | ALWAYS_ON[plugin]) - forbidden
+    elif f"{plugin}:{ROUTERS[plugin]}" in case["expected_skills"] + case["acceptable_auxiliaries"]:
+        route_allowed_skills = {"swe:writing"} - forbidden
+    allowed = set(case["expected_skills"] + case["acceptable_auxiliaries"]) | route_allowed_skills
     complete = evidence["evidence_coverage"] == "complete" and evidence["session_state"] == "completed"
     ambiguous_forbidden = any(l["skill"] in forbidden and l["status"] in {"partial", "unavailable"}
                               for l in evidence["loads"])
@@ -1130,8 +1122,8 @@ def score(args):
     timing = {}
     actions = [a["seq"] for a in evidence["actions"] if a["kind"] == case["relevant_action"]]
     for skill in case["expected_skills"]:
-        loads = [l["completed_seq"] for l in evidence["loads"] if l["skill"] == resolve(skill) and l["status"] == "success"]
-        ambiguous = any(l["skill"] == resolve(skill) and l["status"] in {"partial", "unavailable"} for l in evidence["loads"])
+        loads = [l["completed_seq"] for l in evidence["loads"] if l["skill"] == skill and l["status"] == "success"]
+        ambiguous = any(l["skill"] == skill and l["status"] in {"partial", "unavailable"} for l in evidence["loads"])
         activation[skill] = "loaded" if loads else "miss" if complete and not ambiguous else "unavailable"
         action_coverage = evidence["coverage"]["start"] and evidence["coverage"]["relevant_actions"] and not evidence["issues"]
         timing[skill] = ("before" if min(loads) < min(actions) else "late") if loads and actions and action_coverage else "unavailable"
@@ -1139,7 +1131,7 @@ def score(args):
     result = {"schema_version": 1, "case_id": case["id"], "target": case["target"], "category": case["category"],
               "hook_arm": hook_arm, "configuration_sha256": configuration_sha256, "scorer_sha256": scorer_sha256,
               "runtime": manifest["runtime"], "adapter_version": evidence["adapter_version"],
-              "split": case["split"], "evidence_kind": evidence["evidence_kind"],
+              "split": case["split"], "family": case.get("family", case["target"]), "evidence_kind": evidence["evidence_kind"],
               "session_state": evidence["session_state"], "evidence_coverage": evidence["evidence_coverage"],
               "activation": activation, "timing": timing, "observed_skills": sorted(observed),
               "expected_skills": case["expected_skills"], "allowed_skills": sorted(allowed),
@@ -1170,7 +1162,8 @@ def aggregate(args):
     others = defaultdict(lambda: defaultdict(Counter))
     for row in rows:
         key = (row["configuration_sha256"], row.get("hook_arm", "hook-off"), row["evidence_kind"],
-               row["split"], row["target"], "explicit_control" if row["category"] == "explicit" else "implicit")
+               row["split"], row["target"], "explicit_control" if row["category"] == "explicit" else "implicit",
+               row.get("family", row["target"]))
         group = groups.setdefault(key, Counter())
         group["runs"] += 1
         group["session_" + row["session_state"]] += 1
@@ -1205,7 +1198,7 @@ def aggregate(args):
         denominator = counts["positive_loaded"] + counts["positive_miss"]
         negatives = counts["negative_scorable"]
         report.append({"configuration_sha256": key[0], "hook_arm": key[1], "runtime": strata_rows[key][0][0]["runtime"],
-                       "evidence_kind": key[2], "split": key[3], "target": key[4], "experiment": key[5],
+                       "evidence_kind": key[2], "split": key[3], "target": key[4], "experiment": key[5], "family": key[6],
                        "counts": dict(counts),
                        "other_expected": [{"skill": skill, **{state: found[state] for state in
                                                               ("loaded", "miss", "unavailable")}}
@@ -1220,7 +1213,7 @@ def aggregate(args):
                           and unexpected not in row["allowed_skills"] and unexpected not in row["unresolved_skills"]
                           for row, complete in strata_rows[key])
         confusion_rows.append({"configuration_sha256": key[0], "hook_arm": key[1], "evidence_kind": key[2],
-                               "split": key[3], "target": key[4], "experiment": key[5],
+                               "split": key[3], "target": key[4], "experiment": key[5], "family": key[6],
                                "expected_skills": list(expected),
                                "unexpected": unexpected, "count": counts["scorable"], "denominator": denominator,
                                "rate": counts["scorable"] / denominator if denominator else None,
@@ -1259,10 +1252,8 @@ def main():
     args = parser.parse_args()
     try:
         if args.command == "validate":
-            cases, skills = corpus(args.corpus), catalog_skills()
-            reasons = {c["id"]: excluded(c, resolver(skills), skills) for c in cases}
-            result = {"cases": len(cases), "targets": sorted(TARGETS),
-                      "excluded_on_this_catalog": {k: v for k, v in reasons.items() if v}}
+            cases = corpus(args.corpus)
+            result = {"cases": len(cases), "targets": sorted(TARGETS)}
         else:
             result = {"materialize": materialize, "capture": capture, "score": score, "aggregate": aggregate}[args.command](args)
         print(json.dumps(result, indent=2, sort_keys=True))

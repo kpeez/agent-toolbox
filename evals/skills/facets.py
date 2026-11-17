@@ -465,20 +465,16 @@ def make(
 
 
 def coverage():
-    skills = skill_eval.catalog_skills()
-    resolve = skill_eval.resolver(skills)
     cases = defaultdict(lambda: {"positive": [], "negative": []})
     routes, listed = defaultdict(list), defaultdict(list)
     for case in skill_eval.corpus():
-        if skill_eval.excluded(case, resolve, skills):
-            continue
         side = "negative" if case["category"] == "negative" else "positive"
-        cases[resolve(case["target"])][side].append(case["id"])
+        cases[case["target"]][side].append(case["id"])
         if case.get("expected_route"):
             routes[tuple(case["expected_route"].split("/")[1:])].append(case["id"])
         for facet_id in case.get("facets", []):
             listed[facet_id].append(case["id"])
-    return {resolve(t) for t in skill_eval.TARGETS}, cases, routes, listed
+    return set(skill_eval.TARGETS), cases, routes, listed
 
 
 def mark_scored(facets, routes, listed):

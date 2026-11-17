@@ -57,12 +57,25 @@ strip, the done-only step filter, and the allowed credit. Three more rules
 were seen red the same way: a nested indented `Steps` line must not split the
 block, the last of two equal blocks wins, and a conditional transitive name
 stays optional.
+
+The router credit tests protect the false-activation signal. Credible
+regressions are crediting the router and `go-deeper` on every case of a plugin
+(an unlabeled load then vanishes from unexpected_skills), crediting `go-deeper` under
+`expected_route` after a case forbids it, and dropping the credit that a route
+gives. Each was seen red under one mutation of skill_eval.py.
+
+Three more rules were seen red the same way: a routed run credits the always-on triggers of its router
+(`swe:writing`, and the swe `go-deeper` on a lab route), a case that lists the router also credits
+`swe:writing`, and a case may not list a skill as auxiliary and forbid it. An open family that holds a
+negative case is refused.
 """
 from __future__ import annotations
 
+from collections import Counter
 import hashlib
 import json
 from pathlib import Path
+import re
 import shutil
 import subprocess
 import sys
@@ -195,30 +208,6 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(report["confusion"][0]["count"], 1)
         self.assertEqual(report["confusion"][0]["denominator"], 1)
         self.assertEqual(report["confusion"][0]["interrupted_or_partial_observations"], 1)
-
-    def test_merged_skill_scores_as_its_successor(self):
-        # A silent miss on every case of a merged family would read as an activation loss.
-        excluded = self.cli("validate")["excluded_on_this_catalog"]
-        self.assertEqual(sorted(excluded), ["AR-10", "TA-07", "TA-10", "TC-07"])
-        for case_id in ("TA-07", "TA-10"):
-            self.cli("materialize", "--case", case_id, "--runtime", HERE / "runtime.offline.json",
-                     "--output", self.root / ("excluded-" + case_id), ok=False)
-        cases = {c["id"]: c for c in json.loads((HERE / "cases.json").read_text())["cases"]}
-        scores = {}
-        for case_id in ("TA-01", "TA-09"):
-            case = cases[case_id]
-            run, _, _ = self.prepare("successor-" + case_id, case)
-            skill = json.loads((run / "manifest.json").read_text())["skills"]["swe:testing-code"]
-            scores[case_id] = self.trace(run, [
-                {"type": "session.started"},
-                {"type": "skill_read.request", "request_id": "merged", "skill": "swe:testing-code", "path": skill["path"]},
-                {"type": "skill_read.result", "request_id": "merged", "exit_code": 0,
-                 "body": Path(skill["path"]).read_text(), "body_complete": True},
-                {"type": "action.started", "kind": case["relevant_action"]},
-                {"type": "session.completed", "coverage": {"skill_delivery": True, "relevant_actions": True}}])
-        self.assertEqual(scores["TA-01"]["activation"], {"swe:test-audit": "loaded"})
-        self.assertEqual(scores["TA-01"]["unexpected_skills"], [])
-        self.assertTrue(scores["TA-09"]["false_activation"])
 
     def claude_trace(self, run, steps, relevant, sidechains=None, hook_rows=None, plugin_dirs=None, hook_parent=None):
         """Write a minimal transcript in the audited Claude Code shape (EVIDENCE.md) and score it."""
@@ -1164,6 +1153,96 @@ class OfflineCLIContract(unittest.TestCase):
         route = self.route_run("route-project-skill", case, [], "Playbook: bootstrap-project. Reason: it fits.", reply)
         self.assertIn("3-prove-the-context", route["steps_section"]["done"])
         self.assertNotIn("research-context", route["step_loads"]["required"])
+
+    def loads_score(self, name, case_id, *skills, **update):
+        if update:
+            self.validate_with(name, case_id, **update)
+        corpus = self.corpus or HERE / "cases.json"
+        case = next(c for c in json.loads(corpus.read_text())["cases"] if c["id"] == case_id)
+        score, _ = self.route_run(name, case, [("skill", skill) for skill in skills], "Answer.", full=True)
+        self.corpus = None
+        return score
+
+    SWE_ROUTER = ("swe:swe-mode", "swe:go-deeper")
+    ALWAYS_ON = (*SWE_ROUTER, "swe:writing")
+
+    def test_the_router_and_go_deeper_are_credited_by_a_route_or_by_a_case_label(self):
+        route_case = self.loads_score("credit-route", "IM-04", *self.SWE_ROUTER, "swe:implement")
+        self.assertEqual(route_case["unexpected_skills"], [])
+        labeled = self.loads_score("credit-label", "AR-01", *self.SWE_ROUTER, "swe:codebase-design")
+        self.assertEqual(labeled["unexpected_skills"], [])
+        cross_plugin = self.loads_score("credit-cross-plugin", "lab-mode-code-fix", *self.SWE_ROUTER, "swe:implement")
+        self.assertEqual(cross_plugin["unexpected_skills"], [])
+        unlisted = self.loads_score("credit-unlisted", "HO-09", "swe:swe-mode")
+        self.assertEqual(unlisted["unexpected_skills"], ["swe:swe-mode"])
+        self.assertIs(unlisted["false_activation"], False)
+
+    def test_a_forbidden_router_or_go_deeper_is_a_false_activation_even_with_a_route(self):
+        quick_fact = self.loads_score("forbid-quick-fact", "HO-09", "swe:go-deeper")
+        self.assertEqual(quick_fact["unexpected_skills"], ["swe:go-deeper"])
+        self.assertIs(quick_fact["false_activation"], True)
+        skipped = self.loads_score("forbid-skip-rule-route", "IM-10", "swe:swe-mode", "swe:go-deeper", "swe:implement")
+        self.assertEqual(skipped["unexpected_skills"], ["swe:go-deeper"])
+        self.assertIs(skipped["false_activation"], True)
+        lab_skipped = self.loads_score(
+            "forbid-skip-rule-lab-route", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", "swe:go-deeper",
+            forbidden_skills=["lab:go-deeper", "swe:go-deeper"], acceptable_auxiliaries=["lab:making-plots"])
+        self.assertEqual(lab_skipped["unexpected_skills"], ["lab:go-deeper", "swe:go-deeper"])
+        self.assertIs(lab_skipped["false_activation"], True)
+        for case_id in ("lab-making-plots-pipeline-diagram", "lab-making-plots-read-table",
+                        "lab-making-plots-crash-diagnosis", "lab-mode-define-metric"):
+            score = self.loads_score("forbid-" + case_id, case_id, "lab:lab-mode")
+            self.assertEqual(score["unexpected_skills"], ["lab:lab-mode"], case_id)
+            self.assertIs(score["false_activation"], True, case_id)
+
+    def test_a_routed_run_may_load_the_always_on_triggers_of_its_router(self):
+        swe = self.loads_score("always-on-swe", "IM-04", *self.ALWAYS_ON, "swe:implement")
+        self.assertEqual(swe["unexpected_skills"], [])
+        lab = self.loads_score("always-on-lab", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper",
+                               "swe:go-deeper", "swe:writing")
+        self.assertEqual(lab["unexpected_skills"], [])
+        labeled = self.loads_score("always-on-label", "AR-01", *self.ALWAYS_ON, "swe:codebase-design")
+        self.assertEqual(labeled["unexpected_skills"], [])
+        no_router = self.loads_score("always-on-no-router", "HO-09", "swe:writing")
+        self.assertEqual(no_router["unexpected_skills"], ["swe:writing"])
+        self.assertIs(no_router["false_activation"], False)
+
+    def test_aggregate_keeps_two_families_of_one_target_apart(self):
+        scores = []
+        for name, case_id in (("family-new-tests", "TC-01"), ("family-audit", "TA-01")):
+            _, run = self.route_run(name, self.case_named(case_id), [], "Route: testing-code. Reason: it fits.", full=True)
+            scores.append(run / "score.json")
+        groups = self.cli("aggregate", *scores)["groups"]
+        self.assertEqual(sorted(g["family"] for g in groups), ["swe:testing-code", "testing-code-audit"])
+
+    def validate_with(self, name, case_id, **update):
+        corpus = json.loads((HERE / "cases.json").read_text())
+        next(c for c in corpus["cases"] if c["id"] == case_id).update(update)
+        self.corpus = self.root / f"{name}.json"
+        self.corpus.write_text(json.dumps(corpus))
+
+    def test_corpus_rejects_a_bad_family_and_a_route_on_a_case_that_forbids_the_router(self):
+        for name, case_id, update, message in (
+                ("family-unknown", "IM-01", {"family": "no-such-family"}, "unknown family"),
+                ("open-family-no-route", "IM-01", {"family": "swe-route-choice", "expected_route": None}, "unknown family"),
+                ("open-family-negative", "IM-07", {"family": "swe-route-choice"}, "unknown family"),
+                ("forbidden-auxiliary", "IM-04", {"forbidden_skills": ["swe:testing-code"]}, "contradictory"),
+                ("router-forbidden-route", "lab-mode-define-metric", {"expected_route": "route/lab/analyze-results"},
+                 "forbids the router")):
+            self.validate_with(name, case_id, **update)
+            self.assertIn(message, self.cli("validate", ok=False).stderr, name)
+        self.validate_with("negative-route", "TC-08", expected_route="route/swe/build-feature")
+        self.cli("validate")
+
+    def test_readme_counts_match_the_corpus(self):
+        cases = json.loads((HERE / "cases.json").read_text())["cases"]
+        readme = (HERE / "README.md").read_text()
+        self.assertEqual(int(re.search(r"The corpus has (\d+) authored scenarios", readme).group(1)), len(cases))
+        holdouts = int(re.search(r"(\d+) cases marked `holdout_candidate`", readme).group(1))
+        self.assertEqual(holdouts, sum(case["split"] == "holdout_candidate" for case in cases))
+        families = Counter(case.get("family", case["target"]) for case in cases)
+        for name, count in re.findall(r"`([a-z-]+)` \((\d+) cases\)", readme):
+            self.assertEqual(families[name], int(count), name)
 
     def test_corpus_rejects_a_bad_expected_route_and_a_bad_facet_listing(self):
         for name, change in (

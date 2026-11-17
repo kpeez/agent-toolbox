@@ -5,8 +5,11 @@ activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
 The corpus has 90 authored scenarios. Seventy are swe cases: ten each for `implement`, `diagnose`,
-`testing-code`, `test-audit`, `improve-codebase-architecture`, `ship-pr`, and
-`grill` (family prefix `HO`). Each family
+`testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
+`ship-pr`, and `interview-user`. A case belongs to the family named by its
+`family` field, else by its target. The audit-mode cases set `family:
+testing-code-audit`, so the two `testing-code` families keep their own 4/2/3/1 mix and their own
+`aggregate` group. Each family
 has four natural requests, two contextual requests, three nearby negatives, and
 one explicit invocation control. Some negatives are direct diff-review requests,
 which expect no `swe` skill.
@@ -21,40 +24,19 @@ the same fixture. Six of them set `expected_route`, the route the agent should
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
 
-The swe consolidation merged `test-audit` into `testing-code` and
-`improve-codebase-architecture` into `codebase-design`. The corpus keeps the
-old names, so every arm runs byte-identical cases. On a catalog without an old
-name, `SUCCESSORS` in `skill_eval.py` scores it as its successor. Four cases
-lose their meaning there and are excluded: `TC-07` and `TA-07` expect and
-forbid the same merged skill, and `TA-10` and `AR-10` type a removed name.
-`validate` lists them. A comparison with a catalog that still has the old
-names must drop the same four cases from both arms.
-
-Five negatives also change meaning on the new catalog. `TA-08` and `TA-09`
-now forbid `testing-code`, and `AR-07` to `AR-09` now forbid
-`codebase-design`. On the old catalog, a load of those skills there was only
-unexpected, and `codebase-design` could load legitimately. Report these five
-cases' false activations as their own stratum, not in a pooled comparison. The
-"Activation facets with no case" list in [FACETS.md](FACETS.md) names each
+The "Activation facets with no case" list in [FACETS.md](FACETS.md) names each
 model-invocable skill that has no family yet.
 
-The `ship-pr` family exists because `ship-pr` became model-invoked on the
-`swe-router-rewrite` branch. On main it is user-only, so main scores zero recall
-and zero false activation for it by construction. Report this family on its own,
-not in the pooled main-versus-branch comparison. Its negatives matter most: a
-false activation loads a skill that commits, pushes, and merges. The fixture has
+The `ship-pr` family's negatives matter most: a false activation loads a skill that commits,
+pushes, and merges. The fixture has
 no remote, so a trace can show the commit and the reads that precede a push, but
 not the push itself. Its `receipt-totals` fixture also holds a CI log and review
 threads as plain files, because no host is reachable.
 
-The `HO` family targets `interview-user`, the renamed `grill` with a wider trigger.
-The family keeps the corpus name `grill`. `SUCCESSORS` scores it as `interview-user` on
-the branch, so the family compares main and branch directly. Its explicit case
-types the new name `/swe:interview-user`, so main excludes it. Its negatives matter
-most: a false activation starts a question round on a clear task. They include
-"figure out why a test fails", which is diagnosis.
+The `interview-user` family's negatives matter most: a false activation starts a question
+round on a clear task. They include "figure out why a test fails", which is diagnosis.
 
-Fourteen cases marked `holdout_candidate` are
+20 cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. An independent sealed
 set is still required before tuning from measured scores.
 
@@ -146,9 +128,10 @@ catalog scope, context delivery, and harness deltas before materializing.
 
 ## Route scoring
 
-A case may set three optional fields. `expected_route` is the id of a `route`
+A case may set four optional fields. `expected_route` is the id of a `route`
 facet in `facets.json`, such as `route/lab/analyze-results`. It must belong to the plugin of the
-case's target, and a negative case must not set it. `expected_mode` names the mode of a
+case's target. A negative case may set it, unless the case forbids the plugin's router, because
+a route needs the router. `family` names the case's family (see above). `expected_mode` names the mode of a
 single-skill route whose skill has modes, such as `publish` for `route/swe/ship-pr`. A route
 with modes needs it, and any other route rejects it. `facets` lists facet ids whose evidence is `skill-call` or
 `full-read`. `score.json` then holds `route` (null without `expected_route`)
@@ -203,10 +186,61 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
 - `followed`: `false` when any check fails, else `null` when any is unavailable,
   else `true`.
 
-The router, the routed skill, and every skill or principle that a step or
-reply line names count as allowed for that case (`route_allowed_skills`), so they are not
-`unexpected_skills`. `aggregate` adds `route_followed_*`, `route_line_*`,
-`route_steps_*`, and `route_read_*` counts to each group. It also adds
+The router runs first, so a case's labels must agree with what a correct router-first run loads: the route, the
+`always` loads of its steps, the router's always-on triggers, and the session-start hooks. A negative for a leaf skill is
+valid only when the correct route for that request never loads that skill. A step text that carries its own condition
+counts. `SP-07` forbids `swe:ship-pr` because `fix-bug` step 14 runs "when publication is authorized" and the request says
+not to commit or push. `HO-07` forbids `swe:interview-user` because `build-feature` step 2 runs only when the user has not
+decided, and the request states the decision. A step that only the user's wording lets a run skip does not count: the
+requests `TC-08`, `DG-07`, `TA-07`, and `AR-07` were rewritten for that reason (`fix-bug` steps 6 and 7 name
+`testing-code`, step 1 names `diagnose`, `refactor-structure` step 1 names `testing-code`, and `build-feature` step 4 names
+`codebase-design`). Their requests now route to no playbook that loads the forbidden skill: three are read-only lookups, and
+`AR-07` is a one-function change with no interface, so step 4 does not apply. `validate` refuses a case that lists a skill
+as expected or auxiliary and also forbids it.
+
+A case that sets `expected_route` credits what a router-first run on that route loads, so it adds no `unexpected_skills`:
+
+- the plugin's router and the routed skill;
+- every skill or principle that a step or reply line of the route names (`route_allowed_skills`);
+- the always-on triggers: `go-deeper` (Match step 2 of the router) and `swe:writing` (the swe router's prose trigger,
+  "the reply included"). A swe route credits `swe:go-deeper` and `swe:writing`.
+  A lab route credits `lab:go-deeper` (its own Match step 2), and also `swe:go-deeper` and `swe:writing`. The swe
+  session-start hook says to run `swe:go-deeper` on "a new task of any kind" and to write replies with the `writing` skill,
+  and a snapshot with both plugins delivers it on a lab task too. The lab router names neither swe skill, so this is
+  a decision about the hook, and a lab run that loads either one is not unexpected.
+
+A `forbidden_skills` entry removes its credit, even under `expected_route`. That is how a routed case withholds the
+`go-deeper` credit: list `go-deeper` (for a lab route, both `lab:go-deeper` and `swe:go-deeper`) where its skip rule
+applies. A `go-deeper` load there is then a false activation.
+
+The `go-deeper` skip rule is: chat, a quick factual answer, a mechanical or fully specified edit, a follow-up inside a
+task you already framed, and "just do it". It runs once per task. The corpus applies it as follows.
+
+- A quick factual answer: `HO-09`, `lab-mode-define-metric`,
+  `lab-making-plots-read-table`, and the lookups `TA-07`, `DG-07`, and `TC-08`.
+- A mechanical or fully specified edit or action: the request names every constraint of the change or the action, so
+  nothing is left to choose. These are `IM-10`, `AR-07`, `HO-07`, `TC-07` (run a named command and report), `SP-01`
+  and `SP-10` (commit finished work and open a draft PR), `SP-04` (land an approved PR), and
+  `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
+- A follow-up inside a framed task: the last user turn continues the work that an earlier assistant turn did. These
+  are `SP-05` (commit what the earlier turn reported complete) and `SP-06` (fix what it diagnosed). A user turn that opens a new task after an answer is
+  a new task, so `HO-05`, `HO-06`, and the lab contextual cases keep `go-deeper` allowed.
+
+A case that sets no `expected_route` gets only one automatic credit: `swe:writing`, when it lists the plugin's router as
+expected or auxiliary. It labels the rest itself:
+
+- `acceptable_auxiliaries` where the router text says they load. A swe case about code, a diff review, or a
+  README edit lists `swe:swe-mode` and `swe:go-deeper`. A lab case that edits code lists the swe pair too.
+- `forbidden_skills` where a load is a false activation: the lab router on an edit that is not research, or
+  `go-deeper` on a task its skip rule excludes.
+- Neither list where a load is merely unexpected, such as `swe:swe-mode` on a quick factual answer. It then
+  shows in `unexpected_skills` and does not count as a false activation.
+
+`aggregate` adds `route_followed_*`, `route_line_*`, `route_steps_*`, and `route_read_*` counts to each group.
+A negative case that sets a route (for example a diagnosis request among the `implement` negatives) counts in its
+family's group beside the positives. Each count compares a run with the route its own case expects, so the counts
+answer "how often did a run follow the route its case sets". A rate over them would mix tasks the skill should and
+should not own, so none is reported; read `category` in each `score.json` to split them. It also adds
 `other_expected`, the loaded, missed, and unavailable counts of each expected
 skill that is not the target, over complete sessions.
 
