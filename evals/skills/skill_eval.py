@@ -984,7 +984,8 @@ def route_line(texts, route, complete):
     for text in texts:
         found = ROUTE_LINE.search(text["text"])
         if found:
-            same = LINE_KIND[found.group(1)] == route["route_type"] and found.group(2) == route["subject"]
+            match_only = route["required_by"]["locator"].startswith("Match:")
+            same = (match_only or LINE_KIND[found.group(1)] == route["route_type"]) and found.group(2) == route["subject"]
             return {"status": "match" if same else "wrong", "observed": found.group(2)}
     return {"status": "missing" if complete else "unavailable", "observed": None}
 

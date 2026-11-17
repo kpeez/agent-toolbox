@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 131 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
+The corpus has 129 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:
@@ -24,20 +24,23 @@ are router-load cases that also set `expected_route`, so each scores the route l
 the playbook, and the Steps section. Its three negatives are a closing remark, a quick fact that
 needs no repository, and a task outside software. A load of the router there is a false
 activation. The closing remark and the quick fact also forbid `swe:go-deeper`, because its skip rule
-excludes chat and quick facts. The software-free task allows it, because the session-start rule
-runs `go-deeper` on a task of any kind.
+excludes chat and quick facts. The software-free task allows it and `swe:writing`, because the session-start hook
+runs `go-deeper` on a task of any kind and sends the reply through `writing`. `swe-mode-pause-safely` and
+`swe-mode-ship-stack` forbid `go-deeper` too: each is a follow-up inside a task that an earlier turn framed.
 
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
 the same fixture. Six of them set `expected_route`, the route the agent should
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
 
-The two route-choice families, `swe-route-choice` (23 cases) and `lab-route-choice` (6), cover
+The two route-choice families, `swe-route-choice` (23 cases) and `lab-route-choice` (6 cases), cover
 each playbook and single-skill route that no other case covers, with one case per route. They have
 no fixed mix: `validate` rejects a negative case, and a case with no `expected_route`, in an open family, because a route-choice case scores one route. A negative in a mix family may set `expected_route`. Every
 case instead resembles a neighbouring route and belongs to its own: the `rationale` names the
 near miss. Cases on a route with modes set `expected_mode`. A route-choice case holds one correct
-route that the router's own text supports. Where two router lines overlap, such as the PR-status
+route that the router's own text supports, and its fixture holds every input that the task names.
+For example, `swe-route-diagnose-runtime` runs a worker script that spins, `swe-route-ship-pr` has a conflicted
+`receipt.py`, and `lab-route-maintain-project-skills` has project skills and a renamed column. Where two router lines overlap, such as the PR-status
 trigger and the `ship-pr` route, the case uses wording that only one of them matches.
 
 The "Activation facets with no case" list in [FACETS.md](FACETS.md) names each
@@ -156,7 +159,8 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
 `route` scores the agent against its router:
 
 - `line`: the first root text with a `Playbook: <slug>` or `Route: <skill>`
-  line. `Playbook` must name a playbook route and `Route` a single-skill route.
+  line. `Playbook` must name a playbook route and `Route` a single-skill route, except for a route that the
+  router reaches only through its Match steps (`figure-it-out`, Match step 6): there either label scores `match`.
   The label may be bold (`**Playbook:**`, `**Playbook**:`) or bulleted
   (`- Playbook:`). The slug may be in backticks, with or without its plugin
   prefix. The status is `match`, `wrong`, `missing`, or `unavailable`.
@@ -232,14 +236,15 @@ applies. A `go-deeper` load there is then a false activation.
 The `go-deeper` skip rule is: chat, a quick factual answer, a mechanical or fully specified edit, a follow-up inside a
 task you already framed, and "just do it". It runs once per task. The corpus applies it as follows.
 
-- A quick factual answer: `HO-09`, `lab-mode-define-metric`,
+- Chat and a quick factual answer: `swe-mode-chat`, `swe-mode-quick-fact`, `HO-09`, `lab-mode-define-metric`,
   `lab-making-plots-read-table`, and the lookups `TA-07`, `DG-07`, and `TC-08`.
 - A mechanical or fully specified edit or action: the request names every constraint of the change or the action, so
   nothing is left to choose. These are `IM-10`, `AR-07`, `HO-07`, `TC-07` (run a named command and report), `SP-01`
   and `SP-10` (commit finished work and open a draft PR), `SP-04` (land an approved PR), and
   `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
 - A follow-up inside a framed task: the last user turn continues the work that an earlier assistant turn did. These
-  are `SP-05` (commit what the earlier turn reported complete) and `SP-06` (fix what it diagnosed). A user turn that opens a new task after an answer is
+  are `SP-05` (commit what the earlier turn reported complete), `SP-06` (fix what it diagnosed),
+  `swe-mode-ship-stack`, `swe-mode-pause-safely`, and `swe-route-autopilot-stack`. A user turn that opens a new task after an answer is
   a new task, so `HO-05`, `HO-06`, and the lab contextual cases keep `go-deeper` allowed.
 
 A case that sets no `expected_route` gets only one automatic credit: `swe:writing`, when it lists the plugin's router as

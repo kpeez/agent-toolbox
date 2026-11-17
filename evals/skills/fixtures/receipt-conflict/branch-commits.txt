@@ -1,0 +1,11 @@
+Commits on the PR branch (PR 12), not on main:
+
+    Put the minus sign before the dollar sign
+
+    A refund of 250 cents printed as "$-2.50". It now prints "-$2.50". test_refund_total pins it.
+
+Commits on main, not on the PR branch:
+
+    Group thousands in receipt totals
+
+    A total of 123456 cents printed as "$1234.56". It now prints "$1,234.56". test_thousands pins it.
