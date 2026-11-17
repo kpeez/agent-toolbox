@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 139 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
+The corpus has 137 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:

@@ -3245,7 +3245,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "We settled it: add localized_names beside display_name, keep display_name for two releases, move the website, the CSV export, and the two reports onto the new field one at a time, then retire the old field. Plan that as four stacked PRs, as a checklist an owner can run box by box. Do not implement."
+          "content": "The README calls the design and the verification approach open, but I have settled both: add localized_names beside display_name, keep display_name for two releases, move the website, the CSV export, and the two reports onto the new field one at a time, then retire the old field. Verify each move by running the export command and both reports before and after it. Plan that as four stacked PRs, as a checklist an owner can run box by box. Do not implement."
         }
       ],
       "fixture": "catalog-migration",
@@ -3260,7 +3260,7 @@
         "principle-read/swe/prove-it-works"
       ],
       "relevant_action": "Say Playbook: plan-multi-phase and read the playbook before any other step.",
-      "rationale": "Four callers over several PRs, and a README that expects more than one session, keep the plan past the skip-small-change step. The write-plan-file and require-real-verification steps run on every correct plan, and they name sequence-verifiable-units and prove-it-works. The settled approach leaves step 2 nothing to prototype, so no principle from it is listed."
+      "rationale": "Four callers over several PRs, and a README that expects more than one session, keep the plan past the skip-small-change step. The write-plan-file and require-real-verification steps run on every correct plan, and they name sequence-verifiable-units and prove-it-works. The user settles the decisions that the README lists as open, so the request and the README agree, and step 2 has nothing to prototype, so no principle from it is listed."
     },
     {
       "id": "swe-fallback-hillclimb-metric",
@@ -3298,7 +3298,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Autopilot these two independent PRs to merged: fix the minus sign on negative totals, and strip the trailing colon from line labels."
+          "content": "Autopilot these two independent PRs to merged: add the missing thousands separator to large totals, and strip the trailing colon from line labels."
         }
       ],
       "fixture": "receipt-totals",
@@ -3323,7 +3323,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Build and verify these two independent PRs with full autonomy, but stop before the merge so I can land them: fix the minus sign on negative totals, and strip the trailing colon from line labels."
+          "content": "Build and verify these two independent PRs with full autonomy, but stop before the merge so I can land them: add the missing thousands separator to large totals, and strip the trailing colon from line labels."
         }
       ],
       "fixture": "receipt-totals",
