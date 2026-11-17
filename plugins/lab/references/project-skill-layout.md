@@ -37,7 +37,7 @@ the whole `.claude/skills` folder: when a teammate keeps a local, ignored
 
 - When `git ls-files -s .claude/skills` already lists `.claude/skills`
   itself with mode `120000`, the repository commits a folder link that
-  reaches the skill. Add nothing.
+  reaches the skill. Add nothing, and skip the rest of this list.
 - When `.claude/skills` is a link that Git does not track
   (`[ -L .claude/skills ]` and `git ls-files .claude/skills` prints
   nothing), an older version of this layout made it in a setup step. Delete
