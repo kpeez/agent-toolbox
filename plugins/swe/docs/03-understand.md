@@ -12,7 +12,7 @@ When the cause is unclear, ask for findings, not a fix:
 /swe:swe-mode investigate why background jobs time out every few hours. give me what we know, what data you used, and your best hypotheses. don't change any code yet.
 ```
 
-A read-only question routes to the [`investigate-question`](../skills/swe-mode/playbooks/investigate-question.md) playbook. It restates the question, runs `how` over the code paths, and adds `why` when the question is about motivation. The answer has an Overview, Key Concepts, How It Works, Where Things Live, and Gotchas. For a choice between options, it gives a recommendation with a tradeoffs table instead. Every claim carries its source and a confidence tier.
+A read-only question routes to the [`investigate-question`](../skills/swe-mode/playbooks/investigate-question.md) playbook. It restates the question, traces the code paths, and adds `why` when the question is about motivation. The answer has an Overview, Key Concepts, How It Works, Where Things Live, and Gotchas. For a choice between options, it gives a recommendation with a tradeoffs table instead. Every claim carries its source.
 
 The playbook changes no code and opens no PR. When the findings point at a fix, start the fix as a new task.
 
@@ -22,9 +22,9 @@ The playbook changes no code and opens no PR. When the findings point at a fix, 
 /swe:how do we dedupe notifications? is there an n+1 when we look up subscribers?
 ```
 
-Ask the question you have. [`how`](../skills/how/SKILL.md) answers at the level of a senior engineer who onboards you onto the subsystem. For a single module or a narrow question, one explainer reads and explains in one pass. For a subsystem across several files or services, it first starts two to four read-only explorers on `sonnet`, one per angle. Then an explainer on `opus` writes the answer from their findings.
+Ask the question you have. [`how`](../skills/how/SKILL.md) answers at the level of a senior engineer who onboards you onto the subsystem. It starts one read-only subagent with a short brief and presents its output. It starts no explorers, and its answer has no fixed headings.
 
-`how` is hidden from the model's skill list, so the router and the playbook steps load it by path. You can still type it. In Codex, type `$swe:how`. The router also runs `how` by itself before any nontrivial change.
+Nothing routes to `how`. The router and the playbooks trace the code themselves. You invoke `how` when you want this walkthrough. It is hidden from the model's skill list, so you type it. In Codex, type `$swe:how`.
 
 ## Find the history with why
 
@@ -32,16 +32,9 @@ Ask the question you have. [`how`](../skills/how/SKILL.md) answers at the level 
 /swe:why why was the retry limit set to five? does the reason still hold?
 ```
 
-[`why`](../skills/why/SKILL.md) first builds a code anchor from `git blame`, `git log`, and the PR bodies. Then it starts one read-only investigator per source, all at once:
+[`why`](../skills/why/SKILL.md) answers from the record, not the code. It reads the commits and PR discussions behind the target and behind each later change. It looks at other sources, such as the tracker, chat, and docs, only when that trail is thin.
 
-- git and gh history
-- GitHub Issues, plus Linear when its tools exist
-- the project's docs folder, such as `.agents/docs/`
-- Slack, when its search tools exist
-
-The answer names each source it could not search and why. It also reports a null result, because "nobody wrote down why" is an answer.
-
-Each claim carries one of five tiers from [epistemics](../skills/why/references/epistemics.md): direct, supported, inferred, speculative, or unknown. When the question comes before a change, the answer ends with what the change must preserve, what it can change, what to avoid, and the risk.
+The answer cites what the authors wrote and marks its own inferences as inferences. It says what the record does not answer, because "nobody wrote down why" is an answer.
 
 The two skills combine well. "do why first, then how" is a good prompt when you suspect the history explains the code.
 
@@ -99,7 +92,7 @@ For a noisy report, such as a long thread or a vague bug, make the restatement t
 /swe:go-deeper make the search page feel faster
 ```
 
-[`go-deeper`](../skills/go-deeper/SKILL.md) answers four questions before the work starts. What would a top expert do here that you did not ask for? What raw material would they start from? Which methods and tools would they use? What check, outside the agent and you, shows the result is right? It gives those answers and the rewritten task in five lines or fewer, then does the rewritten task. It rejects additions that only make the task bigger. When an answer depends on a preference only you can set, it asks you in rounds, each question with its recommended answer, until no decision is open.
+[`go-deeper`](../skills/go-deeper/SKILL.md) answers four questions before the work starts. What would a top expert do here that you did not ask for? What raw material would they start from? Which methods and tools would they use? What check, outside the agent and you, shows the result is right? It gives those answers and the rewritten task in five lines or fewer, then does the rewritten task. It rejects additions that only make the task bigger. When a choice has an experiment that can settle it, the rewritten task asks the agent to prototype the options and recommend one from what it observed. Product and preference choices stay with you. When an answer depends on a preference only you can set, it asks you in rounds, each question with its recommended answer, until no decision is open.
 
 You seldom type it. The SessionStart hook and the router run it on every new task, and skip chat, quick facts, and fully specified mechanical edits. lab and uni have their own identical copy, so each plugin works alone.
 

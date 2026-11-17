@@ -12,7 +12,7 @@ Right after a task that taught you something, type this:
 /swe:reflect that took too long. capture what we learned so the next run doesn't repeat it.
 ```
 
-[reflect](../skills/reflect/SKILL.md) is user-invoked, so it runs only when you type it. It finds this session's transcript and reads only this project's transcripts. Then it starts three reviewers in parallel, each with a different lens (judgment, tooling, and divergent). A fourth subagent synthesizes their findings into Accepted, Rejected, and Backlog lists.
+[reflect](../skills/reflect/SKILL.md) is user-invoked, so it runs only when you type it. It finds this session's transcript and reads it itself, with no subagents. It keeps only findings that will still hold and would change a future agent's work. It routes each finding to a skill the session used. Then it sorts the findings into Accepted, Rejected, and Backlog lists.
 
 reflect moves to Backlog each finding that a lint, script, type, or check would enforce better than prose. It waits for your approval before it applies any skill edit. Approve a finding only if it would change a future decision. One strange session is an anecdote, not a rule.
 

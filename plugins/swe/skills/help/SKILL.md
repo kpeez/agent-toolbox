@@ -82,15 +82,15 @@ and give one example prompt.
 | Check that the agent understood the goal before it starts | [in-your-own-words](../in-your-own-words/SKILL.md) |
 | Make a task deeper, not bigger, before it starts | [go-deeper](../go-deeper/SKILL.md) |
 | Settle open plan or design decisions in an interview | [interview-user](../interview-user/SKILL.md) |
-| Know how code works now, or where new code goes | [how](../how/SKILL.md) |
-| Know why code is shaped this way | [why](../why/SKILL.md) |
+| Get a walkthrough of how a subsystem works, from one read-only subagent | [how](../how/SKILL.md) |
+| Know why code is shaped this way, from commits and PR discussions | [why](../why/SKILL.md) |
 | Catch up on their own recent work on a topic | [recall](../recall/SKILL.md) |
 | Catch up on this chat since their last message, with every waiting call decidable from the reply | [ketchup](../ketchup/SKILL.md) |
 | Catch up like `ketchup`, in a short subtitled video of slides, with the waiting calls as text under it | [ketchup-video](../ketchup-video/SKILL.md) |
 | Hear the last reply again in plain words | [wait-what](../wait-what/SKILL.md) |
 | Explain a failure, crash, hang, or leak | [diagnose](../diagnose/SKILL.md) |
 | Know what a diff could break outside itself | [blast-radius](../blast-radius/SKILL.md) |
-| Settle types and module shape before code that crosses a function boundary | [architect](../architect/SKILL.md) |
+| Pick the types and module shape before code that crosses a function boundary | [architect](../architect/SKILL.md) |
 | Design a new interface, or review module boundaries | [codebase-design](../codebase-design/SKILL.md) |
 | Run parallel checks over slices, or race workers | [swarm](../swarm/SKILL.md) |
 | Run workers on OpenCode, Antigravity, or another agent CLI | [external-agents](../external-agents/SKILL.md) |
@@ -118,7 +118,8 @@ covered under principles below.
 
 Close calls:
 
-- `how` explains what the code does. `why` explains the reasons.
+- `how` explains what the code does. Nothing routes to it, so the user
+  invokes it. `why` explains the reasons from the record.
 - `architect` settles a new design before code. `codebase-design` reviews the
   boundaries of existing code and writes a report.
 - A reviewer agent with [references/review-brief.md](../../references/review-brief.md)
@@ -126,9 +127,9 @@ Close calls:
 - `recall` rebuilds context across recent chats. `ketchup` covers only this
   chat since the user's last message. To resume one branch, the
   `pick-up-session` playbook applies.
-- `figure-it-out` designs one rigorous run. The `run-program` playbook runs a
-  program across days and many PRs. The `run-autonomously` playbook drives
-  one task to an exit condition.
+- `figure-it-out` designs one rigorous run, and it takes program-scale work
+  across days and many PRs. The `run-autonomously` playbook drives one task to
+  an exit condition.
 - `swarm` fans out native subagents. `external-agents` runs workers
   on another agent CLI, such as OpenCode or Antigravity.
 
@@ -139,7 +140,9 @@ slash command. Describe the task, and the router picks one. These phrases
 name one directly:
 
 - "babysit this pr" or "check on pr 123" runs `babysit-pr`. It drives the PR
-  to merge-ready and stops. It does not merge unless the user asks.
+  to merge-ready and stops. It does not merge unless the user asks. It never
+  rebases, retargets, or force-pushes. It reports a conflict or a stale base
+  with the branch that needs the rebase.
 - "land the stack" runs `ship-stack`.
 - "take over this branch" runs `pick-up-session`.
 - "pause safely" runs `pause-safely`.
@@ -150,7 +153,7 @@ The Playbooks section of [swe-mode](../swe-mode/SKILL.md) lists every
 playbook and when it applies. Page `06-verify-and-ship.md` covers opening,
 babysitting, and landing a PR. For work across phases or stacked PRs, ask
 `/swe:swe-mode` for a plan. It runs the `plan-multi-phase` playbook, which
-writes the plan and does not implement it.
+writes the plan file, hands back its path, and does not implement it.
 
 Principles are one-rule skills that `/swe:swe-mode` reads by path and cites
 in its replies. They are hidden from the model listing. The user steers with

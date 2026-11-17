@@ -42,8 +42,10 @@ Always keep one outside check.
 
 ## Constraints only the user can set
 
-When an answer depends on a product or preference constraint that no
-observation can settle, ask the user about those constraints only. Ask in
+Settle a choice that an experiment can settle with a prototype, and recommend
+the option that the result supports. When an answer depends on a product or
+preference constraint that no experiment can settle, ask the user about those
+constraints only. Ask in
 rounds. Each round asks every open decision whose prerequisites are settled,
 each with your recommended answer. Repeat until no decision is open. Do not
 ask for a fact you can look up.
@@ -56,4 +58,6 @@ rewritten task. Do not wait for approval unless an open constraint blocks the
 work. The frame does not replace the work.
 
 When the user asks only for a better prompt, give the four answers and the
-rewritten prompt, then stop.
+rewritten prompt, then stop. The rewritten prompt asks the agent to prototype
+any choice an experiment can settle and to recommend an option from what it
+observed. It leaves product and preference choices to the user.

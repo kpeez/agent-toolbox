@@ -99,8 +99,15 @@ class FacetMapContract(unittest.TestCase):
         self.assertEqual(route["modes"]["publish"][-1], "7-report")
 
     def test_write_rejects_a_name_that_two_classes_own(self):
+        reference = (
+            self.root / "plugins/swe/skills/swe-mode/references/plan-multi-phase.md"
+        )
+        reference.parent.mkdir(exist_ok=True)
+        reference.write_text("# plan-multi-phase\n", encoding="utf-8")
         playbook = "plugins/swe/skills/swe-mode/playbooks/build-feature.md"
-        self.append_step(playbook, "15-extra-step: Do the extra step. (plan-multi-phase)")
+        self.append_step(
+            playbook, "15-extra-step: Do the extra step. (plan-multi-phase)"
+        )
         result = self.cli("write")
         self.assertNotEqual(result.returncode, 0)
         self.assertIn("plan-multi-phase", result.stderr)

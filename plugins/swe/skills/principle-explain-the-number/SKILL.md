@@ -6,31 +6,17 @@ disable-model-invocation: true
 
 # Explain the number
 
-- **Write the decision before you run.** Name the result that would change a
-  decision, and the noise floor. Stop when the run-to-run spread is larger
-  than the effect.
+- **Write the decision before you run.** Name the result that would change it,
+  and the noise floor. Stop when the run-to-run spread is larger than the
+  effect.
 - **Ask "why not double?"** Name the resource or code path that bounds the
-  result, such as a core, a lock, the disk, the network, or the load generator
-  itself. Get it from a profile or from system counters taken during a run,
-  then map it to the source. A guess from reading the code is not a limiter.
-  If you cannot say why the number is not twice as good, you do not know what
-  you measured.
-- **List what else the number could measure, and rule out each one with
-  evidence.** The usual suspects are errors, skipped or cached work, code that
-  never ran, an untuned side (one left on default settings), noise, and a
-  part too small to matter end to end.
-- **Keep the evidence with the number.** Put the run count, the spread (a
-  range or an interval), and the limiter in the notes or a linked artifact.
-  One run has no spread.
+  result. Get it from a profile or from counters taken during a run. A guess
+  from reading the code is not a limiter.
+- **List what else the number could measure.** Examples are errors, skipped or
+  cached work, code that never ran, an untuned side, noise, and a part too
+  small to matter. Rule out each one with evidence.
+- **Keep the run count, the spread, and the limiter with the number.**
 
-For a performance number, run the full procedure with the
-`benchmark-checklist` skill. For an eval result, ask the same of the trials.
-Did every run do the task? Does the gap hold across trials and models? Does
-the scenario matter?
-
-You skipped this when a run started without the result that would change a
-decision, when the evidence behind a number has no run count, no spread, or
-no named limiter, or when the time saved is larger than the time the changed
-part took.
-
-Distinct from [prove-it-works](../principle-prove-it-works/SKILL.md), which checks that an output is real.
+For a performance number, run the `benchmark-checklist` skill. For an eval
+result, ask three questions. Did every run do the task? Does the gap hold
+across trials and models? Does the scenario matter?

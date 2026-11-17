@@ -7,7 +7,7 @@ You own this task. Plan, review, verify.
 Delegate the investigation and the fix to subagents and stay in the lead. Be scientific. Every shipped line traces to runtime evidence. A change that "might help" is a hypothesis, not a fix, and it does not ship. When evidence refutes a hypothesis, revert what it motivated.
 
 1-reproduce-failure: Reproduce it yourself on the reported surface, with the project's verification skill when one exists. Ask the user only with a specific reason that surface cannot reach it. If it does not fire, synthesize the trigger, tighten conditions, or instrument until it does. (diagnose, prove-it-works)
-2-binary-search-cause: Seed hypotheses with how and why. Each pass, take the split that cuts the most problem space, get runtime evidence, and eliminate. Instrument when state is unclear. Do not guess. (how, why, diagnose, fix-root-causes)
+2-binary-search-cause: Seed hypotheses with a trace of the affected code and with why. Each pass, take the split that cuts the most problem space, get runtime evidence, and eliminate. Instrument when state is unclear. Do not guess. (why, diagnose, fix-root-causes)
 3-confirm-mechanism: Confirm the surviving mechanism with runtime evidence before you plan the fix. When two fixes on one premise have failed, question the premise. (fix-root-causes, attack-the-premise)
 4-sweep-for-pattern: Search for other instances of the same faulty pattern. (fix-root-causes)
 5-plan-fix: When the fix crosses a function boundary, run architect first. Give the code delegate a specific scope. (architect, implement)

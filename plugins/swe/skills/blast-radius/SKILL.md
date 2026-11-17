@@ -38,9 +38,7 @@ application ships and calls the exact function in question.
 
 1. `1-read-the-change`: Read the diff and the symbols it adds, changes, and
    deletes. State what the code now does differently, including what the
-   diff does not spell out. Build the
-   [code anchor](../why/SKILL.md#2-build-code-anchor) to get the commits and
-   the PR.
+   diff does not spell out. Pull the PR and its commits.
 2. `2-find-safety-fact`: Find the single fact the change is safe because of,
    such as "this call only drops cache entries that are already dead". Most
    changes that look risky are safe because of one fact. When it holds, most
@@ -54,9 +52,9 @@ application ships and calls the exact function in question.
    returns, database columns, another language that reads the same bytes,
    feature flags, and code three hops downstream.
 4. `4-rate-each-risk`: Give each risk a real likelihood and a real cost. Keep
-   confirmed risks apart from risks you checked and cleared. Follow the
-   evidence rules of `why`. Cite a real `file:line`; a search that finds
-   nothing is an answer too. Never invent a caller or an API.
+   confirmed risks apart from risks you checked and cleared. Cite a real
+   `file:line`; a search that finds nothing is an answer too. Never invent a
+   caller or an API.
 5. `5-prove-the-fact`: Write a probe that runs the real code, run it, and
    paste the result. Put the probe in `.agents/scratch/<branch-slug>/`
    ([agent scratch](../../references/agent-scratch.md)). It becomes a permanent test only through the admission

@@ -6,10 +6,10 @@ You own the design. Plan, review, verify.
 
 Delegate implementation and stay in the lead. Delegation is mandatory and the laziness protocol does not waive it, because the gain is review separation. A subagent that cannot spawn owns the diff directly and keeps the same review separation. Code-coupled work goes to one owner with the checkpoint inline, and that owner fans out after the blocking phase. Parent-level fan-out is for slices with independent artifacts. Rewrite the checkpoint at phase boundaries. Spawn a fresh owner rather than chaining interrupts.
 
-1-map-subsystem: Run how over the affected subsystem. (how)
+1-map-subsystem: Trace the affected subsystem yourself.
 2-interview-on-open-decisions: When scope or behavior rests on a product or preference decision the user has not made, run interview-user on those decisions only. Settle facts a run can show by prototype instead. (interview-user, build-prototype)
 3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. (model-the-domain, foundational-thinking)
-4-explore-designs: When the code crosses a function boundary, run architect for parallel design exploration. For a consequential interface, map callers, invariants, and errors. (architect, codebase-design, redesign-from-first-principles)
+4-explore-designs: When the code crosses a function boundary, run architect for the shape. For a consequential interface, map callers, invariants, and errors. (architect, codebase-design, redesign-from-first-principles)
 5-write-throughput-checkpoint: Add four task items for blocking first steps, independent workstreams, shared mutable state, and the smallest safe decomposition. Mark one that does not apply `n/a: <reason>`. (separate-before-serializing-shared-state)
 6-build-one-unit: Delegate each unit with file paths, the data shape, and success criteria, and verify it before the next. Port a shared-primitive improvement to every consumer. Commit liberally. (implement, sequence-verifiable-units, laziness-protocol)
 7-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)

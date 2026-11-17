@@ -98,7 +98,7 @@ The [`autopilot-stack`](../skills/swe-mode/playbooks/autopilot-stack.md) playboo
 
 ## Run a multi-day program
 
-The [`run-program`](../skills/swe-mode/playbooks/run-program.md) playbook is for work that outlives any single agent. It runs many stacked PRs and many subagents under one coordinator session. The coordinator decides which agent does each piece of work, checks what each one produces, and never writes code. It uses only its own tools: subagent spawns, one tracker note, and PR event subscriptions. It takes one unit through owner, verifier, and merge before it fans out. When one agent could finish inside the budget, the playbook sends you back to `run-autonomously`.
+A program, such as a migration across many packages over several days and many PRs, has no playbook of its own. `/swe:swe-mode` routes it to [`figure-it-out`](../skills/figure-it-out/SKILL.md), which designs one rigorous run for it. When one agent could finish inside the budget, use `run-autonomously`.
 
 ## Clean up worktrees
 
@@ -112,7 +112,7 @@ The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playboo
 
 The router's Subagents section sets the rules. The chat that runs the playbook owns it, code goes to delegates, and each new round goes to a fresh subagent. In Claude Code the router picks `opus` for judgment and the hardest code, `sonnet` for routine code, and `haiku` for mechanical edits. In Codex it sets reasoning effort the same way.
 
-`implement` fans out large work with independent parts through [`swarm`](../skills/swarm/SKILL.md). Code delegates go to the [`daedalus`](../agents/daedalus.md) agent, which publishes nothing without explicit authority. The swe README lists [both swe agents](../README.md#agents).
+`implement` fans out large work with independent parts through [`swarm`](../skills/swarm/SKILL.md). Code delegates go to the [`daedalus`](../agents/daedalus.md) agent, which publishes nothing without explicit authority. Every subagent that `swe-mode` starts reads [`worker.md`](../skills/swe-mode/worker.md) first. It holds your rules for started agents. The kickoff's bar is the whole bar. The agent decides reversible calls instead of asking you. It publishes PRs as the [`ship-pr`](../skills/ship-pr/SKILL.md) skill says. The swe README lists [both swe agents](../README.md#agents).
 
 Reviews and searches use the host's own subagents, with the rules in the [review brief](../references/review-brief.md). By default a reviewer fixes small, sure findings and reports each fix. A landing verdict edits nothing.
 

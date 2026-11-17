@@ -31,7 +31,6 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `automate-me`, `make-bot-ui` | Persona and Cursor UI. | #174 |
 | `setup-pstack` | Cursor setup. swe installs as a plugin. | #174 |
 | `poteto-mode/scripts/` (`watch-pr`, `orch`, `bootstrap.ts`, bun files) | Cursor, Origin, and Graphite tooling. swe uses `gh` and its own Python scripts. | #174 |
-| `why/references/sources/` for Databricks, Datadog, Notion, Sentry, incident postmortems | swe `why` uses git history, Linear, Slack, and project docs. | #179 |
 | `show-me-your-work` TSV template | `log-decisions` writes JSONL. | #171 |
 | `docs/harness/` | swe is written for Claude Code and Codex already. | #190 |
 | `assets/`, `automations/`, `docs/guide/images/`, plugin manifests | Cursor packaging. | #179 |
@@ -43,12 +42,20 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `statechart` | Imported on owner approval. Node scripts kept, not ported to Python: upstream code keeps its own language. Class `copied`. | #198 |
 | `ketchup-video` | Imported on owner approval. Class `copied`. | #200 |
 | `statechart` TypeScript compiler (cursor/plugins#977) | Full tree imported with the test corpus, on owner approval. It replaces the 26 `.mjs` scripts. Class `copied`. | #201 |
+| `poteto-mode/worker.md` (cursor/plugins#1249) | Imported on owner approval as `swe-mode/worker.md`. Upstream's reason: the rules live in skills a started agent does not load, so they reach it only through its brief. Its PR rules point at `ship-pr` (draft first, the body template), not upstream's ready PRs and six headings. Class `modified`. | #238 |
 
 ## Deleted swe content
 
 | swe | Why | PR |
 | --- | --- | --- |
 | `swe-mode/references/run-program.md` (program store, inbox, ledger, frontier) | Upstream made orchestrate agentic (cursor/plugins#1043). Port and deletion made on owner approval. | #201 |
+| `why` lanes, synthesizer, confidence tiers, and `why/references/` | Upstream cut `why` to one short file that names no source (cursor/plugins#1236). It reads the commits and PR discussions first and other sources only when that trail is thin. | #238 |
+| `how` explorers, `how/references/`, and every route to `how` | Upstream cut `how` to one subagent and stopped routing to it (cursor/plugins#1236). Playbooks trace the code directly. | #238 |
+| `reflect` reviewers, synthesizer, and `reflect/references/` | Upstream made `reflect` one file with no subagents (cursor/plugins#1249). | #238 |
+| `architect` phases and `architect/references/` | Upstream cut `architect` to a short brief (cursor/plugins#1249). | #238 |
+| `run-program` playbook | Upstream deleted Orchestrate (cursor/plugins#1249). `figure-it-out` takes program-scale work. | #238 |
+| `scripts/check_plan.py` and `swe-mode/references/plan-multi-phase.md` | Upstream cut the plan playbook to five steps and deleted `check-plan.mjs` (cursor/plugins#1249). | #238 |
+| `principle-model-the-domain` "Find implicit state machines" section | Cut to one sentence with the upstream principle cut (cursor/plugins#1249). | #238 |
 
 ## Skipped upstream changes
 
@@ -59,6 +66,7 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `reflect`: never open a PR or push after a skill edit (cursor/plugins#800) | swe defaults allow task-scoped commits and draft PRs. swe ports only the rule against edits in a plugin cache. | #200 |
 | `interrogate`: adversaries keep only findings a run proves (cursor/plugins#986) | swe dropped `interrogate`. The review brief also serves prose and design reviews, where a run cannot prove a finding. | #201 |
 | `poteto-mode`: `run_in_background: true` on a steer or resume (cursor/plugins#986) | Claude Code runs subagents in the background by default. Codex has no such flag. | #201 |
+| Model defaults: Opus 5.5 first, Fable 5.2 only on request or after two failures, a cap at xhigh, `-fast` slugs, and another vendor for a second opinion (cursor/plugins#1236, #1249) | swe skills name no model or vendor. | #238 |
 
 ## Different defaults
 
@@ -67,5 +75,7 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `poteto-mode` Autonomy and `opening-a-pr`: PRs open ready; merge only in Shipping on request | `ship-pr` Publication authority: an implementation request covers commits, pushes, a draft PR, and a merge without review once verified and checks pass; local-only or a hold point overrides | The rule moved from global agent rules into swe (dotfiles#73). | #203 |
 | `bug-fix` playbook: no step encodes the bug; `correct` counts a class at its second occurrence | `fix-bug` step `10-encode-bug-class` turns a bug that the code alone shows into a type, lint rule, or check; `correct` counts such a bug at its first occurrence | swe turns each found bug into a lint rule. | #207 |
 | `poteto-mode` first-message trigger: open each PR's `## Why` with the user's goal (ported in #201) | The goal restatement stays in the chat and subagent briefs. `ship-pr` builds the PR body from `templates/pr-body.md` with `pr_body.py render`, and a `PreToolUse` hook blocks any other body | The ported clause made PR bodies open with `## Why` and requester attribution (#207, #212). Do not port it again. | #214 |
-| `principle-model-the-domain`: the stance only, for new code | `principle-model-the-domain` adds a "Find implicit state machines" section with signs for existing code, and `codebase-design` review uses it as a friction question | swe looks for state machines that nobody wrote down in existing code, not only in new code. Keep the section on a sync. | #215 |
+| `principle-model-the-domain`: the stance only, for new code | `principle-model-the-domain` adds one sentence: look for state machines nobody wrote down in existing code before you add a branch | swe looks for implicit state machines in existing code, not only in new code. The longer section (#215) was cut to this sentence. | #215, #238 |
 | `autopilot-stack`, `shipping`, and `opening-a-pr`: hand-chained `gh pr create --base` and one-by-one merge | `autopilot-stack.md`, `ship-stack.md`, and `ship-pr/SKILL.md` use `gh stack link` to publish stacks and `gh stack merge --squash` for a fully verified stack, keeping plain `gh` base chaining only as a fallback when `gh stack` is unavailable | Prevents hand-chained `--base` PRs that omit a GitHub stack, enforced by `pr_body.py hook`. Departs from pstack on purpose; keep on sync. | KP-589 |
+| `poteto-mode` todo list: a skipped step no longer stays as `skip: <reason>` (cursor/plugins#1249) | `swe-mode` ends the reply with a Steps section, each handle `done` or `skip:` with a reason | The route eval in `evals/skills` reads the Steps section to score whether an agent followed its route (#235). | #238 |
+| `architect` sends a large or contested design to `arena` | `architect` sends it to `codebase-design` design mode | swe has no `arena`. `codebase-design` compares materially different interfaces. | #238 |

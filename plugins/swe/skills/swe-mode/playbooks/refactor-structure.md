@@ -6,7 +6,7 @@ You own the contract. The structure changes. The behavior does not.
 
 When the cleanup reveals a missing feature or a real bug, split it out and ship the structural change first against the pinned contract. A named redesign routes to build-feature. Large or cross-cutting structural work goes to figure-it-out.
 
-1-pin-behavior: Run how to learn the contract, then pin it with a characterization test, snapshot, or equivalence harness before any structure moves. Type check and lint are not a pin. (how, testing-code)
+1-pin-behavior: Trace the code to learn the contract, then pin it with a characterization test, snapshot, or equivalence harness before any structure moves. Type check and lint are not a pin. (testing-code)
 2-name-missing-structure: Name the structure the code is missing. The reshape must delete branches or invalid states, not add indirection. Boring code stays when its shape is clear and local. (model-the-domain)
 3-name-target-shape: State the module layout, types, and call graph as if built today. When the target crosses a function boundary, run architect first. When the target shape rests on a product or preference decision the user has not made, run interview-user on those decisions only. (foundational-thinking, redesign-from-first-principles, architect, codebase-design, interview-user)
 4-subtract-first: Delete dead code, one-caller wrappers, redundant validators, and orphan references before adding structure. Revert a speculative cleanup. (subtract-before-you-add, laziness-protocol)

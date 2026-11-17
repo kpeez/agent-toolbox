@@ -28,8 +28,8 @@ base branch, default `main`, including the working tree.
    change. Audit scoped lint and TypeScript suppressions it missed.
    Correctness or safety suppressions stay actionable `MUST KILL` flags.
    Restore a deletion only with an exact exception and scoped proof. Before
-   you accept a thin `IMPORTANT` or `do not remove` kill or keep, run the
-   `how` or `why` skill on its symbol. If a kill is ambiguous, do not restore
+   you accept a thin `IMPORTANT` or `do not remove` kill or keep, trace its
+   symbol or run the `why` skill on it. If a kill is ambiguous, do not restore
    it. If a keep is refuted or still ambiguous, delete it. Revert one rejected
    report and rerun Comment Sicko with the failure named. Reject a second bad
    report, report it open, and fail `no-comments`.

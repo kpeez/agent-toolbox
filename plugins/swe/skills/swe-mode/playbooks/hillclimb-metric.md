@@ -6,7 +6,7 @@ You own the metric and the experiment's integrity. Supervise and review. Delegat
 
 A one-off fix is fix-bug or improve-performance. Here the core discipline is one change, one measurement, keep or revert. Never stack untested changes. Never claim a win from code inspection. Correctness and simplicity outrank the number. For an unattended run, borrow only the wake mechanism of run-autonomously, not its stop rule.
 
-1-ground-workload: Run how over the target and name the workload dimensions that move the result. Select a case that reproduces the user's complaint. If none does, fix the repro first. (how)
+1-ground-workload: Trace the target and name the workload dimensions that move the result. Select a case that reproduces the user's complaint. If none does, fix the repro first.
 2-fix-metric-and-stop: Fix one metric, its better direction, and a stop predicate that pairs a target with a floor on attempts. Use the user's numbers or agree them.
 3-freeze-harness: Prove the harness separates contrasting workloads, vet it, and make it print its error count and work count. Freeze one command that reports a median of N. Record the baseline and a green regression gate. (build-the-lever, benchmark-checklist)
 4-open-decision-log: Keep a gitignored `decision.tsv` with id, hypothesis, change, before, after, delta, tests, verdict, and note. Give each attempt a new id, a crash or a retry included, and never reuse one. Read the log before each attempt. (log-decisions)

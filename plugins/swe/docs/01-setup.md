@@ -62,7 +62,7 @@ Without these lines, type `$swe:swe-mode <task>` to start the router in Codex.
 
 ## Know where the tokens go
 
-swe spends extra tokens on subagents. Code goes to delegates, reviews go to a fresh reviewer, and `how` and `why` can fan out to several explorers. That is the price of independent checks.
+swe spends extra tokens on subagents. Code goes to delegates, and reviews go to a fresh reviewer. That is the price of independent checks.
 
 The router picks a model for each job. You do not configure it. In Claude Code, the [router's Subagents section](../skills/swe-mode/SKILL.md#subagents) uses these models:
 
@@ -76,7 +76,7 @@ In Codex, the router raises or lowers reasoning effort the same way. The `daedal
 
 To spend fewer tokens:
 
-- Ask a narrow question. `how` spawns no explorers for a single module or function.
+- Ask a narrow question. `how` starts only one read-only subagent.
 - Give the router a scoped task with a clear done check, so it does not plan work you did not ask for.
 - Run the main chat on a cheaper model. The subagent choices above stay the same.
 

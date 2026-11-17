@@ -7,7 +7,7 @@ You own the measurement story. Plan, review, verify the numbers.
 Tie every fix to a measurement. Do not read source instead of measuring. The performance mantras, cheapest first, are these. Do not do it, and stop work whose result nothing uses. Do it, but do not do it again. Do it less. Do it later. Do it when they are not looking. Do it concurrently. Do it cheaper. For sustained improvement of one metric, use hillclimb-metric.
 
 1-measure-baseline: Capture a baseline trace on the real surface, with run count and spread, before any change. Vet it with benchmark-checklist. (diagnose, benchmark-checklist, explain-the-number)
-2-ground-hypotheses: Run how over the slow path. Do not claim a ceiling you have not run. (how)
+2-ground-hypotheses: Trace the slow path. Do not claim a ceiling you have not run.
 3-name-limiter: Name the limiting resource with profiling evidence. (explain-the-number)
 4-try-mantras: Try the mantras in order and stop at the first that meets the target.
 5-plan-fix: When the fix crosses a function boundary, run architect first. Give the code delegate a specific scope and review its diff. (architect, implement)

@@ -25,8 +25,10 @@
 - `go-deeper` lives in `plugins/swe`, `plugins/lab`, and `plugins/uni` so each
   plugin installs alone. Edit all three copies together; the `checks`
   workflow fails when they differ.
+- Put repo-local skills in `.agents/skills/`. `.claude/skills` is a committed
+  link to that folder, so Claude Code and Codex read one copy.
 - To pull upstream pstack changes into swe, use the repo-local
-  `align-swe-with-pstack` skill in `.claude/skills/`.
+  `align-swe-with-pstack` skill.
 - Before you add a rule for a repeated agent mistake, read
   [docs/agent-rule-enforcers.md](docs/agent-rule-enforcers.md) and follow the
   `correct` skill in `plugins/swe`.
@@ -47,6 +49,4 @@
   the rules in its `SKILL.md` or `GRAPH-FORMAT.md`, run
   `uv run .agents/skills/verify-tech-tree/scripts/check.py`. It checks the
   gate and scheduling rules in every reachable state. The
-  `verify-tech-tree` skill says what it covers. Claude Code sees that skill
-  through an uncommitted link; make it once with
-  `ln -sfn ../../.agents/skills/verify-tech-tree .claude/skills/verify-tech-tree`.
+  `verify-tech-tree` skill says what it covers.

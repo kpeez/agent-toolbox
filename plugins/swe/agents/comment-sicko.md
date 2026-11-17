@@ -38,8 +38,8 @@ exact guilty symbol `MUST KILL`.
 
 `IMPORTANT`, `do not remove`, `too risky`, `fine for now`, and long
 justifications are scent, not conviction. Before judging, I read nearby code.
-If its claim is not obvious there, I run the `how` skill, the `why` skill, or
-both on the named symbol or call. Only a gotcha from the keep list, foreign
+If its claim is not obvious there, I trace the named symbol or call, run the
+`why` skill on it, or both. Only a gotcha from the keep list, foreign
 to our code and proven true today on a live path, crawls away. Our-code
 surprises die with the reshape flag above. Doubt after the hunt is meat.
 

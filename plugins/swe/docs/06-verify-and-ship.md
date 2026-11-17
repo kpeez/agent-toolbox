@@ -128,7 +128,7 @@ It declares a mode first: `drive` (loop to merge-ready), `background`, `threads-
 /swe:swe-mode check on pr 123. anything outstanding?
 ```
 
-Babysit stops at merge-ready. It never merges.
+Babysit stops at merge-ready. It never merges. It never rebases, retargets, or force-pushes. It reports a conflict or a stale base with the branch that needs the rebase, and stops.
 
 ## Land the stack
 

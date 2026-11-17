@@ -1,6 +1,6 @@
 # Design the change before you build it
 
-This page shows how to settle the shape of a change before code locks it in. The first design an agent thinks of is rarely the best one, and a plan that no code has tested hides its weak points. You use `architect` for competing designs, `codebase-design` for one interface, `interview-user` for decisions only you can make, prototypes for questions a run can answer, and a written plan last.
+This page shows how to settle the shape of a change before code locks it in. The first design an agent thinks of is rarely the best one, and a plan that no code has tested hides its weak points. You use `architect` to pick a shape, `codebase-design` for one interface, `interview-user` for decisions only you can make, prototypes for questions a run can answer, and a written plan last.
 
 ## Settle the shape with architect
 
@@ -8,25 +8,13 @@ This page shows how to settle the shape of a change before code locks it in. The
 /swe:swe-mode design the import pipeline before writing any code. i care most about how callers use it.
 ```
 
-The router runs [`architect`](../skills/architect/SKILL.md) on its own when code crosses a function boundary. You can also type `/swe:architect` to start it directly. In Codex, the same commands start with `$`, such as `$swe:swe-mode` and `$swe:architect`. It runs in five phases:
+The router runs [`architect`](../skills/architect/SKILL.md) on its own when code crosses a function boundary. You can also type `/swe:architect` to start it directly. In Codex, the same commands start with `$`, such as `$swe:swe-mode` and `$swe:architect`. It works from one short brief. It traces every system the change touches. Then it sketches two different shapes, each with types, signatures, and module boundaries. It picks the shape where each piece of state has one owner, each task has one way to do it, and callers need to know least.
 
-1. Ground. It runs [`how`](../skills/how/SKILL.md) over every subsystem the design touches. When the design moves ownership or layers, it also runs [`why`](../skills/why/SKILL.md) on the current shape.
-2. Sketch. It runs [`swarm`](../skills/swarm/SKILL.md) as a race with the `rank all` rule. At least two runners on different models (in Claude Code, `opus` and `sonnet`) each write a sketch of types, signatures, and module boundaries with `not implemented` bodies. It needs at least two structurally distinct candidates, screens each one against the [design red flags](../skills/architect/references/design-red-flags.md), picks a base, and grafts in what the others do better.
-3. Agree. This phase is opt-in. By default it goes straight to code.
-4. Implement. It fills in the sketch. A deviation from the sketch is a signal to report, not friction to absorb.
-5. Scrap. When the same workaround shows up across unrelated code, or types need `any` and casts to compile, it throws the sketch out and runs the sketch race again.
-
-To see the design before any code, say so:
-
-```text
-/swe:architect with checkpoint. stop and show me before implementing.
-```
-
-The output starts with the caller's usage, then the types. A rationale file follows the [rationale template](../skills/architect/references/rationale-template.md) and records the synthesis decision.
+The design is not sacred once code starts. When the same workaround keeps coming back, `architect` redesigns instead of patching around it. A large or contested design uses [`codebase-design`](../skills/codebase-design/SKILL.md) in design mode. To see the design before any code, say so in the prompt.
 
 ## Design one interface with codebase-design
 
-Not every interface needs a race. For a bounded design with one obvious shape, [`codebase-design`](../skills/codebase-design/SKILL.md) in design mode is enough. It maps the real callers, then states invariants, ordering, error modes, and costs before it picks the interface. Its goal is depth, which means a lot of behavior behind a small interface.
+For a bounded design with one obvious shape, [`codebase-design`](../skills/codebase-design/SKILL.md) in design mode is enough. It maps the real callers, then states invariants, ordering, error modes, and costs before it picks the interface. Its goal is depth, which means a lot of behavior behind a small interface.
 
 Review mode looks at modules you already have:
 
@@ -107,7 +95,7 @@ For work that spans phases or stacked PRs, the [plan-multi-phase playbook](../sk
 /swe:swe-mode turn this design into a plan. small verifiable PRs, each with its own verification steps.
 ```
 
-It skips the plan for a one or two file change. Otherwise it settles open questions by prototype, explores in subagents, and fills the skeleton in the [plan rules](../skills/swe-mode/references/plan-multi-phase.md) with one section per PR. Tests alone do not verify a PR. Each PR needs unit, live, and perf boxes. The playbook runs `check_plan.py` on the plan, names the execution playbook, and stops. The plan is the deliverable, so it implements nothing until you say go.
+It has five steps. It skips the plan for a one or two file change. Otherwise it settles open questions by prototype. Then it writes the plan file. The file lists what changes, the PR ids in landing order, and a dependency graph. Then it has one section per PR with checkboxes: depends on, files, the one change, the result you see, and verification. A PR is verified only when its unit, live, and perf boxes are checked. The playbook hands back the plan path and stops. The plan is the deliverable, so it implements nothing until you say go.
 
 Smaller work needs no plan file. Use plan mode, or ask for a plan in chat. Plans live in `<main checkout>/.agents/plans/`, outside Git. Delete a plan when its PR merges, because the PR and the code are the record. [Run long work](07-long-runs.md) covers where these files live.
 
@@ -116,7 +104,7 @@ Smaller work needs no plan file. Use plan mode, or ask for a plan in chat. Plans
 Most changes need none of this. Use this list to pick:
 
 - A change inside one function needs no design step.
-- A change that crosses a function boundary gets `architect`. The router does this on its own.
+- A change that crosses a function boundary gets `architect`. The router does this on its own. A large or contested design adds `codebase-design` in design mode.
 - One new interface with an obvious shape gets `codebase-design` in design mode.
 - A question a run can answer, such as a layout, a timing, or an approach, gets a prototype.
 - A product or preference call gets `interview-user`.

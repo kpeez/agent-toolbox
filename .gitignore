@@ -3,8 +3,6 @@ artifacts
 data/
 datasets/
 .agents/docs
-.agents/skills/*
-!.agents/skills/verify-tech-tree/
 
 # Type declarations and the tsconfig Claude Code writes when it loads a mod
 claude-mods/*/.claude-plugin/types/
@@ -16,8 +14,7 @@ claude-mods/*/tsconfig.json
 .idea/
 .claude/*
 !.claude/settings.json
-!.claude/skills/
-.claude/skills/verify-tech-tree
+!.claude/skills
 .ipynb_checkpoints/
 
 # OS noise

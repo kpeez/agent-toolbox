@@ -140,7 +140,10 @@ WHOLE_RUNS = {
 EXTRA_ROUTES = {
     ("swe", "figure-it-out"): "or work that no playbook fits goes to `figure-it-out`."
 }
-TRIGGER_IGNORE: set[tuple[str, str]] = set()
+TRIGGER_IGNORE: set[tuple[str, str]] = {
+    ("swe", "Read <path>/worker.md before anything else."),
+    ("swe", "<path>"),
+}
 CONTRACTS = [
     (
         "go-deeper-before-match",
@@ -211,7 +214,7 @@ CONTRACTS = [
         "first-message-restatement",
         "assistant-text",
         {
-            "swe": "Your first message on a task: tell the user, in your own words, their goal",
+            "swe": "First message: restate the user's goal and the smallest change that meets it",
             "lab": "Your first message on a task: restate the question in your own words",
         },
     ),

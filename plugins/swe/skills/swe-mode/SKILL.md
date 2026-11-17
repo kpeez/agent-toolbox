@@ -29,9 +29,9 @@ read it. Put this file's absolute path in every delegate's brief.
    [Single-skill routes](#single-skill-routes).
 5. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
    fits. The list runs from narrow to broad.
-6. Large or cross-cutting work, work the user steps away from, or work that no
-   playbook fits goes to `figure-it-out`. It writes a bespoke playbook in the
-   same step format. A standing multi-day program goes to `run-program`.
+6. Large or cross-cutting work, a multi-day program, work the user steps away
+   from, or work that no playbook fits goes to `figure-it-out`. It writes a
+   bespoke playbook in the same step format.
 7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
    `Route: <skill>. Reason: <one clause>.`
 
@@ -80,51 +80,27 @@ Where the host has no Skill tool, read the skill's `SKILL.md` instead.
 
 These hold in every playbook and route, in addition to the steps.
 
-- Your first message on a task: tell the user, in your own words, their goal,
-  the problem they solve, and, when the task ships a change, the smallest
-  change you expect to meet it (`in-your-own-words`). Do not wait for
-  confirmation. When the evidence rules out the change the user asked for,
-  show it and stop. Restate the goal in each subagent brief and at the start
-  of each final report, except after a fully specified one-line edit. This
-  restatement is for the chat only. A PR body follows the
+- First message: restate the user's goal and the smallest change that meets
+  it (`in-your-own-words`), then proceed. Open each subagent brief and final
+  report with the goal. A PR body follows the
   [PR body template](../ship-pr/references/pr-body.md) and never names the
   requester or the chat.
-- Any code: name the data shape first, and choose its structure per
-  `model-the-domain`.
-- A nontrivial change, an architecture decision, or "are we sure?": run `how`
-  over the affected subsystem first.
-- Code that crosses a function boundary: run `architect` before you build.
-- A contested design: give the design and its evidence to a `reviewer agent`
-  before you ship.
-- A fork you want to ask about ("which approach", "what should this do"):
-  classify it first. When a run can show the answer (behavior, timing,
-  layout, output, performance), it is not the user's question. Settle it with
-  the `build-prototype` playbook. In a read-only investigation, answer from
-  the evidence instead. Ask the user only a product or preference call that
-  no experiment can settle (`never-block-on-the-human`).
-- Initial scope or design that rests on a product or preference decision
-  the user has not made: `interview-user` on those decisions only.
-- Nontrivial multi-step work: write the throughput checkpoint
-  (`build-feature` step 5).
-- Parallel fan-out: `swarm`. Workers on another agent CLI (OpenCode,
-  Antigravity) that the user asked for: `external-agents`.
-- Any prose surface, the reply included: `writing`. It routes each surface
-  (docs, skills, PR bodies, handoffs, plans, replies) to its rules. Write
-  replies to the user and agent-facing text in ASD-STE100 Simplified
-  Technical English.
-- Before review: `no-comments` over the diff.
-- A number you measured (a speedup, a regression, latency, an eval result):
-  `benchmark-checklist` before you report or act on it.
-- A PR-status request ("check on PR X", "get it green", "address the review
-  comments"): the `babysit-pr` playbook. Opening a PR does not start it.
-- A request to land or ship a green stack: the `ship-stack` playbook. Green is
-  not safe. Nothing lands before an independent verdict per PR.
-- A review bot commented: triage each finding on its merits per the
-  [bot triage](../ship-pr/references/bot-triage.md) rules.
-- A broken skill found mid-task: fix it in its own PR. Do not block, and do
-  not silently work around it.
-- Long, autonomous, or multi-phase work, or work the user steps away from:
-  keep a decision trail with `log-decisions`.
+- Starting any subagent: the first line of its brief is
+  `Read <path>/worker.md before anything else.`, with `<path>` the absolute
+  path of this skill's folder.
+- A fork that a run can settle: prototype it with `build-prototype` instead of
+  asking. A product or preference call no run can settle: `interview-user`.
+- Code: name the data shape first (`model-the-domain`). Across a function
+  boundary: `architect`. Fan-out: `swarm`, or `external-agents` when the user
+  asked for another agent CLI. Contested design: a `reviewer agent`.
+- Prose, the reply included: `writing`, in ASD-STE100 Simplified Technical
+  English. Before review: `no-comments`.
+- A number you measured: `benchmark-checklist`.
+- PR status: the `babysit-pr` playbook. Landing a green stack: the
+  `ship-stack` playbook.
+- Review bot comments: judge each on its merits per
+  [bot triage](../ship-pr/references/bot-triage.md).
+- Long or unattended work: `log-decisions`.
 
 ## Principles
 
@@ -231,52 +207,27 @@ loaded in this session.
 
 ## Subagents
 
-- The chat that runs this skill owns the playbook, the task list, and every
-  spawn. Do not spawn a subagent to run the playbook itself.
+- The chat that runs this skill owns the playbook and every spawn. Do not
+  spawn a subagent to run the playbook itself.
 - Code delegates: the `daedalus` agent (Claude Code: Agent tool,
-  `swe:daedalus`; Codex: the `daedalus` agent). Give it this file's absolute
-  path, the step, the file paths, the named data shape, and the success check.
-- Search, review, and verification: native subagents. A reviewer gets the
+  `swe:daedalus`; Codex: the `daedalus` agent). Give it the step, the file
+  paths, the named data shape, and the success check. Search, review, and
+  verification: native subagents. A reviewer gets the
   [review brief](../../references/review-brief.md).
-- Match the model to the job. In Claude Code, use `opus` for judgment, prose,
-  and the hardest code (cross-cutting design, concurrency, subtle
-  algorithms); `sonnet` for routine code; `haiku` for mechanical edits. In
-  Codex, raise or lower reasoning effort the same way.
-- A second opinion is the same brief on a different model: another Claude
-  model, or another agent CLI through `external-agents` when the user asked
-  for it.
-  Agreement is a strong signal.
+- Match the model to the job: the strongest model for judgment, prose, and
+  the hardest code; a faster one for routine and mechanical work.
 - Fresh subagents by default. A fix round, a retry, or a follow-up goes to a
-  fresh subagent with the full scope: the original brief, every later
-  directive, and the prior agent's report and branch. Resume an agent only
-  when the work needs state that lives in it, such as uncommitted changes or a
-  running process.
-- You own every subagent's work. Read the diff and write your own summary. Do
-  not pass a subagent's report through.
+  fresh subagent with the original brief, every later directive, and the
+  prior agent's report and branch. Resume an agent only when the work needs
+  state that lives in it, such as uncommitted changes or a running process.
+- You own every subagent's work. Read the diff and write your own summary.
 
 ## Writing the reply
 
-Write the reply clean as you draft it. A cleanup pass after drafting does not
-remove these patterns.
-
-- Short declarative sentences. One thought per sentence.
-- No long dash character. No colon as a mid-sentence connector; a colon before
-  a list is fine.
-- Terse is not an excuse to drop content. Keep every section the playbook's
-  Reply line names: details, tradeoffs, choices, and open decisions.
-- Name who the work is for and what changes for them before implementation
-  detail. Then say what the next maintainer inherits.
-- Never invent a link, citation, or transcript reference. Link only what you
-  produced or read in this session.
-- Every claim carries its evidence or its label in the same sentence. Never
-  hand the user a check you could run.
-
-## Comments
-
-Write comments clean as you go. Keep a comment only for a non-obvious why that
-the code cannot show. Scripts and tests get no comments that narrate phases;
-the assertion or log string documents the step. This holds for every file you
-produce, a delegate's diff included.
+Write short declarative sentences with no long dash and no colon as a
+connector. Lead with what changes for the user. Give each claim its evidence
+or a label (measured, inferred, or guess). Never hand the user a check you
+could run.
 
 ## Playbooks
 
@@ -318,8 +269,6 @@ Long runs and sessions:
   PR.
 - `autopilot-stack`: autopilot-full without the merge. Verified PRs the user
   lands, linked as a stack only where one builds on another.
-- `run-program`: a standing multi-day program with many PRs and subagents
-  under one coordinator.
 - `pick-up-session`: resume a prior agent's in-flight work from its handoff
   file, decision log, transcript, or branch.
 - `pause-safely`: stop in-flight work cleanly so a new session can resume it.
@@ -328,7 +277,6 @@ Long runs and sessions:
 ## Single-skill routes
 
 - Explain a failure, crash, hang, or leak; no fix requested: `diagnose`.
-- Explain how a subsystem works, no code change: `how`.
 - Design or judge a new test or a disposable probe: `testing-code`.
 - Prune or review an existing test suite: `testing-code`.
 - Explore competing designs before code: `architect`.
@@ -352,6 +300,5 @@ Give the playbook slug or route, then what the playbook's Reply line asks
 for or, for a route, the skill's own report. Then give the principle
 citations. End with the "Steps" section. Give each claim the confidence
 label its skill defines: VERIFIED, NOT VERIFIED, or INCONCLUSIVE for a
-change; a why tier for a rationale claim; a blast-radius rung for a safety
-fact; and reproduced, inferred from the evidence, or unresolved for a
-failure's cause.
+change; a blast-radius rung for a safety fact; and reproduced, inferred from
+the evidence, or unresolved for a failure's cause.

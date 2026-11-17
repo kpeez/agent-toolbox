@@ -25,7 +25,7 @@ another model or provider without telling the user.
 - **Gauntlet**. Several independent checkers attack one artifact from
   different angles. Every lane reports.
 - **Exploration partition**. Split an open question into distinct angles, one
-  worker per angle, as the [how](../how/SKILL.md) explorers do.
+  worker per angle.
 - **Verifier lanes**. Each lane verifies or measures named commits with a
   named method. The brief names the exact SHAs.
 

@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-324 of 361 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+299 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -56,12 +56,12 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|---|---|
 | activation | 8 | 29 | 0 | 37 |
 | hook-load | 0 | 5 | 0 | 5 |
-| route | 5 | 0 | 44 | 49 |
-| route-load | 1 | 19 | 0 | 20 |
-| playbook-read | 4 | 25 | 0 | 29 |
-| step-load | 46 | 211 | 10 | 267 |
+| route | 5 | 0 | 42 | 47 |
+| route-load | 1 | 18 | 0 | 19 |
+| playbook-read | 4 | 24 | 0 | 28 |
+| step-load | 46 | 187 | 9 | 242 |
 | reply-load | 0 | 2 | 0 | 2 |
-| trigger-load | 0 | 19 | 2 | 21 |
+| trigger-load | 0 | 16 | 2 | 18 |
 | principle-read | 0 | 29 | 0 | 29 |
 | router-contract | 0 | 0 | 25 | 25 |
 
@@ -145,11 +145,11 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | route | handles | positive cases | negative cases |
 |---|---|---|---|
-| skill `architect` | 1-ground-the-problem, 2-sketch-competing-designs, 3-agree-on-the-design, 4-implement-against-the-sketch, 5-scrap-a-wrong-architecture | 0 | 0 |
+| skill `architect` | 1-trace-the-systems, 2-sketch-two-shapes, 3-pick-the-shape, 4-redesign-on-repeat-workarounds | 0 | 0 |
 | playbook `author-skill` | 1-choose-invocation, 2-single-source-check, 3-cut-to-decisions, 4-validate-skill, 5-check-packaging, 6-plan-activation-check, 7-publish-draft-pr | 0 | 0 |
 | playbook `autopilot-full` | 1-honor-operator-gates, 2-spawn-owner-per-pr, 3-report-code-ready-head, 4-assume-the-session-dies, 5-run-owners-in-parallel, 6-swarm-verify-once, 7-send-findings-to-owner, 8-merge-only-verified, 9-countersign-loosened-gates, 10-arm-audit-loop, 11-stand-down-on-stop | 0 | 0 |
 | playbook `autopilot-stack` | 1-stop-at-verified, 2-stack-only-on-dependency | 0 | 0 |
-| playbook `babysit-pr` | 1-declare-mode, 2-claim-the-stack, 3-work-the-frontier, 4-keep-the-topology, 5-conflicts-then-threads-then-ci, 6-read-github-verdict, 7-classify-ci-first, 8-triage-review-bots, 9-stop-at-merge-ready, 10-stop-at-human-line, 11-sweep-triage-patterns | 0 | 0 |
+| playbook `babysit-pr` | 1-declare-mode, 2-keep-the-topology, 3-conflicts-then-threads-then-ci, 4-triage-review-bots, 5-stop-at-human-line | 0 | 0 |
 | skill `blast-radius` | 1-read-the-change, 2-find-safety-fact, 3-look-past-grep, 4-rate-each-risk, 5-prove-the-fact, 6-optional-independent-review | 0 | 0 |
 | playbook `build-feature` | 1-map-subsystem, 2-interview-on-open-decisions, 3-name-data-shape, 4-explore-designs, 5-write-throughput-checkpoint, 6-build-one-unit, 7-decide-tests, 8-verify-on-surface, 9-check-blast-radius, 10-review-if-contested, 11-independent-review, 12-order-commits, 13-update-obsolete-docs, 14-publish-draft-pr | 0 | 0 |
 | playbook `build-prototype` | 1-scope-the-decision, 2-gather-references, 3-build-throwaway, 4-switch-between-variants, 5-observe-on-surface, 6-recommend-direction | 0 | 0 |
@@ -165,24 +165,22 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | playbook `fix-bug` | 1-reproduce-failure, 2-binary-search-cause, 3-confirm-mechanism, 4-sweep-for-pattern, 5-plan-fix, 6-decide-regression-test, 7-commit-failing-repro, 8-apply-smallest-fix, 9-verify-original-repro, 10-encode-bug-class, 11-check-blast-radius, 12-clean-the-diff, 13-update-obsolete-docs, 14-publish-draft-pr | 0 | 0 |
 | skill `handoff` | 1-find-the-file, 2-write-the-file | 0 | 0 |
 | playbook `hillclimb-metric` | 1-ground-workload, 2-fix-metric-and-stop, 3-freeze-harness, 4-open-decision-log, 5-ground-each-hypothesis, 6-delegate-attempt, 7-measure-and-decide, 8-commit-and-log, 9-push-past-plateau, 10-stop-on-predicate, 11-publish-draft-pr | 0 | 0 |
-| skill `how` | 1-assess-complexity, 2-explore, 3-synthesize, 4-present | 0 | 0 |
 | playbook `improve-performance` | 1-measure-baseline, 2-ground-hypotheses, 3-name-limiter, 4-try-mantras, 5-plan-fix, 6-change-one-thing, 7-compare-artifacts, 8-explain-the-gain, 9-verify-behavior-unchanged, 10-update-obsolete-docs, 11-publish-draft-pr | 0 | 0 |
 | skill `interview-user` | 1-ask-a-round, 2-find-facts-and-leave-decisions, 3-confirm-the-shared-understanding | 0 | 0 |
-| playbook `investigate-question` | 1-restate-question, 2-map-with-how, 3-trace-rationale, 4-note-throughput, 5-shape-the-answer, 6-label-each-claim, 7-check-reply-prose | 0 | 0 |
+| playbook `investigate-question` | 1-restate-question, 2-trace-the-code, 3-trace-rationale, 4-note-throughput, 5-shape-the-answer, 6-label-each-claim, 7-check-reply-prose | 0 | 0 |
 | skill `ketchup` | 1-gather-what-changed, 2-write-the-reply | 0 | 0 |
 | playbook `match-visual-parity` | 1-establish-baseline, 2-migrate-shared-primitives, 3-migrate-one-component, 4-diff-each-component, 5-publish-draft-pr | 0 | 0 |
 | playbook `pause-safely` | 1-stop-at-safe-boundary, 2-take-no-irreversible-action, 3-commit-wip, 4-write-handoff | 0 | 0 |
 | playbook `pick-up-session` | 1-locate-prior-trail, 2-reconstruct-state, 3-diff-done-vs-pending, 4-route-remaining-work, 5-verify-inherited-claims | 0 | 0 |
-| playbook `plan-multi-phase` | 1-skip-small-change, 2-settle-by-prototype, 3-explore-in-subagents, 4-fill-skeleton, 5-write-as-how-to, 6-run-plan-check, 7-hand-back | 0 | 0 |
+| playbook `plan-multi-phase` | 1-skip-small-change, 2-settle-by-prototype, 3-write-plan-file, 4-require-real-verification, 5-hand-back | 0 | 0 |
 | playbook `refactor-structure` | 1-pin-behavior, 2-name-missing-structure, 3-name-target-shape, 4-subtract-first, 5-move-in-small-steps, 6-migrate-then-delete, 7-prove-equivalence, 8-confirm-reader-gain, 9-independent-review, 10-order-commits, 11-update-obsolete-docs, 12-publish-draft-pr | 0 | 0 |
-| skill `reflect` | 1-locate-the-transcript, 2-start-three-reviewers, 3-synthesize, 4-check-structural-enforcement, 5-apply-approved-edits, 6-summarize-for-the-user | 0 | 0 |
+| skill `reflect` | 1-read-the-session, 2-keep-durable-findings, 3-present-and-wait | 0 | 0 |
 | playbook `run-autonomously` | 1-state-exit-predicate, 2-pick-wake-mechanism, 3-open-decision-log, 4-iterate-smallest-change, 5-own-mid-run-discoveries, 6-log-each-iteration, 7-stop-on-predicate, 8-publish-draft-pr | 0 | 0 |
-| playbook `run-program` | 1-frame-program, 2-one-owner-per-pr, 3-fresh-worker-per-task, 4-sub-coordinator-only-when-wide, 5-fork-for-built-state, 6-verify-each-pr, 7-start-with-one-unit, 8-name-the-evidence, 9-read-the-work, 10-check-live-state, 11-replace-stalled-workers, 12-ask-only-for-decisions | 0 | 0 |
 | skill `ship-pr` | publish: 1-inspect, 2-verify, 3-group-and-commit, 4-push, 5-open-draft-pr, 6-link-issue, 7-report; drive-to-green: 1-resolve-conflicts, 2-triage-review-threads, 3-classify-ci-failures, 4-push-one-wave, 5-reply-to-threads, 6-update-pr-body; land: 1-get-independent-verdict, 2-key-verdict-to-patch, 3-recheck-before-landing, 4-mark-ready, 5-merge; finalize: 1-locate-pr, 2-account-for-local-changes, 3-reverify, 4-ready-or-land, 5-leave-issue-status, 6-report | 0 | 0 |
 | playbook `ship-stack` | 1-verify-each-pr, 2-find-verified-run, 3-recheck-patch-ids, 4-land-bottom-up, 5-hands-off-while-landing, 6-stop-at-ceiling | 0 | 0 |
 | skill `testing-code` | new-tests-and-probes: 1-name-the-contract, 2-pass-the-admission-gate, 3-choose-the-evidence, 4-see-it-fail, 5-clean-up-and-report; audit: 1-record-suite-baseline, 2-mark-candidates, 3-edit-in-small-batches, 4-mutate-changed-contracts, 5-independent-preservation-review, 6-publish-draft-pr | 0 | 0 |
 | skill `verification-skill` | create: 1-interview-the-repo, 2-fix-the-checkout, 3-generate-the-skill, 4-seed-the-feature-map, 5-prove-the-generated-skill, 6-hand-over; maintain: 1-clean-the-index, 2-run-the-source-wave, 3-reconcile, 4-run-the-live-pass, 5-triage, 6-ship-or-stop | 0 | 0 |
-| skill `writing` | 1-find-the-surface, 2-read-its-row, 3-apply-the-prose-rules, 4-run-the-check | 0 | 0 |
+| skill `writing` | 1-find-the-surface, 2-read-its-row, 3-apply-the-prose-rules | 0 | 0 |
 
 ### Playbook `author-skill` step loads
 
@@ -226,20 +224,16 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
-| 4-keep-the-topology | autopilot-full | playbook | full-read | always | - |
-| 4-keep-the-topology | autopilot-stack | playbook | full-read | always | - |
-| 5-conflicts-then-threads-then-ci | ship-pr | visible-skill | skill-call | always | - |
-| 6-read-github-verdict | ship-pr | visible-skill | skill-call | always | - |
-| 7-classify-ci-first | ship-pr | visible-skill | skill-call | always | - |
-| 8-triage-review-bots | ship-pr | visible-skill | skill-call | always | - |
-| 9-stop-at-merge-ready | ship-pr | visible-skill | skill-call | always | - |
-| 10-stop-at-human-line | ship-stack | playbook | full-read | always | - |
+| 1-declare-mode | ship-pr | visible-skill | skill-call | always | - |
+| 2-keep-the-topology | autopilot-full | playbook | full-read | always | - |
+| 3-conflicts-then-threads-then-ci | ship-pr | visible-skill | skill-call | always | - |
+| 4-triage-review-bots | ship-pr | visible-skill | skill-call | always | - |
+| 5-stop-at-human-line | ship-stack | playbook | full-read | always | - |
 
 ### Playbook `build-feature` step loads
 
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
-| 1-map-subsystem | how | hidden-skill | full-read | always | - |
 | 2-interview-on-open-decisions | build-prototype | playbook | full-read | conditional | - |
 | 2-interview-on-open-decisions | interview-user | visible-skill | skill-call | conditional | - |
 | 3-name-data-shape | foundational-thinking | principle | full-read | always | - |
@@ -316,7 +310,6 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 1-reproduce-failure | prove-it-works | principle | full-read | always | - |
 | 2-binary-search-cause | diagnose | visible-skill | skill-call | always | - |
 | 2-binary-search-cause | fix-root-causes | principle | full-read | always | - |
-| 2-binary-search-cause | how | hidden-skill | full-read | always | - |
 | 2-binary-search-cause | why | visible-skill | skill-call | always | - |
 | 3-confirm-mechanism | attack-the-premise | principle | full-read | always | - |
 | 3-confirm-mechanism | fix-root-causes | principle | full-read | always | - |
@@ -343,7 +336,6 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
-| 1-ground-workload | how | hidden-skill | full-read | always | - |
 | 3-freeze-harness | benchmark-checklist | hidden-skill | full-read | always | - |
 | 3-freeze-harness | build-the-lever | principle | full-read | always | - |
 | 4-open-decision-log | log-decisions | visible-skill | skill-call | always | - |
@@ -364,7 +356,6 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 1-measure-baseline | benchmark-checklist | hidden-skill | full-read | always | - |
 | 1-measure-baseline | diagnose | visible-skill | skill-call | always | - |
 | 1-measure-baseline | explain-the-number | principle | full-read | always | - |
-| 2-ground-hypotheses | how | hidden-skill | full-read | always | - |
 | 3-name-limiter | explain-the-number | principle | full-read | always | - |
 | 5-plan-fix | architect | hidden-skill | full-read | conditional | - |
 | 5-plan-fix | implement | visible-skill | skill-call | conditional | - |
@@ -380,10 +371,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
-| 2-map-with-how | how | hidden-skill | full-read | always | - |
 | 3-trace-rationale | why | visible-skill | skill-call | conditional | - |
-| 5-shape-the-answer | how | hidden-skill | full-read | always | - |
-| 6-label-each-claim | why | visible-skill | skill-call | always | - |
 | 7-check-reply-prose | writing | visible-skill | skill-call | always | - |
 
 ### Playbook `match-visual-parity` step loads
@@ -420,17 +408,14 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|---|---|---|
 | 2-settle-by-prototype | build-prototype | playbook | full-read | always | - |
 | 2-settle-by-prototype | interview-user | visible-skill | skill-call | always | - |
-| 2-settle-by-prototype | never-block-on-the-human | principle | full-read | always | - |
-| 3-explore-in-subagents | guard-the-context-window | principle | full-read | always | - |
-| 4-fill-skeleton | sequence-verifiable-units | principle | full-read | always | - |
-| 5-write-as-how-to | writing | visible-skill | skill-call | always | - |
-| 6-run-plan-check | encode-lessons-in-structure | principle | full-read | always | - |
+| 3-write-plan-file | sequence-verifiable-units | principle | full-read | always | - |
+| 3-write-plan-file | writing | visible-skill | skill-call | always | - |
+| 4-require-real-verification | prove-it-works | principle | full-read | always | - |
 
 ### Playbook `refactor-structure` step loads
 
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
-| 1-pin-behavior | how | hidden-skill | full-read | always | - |
 | 1-pin-behavior | testing-code | visible-skill | skill-call | always | - |
 | 2-name-missing-structure | model-the-domain | principle | full-read | always | - |
 | 3-name-target-shape | architect | hidden-skill | full-read | always | - |
@@ -462,23 +447,6 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 6-log-each-iteration | log-decisions | visible-skill | skill-call | always | - |
 | 8-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
 
-### Playbook `run-program` step loads
-
-| handle | name | name class | evidence | requirement | supplied by |
-|---|---|---|---|---|---|
-| 1-frame-program | in-your-own-words | hidden-skill | full-read | always | - |
-| 1-frame-program | log-decisions | visible-skill | skill-call | always | - |
-| 1-frame-program | run-autonomously | playbook | full-read | always | - |
-| 2-one-owner-per-pr | separate-before-serializing-shared-state | principle | full-read | always | - |
-| 3-fresh-worker-per-task | swarm | hidden-skill | full-read | always | - |
-| 4-sub-coordinator-only-when-wide | guard-the-context-window | principle | full-read | always | - |
-| 6-verify-each-pr | prove-it-works | principle | full-read | always | - |
-| 6-verify-each-pr | reviewer agent | reviewer-agent | agent-spawn | always | - |
-| 7-start-with-one-unit | sequence-verifiable-units | principle | full-read | always | - |
-| 9-read-the-work | prove-it-works | principle | full-read | always | - |
-| 10-check-live-state | babysit-pr | playbook | full-read | always | - |
-| 12-ask-only-for-decisions | never-block-on-the-human | principle | full-read | always | - |
-
 ### Playbook `ship-stack` step loads
 
 | handle | name | name class | evidence | requirement | supplied by |
@@ -501,7 +469,6 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | external-agents | visible-skill | skill-call | recorded | Single-skill routes: external-agents |
 | figure-it-out | hidden-skill | full-read | recorded | Match: figure-it-out |
 | handoff | visible-skill | skill-call | recorded | Single-skill routes: handoff |
-| how | hidden-skill | full-read | recorded | Single-skill routes: how |
 | interview-user | visible-skill | skill-call | recorded | Single-skill routes: interview-user |
 | ketchup | hidden-skill | full-read | recorded | Single-skill routes: ketchup |
 | reflect | hidden-skill | full-read | recorded | Single-skill routes: reflect |
@@ -514,23 +481,20 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | name | name class | evidence | scorer | trigger |
 |---|---|---|---|---|
-| architect | hidden-skill | full-read | recorded | Code that crosses a function boundary: run `architect` before you build. |
-| babysit-pr | playbook | full-read | recorded | A PR-status request ("check on PR X", "get it green", "address the review comments"): the `babysit-pr` playbook. Opening a PR does not start it. |
-| benchmark-checklist | hidden-skill | full-read | recorded | A number you measured (a speedup, a regression, latency, an eval result): `benchmark-checklist` before you report or act on it. |
-| build-feature | playbook | full-read | recorded | Nontrivial multi-step work: write the throughput checkpoint (`build-feature` step 5). |
-| build-prototype | playbook | full-read | recorded | A fork you want to ask about ("which approach", "what should this do"): classify it first. When a run can show the answer (behavior, timing, layout, output, performance), it is not the user's question. Settle it with the `build-prototype` playbook. In a read-only investigation, answer from the evidence instead. Ask the user only a product or preference call that no experiment can settle (`never-block-on-the-human`). |
-| external-agents | visible-skill | skill-call | recorded | Parallel fan-out: `swarm`. Workers on another agent CLI (OpenCode, Antigravity) that the user asked for: `external-agents`. |
-| how | hidden-skill | full-read | recorded | A nontrivial change, an architecture decision, or "are we sure?": run `how` over the affected subsystem first. |
-| in-your-own-words | hidden-skill | full-read | recorded | Your first message on a task: tell the user, in your own words, their goal, the problem they solve, and, when the task ships a change, the smallest change you expect to meet it (`in-your-own-words`). Do not wait for confirmation. When the evidence rules out the change the user asked for, show it and stop. Restate the goal in each subagent brief and at the start of each final report, except after a fully specified one-line edit. This restatement is for the chat only. A PR body follows the PR body template and never names the requester or the chat. |
-| interview-user | visible-skill | skill-call | recorded | Initial scope or design that rests on a product or preference decision the user has not made: `interview-user` on those decisions only. |
-| log-decisions | visible-skill | skill-call | recorded | Long, autonomous, or multi-phase work, or work the user steps away from: keep a decision trail with `log-decisions`. |
-| model-the-domain | principle | full-read | recorded | Any code: name the data shape first, and choose its structure per `model-the-domain`. |
-| never-block-on-the-human | principle | full-read | recorded | A fork you want to ask about ("which approach", "what should this do"): classify it first. When a run can show the answer (behavior, timing, layout, output, performance), it is not the user's question. Settle it with the `build-prototype` playbook. In a read-only investigation, answer from the evidence instead. Ask the user only a product or preference call that no experiment can settle (`never-block-on-the-human`). |
-| no-comments | hidden-skill | full-read | recorded | Before review: `no-comments` over the diff. |
-| reviewer agent | reviewer-agent | agent-spawn | invisible | A contested design: give the design and its evidence to a `reviewer agent` before you ship. |
-| ship-stack | playbook | full-read | recorded | A request to land or ship a green stack: the `ship-stack` playbook. Green is not safe. Nothing lands before an independent verdict per PR. |
-| swarm | hidden-skill | full-read | recorded | Parallel fan-out: `swarm`. Workers on another agent CLI (OpenCode, Antigravity) that the user asked for: `external-agents`. |
-| writing | visible-skill | skill-call | recorded | Any prose surface, the reply included: `writing`. It routes each surface (docs, skills, PR bodies, handoffs, plans, replies) to its rules. Write replies to the user and agent-facing text in ASD-STE100 Simplified Technical English. |
+| architect | hidden-skill | full-read | recorded | Code: name the data shape first (`model-the-domain`). Across a function boundary: `architect`. Fan-out: `swarm`, or `external-agents` when the user asked for another agent CLI. Contested design: a `reviewer agent`. |
+| babysit-pr | playbook | full-read | recorded | PR status: the `babysit-pr` playbook. Landing a green stack: the `ship-stack` playbook. |
+| benchmark-checklist | hidden-skill | full-read | recorded | A number you measured: `benchmark-checklist`. |
+| build-prototype | playbook | full-read | recorded | A fork that a run can settle: prototype it with `build-prototype` instead of asking. A product or preference call no run can settle: `interview-user`. |
+| external-agents | visible-skill | skill-call | recorded | Code: name the data shape first (`model-the-domain`). Across a function boundary: `architect`. Fan-out: `swarm`, or `external-agents` when the user asked for another agent CLI. Contested design: a `reviewer agent`. |
+| in-your-own-words | hidden-skill | full-read | recorded | First message: restate the user's goal and the smallest change that meets it (`in-your-own-words`), then proceed. Open each subagent brief and final report with the goal. A PR body follows the PR body template and never names the requester or the chat. |
+| interview-user | visible-skill | skill-call | recorded | A fork that a run can settle: prototype it with `build-prototype` instead of asking. A product or preference call no run can settle: `interview-user`. |
+| log-decisions | visible-skill | skill-call | recorded | Long or unattended work: `log-decisions`. |
+| model-the-domain | principle | full-read | recorded | Code: name the data shape first (`model-the-domain`). Across a function boundary: `architect`. Fan-out: `swarm`, or `external-agents` when the user asked for another agent CLI. Contested design: a `reviewer agent`. |
+| no-comments | hidden-skill | full-read | recorded | Prose, the reply included: `writing`, in ASD-STE100 Simplified Technical English. Before review: `no-comments`. |
+| reviewer agent | reviewer-agent | agent-spawn | invisible | Code: name the data shape first (`model-the-domain`). Across a function boundary: `architect`. Fan-out: `swarm`, or `external-agents` when the user asked for another agent CLI. Contested design: a `reviewer agent`. |
+| ship-stack | playbook | full-read | recorded | PR status: the `babysit-pr` playbook. Landing a green stack: the `ship-stack` playbook. |
+| swarm | hidden-skill | full-read | recorded | Code: name the data shape first (`model-the-domain`). Across a function boundary: `architect`. Fan-out: `swarm`, or `external-agents` when the user asked for another agent CLI. Contested design: a `reviewer agent`. |
+| writing | visible-skill | skill-call | recorded | Prose, the reply included: `writing`, in ASD-STE100 Simplified Technical English. Before review: `no-comments`. |
 
 ### Router contracts
 
@@ -538,7 +502,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|
 | cite-only-loaded-principles | final-reply-section | Cite only principles you loaded in this session. |
 | delegate-brief-router-path | agent-spawn | Put this file's absolute path in every delegate's brief. |
-| first-message-restatement | assistant-text | Your first message on a task: tell the user, in your own words, their goal |
+| first-message-restatement | assistant-text | First message: restate the user's goal and the smallest change that meets it |
 | go-deeper-before-match | skill-call | Run `go-deeper` on a new task, unless it already ran for this task or its skip rule applies. |
 | load-names-before-step | task-list | Before a step, load each name in its parentheses that you have not loaded in this session. |
 | one-task-per-step | task-list | create one task per step right after you read the playbook or load the routed skill. Copy each playbook step line byte for byte |
@@ -724,24 +688,24 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | swe | attack-the-premise | always | no | step-load/swe/fix-bug/3-confirm-mechanism/attack-the-premise |
 | swe | boundary-discipline | conditional | yes | - |
 | swe | build-the-lever | always | no | step-load/swe/clean-worktrees/1-snapshot-and-audit/build-the-lever<br>step-load/swe/diagnose-trace/2-make-it-queryable/build-the-lever<br>step-load/swe/hillclimb-metric/3-freeze-harness/build-the-lever<br>step-load/swe/refactor-structure/5-move-in-small-steps/build-the-lever |
-| swe | encode-lessons-in-structure | always | no | step-load/swe/author-skill/2-single-source-check/encode-lessons-in-structure<br>step-load/swe/clean-worktrees/1-snapshot-and-audit/encode-lessons-in-structure<br>step-load/swe/fix-bug/10-encode-bug-class/encode-lessons-in-structure<br>step-load/swe/plan-multi-phase/6-run-plan-check/encode-lessons-in-structure |
+| swe | encode-lessons-in-structure | always | no | step-load/swe/author-skill/2-single-source-check/encode-lessons-in-structure<br>step-load/swe/clean-worktrees/1-snapshot-and-audit/encode-lessons-in-structure<br>step-load/swe/fix-bug/10-encode-bug-class/encode-lessons-in-structure |
 | swe | exhaust-the-design-space | always | no | step-load/swe/build-prototype/4-switch-between-variants/exhaust-the-design-space |
 | swe | experience-first | conditional | yes | - |
 | swe | explain-the-number | always | no | step-load/swe/diagnose-trace/5-confirm-with-pair/explain-the-number<br>step-load/swe/evaluate-agent-change/10-report-with-spread/explain-the-number<br>step-load/swe/evaluate-agent-change/2-preregister-criteria/explain-the-number<br>step-load/swe/hillclimb-metric/7-measure-and-decide/explain-the-number<br>step-load/swe/improve-performance/1-measure-baseline/explain-the-number<br>step-load/swe/improve-performance/3-name-limiter/explain-the-number<br>step-load/swe/improve-performance/7-compare-artifacts/explain-the-number<br>step-load/swe/improve-performance/8-explain-the-gain/explain-the-number |
 | swe | fix-root-causes | always | no | step-load/swe/diagnose-runtime/3-prove-mechanism/fix-root-causes<br>step-load/swe/fix-bug/2-binary-search-cause/fix-root-causes<br>step-load/swe/fix-bug/3-confirm-mechanism/fix-root-causes<br>step-load/swe/fix-bug/4-sweep-for-pattern/fix-root-causes |
 | swe | foundational-thinking | always | no | step-load/swe/build-feature/3-name-data-shape/foundational-thinking<br>step-load/swe/refactor-structure/3-name-target-shape/foundational-thinking |
-| swe | guard-the-context-window | always | no | step-load/swe/clean-worktrees/3-verify-usage/guard-the-context-window<br>step-load/swe/diagnose-runtime/2-reduce-to-smoking-gun/guard-the-context-window<br>step-load/swe/diagnose-trace/1-identify-format/guard-the-context-window<br>step-load/swe/hillclimb-metric/6-delegate-attempt/guard-the-context-window<br>step-load/swe/pick-up-session/1-locate-prior-trail/guard-the-context-window<br>step-load/swe/plan-multi-phase/3-explore-in-subagents/guard-the-context-window<br>step-load/swe/run-program/4-sub-coordinator-only-when-wide/guard-the-context-window |
+| swe | guard-the-context-window | always | no | step-load/swe/clean-worktrees/3-verify-usage/guard-the-context-window<br>step-load/swe/diagnose-runtime/2-reduce-to-smoking-gun/guard-the-context-window<br>step-load/swe/diagnose-trace/1-identify-format/guard-the-context-window<br>step-load/swe/hillclimb-metric/6-delegate-attempt/guard-the-context-window<br>step-load/swe/pick-up-session/1-locate-prior-trail/guard-the-context-window |
 | swe | laziness-protocol | always | no | step-load/swe/build-feature/6-build-one-unit/laziness-protocol<br>step-load/swe/fix-bug/8-apply-smallest-fix/laziness-protocol<br>step-load/swe/hillclimb-metric/9-push-past-plateau/laziness-protocol<br>step-load/swe/refactor-structure/4-subtract-first/laziness-protocol |
 | swe | make-operations-idempotent | conditional | yes | - |
 | swe | migrate-callers-then-delete-legacy-apis | always | no | step-load/swe/refactor-structure/6-migrate-then-delete/migrate-callers-then-delete-legacy-apis |
 | swe | minimize-reader-load | always | no | step-load/swe/refactor-structure/8-confirm-reader-gain/minimize-reader-load |
 | swe | model-the-domain | always | no | step-load/swe/build-feature/3-name-data-shape/model-the-domain<br>step-load/swe/refactor-structure/2-name-missing-structure/model-the-domain<br>trigger-load/swe/swe-mode/model-the-domain |
-| swe | never-block-on-the-human | always | no | step-load/swe/plan-multi-phase/2-settle-by-prototype/never-block-on-the-human<br>step-load/swe/run-autonomously/5-own-mid-run-discoveries/never-block-on-the-human<br>step-load/swe/run-program/12-ask-only-for-decisions/never-block-on-the-human<br>trigger-load/swe/swe-mode/never-block-on-the-human |
+| swe | never-block-on-the-human | always | no | step-load/swe/run-autonomously/5-own-mid-run-discoveries/never-block-on-the-human |
 | swe | outcome-oriented-execution | conditional | yes | - |
-| swe | prove-it-works | always | no | step-load/swe/autopilot-full/2-spawn-owner-per-pr/prove-it-works<br>step-load/swe/autopilot-full/6-swarm-verify-once/prove-it-works<br>step-load/swe/build-feature/8-verify-on-surface/prove-it-works<br>step-load/swe/build-prototype/5-observe-on-surface/prove-it-works<br>step-load/swe/clean-worktrees/2-cross-check-in-use/prove-it-works<br>step-load/swe/diagnose-runtime/3-prove-mechanism/prove-it-works<br>step-load/swe/fix-bug/1-reproduce-failure/prove-it-works<br>step-load/swe/fix-bug/9-verify-original-repro/prove-it-works<br>step-load/swe/hillclimb-metric/7-measure-and-decide/prove-it-works<br>step-load/swe/improve-performance/9-verify-behavior-unchanged/prove-it-works<br>step-load/swe/match-visual-parity/1-establish-baseline/prove-it-works<br>step-load/swe/match-visual-parity/4-diff-each-component/prove-it-works<br>step-load/swe/pick-up-session/5-verify-inherited-claims/prove-it-works<br>step-load/swe/refactor-structure/7-prove-equivalence/prove-it-works<br>step-load/swe/run-autonomously/4-iterate-smallest-change/prove-it-works<br>step-load/swe/run-program/6-verify-each-pr/prove-it-works<br>step-load/swe/run-program/9-read-the-work/prove-it-works<br>step-load/swe/ship-stack/1-verify-each-pr/prove-it-works |
+| swe | prove-it-works | always | no | step-load/swe/autopilot-full/2-spawn-owner-per-pr/prove-it-works<br>step-load/swe/autopilot-full/6-swarm-verify-once/prove-it-works<br>step-load/swe/build-feature/8-verify-on-surface/prove-it-works<br>step-load/swe/build-prototype/5-observe-on-surface/prove-it-works<br>step-load/swe/clean-worktrees/2-cross-check-in-use/prove-it-works<br>step-load/swe/diagnose-runtime/3-prove-mechanism/prove-it-works<br>step-load/swe/fix-bug/1-reproduce-failure/prove-it-works<br>step-load/swe/fix-bug/9-verify-original-repro/prove-it-works<br>step-load/swe/hillclimb-metric/7-measure-and-decide/prove-it-works<br>step-load/swe/improve-performance/9-verify-behavior-unchanged/prove-it-works<br>step-load/swe/match-visual-parity/1-establish-baseline/prove-it-works<br>step-load/swe/match-visual-parity/4-diff-each-component/prove-it-works<br>step-load/swe/pick-up-session/5-verify-inherited-claims/prove-it-works<br>step-load/swe/plan-multi-phase/4-require-real-verification/prove-it-works<br>step-load/swe/refactor-structure/7-prove-equivalence/prove-it-works<br>step-load/swe/run-autonomously/4-iterate-smallest-change/prove-it-works<br>step-load/swe/ship-stack/1-verify-each-pr/prove-it-works |
 | swe | redesign-from-first-principles | always | no | step-load/swe/build-feature/4-explore-designs/redesign-from-first-principles<br>step-load/swe/refactor-structure/3-name-target-shape/redesign-from-first-principles |
-| swe | separate-before-serializing-shared-state | always | no | step-load/swe/build-feature/5-write-throughput-checkpoint/separate-before-serializing-shared-state<br>step-load/swe/hillclimb-metric/6-delegate-attempt/separate-before-serializing-shared-state<br>step-load/swe/match-visual-parity/3-migrate-one-component/separate-before-serializing-shared-state<br>step-load/swe/run-program/2-one-owner-per-pr/separate-before-serializing-shared-state |
-| swe | sequence-verifiable-units | always | no | step-load/swe/build-feature/12-order-commits/sequence-verifiable-units<br>step-load/swe/build-feature/6-build-one-unit/sequence-verifiable-units<br>step-load/swe/fix-bug/7-commit-failing-repro/sequence-verifiable-units<br>step-load/swe/hillclimb-metric/7-measure-and-decide/sequence-verifiable-units<br>step-load/swe/improve-performance/6-change-one-thing/sequence-verifiable-units<br>step-load/swe/plan-multi-phase/4-fill-skeleton/sequence-verifiable-units<br>step-load/swe/refactor-structure/10-order-commits/sequence-verifiable-units<br>step-load/swe/refactor-structure/5-move-in-small-steps/sequence-verifiable-units<br>step-load/swe/run-autonomously/4-iterate-smallest-change/sequence-verifiable-units<br>step-load/swe/run-program/7-start-with-one-unit/sequence-verifiable-units |
+| swe | separate-before-serializing-shared-state | always | no | step-load/swe/build-feature/5-write-throughput-checkpoint/separate-before-serializing-shared-state<br>step-load/swe/hillclimb-metric/6-delegate-attempt/separate-before-serializing-shared-state<br>step-load/swe/match-visual-parity/3-migrate-one-component/separate-before-serializing-shared-state |
+| swe | sequence-verifiable-units | always | no | step-load/swe/build-feature/12-order-commits/sequence-verifiable-units<br>step-load/swe/build-feature/6-build-one-unit/sequence-verifiable-units<br>step-load/swe/fix-bug/7-commit-failing-repro/sequence-verifiable-units<br>step-load/swe/hillclimb-metric/7-measure-and-decide/sequence-verifiable-units<br>step-load/swe/improve-performance/6-change-one-thing/sequence-verifiable-units<br>step-load/swe/plan-multi-phase/3-write-plan-file/sequence-verifiable-units<br>step-load/swe/refactor-structure/10-order-commits/sequence-verifiable-units<br>step-load/swe/refactor-structure/5-move-in-small-steps/sequence-verifiable-units<br>step-load/swe/run-autonomously/4-iterate-smallest-change/sequence-verifiable-units |
 | swe | subtract-before-you-add | always | no | step-load/swe/fix-bug/8-apply-smallest-fix/subtract-before-you-add<br>step-load/swe/refactor-structure/4-subtract-first/subtract-before-you-add |
 | swe | test-behavior-not-implementation | always | no | step-load/swe/build-feature/7-decide-tests/test-behavior-not-implementation<br>step-load/swe/fix-bug/6-decide-regression-test/test-behavior-not-implementation |
 | swe | type-system-discipline | conditional | yes | - |
@@ -762,6 +726,7 @@ No route, step, or trigger names these hidden, non-principle skills. This is inf
 
 - `swe:create-formal-verification-skill`
 - `swe:help`
+- `swe:how`
 - `swe:ketchup-video`
 - `swe:maintain-formal-verification-skill`
 - `swe:statechart`

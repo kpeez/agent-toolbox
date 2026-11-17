@@ -70,7 +70,7 @@ first real task, from setup and prompts through verification and long runs.
 ## Usage
 
 `/swe:swe-mode` is the front door to swe. You give it a goal. It matches one
-of 22 playbooks, or the one skill that owns the task, copies the steps into
+of 21 playbooks, or the one skill that owns the task, copies the steps into
 the task list, and loads the other skills as the steps need them. In Codex,
 type `$swe:swe-mode` instead.
 
@@ -123,8 +123,8 @@ The [router](./skills/swe-mode/SKILL.md#match) first runs
 [`go-deeper`](./skills/go-deeper/SKILL.md) on a new task, then matches the
 rewritten task in this order:
 
-1. When one skill owns the whole task, it routes to that skill. "Explain how a
-   subsystem works, no code change" goes to `how`, for example.
+1. When one skill owns the whole task, it routes to that skill. "Explain this
+   crash, no fix" goes to `diagnose`, for example.
 2. Otherwise it picks the first playbook whose line fits. The list runs from
    narrow to broad, so `fix-bug` comes before `build-feature`.
 3. Large or cross-cutting work, work you step away from, or work that no
@@ -246,7 +246,7 @@ override one choice.
 The [playbook directory](./skills/swe-mode/playbooks) has the full set.
 
 <details>
-<summary>The 22 playbooks</summary>
+<summary>The 21 playbooks</summary>
 
 | Playbook | Use for |
 | --- | --- |
@@ -268,7 +268,6 @@ The [playbook directory](./skills/swe-mode/playbooks) has the full set.
 | [plan-multi-phase](./skills/swe-mode/playbooks/plan-multi-phase.md) | Write a plan for work across phases or stacked PRs |
 | [autopilot-full](./skills/swe-mode/playbooks/autopilot-full.md) | A queue of independent PRs, run to merged |
 | [autopilot-stack](./skills/swe-mode/playbooks/autopilot-stack.md) | Autopilot-full without the merge: verified PRs you land |
-| [run-program](./skills/swe-mode/playbooks/run-program.md) | A standing multi-day program under one coordinator |
 | [pick-up-session](./skills/swe-mode/playbooks/pick-up-session.md) | Resume a prior agent's in-flight work |
 | [pause-safely](./skills/swe-mode/playbooks/pause-safely.md) | Stop in-flight work so a new session can resume it |
 | [clean-worktrees](./skills/swe-mode/playbooks/clean-worktrees.md) | Reclaim disk from merged or abandoned worktrees |
@@ -327,8 +326,8 @@ them, such as `/swe:how`.
 | Command | Use it when |
 | --- | --- |
 | [`/swe:help [question]`](./skills/help/SKILL.md) | You want to know which swe skill, playbook, or principle fits |
-| [`/swe:how <subsystem or question>`](./skills/how/SKILL.md) | You want a walkthrough of how a subsystem works |
-| [`/swe:architect <feature or interface>`](./skills/architect/SKILL.md) | You want competing designs explored before code |
+| [`/swe:how <subsystem or question>`](./skills/how/SKILL.md) | You want a walkthrough of how a subsystem works. Nothing routes to it. It starts one read-only subagent |
+| [`/swe:architect <feature or interface>`](./skills/architect/SKILL.md) | You want a design shape picked before code |
 | [`/swe:swarm <task>`](./skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
 | [`/swe:figure-it-out <task>`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
 | [`/swe:create-formal-verification-skill [area or bug]`](./skills/create-formal-verification-skill/SKILL.md) | Tests cannot reach the case that breaks a race, retry, state machine, or parser |
