@@ -165,6 +165,102 @@ The offline runtime example deliberately says `not-run`. For any future native
 run, replace it with verified model ID, effort, CLI/version, permissions, tools,
 catalog scope, context delivery, and harness deltas before materializing.
 
+## Native runner
+
+`run_eval.py` runs the pilot: for each (case, arm, repeat) it calls `skill_eval.py`
+`materialize`, launches headless `claude -p` with the frozen flags, then calls `capture` and
+`score`, and at the end `aggregate`. It does not copy their logic. It is a dry run unless you pass
+`--execute`. A dry run launches no model. It does run `claude --version`, `--help`,
+`plugin list --json`, and `auth status --json`, which need no model.
+
+```sh
+uv run evals/skills/run_eval.py --case IM-01 --repeats 2
+```
+
+The dry run prints the frozen configuration, the planned runs (arms are `hook-on` and `hook-off`,
+never git refs), the argv template, the worst-case cost, the preflight result, the blockers, and the
+live steps that wait for approval. `--repeats` defaults to 10 runs per case and arm. Without `--case`
+it plans every usable case.
+
+Execute only after approval:
+
+```sh
+uv run evals/skills/run_eval.py --execute --pilot-id PILOT --max-cost-usd 20 \
+  [--backup-dir /absolute/path]
+```
+
+The runtime file `runtime.native.json` holds the model, effort, tools, permission mode, per-run
+budget, timeout, and the confinement each limit needs. Its model and effort say `UNAPPROVED` and
+`approval` is `null`. `--execute` refuses until a person sets all three and the preflight passes.
+`--execute` also needs `--pilot-id` and `--max-cost-usd`. The runtime file is part of the frozen
+configuration, so a changed file starts a new pilot.
+
+### Layout
+
+```text
+artifacts/skill-evals/PILOT/
+  pilot.json              frozen manifest, written once: runtime, stopping rule, harness and plugin digests, preflight
+  runtime.json            the runtime file that materialize read
+  mcp-empty.json          the strict MCP config
+  effective-session.json  the first run's init event (skills, tools, plugins, model), the baseline for drift
+  report.json             run states, cost, aggregate with a Wilson 95% interval for recall and false activation
+  runs/r-<hash>/          one run per (case, arm, repeat); the hash hides the case id from the agent
+    run.json              argv, env keys, session id, exit code, timeout, duration, usage, effective session, violations
+    launch/stream.jsonl   raw stdout bytes; launch/stderr.txt
+    claude-home/          the run's own CLAUDE_CONFIG_DIR, with the session transcript and subagent files
+    workspace/ inputs/ manifest.json capture.json raw*.jsonl final-files/ evidence.json score.json   (skill_eval.py)
+```
+
+`artifacts/` is ignored, so `--backup-dir` copies each finished run and the report to a destination
+outside the repository. The runner never deletes a run. Case labels and oracles stay in `cases.json`;
+the run folder holds only the prompt, the fixture, and the frozen catalog.
+
+### Preflight
+
+Each check needs no model call. A `fail` blocks `--execute`.
+
+- `runtime-complete`, `approval-recorded`: every field is set, and a person approved the model and effort.
+- `cli-version`: the installed CLI equals the frozen version.
+- `flags-in-help`: `claude --help` defines every flag the runner passes. The runner passes only flags that help lists.
+- `effort-allowed`, `permission_mode-allowed`, `permission_prompts-allowed`: the values are in the help's choices.
+- `config-home-isolated`: a fresh `CLAUDE_CONFIG_DIR` lists no installed plugin, so host plugins and
+  skills stay out. The run uses one such directory per run.
+- `auth-in-isolated-home`: the isolated home is logged in and honors the directory. It holds no OAuth
+  login, so the pilot bills `ANTHROPIC_API_KEY`.
+- `confine-read`, `confine-write`, `confine-network`: with `confined`, the tool set must hold no shell,
+  web, or MCP tool, and `restricted` must be true for read and write. No flag confines a shell tool, so a
+  tool set with one fails. Set the limit to `unconfined` to accept it. The manifest records that choice.
+  A passing check is `pending_live`: the CLI documents the limit, and a canary proves it.
+- `backup-dir`: writable, and outside the repository.
+
+The launch environment holds only `PATH`, `HOME`, `TMPDIR`, locale, proxy and certificate variables,
+`ANTHROPIC_API_KEY`, and `CLAUDE_CONFIG_DIR`. After each run, the init event is checked: no MCP server,
+no shell or web tool under a confined limit, and the auto-memory path inside the run's config home. A
+check that fails stops the pilot. Every later run must match the first run's effective session, which
+also freezes the bundled skills that the checked-out catalog does not list.
+
+### Stopping rule and cost
+
+The rule is fixed in `pilot.json` before the first launch. Runs go repeat by repeat, then case, then
+arm, so any stop leaves the arms within one run of each other. The runner launches a run only when the
+known spend, plus the per-run budget of each run with unknown cost, plus the next run's per-run budget,
+stays within `--max-cost-usd`. It also stops after three failed runs in a row, on drift, and on an
+isolation violation. Cost comes from the stream's `result` event. A missing cost stays `null`, counts at
+the per-run budget for the cap, and shows in `report.json` as `unknown_cost_runs`. A run that already
+launched is never launched again: a rerun skips a run with `score.json`, rescores a run that finished
+without one, and moves an interrupted run aside.
+
+### What still needs approval
+
+- Model, effort, runs per case, per-run budget, total cap, tool set, and the confinement choice.
+- The backup destination.
+- The live canaries listed in the dry run: a read and a write outside the fixture, a fetch, and a
+  playbook read under `--restricted`.
+- A relevant-action label. The runner passes none, so evidence stays partial and recall has a zero
+  denominator until a labeler runs. `claude plugin eval` does not replace this runner. Its help lists no hook arm, no effort flag,
+  and no way to keep the raw transcript or the final fixture. Its ablation compares a plugin with no
+  plugin, and it publishes its report to claude.ai unless `--no-publish` is set.
+
 ## Route scoring
 
 A case may set four optional fields. `expected_route` is the id of a `route`
@@ -368,7 +464,9 @@ or justify a single pooled efficacy percentage.
 synthetic traces and minimal Claude-shaped transcripts. It checks leakage/isolation
 of fixtures, strict body identity, ordering, incomplete/failed reads, missing
 native evidence, aggregate denominators, and the Claude load proofs and message
-order. This verifies harness behavior only. `test_facets.py` runs `facets.py`
+order. This verifies harness behavior only. `test_run_eval.py` runs `run_eval.py` against a stub `claude` on `PATH`; it checks that a dry run launches
+no model, a rerun skips finished runs, the cost cap stops before the next launch, unknown cost stays
+unknown, and an unenforceable limit is rejected. `test_facets.py` runs `facets.py`
 on a copied catalog. It checks that `check` fails on a stale map and that
 `write` rejects a step name that nothing owns.
 The retained verification record is
@@ -397,8 +495,8 @@ miss. EVIDENCE.md holds the contract and the raw-event audit.
 No activation baseline exists yet. A native run needs an authorized pilot:
 proposed model, effort, count, access, isolation limits and costs must go to the
 coordinator before starting. Do not run the model matrix from this README or assume stripping
-bindings disables manual external calls. Native subprocess execution and sandbox
-enforcement are intentionally absent pending that gate.
+bindings disables manual external calls. `run_eval.py` runs the pilot (see "Native runner"), but no native run has happened and no
+limit is yet proved live.
 
 Sources: the private source chat, especially its final two eval turns; the repository's current skill contracts; and OpenAI's
 [skill eval guidance](https://developers.openai.com/blog/eval-skills). The supplied

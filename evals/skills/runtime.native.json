@@ -1,0 +1,30 @@
+{
+  "model": "UNAPPROVED",
+  "effort": "UNAPPROVED",
+  "cli": "claude",
+  "cli_version": "2.1.326 (Claude Code)",
+  "permissions": {
+    "mode": "dontAsk with no permission prompts; only allowed_tools run",
+    "read": "file tools confined to the fixture and the plugin snapshot by --restricted",
+    "write": "file tools confined to the fixture and the plugin snapshot by --restricted",
+    "network": "no shell or web tool in the tool set; the model API only"
+  },
+  "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Skill"],
+  "allowed_tools": ["Read", "Write", "Edit", "Glob", "Grep", "Skill"],
+  "permission_mode": "dontAsk",
+  "permission_prompts": "none",
+  "restricted": true,
+  "setting_sources": "project,local",
+  "max_budget_usd_per_run": 0.5,
+  "timeout_seconds": 600,
+  "confinement": {"read": "confined", "write": "confined", "network": "confined"},
+  "harness_deltas": [
+    "separate CLAUDE_CONFIG_DIR per run; the isolated home authenticates with ANTHROPIC_API_KEY only",
+    "empty strict MCP config",
+    "plugin hooks and MCP bindings stripped by materialize, except SessionStart in the hook-on arm",
+    "no shell tool, so a case's relevant action cannot run if it needs a shell"
+  ],
+  "catalog_scope": "full_checkedout_catalog",
+  "context_delivery": "serialized_conversation",
+  "approval": null
+}
