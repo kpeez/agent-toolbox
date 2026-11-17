@@ -2297,12 +2297,10 @@
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [],
-      "forbidden_skills": [
-        "swe:go-deeper"
-      ],
+      "forbidden_skills": [],
       "expected_route": "route/swe/autopilot-stack",
       "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
-      "rationale": "The same queue as the autopilot-full case, with the merge left to the user. Only autopilot-stack stops before the merge. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
+      "rationale": "The same queue as the autopilot-full case, with the merge left to the user. Only autopilot-stack stops before the merge. The queue is a new task and the earlier assistant turn only offered a choice, so go-deeper is allowed."
     },
     {
       "id": "swe-route-babysit-pr",
@@ -2467,7 +2465,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Run until `python3 -m unittest` prints OK for the report helpers. Do not stop between fixes: rerun the suite after each change and keep going until it is green."
+          "content": "Run until `python3 -m unittest` prints OK across all five report helper modules. Do not stop between modules: rerun the suite after each one and keep going until it is green."
         }
       ],
       "fixture": "legacy-suite",

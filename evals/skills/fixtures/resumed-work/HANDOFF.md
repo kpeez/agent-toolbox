@@ -3,7 +3,7 @@
 Goal: wait_for_item in poller.py must return an item that arrives exactly at the timeout boundary.
 
 Done so far:
-- Read poller.py and the failing case. The loop stops when the elapsed time reaches the timeout, before it checks the queue one last time.
+- Read poller.py and the failing case in test_poller.py. The loop stops when the elapsed time reaches the timeout, before it checks the queue one last time.
 - Wrote no code yet.
 
 Left to do:

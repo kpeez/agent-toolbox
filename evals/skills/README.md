@@ -244,7 +244,7 @@ task you already framed, and "just do it". It runs once per task. The corpus app
   `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
 - A follow-up inside a framed task: the last user turn continues the work that an earlier assistant turn did. These
   are `SP-05` (commit what the earlier turn reported complete), `SP-06` (fix what it diagnosed),
-  `swe-mode-ship-stack`, `swe-mode-pause-safely`, and `swe-route-autopilot-stack`. A user turn that opens a new task after an answer is
+  `swe-mode-ship-stack`, and `swe-mode-pause-safely`. A user turn that opens a new task after an answer is
   a new task, so `HO-05`, `HO-06`, and the lab contextual cases keep `go-deeper` allowed.
 
 A case that sets no `expected_route` gets only one automatic credit: `swe:writing`, when it lists the plugin's router as
