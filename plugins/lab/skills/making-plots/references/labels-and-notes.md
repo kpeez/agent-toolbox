@@ -69,5 +69,5 @@ is series colored.
 
 Display names live in one dictionary in the style module. Compose compound
 labels in code (`"<detector> + <pose>"`) rather than storing variants. Never
-expose private identifiers (real subject or subject ids) in a figure; use the
+expose private identifiers (real subject ids) in a figure; use the
 documented display labels.

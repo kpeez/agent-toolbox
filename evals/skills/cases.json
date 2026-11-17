@@ -1709,7 +1709,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "make sure we have updated figures. I want the full suite of what we plotted. Like the \"model table\" you see from frontier labs, the TPR curves, the known/stranger distribution, etc."
+          "content": "make sure we have updated figures. I want the full suite of what we plotted. Like the \"model table\" you see from frontier labs, the ROC curves, the positive/negative score distribution, etc."
         }
       ],
       "fixture": "classifier-figures",
@@ -1761,7 +1761,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "the DET plot is unreadable once all the models are on it. can you make it so I can actually see which model wins at FPR 0.01?"
+          "content": "the ROC plot is unreadable once all the models are on it. can you make it so I can actually see which model wins at FPR 0.01?"
         }
       ],
       "fixture": "classifier-figures",
@@ -1776,7 +1776,7 @@
         "swe:go-deeper"
       ],
       "forbidden_skills": [],
-      "relevant_action": "Edit draw_det in figures.py.",
+      "relevant_action": "Edit draw_roc in figures.py.",
       "rationale": "Revising a crowded result curve is figure design work."
     },
     {
@@ -1817,7 +1817,7 @@
         },
         {
           "role": "assistant",
-          "content": "Fine-tuning helps every backbone. large leads: TPR at FPR 0.1 is 0.598 fine-tuned against 0.602 zero-shot, and AUROC is 0.543 against 0.821. figures/results_table.png has the full table."
+          "content": "Fine-tuning helps every model. The large model leads: TPR at FPR 0.1 is 0.814 fine-tuned against 0.412 zero-shot, and AUROC is 0.931 against 0.718. figures/results_table.png has the full table."
         },
         {
           "role": "user",
@@ -1851,7 +1851,7 @@
         },
         {
           "role": "assistant",
-          "content": "large fine-tuned. It leads on TPR at both operating points and on AUROC. distilled fine-tuned is close on rank-1 (0.669 against 0.753)."
+          "content": "The large model, fine-tuned. It leads on TPR at both operating points and on AUROC. The distilled model, fine-tuned, is close on accuracy (0.921 against 0.929)."
         },
         {
           "role": "user",
@@ -1881,7 +1881,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Which model has the highest rank-1 in results/summary.csv, and by how much over the runner-up?"
+          "content": "Which model has the highest accuracy in results/summary.csv, and by how much over the runner-up?"
         }
       ],
       "fixture": "classifier-figures",
@@ -1980,7 +1980,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Is this paper's claim legit? https://arxiv.org/abs/0000.00000 says backbone features work for retrieval without fine-tuning. Our zero-shot backbone rows in results/summary.csv look much worse than the fine-tuned ones."
+          "content": "Is this paper's claim legit? The authors claim frozen zero-shot embeddings match fine-tuned text classifiers without task-specific training, yet our zero-shot rows in results/summary.csv look much worse than the fine-tuned ones."
         }
       ],
       "fixture": "classifier-figures",
@@ -2004,7 +2004,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "What does the literature say about thresholded face retrieval for subject? Which metrics do people report, and what TPR at FPR 0.01 counts as good?"
+          "content": "What does the literature say about low-false-positive text classification under domain shift? Which metrics do people report, and what TPR at FPR 0.01 counts as good?"
         }
       ],
       "fixture": "classifier-figures",
@@ -2053,7 +2053,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "test whether a lower learning rate for fine-tuning base helps TPR at FPR 0.01"
+          "content": "test whether a lower learning rate for fine-tuning the base model helps TPR at FPR 0.01"
         }
       ],
       "fixture": "classifier-figures",
@@ -2078,15 +2078,15 @@
       "messages": [
         {
           "role": "user",
-          "content": "how far is fine-tuned ViT-B from ViT-L at FPR 0.01?"
+          "content": "how far is fine-tuned base from large at FPR 0.01?"
         },
         {
           "role": "assistant",
-          "content": "ViT-B reaches 0.595 and ViT-L 0.994, a gap of 0.057 in TPR at FPR 0.01."
+          "content": "base reaches 0.415 and large 0.478, a gap of 0.063 in TPR at FPR 0.01."
         },
         {
           "role": "user",
-          "content": "keep tuning the ViT-B fine-tuning recipe until TPR at FPR 0.01 stops improving"
+          "content": "keep tuning the base fine-tuning recipe until TPR at FPR 0.01 stops improving"
         }
       ],
       "fixture": "classifier-figures",
@@ -2114,11 +2114,11 @@
         },
         {
           "role": "assistant",
-          "content": "Yes. results/summary.csv now has the zero-shot large row: TPR at FPR 0.1 is 0.203."
+          "content": "Yes. results/summary.csv now has the zero-shot base row: TPR at FPR 0.1 is 0.341."
         },
         {
           "role": "user",
-          "content": "so does fine-tuning matter more than backbone size? give me a conclusion I can put in the update."
+          "content": "so does fine-tuning matter more than model size? give me a conclusion I can put in the update."
         }
       ],
       "fixture": "classifier-figures",
@@ -2213,7 +2213,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Use /lab:lab-mode to work out whether distilled really beats backbone on rank-1."
+          "content": "Use /lab:lab-mode to work out whether distilled really beats base on accuracy."
         }
       ],
       "fixture": "classifier-figures",
