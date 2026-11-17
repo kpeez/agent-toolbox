@@ -81,7 +81,7 @@ Providers can keep your prompts, so use the skill only on code you agree to send
 
 Many steps say `reviewer agent`. That is a fresh subagent that did not write the code, briefed with the [review brief](../references/review-brief.md). The brief has two modes. In review and fix mode, the default, the reviewer fixes small, sure findings and reports each fix. In verdict only mode, it edits nothing. A landing verdict and parallel reviews of one change use verdict only.
 
-The router gives a contested design and its evidence to a reviewer before you ship. `architect` can also give its synthesized sketch to a reviewer before implementation. Ask for it when the design is expensive to reverse:
+The router gives a contested design and its evidence to a reviewer before you ship. `architect` can also give its chosen sketch to a reviewer before implementation. Ask for it when the design is expensive to reverse:
 
 ```text
 /swe:swe-mode add rate limiting for external webhooks. architect it first, then have a reviewer agent attack the sketch before you implement.

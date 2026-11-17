@@ -8,7 +8,7 @@ This page gives prompts you can copy, then the mistakes most people make once. S
 /swe:how how does session initialization work? then /swe:why to find out why it broke last week.
 ```
 
-Mechanics first, history second. Each report says which sources it searched, so you know what the answer rests on.
+Mechanics first, history second.
 
 ## Restate a noisy report before you touch code
 

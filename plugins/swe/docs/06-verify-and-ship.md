@@ -70,8 +70,6 @@ Commit the verification skill so every person and agent drives the app the same 
 
 Run `/swe:verification-skill` again when the skill already exists, and it audits the skill instead. It checks each feature from source in parallel, then drives every feature live. It ends in one outcome. `clean` means nothing to ship. `changed` means proven corrections to the skill's own folder. `blocked` names the blocker. It never edits product code, and it reports a product regression instead of hiding it in the docs.
 
-When a change adds or changes a user-facing feature, the agent updates that feature's entry in the map as part of the change.
-
 ## Verify what tests cannot reach
 
 Some bugs need one rare order of events or one input that no test tries: a race, a retry, a state machine, a parser. Type:
@@ -122,7 +120,7 @@ An open PR collects failed checks, review comments, and conflicts. Hand them to 
 /swe:swe-mode babysit this pr. get it green.
 ```
 
-It declares a mode first: `drive` (loop to merge-ready), `background`, `threads-only`, or `check` (one status pass). It works conflicts, then review threads, then CI, and batches every fix into one push. It classifies each failed check before a rerun, and it triages each bot comment as fix, dismiss, or ask. In Claude Code it watches with `gh pr checks <pr> --watch` or `/loop`. In Codex you rerun the pass by hand. For status only, ask smaller:
+It declares a mode first: `drive` (loop to merge-ready), `threads-only`, or `check` (one status pass). It works conflicts, then review threads, then CI, and batches every fix into one push. It classifies each failed check before a rerun, and it triages each bot comment as fix, dismiss, or ask. In Claude Code it watches with `gh pr checks <pr> --watch` or `/loop`. In Codex you rerun the pass by hand. For status only, ask smaller:
 
 ```text
 /swe:swe-mode check on pr 123. anything outstanding?

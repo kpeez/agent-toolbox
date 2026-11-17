@@ -11,8 +11,8 @@ independent axes. One is the layers to trace between the question and the
 answer. The other is the hidden or mutable state to hold in mind. Guard both.
 
 - Collapse layers that only forward, such as a wrapper with one caller, an
-  adapter with no second implementation, or a pass-through method. Inline
-  them.
+  adapter with no second implementation, external contract, or test
+  substitute, or a pass-through method. Inline them.
 - Shrink state scope. Prefer returns over mutation, locals over fields,
   fields over module state, and module state over globals. Derive a value
   instead of keeping two copies in sync.

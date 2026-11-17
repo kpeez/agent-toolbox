@@ -29,9 +29,9 @@ read it. Put this file's absolute path in every delegate's brief.
    [Single-skill routes](#single-skill-routes).
 5. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
    fits. The list runs from narrow to broad.
-6. Large or cross-cutting work, a multi-day program, work the user steps away
-   from, or work that no playbook fits goes to `figure-it-out`. It writes a
-   bespoke playbook in the same step format.
+6. Large or cross-cutting work, work the user steps away from, or work that
+   no playbook fits goes to `figure-it-out`. It writes a bespoke playbook in
+   the same step format.
 7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
    `Route: <skill>. Reason: <one clause>.`
 

@@ -9,7 +9,7 @@ Codex, type `$swe:` in place of `/swe:`.
 - `/swe:in-your-own-words <long or messy ask>`
 - `/swe:go-deeper <your task>`
 - `/swe:swe-mode investigate why <symptom>. give me what we know, what data you used, and your best hypotheses. don't change any code yet.`
-- `use how to understand <subsystem>. then use why to find out why it broke recently.`
+- `/swe:how <subsystem>. then /swe:why to find out why it broke recently.`
 - `/swe:recall my work on <topic> from last week, then read <issue>.`
 - `/swe:swe-mode take over this branch. read the handoff and the decision log, find what's done, and continue. don't redo finished work.`
 

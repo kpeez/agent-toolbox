@@ -1,6 +1,6 @@
 # Run long work and hand it off
 
-This page shows you how to leave an agent on a long task, audit what it decided, and move work between sessions, agents, and hosts. It also covers queues of PRs, multi-day programs, delegation, and where swe keeps its files. A run you can leave alone needs a checkable finish condition, an isolated worktree, and a decision log you can read when you come back.
+This page shows you how to leave an agent on a long task, audit what it decided, and move work between sessions, agents, and hosts. It also covers queues of PRs, delegation, and where swe keeps its files. A run you can leave alone needs a checkable finish condition, an isolated worktree, and a decision log you can read when you come back.
 
 ## Drive one task to an exit condition
 
@@ -95,10 +95,6 @@ The [`autopilot-full`](../skills/swe-mode/playbooks/autopilot-full.md) playbook 
 ```
 
 The [`autopilot-stack`](../skills/swe-mode/playbooks/autopilot-stack.md) playbook is `autopilot-full` without the merge. You get verified PRs, each with its verdict, and you land them yourself. A PR stacks only on a PR it builds on. Pick it when you want to review before anything merges.
-
-## Run a multi-day program
-
-A program, such as a migration across many packages over several days and many PRs, has no playbook of its own. `/swe:swe-mode` routes it to [`figure-it-out`](../skills/figure-it-out/SKILL.md), which designs one rigorous run for it. When one agent could finish inside the budget, use `run-autonomously`.
 
 ## Clean up worktrees
 

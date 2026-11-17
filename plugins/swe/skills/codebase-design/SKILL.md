@@ -91,8 +91,7 @@ for that comparison. Do not manufacture alternatives to an obvious interface.
 When the interface or architecture has no precedent in the codebase, follow
 [exhaust-the-design-space](../principle-exhaust-the-design-space/SKILL.md):
 build two or three competing sketches and compare them side by side before
-you commit to one. To run those designs in parallel and then fill in code
-against the chosen sketch, use [architect](../architect/SKILL.md).
+you commit to one.
 
 ## Review mode
 

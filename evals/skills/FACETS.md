@@ -149,7 +149,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | playbook `author-skill` | 1-choose-invocation, 2-single-source-check, 3-cut-to-decisions, 4-validate-skill, 5-check-packaging, 6-plan-activation-check, 7-publish-draft-pr | 0 | 0 |
 | playbook `autopilot-full` | 1-honor-operator-gates, 2-spawn-owner-per-pr, 3-report-code-ready-head, 4-assume-the-session-dies, 5-run-owners-in-parallel, 6-swarm-verify-once, 7-send-findings-to-owner, 8-merge-only-verified, 9-countersign-loosened-gates, 10-arm-audit-loop, 11-stand-down-on-stop | 0 | 0 |
 | playbook `autopilot-stack` | 1-stop-at-verified, 2-stack-only-on-dependency | 0 | 0 |
-| playbook `babysit-pr` | 1-declare-mode, 2-keep-the-topology, 3-conflicts-then-threads-then-ci, 4-triage-review-bots, 5-stop-at-human-line | 0 | 0 |
+| playbook `babysit-pr` | 1-declare-mode, 2-work-the-frontier, 3-keep-the-topology, 4-conflicts-then-threads-then-ci, 5-triage-review-bots, 6-stop-at-human-line | 0 | 0 |
 | skill `blast-radius` | 1-read-the-change, 2-find-safety-fact, 3-look-past-grep, 4-rate-each-risk, 5-prove-the-fact, 6-optional-independent-review | 0 | 0 |
 | playbook `build-feature` | 1-map-subsystem, 2-interview-on-open-decisions, 3-name-data-shape, 4-explore-designs, 5-write-throughput-checkpoint, 6-build-one-unit, 7-decide-tests, 8-verify-on-surface, 9-check-blast-radius, 10-review-if-contested, 11-independent-review, 12-order-commits, 13-update-obsolete-docs, 14-publish-draft-pr | 5 | 0 |
 | playbook `build-prototype` | 1-scope-the-decision, 2-gather-references, 3-build-throwaway, 4-switch-between-variants, 5-observe-on-surface, 6-recommend-direction | 0 | 0 |
@@ -225,10 +225,10 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
 | 1-declare-mode | ship-pr | visible-skill | skill-call | always | - |
-| 2-keep-the-topology | autopilot-full | playbook | full-read | always | - |
-| 3-conflicts-then-threads-then-ci | ship-pr | visible-skill | skill-call | always | - |
-| 4-triage-review-bots | ship-pr | visible-skill | skill-call | always | - |
-| 5-stop-at-human-line | ship-stack | playbook | full-read | always | - |
+| 3-keep-the-topology | autopilot-full | playbook | full-read | always | - |
+| 4-conflicts-then-threads-then-ci | ship-pr | visible-skill | skill-call | always | - |
+| 5-triage-review-bots | ship-pr | visible-skill | skill-call | always | - |
+| 6-stop-at-human-line | ship-stack | playbook | full-read | always | - |
 
 ### Playbook `build-feature` step loads
 
