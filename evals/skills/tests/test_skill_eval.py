@@ -1070,6 +1070,18 @@ class OfflineCLIContract(unittest.TestCase):
             route, _ = self.route_trace(f"route-label-{index}", line=line)
             self.assertEqual(route["line"], {"status": "match", "observed": "analyze-results"}, line)
 
+    def test_a_route_that_only_match_reaches_accepts_a_playbook_or_a_route_line(self):
+        case = self.case_named("swe-route-figure-it-out")
+        for name, line in (("playbook", "Playbook: figure-it-out. Reason: the work is cross-cutting."),
+                           ("route", "Route: figure-it-out. Reason: the work is cross-cutting.")):
+            route = self.route_run(f"match-only-{name}", case, [("skill", "swe:figure-it-out")], line)
+            self.assertEqual(route["line"], {"status": "match", "observed": "figure-it-out"}, line)
+        wrong = self.route_run("match-only-wrong-slug", case, [], "Playbook: fix-bug. Reason: it fits.")
+        self.assertEqual(wrong["line"]["status"], "wrong")
+        listed = self.route_run("listed-route-keeps-its-label", self.case_named("DG-01"), [],
+                                "Playbook: diagnose. Reason: it fits.")
+        self.assertEqual(listed["line"]["status"], "wrong")
+
     def test_skill_route_scores_the_line_and_the_routed_skill_load(self):
         case = self.case_named("lab-mode-route-autoresearch")
         line = "Route: autoresearch. Reason: the user wants a bounded experiment loop."

@@ -2259,7 +2259,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Here are three unrelated fixes for the receipt helpers: the minus sign on negative totals, the trailing colon on line labels, and the failing python 3.8 check. Get each one built, checked, and merged on its own. I am away all day, so do not wait for me between them."
+          "content": "Here are three unrelated fixes for the receipt helpers: the missing thousands separator on large totals, the trailing colon on line labels, and the failing python 3.8 check. Get each one built, checked, and merged on its own. I am away all day, so do not wait for me between them."
         }
       ],
       "fixture": "receipt-totals",
@@ -2281,7 +2281,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Three independent changes are queued for the receipt helpers: the minus sign on negative totals, the trailing colon on line labels, and the failing python 3.8 check."
+          "content": "Three independent changes are queued for the receipt helpers: the missing thousands separator on large totals, the trailing colon on line labels, and the failing python 3.8 check."
         },
         {
           "role": "assistant",
@@ -2297,10 +2297,12 @@
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "expected_route": "route/swe/autopilot-stack",
       "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
-      "rationale": "The same queue as the autopilot-full case, with the merge left to the user. Only autopilot-stack stops before the merge."
+      "rationale": "The same queue as the autopilot-full case, with the merge left to the user. Only autopilot-stack stops before the merge. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
     },
     {
       "id": "swe-route-babysit-pr",
@@ -2377,10 +2379,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "A worker that calls wait_for_item is running right now and pegs one CPU core while its queue is empty. Nobody has profiled it. Profile the live process, find the function that spins, and tell me the line. Diagnosis only."
+          "content": "The worker that `python3 run_worker.py` starts keeps one CPU core busy while its queue is empty. Nobody has profiled it. Start it, profile the live process, find the function that spins, and tell me the line. Diagnosis only."
         }
       ],
-      "fixture": "worker-queue",
+      "fixture": "spinning-worker",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2388,7 +2390,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/diagnose-runtime",
       "relevant_action": "Say Playbook: diagnose-runtime and read the playbook before any other step.",
-      "rationale": "A live symptom, a spin, with nothing captured yet, diagnosed by instrumenting the running process. The diagnose route explains a failure, crash, hang, or leak from evidence that exists, and diagnose-trace reads a profile that already exists."
+      "rationale": "A live symptom, a spin, with nothing captured yet, diagnosed by instrumenting the running process. The fixture holds a worker script that spins on an empty queue. The diagnose route explains a failure, crash, hang, or leak from evidence that exists, and diagnose-trace reads a profile that already exists."
     },
     {
       "id": "swe-route-hillclimb-metric",
@@ -2465,7 +2467,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "The nightly suite is red across the report helpers, and I want python3 -m unittest to pass with no failures. The breakages are many and separate. Work through all of them, run the suite after each fix, and stay on it until it passes."
+          "content": "Run until `python3 -m unittest` prints OK for the report helpers. Do not stop between fixes: rerun the suite after each change and keep going until it is green."
         }
       ],
       "fixture": "legacy-suite",
@@ -2476,7 +2478,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/run-autonomously",
       "relevant_action": "Say Playbook: run-autonomously and read the playbook before any other step.",
-      "rationale": "A long task with a checkable exit condition, a green suite. The fix-bug playbook reproduces and fixes one defect, and this task has ten, so the exit condition owns the task. The prompt holds no session override phrase."
+      "rationale": "The user asks to run until a checkable predicate holds and to keep going between iterations. That is the cue in the run-autonomously Applies line (\"run until done\"). The fix-bug playbook reproduces and fixes one reported defect, and the request names none: the green suite is the exit condition."
     },
     {
       "id": "swe-route-architect",
@@ -2694,10 +2696,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "My open PR has a merge conflict with main in receipt.py. Resolve it and push the result."
+          "content": "My open PR has a merge conflict with main in receipt.py. Resolve it and commit the resolution."
         }
       ],
-      "fixture": "receipt-totals",
+      "fixture": "receipt-conflict",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2706,7 +2708,7 @@
       "expected_route": "route/swe/ship-pr",
       "expected_mode": "drive-to-green",
       "relevant_action": "Say Route: ship-pr and load the skill before any other step.",
-      "rationale": "One conflict on one open PR, with no request for status. The babysit-pr playbook covers a babysit or get-it-green request."
+      "rationale": "One conflict on one open PR, with no request for status. The fixture holds the conflicted file and the commit messages of both sides. The babysit-pr playbook covers a babysit or get-it-green request."
     },
     {
       "id": "swe-route-verification-skill",
@@ -2817,7 +2819,7 @@
           "content": "The regime column in results/summary.csv is now called setting. Check whether our project skills still run and are still true."
         }
       ],
-      "fixture": "classifier-figures",
+      "fixture": "classifier-figures-setting",
       "expected_skills": [
         "lab:lab-mode"
       ],
@@ -2825,7 +2827,7 @@
       "forbidden_skills": [],
       "expected_route": "route/lab/maintain-project-skills",
       "relevant_action": "Say Playbook: maintain-project-skills and read the playbook before any other step.",
-      "rationale": "A check of the project's skills after the data changed. The bootstrap-project playbook creates the kit."
+      "rationale": "A check of the project's skills after the data changed. The fixture holds the research-context skill, one procedure skill, and a summary.csv whose column is already renamed. The bootstrap-project playbook creates the kit."
     },
     {
       "id": "lab-route-making-plots",
@@ -3002,10 +3004,12 @@
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "expected_route": "route/swe/pause-safely",
       "relevant_action": "Say Playbook: pause-safely and read the playbook before any other step.",
-      "rationale": "An explicit pause with work in flight. The handoff route writes state but does not stop work cleanly."
+      "rationale": "An explicit pause with work in flight. The handoff route writes state but does not stop work cleanly. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
     },
     {
       "id": "swe-mode-ship-stack",
@@ -3031,10 +3035,12 @@
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
       "expected_route": "route/swe/ship-stack",
       "relevant_action": "Say Playbook: ship-stack and read the playbook before any other step.",
-      "rationale": "An explicit request to land a green stack. The babysit-pr playbook ends where this one begins."
+      "rationale": "An explicit request to land a green stack. The babysit-pr playbook ends where this one begins. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
     },
     {
       "id": "swe-mode-evaluate-agent-change",
@@ -3113,13 +3119,14 @@
       "fixture": "harbor-importer",
       "expected_skills": [],
       "acceptable_auxiliaries": [
-        "swe:go-deeper"
+        "swe:go-deeper",
+        "swe:writing"
       ],
       "forbidden_skills": [
         "swe:swe-mode"
       ],
       "relevant_action": "Answer in one reply without loading a workflow.",
-      "rationale": "A writing task outside software. The router routes software tasks."
+      "rationale": "A writing task outside software. The router routes software tasks. The swe session-start hook still sends the reply through the writing skill."
     }
   ]
 }

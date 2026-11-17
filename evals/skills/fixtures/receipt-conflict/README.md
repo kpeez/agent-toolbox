@@ -1,0 +1,1 @@
+Receipt text helpers for the point-of-sale printer. Amounts are integer cents. Merging `main` into the branch of open PR 12 stopped on a conflict in `receipt.py`. `receipt.py` holds the conflict markers that git left. `branch-commits.txt` holds the commit messages of both sides.
