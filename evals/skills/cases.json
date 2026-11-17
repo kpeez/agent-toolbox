@@ -2259,7 +2259,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Full autopilot on this queue of three independent PRs for the receipt helpers: the minus sign on negative totals, the trailing colon on line labels, and the failing python 3.8 check. Build and verify each one, and merge each when it passes."
+          "content": "Here are three unrelated fixes for the receipt helpers: the minus sign on negative totals, the trailing colon on line labels, and the failing python 3.8 check. Get each one built, checked, and merged on its own. I am away all day, so do not wait for me between them."
         }
       ],
       "fixture": "receipt-totals",
@@ -2270,7 +2270,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/autopilot-full",
       "relevant_action": "Say Playbook: autopilot-full and read the playbook before any other step.",
-      "rationale": "A queue of independent PRs with full autonomy and a merge. The autopilot-stack playbook differs only by its no-merge rule."
+      "rationale": "A queue of independent PRs, each merged when it passes, with no human gate. The autopilot-stack playbook differs only by its no-merge rule."
     },
     {
       "id": "swe-route-autopilot-stack",
@@ -2289,7 +2289,7 @@
         },
         {
           "role": "user",
-          "content": "Run the whole queue with full autonomy: build and verify all three, but do not merge anything. I will land them myself."
+          "content": "Work through all three yourself without checking in, and have each one built and verified. Leave the merging to me."
         }
       ],
       "fixture": "receipt-totals",
@@ -2300,7 +2300,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/autopilot-stack",
       "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
-      "rationale": "The same queue as the autopilot-full case, with an explicit no-merge rule. Only autopilot-stack stops before the merge."
+      "rationale": "The same queue as the autopilot-full case, with the merge left to the user. Only autopilot-stack stops before the merge."
     },
     {
       "id": "swe-route-babysit-pr",
@@ -2311,7 +2311,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Babysit PR 12 until it is merge-ready. The CI log and the review threads are in the repo."
+          "content": "Where does PR 12 stand? Tell me what still blocks a merge. The CI log and the review threads are in the repo."
         }
       ],
       "fixture": "receipt-totals",
@@ -2322,7 +2322,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/babysit-pr",
       "relevant_action": "Say Playbook: babysit-pr and read the playbook before any other step.",
-      "rationale": "The user says babysit and asks for a merge-ready PR. The ship-pr route covers a single conflict, thread, or check; the router's PR-status trigger sends a babysit request to this playbook."
+      "rationale": "A status request on an open PR: the router's PR-status trigger sends it to babysit-pr. The ship-pr route acts on a named conflict, thread, or check, and this request names none."
     },
     {
       "id": "swe-route-build-prototype",
@@ -2377,7 +2377,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "The poller process sits at 100% CPU while the queue is empty. Attach to the running process, instrument it, and find where it spins. I only want the diagnosis, no fix."
+          "content": "A worker that calls wait_for_item is running right now and pegs one CPU core while its queue is empty. Nobody has profiled it. Profile the live process, find the function that spins, and tell me the line. Diagnosis only."
         }
       ],
       "fixture": "worker-queue",
@@ -2388,7 +2388,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/diagnose-runtime",
       "relevant_action": "Say Playbook: diagnose-runtime and read the playbook before any other step.",
-      "rationale": "A live symptom diagnosed from instrumentation of the running process. The diagnose route and diagnose-trace cover failures read from evidence that already exists."
+      "rationale": "A live symptom, a spin, with nothing captured yet, diagnosed by instrumenting the running process. The diagnose route explains a failure, crash, hang, or leak from evidence that exists, and diagnose-trace reads a profile that already exists."
     },
     {
       "id": "swe-route-hillclimb-metric",
@@ -2399,7 +2399,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Keep improving the preview refresh time until it is under 2 seconds for 18,000 tiles. Change one thing at a time, measure after each change, and revert any change that does not help."
+          "content": "The preview refresh takes 12 seconds for 18,000 tiles and I want it under 2. Try ideas one by one. Keep what speeds it up and throw away the rest."
         }
       ],
       "fixture": "tile-renderer",
@@ -2410,7 +2410,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/hillclimb-metric",
       "relevant_action": "Say Playbook: hillclimb-metric and read the playbook before any other step.",
-      "rationale": "A loop of measured attempts against one target with keep or revert. The improve-performance playbook covers one measured slowness."
+      "rationale": "A loop of measured attempts toward one target with keep or discard. The improve-performance playbook covers one measured slowness, and run-autonomously has no per-attempt keep or revert."
     },
     {
       "id": "swe-route-match-visual-parity",
@@ -2465,10 +2465,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "Going to bed. Keep going until python3 -m unittest passes, and do not stop to ask me anything."
+          "content": "The nightly suite is red across the report helpers, and I want python3 -m unittest to pass with no failures. The breakages are many and separate. Work through all of them, run the suite after each fix, and stay on it until it passes."
         }
       ],
-      "fixture": "status-labels",
+      "fixture": "legacy-suite",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2476,29 +2476,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/run-autonomously",
       "relevant_action": "Say Playbook: run-autonomously and read the playbook before any other step.",
-      "rationale": "One task driven to a checkable exit condition without stopping. The fix-bug playbook would fix the defect but does not own the exit condition."
-    },
-    {
-      "id": "swe-route-run-program",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "Own the move of every pipeline adapter to streaming reads as a program. It will take about a week, with many stacked PRs and several subagents, and I will check in only a few times. You are the coordinator: decide which agent does each piece and check what each one produces."
-        }
-      ],
-      "fixture": "pipeline",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/run-program",
-      "relevant_action": "Say Playbook: run-program and read the playbook before any other step.",
-      "rationale": "A multi-day program with many PRs and few human turns. The run-autonomously playbook drives one task to one predicate, and figure-it-out writes one bespoke workflow."
+      "rationale": "A long task with a checkable exit condition, a green suite. The fix-bug playbook reproduces and fixes one defect, and this task has ten, so the exit condition owns the task. The prompt holds no session override phrase."
     },
     {
       "id": "swe-route-architect",
@@ -2509,7 +2487,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Before anyone writes code, sketch two or three competing designs for how the map and delivery screens should share one address label, and compare them."
+          "content": "The map and delivery screens both build an address label, and I do not know whether they should share one function, one class, or stay separate. Lay out two or three designs side by side and tell me which you would pick. Write no code yet."
         }
       ],
       "fixture": "location-routing",
@@ -2520,7 +2498,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/architect",
       "relevant_action": "Say Route: architect and load the skill before any other step.",
-      "rationale": "Competing designs before code. The codebase-design route reviews the boundaries that exist today."
+      "rationale": "Competing designs for something to build, before code. The codebase-design route reviews the boundaries that exist today and does not weigh designs against each other."
     },
     {
       "id": "swe-route-blast-radius",
@@ -2531,7 +2509,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "What could the checkout change break beyond its diff? Name the one fact it is safe because of, and prove it by running real code."
+          "content": "I am about to ship the checkout change. What else could it break, and why are you sure it is safe? Back it up by running something, not by reading."
         }
       ],
       "fixture": "checkout-diff",
@@ -2542,7 +2520,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/blast-radius",
       "relevant_action": "Say Route: blast-radius and load the skill before any other step.",
-      "rationale": "The question is the blast radius of a change. The regression review in the negative cases reports defects in the diff only."
+      "rationale": "The question is how far one change reaches and what keeps it safe. The regression review in the negative cases reports defects in the diff only."
     },
     {
       "id": "swe-route-correct",
@@ -2561,7 +2539,7 @@
         },
         {
           "role": "user",
-          "content": "That is the third time an agent has missed this. Stop it from happening again, and fix the cause at the highest level that works."
+          "content": "That is the third time an agent has missed this. Make this kind of mistake impossible to repeat, not just fixed once."
         }
       ],
       "fixture": "harbor-importer",
@@ -2606,7 +2584,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Rework the whole pipeline to read streams instead of files: every adapter, the validator, the normalizer, all callers and tests, while the nightly import keeps working. No playbook fits this, so work out your own workflow for it and run it."
+          "content": "Rework the whole pipeline to read streams instead of files: every adapter, the validator, the normalizer, all callers and tests, while the nightly import keeps working."
         }
       ],
       "fixture": "pipeline",
@@ -2617,7 +2595,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/figure-it-out",
       "relevant_action": "Say Route: figure-it-out and load the skill before any other step.",
-      "rationale": "Large cross-cutting work that no playbook fits. The refactor-structure playbook sends large structural work here."
+      "rationale": "Large cross-cutting structural work. The refactor-structure playbook sends it to figure-it-out, and no other playbook fits."
     },
     {
       "id": "swe-route-handoff",
@@ -2628,7 +2606,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Write down where this work stands, so a new session can continue it tomorrow."
+          "content": "Leave notes on this work for whoever picks it up tomorrow: what is done, what is left, and what to watch out for."
         }
       ],
       "fixture": "worker-queue",
@@ -2639,29 +2617,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/handoff",
       "relevant_action": "Say Route: handoff and load the skill before any other step.",
-      "rationale": "The user asks for the state of the work in a file. The pause-safely playbook runs only on an explicit pause."
-    },
-    {
-      "id": "swe-route-how",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "Explain how run_import picks the CSV or JSON adapter and what each stage hands to the next. Do not change anything."
-        }
-      ],
-      "fixture": "pipeline",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/how",
-      "relevant_action": "Say Route: how and load the skill before any other step.",
-      "rationale": "A how-it-works question with no code change. The investigate-question playbook covers a cited answer about why the code is built this way."
+      "rationale": "The user asks for the state of the work in a file for a later session. The pause-safely playbook runs only on an explicit pause, and the ketchup route informs the user, not a new session."
     },
     {
       "id": "swe-route-interview-user",
@@ -2694,7 +2650,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "I am back after a long weekend. Catch me up on where things stand."
+          "content": "I was out for four days. What happened in this repo while I was away?"
         }
       ],
       "fixture": "notification-service",
@@ -2705,7 +2661,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/ketchup",
       "relevant_action": "Say Route: ketchup and load the skill before any other step.",
-      "rationale": "A catch-up after time away. The handoff route writes state for a new session, not for the user."
+      "rationale": "A catch-up for the user after time away. The handoff route writes state for a new session, not for the user."
     },
     {
       "id": "swe-route-reflect",
@@ -2716,7 +2672,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Review the last session for agent mistakes: what did the agents get wrong, and what should change?"
+          "content": "Look back over the last session. Where did the agents waste time or do something I did not want, and what is worth remembering for next time?"
         }
       ],
       "fixture": "harbor-importer",
@@ -2727,7 +2683,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/reflect",
       "relevant_action": "Say Route: reflect and load the skill before any other step.",
-      "rationale": "A review of a session for agent mistakes. The correct route fixes a mistake class the user has just named."
+      "rationale": "A look back over a session for agent mistakes. The correct route fixes a mistake class the user has just named."
     },
     {
       "id": "swe-route-ship-pr",
@@ -2761,7 +2717,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Create this project's verification skill: a reusable way to launch run_import, drive it with real input, and observe the output, plus a map of its features."
+          "content": "I want agents to be able to start run_import on real input and see what it does, without me explaining it each time. Set that up for this repo, and list the features it covers."
         }
       ],
       "fixture": "pipeline",
@@ -2999,7 +2955,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/investigate-question",
       "relevant_action": "Say Playbook: investigate-question and read the playbook before any other step.",
-      "rationale": "A read-only why question with a cited answer. The how route explains how code works and has no why or citation duty."
+      "rationale": "A read-only why question with a cited answer. The diagnose route explains a failure, and nothing here fails."
     },
     {
       "id": "swe-mode-plan-multi-phase",
@@ -3038,7 +2994,7 @@
         },
         {
           "role": "user",
-          "content": "I have to leave now and will be offline for a day. Pause this safely so another session can resume it."
+          "content": "I have to leave now and will be offline for a day. Stop what you are doing without losing anything, so someone can continue this later."
         }
       ],
       "fixture": "worker-queue",
@@ -3116,7 +3072,8 @@
       "expected_skills": [],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:swe-mode"
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "relevant_action": "Answer in one reply without loading a workflow.",
       "rationale": "A closing remark holds no task to route."
@@ -3136,7 +3093,8 @@
       "expected_skills": [],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [
-        "swe:swe-mode"
+        "swe:swe-mode",
+        "swe:go-deeper"
       ],
       "relevant_action": "Answer in one reply without loading a workflow.",
       "rationale": "A quick fact that needs no repository read and no playbook."
@@ -3154,7 +3112,9 @@
       ],
       "fixture": "harbor-importer",
       "expected_skills": [],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:go-deeper"
+      ],
       "forbidden_skills": [
         "swe:swe-mode"
       ],

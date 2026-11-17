@@ -1207,6 +1207,14 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(no_router["unexpected_skills"], ["swe:writing"])
         self.assertIs(no_router["false_activation"], False)
 
+    def test_go_deeper_on_chat_or_a_quick_fact_is_a_false_activation(self):
+        for case_id in ("swe-mode-chat", "swe-mode-quick-fact"):
+            score = self.loads_score("go-deeper-" + case_id, case_id, "swe:go-deeper")
+            self.assertEqual(score["unexpected_skills"], ["swe:go-deeper"], case_id)
+            self.assertIs(score["false_activation"], True, case_id)
+        allowed = self.loads_score("go-deeper-non-software", "swe-mode-non-software", "swe:go-deeper")
+        self.assertEqual(allowed["unexpected_skills"], [])
+
     def test_aggregate_keeps_two_families_of_one_target_apart(self):
         scores = []
         for name, case_id in (("family-new-tests", "TC-01"), ("family-audit", "TA-01")):
