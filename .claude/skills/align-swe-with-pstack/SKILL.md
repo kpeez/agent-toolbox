@@ -30,7 +30,7 @@ path). Run it from the repository root. When `.agents/scratch` is missing, make 
 
 ## Steps
 
-1. `1-check-the-record`: Run `python3 .claude/skills/align-swe-with-pstack/scripts/pstack_sync.py check`.
+1. `1-check-the-record`: Run `uv run .claude/skills/align-swe-with-pstack/scripts/pstack_sync.py check`.
    Fix each problem before you continue. Below, `pstack_sync.py` means this
    script path.
 2. `2-list-changes`: Run `pstack_sync.py status`. It lists the upstream

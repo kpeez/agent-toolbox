@@ -33,7 +33,7 @@ run-specific analysis but do not create additional panels.
 ## Render
 
 ```bash
-python3 <plot_trials.py> <candidate-record-dir> --validate
+uv run <plot_trials.py> <candidate-record-dir> --validate
 uv run <plot_trials.py> <candidate-record-dir>
 ```
 

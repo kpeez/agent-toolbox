@@ -26,7 +26,7 @@ the git common directory or `gh stack` succeeds).
 
    ```bash
    gh pr edit <n> --title "<title>" --body-file <rendered>
-   gh pr view <n> --json body --jq .body | python3 <ship-pr>/scripts/pr_body.py check -
+   gh pr view <n> --json body --jq .body | uv run <ship-pr>/scripts/pr_body.py check -
    ```
 
 3. **Land a fully verified stack.** `gh stack merge` is all-or-nothing and

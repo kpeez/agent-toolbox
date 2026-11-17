@@ -126,7 +126,7 @@ instruction.
    runs `gh pr edit <n> --title "<title>" --body-file <rendered>` on each pull
    request because `gh stack` writes its own titles and bodies, and verifies
    each published body with
-   `gh pr view <n> --json body --jq .body | python3 <ship-pr>/scripts/pr_body.py check -`.
+   `gh pr view <n> --json body --jq .body | uv run <ship-pr>/scripts/pr_body.py check -`.
 6. `6-link-issue`: When the work has an issue, pass
    `--link "Fixes ABC-123"` (or `Fixes #123` on GitHub) to `render` so the tracker's GitHub
    integration moves the issue on merge. Use `Part of ABC-123` when this pull

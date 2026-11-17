@@ -11,7 +11,7 @@ The plan is the deliverable. Do not implement. The verification rule, the verifi
 3-explore-in-subagents: Explore in subagents. Each returns file pointers, conventions, test commands, and entry points, not inlined dumps. (guard-the-context-window)
 4-fill-skeleton: Copy the skeleton into the plan file in the plans directory and fill every placeholder, with one section per PR. Name the execution playbook in How to read this, autopilot-full when the run may merge, autopilot-stack when the operator lands the PRs, or run-program for a standing program. (sequence-verifiable-units)
 5-write-as-how-to: Write the body as one how-to. Appendices hold explanation and reference. Each heading states the task or the finding. No long dashes and no mid-sentence colons. (writing)
-6-run-plan-check: Run `python3 <plugin-root>/scripts/check_plan.py <plan.md>` ([check_plan.py](../../../scripts/check_plan.py)) and fix every line it prints. (encode-lessons-in-structure)
+6-run-plan-check: Run `uv run <plugin-root>/scripts/check_plan.py <plan.md>` ([check_plan.py](../../../scripts/check_plan.py)) and fix every line it prints. (encode-lessons-in-structure)
 7-hand-back: Post the plan path and the check output, then stop. Execution starts on the operator's explicit go, under the playbook the plan names.
 
 Reply: the plan path, the PR ids with their dependencies and the review-gated set, what the prototypes proved and what stays unproven, and the check output. No PR.

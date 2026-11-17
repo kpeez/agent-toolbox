@@ -75,8 +75,8 @@ Read every output yourself before you accept the verdict. If you disagree with t
 The repository also has offline skill-activation evals in [evals/skills/](../../../evals/skills/README.md). They check whether the right skill loads for a request, not whether the result is good. They call no model provider. No activation baseline exists yet. Before a broad release, validate the cases and run the harness tests:
 
 ```text
-python3 evals/skills/skill_eval.py validate
-python3 -m unittest discover -s evals/skills/tests
+uv run evals/skills/skill_eval.py validate
+uv run -m unittest discover -s evals/skills/tests
 ```
 
 ## Fork the plugin

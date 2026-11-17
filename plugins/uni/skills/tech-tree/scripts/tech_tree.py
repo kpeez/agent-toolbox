@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Validate a course tech tree and gate a learner's progress through it.
 
 The graph lives in ``tech-tree.json``; the learner's state lives in

@@ -72,15 +72,15 @@ Run from the repository root with Python 3.10+ and Git. Run output belongs under
 overwritten. The repository already provides its ignored artifacts location.
 
 ```sh
-python3 evals/skills/skill_eval.py validate
-python3 evals/skills/skill_eval.py materialize \
+uv run evals/skills/skill_eval.py validate
+uv run evals/skills/skill_eval.py materialize \
   --case CASE_ID --runtime evals/skills/runtime.offline.json \
   --output artifacts/skill-evals/RUN_ID [--hook-arm {hook-off,hook-on}]
-python3 evals/skills/skill_eval.py capture \
+uv run evals/skills/skill_eval.py capture \
   --run artifacts/skill-evals/RUN_ID --source /absolute/path/to/trace.jsonl \
   --state completed --format synthetic-contract-v1 --evidence-kind synthetic
-python3 evals/skills/skill_eval.py score --run artifacts/skill-evals/RUN_ID
-python3 evals/skills/skill_eval.py aggregate artifacts/skill-evals/*/score.json
+uv run evals/skills/skill_eval.py score --run artifacts/skill-evals/RUN_ID
+uv run evals/skills/skill_eval.py aggregate artifacts/skill-evals/*/score.json
 ```
 
 Replace `CASE_ID` using `cases.json` and `RUN_ID` with a unique name. To score a
@@ -100,7 +100,7 @@ tool flags that the frozen runtime names. [EVIDENCE.md](EVIDENCE.md) names the
 audited probe runs; their `commands.sh` is the reference invocation.
 
 ```sh
-python3 evals/skills/skill_eval.py capture \
+uv run evals/skills/skill_eval.py capture \
   --run artifacts/skill-evals/RUN_ID \
   --source ~/.claude/projects/PROJECT/SESSION_ID.jsonl --state completed \
   --format claude-transcript --plugin-dir /absolute/RUN/inputs/plugins/swe \
@@ -154,10 +154,10 @@ Regenerate both files after you change a skill, a router, a playbook, a hook,
 or an eval case:
 
 ```sh
-python3 evals/skills/facets.py write
+uv run evals/skills/facets.py write
 ```
 
-CI runs `python3 evals/skills/facets.py check`. The check fails when a skill
+CI runs `uv run evals/skills/facets.py check`. The check fails when a skill
 change leaves the map stale. `write` also fails when a playbook step names a
 skill, principle, playbook, or reference that does not exist.
 
@@ -203,7 +203,7 @@ or justify a single pooled efficacy percentage.
 
 ## Verification and next step
 
-`python3 -m unittest discover -s evals/skills/tests` exercises the public CLI with
+`uv run -m unittest discover -s evals/skills/tests` exercises the public CLI with
 synthetic traces and minimal Claude-shaped transcripts. It checks leakage/isolation
 of fixtures, strict body identity, ordering, incomplete/failed reads, missing
 native evidence, aggregate denominators, and the Claude load proofs and message

@@ -11,7 +11,7 @@ merges, delete the file.
 
 ## Find the file
 
-Run `python3 ../../scripts/handoff.py path --session "${CLAUDE_SESSION_ID}"` in
+Run `uv run ../../scripts/handoff.py path --session "${CLAUDE_SESSION_ID}"` in
 the target repository. Resolve the script from this skill's directory, not the
 current working directory. It creates the plans directory and prints the
 file's path: `<main checkout>/.agents/plans/<branch>.md`, with `/` in the branch

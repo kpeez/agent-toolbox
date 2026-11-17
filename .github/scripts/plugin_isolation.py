@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Fail when a plugin under plugins/ names another plugin's skill or agent.
 
 Each plugin installs alone, so a reference such as `lab:autoresearch` inside

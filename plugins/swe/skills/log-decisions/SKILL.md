@@ -23,7 +23,7 @@ Run this in the target repository. Resolve the script from this skill's
 directory, not the current working directory:
 
 ```bash
-python3 ../../scripts/handoff.py log --session "${CLAUDE_SESSION_ID}" \
+uv run ../../scripts/handoff.py log --session "${CLAUDE_SESSION_ID}" \
   --phase <phase> --decision "<what>" --why "<reason>" \
   --evidence <pointer> [--evidence <pointer> ...] --result "<outcome>"
 ```

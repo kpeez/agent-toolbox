@@ -36,7 +36,7 @@ Large or cross-cutting work, and work you step away from, goes to [`figure-it-ou
 For a long, multi-phase, or unattended run, the [`log-decisions`](../skills/log-decisions/SKILL.md) skill keeps an append-only log next to the handoff file: `<branch>.decisions.jsonl`. Each line is one decision with `ts`, `phase`, `decision`, `why`, `evidence` (a list of pointers), and `result`. Append a row:
 
 ```bash
-python3 plugins/swe/scripts/handoff.py log --phase frame \
+uv run plugins/swe/scripts/handoff.py log --phase frame \
   --decision "Split the migration into 3 PRs" --why "Each PR stays reviewable" \
   --evidence docs/plan.md --result open
 ```

@@ -75,7 +75,7 @@ data is not a replacement for the optimized metric.
 Validate and render through the shared renderer, for example:
 
 ```bash
-python3 <skill-dir>/scripts/plot_trials.py <plot-input-dir> --validate
+uv run <skill-dir>/scripts/plot_trials.py <plot-input-dir> --validate
 uv run <skill-dir>/scripts/plot_trials.py <plot-input-dir> --out <run-directory>/autoresearch-run.png
 ```
 
@@ -112,8 +112,8 @@ an archive.
 Use `scripts/cleanup.py` for archive mechanics:
 
 ```bash
-python3 <skill-dir>/scripts/cleanup.py <run-directory>
-python3 <skill-dir>/scripts/cleanup.py <run-directory> --apply --acknowledge-stopped-run
+uv run <skill-dir>/scripts/cleanup.py <run-directory>
+uv run <skill-dir>/scripts/cleanup.py <run-directory> --apply --acknowledge-stopped-run
 ```
 
 The first command inspects readiness without changing the run. Use the second

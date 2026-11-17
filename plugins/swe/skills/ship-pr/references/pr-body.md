@@ -18,7 +18,7 @@ template:
 | `blast_radius.md` | One word, then optional ramifications. See [Risk](#risk). |
 
 ```bash
-python3 <ship-pr>/scripts/pr_body.py render <slot-folder> --link "Fixes ABC-123" -o body.md
+uv run <ship-pr>/scripts/pr_body.py render <slot-folder> --link "Fixes ABC-123" -o body.md
 gh pr create --draft --title "<title>" --body-file body.md
 ```
 

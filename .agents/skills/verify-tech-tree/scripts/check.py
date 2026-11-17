@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Explore every order of learner events on the real tech-tree code.
 
 Breadth-first search over the states that ``tech_tree.py`` reaches on the

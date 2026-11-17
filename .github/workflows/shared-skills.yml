@@ -13,6 +13,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v10.3.3
       - name: Shared skills are identical in every plugin
         run: |
           # Each line: a skill folder that swe, lab, and uni each carry.
@@ -27,7 +28,7 @@ jobs:
           done
           exit $status
       - name: No plugin names another plugin's skills
-        run: python3 .github/scripts/plugin_isolation.py
+        run: uv run .github/scripts/plugin_isolation.py
       - name: Antigravity rules match the session-start hook
         run: |
           # Antigravity CLI skips hooks/hooks.json and loads rules/AGENTS.md
@@ -41,4 +42,4 @@ jobs:
           done
           exit $status
       - name: Eval facet map matches the skill sources
-        run: python3 evals/skills/facets.py check
+        run: uv run evals/skills/facets.py check

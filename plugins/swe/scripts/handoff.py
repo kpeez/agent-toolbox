@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Find handoff files, and save each compaction's summary into one.
 
 A handoff file holds the current state of one piece of work, so a new session
@@ -18,7 +22,7 @@ to the handoff file with the same stem and ``.decisions.jsonl``. Each line holds
 ``ts``, ``phase``, ``decision``, ``why``, ``evidence`` (a list of pointers), and
 ``result``. The ``log-decisions`` skill says when to write a row.
 
-Usage: python3 handoff.py {dir,path,log,hook} --help
+Usage: uv run handoff.py {dir,path,log,hook} --help
 """
 
 import argparse

@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Build a pull-request body from templates/pr-body.md, or check a published one.
 
 render: fill each {slot} of the template from <slot>.md in a folder. The agent
@@ -250,7 +254,7 @@ def repo_has_own_template(cwd):
 
 def block(reason):
     script = Path(__file__).resolve()
-    print(f"PR body blocked by ship-pr: {reason}\nRender: python3 {script} render <slot-folder> -o body.md", file=sys.stderr)
+    print(f"PR body blocked by ship-pr: {reason}\nRender: uv run {script} render <slot-folder> -o body.md", file=sys.stderr)
     return 2
 
 

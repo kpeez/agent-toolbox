@@ -16,7 +16,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PLUGIN_ROOT\"/scripts/handoff.py hook",
+            "command": "uv run --script \"$CLAUDE_PLUGIN_ROOT\"/scripts/handoff.py hook",
             "timeout": 10
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "python3 \"$CLAUDE_PLUGIN_ROOT\"/skills/ship-pr/scripts/pr_body.py hook",
+            "command": "uv run --script \"$CLAUDE_PLUGIN_ROOT\"/skills/ship-pr/scripts/pr_body.py hook",
             "timeout": 10
           }
         ]

@@ -4,7 +4,7 @@ Plans and handoffs live in `<main checkout>/.agents/plans/`, shared by the
 repository's worktrees and kept out of Git. Resolve
 `plugins/swe/scripts/handoff.py` from the installed SWE plugin, not from the
 current skill or repository directory. Run
-`python3 <plugin-root>/scripts/handoff.py dir` in the target repository to
+`uv run <plugin-root>/scripts/handoff.py dir` in the target repository to
 create and print the directory. Do not use `.agents/docs/` or a notes vault for
 plans.
 

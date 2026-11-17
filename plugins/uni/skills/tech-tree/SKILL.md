@@ -16,7 +16,7 @@ The course folder holds two files. [GRAPH-FORMAT.md](GRAPH-FORMAT.md) defines bo
 Run the script for every gate, placement, and result. Do not track state by hand:
 
 ```text
-python3 -I <this skill>/scripts/tech_tree.py --graph <course>/tech-tree.json <command>
+uv run <this skill>/scripts/tech_tree.py --graph <course>/tech-tree.json <command>
 ```
 
 Commands: `validate`, `mermaid`, `frontier`, `next`, `record <id> pass|fail [--helped]`, `place <id> pass|fail`, `status`. The options `--graph`, `--progress`, and `--date YYYY-MM-DD` (today) go before or after the command.

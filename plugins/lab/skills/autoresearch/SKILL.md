@@ -87,7 +87,7 @@ record the crash and discard it.
 Use the recorded ledger script:
 
 ```bash
-python3 <ledger.py> append <record-dir> \
+uv run <ledger.py> append <record-dir> \
   --commit <full-sha> --status keep --description "exp000-baseline" \
   --metric val_bpb=0.9979 --metric peak_vram_gb=44.0
 ```

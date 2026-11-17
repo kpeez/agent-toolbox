@@ -9820,7 +9820,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "6-run-plan-check: Run `python3 <plugin-root>/scripts/check_plan.py <plan.md>` ([check_plan.py](../../../scripts/check_plan.py)) and fix every line it prints. (encode-lessons-in-structure)",
+      "source_text": "6-run-plan-check: Run `uv run <plugin-root>/scripts/check_plan.py <plan.md>` ([check_plan.py](../../../scripts/check_plan.py)) and fix every line it prints. (encode-lessons-in-structure)",
       "subject": "plan-multi-phase"
     },
     {

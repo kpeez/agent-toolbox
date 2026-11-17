@@ -27,7 +27,7 @@ sessions of unrelated projects.
   resolved from this skill's directory:
 
   ```bash
-  python3 ../recall/scripts/transcripts.py --days 1 --subagents | head -10
+  uv run ../recall/scripts/transcripts.py --days 1 --subagents | head -10
   ```
 
   Open the first user message of each candidate and take the file that holds

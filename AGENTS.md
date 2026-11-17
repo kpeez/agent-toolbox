@@ -8,6 +8,10 @@
   A minor or major bump requires explicit permission in the request;
   precedent in the git history is not permission.
 - Keep every marketplace catalog entry pointed at a plugin folder that exists.
+- Run every repo and plugin Python script with `uv run`, never `python3`. Each
+  script starts with `#!/usr/bin/env -S uv run --script` and a PEP 723 header
+  that sets `requires-python = ">=3.11"` and lists its dependencies. The
+  header keeps `uv run` from syncing the project that a hook runs in.
 - `plugins/` holds plugins every supported agent can use. `claude-mods/` holds
   Claude Code function-hook mods, which only the Claude catalog lists.
 - Keep every skill reference pointed at a resource or script that exists in
@@ -16,7 +20,7 @@
   skill into each plugin, as with `go-deeper`, only when every plugin needs
   it, it is not specific to one domain, and a few inline lines cannot replace
   it.
-  `python3 .github/scripts/plugin_isolation.py` catches `<plugin>:<name>`
+  `uv run .github/scripts/plugin_isolation.py` catches `<plugin>:<name>`
   references; a bare name such as `interview-user` in lab is yours to catch.
 - `go-deeper` lives in `plugins/swe`, `plugins/lab`, and `plugins/uni` so each
   plugin installs alone. Edit all three copies together; the `shared-skills`
@@ -32,7 +36,7 @@
 - For plugin packaging changes, parse the affected manifests, catalogs, and hooks
   as direct JSON and verify version, catalog, and resource-reference invariants.
 - For changed shell or runtime scripts, run `bash -n`, Python help/usage checks,
-  and `python3 -m py_compile` as applicable. Do not run every repository check
+  and `uv run -m py_compile` as applicable. Do not run every repository check
   for a docs-only change.
 - Run local provider smoke checks against the checked-out catalogs, manifests,
   and hooks without network access when those surfaces change. A broad plugin
@@ -41,7 +45,7 @@
 - Do not require `pyproject.toml`, a lockfile, or a test suite.
 - After a change to `plugins/uni/skills/tech-tree/scripts/tech_tree.py` or
   the rules in its `SKILL.md` or `GRAPH-FORMAT.md`, run
-  `python3 .agents/skills/verify-tech-tree/scripts/check.py`. It checks the
+  `uv run .agents/skills/verify-tech-tree/scripts/check.py`. It checks the
   gate and scheduling rules in every reachable state. The
   `verify-tech-tree` skill says what it covers. Claude Code sees that skill
   through an uncommitted link; make it once with

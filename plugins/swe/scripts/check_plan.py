@@ -1,4 +1,8 @@
-#!/usr/bin/env python3
+#!/usr/bin/env -S uv run --script
+# /// script
+# requires-python = ">=3.11"
+# dependencies = []
+# ///
 """Check a multi-phase plan against the plan-multi-phase skeleton.
 
 Prints one summary line per PR section, then one line per problem on stderr

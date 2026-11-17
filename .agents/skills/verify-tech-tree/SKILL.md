@@ -22,7 +22,7 @@ Each rule holds in every state that the events can reach:
 From the repository root:
 
 ```sh
-python3 .agents/skills/verify-tech-tree/scripts/check.py
+uv run .agents/skills/verify-tech-tree/scripts/check.py
 ```
 
 It needs Python 3 and nothing else. It takes about one minute. It exits 0 only
