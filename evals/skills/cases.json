@@ -2967,7 +2967,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "We decided: keep display_name for two releases, add localized_names beside it, and backfill with a script. Write the plan for the migration across stacked PRs, as a checklist an owner can run box by box. Do not implement."
+          "content": "The README calls the design and the verification approach open, but I have settled both: keep display_name for two releases, add localized_names beside it, and backfill with a script. Verify each step by running the export command and both reports before and after it. Write the plan for the migration across stacked PRs, as a checklist an owner can run box by box. Do not implement."
         }
       ],
       "fixture": "catalog-migration",
@@ -2978,7 +2978,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/plan-multi-phase",
       "relevant_action": "Say Playbook: plan-multi-phase and read the playbook before any other step.",
-      "rationale": "The plan is the deliverable and the decisions are made. The interview-user route would apply if the decisions were open."
+      "rationale": "The plan is the deliverable and the user has settled the open decisions that the fixture README lists, so the request and the README agree. The interview-user route would apply if the decisions were open."
     },
     {
       "id": "swe-mode-pause-safely",
