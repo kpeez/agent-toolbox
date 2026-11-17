@@ -16,6 +16,6 @@ Raw results come before summaries. A new analysis is exploratory unless a writte
 8-rule-out-rivals: List the other explanations, such as leakage, contamination, a metric artifact, or a confound, and mark each as ruled out or open. Check the Rivals section. (claim-checklist)
 9-make-figures: Make one figure or table for each result you report, with its spread shown. (making-plots)
 10-grade-the-conclusion: Give the conclusion one grade, and state the claim at the scope the evidence supports. (grade-the-evidence)
-11-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)
+11-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the "Procedure skills" list of `research-context`, marked proposed. (encode-the-procedure)
 
 Reply: the conclusion with its grade, numbers with run count and spread, rivals ruled out and still open, figure paths, the next experiment, and any project skill proposed or updated.

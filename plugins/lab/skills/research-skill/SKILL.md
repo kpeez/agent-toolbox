@@ -60,7 +60,7 @@ When the target is unclear and several skills could fit, ask which one, and name
 
    Done when each check has a source and a form (assertion or question).
 
-4. `4-build-the-known-good-run`: Choose one of two forms. The first is a small real input with its recorded expected output. The second is simulated data with a planted, known answer that the procedure must recover; see [simulate-before-you-trust](../principle-simulate-before-you-trust/SKILL.md). A null input that must show no effect is the strongest form. Keep the input small enough to commit. Store it in the skill folder.
+4. `4-build-the-known-good-run`: Choose one of three forms. The first is a small real input with its recorded expected output. The second is simulated data with a planted, known answer that the procedure must recover; see [simulate-before-you-trust](../principle-simulate-before-you-trust/SKILL.md). The third, and strongest, is a null input that must show no effect. Keep the input small enough to commit. Store it in the skill folder.
 
    Done when one command runs the procedure on this input and compares the result with the expected answer.
 
@@ -78,10 +78,12 @@ When the target is unclear and several skills could fit, ask which one, and name
 
 ## Maintain mode
 
+Maintain only skills in the "Procedure skills" list of `research-context`, and leave every other skill under `.agents/skills/` alone.
+
 1. Rerun the known-good run. A failure is a finding.
 2. Compare the skill's commands, paths, and conventions with the pipeline as it is now.
 3. Fold each new user correction into the skill as a check or a gotcha, in the user's terms.
-4. End with one outcome for each skill, and say which: unchanged, updated, or retired. Remove a retired skill from the `research-context` list.
+4. End with one outcome for each skill, and say which: unchanged, updated, or retired. Delete a retired skill's folder and remove it from the "Procedure skills" list in `research-context`.
 
 Edit only project skill folders. When the pipeline's output looks wrong, report it. Do not hide it with a skill edit.
 

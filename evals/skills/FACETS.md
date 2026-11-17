@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-405 of 479 facets are always required and have no scoring case.
+407 of 483 facets are always required and have no scoring case.
 
 ## Legend
 
@@ -58,7 +58,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | route | 0 | 0 | 49 | 49 |
 | route-load | 0 | 20 | 0 | 20 |
 | playbook-read | 0 | 29 | 0 | 29 |
-| step-load | 0 | 255 | 10 | 265 |
+| step-load | 0 | 259 | 10 | 269 |
 | trigger-load | 0 | 19 | 2 | 21 |
 | principle-read | 0 | 29 | 0 | 29 |
 | router-contract | 0 | 0 | 25 | 25 |
@@ -607,7 +607,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 5-codify-the-top-procedure | codify-procedure | playbook | full-read | always | - |
 | 5-codify-the-top-procedure | encode-the-procedure | principle | full-read | transitive | codify-procedure/1-name-the-procedure |
 | 5-codify-the-top-procedure | research-context | project-skill | skill-call-or-full-read | transitive, conditional | codify-procedure/2-load-the-context |
-| 5-codify-the-top-procedure | research-skill | visible-skill | skill-call | transitive | codify-procedure/6-write-the-skill, codify-procedure/8-register-the-skill |
+| 5-codify-the-top-procedure | research-skill | visible-skill | skill-call | transitive | codify-procedure/3-run-it-as-is, codify-procedure/6-write-the-skill, codify-procedure/7-prove-the-skill, codify-procedure/8-register-the-skill |
 | 5-codify-the-top-procedure | simulate-before-you-trust | principle | full-read | transitive | codify-procedure/5-build-the-known-good-run |
 | 6-list-the-rest | research-skill | visible-skill | skill-call | always | - |
 
@@ -619,16 +619,20 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 2-load-the-context | bootstrap-project | playbook | full-read | conditional | - |
 | 2-load-the-context | research-context | project-skill | skill-call-or-full-read | conditional | - |
 | 2-load-the-context | research-skill | visible-skill | skill-call | transitive, conditional | bootstrap-project/1-survey-the-repo, bootstrap-project/2-write-research-context |
+| 3-run-it-as-is | research-skill | visible-skill | skill-call | always | - |
 | 4-collect-validity-checks | claim-checklist | reference | full-read | always | - |
 | 5-build-the-known-good-run | simulate-before-you-trust | principle | full-read | always | - |
 | 6-write-the-skill | research-skill | visible-skill | skill-call | always | - |
+| 7-prove-the-skill | research-skill | visible-skill | skill-call | always | - |
 | 8-register-the-skill | research-skill | visible-skill | skill-call | always | - |
 
 ### Playbook `maintain-project-skills` step loads
 
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
-| 1-list-project-skills | research-context | project-skill | skill-call-or-full-read | always | - |
+| 1-list-project-skills | bootstrap-project | playbook | full-read | conditional | - |
+| 1-list-project-skills | research-context | project-skill | skill-call-or-full-read | conditional | - |
+| 2-rerun-known-good-runs | simulate-before-you-trust | principle | full-read | always | - |
 | 3-compare-with-the-pipeline | research-context | project-skill | skill-call-or-full-read | always | - |
 | 4-fix-or-retire | research-skill | visible-skill | skill-call | always | - |
 | 5-refresh-the-context | research-skill | visible-skill | skill-call | always | - |
@@ -712,7 +716,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|---|---|
 | lab | encode-the-procedure | always | no | step-load/lab/analyze-results/11-feed-the-flywheel/encode-the-procedure<br>step-load/lab/appraise-source/9-feed-the-flywheel/encode-the-procedure<br>step-load/lab/bootstrap-project/4-rank-procedures/encode-the-procedure<br>step-load/lab/bootstrap-project/5-codify-the-top-procedure/encode-the-procedure<br>step-load/lab/codify-procedure/1-name-the-procedure/encode-the-procedure<br>step-load/lab/review-literature/7-feed-the-flywheel/encode-the-procedure<br>step-load/lab/run-experiment/9-feed-the-flywheel/encode-the-procedure<br>trigger-load/lab/lab-mode/encode-the-procedure |
 | lab | grade-the-evidence | always | no | step-load/lab/analyze-results/10-grade-the-conclusion/grade-the-evidence<br>step-load/lab/appraise-source/8-grade-each-claim/grade-the-evidence<br>step-load/lab/review-literature/3-screen-sources/grade-the-evidence<br>step-load/lab/review-literature/4-appraise-key-sources/grade-the-evidence<br>step-load/lab/review-literature/5-synthesize-by-claim/grade-the-evidence<br>step-load/lab/run-experiment/7-analyze/grade-the-evidence |
-| lab | simulate-before-you-trust | always | no | step-load/lab/analyze-results/4-check-the-pipeline/simulate-before-you-trust<br>step-load/lab/bootstrap-project/5-codify-the-top-procedure/simulate-before-you-trust<br>step-load/lab/codify-procedure/5-build-the-known-good-run/simulate-before-you-trust<br>step-load/lab/run-experiment/4-pilot-small/simulate-before-you-trust<br>step-load/lab/run-experiment/7-analyze/simulate-before-you-trust<br>trigger-load/lab/lab-mode/simulate-before-you-trust |
+| lab | simulate-before-you-trust | always | no | step-load/lab/analyze-results/4-check-the-pipeline/simulate-before-you-trust<br>step-load/lab/bootstrap-project/5-codify-the-top-procedure/simulate-before-you-trust<br>step-load/lab/codify-procedure/5-build-the-known-good-run/simulate-before-you-trust<br>step-load/lab/maintain-project-skills/2-rerun-known-good-runs/simulate-before-you-trust<br>step-load/lab/run-experiment/4-pilot-small/simulate-before-you-trust<br>step-load/lab/run-experiment/7-analyze/simulate-before-you-trust<br>trigger-load/lab/lab-mode/simulate-before-you-trust |
 | lab | write-the-decision-first | always | no | step-load/lab/analyze-results/2-state-the-decision/write-the-decision-first<br>step-load/lab/run-experiment/1-write-the-decision/write-the-decision-first<br>step-load/lab/run-experiment/8-record-the-result/write-the-decision-first |
 | swe | ancillary-fixes | conditional | yes | - |
 | swe | attack-the-premise | always | no | step-load/swe/fix-bug/3-confirm-mechanism/attack-the-premise |

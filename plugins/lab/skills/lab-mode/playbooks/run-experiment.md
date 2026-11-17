@@ -14,6 +14,6 @@ Decide before you run. Give the baseline the same tuning as the change. Record a
 6-run-with-provenance: Run the full experiment, and link each result to its command, config, commit, and data version. Check the Provenance section. (claim-checklist)
 7-analyze: Run steps 3 to 10 of analyze-results on the results. (analyze-results)
 8-record-the-result: Record the result against the decision rule, with each deviation from the written plan. Record null and negative results too. Check the Provenance section. (claim-checklist, write-the-decision-first)
-9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)
+9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the "Procedure skills" list of `research-context`, marked proposed. (encode-the-procedure)
 
 Reply: hypothesis, decision rule, result against the rule with run count and spread, grade, artifact paths, deviations from the plan, any project skill proposed or updated.

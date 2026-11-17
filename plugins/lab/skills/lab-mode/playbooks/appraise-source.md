@@ -14,6 +14,6 @@ The work is read-only. It writes no memo file unless the user asks for one. Judg
 6-read-examples: Read the qualitative examples and any released data or outputs, and note each case that fits or breaks a claim. Check the Raw data section. (claim-checklist)
 7-search-follow-ups: Search forward citations, replications, critiques, and public reviews, and record what each finds for each claim. Check the Contrary evidence section. (claim-checklist)
 8-grade-each-claim: Give each claim one grade from the strength and independence of its evidence. (grade-the-evidence)
-9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)
+9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the "Procedure skills" list of `research-context`, marked proposed. (encode-the-procedure)
 
 Reply: for each claim, the claim as stated, the claim as supported, its grade, and its main weakness; then what evidence would change the verdict, and any project skill proposed or updated.

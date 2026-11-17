@@ -1,6 +1,6 @@
 ---
 name: principle-encode-the-procedure
-description: "When you do a project procedure a second time, or the user corrects how you did it, make or update a project skill so the next run starts from it."
+description: "When you do a project procedure a second time, or the user corrects how you did it, propose or update a project skill."
 disable-model-invocation: true
 ---
 

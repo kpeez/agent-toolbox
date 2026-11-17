@@ -959,7 +959,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge.",
+      "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge. For your own results, use `analyze-results`.",
       "subject": "appraise-source"
     },
     {
@@ -1530,7 +1530,7 @@
       "router_only": false,
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`encode-the-procedure`: you do a project procedure a second time, or the user corrects how you did it. Make or update a project skill so the next run starts from it.",
+      "source_text": "`encode-the-procedure`: you do a project procedure a second time, or the user corrects how you did it. Propose or update a project skill.",
       "subject": "encode-the-procedure"
     },
     {
@@ -1576,6 +1576,7 @@
         "step-load/lab/analyze-results/4-check-the-pipeline/simulate-before-you-trust",
         "step-load/lab/bootstrap-project/5-codify-the-top-procedure/simulate-before-you-trust",
         "step-load/lab/codify-procedure/5-build-the-known-good-run/simulate-before-you-trust",
+        "step-load/lab/maintain-project-skills/2-rerun-known-good-runs/simulate-before-you-trust",
         "step-load/lab/run-experiment/4-pilot-small/simulate-before-you-trust",
         "step-load/lab/run-experiment/7-analyze/simulate-before-you-trust",
         "trigger-load/lab/lab-mode/simulate-before-you-trust"
@@ -2771,7 +2772,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge.",
+      "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge. For your own results, use `analyze-results`.",
       "subject": "appraise-source"
     },
     {
@@ -4617,7 +4618,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "11-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)",
+      "source_text": "11-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "analyze-results"
     },
     {
@@ -5008,7 +5009,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)",
+      "source_text": "9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "appraise-source"
     },
     {
@@ -5234,7 +5235,9 @@
       "source_text": "5-codify-the-top-procedure: Run the playbook on the top procedure. A skill for it exists at the end. (codify-procedure)",
       "subject": "bootstrap-project",
       "target_handles": [
+        "codify-procedure/3-run-it-as-is",
         "codify-procedure/6-write-the-skill",
+        "codify-procedure/7-prove-the-skill",
         "codify-procedure/8-register-the-skill"
       ],
       "via": "step-load/lab/bootstrap-project/5-codify-the-top-procedure/codify-procedure"
@@ -5393,6 +5396,29 @@
         "negative": [],
         "positive": []
       },
+      "evidence": "skill-call",
+      "handle": "3-run-it-as-is",
+      "id": "step-load/lab/codify-procedure/3-run-it-as-is/research-skill",
+      "kind": "step-load",
+      "name": "research-skill",
+      "name_class": "visible-skill",
+      "path": null,
+      "plugin": "lab",
+      "required_by": {
+        "locator": "3-run-it-as-is",
+        "path": "plugins/lab/skills/lab-mode/playbooks/codify-procedure.md"
+      },
+      "requirement": "always",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "3-run-it-as-is: Run the commands on the current checkout. For a long pipeline, use the smallest real input that goes through every stage. When one breaks, fix it and record the fix. When you cannot fix it, report the break and stop. (research-skill)",
+      "subject": "codify-procedure"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
       "evidence": "full-read",
       "handle": "4-collect-validity-checks",
       "id": "step-load/lab/codify-procedure/4-collect-validity-checks/claim-checklist",
@@ -5463,6 +5489,29 @@
         "positive": []
       },
       "evidence": "skill-call",
+      "handle": "7-prove-the-skill",
+      "id": "step-load/lab/codify-procedure/7-prove-the-skill/research-skill",
+      "kind": "step-load",
+      "name": "research-skill",
+      "name_class": "visible-skill",
+      "path": null,
+      "plugin": "lab",
+      "required_by": {
+        "locator": "7-prove-the-skill",
+        "path": "plugins/lab/skills/lab-mode/playbooks/codify-procedure.md"
+      },
+      "requirement": "always",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "7-prove-the-skill: Follow the skill's own text, and nothing else, on real data. Include its known-good run. Fix each gap you find, then repeat until the run passes. (research-skill)",
+      "subject": "codify-procedure"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "skill-call",
       "handle": "8-register-the-skill",
       "id": "step-load/lab/codify-procedure/8-register-the-skill/research-skill",
       "kind": "step-load",
@@ -5485,6 +5534,29 @@
         "negative": [],
         "positive": []
       },
+      "evidence": "full-read",
+      "handle": "1-list-project-skills",
+      "id": "step-load/lab/maintain-project-skills/1-list-project-skills/bootstrap-project",
+      "kind": "step-load",
+      "name": "bootstrap-project",
+      "name_class": "playbook",
+      "path": "skills/lab-mode/playbooks/bootstrap-project.md",
+      "plugin": "lab",
+      "required_by": {
+        "locator": "1-list-project-skills",
+        "path": "plugins/lab/skills/lab-mode/playbooks/maintain-project-skills.md"
+      },
+      "requirement": "conditional",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "1-list-project-skills: When no `research-context` skill exists, route to `bootstrap-project` and stop. Otherwise, list each entry of the \"Procedure skills\" list in `research-context`, and give each its last recorded known-good result. Leave every other skill under `.agents/skills/` alone. (bootstrap-project, research-context)",
+      "subject": "maintain-project-skills"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
       "evidence": "skill-call-or-full-read",
       "handle": "1-list-project-skills",
       "id": "step-load/lab/maintain-project-skills/1-list-project-skills/research-context",
@@ -5497,10 +5569,33 @@
         "locator": "1-list-project-skills",
         "path": "plugins/lab/skills/lab-mode/playbooks/maintain-project-skills.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "invisible",
-      "source_text": "1-list-project-skills: List each entry of the \"Procedure skills\" list in `research-context`. Give each its last recorded known-good result. Leave every other skill under `.agents/skills/` alone. (research-context)",
+      "source_text": "1-list-project-skills: When no `research-context` skill exists, route to `bootstrap-project` and stop. Otherwise, list each entry of the \"Procedure skills\" list in `research-context`, and give each its last recorded known-good result. Leave every other skill under `.agents/skills/` alone. (bootstrap-project, research-context)",
+      "subject": "maintain-project-skills"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "full-read",
+      "handle": "2-rerun-known-good-runs",
+      "id": "step-load/lab/maintain-project-skills/2-rerun-known-good-runs/simulate-before-you-trust",
+      "kind": "step-load",
+      "name": "simulate-before-you-trust",
+      "name_class": "principle",
+      "path": "skills/principle-simulate-before-you-trust/SKILL.md",
+      "plugin": "lab",
+      "required_by": {
+        "locator": "2-rerun-known-good-runs",
+        "path": "plugins/lab/skills/lab-mode/playbooks/maintain-project-skills.md"
+      },
+      "requirement": "always",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "2-rerun-known-good-runs: Run the known-good run of each live skill on the list. Record pass or fail with the output. (simulate-before-you-trust)",
       "subject": "maintain-project-skills"
     },
     {
@@ -5546,7 +5641,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "4-fix-or-retire: Give each skill one outcome: unchanged, updated, or retired. Rerun the known-good run of each updated skill until it passes. (research-skill)",
+      "source_text": "4-fix-or-retire: Give each skill one outcome: unchanged, updated, or retired. Rerun the known-good run of each updated skill until it passes. Delete each retired skill's folder. (research-skill)",
       "subject": "maintain-project-skills"
     },
     {
@@ -5860,7 +5955,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "7-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)",
+      "source_text": "7-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "review-literature"
     },
     {
@@ -6229,7 +6324,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)",
+      "source_text": "9-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the \"Procedure skills\" list of `research-context`, marked proposed. (encode-the-procedure)",
       "subject": "run-experiment"
     },
     {
@@ -11206,7 +11301,7 @@
     },
     "step-load": {
       "invisible": 10,
-      "recorded": 255
+      "recorded": 259
     },
     "trigger-load": {
       "invisible": 2,

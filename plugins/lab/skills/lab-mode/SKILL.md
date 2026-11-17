@@ -23,8 +23,8 @@ Lab is built around the project's own skills. A project skill holds one
 recurring research procedure of this project: its real commands, the
 domain's validity checks, one known-good run, and the gotchas found so far.
 The `research-skill` skill writes and maintains them. Each research playbook
-ends by asking whether the run should create or update one, so the next run
-on this project starts from it.
+ends by asking whether the run should propose or update one. A proposed skill
+goes in the "Procedure skills" list of `research-context`, marked proposed.
 
 Two project skills have a fixed role:
 
@@ -94,8 +94,7 @@ These hold in every playbook and route.
 ## Principles
 
 - `encode-the-procedure`: you do a project procedure a second time, or the
-  user corrects how you did it. Make or update a project skill so the next
-  run starts from it.
+  user corrects how you did it. Propose or update a project skill.
 - `simulate-before-you-trust`: before you trust a pipeline, an analysis, or a
   metric on real data. Feed it data with a known answer and confirm the
   answer comes back.
@@ -138,7 +137,8 @@ Project:
 
 Research:
 
-- `appraise-source`: one paper, preprint, blog post, or result to judge.
+- `appraise-source`: one paper, preprint, blog post, or result to judge. For
+  your own results, use `analyze-results`.
 - `review-literature`: what a body of work shows on a question, from a
   bounded question to a multi-lane survey.
 - `analyze-results`: results or logs that exist and need a conclusion.

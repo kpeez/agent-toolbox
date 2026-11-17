@@ -12,6 +12,6 @@ The unit of work is the claim, not the paper. Search against the claim as hard a
 4-appraise-key-sources: Give each source that a conclusion rests on to one subagent to run appraise-source steps 2 to 8, and name the claim-checklist sections in each brief. (appraise-source)
 5-synthesize-by-claim: Organize by claim, not by paper. For each claim, give the agreement, the contradictions, the gaps, and a grade. (grade-the-evidence)
 6-write-the-report: Write the report with a bounded question in research, or with a multi-lane survey in deep-research. Finish its citation audit and trace each claim to its primary source. Check the Source and Provenance sections. (research, deep-research, claim-checklist)
-7-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. (encode-the-procedure)
+7-feed-the-flywheel: Ask whether this run repeated a procedure or drew a user correction. If yes, propose or update a project skill, and name it in the reply. Record a proposed skill in the "Procedure skills" list of `research-context`, marked proposed. (encode-the-procedure)
 
 Reply: report path, claims with grades, contradictions, what remains unknown, and any project skill proposed or updated.

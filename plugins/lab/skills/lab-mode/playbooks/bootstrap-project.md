@@ -1,6 +1,6 @@
 # bootstrap-project
 
-Applies when: a research repository with no research-context skill, or a request to set one up.
+Applies when: a request to set up a research project's `research-context` and first procedure skill. A missing `research-context` does not select it by itself; route the task on its own terms.
 
 You own the project's starting kit: one `research-context` skill that is true, and the first procedure skill.
 

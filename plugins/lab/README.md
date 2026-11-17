@@ -1,7 +1,8 @@
 # lab
 
-lab adds research and experiment skills: cited memos and reports, bounded
-experiment loops, and plot guidance.
+lab adds a research router (`lab-mode`) and project skills for recurring
+procedures, alongside cited memos and reports, bounded experiment loops, and
+plot guidance.
 
 ## Install
 
@@ -53,9 +54,10 @@ The Claude Code plugin adds a SessionStart hook with one reminder: for
 research work, such as reading or judging sources, designing or analyzing a
 model experiment, or improving a project's own research skills,
 [`lab-mode`](./skills/lab-mode/SKILL.md) routes the task to a playbook. The
-hook does not load the skill. The agent loads it when a task fits. lab-mode
-then runs [`go-deeper`](./skills/go-deeper/SKILL.md) and tracks each step. A
-plain figure request goes straight to `making-plots`.
+hook tells the agent to load `lab-mode` when a task fits, and does not load
+the skill itself. lab-mode then runs
+[`go-deeper`](./skills/go-deeper/SKILL.md) and tracks each step. A plain
+figure request goes straight to `making-plots`.
 
 agy runs no hooks, but it loads the same reminder from
 [`rules/AGENTS.md`](./rules/AGENTS.md). Codex plugins and the skills-only
@@ -79,8 +81,10 @@ in the project's `.agents/skills/` folder, as the
   counts only after it has run once on real data.
 
 Every research playbook ends with a step that asks two questions. Did this
-run repeat a procedure? Did the user correct one? A yes proposes or updates a
-project skill, so the next run on the project starts from it.
+run repeat a procedure? Did the user correct one? When the answer is yes, the
+step proposes a project skill in the "Procedure skills" list of
+`research-context` (marked proposed) or updates an existing skill, and names it
+in the reply.
 
 ## Playbooks and principles
 
@@ -127,7 +131,7 @@ in place of `/`.
 | Command | Use for |
 | --- | --- |
 | [`/lab:go-deeper <task>`](./skills/go-deeper/SKILL.md) | A task made deeper, not bigger: expert moves, raw sources, real methods, and an outside check. lab-mode runs it at the start of a research task |
-| [`/lab:lab-mode <task>`](./skills/lab-mode/SKILL.md) | Route a research task to its playbook and track each step. The session-start hook reminds the agent of it |
+| [`/lab:lab-mode <task>`](./skills/lab-mode/SKILL.md) | Route a research task to its playbook and track each step. The session-start hook tells the agent to load it |
 | [`/lab:research-skill [procedure, or context]`](./skills/research-skill/SKILL.md) | Create or maintain a project's own research skills: its `research-context` and one skill per recurring procedure |
 | [`/lab:research <question>`](./skills/research/SKILL.md) | One cited memo for a bounded question or a source audit |
 | [`/lab:deep-research <topic>`](./skills/deep-research/SKILL.md) | A multi-lane research program with briefs, lane evidence, and an audited report |

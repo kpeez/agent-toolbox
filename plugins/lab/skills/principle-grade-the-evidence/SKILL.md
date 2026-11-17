@@ -10,8 +10,7 @@ This file defines the grade scale. Every skill and reply uses these four
 grades and no others. Check the grades from the top, and give the first one
 whose every condition holds:
 
-- **`unsupported`**: no traceable evidence, or evidence that contradicts the
-  claim.
+- **`unsupported`**: no traceable evidence.
 - **`strong`**: two or more independent sources agree, each has spread and a
   fair comparison, and no rival explanation is open.
 - **`moderate`**: at least one primary source has spread and a fair
@@ -28,9 +27,12 @@ whose every condition holds:
   one-line reason. Venue, citation count, author reputation,
   and repetition add nothing. Raise a grade only for a new check that passed.
 - **Downgrade for a conflict of interest.** A vendor's own benchmark of its own
-  product drops one grade until an independent source confirms it.
-- **Report both sides of a contradiction.** State each source and grade each on
-  its own quality. Do not average them or pick one without a reason.
+  product drops one grade, never below `weak`, until an independent source
+  confirms it. Add a conflict-of-interest note to the claim.
+- **Report both sides of a contradiction.** Report both sides as separate
+  claims and grade each one on its own evidence. A contradicting source does not
+  downgrade the supported claim. Do not average the sides or pick one without a
+  reason.
 - **Label each inference as an inference.** Grade it no higher than its weakest
   premise.
 
