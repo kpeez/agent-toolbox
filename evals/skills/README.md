@@ -294,7 +294,9 @@ finish where it is. That run is `aborted`: the runner was interrupted, was hard-
 loss leaves a `run.json` with `started_at` and no `ended_at` or `outcome`), or failed while reading the
 stream after the launch. Its `run.json` records `outcome: aborted` and the reason. It is final and
 unscorable. `report.json` counts it under `run_states`. Its spend is the recorded cost, or the
-reservation when it has none (an interrupt or a hard kill records none).
+reservation when it has none (an interrupt or a hard kill records none). An interrupted or hard-killed
+run never reached the escape check, so the runner checks its retained stream once, when it records the
+interrupt or settles the hard kill. An escape there writes `isolation-violation.json` and stops the pilot.
 
 On SIGINT, SIGTERM, or SIGHUP, the runner kills the whole process group of the running `claude`, waits
 for it, records the run as `aborted` with the signal, and exits with a nonzero status. The signals are
@@ -356,7 +358,8 @@ fails when its cost is not known and within the per-run budget. Only `read-outsi
 `playbook-read`, and `budget-ceiling` fail when the agent never attempts the call they judge. `canaries.json` holds the verdicts and the frozen
 configuration digest. `--execute` refuses without it, with a different digest, or with any canary not
 passed or missing. A canary run counts toward `--max-cost-usd`. A canary that launched is never launched
-again, so a failed or interrupted canary needs a new `--pilot-id`.
+again, so a failed or interrupted canary needs a new `--pilot-id`. A canary that a hard kill left
+unjudged has its retained stream checked for escapes; an escape stops the canaries.
 
 ### What still needs approval
 

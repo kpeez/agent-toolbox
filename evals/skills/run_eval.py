@@ -1045,6 +1045,7 @@ def launch_run(
             if stop.started
             else f"interrupted by {stop} before the child started",
         )
+        record_retained_escapes(ctx["root"], run, record)
         se.save_json(run / "run.json", record)
         raise
     record.update(
@@ -1189,18 +1190,33 @@ def may_launch(ctx, failures, budget=None):
     return None
 
 
-def settle_aborted(run):
-    """A launched run without a recorded end is final. Record that once; never launch it again."""
+def record_retained_escapes(root, run, record):
+    """A launch that ended before its checks ran (an interrupt or a hard kill) keeps its stream; check it for escapes."""
+    stream = run / "launch" / "stream.jsonl"
+    found = escapes(stream, run) if stream.is_file() else []
+    if found:
+        record["violations"] = (record.get("violations") or []) + found
+        record_isolation_violation(root, run, "; ".join(found))
+    return found
+
+
+def settle_aborted(root, run):
+    """A launched run without a recorded end is final. Record that once; never launch it again.
+
+    Returns the escapes its retained stream shows."""
     record = se.read_json(run / "run.json")
-    if "outcome" not in record:
-        se.save_json(
-            run / "run.json",
-            record
-            | {
-                "outcome": "aborted",
-                "error": "the runner stopped after the launch and recorded no end",
-            },
-        )
+    if "outcome" in record:
+        return []
+    found = record_retained_escapes(root, run, record)
+    se.save_json(
+        run / "run.json",
+        record
+        | {
+            "outcome": "aborted",
+            "error": "the runner stopped after the launch and recorded no end",
+        },
+    )
+    return found
 
 
 def execute(ctx):
@@ -1208,8 +1224,9 @@ def execute(ctx):
     for item in ctx["plan"]:
         run = ctx["root"] / "runs" / item["rid"]
         state = run_state(run)
-        if state == "aborted":
-            settle_aborted(run)
+        if state == "aborted" and settle_aborted(ctx["root"], run):
+            stop = violation_blocker(ctx["root"])
+            break
         if state in {"scored", "unscorable", "aborted"}:
             skipped += 1
             continue
@@ -1558,6 +1575,14 @@ def run_canary(ctx, name, arm):
         return se.read_json(done)
     result = {"canary": name, "arm": arm}
     if (run / "run.json").is_file():
+        record = se.read_json(run / "run.json")
+        found = [] if "ended_at" in record else record_retained_escapes(ctx["root"], run, record)
+        if found:
+            se.save_json(run / "run.json", record)
+            result |= {
+                "isolation_violation": "; ".join(found),
+                "isolation_violation_record": str(ctx["root"] / "isolation-violation.json"),
+            }
         result |= {
             "passed": False,
             "detail": "launched earlier and never judged; a launched run is never launched again",

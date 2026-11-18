@@ -89,6 +89,11 @@ STUB = textwrap.dedent('''\
                           "authMethod": "api_key", "apiKeySource": "ANTHROPIC_API_KEY"}))
     elif "-p" in argv:
         sid = argv[argv.index("--session-id") + 1]
+        if config.get("stray_write"):
+            print(json.dumps({"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": "s1", "name": "Write", "input": {"file_path": config["stray_write"], "content": "x"}}]}}))
+            print(json.dumps({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": "s1", "is_error": False, "content": "ok"}]}}), flush=True)
         if config.get("sleep"):
             import subprocess, time
             grandchild = subprocess.Popen(["sleep", "60"])
@@ -136,11 +141,6 @@ STUB = textwrap.dedent('''\
                 target_file = Path(config["append_fixture_file"])
                 target_file.write_bytes(target_file.read_bytes() + b"\\nx")
         prompt = argv[argv.index("-p") + 1]
-        if config.get("stray_write"):
-            print(json.dumps({"type": "assistant", "message": {"content": [
-                {"type": "tool_use", "id": "s1", "name": "Write", "input": {"file_path": config["stray_write"], "content": "x"}}]}}))
-            print(json.dumps({"type": "user", "message": {"content": [
-                {"type": "tool_result", "tool_use_id": "s1", "is_error": False, "content": "ok"}]}}))
         if prompt.startswith("CANARY "):
             kind = prompt.split()[1].rstrip(":")
             path = prompt.split("PATH=")[1].split()[0].rstrip(".,") if "PATH=" in prompt else None
@@ -1105,6 +1105,61 @@ class NativeRunner(unittest.TestCase):
         self.assertIn("isolation violation", json.loads(done.stdout)["stopped"])
         self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
         self.assertEqual(len(self.model_calls()), 1)
+
+    def stray_stream(self, path):
+        return "\n".join(json.dumps(e) for e in (
+            {"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": "s1", "name": "Write", "input": {"file_path": path, "content": "x"}}]}},
+            {"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": "s1", "is_error": False, "content": "ok"}]}},
+        )) + "\n"
+
+    def test_a_hard_killed_run_whose_stream_shows_an_escape_stops_the_resume(self):
+        first = self.run_eval("--max-cost-usd", "1")
+        self.assertEqual(first.returncode, 0, first.stderr)
+        victim = next(p for p in sorted((self.root / "runs").iterdir()) if self.records()[p.name]["arm"] == "hook-off")
+        record = json.loads((victim / "run.json").read_text())
+        killed = {k: record[k] for k in ("schema_version", "rid", "case", "arm", "repeat", "launch", "started_at")}
+        (victim / "run.json").write_text(json.dumps(killed))
+        for leftover in ("score.json", "capture.json"):
+            (victim / leftover).unlink(missing_ok=True)
+        stray = str(Path(self.temp.name) / "stray.txt")
+        (victim / "launch" / "stream.jsonl").write_text(self.stray_stream(stray))
+        second = self.run_eval("--max-cost-usd", "1")
+        self.assertEqual(second.returncode, 3, second.stderr)
+        self.assertIn("isolation violation", json.loads(second.stdout)["stopped"])
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        self.assertEqual(len(self.model_calls()), 2)
+
+    def test_an_interrupted_run_whose_stream_shows_an_escape_writes_the_marker(self):
+        pids = self.stub_dir / "pids"
+        self.record_canaries("--max-cost-usd", "1")
+        stray = str(Path(self.temp.name) / "stray.txt")
+        runner = self.start("--max-cost-usd", "1", stub={"sleep": 60, "stray_write": stray})
+        deadline = time.monotonic() + 30
+        while not pids.exists() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        child, grandchild = map(int, pids.read_text().split())
+        self.addCleanup(self.kill_quietly, child, grandchild)
+        runner.send_signal(signal.SIGTERM)
+        runner.communicate(timeout=30)
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        again = self.run_eval("--max-cost-usd", "1")
+        self.assertEqual(again.returncode, 3, again.stderr)
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_a_canary_hard_killed_after_an_escape_stops_the_canaries(self):
+        earlier = self.root / "canaries" / "read-outside"
+        (earlier / "launch").mkdir(parents=True)
+        (earlier / "run.json").write_text(json.dumps({"started_at": "2026-01-01T00:00:00Z"}))
+        stray = str(Path(self.temp.name) / "stray.txt")
+        (earlier / "launch" / "stream.jsonl").write_text(self.stray_stream(stray))
+        done = self.run_eval("--max-cost-usd", "5", mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertIn("isolation violation in canary read-outside", summary["stopped"])
+        self.assertEqual(list(summary["canaries"]), ["read-outside"])
+        self.assertEqual(len(self.model_calls()), 0)
 
     def test_a_plugin_catalog_that_changes_while_it_is_copied_launches_nothing(self):
         self.record_canaries("--max-cost-usd", "1")
