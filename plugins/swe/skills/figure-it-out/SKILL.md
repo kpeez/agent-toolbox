@@ -1,16 +1,16 @@
 ---
 name: figure-it-out
-description: "Design a bespoke, auditable playbook when no swe playbook fits or the work is large: a migration, an ambitious multi-part change, or work a human reviews after stepping away. Scales rigor to the task, runs a hypothesis loop, and logs decisions."
+description: "Design a bespoke, auditable playbook when no swe playbook fits, or when a fix, feature, or refactor is large: a migration, an ambitious multi-part change, or a multi-day program of code changes. Scales rigor to the task, runs a hypothesis loop, and logs decisions."
 argument-hint: "<task>"
 disable-model-invocation: true
 ---
 
 # Figure it out
 
-When the task matches no playbook, design one. The deliverable before any code
-is the workflow itself. It is a sequence of steps that scales rigor to the
-task, runs the scientific method, and leaves a decision trail a human can
-audit after stepping away.
+When a fix, feature, or refactor is large, or the task matches no playbook,
+design one. The deliverable before any code is the workflow itself. It is a
+sequence of steps that scales rigor to the task, runs the scientific method,
+and leaves a decision trail a human can audit after stepping away.
 
 A principle named here is a swe principle skill. Load it by reading
 `../principle-<slug>/SKILL.md`.

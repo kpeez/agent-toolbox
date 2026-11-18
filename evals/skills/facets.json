@@ -1028,7 +1028,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`codify-procedure`: a request to turn a procedure, done in this session or named by the user, into a project skill.",
+      "source_text": "`codify-procedure`: a request to turn a procedure that the user does not state in full into a new project skill: one done or corrected in this session, one the user only names, or one the user gives in part. A procedure that the user states in full goes to `research-skill`.",
       "subject": "codify-procedure"
     },
     {
@@ -1048,7 +1048,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`maintain-project-skills`: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.",
+      "source_text": "`maintain-project-skills`: a request to check, review, or update the project's procedure skills, also when the project has one skill, such as after the pipeline, the data, or the conventions changed. Edits that the user states when nothing upstream changed go to `research-skill`.",
       "subject": "maintain-project-skills"
     },
     {
@@ -1152,7 +1152,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -1505,7 +1505,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`run-autonomously`: a long task to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
       "subject": "run-autonomously"
     },
     {
@@ -2329,7 +2329,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)",
+      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged, and what step 3 landed. (ketchup)",
       "subject": "autopilot-stack"
     },
     {
@@ -2397,7 +2397,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "Write or update one project skill when the procedure is already clear: `research-skill`.",
+      "source_text": "Write one new project skill for a procedure that the user states in full, or make edits that the user states to existing project skills when the pipeline, the data, and the conventions did not change: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -2583,7 +2583,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "or work that no playbook fits goes to `figure-it-out`.",
+      "source_text": "When that playbook is `fix-bug`, `build-feature`, or `refactor-structure` and the code change is large, cross-cutting, or a multi-day program, use `figure-it-out` instead. | Work that no playbook fits also goes to `figure-it-out`.",
       "subject": "figure-it-out"
     },
     {
@@ -2776,7 +2776,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "Write or edit a README, a docs page, or other prose: `writing`.",
+      "source_text": "Write or edit a README, a docs page, or other prose that is not a skill, `AGENTS.md`, `CLAUDE.md`, or a plan of PRs: `writing`.",
       "subject": "writing"
     },
     {
@@ -2944,7 +2944,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`codify-procedure`: a request to turn a procedure, done in this session or named by the user, into a project skill.",
+      "source_text": "`codify-procedure`: a request to turn a procedure that the user does not state in full into a new project skill: one done or corrected in this session, one the user only names, or one the user gives in part. A procedure that the user states in full goes to `research-skill`.",
       "subject": "codify-procedure"
     },
     {
@@ -2972,7 +2972,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`maintain-project-skills`: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.",
+      "source_text": "`maintain-project-skills`: a request to check, review, or update the project's procedure skills, also when the project has one skill, such as after the pipeline, the data, or the conventions changed. Edits that the user states when nothing upstream changed go to `research-skill`.",
       "subject": "maintain-project-skills"
     },
     {
@@ -3047,7 +3047,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "Write or update one project skill when the procedure is already clear: `research-skill`.",
+      "source_text": "Write one new project skill for a procedure that the user states in full, or make edits that the user states to existing project skills when the pipeline, the data, and the conventions did not change: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -3243,8 +3243,9 @@
       },
       "evidence": "assistant-text",
       "handles": [
-        "1-stop-at-verified",
-        "2-stack-only-on-dependency"
+        "1-stack-only-on-dependency",
+        "2-stop-at-verified",
+        "3-land-on-request"
       ],
       "id": "route/swe/autopilot-stack",
       "kind": "route",
@@ -3258,7 +3259,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -3689,7 +3690,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "or work that no playbook fits goes to `figure-it-out`.",
+      "source_text": "When that playbook is `fix-bug`, `build-feature`, or `refactor-structure` and the code change is large, cross-cutting, or a multi-day program, use `figure-it-out` instead. | Work that no playbook fits also goes to `figure-it-out`.",
       "subject": "figure-it-out"
     },
     {
@@ -4111,7 +4112,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`run-autonomously`: a long task to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
       "subject": "run-autonomously"
     },
     {
@@ -4319,7 +4320,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "Write or edit a README, a docs page, or other prose: `writing`.",
+      "source_text": "Write or edit a README, a docs page, or other prose that is not a skill, `AGENTS.md`, `CLAUDE.md`, or a plan of PRs: `writing`.",
       "subject": "writing"
     },
     {
@@ -5634,7 +5635,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "1-name-the-procedure: Write the inputs, the outputs, the decisions, and the real commands from this session. (encode-the-procedure)",
+      "source_text": "1-name-the-procedure: Write the inputs, the outputs, the decisions, and the real commands from this session. For a procedure that did not run in this session, write the commands the user gave or that the repository holds; step 3 proves them. (encode-the-procedure)",
       "subject": "codify-procedure"
     },
     {
@@ -7119,45 +7120,22 @@
         "negative": [],
         "positive": []
       },
-      "evidence": "full-read",
-      "handle": "1-stop-at-verified",
-      "id": "step-load/swe/autopilot-stack/1-stop-at-verified/autopilot-full",
-      "kind": "step-load",
-      "name": "autopilot-full",
-      "name_class": "playbook",
-      "path": "skills/swe-mode/playbooks/autopilot-full.md",
-      "plugin": "swe",
-      "required_by": {
-        "locator": "1-stop-at-verified",
-        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
-      },
-      "requirement": "always",
-      "scope": "delegate-allowed",
-      "scorer": "recorded",
-      "source_text": "1-stop-at-verified: In place of autopilot-full step 8, stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. (autopilot-full)",
-      "subject": "autopilot-stack"
-    },
-    {
-      "cases": {
-        "negative": [],
-        "positive": []
-      },
       "evidence": "skill-call",
-      "handle": "2-stack-only-on-dependency",
-      "id": "step-load/swe/autopilot-stack/2-stack-only-on-dependency/ship-pr",
+      "handle": "1-stack-only-on-dependency",
+      "id": "step-load/swe/autopilot-stack/1-stack-only-on-dependency/ship-pr",
       "kind": "step-load",
       "name": "ship-pr",
       "name_class": "visible-skill",
       "path": null,
       "plugin": "swe",
       "required_by": {
-        "locator": "2-stack-only-on-dependency",
+        "locator": "1-stack-only-on-dependency",
         "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
       },
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
+      "source_text": "1-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Each child's owner builds on its parent's branch, not on trunk, and rebases onto that branch in autopilot-full step 3. Subagents commit in their own worktrees and never push or open PRs. When every owner reports its code-ready commit, the coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. (ship-pr, ship-stack)",
       "subject": "autopilot-stack"
     },
     {
@@ -7166,21 +7144,67 @@
         "positive": []
       },
       "evidence": "full-read",
-      "handle": "2-stack-only-on-dependency",
-      "id": "step-load/swe/autopilot-stack/2-stack-only-on-dependency/ship-stack",
+      "handle": "1-stack-only-on-dependency",
+      "id": "step-load/swe/autopilot-stack/1-stack-only-on-dependency/ship-stack",
       "kind": "step-load",
       "name": "ship-stack",
       "name_class": "playbook",
       "path": "skills/swe-mode/playbooks/ship-stack.md",
       "plugin": "swe",
       "required_by": {
-        "locator": "2-stack-only-on-dependency",
+        "locator": "1-stack-only-on-dependency",
         "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
       },
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
+      "source_text": "1-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Each child's owner builds on its parent's branch, not on trunk, and rebases onto that branch in autopilot-full step 3. Subagents commit in their own worktrees and never push or open PRs. When every owner reports its code-ready commit, the coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. (ship-pr, ship-stack)",
+      "subject": "autopilot-stack"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "full-read",
+      "handle": "2-stop-at-verified",
+      "id": "step-load/swe/autopilot-stack/2-stop-at-verified/autopilot-full",
+      "kind": "step-load",
+      "name": "autopilot-full",
+      "name_class": "playbook",
+      "path": "skills/swe-mode/playbooks/autopilot-full.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "2-stop-at-verified",
+        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
+      },
+      "requirement": "always",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "2-stop-at-verified: In place of autopilot-full step 8, run autopilot-full step 6 on each PR at its head in the linked stack, so a child's checks include its parent's code. An owner commits each fix in its worktree on the lowest branch that owns the code, and the coordinator replays the branches above it and pushes the line. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. Stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. A merge request in the user's task is that go. (autopilot-full)",
+      "subject": "autopilot-stack"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "full-read",
+      "handle": "3-land-on-request",
+      "id": "step-load/swe/autopilot-stack/3-land-on-request/ship-stack",
+      "kind": "step-load",
+      "name": "ship-stack",
+      "name_class": "playbook",
+      "path": "skills/swe-mode/playbooks/ship-stack.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "3-land-on-request",
+        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
+      },
+      "requirement": "conditional",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "3-land-on-request: When the user's task asked for the merge, run ship-stack on the handed-off stack. Otherwise skip this step and leave the landing to the operator. (ship-stack)",
       "subject": "autopilot-stack"
     },
     {
@@ -11219,7 +11243,7 @@
     },
     "step-load": {
       "invisible": 9,
-      "recorded": 139,
+      "recorded": 140,
       "scored": 94
     },
     "trigger-load": {
