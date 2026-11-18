@@ -138,7 +138,11 @@ WHOLE_RUNS = {
     ("lab", "bootstrap-project", "5-codify-the-top-procedure"): "codify-procedure"
 }
 EXTRA_ROUTES = {
-    ("swe", "figure-it-out"): "Work that no playbook fits also goes to `figure-it-out`."
+    ("swe", "figure-it-out"): (
+        "When that playbook is `fix-bug`, `build-feature`, or `refactor-structure` and the "
+        "code change is large, cross-cutting, or a multi-day program, use `figure-it-out` instead.",
+        "Work that no playbook fits also goes to `figure-it-out`.",
+    )
 }
 TRIGGER_IGNORE: set[tuple[str, str]] = {
     ("swe", "Read <path>/worker.md before anything else."),
@@ -843,13 +847,14 @@ def router_facets(plugin):
             )
         routes[names[-1]].append(bullet)
     extra = {}
-    for (owner, skill), anchor in EXTRA_ROUTES.items():
+    for (owner, skill), anchors in EXTRA_ROUTES.items():
         if owner != plugin.name:
             continue
-        if norm(anchor) not in text:
-            raise FacetError(
-                f"{rel(router)}: route to {skill} lost its anchor {anchor!r}"
-            )
+        for anchor in anchors:
+            if norm(anchor) not in text:
+                raise FacetError(
+                    f"{rel(router)}: route to {skill} lost its anchor {anchor!r}"
+                )
         if skill not in plugin.visible | plugin.hidden:
             raise FacetError(
                 f"{rel(router)}: extra route names {skill}, which is not a skill"
@@ -858,7 +863,7 @@ def router_facets(plugin):
             raise FacetError(
                 f"{rel(router)}: {skill} is a Single-skill route; drop it from EXTRA_ROUTES"
             )
-        extra[skill] = anchor
+        extra[skill] = " | ".join(anchors)
     for locator, skill, source_text in [
         (f"Single-skill routes: {skill}", skill, " | ".join(texts))
         for skill, texts in routes.items()

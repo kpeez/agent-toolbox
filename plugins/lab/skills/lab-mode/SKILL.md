@@ -132,9 +132,10 @@ Project:
 - `bootstrap-project`: a request to set up a research project's
   `research-context` and first procedure skill. A missing `research-context`
   does not select it by itself; route the task on its own terms.
-- `codify-procedure`: a request to turn a procedure into a new project skill
-  when the procedure was done or corrected in this session, or the user only
-  names it. A procedure that the user states in full goes to `research-skill`.
+- `codify-procedure`: a request to turn a procedure that the user does not
+  state in full into a new project skill: one done or corrected in this
+  session, one the user only names, or one the user gives in part. A
+  procedure that the user states in full goes to `research-skill`.
 - `maintain-project-skills`: a request to check the project's procedure
   skills after the pipeline, the data, or the conventions changed.
 
@@ -149,8 +150,8 @@ Research:
 
 ## Single-skill routes
 
-- Write one project skill for a procedure that the user states in full, or
-  update one existing project skill: `research-skill`.
+- Write one new project skill for a procedure that the user states in full,
+  or update one existing project skill: `research-skill`.
 - Repeated keep-or-discard runs against one metric, or cleanup of such a run:
   `autoresearch`.
 - A result figure or table to make or revise: `making-plots`.

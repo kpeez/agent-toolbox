@@ -27,17 +27,21 @@ read it. Put this file's absolute path in every delegate's brief.
    command. Ask the user only for a choice that no observation can settle.
 4. When one skill owns the whole task, use its line in
    [Single-skill routes](#single-skill-routes).
-5. A queue of PRs to build goes to `autopilot-full` or `autopilot-stack`,
-   also when the user is away.
-6. A large or cross-cutting change, or a multi-day program, goes to
-   `figure-it-out` before you try the playbook list. It writes a bespoke
-   playbook in the same step format. A plan only (`plan-multi-phase`) and a
-   run without stopping to an exit condition that the user names
-   (`run-autonomously`) keep their playbooks at any size.
-7. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
-   fits the whole task. The list runs from narrow to broad.
-8. Work that no playbook fits also goes to `figure-it-out`.
-9. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
+5. A queue of PRs to build goes to `autopilot-full` when the PRs are
+   independent and should merge, and to `autopilot-stack` when they depend
+   on each other or the user lands them. A dependent stack goes to
+   `autopilot-stack` also when the user wants it merged. Landing it is a
+   later `ship-stack` request. This step holds also when the user is away.
+   A request to plan the queue only is not a build. It goes to
+   `plan-multi-phase`.
+6. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
+   fits the whole task. The list runs from narrow to broad. When that
+   playbook is `fix-bug`, `build-feature`, or `refactor-structure` and the
+   code change is large, cross-cutting, or a multi-day program, use
+   `figure-it-out` instead. It writes a bespoke playbook in the same step
+   format.
+7. Work that no playbook fits also goes to `figure-it-out`.
+8. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
    `Route: <skill>. Reason: <one clause>.`
 
 ## Track
@@ -273,7 +277,8 @@ Long runs and sessions:
 - `autopilot-full`: a queue of independent PRs run to merged, one owner per
   PR.
 - `autopilot-stack`: autopilot-full without the merge. Verified PRs the user
-  lands, linked as a stack only where one builds on another.
+  lands, linked as a stack only where one builds on another. PRs that depend
+  on each other come here also when the user wants them merged.
 - `pick-up-session`: resume a prior agent's in-flight work from its handoff
   file, decision log, transcript, or branch.
 - `pause-safely`: stop in-flight work cleanly so a new session can resume it.

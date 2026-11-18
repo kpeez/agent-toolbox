@@ -102,9 +102,11 @@ sequenceDiagram
   Router->>Router: go-deeper rewrites the task
   alt one skill owns the task
     Router->>Steps: route to that skill
-  else a playbook fits
+  else a queue of PRs to build
+    Router->>Steps: copy the autopilot playbook steps
+  else a playbook fits, and the work is not a large code change
     Router->>Steps: copy the playbook steps
-  else large work or no match
+  else a large code change, or no match
     Router->>Steps: figure-it-out writes a bespoke playbook
   end
   loop each step
@@ -125,15 +127,17 @@ rewritten task in this order:
 
 1. When one skill owns the whole task, it routes to that skill. "Explain this
    crash, no fix" goes to `diagnose`, for example.
-2. A queue of PRs to build goes to `autopilot-full` or `autopilot-stack`,
-   also when you are away.
-3. A large or cross-cutting change, or a multi-day program, goes to
-   [`figure-it-out`](./skills/figure-it-out/SKILL.md). It writes a bespoke
-   playbook in the same step format. A plan only, and a run to an exit
-   condition you name, keep their own playbooks at any size.
-4. Otherwise it picks the first playbook whose line fits the whole task. The
+2. A queue of PRs to build goes to `autopilot-full` when the PRs are
+   independent and should merge, and to `autopilot-stack` when they depend
+   on each other or you land them. This holds also when you are away. A
+   request to plan the queue only goes to `plan-multi-phase`.
+3. Otherwise it picks the first playbook whose line fits the whole task. The
    list runs from narrow to broad, so `fix-bug` comes before `build-feature`.
-5. Work that no playbook fits also goes to `figure-it-out`.
+   When that playbook is `fix-bug`, `build-feature`, or `refactor-structure`
+   and the code change is large, cross-cutting, or a multi-day program, it
+   goes to [`figure-it-out`](./skills/figure-it-out/SKILL.md) instead. That
+   skill writes a bespoke playbook in the same step format.
+4. Work that no playbook fits also goes to `figure-it-out`.
 
 The router says its choice in one line, such as
 `Playbook: fix-bug. Reason: a reported defect.` In every step it applies its
@@ -226,7 +230,7 @@ folders and deletes those of merged branches after you confirm that list.
 When you step away, say what done means and go:
 
 ```text
-/swe:swe-mode going to bed. keep going until the migration check reports zero old callers. log your decisions.
+/swe:swe-mode going to bed. keep going until `uv run pytest` passes on python 3.12 and 3.13. log your decisions.
 ```
 
 "going to bed", "run until done", and "don't stop" tell the router to keep

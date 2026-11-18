@@ -7,8 +7,8 @@ This page shows you how to leave an agent on a long task, audit what it decided,
 Give the run a goal, a predicate that can pass or fail, permissions, and a way out:
 
 ```text
-/swe:swe-mode going to bed. migrate every caller to the new parser in a fresh worktree off <base>.
-done means zero old callers, all parser fixtures pass, and the old api is deleted.
+/swe:swe-mode going to bed. work in a fresh worktree off <base>.
+done means `uv run pytest` passes on python 3.12 and 3.13 and the lint check is clean.
 keep a decision log. commit without asking me.
 if you are truly stuck after a few hours, stop and write up why.
 ```
@@ -29,7 +29,7 @@ flowchart TD
 
 A plateau means pivot, not stop. The agent never relaxes the predicate to declare victory. A duration is not a predicate. "Work on this for 4 hours" gives the agent nothing to check.
 
-A large or cross-cutting change, or a multi-day program, goes to [`figure-it-out`](../skills/figure-it-out/SKILL.md), and so does work that no playbook fits. A run to an exit condition you name stays with `run-autonomously` at any size, and stepping away alone does not pick `figure-it-out`. It designs the run's phases before any code and keeps the decision log.
+A large or cross-cutting code change, or a multi-day program of one, goes to [`figure-it-out`](../skills/figure-it-out/SKILL.md) in place of `fix-bug`, `build-feature`, or `refactor-structure`. A migration of every caller to a new API is such a change. Work that no playbook fits also goes to `figure-it-out`. Stepping away alone does not pick it. It designs the run's phases before any code and keeps the decision log.
 
 ## Keep a decision log
 

@@ -1,6 +1,6 @@
 # autopilot-stack
 
-Applies when: a queue of PRs to build and verify with full autonomy, handed to the operator to land ("autopilot, don't merge", "stack them, don't ship", "build the stack, I'll land it").
+Applies when: a queue of PRs to build and verify with full autonomy, handed to the operator to land ("autopilot, don't merge", "stack them, don't ship", "build the stack, I'll land it"). PRs that depend on each other come here also when the user wants them merged. Landing them is a later ship-stack request.
 
 Run autopilot-full, but do not merge. Every loop tick re-reads this file, so each tick sees the no-merge rule.
 
