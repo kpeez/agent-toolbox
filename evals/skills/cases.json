@@ -3160,7 +3160,7 @@
           "content": "wait_for_item in poller.py drops a job that arrives exactly at the timeout. I tried two fixes: reading the clock again after the loop, and moving the pop above the loop condition. Both still fail the boundary check."
         }
       ],
-      "fixture": "worker-queue",
+      "fixture": "worker-queue-boundary",
       "expected_skills": [
         "swe:swe-mode"
       ],
