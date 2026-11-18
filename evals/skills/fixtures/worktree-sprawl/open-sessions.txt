@@ -1,0 +1,4 @@
+Agent sessions open on this machine on 2026-11-16 at 10:00 UTC:
+
+- /work/tally: this session.
+- /work/tally.wt/due-dates: a follow-up on PR 61, started 09:40 and still running.

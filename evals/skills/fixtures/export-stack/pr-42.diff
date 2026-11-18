@@ -1,0 +1,34 @@
+diff --git a/export.py b/export.py
+index 6973f1c..0be40c6 100644
+--- a/export.py
++++ b/export.py
+@@ -1,8 +1,10 @@
++import csv
++
+ HEADER = ["number", "customer", "total"]
+ 
+ 
+ def write_rows(invoices, out):
+-    out.write(",".join(HEADER) + "\n")
++    writer = csv.writer(out, quoting=csv.QUOTE_MINIMAL, lineterminator="\n")
++    writer.writerow(HEADER)
+     for invoice in invoices:
+-        fields = [invoice["number"], invoice["customer"], "%.2f" % (invoice["cents"] / 100)]
+-        out.write(",".join(fields) + "\n")
++        writer.writerow([invoice["number"], invoice["customer"], "%.2f" % (invoice["cents"] / 100)])
+diff --git a/test_export.py b/test_export.py
+index f671459..6f6a6a0 100644
+--- a/test_export.py
++++ b/test_export.py
+@@ -10,6 +10,11 @@ class ExportTests(unittest.TestCase):
+         write_rows([{"number": "INV-2", "customer": "Birch", "cents": 990}], out)
+         self.assertEqual(out.getvalue(), "number,customer,total\nINV-2,Birch,9.90\n")
+ 
++    def test_quotes_a_comma(self):
++        out = io.StringIO()
++        write_rows([{"number": "INV-1", "customer": "Acme, Ltd", "cents": 1205}], out)
++        self.assertIn('"Acme, Ltd"', out.getvalue())
++
+ 
+ if __name__ == "__main__":
+     unittest.main()

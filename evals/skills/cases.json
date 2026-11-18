@@ -2695,6 +2695,106 @@
       "rationale": "A README is prose, which the writing line names. That line excludes a skill, AGENTS.md, CLAUDE.md, and a plan of PRs, which go to author-skill and plan-multi-phase."
     },
     {
+      "id": "swe-route-ship-stack",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "The CSV export stack is finished: PRs 41, 42, and 43, each built on the one below it. Every check passes on all three, and each has an approval. Get the whole stack into main. This copy has no git history or forge access, so stack.md and checks.log hold the PR and CI state, and pr-41.diff, pr-42.diff, and pr-43.diff hold each patch."
+        }
+      ],
+      "fixture": "export-stack",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
+      "expected_route": "route/swe/ship-stack",
+      "relevant_action": "Say Playbook: ship-stack and read the playbook before any other step.",
+      "rationale": "A finished stack of three dependent PRs, green and approved, to merge. The router's trigger for landing a green stack names ship-stack, and the babysit-pr playbook sends a request to land to ship-stack. Match step 5 takes a queue of PRs to build, and nothing here is left to build, so autopilot-stack loses. The ship-pr line merges one verified PR; green checks and an approval are not a verification, and one skill does not own the landing of three PRs (Match step 4). The babysit-pr playbook stops at merge-ready. The fixture is a copy of the top branch with no git history or forge: stack.md, checks.log, and the three diffs hold the state. The request names the whole action, so go-deeper is skipped, as in SP-04."
+    },
+    {
+      "id": "swe-route-ketchup",
+      "target": "swe:swe-mode",
+      "category": "contextual",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "Three changes for the invoice export while I am away until Friday: round discounted lines half up instead of down, add a currency column to the CSV, and document the --out flag in the README. Each one is its own PR. Build and check each one, and merge it once it is verified."
+        },
+        {
+          "role": "assistant",
+          "content": "Started. One owner builds each PR, and I check on them every hour. The decision log is decisions.md."
+        },
+        {
+          "role": "user",
+          "content": "I am back after four days away. Where did all of it end up, and is anything waiting on me? This copy has no git history or forge access, so commits.txt, prs.md, and decisions.md hold what git and the forge show."
+        }
+      ],
+      "fixture": "export-queue-catchup",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [
+        "swe:go-deeper"
+      ],
+      "expected_route": "route/swe/ketchup",
+      "relevant_action": "Say Route: ketchup and load the skill before any other step.",
+      "rationale": "A catch-up after four days away, which the ketchup line names. Match step 1 matches the last turn again, and a single-skill route that owns the whole task comes before the playbooks (Match step 4). The autopilot-full playbook that framed the queue would resume the build, which the last turn does not ask for, and its own Reply line catches the operator up with ketchup. The PR-status trigger and the babysit-pr playbook drive or check one PR or stack; they do not account for four days of work. investigate-question answers a question about code. The fixture has no git history or forge: commits.txt, prs.md, and decisions.md hold the commits, the PR and CI state, and the decision log, and PR 58 waits on a column-order call that only the user can make. The last turn asks about work that an earlier turn framed, so go-deeper is skipped."
+    },
+    {
+      "id": "swe-route-reflect",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "An agent session on this repo yesterday went badly, and I had to step in several times. Its transcript is in last-session.md. Go through it, find what the agent got wrong that should not happen again, and propose changes to the skills it used. Do not edit any skill yet."
+        }
+      ],
+      "fixture": "session-review",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/reflect",
+      "relevant_action": "Say Route: reflect and load the skill before any other step.",
+      "rationale": "A review of a past session for agent mistakes, which the reflect line names, and single-skill routes come first (Match step 4). The correct route takes a mistake that the user corrects now and that agents have made before; here the user asks the agent to find the mistakes in a past session. The pick-up-session playbook reads a transcript to resume its work, and the work in this session is finished. investigate-question answers a question about code. A workspace has no past session, so the fixture holds the transcript as a plain file. The session used swe-mode and the fix-bug playbook, which the agent can read in the plugin snapshot, and the README names the test command the agent had to ask for."
+    },
+    {
+      "id": "swe-route-clean-worktrees",
+      "target": "swe:swe-mode",
+      "category": "natural",
+      "split": "development",
+      "family": "swe-route-choice",
+      "messages": [
+        {
+          "role": "user",
+          "content": "My disk is nearly full, and this repo has collected worktrees for branches that merged long ago or that I gave up on. Get rid of the ones that are safe to delete. This copy has no shell, git, or forge access, so repo-state.txt holds the git, gh, du, and df output, and open-sessions.txt lists the sessions that are open now."
+        }
+      ],
+      "fixture": "worktree-sprawl",
+      "expected_skills": [
+        "swe:swe-mode"
+      ],
+      "acceptable_auxiliaries": [],
+      "forbidden_skills": [],
+      "expected_route": "route/swe/clean-worktrees",
+      "relevant_action": "Say Playbook: clean-worktrees and read the playbook before any other step.",
+      "rationale": "Reclaiming disk from merged or abandoned worktrees, which the clean-worktrees line names. No single-skill route owns it. investigate-question is read-only, and this request asks to delete. figure-it-out takes only work that no playbook fits. The fixture has no worktrees, so repo-state.txt holds the worktree list, the PR and merge state, the uncommitted files, and the sizes, and open-sessions.txt holds the in-use set that step 2-cross-check-in-use needs. A correct run holds back due-dates (merged but in use), spike-parquet (three tracked edits), and currency-column (open PR)."
+    },
+    {
       "id": "lab-route-bootstrap-project",
       "target": "lab:lab-mode",
       "category": "natural",
