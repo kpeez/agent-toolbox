@@ -2649,50 +2649,6 @@
       "rationale": "Open product decisions that no run can settle, and the user asks to be interviewed. The build-prototype playbook covers a fork a run can show."
     },
     {
-      "id": "swe-route-ketchup",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "I was out for four days. What happened in this repo while I was away?"
-        }
-      ],
-      "fixture": "notification-service",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/ketchup",
-      "relevant_action": "Say Route: ketchup and load the skill before any other step.",
-      "rationale": "A catch-up for the user after time away. The handoff route writes state for a new session, not for the user."
-    },
-    {
-      "id": "swe-route-reflect",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "Look back over the last session. Where did the agents waste time or do something I did not want, and what is worth remembering for next time?"
-        }
-      ],
-      "fixture": "harbor-importer",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/reflect",
-      "relevant_action": "Say Route: reflect and load the skill before any other step.",
-      "rationale": "A look back over a session for agent mistakes. The correct route fixes a mistake class the user has just named."
-    },
-    {
       "id": "swe-route-ship-pr",
       "target": "swe:swe-mode",
       "category": "natural",
@@ -3033,33 +2989,33 @@
       "rationale": "An explicit pause with work in flight. The handoff route writes state but does not stop work cleanly. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
     },
     {
-      "id": "swe-mode-ship-stack",
+      "id": "swe-mode-build-feature",
       "target": "swe:swe-mode",
       "category": "contextual",
       "split": "development",
       "messages": [
         {
           "role": "user",
-          "content": "CI is green on all three receipt PRs and the review threads are resolved."
+          "content": "Which inbox files does the nightly import skip?"
         },
         {
           "role": "assistant",
-          "content": "I agree. Nothing is outstanding on any of them."
+          "content": "Every file whose suffix is not .csv, .json, or .jsonl. nightly_import.py imports a file only when its suffix is a key of pipeline.ADAPTERS, so it skips inbox/2026-11-17-west.tsv without a message."
         },
         {
           "role": "user",
-          "content": "Then land the stack."
+          "content": "The west stations send tab-separated files from now on. Make the nightly import read them too."
         }
       ],
-      "fixture": "receipt-totals",
+      "fixture": "nightly-import",
       "expected_skills": [
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
-      "expected_route": "route/swe/ship-stack",
-      "relevant_action": "Say Playbook: ship-stack and read the playbook before any other step.",
-      "rationale": "An explicit request to land a green stack. The babysit-pr playbook ends where this one begins. The earlier assistant turn only agreed with a status statement, so landing the stack is a new task and go-deeper may run."
+      "expected_route": "route/swe/build-feature",
+      "relevant_action": "Say Playbook: build-feature and read the playbook before any other step.",
+      "rationale": "New behavior: the nightly import must read a format that it skips today. The earlier answer shows that the skip is the suffix allow-list working as written, so the request reports no defect and fix-bug does not fit. No single-skill route owns the task (Match step 4), and it is not a queue of PRs (step 5). Match step 6 picks build-feature, and the change touches one adapter and the adapter map, so the size rule does not send it to figure-it-out. The earlier turns answered a question, and the last turn opens a new task that builds on the answer, so go-deeper may run."
     },
     {
       "id": "swe-mode-evaluate-agent-change",

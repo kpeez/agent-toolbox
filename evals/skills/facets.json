@@ -478,13 +478,13 @@
           "swe-mode-quick-fact"
         ],
         "positive": [
+          "swe-mode-build-feature",
           "swe-mode-evaluate-agent-change",
           "swe-mode-improve-performance",
           "swe-mode-investigate-question",
           "swe-mode-pause-safely",
           "swe-mode-plan-multi-phase",
           "swe-mode-refactor-structure",
-          "swe-mode-ship-stack",
           "swe-route-architect",
           "swe-route-author-skill",
           "swe-route-autopilot-full",
@@ -500,10 +500,8 @@
           "swe-route-handoff",
           "swe-route-hillclimb-metric",
           "swe-route-interview-user",
-          "swe-route-ketchup",
           "swe-route-match-visual-parity",
           "swe-route-pick-up-session",
-          "swe-route-reflect",
           "swe-route-run-autonomously",
           "swe-route-ship-pr",
           "swe-route-verification-skill",
@@ -1238,7 +1236,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -1592,9 +1591,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/ship-stack",
@@ -1607,7 +1604,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
@@ -2736,9 +2733,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-ketchup"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "route-load/swe/ketchup",
@@ -2753,16 +2748,14 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "Catch the user up after time away: `ketchup`.",
       "subject": "ketchup"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-reflect"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "route-load/swe/reflect",
@@ -2777,7 +2770,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "Review a session for agent mistakes: `reflect`.",
       "subject": "reflect"
     },
@@ -3466,7 +3459,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "assistant-text",
@@ -4049,9 +4043,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-ketchup"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4070,7 +4062,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "Catch the user up after time away: `ketchup`.",
       "subject": "ketchup"
     },
@@ -4233,9 +4225,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-reflect"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4255,7 +4245,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "Review a session for agent mistakes: `reflect`.",
       "subject": "reflect"
     },
@@ -4353,9 +4343,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4377,7 +4365,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
@@ -7634,7 +7622,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7686,7 +7675,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7715,7 +7705,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -7744,7 +7735,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -7773,7 +7765,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7802,7 +7795,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -7831,7 +7825,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7860,7 +7855,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7889,7 +7885,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7918,7 +7915,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -7947,7 +7945,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7976,7 +7975,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8005,7 +8005,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -8034,7 +8035,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8063,7 +8065,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8092,7 +8095,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8121,7 +8125,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -8150,7 +8155,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8179,7 +8185,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -11155,9 +11162,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "1-verify-each-pr",
@@ -11173,7 +11178,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-verify-each-pr: Give each PR its own verifier, an agent that did not write the code. It runs the change the way a user would, parent against head, with the project's verification skill when one exists, and records `PASS`, `PASS+NOTES`, or `FAIL` on that PR keyed to the patch-id. (ship-pr, reviewer agent, prove-it-works)",
       "subject": "ship-stack"
     },
@@ -11203,9 +11208,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "skill-call",
       "handle": "1-verify-each-pr",
@@ -11221,16 +11224,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-verify-each-pr: Give each PR its own verifier, an agent that did not write the code. It runs the change the way a user would, parent against head, with the project's verification skill when one exists, and records `PASS`, `PASS+NOTES`, or `FAIL` on that PR keyed to the patch-id. (ship-pr, reviewer agent, prove-it-works)",
       "subject": "ship-stack"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "skill-call",
       "handle": "3-recheck-patch-ids",
@@ -11246,16 +11247,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "3-recheck-patch-ids: Compare `git patch-id` at the verdict SHA with the current head before you trust an older verdict, since a chain rebase moves every PR above it. When only tests, docs, or lint config differ, a lane's result stands if what it ran builds the same at both SHAs apart from noise. Report each kind of noise with its files. Rerun a lane with no build output, and re-verify anything else that drifted. (ship-pr)",
       "subject": "ship-stack"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "skill-call",
       "handle": "4-land-bottom-up",
@@ -11271,7 +11270,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "4-land-bottom-up: When every PR in the stack is verified and `gh stack` is available, mark each draft ready with `gh pr ready <pr>`, run `gh stack merge <stack> --yes --squash` (or the repository's merge method), confirm each PR reads merged with `gh pr view <pr> --json state,mergedAt,baseRefName`, and delete the merged remote branches afterward. For a partial run stopping at step 2's ceiling, or when `gh stack` is unavailable, merge the run's lowest unmerged PR with `gh pr merge <pr> --squash --match-head-commit <sha>` (or the repository's merge method), read it back with `gh pr view <pr> --json state,mergedAt,baseRefName`, retarget the next PR to trunk with `gh pr edit <pr> --base <trunk>`, move its patch onto the merge result, push with `--force-with-lease`, and merge it once its checks pass and its verdict survives step 3. (ship-pr)",
       "subject": "ship-stack"
     },
@@ -11682,7 +11681,8 @@
       "recorded": 5
     },
     "playbook-read": {
-      "scored": 28
+      "recorded": 1,
+      "scored": 27
     },
     "principle-read": {
       "recorded": 29
@@ -11691,18 +11691,20 @@
       "recorded": 2
     },
     "route": {
-      "scored": 47
+      "invisible": 3,
+      "scored": 44
     },
     "route-load": {
-      "scored": 19
+      "recorded": 2,
+      "scored": 17
     },
     "router-contract": {
       "invisible": 25
     },
     "step-load": {
       "invisible": 9,
-      "recorded": 2,
-      "scored": 232
+      "recorded": 6,
+      "scored": 228
     },
     "trigger-load": {
       "invisible": 2,
