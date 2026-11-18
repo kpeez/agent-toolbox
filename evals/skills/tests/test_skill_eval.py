@@ -68,6 +68,11 @@ Three more rules were seen red the same way: a routed run credits the always-on 
 (`swe:writing`, and the swe `go-deeper` on a lab route), a case that lists the router also credits
 `swe:writing`, and a case may not list a skill as auxiliary and forbid it. An open family that holds a
 negative case is refused.
+
+The hillclimb fallback test protects the labels of `swe-fallback-hillclimb-metric`: a correct run on it
+delegates attempts to parallel worktrees and reviews their diffs, so it loads `swarm` and `no-comments`
+from the router's Triggers beside its listed principles. The credible regression is a scorer or case change
+that reports those loads as unexpected. It was seen red with the trigger credit removed from route_allowed.
 """
 from __future__ import annotations
 
@@ -1099,6 +1104,16 @@ class OfflineCLIContract(unittest.TestCase):
         untriggered = self.loads_score("router-triggers-unnamed", "swe-route-blast-radius", "swe:swe-mode",
                                        "swe:blast-radius", "swe:why")
         self.assertEqual(untriggered["unexpected_skills"], ["swe:why"])
+
+    def test_a_correct_hillclimb_fallback_run_loads_nothing_unexpected(self):
+        case_id = "swe-fallback-hillclimb-metric"
+        score = self.loads_score("hillclimb-fallback", case_id, *self.ALWAYS_ON,
+                                 "swe:principle-explain-the-number",
+                                 "swe:principle-separate-before-serializing-shared-state",
+                                 "swe:principle-guard-the-context-window",
+                                 "swe:swarm", "swe:no-comments", "swe:log-decisions")
+        self.assertEqual(score["unexpected_skills"], [])
+        self.assertEqual(score["facets"], dict.fromkeys(self.case_named(case_id)["facets"], "loaded"))
 
     def test_skill_route_scores_the_line_and_the_routed_skill_load(self):
         case = self.case_named("lab-mode-route-autoresearch")
