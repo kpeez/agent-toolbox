@@ -46,17 +46,17 @@ the whole `.claude/skills` folder: when a teammate keeps a local, ignored
   nothing), an older version of this layout made it in a setup step. Delete
   the link with `rm .claude/skills`, and remove the setup-step line that made
   it. Leave `.gitignore` as it is.
+- When `.claude/skills/<skill-name>` is a real directory, stop. `ln -sfn`
+  would put the link inside it. Tell the user that the directory hides the
+  skill, and do not move or delete it.
 - When the setup step has a line that links this one skill
   (`ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`),
   an older version of this layout added it with the ignore line
   `/.claude/skills/<skill-name>`. Remove both lines.
-- When `.claude/skills/<skill-name>` is a real directory, stop. `ln -sfn`
-  would put the link inside it. Tell the user that the directory hides the
-  skill, and do not move or delete it.
 - Otherwise, link the skill:
   `mkdir -p .claude/skills && ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`.
-- Then commit the link with `git add -f .claude/skills/<skill-name>`. The `-f`
-  adds it even when `.gitignore` covers `.claude/`. Git applies no ignore
+- Then stage the link with `git add -f .claude/skills/<skill-name>` and commit
+  it with the skill. The `-f` adds it even when `.gitignore` covers `.claude/`. Git applies no ignore
   rule to a tracked path, so do not edit `.gitignore` for the link. If the
   link later leaves the index, add it again with `git add -f`;
   `git add -A` does not.
