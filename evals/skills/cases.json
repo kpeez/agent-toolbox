@@ -3090,7 +3090,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "wait_for_item in poller.py drops a job that arrives exactly at the timeout. I tried two fixes: reading the clock again after the loop, and moving the pop above the loop condition. Both still fail the boundary check."
+          "content": "wait_for_item in poller.py drops a job that arrives exactly at the timeout. I tried two fixes: changing `<` to `<=` in the loop condition, and one more pop after the loop when the clock still reads within the timeout. Both still fail test_returns_item_arriving_at_timeout. Fix it."
         }
       ],
       "fixture": "worker-queue-boundary",
@@ -3107,7 +3107,7 @@
         "principle-read/swe/prove-it-works"
       ],
       "relevant_action": "Say Playbook: fix-bug and read the playbook before any other step.",
-      "rationale": "Two failed fixes on one premise make the fix-bug step name attack-the-premise. The principles are hidden from the skill list, so the agent reads each one by path."
+      "rationale": "A reported defect with a fix request, so the fix-bug line takes it; the diagnose route needs no fix requested, and a change inside one function is not large enough for figure-it-out. The boundary test uses interval 4 and timeout 10, so the poll wakes at 8 and then 12, never at 10, and both fixes the user names fail that test: they share the premise that the loop wakes at the timeout. Every correct run does step 3-confirm-mechanism (fix-root-causes, attack-the-premise), step 6-decide-regression-test (test-behavior-not-implementation), and steps 1-reproduce-failure and 9-verify-original-repro (prove-it-works). The principles are hidden from the skill list, so the agent reads each one by path."
     },
     {
       "id": "swe-fallback-refactor-structure",

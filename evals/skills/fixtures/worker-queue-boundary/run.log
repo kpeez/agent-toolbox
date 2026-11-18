@@ -1,5 +1,5 @@
-09:00:00 poll started timeout=2 interval=1
-09:00:02 item available queue=primary
-09:00:02 poll returned empty
+09:00:00 poll started timeout=10 interval=4
+09:00:10 item available queue=primary
+09:00:12 poll returned empty
 09:01:00 poll started timeout=60 interval=5
 09:02:00 poll returned empty
