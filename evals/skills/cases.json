@@ -2586,10 +2586,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "Rework the whole pipeline to read streams instead of files: every adapter, the validator, the normalizer, all callers and tests, while the nightly import keeps working."
+          "content": "Rework the whole import pipeline to read streams instead of file paths: every adapter, the validator, the normalizer, both callers, and all tests, while the nightly import keeps working."
         }
       ],
-      "fixture": "pipeline",
+      "fixture": "nightly-import",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2602,7 +2602,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/figure-it-out",
       "relevant_action": "Say Route: figure-it-out and load the skill before any other step.",
-      "rationale": "Large cross-cutting structural work. The refactor-structure playbook sends it to figure-it-out, and no other playbook fits."
+      "rationale": "A cross-cutting code change: every adapter, the validator, the normalizer, both callers (nightly_import.py and show.py), and every test change how they read input. No single-skill route owns it (Match step 4), and it is not a queue of PRs (step 5). Match step 6 picks refactor-structure, or build-feature if reading streams counts as new behavior, and its size rule sends a large or cross-cutting change in either one to figure-it-out."
     },
     {
       "id": "swe-route-handoff",
