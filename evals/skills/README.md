@@ -222,7 +222,7 @@ artifacts/skill-evals/PILOT/
 `artifacts/` is ignored, so `--backup-dir` copies each finished run and the report to a destination
 outside the repository. The runner deletes only a run folder that never launched: a folder with no
 `run.json` left by an interrupted setup, and the folder it just materialized when a frozen input
-(corpus, fixture, plugin catalog, or harness) changed since the freeze. Both hold no model output. It never deletes or moves a run that launched. Case labels and oracles stay in `cases.json`;
+(corpus, fixture, plugin catalog, or harness) changed since the freeze. Both hold no model output. It never deletes or moves a run that launched. `materialize` also refuses when the copy of `plugins/` differs from the catalog it hashed just before (less `__pycache__` and `*.pyc`), so a change during the copy launches nothing. Case labels and oracles stay in `cases.json`;
 the run folder holds only the prompt, the fixture, and the frozen catalog.
 
 ### Preflight

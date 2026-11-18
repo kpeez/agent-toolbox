@@ -265,6 +265,11 @@ def materialize(args):
     inputs.mkdir()
     # Full bodies and their resources survive; executable integration bindings do not (except SessionStart in hook-on).
     shutil.copytree(REPO / "plugins", inputs / "plugins", ignore=shutil.ignore_patterns("__pycache__", "*.pyc"))
+    # The copy must equal the catalog hashed above, less what copytree skipped; else plugins/ changed in between.
+    expected = {rel: sha for rel, sha in source_catalog_files.items()
+                if not any(part == "__pycache__" or part.endswith(".pyc") for part in rel.split("/"))}
+    if inventory(inputs / "plugins") != expected:
+        raise ValueError("plugins/ changed while it was copied")
     removed = []
     versions = {}
     hooks = {}

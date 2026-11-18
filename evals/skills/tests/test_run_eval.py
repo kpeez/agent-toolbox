@@ -1106,6 +1106,36 @@ class NativeRunner(unittest.TestCase):
         self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
         self.assertEqual(len(self.model_calls()), 1)
 
+    def test_a_plugin_catalog_that_changes_while_it_is_copied_launches_nothing(self):
+        self.record_canaries("--max-cost-usd", "1")
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        (self.stub_dir / "config.json").write_text(json.dumps({}))
+        wrapper = (
+            "import shutil, sys\n"
+            "from pathlib import Path\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            "real = shutil.copytree\n"
+            "def copy_then_change(src, dst, *args, **kw):\n"
+            "    out = real(src, dst, *args, **kw)\n"
+            f"    if Path(src) == Path({str(REPO / 'plugins')!r}):\n"
+            "        skill = sorted(Path(dst).rglob('SKILL.md'))[0]\n"
+            "        skill.write_text(skill.read_text() + 'changed during the copy\\n')\n"
+            "    return out\n"
+            "shutil.copytree = copy_then_change\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        done = subprocess.run(
+            [sys.executable, "-c", wrapper, *self.flags("--max-cost-usd", "1", mode="--execute")],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(done.returncode, 2, done.stderr)
+        self.assertIn("plugins/ changed while it was copied", done.stderr)
+        self.assertEqual(self.model_calls(), [])
+        self.assertEqual(self.records(), {})
+
     def test_write_escape_to_other_outside_path_stops_canaries(self):
         done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write_succeeded"}, mode="--canaries")
         self.assertEqual(done.returncode, 3, done.stderr)
