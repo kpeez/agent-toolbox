@@ -2776,7 +2776,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "Write or edit a README, a docs page, or other prose: `writing`.",
+      "source_text": "Write or edit a README, a docs page, or other prose that is not a skill, `AGENTS.md`, or `CLAUDE.md`: `writing`.",
       "subject": "writing"
     },
     {
@@ -4319,7 +4319,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "Write or edit a README, a docs page, or other prose: `writing`.",
+      "source_text": "Write or edit a README, a docs page, or other prose that is not a skill, `AGENTS.md`, or `CLAUDE.md`: `writing`.",
       "subject": "writing"
     },
     {

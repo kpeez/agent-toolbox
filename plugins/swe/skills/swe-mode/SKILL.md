@@ -286,7 +286,8 @@ Long runs and sessions:
 - Prune or review an existing test suite: `testing-code`.
 - Explore competing designs before code: `architect`.
 - Propose deepening refactors; no implementation: `codebase-design`.
-- Write or edit a README, a docs page, or other prose: `writing`.
+- Write or edit a README, a docs page, or other prose that is not a skill,
+  `AGENTS.md`, or `CLAUDE.md`: `writing`.
 - Conflicts, review threads, or CI on an open PR, or mark ready and merge a
   verified PR: `ship-pr`.
 - Find what a change could break: `blast-radius`.
