@@ -13,7 +13,6 @@ The pipeline steps are `skill_eval.py` functions; this file only orders them and
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import json
 import math
 import os
@@ -1378,6 +1377,44 @@ def canary_setup(name, ctx, run):
     return "CANARY hook: reply with the word ok.", None
 
 
+def glob_regex(pattern):
+    """A glob as a regex that keeps to folders, as Glob does.
+
+    `*`, `?`, and `[...]` never match `/`; a whole `**` segment matches zero or more folders."""
+    parts = pattern.split("/")
+    out = []
+    for index, part in enumerate(parts):
+        last = index == len(parts) - 1
+        if part == "**":
+            out.append(".*" if last else "(?:[^/]*/)*")
+            continue
+        i = 0
+        while i < len(part):
+            c = part[i]
+            close = -1
+            if c == "[":
+                j = i + 1 + (part[i + 1 : i + 2] in ("!", "^"))
+                close = part.find("]", j + (part[j : j + 1] == "]"))
+            if c == "*":
+                out.append("[^/]*")
+            elif c == "?":
+                out.append("[^/]")
+            elif close > 0:
+                body = part[i + 1 : close]
+                negate = body[:1] in ("!", "^")
+                body = "".join(
+                    "\\" + ch if ch in "\\[]^&~|" else ch for ch in body[negate:]
+                )
+                out.append(f"[^/{body}]" if negate else f"(?!/)[{body}]")
+                i = close
+            else:
+                out.append(re.escape(c))
+            i += 1
+        if not last:
+            out.append("/")
+    return re.compile("".join(out))
+
+
 def matches_canary_target(use, target):
     if target is None:
         return False
@@ -1398,7 +1435,7 @@ def matches_canary_target(use, target):
             if not isinstance(base, str) or not base:
                 return False
             pattern = os.path.join(base, pattern)
-        return fnmatch.fnmatchcase(target_norm, os.path.normpath(pattern))
+        return glob_regex(os.path.normpath(pattern)).fullmatch(target_norm) is not None
     if tool == "Grep":
         gpath = inp.get("path")
         return isinstance(gpath, str) and os.path.normpath(gpath) in {
