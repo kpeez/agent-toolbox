@@ -37,9 +37,10 @@ the whole `.claude/skills` folder: when a teammate keeps a local, ignored
 
 - When `git ls-files -s .claude/skills` already lists `.claude/skills`
   itself with mode `120000`, the repository commits a folder link. When
-  `.claude/skills/<skill-name>/SKILL.md` resolves through it, add nothing,
-  and skip the rest of this list. When it does not resolve, stop: tell the
-  user that the folder link does not reach the skill, and do not change it.
+  `.claude/skills/<skill-name>/SKILL.md` resolves to the same file as
+  `.agents/skills/<skill-name>/SKILL.md` (compare `realpath` of both), add
+  nothing, and skip the rest of this list. Otherwise, stop: tell the user
+  that the folder link does not reach this skill, and do not change it.
 - When `.claude/skills` is a link that Git does not track
   (`[ -L .claude/skills ]` and `git ls-files .claude/skills` prints
   nothing), an older version of this layout made it in a setup step. Delete
