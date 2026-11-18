@@ -323,6 +323,23 @@ class OfflineCLIContract(unittest.TestCase):
                 self.assertEqual((score["evidence_coverage"], score["activation"]["swe:implement"],
                                   score["timing"]["swe:implement"]), outcome)
 
+    def test_a_harness_reminder_attachment_keeps_coverage_and_an_unknown_one_does_not(self):
+        # Claude Code 2.1.327 wrote this attachment mid-session in a plugin-eval canary run.
+        reminder = {"type": "silent_turn_reminder", "text": "The user hasn't heard from you in a while."}
+        for name, attachment, coverage in (("reminder", reminder, "complete"),
+                                           ("unknown", {"type": "not_audited_yet"}, "partial")):
+            with self.subTest(name=name):
+                run, skill, text = self.prepare("attachment-" + name)
+                body = ("Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n"
+                        + text.split("\n---\n", 1)[1].lstrip("\n"))
+                steps = [("call", "message-skill", "use-skill", {"name": "Skill", "input": {"skill": "swe:implement"}}),
+                         ("result", None, "use-skill", {"success": True, "commandName": "swe:implement"}),
+                         ("body", None, "use-skill", body), ("attachment", None, None, attachment),
+                         ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+                         ("result", None, "use-edit", {"filePath": "calc.py"})]
+                score = self.claude_trace(run, steps, "use-edit")
+                self.assertEqual(score["evidence_coverage"], coverage)
+
     def test_isolation_native_unknown_and_frozen_input_integrity(self):
         run, skill, body = self.prepare("identity")
         messages = json.loads((run / "inputs" / "messages.json").read_text())

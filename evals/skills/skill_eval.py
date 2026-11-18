@@ -35,7 +35,8 @@ RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools
                   "harness_deltas", "catalog_scope", "context_delivery"}
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md), plus five
 # metadata record types from 2.1.325 (session-owner, api-request, api-request-shape,
-# api-request-blob, tools-used).
+# api-request-blob, tools-used), and one attachment type from 2.1.327 (silent_turn_reminder, a fixed
+# harness nudge to update the user; it carries no skill load).
 # Anything else is coverage loss until a raw audit adds it here.
 CLAUDE_LINE_TYPES = {"user", "assistant", "attachment", "system", "queue-operation",
                      "atis-latch", "last-prompt", "cost-state", "session-owner", "api-request-shape",
@@ -45,7 +46,7 @@ CLAUDE_ATTACHMENT_TYPES = {
     "advisor_tool", "agent_listing_delta", "command_permissions", "credential_org", "date",
     "deferred_tools_delta", "deferred_tools_record", "environment", "instructions",
     "mcp_instructions_delta", "model", "prompt_snapshot", "remote_session_change",
-    "session_context", "skill_listing", "total_tokens_reminder"}
+    "session_context", "silent_turn_reminder", "skill_listing", "total_tokens_reminder"}
 ROUTERS = {"swe": "swe-mode", "lab": "lab-mode"}
 GO_DEEPER_COPIES = {"swe:go-deeper", "lab:go-deeper", "uni:go-deeper"}
 HOOK_ON_ALWAYS_ON = {"go-deeper", "swe:writing"}

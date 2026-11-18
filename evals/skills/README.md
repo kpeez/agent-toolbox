@@ -639,7 +639,8 @@ Native scoring supports Claude Code session transcripts from the audited
 version (2.1.296, headless), plus the 2.1.325 additions: five metadata record
 types (`session-owner`, `api-request`, `api-request-shape`, `api-request-blob`,
 `tools-used`) that carry no skill load, and parallel tool calls whose one API
-message spans several lines. It supports `Skill`-tool loads, by full or bare name, proved
+message spans several lines, plus the 2.1.327 `silent_turn_reminder` attachment, a fixed
+harness nudge to update the user. It supports `Skill`-tool loads, by full or bare name, proved
 by the linked delivered body, full `Read` reads of frozen `SKILL.md` and plugin resource files
 (playbooks and references named in `facets.json`), root versus subagent records (`child_loads` and
 `child_resource_reads`), `Bash` commands mentioning frozen paths in `unproved_reads`,
