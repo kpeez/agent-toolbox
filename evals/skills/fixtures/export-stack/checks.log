@@ -1,0 +1,21 @@
+PR 41, head 3e1f9a2
+  Check "tests (python 3.12)": passed
+  Check "tests (python 3.9)": passed
+  Check "lint": passed
+
+PR 42, head 8c04d57
+  Check "tests (python 3.12)": passed
+  Check "tests (python 3.9)": passed
+  Check "lint": passed
+
+PR 43, head b7a2e16
+  Check "tests (python 3.12)": passed
+  Check "tests (python 3.9)": passed
+  Check "lint": passed
+
+$ python -m unittest    (PR 43, head b7a2e16, python 3.12)
+...
+----------------------------------------------------------------------
+Ran 3 tests in 0.004s
+
+OK

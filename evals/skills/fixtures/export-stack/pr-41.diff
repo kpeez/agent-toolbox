@@ -1,0 +1,35 @@
+diff --git a/export.py b/export.py
+new file mode 100644
+index 0000000..6973f1c
+--- /dev/null
++++ b/export.py
+@@ -0,0 +1,8 @@
++HEADER = ["number", "customer", "total"]
++
++
++def write_rows(invoices, out):
++    out.write(",".join(HEADER) + "\n")
++    for invoice in invoices:
++        fields = [invoice["number"], invoice["customer"], "%.2f" % (invoice["cents"] / 100)]
++        out.write(",".join(fields) + "\n")
+diff --git a/test_export.py b/test_export.py
+new file mode 100644
+index 0000000..f671459
+--- /dev/null
++++ b/test_export.py
+@@ -0,0 +1,15 @@
++import io
++import unittest
++
++from export import write_rows
++
++
++class ExportTests(unittest.TestCase):
++    def test_header_and_row(self):
++        out = io.StringIO()
++        write_rows([{"number": "INV-2", "customer": "Birch", "cents": 990}], out)
++        self.assertEqual(out.getvalue(), "number,customer,total\nINV-2,Birch,9.90\n")
++
++
++if __name__ == "__main__":
++    unittest.main()

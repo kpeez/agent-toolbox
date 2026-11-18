@@ -498,6 +498,7 @@
           "swe-route-babysit-pr",
           "swe-route-blast-radius",
           "swe-route-build-prototype",
+          "swe-route-clean-worktrees",
           "swe-route-correct",
           "swe-route-diagnose-runtime",
           "swe-route-external-agents",
@@ -505,10 +506,13 @@
           "swe-route-handoff",
           "swe-route-hillclimb-metric",
           "swe-route-interview-user",
+          "swe-route-ketchup",
           "swe-route-match-visual-parity",
           "swe-route-pick-up-session",
+          "swe-route-reflect",
           "swe-route-run-autonomously",
           "swe-route-ship-pr",
+          "swe-route-ship-stack",
           "swe-route-verification-skill",
           "swe-route-writing"
         ]
@@ -1287,7 +1291,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-clean-worktrees"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/clean-worktrees",
@@ -1300,7 +1306,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
       "subject": "clean-worktrees"
     },
@@ -1600,7 +1606,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ship-stack"
+        ]
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/ship-stack",
@@ -1613,7 +1621,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
@@ -2782,7 +2790,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ketchup"
+        ]
       },
       "evidence": "full-read",
       "id": "route-load/swe/ketchup",
@@ -2797,14 +2807,16 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Catch the user up after time away: `ketchup`.",
       "subject": "ketchup"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-reflect"
+        ]
       },
       "evidence": "full-read",
       "id": "route-load/swe/reflect",
@@ -2819,7 +2831,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "Review a session for agent mistakes: `reflect`.",
       "subject": "reflect"
     },
@@ -3580,7 +3592,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-clean-worktrees"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -3603,7 +3617,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
       "subject": "clean-worktrees"
     },
@@ -4094,7 +4108,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ketchup"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4113,7 +4129,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "Catch the user up after time away: `ketchup`.",
       "subject": "ketchup"
     },
@@ -4278,7 +4294,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-reflect"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4298,7 +4316,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "Review a session for agent mistakes: `reflect`.",
       "subject": "reflect"
     },
@@ -4396,7 +4414,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ship-stack"
+        ]
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4418,7 +4438,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "invisible",
+      "scorer": "scored",
       "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
@@ -8381,7 +8401,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-clean-worktrees"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-snapshot-and-audit",
@@ -8397,14 +8419,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-snapshot-and-audit: Record `df -h /`, then run `bash <plugin-root>/scripts/worktree_audit.sh [-b origin/<branch>] [repo-path]` ([worktree_audit.sh](../../../scripts/worktree_audit.sh)). Pass `-b` when PRs target a branch other than `origin/HEAD`. It reads paths from `git worktree list`, never hand-typed. Run it in the background, because the session scan is slow. (build-the-lever, encode-lessons-in-structure)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-clean-worktrees"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-snapshot-and-audit",
@@ -8420,14 +8444,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-snapshot-and-audit: Record `df -h /`, then run `bash <plugin-root>/scripts/worktree_audit.sh [-b origin/<branch>] [repo-path]` ([worktree_audit.sh](../../../scripts/worktree_audit.sh)). Pass `-b` when PRs target a branch other than `origin/HEAD`. It reads paths from `git worktree list`, never hand-typed. Run it in the background, because the session scan is slow. (build-the-lever, encode-lessons-in-structure)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-clean-worktrees"
+        ]
       },
       "evidence": "full-read",
       "handle": "2-cross-check-in-use",
@@ -8443,14 +8469,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "2-cross-check-in-use: The bucket is advice, not permission. The active sessions are the real artifact. Get that set from the user and cross-check every candidate; the in-use set wins over a `safe` bucket. (prove-it-works)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-clean-worktrees"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-verify-usage",
@@ -8466,14 +8494,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-verify-usage: For every `verify-recent-chat` row, or any row you doubt, have subagents read this project's session transcripts and report whether the session is ongoing and which worktrees it touches. A background subagent's worktree is in use even when the user never named it. (recall, guard-the-context-window)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-clean-worktrees"
+        ]
       },
       "evidence": "full-read",
       "handle": "3-verify-usage",
@@ -8489,7 +8519,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-verify-usage: For every `verify-recent-chat` row, or any row you doubt, have subagents read this project's session transcripts and report whether the session is ongoing and which worktrees it touches. A background subagent's worktree is in use even when the user never named it. (recall, guard-the-context-window)",
       "subject": "clean-worktrees"
     },
@@ -11283,7 +11313,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ship-stack"
+        ]
       },
       "evidence": "full-read",
       "handle": "1-verify-each-pr",
@@ -11299,7 +11331,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-verify-each-pr: Give each PR its own verifier, an agent that did not write the code. It runs the change the way a user would, parent against head, with the project's verification skill when one exists, and records `PASS`, `PASS+NOTES`, or `FAIL` on that PR keyed to the patch-id. (ship-pr, reviewer agent, prove-it-works)",
       "subject": "ship-stack"
     },
@@ -11329,7 +11361,9 @@
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ship-stack"
+        ]
       },
       "evidence": "skill-call",
       "handle": "1-verify-each-pr",
@@ -11345,14 +11379,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "1-verify-each-pr: Give each PR its own verifier, an agent that did not write the code. It runs the change the way a user would, parent against head, with the project's verification skill when one exists, and records `PASS`, `PASS+NOTES`, or `FAIL` on that PR keyed to the patch-id. (ship-pr, reviewer agent, prove-it-works)",
       "subject": "ship-stack"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ship-stack"
+        ]
       },
       "evidence": "skill-call",
       "handle": "3-recheck-patch-ids",
@@ -11368,14 +11404,16 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "3-recheck-patch-ids: Compare `git patch-id` at the verdict SHA with the current head before you trust an older verdict, since a chain rebase moves every PR above it. When only tests, docs, or lint config differ, a lane's result stands if what it ran builds the same at both SHAs apart from noise. Report each kind of noise with its files. Rerun a lane with no build output, and re-verify anything else that drifted. (ship-pr)",
       "subject": "ship-stack"
     },
     {
       "cases": {
         "negative": [],
-        "positive": []
+        "positive": [
+          "swe-route-ship-stack"
+        ]
       },
       "evidence": "skill-call",
       "handle": "4-land-bottom-up",
@@ -11391,7 +11429,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "recorded",
+      "scorer": "scored",
       "source_text": "4-land-bottom-up: When every PR in the stack is verified and `gh stack` is available, mark each draft ready with `gh pr ready <pr>`, run `gh stack merge <stack> --yes --squash` (or the repository's merge method), confirm each PR reads merged with `gh pr view <pr> --json state,mergedAt,baseRefName`, and delete the merged remote branches afterward. For a partial run stopping at step 2's ceiling, or when `gh stack` is unavailable, merge the run's lowest unmerged PR with `gh pr merge <pr> --squash --match-head-commit <sha>` (or the repository's merge method), read it back with `gh pr view <pr> --json state,mergedAt,baseRefName`, retarget the next PR to trunk with `gh pr edit <pr> --base <trunk>`, move its patch onto the merge result, push with `--force-with-lease`, and merge it once its checks pass and its verdict survives step 3. (ship-pr)",
       "subject": "ship-stack"
     },
@@ -11802,8 +11840,7 @@
       "recorded": 5
     },
     "playbook-read": {
-      "recorded": 2,
-      "scored": 26
+      "scored": 28
     },
     "principle-read": {
       "recorded": 11,
@@ -11813,20 +11850,18 @@
       "recorded": 2
     },
     "route": {
-      "invisible": 4,
-      "scored": 43
+      "scored": 47
     },
     "route-load": {
-      "recorded": 2,
-      "scored": 17
+      "scored": 19
     },
     "router-contract": {
       "invisible": 25
     },
     "step-load": {
       "invisible": 9,
-      "recorded": 11,
-      "scored": 223
+      "recorded": 2,
+      "scored": 232
     },
     "trigger-load": {
       "invisible": 2,

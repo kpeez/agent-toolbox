@@ -1,0 +1,31 @@
+$ df -h /
+Filesystem      Size   Used  Avail Capacity  Mounted on
+/dev/disk3s1   460Gi  441Gi   19Gi    96%    /
+
+$ git worktree list
+/work/tally                          c81d2fa [main]
+/work/tally.wt/fix-rounding          4b7c19e [fix-rounding]
+/work/tally.wt/currency-column       f04c6d1 [currency-column]
+/work/tally.wt/readme-out-flag       6e0f3b8 [readme-out-flag]
+/work/tally.wt/old-importer          71ad0c3 [old-importer]
+/work/tally.wt/spike-parquet         e2290b5 [spike-parquet]
+/work/tally.wt/due-dates             0d93e4f [due-dates]
+
+$ git fetch origin && git rev-parse origin/HEAD
+c81d2fa
+
+$ gh pr list --author @me --state all --json number,state,headRefName,headRefOid
+#57  MERGED  fix-rounding      4b7c19e  (squash-merged 2026-11-13)
+#58  OPEN    currency-column   f04c6d1
+#59  MERGED  readme-out-flag   6e0f3b8  (squash-merged 2026-11-15)
+#31  CLOSED  old-importer      71ad0c3  (closed without merge 2026-09-14)
+#61  MERGED  due-dates         0d93e4f  (squash-merged 2026-11-16 09:20)
+(no PR for spike-parquet)
+
+$ for each worktree: du -sh, git status --porcelain, last commit date, upstream
+/work/tally.wt/fix-rounding       1.2G  clean                          2026-11-13  pushed
+/work/tally.wt/currency-column    0.9G  clean                          2026-11-14  pushed
+/work/tally.wt/readme-out-flag    0.3G  ?? notes.txt, ?? out.csv         2026-11-15  pushed
+/work/tally.wt/old-importer       2.4G  clean                          2026-09-12  pushed
+/work/tally.wt/spike-parquet      3.1G   M export.py, M schema.py, M test_export.py   2026-10-09  no upstream
+/work/tally.wt/due-dates          0.4G  clean                          2026-11-16  pushed

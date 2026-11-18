@@ -1,0 +1,60 @@
+diff --git a/export.py b/export.py
+index 0be40c6..a7dab1c 100644
+--- a/export.py
++++ b/export.py
+@@ -1,4 +1,6 @@
++import argparse
+ import csv
++import sys
+ 
+ HEADER = ["number", "customer", "total"]
+ 
+@@ -8,3 +10,19 @@ def write_rows(invoices, out):
+     writer.writerow(HEADER)
+     for invoice in invoices:
+         writer.writerow([invoice["number"], invoice["customer"], "%.2f" % (invoice["cents"] / 100)])
++
++
++def main(argv=None):
++    parser = argparse.ArgumentParser(description="Export invoices as CSV.")
++    parser.add_argument("--out", help="file to write; standard output when absent")
++    args = parser.parse_args(argv)
++    invoices = [{"number": "INV-1", "customer": "Acme, Ltd", "cents": 1205}]
++    if args.out:
++        with open(args.out, "w", newline="") as out:
++            write_rows(invoices, out)
++    else:
++        write_rows(invoices, sys.stdout)
++
++
++if __name__ == "__main__":
++    main()
+diff --git a/test_export.py b/test_export.py
+index 6f6a6a0..8a690b6 100644
+--- a/test_export.py
++++ b/test_export.py
+@@ -1,7 +1,9 @@
+ import io
++import os
++import tempfile
+ import unittest
+ 
+-from export import write_rows
++from export import main, write_rows
+ 
+ 
+ class ExportTests(unittest.TestCase):
+@@ -15,6 +17,13 @@ class ExportTests(unittest.TestCase):
+         write_rows([{"number": "INV-1", "customer": "Acme, Ltd", "cents": 1205}], out)
+         self.assertIn('"Acme, Ltd"', out.getvalue())
+ 
++    def test_out_flag_writes_a_file(self):
++        with tempfile.TemporaryDirectory() as folder:
++            path = os.path.join(folder, "invoices.csv")
++            main(["--out", path])
++            with open(path) as written:
++                self.assertTrue(written.read().startswith("number,customer,total\n"))
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
