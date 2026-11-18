@@ -32,6 +32,7 @@ REPO = HERE.parents[1]
 SCRIPT = HERE / "run_eval.py"
 sys.path.insert(0, str(HERE))
 import run_eval
+from corpus_io import read_cases, write_corpus
 
 CANARY_NAMES = (
     "read-outside",
@@ -726,10 +727,10 @@ class NativeRunner(unittest.TestCase):
         sandbox.mkdir()
         shutil.copy2(HERE / "facets.json", sandbox / "facets.json")
         shutil.copytree(HERE / "fixtures", sandbox / "fixtures")
-        corpus = sandbox / "custom-cases.json"
-        cases_data = json.loads((HERE / "cases.json").read_text())
-        original_corpus = json.dumps(cases_data)
-        corpus.write_text(original_corpus)
+        corpus = sandbox / "custom-cases.jsonl"
+        cases = read_cases()
+        write_corpus(corpus, cases)
+        original_corpus = corpus.read_text()
         runtime_path = Path(self.temp.name) / "runtime.json"
         runtime_path.write_text(json.dumps(self.runtime))
         wrapper = (
@@ -755,8 +756,8 @@ class NativeRunner(unittest.TestCase):
             "config_sha256": json.loads(dry.stdout)["pilot"]["config_sha256"],
             "canaries": {name: {"passed": True} for name in CANARY_NAMES},
         }))
-        cases_data["cases"][0]["messages"][0]["content"] = "edited custom corpus prompt"
-        corpus.write_text(json.dumps(cases_data))
+        cases[0]["messages"][0]["content"] = "edited custom corpus prompt"
+        write_corpus(corpus, cases)
         changed_corpus = run_custom("--execute")
         self.assertEqual(changed_corpus.returncode, 2)
         self.assertIn("different frozen configuration", changed_corpus.stderr)
@@ -918,8 +919,8 @@ class NativeRunner(unittest.TestCase):
         sandbox.mkdir()
         shutil.copy2(HERE / "facets.json", sandbox / "facets.json")
         shutil.copytree(HERE / "fixtures", sandbox / "fixtures")
-        corpus = sandbox / "cases.json"
-        shutil.copy2(HERE / "cases.json", corpus)
+        corpus = sandbox / "cases.jsonl"
+        shutil.copy2(HERE / "dataset" / "dev.jsonl", corpus)
         fixture_file = next(
             p for p in sorted((sandbox / "fixtures" / "harbor-importer").rglob("*")) if p.is_file()
         )

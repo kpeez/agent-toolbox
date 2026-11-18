@@ -103,12 +103,39 @@ def load_facets():
     return {f["id"]: f for f in read_json(HERE / "facets.json")["facets"]}
 
 
-def corpus(path=HERE / "cases.json"):
-    data = read_json(path)
+DATASET = HERE / "dataset" / "dev.jsonl"
+FIXTURE_FILE = re.compile(r"\.\./fixtures/([^/]+)/(.+)")
+
+
+def read_cases(path=DATASET):
+    """Parse the Inspect Sample JSONL into the case dicts the rest of this module uses."""
+    cases = []
+    for number, line in enumerate(Path(path).read_text(encoding="utf-8").splitlines(), 1):
+        if not line.strip():
+            continue
+        sample = json.loads(line)
+        if not isinstance(sample.get("input"), list) or not isinstance(sample.get("files"), dict):
+            raise ValueError(f"line {number}: input must be a message list and files a path map")
+        names = set()
+        for rel, source in sample["files"].items():
+            match = FIXTURE_FILE.fullmatch(source)
+            if not match or match.group(2) != rel:
+                raise ValueError(f"line {number}: file {rel!r} must map to ../fixtures/<fixture>/{rel}")
+            names.add(match.group(1))
+        if len(names) != 1:
+            raise ValueError(f"line {number}: files must all come from exactly one fixture")
+        metadata = dict(sample.get("metadata", {}))
+        case = {"id": sample["id"], "target": metadata.pop("target_skill"), **metadata,
+                "messages": sample["input"], "fixture": names.pop()}
+        if "target" in sample:
+            case["expected_route"] = sample["target"]
+        cases.append(case)
+    return cases
+
+
+def corpus(path=DATASET):
+    cases = read_cases(path)
     facets = load_facets()
-    if data.get("schema_version") != 1:
-        raise ValueError("unsupported corpus schema")
-    cases = data["cases"]
     ids = set()
     groups = defaultdict(Counter)
     skills = catalog_skills()
@@ -1236,7 +1263,7 @@ def aggregate(args):
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument("--corpus", type=Path, default=HERE / "cases.json")
+    parser.add_argument("--corpus", type=Path, default=DATASET)
     commands = parser.add_subparsers(dest="command", required=True)
     commands.add_parser("validate")
     prep = commands.add_parser("materialize")

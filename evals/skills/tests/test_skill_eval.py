@@ -87,6 +87,8 @@ import sys
 import tempfile
 import unittest
 
+from corpus_io import read_cases, write_corpus
+
 HERE = Path(__file__).resolve().parents[1]
 SCRIPT = HERE / "skill_eval.py"
 REPO = HERE.parents[1]
@@ -98,7 +100,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.corpus = None
-        self.case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"]
+        self.case = next(c for c in read_cases()
                          if c["target"] == "swe:implement" and c["category"] == "natural")
 
     def cli(self, *args, ok=True):
@@ -177,7 +179,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(group["counts"]["session_timeout"], 1)
 
     def test_negative_auxiliaries_and_partial_confusion(self):
-        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"]
+        case = next(c for c in read_cases()
                     if c["target"] == "swe:implement" and c["category"] == "negative" and c["expected_skills"])
         scores = []
         for state, partial in (("completed", False), ("incomplete", False), ("completed", True)):
@@ -324,9 +326,9 @@ class OfflineCLIContract(unittest.TestCase):
         run, skill, body = self.prepare("identity")
         messages = json.loads((run / "inputs" / "messages.json").read_text())
         self.assertEqual(messages, self.case["messages"])
-        self.assertFalse((run / "workspace" / "cases.json").exists())
+        self.assertFalse((run / "workspace" / "dataset").exists())
         for root in (run / "workspace", run / "inputs"):
-            self.assertFalse(any(p.name == "cases.json" for p in root.rglob("*")))
+            self.assertFalse(any(p.name in {"dev.jsonl", "dataset"} for p in root.rglob("*")))
         self.assertTrue((run / "workspace" / ".git").is_dir())
         self.assertFalse((run / "workspace" / ".git" / "hooks").exists())
         self.assertFalse((run / "workspace" / ".git" / "commondir").exists())
@@ -701,7 +703,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(len(report["groups"]), 2)
         self.assertEqual({g["hook_arm"] for g in report["groups"]}, {"hook-off", "hook-on"})
 
-        neg_case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"]
+        neg_case = next(c for c in read_cases()
                         if c["target"] == "swe:implement" and c["category"] == "negative" and c["expected_skills"])
         neg_scores = []
         for arm in ("hook-off", "hook-on"):
@@ -910,7 +912,7 @@ class OfflineCLIContract(unittest.TestCase):
                     read_playbook=True, unread=(), step_4="skip: the pipeline is the shared one",
                     text_after_tools=True, heading="Steps:", done_note="", entries=None,
                     state="completed", before="", after=""):
-        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == self.ROUTE_CASE)
+        case = next(c for c in read_cases() if c["id"] == self.ROUTE_CASE)
         run, _, _ = self.prepare(name, case)
         manifest = json.loads((run / "manifest.json").read_text())
         handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
@@ -1050,7 +1052,7 @@ class OfflineCLIContract(unittest.TestCase):
             self.assertEqual(glued["steps_section"]["done"], [])
 
     def case_named(self, case_id):
-        return next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == case_id)
+        return next(c for c in read_cases() if c["id"] == case_id)
 
     def route_run(self, name, case, reads, line, final=None, full=False):
         run, _, _ = self.prepare(name, case)
@@ -1136,10 +1138,10 @@ class OfflineCLIContract(unittest.TestCase):
         case.pop("expected_mode", None)
         if mode:
             case["expected_mode"] = mode
-        corpus = json.loads((HERE / "cases.json").read_text())
+        corpus = {"cases": read_cases()}
         corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
-        self.corpus = self.root / f"{name}.json"
-        self.corpus.write_text(json.dumps(corpus))
+        self.corpus = self.root / f"{name}-corpus.jsonl"
+        write_corpus(self.corpus, corpus["cases"])
         reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
         return self.route_run(name, case, [("skill", f"lab:{subject}")], f"Route: {subject}. Reason: it fits.", reply)
 
@@ -1175,10 +1177,10 @@ class OfflineCLIContract(unittest.TestCase):
             case.pop("expected_mode", None)
             if mode:
                 case["expected_mode"] = mode
-            corpus = json.loads((HERE / "cases.json").read_text())
+            corpus = {"cases": read_cases()}
             corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
-            self.corpus = self.root / f"{name}.json"
-            self.corpus.write_text(json.dumps(corpus))
+            self.corpus = self.root / f"{name}-corpus.jsonl"
+            write_corpus(self.corpus, corpus["cases"])
             self.assertIn("expected_mode", self.cli("validate", ok=False).stderr, name)
 
     def test_route_followed_is_null_when_evidence_is_partial(self):
@@ -1188,10 +1190,10 @@ class OfflineCLIContract(unittest.TestCase):
 
     def test_a_project_skill_step_load_is_never_required(self):
         case = dict(self.case_named(self.ROUTE_CASE), expected_route="route/lab/bootstrap-project")
-        corpus = json.loads((HERE / "cases.json").read_text())
+        corpus = {"cases": read_cases()}
         corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
-        self.corpus = self.root / "corpus.json"
-        self.corpus.write_text(json.dumps(corpus))
+        self.corpus = self.root / "custom-corpus.jsonl"
+        write_corpus(self.corpus, corpus["cases"])
         handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
                        if f["id"] == "route/lab/bootstrap-project")["handles"]
         reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
@@ -1202,8 +1204,7 @@ class OfflineCLIContract(unittest.TestCase):
     def loads_score(self, name, case_id, *skills, **update):
         if update:
             self.validate_with(name, case_id, **update)
-        corpus = self.corpus or HERE / "cases.json"
-        case = next(c for c in json.loads(corpus.read_text())["cases"] if c["id"] == case_id)
+        case = next(c for c in read_cases(self.corpus or HERE / "dataset" / "dev.jsonl") if c["id"] == case_id)
         score, _ = self.route_run(name, case, [("skill", skill) for skill in skills], "Answer.", full=True)
         self.corpus = None
         return score
@@ -1269,10 +1270,10 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(sorted(g["family"] for g in groups), ["swe:testing-code", "testing-code-audit"])
 
     def validate_with(self, name, case_id, **update):
-        corpus = json.loads((HERE / "cases.json").read_text())
+        corpus = {"cases": read_cases()}
         next(c for c in corpus["cases"] if c["id"] == case_id).update(update)
-        self.corpus = self.root / f"{name}.json"
-        self.corpus.write_text(json.dumps(corpus))
+        self.corpus = self.root / f"{name}-corpus.jsonl"
+        write_corpus(self.corpus, corpus["cases"])
 
     def test_corpus_rejects_a_bad_family_and_a_route_on_a_case_that_forbids_the_router(self):
         for name, case_id, update, message in (
@@ -1288,7 +1289,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.cli("validate")
 
     def test_readme_counts_match_the_corpus(self):
-        cases = json.loads((HERE / "cases.json").read_text())["cases"]
+        cases = read_cases()
         readme = (HERE / "README.md").read_text()
         self.assertEqual(int(re.search(r"The corpus has (\d+) authored scenarios", readme).group(1)), len(cases))
         holdouts = int(re.search(r"(\d+) cases marked `holdout_candidate`", readme).group(1))
@@ -1304,10 +1305,10 @@ class OfflineCLIContract(unittest.TestCase):
                 ("route-other-plugin", {"expected_route": "route/lab/analyze-results"}),
                 ("facet-router-contract", {"facets": ["router-contract/lab/pick-one-rule"]}),
                 ("facet-unknown", {"facets": ["step-load/lab/none/none/none"]})):
-            corpus = json.loads((HERE / "cases.json").read_text())
+            corpus = {"cases": read_cases()}
             corpus["cases"][0].update(change)
-            self.corpus = self.root / f"{name}.json"
-            self.corpus.write_text(json.dumps(corpus))
+            self.corpus = self.root / f"{name}-corpus.jsonl"
+            write_corpus(self.corpus, corpus["cases"])
             self.assertIn("skill-eval:", self.cli("validate", ok=False).stderr, name)
 
     SKIP_REASON = "the pipeline is shared"
@@ -1377,10 +1378,10 @@ class OfflineCLIContract(unittest.TestCase):
         case = dict(self.case_named(self.ROUTE_CASE), expected_skills=["lab:lab-mode", "lab:making-plots"],
                     facets=["step-load/lab/analyze-results/10-grade-the-conclusion/grade-the-evidence",
                             "step-load/lab/analyze-results/4-check-the-pipeline/simulate-before-you-trust"])
-        corpus = json.loads((HERE / "cases.json").read_text())
+        corpus = {"cases": read_cases()}
         corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
-        self.corpus = self.root / "listed.json"
-        self.corpus.write_text(json.dumps(corpus))
+        self.corpus = self.root / "listed-corpus.jsonl"
+        write_corpus(self.corpus, corpus["cases"])
         line = "Playbook: analyze-results. Reason: it fits."
         grade = ("skill", "lab:principle-grade-the-evidence")
         both, both_run = self.route_run("listed-both", case, [grade, ("skill", "lab:making-plots")], line, full=True)
@@ -1435,7 +1436,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertNotEqual(legacy["configuration_sha256"], score["configuration_sha256"])
 
     def test_claude_text_block_with_backticked_route_line(self):
-        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == self.ROUTE_CASE)
+        case = next(c for c in read_cases() if c["id"] == self.ROUTE_CASE)
         run, _, _ = self.prepare("claude-route-line", case)
         score = self.claude_trace(run, [
             ("text", "message-text", None, "Playbook: `analyze-results`. Reason: the user wants a graded conclusion."),
@@ -1448,7 +1449,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertIsNone(evidence["final_reply"])
 
     def test_claude_final_reply_is_the_text_after_the_last_root_tool_call(self):
-        case = next(c for c in json.loads((HERE / "cases.json").read_text())["cases"] if c["id"] == self.ROUTE_CASE)
+        case = next(c for c in read_cases() if c["id"] == self.ROUTE_CASE)
         run, _, _ = self.prepare("claude-final-reply", case)
         self.claude_trace(run, [
             ("text", "message-text", None, "Playbook: `analyze-results`. Reason: the user wants a graded conclusion."),
