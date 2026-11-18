@@ -1083,6 +1083,9 @@ class OfflineCLIContract(unittest.TestCase):
         listed = self.route_run("listed-route-keeps-its-label", self.case_named("DG-01"), [],
                                 "Playbook: diagnose. Reason: it fits.")
         self.assertEqual(listed["line"]["status"], "wrong")
+        playbook = self.route_run("route-label-on-a-playbook", self.case_named("swe-mode-refactor-structure"), [],
+                                  "Route: refactor-structure. Reason: it fits.")
+        self.assertEqual(playbook["line"], {"status": "wrong", "observed": "refactor-structure"})
 
     def test_figure_it_out_allows_log_decisions(self):
         score = self.loads_score("figure-it-out-log-decisions", "swe-route-figure-it-out",
