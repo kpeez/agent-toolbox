@@ -36,8 +36,10 @@ the whole `.claude/skills` folder: when a teammate keeps a local, ignored
 `.claude/skills/` directory, their next pull deletes it without a warning.
 
 - When `git ls-files -s .claude/skills` already lists `.claude/skills`
-  itself with mode `120000`, the repository commits a folder link that
-  reaches the skill. Add nothing, and skip the rest of this list.
+  itself with mode `120000`, the repository commits a folder link. When
+  `.claude/skills/<skill-name>/SKILL.md` resolves through it, add nothing,
+  and skip the rest of this list. When it does not resolve, stop: tell the
+  user that the folder link does not reach the skill, and do not change it.
 - When `.claude/skills` is a link that Git does not track
   (`[ -L .claude/skills ]` and `git ls-files .claude/skills` prints
   nothing), an older version of this layout made it in a setup step. Delete
