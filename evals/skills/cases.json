@@ -3348,7 +3348,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Does halving the fine-tuning learning rate change TPR at FPR 0.1 for ViT-B? Run the comparison."
+          "content": "Does halving the fine-tuning learning rate change TPR at FPR 0.1 for the base model? Run the comparison."
         }
       ],
       "fixture": "classifier-figures",
