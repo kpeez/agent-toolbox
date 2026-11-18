@@ -191,7 +191,8 @@ uv run evals/skills/run_eval.py --execute --pilot-id PILOT --max-cost-usd 20 \
 ```
 
 `--output-root` moves the pilot folders away from `artifacts/skill-evals/`. The tests set it to a
-temporary directory, so no test writes under `artifacts/`.
+temporary directory, so no test writes under `artifacts/`. `--pilot-id` must be a plain folder name,
+not `.` or `..`, that resolves to a folder inside `--output-root`.
 
 The runtime file `runtime.native.json` holds the model, effort, tools, permission mode, per-run
 budget, worst-request cost bounds, timeout, and the confinement each limit needs. Its model, effort,

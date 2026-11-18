@@ -1149,6 +1149,25 @@ class NativeRunner(unittest.TestCase):
         self.assertIn("budget assumption broken", json.loads(blocked.stdout)["stopped"])
         self.assertEqual(len(self.model_calls()), len(CANARY_NAMES))
 
+    def test_a_pilot_id_that_leaves_the_output_root_is_refused(self):
+        tmp = Path(self.temp.name)
+        elsewhere = tmp / "elsewhere"
+        elsewhere.mkdir()
+        self.output_root.mkdir()
+        (self.output_root / "linked").symlink_to(elsewhere)
+        harness = {tmp / "runtime.json", self.stub_dir / "config.json", self.log}
+        def files():
+            return sorted(p for p in tmp.rglob("*") if p not in harness)
+        for pilot_id in ("..", ".", "linked"):
+            with self.subTest(pilot_id=pilot_id):
+                before = files()
+                self.pilot_id = pilot_id
+                done = self.run_eval("--max-cost-usd", "5", mode="--canaries")
+                self.assertEqual(done.returncode, 2, done.stderr)
+                self.assertIn("--pilot-id", done.stderr)
+                self.assertEqual(files(), before)
+        self.assertEqual(self.model_calls(), [])
+
     def test_write_escape_to_other_outside_path_stops_canaries(self):
         done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write_succeeded"}, mode="--canaries")
         self.assertEqual(done.returncode, 3, done.stderr)

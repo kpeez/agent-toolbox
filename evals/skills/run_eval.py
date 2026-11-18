@@ -1820,8 +1820,16 @@ def main():
             args.max_cost_usd is not None and args.max_cost_usd <= 0
         ):
             raise ValueError("--repeats and --max-cost-usd must be positive")
-        if not re.fullmatch(r"[A-Za-z0-9._-]+", args.pilot_id):
-            raise ValueError("--pilot-id must be a plain folder name")
+        pilot_root = (args.output_root / args.pilot_id).resolve()
+        if (
+            args.pilot_id in {".", ".."}
+            or not re.fullmatch(r"[A-Za-z0-9._-]+", args.pilot_id)
+            or pilot_root == args.output_root
+            or not pilot_root.is_relative_to(args.output_root)
+        ):
+            raise ValueError(
+                "--pilot-id must be a plain folder name that stays inside --output-root"
+            )
         runtime = se.read_json(args.runtime)
         cases, excluded = selected_cases(args.corpus, args.case)
         pilot = build_pilot(args, runtime, cases)
