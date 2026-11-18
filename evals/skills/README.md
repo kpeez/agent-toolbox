@@ -46,7 +46,8 @@ trigger and the `ship-pr` route, the case uses wording that only one of them mat
 The family `hidden-skill-fallback` (8 cases) targets the skills and principles that the Skill tool
 refuses because the model's list hides them. A playbook step names them, and the agent must read
 `../<name>/SKILL.md` or `../principle-<slug>/SKILL.md` by path. Each case sets `expected_route` and lists in
-`facets` the `principle-read` and `reply-load` facets that its route needs. It words the request so that the
+`facets` the `principle-read` facets and `step-load` facets of hidden skills that its route needs. A name on a playbook's Reply
+line is not listed, because the router loads only names in step parentheses. It words the request so that the
 step which names each principle applies, for example two failed fixes before `attack-the-premise`.
 A listed facet scores `loaded` or `miss` whether or not the agent marks its step done, so a case lists only facets from steps that a correct run on
 its prompt and fixture must do. A step that the run may correctly skip, such as the pilot of an experiment on a fixture with no pipeline, lists none.

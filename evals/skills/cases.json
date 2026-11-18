@@ -3271,10 +3271,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "Bring the preview refresh under 2 seconds for 18,000 tiles. Try independent ideas in parallel worktrees, change one thing per attempt, measure each with the same command, and say whether each gain is more than noise."
+          "content": "The tile cache hit rate on the measure.py replay is about 0.668. Get it to 0.80 or higher at the same capacity. Try independent ideas in parallel worktrees, change one thing per attempt, measure each with the same command over several seeds, and say whether each gain is more than noise."
         }
       ],
-      "fixture": "tile-renderer",
+      "fixture": "tile-cache",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -3287,7 +3287,7 @@
         "principle-read/swe/guard-the-context-window"
       ],
       "relevant_action": "Say Playbook: hillclimb-metric and read the playbook before any other step.",
-      "rationale": "Parallel worktrees and a noise question make the hillclimb-metric steps name all three principles. Step 6 hands each attempt to a subagent and keeps the findings in the main thread, so it names guard-the-context-window beside separate-before-serializing-shared-state."
+      "rationale": "The tile-cache fixture has cache.py and the seeded measure.py replay, so the run reaches steps 6 and 7 instead of stopping at step 1 to build a repro. Step 6 hands each attempt to a subagent in a parallel worktree and keeps findings in the main thread, naming guard-the-context-window and separate-before-serializing-shared-state, and step 7 names explain-the-number for the noise check. A hit rate is not a time, so improve-performance does not fit."
     },
     {
       "id": "swe-fallback-autopilot-full",
@@ -3309,10 +3309,11 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/autopilot-full",
       "facets": [
-        "reply-load/swe/autopilot-full/reply/ketchup"
+        "step-load/swe/autopilot-full/3-report-code-ready-head/no-comments",
+        "step-load/swe/autopilot-full/6-swarm-verify-once/swarm"
       ],
       "relevant_action": "Say Playbook: autopilot-full and read the playbook before any other step.",
-      "rationale": "The Reply line of autopilot-full names ketchup, a skill hidden from the list. The agent reads it by path before the final reply."
+      "rationale": "Steps 3-report-code-ready-head and 6-swarm-verify-once run for every PR in the queue, so every correct run loads no-comments and swarm by path (either in root or in an owner subagent). Step 10-arm-audit-loop runs only on the operator's go, and the Reply line's ketchup is not listed because the router loads only names in step parentheses."
     },
     {
       "id": "swe-fallback-autopilot-stack",
@@ -3330,14 +3331,20 @@
       "expected_skills": [
         "swe:swe-mode"
       ],
-      "acceptable_auxiliaries": [],
+      "acceptable_auxiliaries": [
+        "swe:no-comments",
+        "swe:swarm",
+        "swe:principle-prove-it-works",
+        "swe:log-decisions"
+      ],
       "forbidden_skills": [],
       "expected_route": "route/swe/autopilot-stack",
       "facets": [
-        "reply-load/swe/autopilot-stack/reply/ketchup"
+        "step-load/swe/autopilot-full/3-report-code-ready-head/no-comments",
+        "step-load/swe/autopilot-full/6-swarm-verify-once/swarm"
       ],
       "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
-      "rationale": "The Reply line of autopilot-stack names ketchup, a skill hidden from the list. The agent reads it by path before the final reply."
+      "rationale": "autopilot-stack runs autopilot-full without step 8-merge-only-verified, so steps 3-report-code-ready-head and 6-swarm-verify-once of autopilot-full still run for every PR in the queue. Every correct run loads no-comments and swarm (and principle-prove-it-works from steps 2 and 6) by path, and the Reply line's ketchup is not listed because the router loads only names in step parentheses."
     },
     {
       "id": "lab-fallback-run-experiment",

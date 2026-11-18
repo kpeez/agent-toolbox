@@ -2428,9 +2428,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-fallback-autopilot-full"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "Reply",
@@ -2446,16 +2444,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "Reply: catch the operator up, covering each PR's state and verdict, what merged, countersigns and why, open operator gates, and parked follow-ups, with links to each PR and each decision log. (ketchup)",
       "subject": "autopilot-full"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-fallback-autopilot-stack"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "Reply",
@@ -2471,7 +2467,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)",
       "subject": "autopilot-stack"
     },
@@ -7293,6 +7289,7 @@
         "negative": [],
         "positive": [
           "swe-fallback-autopilot-full",
+          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-full"
         ]
       },
@@ -7397,6 +7394,7 @@
         "negative": [],
         "positive": [
           "swe-fallback-autopilot-full",
+          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-full"
         ]
       },
@@ -11823,7 +11821,7 @@
       "scored": 18
     },
     "reply-load": {
-      "scored": 2
+      "recorded": 2
     },
     "route": {
       "scored": 47
