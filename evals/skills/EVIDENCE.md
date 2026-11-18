@@ -15,7 +15,7 @@ transcript adapter, load records add `agent_id`, `detail`, and `transform`.
 `groups` and `confusion` row, so the two arms never pool.
 
 `manifest.json` records `corpus_sha256` and `facets_sha256`, the digests of
-`cases.json` and `facets.json` at materialization. `score` refuses a run when
+`dataset/dev.jsonl` and `facets.json` at materialization. `score` refuses a run when
 the answer-key corpus or the facet map changed since then. A manifest without
 `facets_sha256` still scores. Both digests enter `configuration_sha256`, so runs
 scored under different maps never pool in `aggregate`.
