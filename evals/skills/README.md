@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 132 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
+The corpus has 136 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:
@@ -36,7 +36,7 @@ the same fixture, except `lab-mode-run-experiment`, which needs a training pipel
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
 
-The two route-choice families, `swe-route-choice` (20 cases) and `lab-route-choice` (6 cases), cover
+The two route-choice families, `swe-route-choice` (24 cases) and `lab-route-choice` (6 cases), cover
 each playbook and single-skill route that no other case covers, with one case per route. They have
 no fixed mix: `validate` rejects a negative case, and a case with no `expected_route`, in an open family, because a route-choice case scores one route. A negative in a mix family may set `expected_route`. Every
 case instead resembles a neighbouring route and belongs to its own: the `rationale` names the
@@ -46,12 +46,18 @@ For example, `swe-route-diagnose-runtime` runs a worker script that spins, `swe-
 `receipt.py`, and `lab-route-maintain-project-skills` has project skills and a renamed column. Where two router lines overlap, such as the PR-status
 trigger and the `ship-pr` route, the case uses wording that only one of them matches.
 
-Four routes have no case. `ketchup` needs commit history, `reflect` needs a past session, `ship-stack`
-needs open PRs and their CI, and `clean-worktrees` needs worktrees. A workspace is a copy of the fixture plus a fresh `git init` with no commits, remote, or
-past sessions, so it holds none of these. Their cases wait until the setup can build that state. The hidden-skill
-reads of `autopilot-full` wait for that setup too. Its steps `3-report-code-ready-head` and `6-swarm-verify-once`
-name `no-comments` and `swarm`, but they need a code-ready PR head, and a workspace with no trunk or remote cannot
-reach one. A correct run can stop before those steps, so no `hidden-skill-fallback` case lists their reads.
+A workspace is a copy of the fixture plus a fresh `git init` with no commits, remote, or past sessions, and the native
+tool set has no shell, so an agent can never run `git` or `gh`. A case that needs repository state puts it in the
+fixture as plain files that the prompt names, and the prompt says the copy has no git history or forge access.
+`swe-route-ship-stack` holds the stack's PR state, CI runs, and patches; `swe-route-ketchup` holds the commits, the PR
+state, and the decision log of a four-day run; `swe-route-reflect` holds a past session's transcript; and
+`swe-route-clean-worktrees` holds the worktree list, merge state, sizes, and the open sessions.
+
+No `hidden-skill-fallback` case covers `autopilot-full` or `autopilot-stack`. Their hidden names sit in steps that a
+PR owner reaches: `3-report-code-ready-head` (`no-comments`) and `6-swarm-verify-once` (`swarm`) need a code-ready head,
+which an owner commits and reports. The native tool set has no subagent tool to spawn an owner and no shell to commit,
+and the playbook forbids the coordinator to write a PR itself. A correct run therefore stops before those steps, and
+files cannot supply an owner or a head, so no case lists their reads.
 
 The family `hidden-skill-fallback` (6 cases) targets the skills and principles that the Skill tool
 refuses because the model's list hides them. A playbook step names them, and the agent must read
@@ -469,11 +475,11 @@ task you already framed, and "just do it". It runs once per task. The corpus app
   `lab-making-plots-read-table`, and the lookups `TA-07`, `DG-07`, and `TC-08`.
 - A mechanical or fully specified edit or action: the request names every constraint of the change or the action, so
   nothing is left to choose. These are `IM-10`, `AR-07`, `HO-07`, `TC-07` (run a named command and report), `SP-01`
-  and `SP-10` (commit finished work and open a draft PR), `SP-04` (land an approved PR), and
-  `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
+  and `SP-10` (commit finished work and open a draft PR), `SP-04` (land an approved PR),
+  `swe-route-ship-stack` (land a named stack), and `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
 - A follow-up inside a framed task: the last user turn continues the work that an earlier assistant turn did. These
   are `SP-05` (commit what the earlier turn reported complete), `SP-06` (fix what it diagnosed),
-  and `swe-mode-pause-safely`. A user turn that opens a new task after an answer is
+  `swe-mode-pause-safely`, and `swe-route-ketchup` (catch up on the queue that the earlier turns framed). A user turn that opens a new task after an answer is
   a new task, so `HO-05`, `HO-06`, `swe-mode-build-feature`, and the lab contextual cases keep `go-deeper` allowed.
 
 A case that sets no `expected_route` gets only one automatic credit: `swe:writing`, when it lists the plugin's router as

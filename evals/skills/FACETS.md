@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-80 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+65 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -56,10 +56,10 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|---|---|
 | activation | 9 | 28 | 0 | 37 |
 | hook-load | 0 | 5 | 0 | 5 |
-| route | 43 | 0 | 4 | 47 |
-| route-load | 17 | 2 | 0 | 19 |
-| playbook-read | 26 | 2 | 0 | 28 |
-| step-load | 223 | 11 | 9 | 243 |
+| route | 47 | 0 | 0 | 47 |
+| route-load | 19 | 0 | 0 | 19 |
+| playbook-read | 28 | 0 | 0 | 28 |
+| step-load | 232 | 2 | 9 | 243 |
 | reply-load | 0 | 2 | 0 | 2 |
 | trigger-load | 0 | 16 | 2 | 18 |
 | principle-read | 18 | 11 | 0 | 29 |
@@ -88,7 +88,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | interview-user | swe | 7 | 3 | scored |
 | log-decisions | swe | 0 | 0 | recorded |
 | ship-pr | swe | 7 | 3 | scored |
-| swe-mode | swe | 32 | 3 | scored |
+| swe-mode | swe | 36 | 3 | scored |
 | testing-code | swe | 14 | 6 | scored |
 | typescript-best-practices | swe | 0 | 0 | recorded |
 | verification-skill | swe | 0 | 0 | recorded |
@@ -152,7 +152,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | skill `blast-radius` | 1-read-the-change, 2-find-safety-fact, 3-look-past-grep, 4-rate-each-risk, 5-prove-the-fact, 6-optional-independent-review | 1 | 0 |
 | playbook `build-feature` | 1-map-subsystem, 2-interview-on-open-decisions, 3-name-data-shape, 4-explore-designs, 5-write-throughput-checkpoint, 6-build-one-unit, 7-decide-tests, 8-verify-on-surface, 9-check-blast-radius, 10-review-if-contested, 11-independent-review, 12-order-commits, 13-update-obsolete-docs, 14-publish-draft-pr | 6 | 0 |
 | playbook `build-prototype` | 1-scope-the-decision, 2-gather-references, 3-build-throwaway, 4-switch-between-variants, 5-observe-on-surface, 6-recommend-direction | 2 | 0 |
-| playbook `clean-worktrees` | 1-snapshot-and-audit, 2-cross-check-in-use, 3-verify-usage, 4-pause-on-loss, 5-prune-confirmed-set, 6-prune-merged-scratch, 7-other-reclaimers | 0 | 0 |
+| playbook `clean-worktrees` | 1-snapshot-and-audit, 2-cross-check-in-use, 3-verify-usage, 4-pause-on-loss, 5-prune-confirmed-set, 6-prune-merged-scratch, 7-other-reclaimers | 1 | 0 |
 | skill `codebase-design` | design: 1-map-the-callers, 2-weigh-the-trade-offs, 3-specify-the-interface, 4-compare-interfaces; review: 1-explore-friction, 2-apply-deletion-test, 3-report-candidates, 4-interview-on-chosen-design | 1 | 0 |
 | skill `correct` | 1-find-the-mistake-classes, 2-fix-each-class, 3-fix-and-prove, 4-keep-the-rule-table | 1 | 0 |
 | skill `diagnose` | 1-state-exact-failure, 2-build-feedback-loop, 3-seed-from-history, 4-rank-hypotheses, 5-label-confidence, 6-remove-instrumentation | 7 | 0 |
@@ -167,16 +167,16 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | playbook `improve-performance` | 1-measure-baseline, 2-ground-hypotheses, 3-name-limiter, 4-try-mantras, 5-plan-fix, 6-change-one-thing, 7-compare-artifacts, 8-explain-the-gain, 9-verify-behavior-unchanged, 10-update-obsolete-docs, 11-publish-draft-pr | 1 | 0 |
 | skill `interview-user` | 1-ask-a-round, 2-find-facts-and-leave-decisions, 3-confirm-the-shared-understanding | 1 | 0 |
 | playbook `investigate-question` | 1-restate-question, 2-trace-the-code, 3-trace-rationale, 4-note-throughput, 5-shape-the-answer, 6-label-each-claim, 7-check-reply-prose | 1 | 0 |
-| skill `ketchup` | 1-gather-what-changed, 2-write-the-reply | 0 | 0 |
+| skill `ketchup` | 1-gather-what-changed, 2-write-the-reply | 1 | 0 |
 | playbook `match-visual-parity` | 1-establish-baseline, 2-migrate-shared-primitives, 3-migrate-one-component, 4-diff-each-component, 5-publish-draft-pr | 1 | 0 |
 | playbook `pause-safely` | 1-stop-at-safe-boundary, 2-take-no-irreversible-action, 3-commit-wip, 4-write-handoff | 1 | 0 |
 | playbook `pick-up-session` | 1-locate-prior-trail, 2-reconstruct-state, 3-diff-done-vs-pending, 4-route-remaining-work, 5-verify-inherited-claims | 1 | 0 |
 | playbook `plan-multi-phase` | 1-skip-small-change, 2-settle-by-prototype, 3-write-plan-file, 4-require-real-verification, 5-hand-back | 2 | 0 |
 | playbook `refactor-structure` | 1-pin-behavior, 2-name-missing-structure, 3-name-target-shape, 4-subtract-first, 5-move-in-small-steps, 6-migrate-then-delete, 7-prove-equivalence, 8-confirm-reader-gain, 9-independent-review, 10-order-commits, 11-update-obsolete-docs, 12-publish-draft-pr | 2 | 0 |
-| skill `reflect` | 1-read-the-session, 2-keep-durable-findings, 3-present-and-wait | 0 | 0 |
+| skill `reflect` | 1-read-the-session, 2-keep-durable-findings, 3-present-and-wait | 1 | 0 |
 | playbook `run-autonomously` | 1-state-exit-predicate, 2-pick-wake-mechanism, 3-open-decision-log, 4-iterate-smallest-change, 5-own-mid-run-discoveries, 6-log-each-iteration, 7-stop-on-predicate, 8-publish-draft-pr | 1 | 0 |
 | skill `ship-pr` | publish: 1-inspect, 2-verify, 3-group-and-commit, 4-push, 5-open-draft-pr, 6-link-issue, 7-report; drive-to-green: 1-resolve-conflicts, 2-triage-review-threads, 3-classify-ci-failures, 4-push-one-wave, 5-reply-to-threads, 6-update-pr-body; land: 1-get-independent-verdict, 2-key-verdict-to-patch, 3-recheck-before-landing, 4-mark-ready, 5-merge; finalize: 1-locate-pr, 2-account-for-local-changes, 3-reverify, 4-ready-or-land, 5-leave-issue-status, 6-report | 1 | 0 |
-| playbook `ship-stack` | 1-verify-each-pr, 2-find-verified-run, 3-recheck-patch-ids, 4-land-bottom-up, 5-hands-off-while-landing, 6-stop-at-ceiling | 0 | 0 |
+| playbook `ship-stack` | 1-verify-each-pr, 2-find-verified-run, 3-recheck-patch-ids, 4-land-bottom-up, 5-hands-off-while-landing, 6-stop-at-ceiling | 1 | 0 |
 | skill `testing-code` | new-tests-and-probes: 1-name-the-contract, 2-pass-the-admission-gate, 3-choose-the-evidence, 4-see-it-fail, 5-clean-up-and-report; audit: 1-record-suite-baseline, 2-mark-candidates, 3-edit-in-small-batches, 4-mutate-changed-contracts, 5-independent-preservation-review, 6-publish-draft-pr | 16 | 0 |
 | skill `verification-skill` | create: 1-interview-the-repo, 2-fix-the-checkout, 3-generate-the-skill, 4-seed-the-feature-map, 5-prove-the-generated-skill, 6-hand-over; maintain: 1-clean-the-index, 2-run-the-source-wave, 3-reconcile, 4-run-the-live-pass, 5-triage, 6-ship-or-stop | 1 | 0 |
 | skill `writing` | 1-find-the-surface, 2-read-its-row, 3-apply-the-prose-rules | 1 | 0 |
@@ -470,8 +470,8 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | figure-it-out | hidden-skill | full-read | scored | Match: figure-it-out |
 | handoff | visible-skill | skill-call | scored | Single-skill routes: handoff |
 | interview-user | visible-skill | skill-call | scored | Single-skill routes: interview-user |
-| ketchup | hidden-skill | full-read | recorded | Single-skill routes: ketchup |
-| reflect | hidden-skill | full-read | recorded | Single-skill routes: reflect |
+| ketchup | hidden-skill | full-read | scored | Single-skill routes: ketchup |
+| reflect | hidden-skill | full-read | scored | Single-skill routes: reflect |
 | ship-pr | visible-skill | skill-call | scored | Single-skill routes: ship-pr |
 | testing-code | visible-skill | skill-call | scored | Single-skill routes: testing-code |
 | verification-skill | visible-skill | skill-call | scored | Single-skill routes: verification-skill |
