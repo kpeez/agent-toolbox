@@ -39,6 +39,11 @@ class PollerTests(unittest.TestCase):
         queue = FakeQueue(clock, arrive_at=10, item="job-2")
         self.assertEqual(wait_for_item(queue, clock, timeout=10, interval=4), "job-2")
 
+    def test_ignores_item_arriving_after_timeout(self):
+        clock = FakeClock(start=0)
+        queue = FakeQueue(clock, arrive_at=11, item="job-3")
+        self.assertIsNone(wait_for_item(queue, clock, timeout=10, interval=4))
+
 
 if __name__ == "__main__":
     unittest.main()
