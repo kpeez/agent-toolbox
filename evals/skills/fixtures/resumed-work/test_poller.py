@@ -37,7 +37,7 @@ class PollerTests(unittest.TestCase):
     def test_returns_item_arriving_at_timeout_boundary(self):
         clock = FakeClock(start=0)
         queue = FakeQueue(clock, arrive_at=10, item="job-2")
-        self.assertEqual(wait_for_item(queue, clock, timeout=10, interval=5), "job-2")
+        self.assertEqual(wait_for_item(queue, clock, timeout=10, interval=4), "job-2")
 
 
 if __name__ == "__main__":

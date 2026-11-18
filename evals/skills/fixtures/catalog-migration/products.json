@@ -1,0 +1,8 @@
+[
+  {"id": "sku-101", "name": "Canvas Tote", "price_cents": 2400},
+  {"id": "sku-102", "name": "Ceramic Mug", "price_cents": 1600},
+  {"id": "sku-103", "name": "Desk Lamp", "price_cents": 5800},
+  {"id": "sku-104", "name": "Linen Notebook", "price_cents": 1400},
+  {"id": "sku-105", "name": "Canvas Tote", "price_cents": 2800},
+  {"id": "sku-106", "name": "Wool Throw", "price_cents": 7200}
+]

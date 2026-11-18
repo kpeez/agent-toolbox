@@ -1070,17 +1070,24 @@ class OfflineCLIContract(unittest.TestCase):
             route, _ = self.route_trace(f"route-label-{index}", line=line)
             self.assertEqual(route["line"], {"status": "match", "observed": "analyze-results"}, line)
 
-    def test_a_route_that_only_match_reaches_accepts_a_playbook_or_a_route_line(self):
+    def test_route_line_requires_the_label_to_match_the_route_type(self):
         case = self.case_named("swe-route-figure-it-out")
-        for name, line in (("playbook", "Playbook: figure-it-out. Reason: the work is cross-cutting."),
-                           ("route", "Route: figure-it-out. Reason: the work is cross-cutting.")):
-            route = self.route_run(f"match-only-{name}", case, [("skill", "swe:figure-it-out")], line)
-            self.assertEqual(route["line"], {"status": "match", "observed": "figure-it-out"}, line)
+        matched = self.route_run("match-only-route", case, [("skill", "swe:figure-it-out")],
+                                 "Route: figure-it-out. Reason: the work is cross-cutting.")
+        self.assertEqual(matched["line"], {"status": "match", "observed": "figure-it-out"})
+        wrong_label = self.route_run("match-only-playbook", case, [("skill", "swe:figure-it-out")],
+                                     "Playbook: figure-it-out. Reason: the work is cross-cutting.")
+        self.assertEqual(wrong_label["line"]["status"], "wrong")
         wrong = self.route_run("match-only-wrong-slug", case, [], "Playbook: fix-bug. Reason: it fits.")
         self.assertEqual(wrong["line"]["status"], "wrong")
         listed = self.route_run("listed-route-keeps-its-label", self.case_named("DG-01"), [],
                                 "Playbook: diagnose. Reason: it fits.")
         self.assertEqual(listed["line"]["status"], "wrong")
+
+    def test_figure_it_out_allows_log_decisions_as_an_auxiliary(self):
+        score = self.loads_score("figure-it-out-log-decisions", "swe-route-figure-it-out",
+                                 "swe:swe-mode", "swe:figure-it-out", "swe:log-decisions")
+        self.assertEqual(score["unexpected_skills"], [])
 
     def test_skill_route_scores_the_line_and_the_routed_skill_load(self):
         case = self.case_named("lab-mode-route-autoresearch")
