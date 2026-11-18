@@ -36,17 +36,27 @@ the whole `.claude/skills` folder: when a teammate keeps a local, ignored
 `.claude/skills/` directory, their next pull deletes it without a warning.
 
 - When `git ls-files -s .claude/skills` already lists `.claude/skills`
-  itself with mode `120000`, the repository commits a folder link that
-  reaches the skill. Add nothing.
+  itself with mode `120000`, the repository commits a folder link. When
+  `.claude/skills/<skill-name>/SKILL.md` resolves to the same file as
+  `.agents/skills/<skill-name>/SKILL.md` (compare `realpath` of both), add
+  nothing, and skip the rest of this list. Otherwise, stop: tell the user
+  that the folder link does not reach this skill, and do not change it.
 - When `.claude/skills` is a link that Git does not track
   (`[ -L .claude/skills ]` and `git ls-files .claude/skills` prints
   nothing), an older version of this layout made it in a setup step. Delete
   the link with `rm .claude/skills`, and remove the setup-step line that made
   it. Leave `.gitignore` as it is.
-- Link the skill:
+- When `.claude/skills/<skill-name>` is a real directory, stop. `ln -sfn`
+  would put the link inside it. Tell the user that the directory hides the
+  skill, and do not move or delete it.
+- When the setup step has a line that links this one skill
+  (`ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`),
+  an older version of this layout added it with the ignore line
+  `/.claude/skills/<skill-name>`. Remove both lines.
+- Then link the skill:
   `mkdir -p .claude/skills && ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`.
-- Commit the link with `git add -f .claude/skills/<skill-name>`. The `-f`
-  adds it even when `.gitignore` covers `.claude/`. Git applies no ignore
+- Then stage the link with `git add -f .claude/skills/<skill-name>` and commit
+  it with the skill. The `-f` adds it even when `.gitignore` covers `.claude/`. Git applies no ignore
   rule to a tracked path, so do not edit `.gitignore` for the link. If the
   link later leaves the index, add it again with `git add -f`;
   `git add -A` does not.
