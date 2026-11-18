@@ -682,12 +682,24 @@ def claude_proof(load, use, result, body, frozen, manifest):
         return load
     load["skill"] = skill
     expected = manifest["skills"][skill]["body_sha256"]
-    # Claude Code appends Skill call arguments to a body that has no $ARGUMENTS placeholder.
-    suffix = "\n\nARGUMENTS: " + str(use["input"].get("args") or "")
-    if use["input"].get("args") and text.endswith(suffix) and digest(text[:-len(suffix)].encode()) == expected:
+    args_value = use["input"].get("args")
+    # Claude Code appends Skill call arguments to a body that has no $ARGUMENTS placeholder,
+    # and replaces every $ARGUMENTS placeholder when the body contains one.
+    suffix = "\n\nARGUMENTS: " + str(args_value or "")
+    substituted = False
+    if args_value and text.endswith(suffix) and digest(text[:-len(suffix)].encode()) == expected:
         text = text[:-len(suffix)]
         load["transform"] += "_arguments_suffix_removed"
-    mismatch = None if separator and digest(text.encode()) == expected else "body digest mismatch"
+    elif separator and digest(text.encode()) != expected:
+        skill_file = Path(load["skill_path"])
+        if not skill_file.is_file() or digest(skill_file.read_bytes()) != manifest["skills"][skill]["sha256"]:
+            skill_file = Path(manifest["skills"][skill]["path"])
+        frozen_body = delivered_body(skill_file.read_text(encoding="utf-8"))
+        if (frozen_body is not None and digest(frozen_body.encode()) == expected and "$ARGUMENTS" in frozen_body
+                and text == frozen_body.replace("$ARGUMENTS", str(args_value or ""))):
+            substituted = True
+            load["transform"] += "_arguments_substituted"
+    mismatch = None if separator and (substituted or digest(text.encode()) == expected) else "body digest mismatch"
     load.update(status="partial" if mismatch else "success", detail=mismatch, body_sha256=digest(text.encode()),
                 completed_seq=max(result["line"], body["line"]), ordering="source_sequence")
     return load

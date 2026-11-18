@@ -1473,6 +1473,50 @@ class OfflineCLIContract(unittest.TestCase):
         evidence = json.loads((run / "evidence.json").read_text())
         self.assertEqual(evidence["final_reply"], "Steps:\n1-locate-raw-results: done")
 
+    def test_claude_skill_body_substitutes_arguments_placeholder(self):
+        rows = [
+            ("no-args", None, lambda b: b.replace("$ARGUMENTS", ""), "success", None,
+             "frontmatter_removed_leading_newlines_stripped_arguments_substituted", True),
+            ("with-args", "fix the parser", lambda b: b.replace("$ARGUMENTS", "fix the parser"), "success", None,
+             "frontmatter_removed_leading_newlines_stripped_arguments_substituted", True),
+            ("other-byte-mismatch", "fix the parser",
+             lambda b: b.replace("$ARGUMENTS", "fix the parser").replace("route a task", "route A task", 1),
+             "partial", "body digest mismatch", "frontmatter_removed_leading_newlines_stripped", False),
+        ]
+        for name, call_args, deliver, expected_status, expected_detail, expected_transform, expected_ok in rows:
+            with self.subTest(name=name):
+                run, _, _ = self.prepare("claude-placeholder-" + name)
+                manifest = json.loads((run / "manifest.json").read_text())
+                skill = manifest["skills"]["swe:swe-mode"]
+                text = Path(skill["path"]).read_text(encoding="utf-8")
+                frozen_body = text.split("\n---\n", 1)[1].lstrip("\n")
+                self.assertIn("$ARGUMENTS", frozen_body)
+                delivered = deliver(frozen_body)
+                if name == "other-byte-mismatch":
+                    self.assertNotEqual(delivered, frozen_body.replace("$ARGUMENTS", call_args))
+                body = "Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n" + delivered
+                skill_input = {"skill": "swe:swe-mode"} if call_args is None else {"skill": "swe:swe-mode", "args": call_args}
+                steps = [
+                    ("call", "message-skill", "use-skill", {"name": "Skill", "input": skill_input}),
+                    ("result", None, "use-skill", {"success": True, "commandName": "swe:swe-mode"}),
+                    ("body", None, "use-skill", body),
+                    ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+                    ("result", None, "use-edit", {"filePath": "calc.py"}),
+                ]
+                score = self.claude_trace(run, steps, "use-edit")
+                ev = json.loads((run / "evidence.json").read_text())
+                load = ev["loads"][0]
+                self.assertEqual(load["status"], expected_status)
+                self.assertEqual(load["detail"], expected_detail)
+                self.assertEqual(load["transform"], expected_transform)
+                self.assertEqual(load["body_sha256"], hashlib.sha256(delivered.encode()).hexdigest())
+                self.assertEqual(score["evidence_coverage"], "complete")
+                if expected_ok:
+                    self.assertIn("swe:swe-mode", score["observed_skills"])
+                else:
+                    self.assertNotIn("swe:swe-mode", score["observed_skills"])
+                    self.assertIn("swe:swe-mode", score["unresolved_skills"])
+
 
 if __name__ == "__main__":
     unittest.main()
