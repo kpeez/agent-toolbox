@@ -171,7 +171,9 @@ which no frozen plugin hook uses and both arms reject as an issue. This
 `6-native-pilot` must confirm it on an audited pilot trace.
 
 `body_sha256` is the digest of `SKILL.md` with its frontmatter removed and its
-leading newlines stripped. The load record names this transform. A failed
+leading newlines stripped. The load record names this transform.
+It also accepts an appended `\n\nARGUMENTS: <args>` suffix (`_arguments_suffix_removed`) and, when the body holds `$ARGUMENTS`, replacement by `args` (`_arguments_substituted`, keeping `body_sha256` as the delivered digest).
+A failed
 result is `failed`. A success without proof is `partial`: no linked body, a
 digest mismatch, or a sliced read. No result, no success flag, a path outside
 the declared plugin directories, or a requested name that differs from the
