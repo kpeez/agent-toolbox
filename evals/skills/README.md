@@ -296,16 +296,17 @@ the runner kills a child that already timed out is recorded as a killed child wi
 No test covers the block before the fork. Only the unblock and the kill are tested, so the fork race
 that the block closes is guarded by the code alone.
 
-The cap rests on two assumptions, and the `budget-ceiling` canary checks only the first (see "Canaries"):
+The cap rests on two assumptions:
 
 - The CLI checks `--max-budget-usd` before each model request, so a run overshoots by at most the
   in-flight requests, at most `max_concurrent_requests` of them.
 - The owner's `worst_request` numbers bound the cost of one request: the context window, the output
   limit, and the highest input and output prices of the approved model.
-- The `budget-ceiling` canary is the one live check of the first point. A run that breaks the bound
-  writes `budget-assumption-broken.json` and stops the pilot.
-- The ordinary canaries only show that their own cost stayed within the per-run budget. Their prompts are
-  trivial, so that holds whether or not the CLI enforces the budget.
+
+The `budget-ceiling` canary is the one live check of the first assumption (see "Canaries"). A run whose
+cost breaks the bound writes `budget-assumption-broken.json` and stops the pilot. The ordinary canaries
+only show that their own cost stayed within the per-run budget. Their prompts are trivial, so that holds
+whether or not the CLI enforces the budget.
 
 Treat the cap as unverified until `canaries.json` shows `budget-ceiling` passed, and read its
 `overshoot_usd` next to `overshoot_bound_usd`.
