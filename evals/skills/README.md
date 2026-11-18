@@ -25,8 +25,8 @@ the playbook, and the Steps section. Its three negatives are a closing remark, a
 needs no repository, and a task outside software. A load of the router there is a false
 activation. The closing remark and the quick fact also forbid `swe:go-deeper`, because its skip rule
 excludes chat and quick facts. The software-free task allows it and `swe:writing`, because the session-start hook
-runs `go-deeper` on a task of any kind and sends the reply through `writing`. `swe-mode-pause-safely` and
-`swe-mode-ship-stack` forbid `go-deeper` too: each is a follow-up inside a task that an earlier turn framed.
+runs `go-deeper` on a task of any kind and sends the reply through `writing`. `swe-mode-pause-safely`
+forbids `go-deeper` too: it is a follow-up inside a task that an earlier turn framed.
 
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
 the same fixture. Six of them set `expected_route`, the route the agent should
@@ -159,8 +159,7 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
 `route` scores the agent against its router:
 
 - `line`: the first root text with a `Playbook: <slug>` or `Route: <skill>`
-  line. `Playbook` must name a playbook route and `Route` a single-skill route, except for a route that the
-  router reaches only through its Match steps (`figure-it-out`, Match step 6): there either label scores `match`.
+  line. `Playbook` must name a playbook route and `Route` a single-skill route.
   The label may be bold (`**Playbook:**`, `**Playbook**:`) or bulleted
   (`- Playbook:`). The slug may be in backticks, with or without its plugin
   prefix. The status is `match`, `wrong`, `missing`, or `unavailable`.
@@ -244,8 +243,8 @@ task you already framed, and "just do it". It runs once per task. The corpus app
   `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
 - A follow-up inside a framed task: the last user turn continues the work that an earlier assistant turn did. These
   are `SP-05` (commit what the earlier turn reported complete), `SP-06` (fix what it diagnosed),
-  `swe-mode-ship-stack`, and `swe-mode-pause-safely`. A user turn that opens a new task after an answer is
-  a new task, so `HO-05`, `HO-06`, and the lab contextual cases keep `go-deeper` allowed.
+  and `swe-mode-pause-safely`. A user turn that opens a new task after an answer is
+  a new task, so `HO-05`, `HO-06`, `swe-mode-ship-stack`, and the lab contextual cases keep `go-deeper` allowed.
 
 A case that sets no `expected_route` gets only one automatic credit: `swe:writing`, when it lists the plugin's router as
 expected or auxiliary. It labels the rest itself:

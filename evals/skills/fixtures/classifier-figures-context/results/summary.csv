@@ -1,0 +1,8 @@
+model,regime,tpr_fpr_0.1,tpr_fpr_0.01,auroc,accuracy
+tiny,fine-tuned,0.618,0.287,0.824,0.892
+base,fine-tuned,0.746,0.415,0.879,0.938
+large,fine-tuned,0.814,0.478,0.931,0.929
+distilled,fine-tuned,0.769,0.442,0.897,0.921
+large,zero-shot,0.412,0.231,0.718,0.742
+base,zero-shot,0.341,0.174,0.682,0.695
+distilled,zero-shot,0.318,0.129,0.659,0.764
