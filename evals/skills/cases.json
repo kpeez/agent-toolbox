@@ -2053,10 +2053,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "test whether a lower learning rate for fine-tuning the base model helps TPR at FPR 0.01"
+          "content": "test whether a lower learning rate helps the ticket classifier's held-out accuracy"
         }
       ],
-      "fixture": "classifier-figures",
+      "fixture": "ticket-classifier",
       "expected_skills": [
         "lab:lab-mode"
       ],
@@ -2066,7 +2066,7 @@
       ],
       "forbidden_skills": [],
       "relevant_action": "Design one comparison with a fixed metric before any run; playbook run-experiment.",
-      "rationale": "One designed comparison: the router should pick run-experiment."
+      "rationale": "One designed comparison on a fixture that can run it (train.py with --lr, eval.py prints held-out accuracy): the router should pick run-experiment."
     },
     {
       "id": "lab-mode-route-autoresearch",

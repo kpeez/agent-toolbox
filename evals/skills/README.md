@@ -32,7 +32,7 @@ for every tile. `python3 preview.py` (python 3.9) took 14.6 to 16.3 s over eight
 says "about 15 s".
 
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
-the same fixture. Six of them set `expected_route`, the route the agent should
+the same fixture, except `lab-mode-run-experiment`, which needs a training pipeline and uses `ticket-classifier`. Six of them set `expected_route`, the route the agent should
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
 
