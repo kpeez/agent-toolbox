@@ -65,6 +65,8 @@ READ_TOOLS = ("Read", "Glob", "Grep")
 CEILING_BUDGET_USD = 0.02
 CEILING_TURNS = 40
 BUDGET_OVERSHOOT_TOLERANCE_USD = 0.05
+# Confirmed against the live Claude CLI by the budget-ceiling canary.
+BUDGET_STOP_SUBTYPE = "error_max_budget_usd"
 CANARIES = (
     ("read-outside", "hook-off"),
     ("write-outside", "hook-off"),
@@ -76,7 +78,7 @@ CANARIES = (
 )
 LIVE_STEPS = [
     "--canaries: every file-read tool (Read, Glob, Grep) must fail to read a sentinel outside the fixture; a Write "
-    "to a new path and an Edit of an existing file outside the fixture must be refused; no network tool; a plugin "
+    "to a new path outside the fixture must be refused; no network tool; a plugin "
     "playbook must read under --restricted; the hook-on stream must show every plugin's SessionStart hook and the "
     "hook-off stream none; each of those canaries must cost no more than the per-run budget; a run with a "
     f"${CEILING_BUDGET_USD} budget and a {CEILING_TURNS}-turn task must stop within "
@@ -285,9 +287,28 @@ def confinement_checks(runtime):
     return checks
 
 
-def reservation(runtime):
-    """What one launch can cost the cap: its budget plus the overshoot the budget-ceiling canary tolerates."""
-    return runtime["max_budget_usd_per_run"] + BUDGET_OVERSHOOT_TOLERANCE_USD
+def overshoot_allowance(root=None):
+    allowance = BUDGET_OVERSHOOT_TOLERANCE_USD
+    if root is not None:
+        path = root / "canaries.json"
+        if path.is_file():
+            try:
+                data = se.read_json(path)
+            except (ValueError, OSError):
+                data = {}
+            overshoot = (
+                ((data.get("canaries") or {}).get("budget-ceiling") or {})
+                .get("overshoot_usd")
+            )
+            if isinstance(overshoot, (int, float)) and not isinstance(overshoot, bool):
+                allowance = max(allowance, overshoot)
+    return allowance
+
+
+def reservation(runtime, root=None, budget=None):
+    """What one launch can cost the cap: its budget plus the overshoot allowance."""
+    base = runtime["max_budget_usd_per_run"] if budget is None else budget
+    return base + overshoot_allowance(root)
 
 
 def check(name, status, detail):
@@ -460,16 +481,15 @@ def plan_runs(pilot_id, cases, arms, repeats):
 
 
 def selected_cases(corpus_path, wanted):
-    cases, skills = se.corpus(corpus_path), se.catalog_skills()
-    resolve = se.resolver(skills)
+    cases = se.corpus(corpus_path)
     known = {c["id"] for c in cases}
     if set(wanted or ()) - known:
         raise ValueError(f"unknown case: {sorted(set(wanted) - known)}")
-    usable = [c["id"] for c in cases if not se.excluded(c, resolve, skills)]
+    usable = [c["id"] for c in cases]
     chosen = [c for c in usable if not wanted or c in wanted]
     if not chosen:
         raise ValueError("no usable case selected")
-    return chosen, sorted(known - set(usable))
+    return chosen, []
 
 
 def build_pilot(args, runtime, cases):
@@ -489,6 +509,11 @@ def build_pilot(args, runtime, cases):
         "order": "repeat-major, then case, then arm",
     }
     catalog = se.inventory(se.REPO / "plugins")
+    corpus_cases = {c["id"]: c for c in se.corpus(args.corpus)}
+    fixtures = {
+        fixture: se.inventory(se.contained(se.HERE / "fixtures", fixture))
+        for fixture in sorted({corpus_cases[cid]["fixture"] for cid in cases})
+    }
     pilot = {
         "schema_version": 1,
         "pilot_id": args.pilot_id,
@@ -502,9 +527,11 @@ def build_pilot(args, runtime, cases):
             json.dumps(catalog, sort_keys=True).encode()
         ),
         "source_catalog_files": len(catalog),
+        "corpus_sha256": se.digest(Path(args.corpus).read_bytes()),
+        "fixtures_sha256": se.digest(json.dumps(fixtures, sort_keys=True).encode()),
         "harness_sha256": {
             name: se.digest((HERE / name).read_bytes())
-            for name in ("run_eval.py", "skill_eval.py", "cases.json", "facets.json")
+            for name in ("run_eval.py", "skill_eval.py", "facets.json")
         },
         "unlabeled": "relevant_action is not labeled; evidence stays partial and misses stay unavailable until a labeler runs",
     }
@@ -512,18 +539,27 @@ def build_pilot(args, runtime, cases):
     return pilot
 
 
-def spend(root, reserve):
-    known, unknown = 0.0, 0
+def spend(root, reserve, ceiling_reserve=None):
+    known, unknown, unknown_usd = 0.0, 0, 0.0
     for record in [*root.glob("runs/*/run.json"), *root.glob("canaries/*/run.json")]:
         cost = (se.read_json(record).get("usage") or {}).get("cost_usd")
         if isinstance(cost, (int, float)) and not isinstance(cost, bool):
             known += cost
         else:
             unknown += 1
+            is_ceiling = (
+                record.parent.parent.name == "canaries"
+                and record.parent.name == "budget-ceiling"
+            )
+            unknown_usd += (
+                ceiling_reserve
+                if is_ceiling and ceiling_reserve is not None
+                else reserve
+            )
     return {
         "known_usd": known,
         "unknown_cost_runs": unknown,
-        "worst_case_usd": known + unknown * reserve,
+        "worst_case_usd": known + unknown_usd,
     }
 
 
@@ -970,10 +1006,43 @@ def drift(ctx, record):
     )
 
 
-def may_launch(ctx, failures):
-    reserve = reservation(ctx["runtime"])
-    spent = spend(ctx["root"], reserve)
-    if spent["worst_case_usd"] + reserve > ctx["pilot"]["stopping_rule"]["max_cost_usd"]:
+def record_isolation_violation(root, run, detail):
+    path = root / "isolation-violation.json"
+    se.save_json(
+        path,
+        {
+            "schema_version": 1,
+            "run": str(run),
+            "run_record": str(run / "run.json"),
+            "detail": detail,
+            "recorded_at": now(),
+        },
+    )
+    return path
+
+
+def violation_blocker(root):
+    path = root / "isolation-violation.json"
+    if not path.is_file():
+        return None
+    data = se.read_json(path)
+    return (
+        f"isolation violation recorded in {path} (inspect {data.get('run_record') or data.get('run')}): "
+        f"{data.get('detail')}; remove {path} by hand to resume"
+    )
+
+
+def may_launch(ctx, failures, budget=None):
+    blocked = violation_blocker(ctx["root"])
+    if blocked:
+        return blocked
+    reserve = reservation(ctx["runtime"], ctx["root"], budget=budget)
+    default_reserve = reservation(ctx["runtime"], ctx["root"])
+    ceiling_reserve = reservation(
+        ctx["runtime"], ctx["root"], budget=CEILING_BUDGET_USD
+    )
+    spent = spend(ctx["root"], default_reserve, ceiling_reserve)
+    if round(spent["worst_case_usd"] + reserve, 9) > ctx["pilot"]["stopping_rule"]["max_cost_usd"]:
         return f"cost cap: worst-case spend {spent['worst_case_usd']:.4f} plus the next run's reservation {reserve} exceeds the cap"
     if failures >= MAX_CONSECUTIVE_FAILURES:
         return f"{failures} consecutive failed runs"
@@ -1014,11 +1083,12 @@ def execute(ctx):
         launched += started
         failed = record.get("outcome") != "scored" or record.get("exit_code") != 0
         failures = failures + 1 if failed else 0
-        stop = (
-            "isolation violation: " + "; ".join(record["violations"])
-            if record.get("violations")
-            else drift(ctx, record)
-        )
+        if record.get("violations"):
+            detail = "; ".join(record["violations"])
+            vpath = record_isolation_violation(ctx["root"], run, detail)
+            stop = f"isolation violation: {detail} (recorded in {vpath}; inspect {run / 'run.json'})"
+        else:
+            stop = drift(ctx, record)
         if ctx["backup_dir"]:
             shutil.copytree(
                 run,
@@ -1032,7 +1102,7 @@ def execute(ctx):
 
 def stream_calls(stream):
     """(tool_use block, its tool_result block or None) for each tool call in the stream."""
-    uses, results = {}, {}
+    uses, results = [], {}
     for line in stream.read_bytes().split(b"\n"):
         try:
             event = json.loads(line)
@@ -1043,10 +1113,12 @@ def stream_calls(stream):
             if not isinstance(block, dict):
                 continue
             if event.get("type") == "assistant" and block.get("type") == "tool_use":
-                uses[block.get("id")] = block
+                uses.append((block.get("id"), block))
             elif event.get("type") == "user" and block.get("type") == "tool_result":
-                results[block.get("tool_use_id")] = block
-    return [(use, results.get(key)) for key, use in uses.items()]
+                tid = block.get("tool_use_id")
+                if isinstance(tid, str) and tid:
+                    results[tid] = block
+    return [(use, results.get(key) if isinstance(key, str) and key else None) for key, use in uses]
 
 
 def result_text(result):
@@ -1109,22 +1181,27 @@ def canary_verdict(name, stream, record, target):
 
         def got(result):
             text = result_text(result)
-            return not (result or {}).get("is_error") and (
+            return not result.get("is_error") and (
                 target.name in text or secret in text
             )
 
         by_tool = {
-            tool: [
-                got(r) for u, r in touching if base_tool(u.get("name", "")) == tool
-            ]
+            tool: [r for u, r in touching if base_tool(u.get("name", "")) == tool]
             for tool in probes
         }
-        silent = sorted(t for t, outcomes in by_tool.items() if not outcomes)
-        read = sorted(t for t, outcomes in by_tool.items() if any(outcomes))
+        silent = sorted(t for t, results in by_tool.items() if not results)
+        missing = sorted(
+            t for t, results in by_tool.items() if any(r is None for r in results)
+        )
+        read = sorted(
+            t
+            for t, results in by_tool.items()
+            if any(r is not None and got(r) for r in results)
+        )
         return (
-            bool(probes) and not silent and not read and not leaked,
+            bool(probes) and not silent and not missing and not read and not leaked,
             f"file-read tools in the session={probes}, never tried against the sentinel outside the fixture={silent}, "
-            f"returned its file name or content={read}, sentinel text in the stream={leaked}",
+            f"missing tool_result={missing}, returned its file name or content={read}, sentinel text in the stream={leaked}",
         )
     if name == "write-outside":
         attempts = [
@@ -1174,7 +1251,7 @@ def ceiling_verdict(stream, record, target):
     overshoot = None if cost is None else round(cost - CEILING_BUDGET_USD, 6)
     stopped = (
         len(reads) < CEILING_TURNS
-        and subtype != "success"
+        and subtype == BUDGET_STOP_SUBTYPE
         and overshoot is not None
         and overshoot >= 0
     )
@@ -1221,15 +1298,30 @@ def run_canary(ctx, name, arm):
         if record.get("outcome") == "aborted":
             problems.append(f"run aborted: {record['error']}")
         elif not record.get("effective_session"):
-            problems.append("no init event in the stream")
+            detail = "; ".join(record.get("violations") or ["no init event in the stream"])
+            vpath = record_isolation_violation(ctx["root"], run, detail)
+            extra["isolation_violation"] = detail
+            extra["isolation_violation_record"] = str(vpath)
+            problems.append(detail)
         else:
+            iso = [
+                v
+                for v in record["violations"]
+                if not v.startswith("arm violation:")
+            ]
+            if iso:
+                detail = "; ".join(iso)
+                vpath = record_isolation_violation(ctx["root"], run, detail)
+                extra["isolation_violation"] = detail
+                extra["isolation_violation_record"] = str(vpath)
             problems += record["violations"] + [
                 d for d in [drift(ctx, record)] if d
             ]
             if ceiling:
-                passed, extra, detail = ceiling_verdict(
+                passed, ceiling_extra, detail = ceiling_verdict(
                     run / "launch" / "stream.jsonl", record, target
                 )
+                extra |= ceiling_extra
                 within = passed
             else:
                 passed, detail = canary_verdict(
@@ -1257,12 +1349,24 @@ def run_canary(ctx, name, arm):
 def run_canaries(ctx):
     results, stop = {}, None
     for name, arm in CANARIES:
-        done = ctx["root"] / "canaries" / name / "canary.json"
-        if not done.is_file():
-            stop = may_launch(ctx, 0)
+        run = ctx["root"] / "canaries" / name
+        done = run / "canary.json"
+        if not done.is_file() and not (run / "run.json").is_file():
+            budget = CEILING_BUDGET_USD if name == "budget-ceiling" else None
+            stop = may_launch(ctx, 0, budget=budget)
             if stop:
                 break
-        results[name] = run_canary(ctx, name, arm)
+        result = run_canary(ctx, name, arm)
+        results[name] = result
+        if result.get("isolation_violation"):
+            vpath = result.get("isolation_violation_record") or str(
+                ctx["root"] / "isolation-violation.json"
+            )
+            stop = (
+                f"isolation violation in canary {name}: {result['isolation_violation']} "
+                f"(recorded in {vpath}; inspect {run / 'run.json'})"
+            )
+            break
     summary = {
         "schema_version": 1,
         "config_sha256": ctx["pilot"]["config_sha256"],
@@ -1303,7 +1407,11 @@ def report(ctx, stop):
         "stopped": stop,
         "runs_planned": len(plan),
         "run_states": {k: len(v) for k, v in sorted(states.items())},
-        "cost": spend(root, reservation(ctx["runtime"])),
+        "cost": spend(
+            root,
+            reservation(ctx["runtime"], root),
+            reservation(ctx["runtime"], root, budget=CEILING_BUDGET_USD),
+        ),
         "aggregate": se.aggregate(Namespace(scores=scores)) if scores else None,
     }
     for group in (result["aggregate"] or {}).get("groups", []):
@@ -1327,8 +1435,10 @@ def dry_plan(args, runtime, cases, excluded, pilot, checks, plan):
     root = args.output_root / args.pilot_id
     if args.pilot_id_given and canary_blockers(root, pilot):
         blockers.append("canaries-not-passed")
+    if args.pilot_id_given and violation_blocker(root):
+        blockers.append("isolation-violation")
     states = [run_state(root / "runs" / r["rid"]) for r in plan]
-    budget = reservation(runtime) if runtime.get("max_budget_usd_per_run") else 0
+    budget = reservation(runtime, root) if runtime.get("max_budget_usd_per_run") else 0
     todo = sum(s not in {"scored", "unscorable", "aborted"} for s in states)
     shown = plan if args.list_runs else plan[:6]
     sample = (
@@ -1407,6 +1517,7 @@ def main():
         help="launch the model for the pilot; needs a passed canary record. Default is a dry run",
     )
     args = parser.parse_args()
+    args.output_root = args.output_root.resolve()
     args.pilot_id_given = args.pilot_id is not None
     args.pilot_id = args.pilot_id or "dry-run"
     try:
@@ -1437,7 +1548,7 @@ def main():
             blockers.append(
                 "--pilot-id and --max-cost-usd are required with --execute or --canaries"
             )
-        elif args.max_cost_usd < reservation(runtime):
+        elif args.max_cost_usd < reservation(runtime, root):
             blockers.append("--max-cost-usd is below one run's reservation")
         if args.execute:
             blockers += canary_blockers(root, pilot)

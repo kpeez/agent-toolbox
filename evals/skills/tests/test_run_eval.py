@@ -17,6 +17,7 @@ from __future__ import annotations
 
 import json
 import os
+import shutil
 import signal
 import time
 import subprocess
@@ -134,25 +135,27 @@ STUB = textwrap.dedent('''\
             path = prompt.split("PATH=")[1].split()[0].rstrip(".,") if "PATH=" in prompt else None
             n = [0]
             ceiling_result = None
-            def tool(name, text, error=False, **tool_input):
+            def tool(name, text, error=False, emit_result=True, **tool_input):
                 n[0] += 1
                 tid = "c%d" % n[0]
                 print(json.dumps({"type": "assistant", "message": {"content": [
                     {"type": "tool_use", "id": tid, "name": name, "input": tool_input}]}}))
-                print(json.dumps({"type": "user", "message": {"content": [
-                    {"type": "tool_result", "tool_use_id": tid, "is_error": error, "content": text}]}}))
+                if emit_result:
+                    print(json.dumps({"type": "user", "message": {"content": [
+                        {"type": "tool_result", "tool_use_id": tid, "is_error": error, "content": text}]}}))
             refusal = "refused: outside the allowed directories"
             if kind == "read-outside" and config.get("outside_read", "refused") != "none":
                 mode = config.get("outside_read", "refused")
+                emit_result = mode != "no_results"
                 secret = Path(path).read_text()
-                tool("Read", secret if mode == "leaked" else refusal, mode != "leaked", file_path=path)
+                tool("Read", secret if mode == "leaked" else refusal, mode != "leaked", emit_result=emit_result, file_path=path)
                 if mode == "echoed":
                     print(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": secret}]}}))
                 if mode != "read_only":
                     folder = str(Path(path).parent)
-                    tool("Glob", path if mode == "glob_leaked" else refusal, mode != "glob_leaked", pattern=folder + "/sentinel-*.txt")
+                    tool("Glob", path if mode == "glob_leaked" else refusal, mode != "glob_leaked", emit_result=emit_result, pattern=folder + "/sentinel-*.txt")
                     grep_out = {"grep_leaked": secret, "grep_listed": path}.get(mode, refusal)
-                    tool("Grep", grep_out, mode not in ("grep_leaked", "grep_listed"), pattern="CANARY-", path=folder)
+                    tool("Grep", grep_out, mode not in ("grep_leaked", "grep_listed"), emit_result=emit_result, pattern="CANARY-", path=folder)
             if kind == "write-outside":
                 mode = config.get("outside_write", "refused")
                 if mode == "edit_only":
@@ -175,6 +178,7 @@ STUB = textwrap.dedent('''\
                     "keeps_spending": (0.012, 40, "success"),
                     "completes_cheaply": (0.0001, 40, "success"),
                     "stops_before_the_budget": (0.0025, 2, "error_during_execution"),
+                    "errors_over_budget": (0.012, 2, "error_during_execution"),
                     "finishes_early_over_the_budget": (0.012, 2, "success"),
                     "stops_after_the_whole_task": (0.0006, 40, "error_max_budget_usd"),
                 }[mode]
@@ -655,6 +659,141 @@ class NativeRunner(unittest.TestCase):
         self.run_eval("--max-cost-usd", "5", stub={"cost": 0.5}, mode="--canaries")
         result = json.loads((self.root / "canaries.json").read_text())["canaries"]["network"]
         self.assertEqual((result["cost_usd"], result["budget_usd"], result["within_budget"]), (0.5, 0.1, False))
+
+    def test_budget_cap_reserves_canary_budget_and_measured_overshoot(self):
+        tight = self.runtime | {"max_budget_usd_per_run": 0.01}
+        done = self.run_eval("--max-cost-usd", "0.10", runtime=tight, stub={"cost": 0.006}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertIn("cost cap", summary["stopped"])
+        self.assertNotIn("budget-ceiling", summary["canaries"])
+        self.assertEqual(len(self.model_calls()), 6)
+        self.use_pilot("measured-overshoot")
+        self.record_canaries("--max-cost-usd", "0.12", runtime=tight)
+        canaries = json.loads((self.root / "canaries.json").read_text())
+        canaries["canaries"]["budget-ceiling"]["overshoot_usd"] = 0.08
+        (self.root / "canaries.json").write_text(json.dumps(canaries))
+        capped = self.run_eval("--max-cost-usd", "0.12", runtime=tight, stub={"cost": 0.05}, canaries_passed=False)
+        self.assertEqual(capped.returncode, 3, capped.stderr)
+        self.assertIn("cost cap", json.loads(capped.stdout)["stopped"])
+        self.assertEqual(len(self.model_calls()), 7)
+
+    def test_budget_ceiling_canary_requires_the_budget_stop_subtype(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"ceiling": "errors_over_budget"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        ceiling = json.loads((self.root / "canaries.json").read_text())["canaries"]["budget-ceiling"]
+        self.assertFalse(ceiling["passed"])
+        self.assertEqual(ceiling["stop_subtype"], "error_during_execution")
+
+    def test_read_outside_canary_requires_matching_tool_results(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"outside_read": "no_results"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        read = json.loads((self.root / "canaries.json").read_text())["canaries"]["read-outside"]
+        self.assertFalse(read["passed"])
+        self.assertIn("missing tool_result", read["detail"])
+
+    def test_execute_refuses_when_custom_corpus_or_selected_fixture_changes(self):
+        sandbox = Path(self.temp.name) / "eval-copy"
+        sandbox.mkdir()
+        shutil.copy2(HERE / "facets.json", sandbox / "facets.json")
+        shutil.copytree(HERE / "fixtures", sandbox / "fixtures")
+        corpus = sandbox / "custom-cases.json"
+        cases_data = json.loads((HERE / "cases.json").read_text())
+        corpus.write_text(json.dumps(cases_data))
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        wrapper = (
+            "import sys\n"
+            "from pathlib import Path\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            f"run_eval.se.HERE = Path({str(sandbox)!r})\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        def run_custom(*extra):
+            return subprocess.run(
+                [sys.executable, "-c", wrapper, "--repeats", "1", "--runtime", str(runtime_path),
+                 "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", str(self.output_root),
+                 "--corpus", str(corpus), "--max-cost-usd", "1", *extra],
+                text=True, capture_output=True, cwd=REPO, env=self.env,
+            )
+        dry = run_custom()
+        self.assertEqual(dry.returncode, 0, dry.stderr)
+        self.root.mkdir(parents=True, exist_ok=True)
+        (self.root / "canaries.json").write_text(json.dumps({
+            "config_sha256": json.loads(dry.stdout)["pilot"]["config_sha256"],
+            "canaries": {name: {"passed": True} for name in CANARY_NAMES},
+        }))
+        cases_data["cases"][0]["messages"][0]["content"] = "edited custom corpus prompt"
+        corpus.write_text(json.dumps(cases_data))
+        changed_corpus = run_custom("--execute")
+        self.assertEqual(changed_corpus.returncode, 2)
+        self.assertIn("different frozen configuration", changed_corpus.stderr)
+        corpus.write_text((HERE / "cases.json").read_text())
+        fixture_file = next(
+            p for p in sorted((sandbox / "fixtures" / "harbor-importer").rglob("*")) if p.is_file()
+        )
+        fixture_file.write_text(fixture_file.read_text() + "\n# changed\n")
+        changed_fixture = run_custom("--execute")
+        self.assertEqual(changed_fixture.returncode, 2)
+        self.assertIn("different frozen configuration", changed_fixture.stderr)
+        self.assertEqual(self.model_calls(), [])
+
+    def test_canaries_stop_at_the_first_isolation_violation_and_launch_nothing_more(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"no_init": True}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertEqual(list(summary["canaries"]), ["read-outside"])
+        self.assertFalse(summary["canaries"]["read-outside"]["passed"])
+        self.assertIn("isolation violation", summary["stopped"])
+        self.assertTrue((self.root / "isolation-violation.json").is_file())
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_resume_blocks_after_an_isolation_violation_until_record_is_removed(self):
+        first = self.run_eval("--repeats", "2", "--max-cost-usd", "1", stub={"no_init": True})
+        self.assertEqual(first.returncode, 3, first.stderr)
+        self.assertEqual(len(self.model_calls()), 1)
+        blocked = self.run_eval("--repeats", "2", "--max-cost-usd", "1")
+        self.assertEqual(blocked.returncode, 3, blocked.stderr)
+        stopped = json.loads(blocked.stdout)["stopped"]
+        self.assertIn("isolation-violation.json", stopped)
+        self.assertIn("run.json", stopped)
+        self.assertEqual(len(self.model_calls()), 1)
+        (self.root / "isolation-violation.json").unlink()
+        resumed = self.run_eval("--repeats", "2", "--max-cost-usd", "1")
+        self.assertEqual(resumed.returncode, 0, resumed.stderr)
+        summary = json.loads(resumed.stdout)
+        self.assertEqual((summary["launched_now"], summary["skipped_finished"]), (3, 1))
+        self.assertEqual(len(self.model_calls()), 4)
+
+    def test_relative_output_root_resolves_to_absolute_paths_for_child(self):
+        rel_root = Path(self.temp.name) / "rel-out"
+        self.output_root = rel_root
+        self.root = rel_root / self.pilot_id
+        self.record_canaries("--max-cost-usd", "1")
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        (self.stub_dir / "config.json").write_text(json.dumps({}))
+        done = subprocess.run(
+            [sys.executable, str(SCRIPT), "--repeats", "1", "--runtime", str(runtime_path),
+             "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", "rel-out",
+             "--max-cost-usd", "1", "--execute"],
+            text=True, capture_output=True, cwd=self.temp.name, env=self.env,
+        )
+        self.assertEqual(done.returncode, 0, done.stderr)
+        calls = [c["argv"] for c in self.model_calls()]
+        self.assertEqual(len(calls), 2)
+        for argv in calls:
+            for flag in ("--mcp-config", "--add-dir", "--plugin-dir"):
+                paths = [argv[i + 1] for i, a in enumerate(argv) if a == flag]
+                self.assertTrue(paths and all(Path(p).is_absolute() for p in paths), (flag, paths))
+
+    def test_dry_run_plan_text_does_not_claim_write_canary_probes_edit(self):
+        plan = json.loads(self.run_eval("--max-cost-usd", "1", mode=None).stdout)
+        steps = "\n".join(plan["live_steps_pending_approval"])
+        self.assertNotIn("Edit", steps)
+        self.assertIn("Write to a new path outside the fixture", steps)
 
 
 if __name__ == "__main__":
