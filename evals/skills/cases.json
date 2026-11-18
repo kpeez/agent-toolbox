@@ -3223,63 +3223,6 @@
       "rationale": "The tile-cache fixture has cache.py and the seeded measure.py replay, so the run reaches steps 6 and 7 instead of stopping at step 1 to build a repro. Step 6 hands each attempt to a subagent in a parallel worktree and keeps findings in the main thread, naming guard-the-context-window and separate-before-serializing-shared-state, and step 7 names explain-the-number for the noise check. A hit rate is not a time, so improve-performance does not fit."
     },
     {
-      "id": "swe-fallback-autopilot-full",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "hidden-skill-fallback",
-      "messages": [
-        {
-          "role": "user",
-          "content": "Autopilot these two independent PRs to merged: add the missing thousands separator to large totals, and strip the trailing colon from line labels."
-        }
-      ],
-      "fixture": "receipt-totals",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/autopilot-full",
-      "facets": [
-        "step-load/swe/autopilot-full/3-report-code-ready-head/no-comments",
-        "step-load/swe/autopilot-full/6-swarm-verify-once/swarm"
-      ],
-      "relevant_action": "Say Playbook: autopilot-full and read the playbook before any other step.",
-      "rationale": "Steps 3-report-code-ready-head and 6-swarm-verify-once run for every PR in the queue, so every correct run loads no-comments and swarm by path (either in root or in an owner subagent). Step 10-arm-audit-loop runs only on the operator's go, and the Reply line's ketchup is not listed because the router loads only names in step parentheses."
-    },
-    {
-      "id": "swe-fallback-autopilot-stack",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "hidden-skill-fallback",
-      "messages": [
-        {
-          "role": "user",
-          "content": "Build and verify these two independent PRs with full autonomy, but stop before the merge so I can land them: add the missing thousands separator to large totals, and strip the trailing colon from line labels."
-        }
-      ],
-      "fixture": "receipt-totals",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [
-        "swe:no-comments",
-        "swe:swarm",
-        "swe:principle-prove-it-works",
-        "swe:log-decisions"
-      ],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/autopilot-stack",
-      "facets": [
-        "step-load/swe/autopilot-full/3-report-code-ready-head/no-comments",
-        "step-load/swe/autopilot-full/6-swarm-verify-once/swarm"
-      ],
-      "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
-      "rationale": "autopilot-stack runs autopilot-full without step 8-merge-only-verified, so steps 3-report-code-ready-head and 6-swarm-verify-once of autopilot-full still run for every PR in the queue. Every correct run loads no-comments and swarm (and principle-prove-it-works from steps 2 and 6) by path, and the Reply line's ketchup is not listed because the router loads only names in step parentheses."
-    },
-    {
       "id": "lab-fallback-run-experiment",
       "target": "lab:lab-mode",
       "category": "natural",

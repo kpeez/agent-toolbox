@@ -88,7 +88,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | interview-user | swe | 7 | 3 | scored |
 | log-decisions | swe | 0 | 0 | recorded |
 | ship-pr | swe | 7 | 3 | scored |
-| swe-mode | swe | 34 | 3 | scored |
+| swe-mode | swe | 32 | 3 | scored |
 | testing-code | swe | 14 | 6 | scored |
 | typescript-best-practices | swe | 0 | 0 | recorded |
 | verification-skill | swe | 0 | 0 | recorded |
@@ -146,8 +146,8 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|---|
 | skill `architect` | 1-trace-the-systems, 2-sketch-two-shapes, 3-pick-the-shape, 4-redesign-on-repeat-workarounds | 1 | 0 |
 | playbook `author-skill` | 1-choose-invocation, 2-single-source-check, 3-cut-to-decisions, 4-validate-skill, 5-check-packaging, 6-plan-activation-check, 7-publish-draft-pr | 1 | 0 |
-| playbook `autopilot-full` | 1-honor-operator-gates, 2-spawn-owner-per-pr, 3-report-code-ready-head, 4-assume-the-session-dies, 5-run-owners-in-parallel, 6-swarm-verify-once, 7-send-findings-to-owner, 8-merge-only-verified, 9-countersign-loosened-gates, 10-arm-audit-loop, 11-stand-down-on-stop | 2 | 0 |
-| playbook `autopilot-stack` | 1-stack-only-on-dependency, 2-stop-at-verified, 3-land-on-request | 2 | 0 |
+| playbook `autopilot-full` | 1-honor-operator-gates, 2-spawn-owner-per-pr, 3-report-code-ready-head, 4-assume-the-session-dies, 5-run-owners-in-parallel, 6-swarm-verify-once, 7-send-findings-to-owner, 8-merge-only-verified, 9-countersign-loosened-gates, 10-arm-audit-loop, 11-stand-down-on-stop | 1 | 0 |
+| playbook `autopilot-stack` | 1-stack-only-on-dependency, 2-stop-at-verified, 3-land-on-request | 1 | 0 |
 | playbook `babysit-pr` | 1-declare-mode, 2-work-the-frontier, 3-keep-the-topology, 4-conflicts-then-threads-then-ci, 5-triage-review-bots, 6-stop-at-human-line | 1 | 0 |
 | skill `blast-radius` | 1-read-the-change, 2-find-safety-fact, 3-look-past-grep, 4-rate-each-risk, 5-prove-the-fact, 6-optional-independent-review | 1 | 0 |
 | playbook `build-feature` | 1-map-subsystem, 2-interview-on-open-decisions, 3-name-data-shape, 4-explore-designs, 5-write-throughput-checkpoint, 6-build-one-unit, 7-decide-tests, 8-verify-on-surface, 9-check-blast-radius, 10-review-if-contested, 11-independent-review, 12-order-commits, 13-update-obsolete-docs, 14-publish-draft-pr | 6 | 0 |

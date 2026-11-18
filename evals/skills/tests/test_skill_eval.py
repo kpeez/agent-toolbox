@@ -1375,18 +1375,6 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(report["groups"][0]["other_expected"],
                          [{"skill": "lab:making-plots", "loaded": 1, "miss": 1, "unavailable": 0}])
 
-    def test_autopilot_fallback_cases_score_the_hidden_skills_their_steps_name(self):
-        reads = [("skill", "swe:swe-mode"), ("skill", "swe:no-comments"), ("skill", "swe:swarm"),
-                 ("skill", "swe:principle-prove-it-works"), ("skill", "swe:log-decisions")]
-        for case_id, line in (("swe-fallback-autopilot-full", "Playbook: autopilot-full. Reason: it fits."),
-                              ("swe-fallback-autopilot-stack", "Playbook: autopilot-stack. Reason: it fits.")):
-            case = self.case_named(case_id)
-            read, _ = self.route_run(f"{case_id}-read", case, reads, line, full=True)
-            self.assertEqual(read["facets"], dict.fromkeys(case["facets"], "loaded"), case_id)
-            self.assertEqual(read["unexpected_skills"], [], case_id)
-            skipped, _ = self.route_run(f"{case_id}-skipped", case, reads[:1], line, full=True)
-            self.assertEqual(skipped["facets"], dict.fromkeys(case["facets"], "miss"), case_id)
-
     def test_steps_section_refuses_unclear_and_lookalike_entries(self):
         broken = {
             "doneish": lambda h: f"{h}: doneish" if h.startswith("1-") else f"{h}: done",

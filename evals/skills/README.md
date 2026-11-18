@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 134 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
+The corpus has 132 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:
@@ -48,16 +48,19 @@ trigger and the `ship-pr` route, the case uses wording that only one of them mat
 
 Four routes have no case. `ketchup` needs commit history, `reflect` needs a past session, `ship-stack`
 needs open PRs and their CI, and `clean-worktrees` needs worktrees. A workspace is a copy of the fixture plus a fresh `git init` with no commits, remote, or
-past sessions, so it holds none of these. Their cases wait until the setup can build that state.
+past sessions, so it holds none of these. Their cases wait until the setup can build that state. The hidden-skill
+reads of `autopilot-full` wait for that setup too. Its steps `3-report-code-ready-head` and `6-swarm-verify-once`
+name `no-comments` and `swarm`, but they need a code-ready PR head, and a workspace with no trunk or remote cannot
+reach one. A correct run can stop before those steps, so no `hidden-skill-fallback` case lists their reads.
 
-The family `hidden-skill-fallback` (8 cases) targets the skills and principles that the Skill tool
+The family `hidden-skill-fallback` (6 cases) targets the skills and principles that the Skill tool
 refuses because the model's list hides them. A playbook step names them, and the agent must read
 `../<name>/SKILL.md` or `../principle-<slug>/SKILL.md` by path. Each case sets `expected_route` and lists in
 `facets` the `principle-read` facets and `step-load` facets of hidden skills that its route needs. A name on a playbook's Reply
 line is not listed, because the router loads only names in step parentheses. It words the request so that the
 step which names each principle applies, for example two failed fixes before `attack-the-premise`.
 A listed facet scores `loaded` or `miss` whether or not the agent marks its step done, so a case lists only facets from steps that a correct run on
-its prompt and fixture must do. A step that the run may correctly skip, such as the pilot of an experiment on a fixture with no pipeline, lists none.
+its prompt and fixture must do. A step that the run may correctly skip, such as a conditional step whose condition the fixture does not meet, lists none.
 The family has no fixed mix and no negatives.
 
 The "Activation facets with no case" list in [FACETS.md](FACETS.md) names each

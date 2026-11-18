@@ -479,8 +479,6 @@
           "swe-mode-quick-fact"
         ],
         "positive": [
-          "swe-fallback-autopilot-full",
-          "swe-fallback-autopilot-stack",
           "swe-fallback-build-prototype",
           "swe-fallback-fix-bug",
           "swe-fallback-hillclimb-metric",
@@ -1174,7 +1172,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -1197,7 +1194,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -3382,7 +3378,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -3419,7 +3414,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -7168,7 +7162,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7194,7 +7187,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7220,7 +7212,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7246,7 +7237,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7272,8 +7262,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-full"
         ]
       },
@@ -7299,7 +7287,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7325,7 +7312,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7351,7 +7337,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7377,8 +7362,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-full"
         ]
       },
@@ -7404,7 +7387,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7430,7 +7412,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-full",
           "swe-route-autopilot-full"
         ]
       },
@@ -7456,7 +7437,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -7482,7 +7462,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -7508,7 +7487,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
@@ -7534,7 +7512,6 @@
       "cases": {
         "negative": [],
         "positive": [
-          "swe-fallback-autopilot-stack",
           "swe-route-autopilot-stack"
         ]
       },
