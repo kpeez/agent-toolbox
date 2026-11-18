@@ -29,7 +29,7 @@ flowchart TD
 
 A plateau means pivot, not stop. The agent never relaxes the predicate to declare victory. A duration is not a predicate. "Work on this for 4 hours" gives the agent nothing to check.
 
-Large or cross-cutting work, and work you step away from, goes to [`figure-it-out`](../skills/figure-it-out/SKILL.md) when no playbook fits. It designs the run's phases before any code and keeps the decision log.
+A large or cross-cutting change, or a multi-day program, goes to [`figure-it-out`](../skills/figure-it-out/SKILL.md), and so does work that no playbook fits. A run to an exit condition you name stays with `run-autonomously` at any size, and stepping away alone does not pick `figure-it-out`. It designs the run's phases before any code and keeps the decision log.
 
 ## Keep a decision log
 

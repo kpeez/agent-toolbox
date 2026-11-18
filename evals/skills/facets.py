@@ -138,7 +138,7 @@ WHOLE_RUNS = {
     ("lab", "bootstrap-project", "5-codify-the-top-procedure"): "codify-procedure"
 }
 EXTRA_ROUTES = {
-    ("swe", "figure-it-out"): "or work that no playbook fits goes to `figure-it-out`."
+    ("swe", "figure-it-out"): "Work that no playbook fits also goes to `figure-it-out`."
 }
 TRIGGER_IGNORE: set[tuple[str, str]] = {
     ("swe", "Read <path>/worker.md before anything else."),

@@ -27,12 +27,17 @@ read it. Put this file's absolute path in every delegate's brief.
    command. Ask the user only for a choice that no observation can settle.
 4. When one skill owns the whole task, use its line in
    [Single-skill routes](#single-skill-routes).
-5. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
-   fits. The list runs from narrow to broad.
-6. Large or cross-cutting work, work the user steps away from, or work that
-   no playbook fits goes to `figure-it-out`. It writes a bespoke playbook in
-   the same step format.
-7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
+5. A queue of PRs to build goes to `autopilot-full` or `autopilot-stack`,
+   also when the user is away.
+6. A large or cross-cutting change, or a multi-day program, goes to
+   `figure-it-out` before you try the playbook list. It writes a bespoke
+   playbook in the same step format. A plan only (`plan-multi-phase`) and a
+   run without stopping to an exit condition that the user names
+   (`run-autonomously`) keep their playbooks at any size.
+7. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
+   fits the whole task. The list runs from narrow to broad.
+8. Work that no playbook fits also goes to `figure-it-out`.
+9. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
    `Route: <skill>. Reason: <one clause>.`
 
 ## Track
@@ -261,8 +266,8 @@ PRs:
 
 Long runs and sessions:
 
-- `run-autonomously`: a long task to drive to a checkable exit condition
-  without stopping.
+- `run-autonomously`: one long task, not a queue of PRs, to drive to a
+  checkable exit condition without stopping.
 - `plan-multi-phase`: work that spans phases or stacked PRs. The plan is the
   deliverable.
 - `autopilot-full`: a queue of independent PRs run to merged, one owner per

@@ -104,7 +104,7 @@ and give one example prompt.
 | Bring a formal verification back in line after the code it covers changed, and tell drift from a bug | [maintain-formal-verification-skill](../maintain-formal-verification-skill/SKILL.md) |
 | Show a PM or designer what the user sees as a chart checked by a TLA+ model, with the shortest path to each state that breaks a rule | [statechart](../statechart/SKILL.md) |
 | Vet a performance number before reporting it | [benchmark-checklist](../benchmark-checklist/SKILL.md) |
-| Run a large or cross-cutting change, or one to review after stepping away | [figure-it-out](../figure-it-out/SKILL.md) |
+| Run a large or cross-cutting change, or a multi-day program | [figure-it-out](../figure-it-out/SKILL.md) |
 | Keep a decision log during a run | [log-decisions](../log-decisions/SKILL.md) |
 | Save the work's state for a new session | [handoff](../handoff/SKILL.md) |
 | Open, fix, or land a PR, including its conflicts | [ship-pr](../ship-pr/SKILL.md) |

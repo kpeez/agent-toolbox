@@ -1028,7 +1028,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`codify-procedure`: a request to turn a procedure, done in this session or named by the user, into a project skill.",
+      "source_text": "`codify-procedure`: a request to turn a procedure into a new project skill when the procedure was done or corrected in this session, or the user only names it. A procedure that the user states in full goes to `research-skill`.",
       "subject": "codify-procedure"
     },
     {
@@ -1505,7 +1505,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`run-autonomously`: a long task to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
       "subject": "run-autonomously"
     },
     {
@@ -2397,7 +2397,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "Write or update one project skill when the procedure is already clear: `research-skill`.",
+      "source_text": "Write one project skill for a procedure that the user states in full, or update one existing project skill: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -2583,7 +2583,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "or work that no playbook fits goes to `figure-it-out`.",
+      "source_text": "Work that no playbook fits also goes to `figure-it-out`.",
       "subject": "figure-it-out"
     },
     {
@@ -2944,7 +2944,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`codify-procedure`: a request to turn a procedure, done in this session or named by the user, into a project skill.",
+      "source_text": "`codify-procedure`: a request to turn a procedure into a new project skill when the procedure was done or corrected in this session, or the user only names it. A procedure that the user states in full goes to `research-skill`.",
       "subject": "codify-procedure"
     },
     {
@@ -3047,7 +3047,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "Write or update one project skill when the procedure is already clear: `research-skill`.",
+      "source_text": "Write one project skill for a procedure that the user states in full, or update one existing project skill: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -3689,7 +3689,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "or work that no playbook fits goes to `figure-it-out`.",
+      "source_text": "Work that no playbook fits also goes to `figure-it-out`.",
       "subject": "figure-it-out"
     },
     {
@@ -4111,7 +4111,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`run-autonomously`: a long task to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
       "subject": "run-autonomously"
     },
     {

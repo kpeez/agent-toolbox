@@ -1,6 +1,6 @@
 # run-autonomously
 
-Applies when: a long task to drive to completion without stopping ("run until done", "/loop until X", "going to bed, keep going").
+Applies when: one long task to drive to completion without stopping ("run until done", "/loop until X", "going to bed, keep going"). A queue of PRs goes to autopilot-full or autopilot-stack, also when the user is away.
 
 You own the exit condition. Define done, then drive to it without stopping.
 

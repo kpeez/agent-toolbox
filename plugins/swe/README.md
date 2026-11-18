@@ -125,11 +125,15 @@ rewritten task in this order:
 
 1. When one skill owns the whole task, it routes to that skill. "Explain this
    crash, no fix" goes to `diagnose`, for example.
-2. Otherwise it picks the first playbook whose line fits. The list runs from
-   narrow to broad, so `fix-bug` comes before `build-feature`.
-3. Large or cross-cutting work, work you step away from, or work that no
-   playbook fits goes to [`figure-it-out`](./skills/figure-it-out/SKILL.md).
-   It writes a bespoke playbook in the same step format.
+2. A queue of PRs to build goes to `autopilot-full` or `autopilot-stack`,
+   also when you are away.
+3. A large or cross-cutting change, or a multi-day program, goes to
+   [`figure-it-out`](./skills/figure-it-out/SKILL.md). It writes a bespoke
+   playbook in the same step format. A plan only, and a run to an exit
+   condition you name, keep their own playbooks at any size.
+4. Otherwise it picks the first playbook whose line fits the whole task. The
+   list runs from narrow to broad, so `fix-bug` comes before `build-feature`.
+5. Work that no playbook fits also goes to `figure-it-out`.
 
 The router says its choice in one line, such as
 `Playbook: fix-bug. Reason: a reported defect.` In every step it applies its

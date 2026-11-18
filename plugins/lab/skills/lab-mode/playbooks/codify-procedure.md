@@ -1,6 +1,6 @@
 # codify-procedure
 
-Applies when: a request to turn a procedure, done in this session or named by the user, into a project skill.
+Applies when: a request to turn a procedure into a new project skill when the procedure was done or corrected in this session, or the user only names it. A procedure that the user states in full goes to research-skill.
 
 You own one procedure skill that a fresh agent can follow and verify.
 
