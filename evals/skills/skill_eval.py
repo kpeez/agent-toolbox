@@ -462,7 +462,8 @@ def capture(args):
         if args.stream:
             copy = shutil.copyfile(args.stream, run / "raw-stream.jsonl")
             info["stream"] = {"path": "raw-stream.jsonl", "sha256": digest(Path(copy).read_bytes()),
-                              "source": str(Path(args.stream).absolute())}
+                              "source": str(Path(args.stream).absolute()),
+                              "appended_final_newline": bool(getattr(args, "stream_appended_final_newline", False))}
     shutil.copytree(run / "workspace", run / "final-files", ignore=shutil.ignore_patterns(".git", "__pycache__", "*.pyc"))
     info["final_files"] = inventory(run / "final-files")
     save_json(run / "capture.json", info)
@@ -1333,6 +1334,8 @@ def main():
     cap.add_argument("--plugin-dir", action="append", default=[],
                      help="claude-transcript: each absolute --plugin-dir the session loaded")
     cap.add_argument("--stream", type=Path, help="claude-transcript: the session's stream-json output")
+    cap.add_argument("--stream-appended-final-newline", action="store_true",
+                     help="claude-transcript: the caller added the final newline the stream file lacked")
     cap.add_argument("--relevant-action", metavar="TOOL_USE_ID",
                      help="claude-transcript: root tool_use id that starts the case's relevant action, or 'none'")
     sc = commands.add_parser("score")

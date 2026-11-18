@@ -1,0 +1,27 @@
+{
+  "model": "claude-opus-5-5",
+  "effort": "high",
+  "cli": "claude plugin eval",
+  "cli_version": "2.1.327",
+  "permissions": {
+    "mode": "plugin eval's dontAsk session: only the granted tools run, with no prompts",
+    "read": "plugin eval sandbox with a sealed home; checked by the read-outside canary",
+    "write": "plugin eval sandbox with a sealed home; checked by the write-outside canary",
+    "network": "no shell or web tool in the tool set; the model API only"
+  },
+  "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Skill"],
+  "max_turns": 30,
+  "timeout_seconds": 900,
+  "per_run_stop_usd": 1.0,
+  "harness_deltas": [
+    "billed to the owner's subscription; cost is the API-equivalent total_cost_usd plugin eval reports",
+    "effort set by CLAUDE_CODE_EFFORT_LEVEL and checked in each transcript",
+    "the session loads swe, lab, and uni from copies beside the snapshot; rex-agents in the checked-out catalog is not loaded",
+    "four policy-managed plugins load in every run: cc-plugin-sec-default, cc-plugin-agents-md, cc-plugin-privacy, cc-plugin-plugin-authoring",
+    "plugin hooks and MCP bindings stripped by materialize, except SessionStart in the hook-on arm",
+    "no shell tool and no Agent tool, so a case's relevant action cannot run if it needs a shell",
+    "a scaffold script copies the materialized fixture into the sandbox working folder"
+  ],
+  "catalog_scope": "full_checkedout_catalog",
+  "context_delivery": "serialized_conversation"
+}
