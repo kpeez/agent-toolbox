@@ -470,7 +470,7 @@ class NativeRunner(unittest.TestCase):
         self.assertEqual(again["run_states"], {"aborted": 1, "scored": 1})
         self.assertEqual(len(self.model_calls()), 2)
         self.assertEqual(sorted(p.name for p in (self.root / "runs").iterdir()), sorted(self.records()))
-        self.assertEqual(again["cost"]["unknown_cost_runs"], 1)
+        self.assertEqual((again["cost"]["unknown_cost_runs"], aborted["usage"]["cost_usd"]), (0, 0.06))
 
     def test_an_interrupt_kills_the_childs_process_group_and_records_the_run_as_aborted(self):
         for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
@@ -1042,6 +1042,16 @@ class NativeRunner(unittest.TestCase):
         self.assertIn("budget assumption broken", summary["stopped"])
         self.assertIn(rid, summary["stopped"])
         self.assertEqual(len(self.model_calls()), 1)
+
+    def test_a_run_whose_hook_file_vanished_keeps_its_cost_and_the_cap_counts_it(self):
+        done = self.run_eval("--max-cost-usd", "0.3", stub={"delete_swe_hook": True, "cost": 0.2})
+        self.assertEqual(done.returncode, 3, done.stderr)
+        self.assertEqual(len(self.model_calls()), 1)
+        aborted = next(iter(self.records().values()))
+        self.assertEqual((aborted["arm"], aborted["outcome"]), ("hook-on", "aborted"))
+        self.assertEqual(aborted["usage"]["cost_usd"], 0.2)
+        self.assertTrue((self.root / "budget-assumption-broken.json").is_file())
+        self.assertAlmostEqual(json.loads(done.stdout)["cost"]["known_usd"], 0.2)
 
     def test_write_escape_to_other_outside_path_stops_canaries(self):
         done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write_succeeded"}, mode="--canaries")

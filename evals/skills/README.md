@@ -279,13 +279,15 @@ the next run's reservation, stays within `--max-cost-usd`. It also stops after t
 row, on drift, on an isolation violation, on an arm violation, and when a pilot run's known cost exceeds
 its budget plus `max_concurrent_requests * max_request_usd` (which writes `budget-assumption-broken.json`
 and blocks any future launch in that pilot). Cost comes from the stream's `result`
-event. A missing cost stays `null`, counts at the reservation for the cap, and shows in `report.json` as
+event. The runner reads it and checks that bound first after the child exits, before it reads the init
+and hook events, so a run that fails later still records its cost. A missing cost stays `null`, counts at the reservation for the cap, and shows in `report.json` as
 `unknown_cost_runs`. A run that already launched is never launched again. A rerun skips a run with
 `score.json`, rescores a run that finished without one, and leaves a run that launched but did not
 finish where it is. That run is `aborted`: the runner was interrupted, was hard-killed (SIGKILL or power
 loss leaves a `run.json` with `started_at` and no `ended_at` or `outcome`), or failed while reading the
 stream after the launch. Its `run.json` records `outcome: aborted` and the reason. It is final and
-unscorable. `report.json` counts it under `run_states` and keeps counting its spend at the reservation.
+unscorable. `report.json` counts it under `run_states`. Its spend is the recorded cost, or the
+reservation when it has none (an interrupt or a hard kill records none).
 
 On SIGINT, SIGTERM, or SIGHUP, the runner kills the whole process group of the running `claude`, waits
 for it, records the run as `aborted` with the signal, and exits with a nonzero status. The signals are
@@ -569,7 +571,7 @@ a session whose tools break a confined limit, a hook-on run missing a plugin's h
 any hook event, and a run with no init event each stop the pilot;
 each run records the hook events its arm allows;
 a run that launched and failed, and a run that a hard kill left without an end, are aborted and never
-launched again;
+launched again; a run that failed after the launch keeps its cost for the cap;
 an interrupt kills the child's process group and the run is aborted;
 `launch` restores the interrupt handlers and the child keeps no blocked signals;
 execute refuses without a canary record for the same configuration, or with a canary missing;

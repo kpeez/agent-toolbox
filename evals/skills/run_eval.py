@@ -1042,13 +1042,32 @@ def launch_run(
         )
         se.save_json(run / "run.json", record)
         raise
-    ended = {
-        "ended_at": now(),
-        "exit_code": code,
-        "timed_out": timed_out,
-        "duration_s": round(time.monotonic() - began, 3),
-    }
+    record.update(
+        ended_at=now(),
+        exit_code=code,
+        timed_out=timed_out,
+        duration_s=round(time.monotonic() - began, 3),
+    )
     try:
+        # Cost and its bound come first, so a later failure still leaves the cost in run.json.
+        record["usage"] = usage_of(last_event(stream, "result"))
+        cost = record["usage"]["cost_usd"]
+        bound_total = reservation(ctx["runtime"], budget=budget)
+        if (
+            check_budget_bound
+            and cost is not None
+            and round(cost, 9) > round(bound_total, 9)
+        ):
+            launch_budget = (
+                ctx["runtime"]["max_budget_usd_per_run"] if budget is None else budget
+            )
+            bdetail = (
+                f"run {run.name} ({run / 'run.json'}) cost {cost} exceeds budget+bound "
+                f"{bound_total} (budget {launch_budget} + bound {overshoot_bound(ctx['runtime'])})"
+            )
+            _record_marker(
+                ctx["root"], "budget-assumption-broken.json", run, bdetail
+            )
         init = init_event(stream)
         hooks = hook_summary(
             hook_events(stream),
@@ -1060,8 +1079,6 @@ def launch_run(
             else ["no init event in the stream, so isolation was not checked"]
         ) + arm_violations(item["arm"], hooks, list(manifest.get("hooks", {})))
         record.update(
-            ended,
-            usage=usage_of(last_event(stream, "result")),
             stdout_sha256=se.digest(stream.read_bytes()),
             stderr_sha256=se.digest((run / "launch" / "stderr.txt").read_bytes()),
             effective_session=effective(init) if init else None,
@@ -1075,28 +1092,8 @@ def launch_run(
         )
         if marker_violations:
             record_isolation_violation(ctx["root"], run, "; ".join(marker_violations))
-        cost = record["usage"].get("cost_usd")
-        bound_total = reservation(ctx["runtime"], budget=budget)
-        if (
-            check_budget_bound
-            and isinstance(cost, (int, float))
-            and not isinstance(cost, bool)
-            and round(cost, 9) > round(bound_total, 9)
-        ):
-            launch_budget = (
-                ctx["runtime"]["max_budget_usd_per_run"] if budget is None else budget
-            )
-            bdetail = (
-                f"run {run.name} ({run / 'run.json'}) cost {cost} exceeds budget+bound "
-                f"{bound_total} (budget {launch_budget} + bound {overshoot_bound(ctx['runtime'])})"
-            )
-            _record_marker(
-                ctx["root"], "budget-assumption-broken.json", run, bdetail
-            )
     except (ValueError, KeyError, TypeError, OSError) as error:
-        record.update(
-            ended, outcome="aborted", error=f"after the launch: {error}"
-        )
+        record.update(outcome="aborted", error=f"after the launch: {error}")
     se.save_json(run / "run.json", record)
     return record
 
