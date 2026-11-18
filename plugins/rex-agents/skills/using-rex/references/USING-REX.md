@@ -156,8 +156,8 @@ In the `auto` and `bypassPermissions` permission modes, the `rex-agents`
 PreToolUse hook rewrites a background Bash call into this form, so its output and exit status pass through unchanged:
 
 ```sh
-{ trap 'printf "\n__rex_rc=%d\n" "$?"' EXIT; <cmd>
-exit $?; } 2>&1 | <abs uv> run --script <plugin>/scripts/rex_mirror.py '<label>' <session id>
+{ ( <cmd>
+ ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | <abs uv> run --script <plugin>/scripts/rex_mirror.py '<label>' <session id>
 ```
 
 `rex_mirror.py` opens a block labelled `[claude] <description>`

@@ -11,7 +11,7 @@ import sys
 
 RULE = (
     "You are a subagent. Never open, rename, or arrange Rex panes or sessions. "
-    "Your background commands are mirrored automatically."
+    "In auto mode, your background commands are mirrored into Rex automatically."
 )
 
 

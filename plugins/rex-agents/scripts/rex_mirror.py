@@ -7,12 +7,12 @@
 
 The mirror hook pipes a background command into this script in this form:
 
-    { trap 'printf "\\n__rex_rc=%d\\n" "$?"' EXIT; CMD
-    exit $?; } 2>&1 | rex_mirror.py LABEL [SESSION_ID]
+    { ( CMD
+     ); printf '\\n__rex_rc=%d\\n' "$?"; } 2>&1 | rex_mirror.py LABEL [SESSION_ID]
 
-The EXIT trap appends a status marker. This script holds back the last bytes
-of the stream so the marker never reaches stdout, then exits with the status
-it names. A stream without the marker exits 125.
+The printf after the subshell appends a status marker. This script holds back
+the last bytes of the stream so the marker never reaches stdout, then exits
+with the status it names. A stream without the marker exits 125.
 """
 
 import json

@@ -27,7 +27,6 @@ from collections.abc import Mapping
 from pathlib import Path
 
 MIRROR = Path(__file__).resolve().parent.parent / "scripts" / "rex_mirror.py"
-TRAP = 'trap \'printf "\\n__rex_rc=%d\\n" "$?"\' EXIT'
 LABEL_MAX = 60
 MIRROR_MODES = {"auto", "bypassPermissions"}
 
@@ -39,8 +38,13 @@ def label_for(tool_input: dict, agent_id: str | None) -> str:
 
 
 def mirrored(command: str, label: str, session_id: str, uv: str) -> str:
+    """Run the command in a subshell, then print its status as the marker rex_mirror.py reads.
+
+    The subshell keeps the command's own EXIT trap, `exec`, and `exit` from
+    skipping the marker. The newline before `)` ends a trailing comment.
+    """
     return (
-        f"{{ {TRAP}; {command}\nexit $?; }} 2>&1 | "
+        f"{{ ( {command}\n ); printf '\\n__rex_rc=%d\\n' \"$?\"; }} 2>&1 | "
         f"{shlex.quote(uv)} run --script {shlex.quote(str(MIRROR))} "
         f"{shlex.quote(label)} {shlex.quote(session_id)}"
     )

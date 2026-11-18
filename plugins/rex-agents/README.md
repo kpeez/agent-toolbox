@@ -63,5 +63,5 @@ keep the command unchanged.
 uv run -m unittest discover -s plugins/rex-agents/scripts/tests
 ```
 
-The tests run the wrapper on 7 command shapes in zsh and bash, check the exit
+The tests run the wrapper on 10 command shapes in zsh and bash, check the exit
 status for a stream without the status marker, and check each hook decision.

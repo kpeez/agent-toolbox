@@ -38,6 +38,14 @@ CASES = [
     ("and-list", "true && printf 'ok\\n' && false", b"ok\n", 1),
     ("stderr merged", "printf 'err\\n' >&2; exit 2", b"err\n", 2),
     ("empty output", "true", b"", 0),
+    (
+        "own EXIT trap",
+        "trap 'echo cleanup' EXIT; echo work; exit 4",
+        b"work\ncleanup\n",
+        4,
+    ),
+    ("exec", "exec sh -c 'echo execd; exit 6'", b"execd\n", 6),
+    ("trailing comment", "echo hi # note", b"hi\n", 0),
 ]
 SHELLS = [s for s in ("/bin/zsh", "/bin/bash") if Path(s).exists()]
 NO_REX = {k: v for k, v in os.environ.items() if not k.startswith("REX_")}
@@ -149,7 +157,7 @@ class HookDecisions(unittest.TestCase):
         self.assertNotIn("permissionDecision", spec)
         updated = spec["updatedInput"]
         self.assertIn(
-            "make test\nexit $?; } 2>&1 | /usr/local/bin/uv run --script",
+            "{ ( make test\n ); printf '\\n__rex_rc=%d\\n' \"$?\"; } 2>&1 | /usr/local/bin/uv run --script",
             updated["command"],
         )
         self.assertIn("'[claude] Run the tests' s-1", updated["command"])
