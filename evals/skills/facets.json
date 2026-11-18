@@ -1048,7 +1048,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`maintain-project-skills`: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.",
+      "source_text": "`maintain-project-skills`: a request to check or update the project's procedure skills after the pipeline, the data, or the conventions changed, also when the project has one skill.",
       "subject": "maintain-project-skills"
     },
     {
@@ -1152,7 +1152,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user wants them merged.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -2329,7 +2329,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)",
+      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged, and what step 3 landed. (ketchup)",
       "subject": "autopilot-stack"
     },
     {
@@ -2397,7 +2397,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "Write one new project skill for a procedure that the user states in full, or update one existing project skill: `research-skill`.",
+      "source_text": "Write one new project skill for a procedure that the user states in full, or make one edit that the user states to one existing project skill when the pipeline, the data, and the conventions did not change: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -2972,7 +2972,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`maintain-project-skills`: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.",
+      "source_text": "`maintain-project-skills`: a request to check or update the project's procedure skills after the pipeline, the data, or the conventions changed, also when the project has one skill.",
       "subject": "maintain-project-skills"
     },
     {
@@ -3047,7 +3047,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "Write one new project skill for a procedure that the user states in full, or update one existing project skill: `research-skill`.",
+      "source_text": "Write one new project skill for a procedure that the user states in full, or make one edit that the user states to one existing project skill when the pipeline, the data, and the conventions did not change: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -3244,7 +3244,8 @@
       "evidence": "assistant-text",
       "handles": [
         "1-stop-at-verified",
-        "2-stack-only-on-dependency"
+        "2-stack-only-on-dependency",
+        "3-land-on-request"
       ],
       "id": "route/swe/autopilot-stack",
       "kind": "route",
@@ -3258,7 +3259,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "invisible",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user wants them merged.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -7134,7 +7135,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "1-stop-at-verified: In place of autopilot-full step 8, stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. (autopilot-full)",
+      "source_text": "1-stop-at-verified: In place of autopilot-full step 8, stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. A merge request in the user's task is that go. (autopilot-full)",
       "subject": "autopilot-stack"
     },
     {
@@ -7181,6 +7182,29 @@
       "scope": "delegate-allowed",
       "scorer": "recorded",
       "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
+      "subject": "autopilot-stack"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "full-read",
+      "handle": "3-land-on-request",
+      "id": "step-load/swe/autopilot-stack/3-land-on-request/ship-stack",
+      "kind": "step-load",
+      "name": "ship-stack",
+      "name_class": "playbook",
+      "path": "skills/swe-mode/playbooks/ship-stack.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "3-land-on-request",
+        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
+      },
+      "requirement": "conditional",
+      "scope": "delegate-allowed",
+      "scorer": "recorded",
+      "source_text": "3-land-on-request: When the user's task asked for the merge, run ship-stack on the handed-off stack. Otherwise skip this step and leave the landing to the operator. (ship-stack)",
       "subject": "autopilot-stack"
     },
     {
@@ -11219,7 +11243,7 @@
     },
     "step-load": {
       "invisible": 9,
-      "recorded": 139,
+      "recorded": 140,
       "scored": 94
     },
     "trigger-load": {

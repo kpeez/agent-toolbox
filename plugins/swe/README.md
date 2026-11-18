@@ -104,9 +104,9 @@ sequenceDiagram
     Router->>Steps: route to that skill
   else a queue of PRs to build
     Router->>Steps: copy the autopilot playbook steps
-  else a playbook fits, and the work is not a large code change
+  else a playbook fits, and it is not a large fix-bug, build-feature, or refactor-structure change
     Router->>Steps: copy the playbook steps
-  else a large code change, or no match
+  else a large fix-bug, build-feature, or refactor-structure change, or no match
     Router->>Steps: figure-it-out writes a bespoke playbook
   end
   loop each step
@@ -129,7 +129,9 @@ rewritten task in this order:
    crash, no fix" goes to `diagnose`, for example.
 2. A queue of PRs to build goes to `autopilot-full` when the PRs are
    independent and should merge, and to `autopilot-stack` when they depend
-   on each other or you land them. This holds also when you are away. A
+   on each other or you land them. When you ask for the merge of a
+   dependent stack, `autopilot-stack` lands it with `ship-stack` after its
+   handoff. This holds also when you are away. A
    request to plan the queue only goes to `plan-multi-phase`.
 3. Otherwise it picks the first playbook whose line fits the whole task. The
    list runs from narrow to broad, so `fix-bug` comes before `build-feature`.

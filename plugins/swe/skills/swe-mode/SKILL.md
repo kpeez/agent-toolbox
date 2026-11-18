@@ -30,8 +30,9 @@ read it. Put this file's absolute path in every delegate's brief.
 5. A queue of PRs to build goes to `autopilot-full` when the PRs are
    independent and should merge, and to `autopilot-stack` when they depend
    on each other or the user lands them. A dependent stack goes to
-   `autopilot-stack` also when the user wants it merged. Landing it is a
-   later `ship-stack` request. This step holds also when the user is away.
+   `autopilot-stack` also when the user asks for the merge. That request is
+   the operator's go, and the playbook lands the stack with `ship-stack`
+   after its handoff. This step holds also when the user is away.
    A request to plan the queue only is not a build. It goes to
    `plan-multi-phase`.
 6. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
@@ -278,7 +279,8 @@ Long runs and sessions:
   PR.
 - `autopilot-stack`: autopilot-full without the merge. Verified PRs the user
   lands, linked as a stack only where one builds on another. PRs that depend
-  on each other come here also when the user wants them merged.
+  on each other come here also when the user asks for the merge. Then the
+  playbook lands them with `ship-stack` after its handoff.
 - `pick-up-session`: resume a prior agent's in-flight work from its handoff
   file, decision log, transcript, or branch.
 - `pause-safely`: stop in-flight work cleanly so a new session can resume it.

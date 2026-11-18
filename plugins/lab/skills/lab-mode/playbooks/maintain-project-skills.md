@@ -1,6 +1,6 @@
 # maintain-project-skills
 
-Applies when: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.
+Applies when: a request to check or update the project's procedure skills after the pipeline, the data, or the conventions changed, also when the project has one skill.
 
 You own the truth of every project skill. A skill that no longer runs is worse than none.
 
