@@ -1170,6 +1170,17 @@ class OfflineCLIContract(unittest.TestCase):
         short = self.skill_route_run("mode-steps-short", "autoresearch", "run", modes["run"][:-1])
         self.assertFalse(short["followed"])
 
+    def test_a_sample_whose_files_differ_from_its_fixture_is_rejected(self):
+        sample = json.loads((HERE / "dataset" / "dev.jsonl").read_text(encoding="utf-8").splitlines()[0])
+        first = next(iter(sample["files"]))
+        for name, files in (("missing", {k: v for k, v in sample["files"].items() if k != first}),
+                            ("extra", {**sample["files"], "ghost.py": sample["files"][first].rsplit("/", 1)[0] + "/ghost.py"})):
+            with self.subTest(name):
+                path = self.root / f"{name}-corpus.jsonl"
+                path.write_text(json.dumps(dict(sample, files=files)) + "\n", encoding="utf-8")
+                with self.assertRaisesRegex(ValueError, "exactly the files of its fixture"):
+                    read_cases(path)
+
     def test_corpus_rejects_a_missing_unknown_or_stray_expected_mode(self):
         for name, route, mode in (("mode-missing", "autoresearch", None), ("mode-unknown", "autoresearch", "no-such-mode"),
                                   ("mode-stray", "making-plots", "run")):

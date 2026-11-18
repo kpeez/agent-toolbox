@@ -124,6 +124,12 @@ def read_cases(path=DATASET):
             names.add(match.group(1))
         if len(names) != 1:
             raise ValueError(f"line {number}: files must all come from exactly one fixture")
+        fixture = contained(HERE / "fixtures", next(iter(names)))
+        present = {f.relative_to(fixture).as_posix() for f in fixture.rglob("*") if f.is_file()}
+        if present != set(sample["files"]):
+            raise ValueError(f"line {number}: files must list exactly the files of its fixture, "
+                             f"missing {sorted(present - set(sample['files']))[:3]}, "
+                             f"absent {sorted(set(sample['files']) - present)[:3]}")
         metadata = dict(sample.get("metadata", {}))
         case = {"id": sample["id"], "target": metadata.pop("target_skill"), **metadata,
                 "messages": sample["input"], "fixture": names.pop()}
