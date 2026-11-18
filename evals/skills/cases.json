@@ -3141,7 +3141,7 @@
         "principle-read/swe/prove-it-works"
       ],
       "relevant_action": "Say Playbook: refactor-structure and read the playbook before any other step.",
-      "rationale": "Every principle that the refactor-structure steps name applies: callers move and the old API goes, and a repeated edit gets a script. The agent reads each principle by path."
+      "rationale": "A structure change that keeps behavior, so the refactor-structure line takes it. It touches four small files, so router Match step 6 keeps it off figure-it-out, and the user asks for the change itself, so neither the architect nor the codebase-design route fits. provider_a.py and provider_b.py hold the same label function, each with one caller (map_view.py and delivery_view.py), so one function keeps the behavior identical. Every correct run does steps 2 to 8: step 2 names model-the-domain, step 3 names foundational-thinking and redesign-from-first-principles, step 4 checks for the one-caller wrappers (subtract-before-you-add, laziness-protocol), step 5 scripts the repeated edit that the user asks for (sequence-verifiable-units, build-the-lever), step 6 moves both callers and deletes the adapters (migrate-callers-then-delete-legacy-apis), step 7 reruns the pin (prove-it-works), and step 8 checks the reader-load delta (minimize-reader-load). The principles are hidden from the skill list, so the agent reads each one by path."
     },
     {
       "id": "swe-fallback-build-prototype",
@@ -3152,7 +3152,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Build a throwaway sketch of three variants of how the search view lists recent records, behind one switch, and show me the output of each variant."
+          "content": "For an empty query, visible_records in search.py returns nothing, and I cannot decide how the search view should list recent records there. Build a throwaway sketch of three variants behind one switch. Make up a dozen sample records with an opened-at time, and show me what each variant prints."
         }
       ],
       "fixture": "sable-search",
@@ -3167,7 +3167,7 @@
         "principle-read/swe/prove-it-works"
       ],
       "relevant_action": "Say Playbook: build-prototype and read the playbook before any other step.",
-      "rationale": "Competing variants behind one switch are what the build-prototype step names exhaust-the-design-space for."
+      "rationale": "A throwaway sketch that settles a design decision by observation, so the build-prototype line takes it; the user asks for running variants, so the architect route, which explores designs before code, does not fit, and a choice a run can show is not an interview-user call. The request has the agent make up the sample records, because the fixture records have only a title. Every correct run does step 4-switch-between-variants, which the request asks for and which names exhaust-the-design-space, and step 5-observe-on-surface, which prints each variant and names prove-it-works. The principles are hidden from the skill list, so the agent reads each one by path."
     },
     {
       "id": "swe-fallback-plan-multi-phase",
@@ -3178,7 +3178,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "The README calls the design and the verification approach open, but I have settled both: add localized_names beside display_name, keep display_name for two releases, move the website, the CSV export, and the two reports onto the new field one at a time, then retire the old field. Verify each move by running the export command and both reports before and after it. Plan that as four stacked PRs, as a checklist an owner can run box by box. Do not implement."
+          "content": "The README calls the design and the verification approach open, but I have settled both. Add localized_names beside display_name in products.json, as a map from locale to name whose en entry equals display_name. Move the four callers in callers.md onto localized_names[\"en\"], one caller per PR, keep display_name for two releases, then retire it. Verify each move by comparing that caller's output before and after it: render_product on every product for the website, and the command in the README for the export and for each report. Plan that as six stacked PRs, as a checklist an owner can run box by box. Do not implement."
         }
       ],
       "fixture": "catalog-migration",
@@ -3193,7 +3193,7 @@
         "principle-read/swe/prove-it-works"
       ],
       "relevant_action": "Say Playbook: plan-multi-phase and read the playbook before any other step.",
-      "rationale": "Four callers over several PRs, and a README that expects more than one session, keep the plan past the skip-small-change step. The write-plan-file and require-real-verification steps run on every correct plan, and they name sequence-verifiable-units and prove-it-works. The user settles the decisions that the README lists as open, so the request and the README agree, and step 2 has nothing to prototype, so no principle from it is listed."
+      "rationale": "The plan of stacked PRs is the deliverable, so the plan-multi-phase line takes it; router Match step 5 sends a request to plan a queue only to plan-multi-phase, the writing route excludes a plan of PRs, and \"Do not implement\" rules out build-feature. The fixture stores display_name in products.json and lists the four callers in callers.md, and the six PRs are the new field, one move per caller, and the retirement. The user asks for a plan, so step 1-skip-small-change does not stop the run, and the user settles the decisions that the README lists as open, so step 2 has nothing to prototype and no principle from it is listed. Every correct run does step 3-write-plan-file (sequence-verifiable-units) and step 4-require-real-verification (prove-it-works). The principles are hidden from the skill list, so the agent reads each one by path."
     },
     {
       "id": "swe-fallback-hillclimb-metric",
@@ -3220,7 +3220,7 @@
         "principle-read/swe/guard-the-context-window"
       ],
       "relevant_action": "Say Playbook: hillclimb-metric and read the playbook before any other step.",
-      "rationale": "The tile-cache fixture has cache.py and the seeded measure.py replay, so the run reaches steps 6 and 7 instead of stopping at step 1 to build a repro. Step 6 hands each attempt to a subagent in a parallel worktree and keeps findings in the main thread, naming guard-the-context-window and separate-before-serializing-shared-state, and step 7 names explain-the-number for the noise check. A hit rate is not a time, so improve-performance does not fit."
+      "rationale": "A loop of measured keep-or-revert attempts toward one metric target, so the hillclimb-metric line takes it. Router Match step 6 reaches improve-performance first, but a hit rate is not a time. The tile-cache fixture has cache.py and the seeded measure.py replay, whose mean over seeds 1 to 5 is 0.668, so the run reaches steps 6 and 7 instead of stopping at step 1 to build a repro. Step 6 hands each attempt to a subagent in a parallel worktree and keeps findings in the main thread, naming guard-the-context-window and separate-before-serializing-shared-state, and step 7 names explain-the-number for the noise check. The principles are hidden from the skill list, so the agent reads each one by path. The fan-out and the diff review load swarm and no-comments through the router's Triggers, which the route credits, and step 4 loads log-decisions."
     },
     {
       "id": "lab-fallback-run-experiment",
