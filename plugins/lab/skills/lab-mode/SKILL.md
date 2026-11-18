@@ -136,9 +136,10 @@ Project:
   state in full into a new project skill: one done or corrected in this
   session, one the user only names, or one the user gives in part. A
   procedure that the user states in full goes to `research-skill`.
-- `maintain-project-skills`: a request to check or update the project's
-  procedure skills after the pipeline, the data, or the conventions changed,
-  also when the project has one skill.
+- `maintain-project-skills`: a request to check, review, or update the
+  project's procedure skills, also when the project has one skill, such as
+  after the pipeline, the data, or the conventions changed. Edits that the
+  user states when nothing upstream changed go to `research-skill`.
 
 Research:
 
@@ -152,7 +153,7 @@ Research:
 ## Single-skill routes
 
 - Write one new project skill for a procedure that the user states in full,
-  or make edits that the user states to one existing project skill when the
+  or make edits that the user states to existing project skills when the
   pipeline, the data, and the conventions did not change:
   `research-skill`.
 - Repeated keep-or-discard runs against one metric, or cleanup of such a run:
