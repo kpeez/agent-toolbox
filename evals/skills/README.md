@@ -500,7 +500,9 @@ files from the agent's working folder, and leaves no hooks in a `hook-off` suite
 scores each arm from the kept files and can run again; that a rerun launches nothing and an
 interrupted run moves aside and counts at the stop amount; that the total budget stops a launch
 before it starts; that a run over the per-run stop, a session with a wrong tool set, and a
-session with the wrong effort each stop the batch and are not scored; and that a different
+session with the wrong effort or CLI version each stop the batch and are not scored; that
+parallel workers count a run in flight once, and a resume counts each stale run folder while
+workers reserve; that the runner's own timeout scores as a timeout; and that a different
 configuration needs a new output folder. `test_facets.py` runs `facets.py`
 on a copied catalog. It checks that `check` fails on a stale map and that
 `write` rejects a step name that nothing owns.

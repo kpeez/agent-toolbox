@@ -486,6 +486,11 @@ class Batch:
         with self.lock:
             if self.stop:
                 return False
+            if run.exists():
+                # An earlier launch stopped part way. Move it aside under the lock, so every check counts it.
+                aside = self.out / "interrupted" / f"{'-'.join(run.relative_to(self.out).parts[1:])}-{secrets.token_hex(3)}"
+                aside.parent.mkdir(parents=True, exist_ok=True)
+                run.rename(aside)
             worst = (
                 spend(self.out, stop_usd, self.active)["worst_case_usd"]
                 + (len(self.active) + 1) * stop_usd
@@ -584,15 +589,6 @@ def launch(run, case_id, arm, runtime, prompt=None):
 
 def prepare(out, item, args):
     run = run_dir(out, item)
-    if run.exists():
-        # An earlier launch stopped part way. Keep it for the spend count and start this run again.
-        aside = (
-            out
-            / "interrupted"
-            / f"{item['case']}-{item['arm']}-r{item['repeat']}-{secrets.token_hex(3)}"
-        )
-        aside.parent.mkdir(parents=True, exist_ok=True)
-        run.rename(aside)
     run.parent.mkdir(parents=True, exist_ok=True)
     se.materialize(
         Namespace(

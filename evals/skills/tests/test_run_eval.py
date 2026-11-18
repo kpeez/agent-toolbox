@@ -262,6 +262,21 @@ class PluginEvalAdapter(unittest.TestCase):
         self.assertIsNone(result["stopped"])
         self.assertEqual((len(self.launches()), result["finished"]), (8, 8))
 
+    def test_a_resume_counts_stale_folders_while_workers_reserve(self):
+        # A killed --jobs 4 batch left 4 started runs, each worth $1. With a $6 cap, 4 stale plus
+        # in-flight launches at $1 each leave room for 2, whatever order the workers reserve in.
+        sys.path.insert(0, str(HERE))
+        import run_eval
+        runtime = json.loads((HERE / "runtime.plugin-eval.json").read_text())
+        runs = [self.out / "runs" / case / "hook-on" / "r1" for case in ("IM-01", "IM-02", "IM-03", "IM-04")]
+        for run in runs:
+            run.mkdir(parents=True)
+            (run / "run.json").write_text(json.dumps({"started_at": "x", "cost_usd": None}))
+        batch = run_eval.Batch(self.out, runtime, 6.0)
+        self.assertEqual([batch.reserve(run) for run in runs], [True, True, False, False])
+        self.assertEqual(run_eval.spend(self.out, 1.0)["unknown_cost_runs"], 4)
+        self.assertIn("budget", batch.stop["reason"])
+
     def test_a_runner_timeout_scores_as_a_timeout(self):
         sys.path.insert(0, str(HERE))
         import run_eval
