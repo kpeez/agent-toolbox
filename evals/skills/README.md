@@ -82,8 +82,10 @@ The `interview-user` family's negatives matter most: a false activation starts a
 round on a clear task. They include "figure out why a test fails", which is diagnosis.
 
 20 cases marked `holdout_candidate` are
-disclosed development material, **not a sealed holdout**. An independent sealed
-set is still required before tuning from measured scores.
+disclosed development material, **not a sealed holdout**. The sealed holdout lives
+outside this repository; `dataset/README.md` says how to check a copy. The loader
+does not score it yet: `corpus()` accepts only the `development` and
+`holdout_candidate` splits, and fixtures resolve under `fixtures/` here.
 
 `dataset/dev.jsonl` holds the corpus as one [Inspect `Sample`](https://inspect.aisi.org.uk/datasets.html)
 per line, split by `split` inside `metadata` and not by file. Its card, `dataset/README.md`, maps the fields. The
