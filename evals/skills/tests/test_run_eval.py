@@ -1136,6 +1136,19 @@ class NativeRunner(unittest.TestCase):
         self.assertEqual(self.model_calls(), [])
         self.assertEqual(self.records(), {})
 
+    def test_a_budget_ceiling_canary_over_its_bound_writes_the_budget_marker_and_execute_stops(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"ceiling": "overshoots"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        self.assertAlmostEqual(json.loads(done.stdout)["canaries"]["budget-ceiling"]["cost_usd"], 0.2)
+        marker = self.root / "budget-assumption-broken.json"
+        self.assertTrue(marker.is_file())
+        self.assertIn("budget-ceiling", json.loads(marker.read_text())["run"])
+        self.record_canaries("--max-cost-usd", "5")
+        blocked = self.run_eval("--max-cost-usd", "5", canaries_passed=False)
+        self.assertEqual(blocked.returncode, 3, blocked.stderr)
+        self.assertIn("budget assumption broken", json.loads(blocked.stdout)["stopped"])
+        self.assertEqual(len(self.model_calls()), len(CANARY_NAMES))
+
     def test_write_escape_to_other_outside_path_stops_canaries(self):
         done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write_succeeded"}, mode="--canaries")
         self.assertEqual(done.returncode, 3, done.stderr)

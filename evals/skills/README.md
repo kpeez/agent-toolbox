@@ -311,8 +311,10 @@ The cap rests on two assumptions:
 - The owner's `worst_request` numbers bound the cost of one request: the context window, the output
   limit, and the highest input and output prices of the approved model.
 
-The `budget-ceiling` canary is the one live check of the first assumption (see "Canaries"). A run whose
-cost breaks the bound writes `budget-assumption-broken.json` and stops the pilot. The ordinary canaries
+The `budget-ceiling` canary is the one live check of the first assumption (see "Canaries"). Every launch,
+canary or run, checks its cost against the budget it launched with plus the bound, so `budget-ceiling`
+checks against $0.02 plus the bound. A launch whose cost breaks it writes `budget-assumption-broken.json`,
+which blocks every later launch in that pilot. The ordinary canaries
 only show that their own cost stayed within the per-run budget. Their prompts are trivial, so that holds
 whether or not the CLI enforces the budget.
 

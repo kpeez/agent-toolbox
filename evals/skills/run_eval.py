@@ -972,13 +972,12 @@ def launch_run(
     prompt=None,
     budget=None,
     ignore_arm_violations=False,
-    check_budget_bound=True,
     secret=None,
     absent=None,
 ):
     """Materialize `run` and launch claude once. A failure after the launch records the run as aborted.
 
-    `budget` replaces the runtime's per-run budget on the command line only.
+    `budget` replaces the runtime's per-run budget on the command line and in the bound the cost must keep.
     `secret` and `absent` are passed to `escapes`."""
     se.materialize(
         Namespace(
@@ -1059,11 +1058,7 @@ def launch_run(
         record["usage"] = usage_of(last_event(stream, "result"))
         cost = record["usage"]["cost_usd"]
         bound_total = reservation(ctx["runtime"], budget=budget)
-        if (
-            check_budget_bound
-            and cost is not None
-            and round(cost, 9) > round(bound_total, 9)
-        ):
+        if cost is not None and round(cost, 9) > round(bound_total, 9):
             launch_budget = (
                 ctx["runtime"]["max_budget_usd_per_run"] if budget is None else budget
             )
@@ -1580,7 +1575,6 @@ def run_canary(ctx, name, arm):
             prompt,
             budget=CEILING_BUDGET_USD if ceiling else None,
             ignore_arm_violations=True,
-            check_budget_bound=not ceiling,
             secret=target.read_text().strip() if name == "read-outside" else None,
             absent=target if name == "write-outside" else None,
         )
