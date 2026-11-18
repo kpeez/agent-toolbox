@@ -84,14 +84,15 @@ round on a clear task. They include "figure out why a test fails", which is diag
 20 cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. The sealed holdout lives
 outside this repository; `dataset/README.md` says how to check a copy. The loader
-does not score it yet: `corpus()` accepts only the `development` and
-`holdout_candidate` splits, and fixtures resolve under `fixtures/` here.
+reads it like `dev.jsonl`: pass `--corpus <copy>/holdout.jsonl`. A corpus is either
+all `holdout` or has no `holdout` cases, and the 4/2/3/1 family mix applies only to
+a corpus without `holdout` cases.
 
 `dataset/dev.jsonl` holds the corpus as one [Inspect `Sample`](https://inspect.aisi.org.uk/datasets.html)
 per line, split by `split` inside `metadata` and not by file. Its card, `dataset/README.md`, maps the fields. The
 evaluator labels, allowed auxiliary skills, forbidden skills, rationales, and
 case-specific action boundaries sit in each sample's `metadata`. `skill_eval.corpus()` parses each
-sample back into the case dict that the rest of the code uses. `fixtures/` holds only task
+sample back into the case dict that the rest of the code uses. `dataset/fixtures/` holds only task
 inputs. The materializer copies messages and fixture files; it never copies
 answer keys into the execution directory. Context is serialized as preceding
 USER/ASSISTANT messages in one prompt, not replayed as native multi-turn sessions.

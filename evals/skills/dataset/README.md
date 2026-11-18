@@ -27,7 +27,7 @@ Each line of `dev.jsonl` is one [Inspect `Sample`](https://inspect.aisi.org.uk/d
 | `id` | Case ID. |
 | `input` | The conversation as `{"role", "content"}` messages. The last message is from the user. |
 | `target` | The expected route facet. Present only on cases that expect a route. |
-| `files` | The fixture repository: `{"<path in the workspace>": "../fixtures/<fixture>/<path>"}`. All paths of one sample share one fixture, and the loader requires them to list exactly that fixture's files. |
+| `files` | The fixture repository: `{"<path in the workspace>": "../fixtures/<fixture>/<path>"}`. All paths of one sample share one fixture, and the loader requires them to list exactly that fixture's files. The loader reads `<fixture>` from the `fixtures/` folder beside the `.jsonl` file, for this corpus and for the sealed holdout. Inspect's own loader resolves these paths from the `.jsonl` file's folder, one level up, so it does not find them. |
 | `metadata` | Every other case field, with the same name and value. The skill under test is `target_skill`, because `target` is taken. |
 
 ## Sealed holdout

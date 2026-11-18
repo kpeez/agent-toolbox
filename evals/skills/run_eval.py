@@ -576,7 +576,7 @@ def build_pilot(args, runtime, cases):
     catalog = se.inventory(se.REPO / "plugins")
     corpus_cases = {c["id"]: c for c in se.corpus(args.corpus)}
     fixtures = {
-        fixture: se.inventory(se.contained(se.HERE / "fixtures", fixture))
+        fixture: se.inventory(se.contained(se.fixtures_root(args.corpus), fixture))
         for fixture in sorted({corpus_cases[cid]["fixture"] for cid in cases})
     }
     pilot = {

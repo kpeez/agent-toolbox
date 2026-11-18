@@ -726,7 +726,7 @@ class NativeRunner(unittest.TestCase):
         sandbox = Path(self.temp.name) / "eval-copy"
         sandbox.mkdir()
         shutil.copy2(HERE / "facets.json", sandbox / "facets.json")
-        shutil.copytree(HERE / "fixtures", sandbox / "fixtures")
+        shutil.copytree(HERE / "dataset" / "fixtures", sandbox / "fixtures")
         corpus = sandbox / "custom-cases.jsonl"
         cases = read_cases()
         write_corpus(corpus, cases)
@@ -918,7 +918,7 @@ class NativeRunner(unittest.TestCase):
         sandbox = Path(self.temp.name) / "eval-live-drift"
         sandbox.mkdir()
         shutil.copy2(HERE / "facets.json", sandbox / "facets.json")
-        shutil.copytree(HERE / "fixtures", sandbox / "fixtures")
+        shutil.copytree(HERE / "dataset" / "fixtures", sandbox / "fixtures")
         corpus = sandbox / "cases.jsonl"
         shutil.copy2(HERE / "dataset" / "dev.jsonl", corpus)
         fixture_file = next(
