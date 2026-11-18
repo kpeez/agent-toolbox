@@ -2594,7 +2594,6 @@
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [
-        "swe:log-decisions",
         "swe:principle-prove-it-works",
         "swe:principle-never-block-on-the-human",
         "swe:principle-foundational-thinking",

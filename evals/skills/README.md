@@ -206,7 +206,7 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
   else `true`.
 
 The router runs first, so a case's labels must agree with what a correct router-first run loads: the route, the
-`always` loads of its steps, the router's always-on triggers, and the session-start hooks. A negative for a leaf skill is
+`always` loads of its steps, the skills the router's Triggers name, and the session-start hooks. A negative for a leaf skill is
 valid only when the correct route for that request never loads that skill. A step text that carries its own condition
 counts. `SP-07` forbids `swe:ship-pr` because `fix-bug` step 14 runs "when publication is authorized" and the request says
 not to commit or push. `HO-07` forbids `swe:interview-user` because `build-feature` step 2 runs only when the user has not
@@ -221,6 +221,10 @@ A case that sets `expected_route` credits what a router-first run on that route 
 
 - the plugin's router and the routed skill;
 - every skill or principle that a step or reply line of the route names (`route_allowed_skills`);
+- every skill or principle that the Triggers section of the plugin's router names (the `trigger-load` facets), such
+  as `model-the-domain`, `architect`, `swarm`, `no-comments`, and `log-decisions`. The router says its Triggers "hold
+  in every playbook and route", so a correct run on any route may load them. A trigger that names a playbook or a
+  reference is a read, not a load, and a project skill is not scorable, so neither adds a credit;
 - the always-on triggers: `go-deeper` (Match step 2 of the router) and `swe:writing` (the swe router's prose trigger,
   "the reply included"). A swe route credits `swe:go-deeper` and `swe:writing`.
   A lab route credits `lab:go-deeper` (its own Match step 2), and also `swe:go-deeper` and `swe:writing`. The swe
