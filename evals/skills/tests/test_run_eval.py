@@ -136,6 +136,11 @@ STUB = textwrap.dedent('''\
                 target_file = Path(config["append_fixture_file"])
                 target_file.write_bytes(target_file.read_bytes() + b"\\nx")
         prompt = argv[argv.index("-p") + 1]
+        if config.get("stray_write"):
+            print(json.dumps({"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": "s1", "name": "Write", "input": {"file_path": config["stray_write"], "content": "x"}}]}}))
+            print(json.dumps({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": "s1", "is_error": False, "content": "ok"}]}}))
         if prompt.startswith("CANARY "):
             kind = prompt.split()[1].rstrip(":")
             path = prompt.split("PATH=")[1].split()[0].rstrip(".,") if "PATH=" in prompt else None
@@ -816,7 +821,7 @@ class NativeRunner(unittest.TestCase):
 
     def test_dry_run_plan_text_does_not_claim_write_canary_probes_edit(self):
         plan = json.loads(self.run_eval("--max-cost-usd", "1", mode=None).stdout)
-        steps = "\n".join(plan["live_steps_pending_approval"])
+        steps = next(s for s in plan["live_steps_pending_approval"] if s.startswith("--canaries"))
         self.assertNotIn("Edit", steps)
         self.assertIn("Write to a new path outside the fixture", steps)
 
@@ -1052,6 +1057,54 @@ class NativeRunner(unittest.TestCase):
         self.assertEqual(aborted["usage"]["cost_usd"], 0.2)
         self.assertTrue((self.root / "budget-assumption-broken.json").is_file())
         self.assertAlmostEqual(json.loads(done.stdout)["cost"]["known_usd"], 0.2)
+
+    def test_an_outside_write_during_the_read_canary_writes_the_marker_and_stops_the_canaries(self):
+        stray = str(Path(self.temp.name) / "stray.txt")
+        done = self.run_eval("--max-cost-usd", "5", stub={"stray_write": stray}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertEqual(list(summary["canaries"]), ["read-outside"])
+        self.assertFalse(summary["canaries"]["read-outside"]["passed"])
+        self.assertIn("isolation violation", summary["stopped"])
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_a_crash_before_the_canary_verdict_leaves_the_marker_and_a_resume_launches_nothing(self):
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        (self.stub_dir / "config.json").write_text(json.dumps({"outside_read": "leaked"}))
+        wrapper = (
+            "import sys\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            "def crash(*args, **kw):\n"
+            "    raise SystemExit(99)\n"
+            "run_eval.canary_verdict = crash\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        crashed = subprocess.run(
+            [sys.executable, "-c", wrapper, "--repeats", "1", "--runtime", str(runtime_path),
+             "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", str(self.output_root),
+             "--max-cost-usd", "5", "--canaries"],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(crashed.returncode, 99, crashed.stderr)
+        self.assertTrue((self.root / "canaries" / "read-outside" / "run.json").is_file())
+        self.assertFalse((self.root / "canaries" / "read-outside" / "canary.json").exists())
+        self.assertTrue((self.root / "isolation-violation.json").is_file())
+        resumed = self.run_eval("--max-cost-usd", "5", mode="--canaries")
+        self.assertEqual(resumed.returncode, 3, resumed.stderr)
+        self.assertIn("isolation violation", json.loads(resumed.stdout)["stopped"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_an_outside_write_in_a_pilot_run_stops_the_pilot(self):
+        stray = str(Path(self.temp.name) / "stray.txt")
+        done = self.run_eval("--repeats", "2", "--max-cost-usd", "1", stub={"stray_write": stray})
+        self.assertEqual(done.returncode, 3, done.stderr)
+        self.assertIn("isolation violation", json.loads(done.stdout)["stopped"])
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        self.assertEqual(len(self.model_calls()), 1)
 
     def test_write_escape_to_other_outside_path_stops_canaries(self):
         done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write_succeeded"}, mode="--canaries")

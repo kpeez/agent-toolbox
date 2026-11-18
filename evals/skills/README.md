@@ -247,6 +247,12 @@ The launch environment holds only `PATH`, `HOME`, `TMPDIR`, locale, proxy and ce
 `ANTHROPIC_API_KEY`, and `CLAUDE_CONFIG_DIR`. After each run, the init event is checked: no MCP server,
 no shell or web tool under a confined limit, and the auto-memory path inside the run's config home. A
 check that fails stops the pilot. A run whose stream has no init event also stops it, because its isolation was not checked.
+Every launch, canary or run, is also checked for an escape in its stream, whatever its prompt asked: a
+`Write`, `Edit`, or `NotebookEdit` outside `<run>/workspace` and `<run>/inputs/plugins`, a `Read` of a
+file there that returned, a `Glob` or `Grep` result that names a path there, or any shell or web call,
+unless its `tool_result` is an error. A write, shell, or web call with no `tool_result` counts too. Both
+sides of each path are resolved first. An escape writes `isolation-violation.json` before `run.json`
+records it, and stops the pilot or the canary phase, so a crash after the launch cannot hide it.
 Every later canary and run must match the effective session that the first canary with an init event
 froze, which also freezes the bundled skills that the checked-out catalog does not list.
 
@@ -340,8 +346,9 @@ materialized run folder under `canaries/NAME/` that the runner judges from its s
   less than the budget spent (for example `error_during_execution`) all fail.
 
 A canary also fails when its init event shows an isolation violation or drifts from the frozen
-effective session. A proven escape in `read-outside`, `write-outside`, or `network` writes
-`isolation-violation.json` and stops the canary phase at once. Every canary except `budget-ceiling` also
+effective session. An escape in any canary (see "Preflight") writes `isolation-violation.json` and stops
+the canary phase at once. `read-outside` also counts the sentinel text anywhere in the stream as an
+escape, and `write-outside` counts its target file existing after the run. Every canary except `budget-ceiling` also
 fails when its cost is not known and within the per-run budget. Only `read-outside`, `write-outside`,
 `playbook-read`, and `budget-ceiling` fail when the agent never attempts the call they judge. `canaries.json` holds the verdicts and the frozen
 configuration digest. `--execute` refuses without it, with a different digest, or with any canary not
@@ -577,6 +584,7 @@ an interrupt kills the child's process group and the run is aborted;
 execute refuses without a canary record for the same configuration, or with a canary missing;
 passing canaries are recorded with their cost and the budget-ceiling overshoot, and allow execute;
 each failing canary variant is recorded and blocks execute;
+an escape in any canary or run writes the marker before the verdict and stops the launches;
 a canary that launched is never launched again; an unknown canary cost fails the canary; and a canary
 cost above the per-run budget is recorded against that budget. `test_facets.py` runs `facets.py`
 on a copied catalog. It checks that `check` fails on a stale map and that

@@ -63,6 +63,7 @@ EFFECTIVE_FIELDS = (
 )
 INTERRUPTS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
 READ_TOOLS = ("Read", "Glob", "Grep")
+WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 CEILING_BUDGET_USD = 0.02
 CEILING_TURNS = 40
 # Confirmed against the live Claude CLI by the budget-ceiling canary.
@@ -85,6 +86,9 @@ LIVE_STEPS = [
     "max_concurrent_requests * max_request_usd above that budget",
     "--execute refuses until canaries.json holds a pass for every canary under the same frozen configuration",
     "first canary with an init event: freeze it as effective-session.json; every later canary and run must match it",
+    "every canary and run: a Write, Edit, or NotebookEdit outside the workspace and plugin snapshot, a Read of a "
+    "file there that returned, a Glob or Grep result that names a path there, or any shell or web call that was "
+    "not refused writes isolation-violation.json before run.json records it, and stops the pilot",
 ]
 
 
@@ -970,10 +974,13 @@ def launch_run(
     budget=None,
     ignore_arm_violations=False,
     check_budget_bound=True,
+    secret=None,
+    absent=None,
 ):
     """Materialize `run` and launch claude once. A failure after the launch records the run as aborted.
 
-    `budget` replaces the runtime's per-run budget on the command line only."""
+    `budget` replaces the runtime's per-run budget on the command line only.
+    `secret` and `absent` are passed to `escapes`."""
     se.materialize(
         Namespace(
             case=item["case"],
@@ -1068,12 +1075,16 @@ def launch_run(
             _record_marker(
                 ctx["root"], "budget-assumption-broken.json", run, bdetail
             )
+        found_violations = escapes(stream, run, secret, absent)
+        if found_violations:
+            record["violations"] = found_violations
+            record_isolation_violation(ctx["root"], run, "; ".join(found_violations))
         init = init_event(stream)
         hooks = hook_summary(
             hook_events(stream),
             manifest.get("hooks", {}) if item["arm"] == "hook-on" else {},
         )
-        found_violations = (
+        found_violations += (
             violations(init, ctx["runtime"], home)
             if init
             else ["no init event in the stream, so isolation was not checked"]
@@ -1263,7 +1274,8 @@ def stream_calls(stream):
             event = json.loads(line)
         except ValueError:
             continue
-        content = (event.get("message") or {}).get("content") if isinstance(event, dict) else None
+        message = event.get("message") if isinstance(event, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
         for block in content if isinstance(content, list) else []:
             if not isinstance(block, dict):
                 continue
@@ -1281,6 +1293,53 @@ def result_text(result):
     if isinstance(content, list):
         return " ".join(str(b.get("text", "")) for b in content if isinstance(b, dict))
     return str(content or "")
+
+
+def outside_run(path, run):
+    """Does `path` resolve outside the run's workspace and plugin snapshot? A relative path is under the workspace."""
+    try:
+        p = Path(os.path.expanduser(path))
+        resolved = (p if p.is_absolute() else run / "workspace" / p).resolve()
+        allowed = ((run / "workspace").resolve(), (run / "inputs" / "plugins").resolve())
+    except (ValueError, OSError, RuntimeError):
+        return True
+    return not any(resolved.is_relative_to(base) for base in allowed)
+
+
+def escapes(stream, run, secret=None, absent=None):
+    """Proof in the stream that a launch reached outside its run, whatever the prompt asked. One line per escape.
+
+    A call counts unless its tool_result is an error. A call that changes something (a write, a shell or
+    web call) counts with no tool_result too, since nothing shows it was refused. `secret` must not appear
+    in the stream, and the file `absent` must not exist after the run.
+    """
+    found = []
+    for use, result in stream_calls(stream):
+        if result is not None and result.get("is_error"):
+            continue
+        tool = base_tool(str(use.get("name", "")))
+        inp = use.get("input") if isinstance(use.get("input"), dict) else {}
+        path = inp.get("file_path") or inp.get("notebook_path")
+        if tool in SHELL_TOOLS | NETWORK_TOOLS:
+            found.append(f"escape: a {tool} call was not refused")
+        elif tool in WRITE_TOOLS and isinstance(path, str) and path and outside_run(path, run):
+            found.append(f"escape: a {tool} of {path} outside the run was not refused")
+        elif tool == "Read" and result is not None and isinstance(path, str) and path and outside_run(path, run):
+            found.append(f"escape: a Read of {path} outside the run returned")
+        elif tool in ("Glob", "Grep") and result is not None:
+            named = [
+                line.strip().split(":")[0]
+                for line in result_text(result).splitlines()
+                if line.strip().startswith("/")
+            ]
+            outside = [p for p in named if outside_run(p, run)]
+            if outside:
+                found.append(f"escape: a {tool} result names {outside[:3]} outside the run")
+    if secret and secret.encode() in stream.read_bytes():
+        found.append("escape: the sentinel text appears in the stream")
+    if absent is not None and absent.exists():
+        found.append(f"escape: {absent} exists after the run")
+    return found
 
 
 def canary_setup(name, ctx, run):
@@ -1349,17 +1408,8 @@ def matches_canary_target(use, target):
     return False
 
 
-def _outside_allowed_dirs(file_path, run):
-    if not isinstance(file_path, str) or not file_path:
-        return False
-    p = Path(file_path)
-    resolved = p.resolve() if p.is_absolute() else (run / "workspace" / p).resolve()
-    allowed = ((run / "workspace").resolve(), (run / "inputs" / "plugins").resolve())
-    return not any(resolved.is_relative_to(base) for base in allowed)
-
-
-def canary_verdict(name, stream, record, target, run):
-    """Judge a canary from its stream. Returns (passed, detail, escaped)."""
+def canary_verdict(name, stream, record, target):
+    """Judge a canary from its stream. Returns (passed, detail). `escapes` in launch_run owns escape detection."""
     calls = stream_calls(stream)
     tools = {base_tool(t) for t in record["effective_session"]["tools"]}
     touching = [
@@ -1392,13 +1442,10 @@ def canary_verdict(name, stream, record, target, run):
             for t, results in by_tool.items()
             if any(r is not None and got(r) for r in results)
         )
-        any_got = any(r is not None and got(r) for _, r in calls)
-        escaped = bool(read or any_got or leaked)
         return (
             bool(probes) and not silent and not missing and not read and not leaked,
             f"file-read tools in the session={probes}, never tried against the sentinel outside the fixture={silent}, "
             f"missing tool_result={missing}, returned its file name or content={read}, sentinel text in the stream={leaked}",
-            escaped,
         )
     if name == "write-outside":
         attempts = [
@@ -1406,20 +1453,10 @@ def canary_verdict(name, stream, record, target, run):
             for u, r in touching
             if base_tool(u.get("name", "")) == "Write"
         ]
-        outside_write_succeeded = any(
-            base_tool(u.get("name", "")) in ("Write", "Edit")
-            and r is not None
-            and not r.get("is_error")
-            and _outside_allowed_dirs((u.get("input") or {}).get("file_path"), run)
-            for u, r in calls
-        )
-        escaped = target.exists() or outside_write_succeeded
         return (
             bool(attempts) and refused(attempts) and not target.exists(),
             f"{len(attempts)} Write call(s) to a new path outside the fixture, "
-            f"all refused={refused(attempts)}, new file absent={not target.exists()}, "
-            f"outside write or edit succeeded={outside_write_succeeded}",
-            escaped,
+            f"all refused={refused(attempts)}, new file absent={not target.exists()}",
         )
     if name == "network":
         banned = sorted(tools & (SHELL_TOOLS | NETWORK_TOOLS))
@@ -1432,7 +1469,6 @@ def canary_verdict(name, stream, record, target, run):
         return (
             not banned and not used,
             f"shell or network tools in the session={banned}, such calls that succeeded={used}",
-            bool(used),
         )
     if name == "playbook-read":
         reads = [
@@ -1446,9 +1482,8 @@ def canary_verdict(name, stream, record, target, run):
         return (
             bool(reads),
             f"{len(reads)} successful Read call(s) on the plugin playbook under --restricted",
-            False,
         )
-    return True, "no arm violation in the hook events", False
+    return True, "no arm violation in the hook events"
 
 
 def ceiling_verdict(stream, record, target, runtime):
@@ -1509,30 +1544,30 @@ def run_canary(ctx, name, arm):
             budget=CEILING_BUDGET_USD if ceiling else None,
             ignore_arm_violations=True,
             check_budget_bound=not ceiling,
+            secret=target.read_text().strip() if name == "read-outside" else None,
+            absent=target if name == "write-outside" else None,
         )
         budget = CEILING_BUDGET_USD if ceiling else ctx["runtime"]["max_budget_usd_per_run"]
         cost = (record.get("usage") or {}).get("cost_usd")
         within = False if ceiling else cost is not None and cost <= budget
         problems, detail, extra = [], "", {}
+        iso = [
+            v
+            for v in record.get("violations") or []
+            if not v.startswith("arm violation:")
+        ]
+        if iso:
+            extra["isolation_violation"] = "; ".join(iso)
+            extra["isolation_violation_record"] = str(
+                ctx["root"] / "isolation-violation.json"
+            )
         if record.get("outcome") == "aborted":
             problems.append(f"run aborted: {record['error']}")
         elif not record.get("effective_session"):
-            detail = "; ".join(record.get("violations") or ["no init event in the stream"])
-            vpath = ctx["root"] / "isolation-violation.json"
-            extra["isolation_violation"] = detail
-            extra["isolation_violation_record"] = str(vpath)
-            problems.append(detail)
+            problems.append(
+                "; ".join(record.get("violations") or ["no init event in the stream"])
+            )
         else:
-            iso = [
-                v
-                for v in record["violations"]
-                if not v.startswith("arm violation:")
-            ]
-            if iso:
-                detail = "; ".join(iso)
-                vpath = ctx["root"] / "isolation-violation.json"
-                extra["isolation_violation"] = detail
-                extra["isolation_violation_record"] = str(vpath)
             problems += record["violations"] + [
                 d for d in [drift(ctx, record)] if d
             ]
@@ -1543,13 +1578,9 @@ def run_canary(ctx, name, arm):
                 extra |= ceiling_extra
                 within = passed
             else:
-                passed, detail, escaped = canary_verdict(
-                    name, run / "launch" / "stream.jsonl", record, target, run
+                passed, detail = canary_verdict(
+                    name, run / "launch" / "stream.jsonl", record, target
                 )
-                if escaped and not extra.get("isolation_violation"):
-                    vpath = record_isolation_violation(ctx["root"], run, detail)
-                    extra["isolation_violation"] = detail
-                    extra["isolation_violation_record"] = str(vpath)
             if not passed:
                 problems.append(detail)
         if not ceiling and not within:
