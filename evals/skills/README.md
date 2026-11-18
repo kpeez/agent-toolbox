@@ -27,6 +27,9 @@ activation. The closing remark and the quick fact also forbid `swe:go-deeper`, b
 excludes chat and quick facts. The software-free task allows it and `swe:writing`, because the session-start hook
 runs `go-deeper` on a task of any kind and sends the reply through `writing`. `swe-mode-pause-safely`
 forbids `go-deeper` too: it is a follow-up inside a task that an earlier turn framed.
+`swe-mode-improve-performance` runs on the `tile-preview` fixture, whose renderer rebuilds a palette of 3,000 shades
+for every tile. `python3 preview.py` (python 3.9) took 14.6 to 16.3 s over eight runs, median 14.8 s, so the request
+says "about 15 s".
 
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
 the same fixture. Six of them set `expected_route`, the route the agent should

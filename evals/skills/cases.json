@@ -2946,10 +2946,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "The preview refresh takes 12.4 s for 18,000 tiles. Make it faster, and show me the numbers before and after."
+          "content": "The preview refresh takes about 15 s for 18,000 tiles. `python3 preview.py` measures it. Make it faster, and show me the numbers before and after."
         }
       ],
-      "fixture": "tile-renderer",
+      "fixture": "tile-preview",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2957,7 +2957,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/improve-performance",
       "relevant_action": "Say Playbook: improve-performance and read the playbook before any other step.",
-      "rationale": "One measured slowness to improve against a baseline. The hillclimb-metric playbook is a loop toward a target."
+      "rationale": "One measured slowness to improve against a baseline, and the preview output is not wrong, so fix-bug, the first playbook in the list, does not fit and improve-performance, the second, does. The hillclimb-metric playbook is a loop toward a target. The tile-preview renderer rebuilds its 3,000-shade palette for every tile, which a profile shows."
     },
     {
       "id": "swe-mode-investigate-question",
