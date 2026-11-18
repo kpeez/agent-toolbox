@@ -33,8 +33,9 @@ story there, so do not rebuild it from transcripts alone.
   Search it first with the `atuin_threads_search` MCP tool and the topic as
   `terms`: once for each path that `git worktree list` prints, with `cwd` set
   to the path, and once with `cwd` set to the main checkout's parent folder,
-  keeping only threads whose directory starts with the main checkout's path.
-  The second search finds threads from worktrees that were already removed.
+  `limit` 20, keeping only threads whose directory is the main checkout's
+  path followed by `.` or `/`, such as `<main>.<branch>`. The second search
+  finds threads from worktrees that were already removed.
   Then read each hit with `atuin_threads_read`. In the CLI,
   `atuin threads search --style json <terms>` prints each thread's directory.
   Fall back to the transcripts below when Atuin is not available or finds
