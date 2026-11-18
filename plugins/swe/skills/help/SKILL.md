@@ -104,7 +104,7 @@ and give one example prompt.
 | Bring a formal verification back in line after the code it covers changed, and tell drift from a bug | [maintain-formal-verification-skill](../maintain-formal-verification-skill/SKILL.md) |
 | Show a PM or designer what the user sees as a chart checked by a TLA+ model, with the shortest path to each state that breaks a rule | [statechart](../statechart/SKILL.md) |
 | Vet a performance number before reporting it | [benchmark-checklist](../benchmark-checklist/SKILL.md) |
-| Run a large or cross-cutting change, or a multi-day program | [figure-it-out](../figure-it-out/SKILL.md) |
+| Run a large, cross-cutting, or multi-day fix, feature, or refactor, or work that no playbook fits | [figure-it-out](../figure-it-out/SKILL.md) |
 | Keep a decision log during a run | [log-decisions](../log-decisions/SKILL.md) |
 | Save the work's state for a new session | [handoff](../handoff/SKILL.md) |
 | Open, fix, or land a PR, including its conflicts | [ship-pr](../ship-pr/SKILL.md) |
@@ -127,9 +127,10 @@ Close calls:
 - `recall` rebuilds context across recent chats. `ketchup` covers only this
   chat since the user's last message. To resume one branch, the
   `pick-up-session` playbook applies.
-- `figure-it-out` designs one rigorous run, and it takes program-scale work
-  across days and many PRs. The `run-autonomously` playbook drives one task to
-  an exit condition.
+- `figure-it-out` designs one rigorous run. It takes a fix, feature, or
+  refactor that is large, cross-cutting, or spans days, and work that no
+  playbook fits. The `run-autonomously` playbook drives one task to an exit
+  condition.
 - `swarm` fans out native subagents. `external-agents` runs workers
   on another agent CLI, such as OpenCode or Antigravity.
 

@@ -277,7 +277,7 @@ The [playbook directory](./skills/swe-mode/playbooks) has the full set.
 | [run-autonomously](./skills/swe-mode/playbooks/run-autonomously.md) | Drive a long task to a checkable exit condition |
 | [plan-multi-phase](./skills/swe-mode/playbooks/plan-multi-phase.md) | Write a plan for work across phases or stacked PRs |
 | [autopilot-full](./skills/swe-mode/playbooks/autopilot-full.md) | A queue of independent PRs, run to merged |
-| [autopilot-stack](./skills/swe-mode/playbooks/autopilot-stack.md) | Autopilot-full without the merge: verified PRs you land |
+| [autopilot-stack](./skills/swe-mode/playbooks/autopilot-stack.md) | Autopilot-full without the merge: verified PRs you land, or a dependent stack it lands with `ship-stack` when you ask for the merge |
 | [pick-up-session](./skills/swe-mode/playbooks/pick-up-session.md) | Resume a prior agent's in-flight work |
 | [pause-safely](./skills/swe-mode/playbooks/pause-safely.md) | Stop in-flight work so a new session can resume it |
 | [clean-worktrees](./skills/swe-mode/playbooks/clean-worktrees.md) | Reclaim disk from merged or abandoned worktrees |

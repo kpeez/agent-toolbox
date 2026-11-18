@@ -152,8 +152,8 @@ Research:
 ## Single-skill routes
 
 - Write one new project skill for a procedure that the user states in full,
-  or make one edit that the user states to one existing project skill when
-  the pipeline, the data, and the conventions did not change:
+  or make edits that the user states to one existing project skill when the
+  pipeline, the data, and the conventions did not change:
   `research-skill`.
 - Repeated keep-or-discard runs against one metric, or cleanup of such a run:
   `autoresearch`.
