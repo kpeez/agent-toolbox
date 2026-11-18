@@ -129,6 +129,12 @@ STUB = textwrap.dedent('''\
                               "hook_event": "SessionStart", "output": "x", "exit_code": 0, "outcome": "success"}))
         if config.get("delete_swe_hook"):
             (plugin / "hooks" / "session-start.md").unlink(missing_ok=True)
+        if config.get("append_fixture_file"):
+            flag = HERE / "appended.flag"
+            if not flag.exists():
+                flag.write_text("1")
+                target_file = Path(config["append_fixture_file"])
+                target_file.write_bytes(target_file.read_bytes() + b"\\nx")
         prompt = argv[argv.index("-p") + 1]
         if prompt.startswith("CANARY "):
             kind = prompt.split()[1].rstrip(":")
@@ -148,7 +154,8 @@ STUB = textwrap.dedent('''\
                 mode = config.get("outside_read", "refused")
                 emit_result = mode != "no_results"
                 secret = Path(path).read_text()
-                tool("Read", secret if mode == "leaked" else refusal, mode != "leaked", emit_result=emit_result, file_path=path)
+                read_path = path + ".wrong" if mode == "wrong_read" else path
+                tool("Read", secret if mode == "leaked" else refusal, mode != "leaked", emit_result=emit_result, file_path=read_path)
                 if mode == "echoed":
                     print(json.dumps({"type": "assistant", "message": {"content": [{"type": "text", "text": secret}]}}))
                 if mode != "read_only":
@@ -163,7 +170,11 @@ STUB = textwrap.dedent('''\
                 else:
                     if mode in ("wrote", "wrote_but_reported_refused"):
                         Path(path).write_text("canary")
-                    tool("Write", "ok" if mode == "wrote" else refusal, mode != "wrote", file_path=path, content="canary")
+                    elif mode == "wrong_write_succeeded":
+                        Path(path + ".wrong").write_text("canary")
+                    write_path = path + ".wrong" if mode in ("wrong_write", "wrong_write_succeeded") else path
+                    succeeded = mode in ("wrote", "wrong_write_succeeded")
+                    tool("Write", "ok" if succeeded else refusal, not succeeded, file_path=write_path, content="canary")
             if kind == "network" and config.get("network") == "fetched":
                 tool("WebFetch", "ok", url="https://example.com")
             if kind == "playbook-read":
@@ -230,6 +241,13 @@ class NativeRunner(unittest.TestCase):
             "effort": "low",
             "approval": {"by": "test"},
             "max_budget_usd_per_run": 0.1,
+            "worst_request": {
+                "context_tokens": 10000,
+                "output_tokens": 1000,
+                "usd_per_mtok_input_max": 4.0,
+                "usd_per_mtok_output": 10.0,
+            },
+            "max_concurrent_requests": 1,
         }
         self.output_root = tmp / "out"
         self.use_pilot("main")
@@ -656,11 +674,19 @@ class NativeRunner(unittest.TestCase):
         self.assertFalse(backup.parent.parent.exists())
 
     def test_the_canary_records_a_cost_above_the_per_run_budget_against_that_budget(self):
-        self.run_eval("--max-cost-usd", "5", stub={"cost": 0.5}, mode="--canaries")
+        self.run_eval("--max-cost-usd", "5", stub={"cost": 0.12}, mode="--canaries")
         result = json.loads((self.root / "canaries.json").read_text())["canaries"]["network"]
-        self.assertEqual((result["cost_usd"], result["budget_usd"], result["within_budget"]), (0.5, 0.1, False))
+        self.assertEqual((result["cost_usd"], result["budget_usd"], result["within_budget"]), (0.12, 0.1, False))
+        self.use_pilot("canary-over-bound")
+        done = self.run_eval("--max-cost-usd", "5", stub={"cost": 0.5}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertEqual(list(summary["canaries"]), ["read-outside"])
+        read_res = summary["canaries"]["read-outside"]
+        self.assertEqual((read_res["cost_usd"], read_res["budget_usd"], read_res["within_budget"]), (0.5, 0.1, False))
+        self.assertIn("budget assumption broken", summary["stopped"])
 
-    def test_budget_cap_reserves_canary_budget_and_measured_overshoot(self):
+    def test_budget_cap_reserves_worst_request_bound(self):
         tight = self.runtime | {"max_budget_usd_per_run": 0.01}
         done = self.run_eval("--max-cost-usd", "0.10", runtime=tight, stub={"cost": 0.006}, mode="--canaries")
         self.assertEqual(done.returncode, 3, done.stderr)
@@ -668,12 +694,10 @@ class NativeRunner(unittest.TestCase):
         self.assertIn("cost cap", summary["stopped"])
         self.assertNotIn("budget-ceiling", summary["canaries"])
         self.assertEqual(len(self.model_calls()), 6)
-        self.use_pilot("measured-overshoot")
-        self.record_canaries("--max-cost-usd", "0.12", runtime=tight)
-        canaries = json.loads((self.root / "canaries.json").read_text())
-        canaries["canaries"]["budget-ceiling"]["overshoot_usd"] = 0.08
-        (self.root / "canaries.json").write_text(json.dumps(canaries))
-        capped = self.run_eval("--max-cost-usd", "0.12", runtime=tight, stub={"cost": 0.05}, canaries_passed=False)
+        self.use_pilot("worst-request-bound")
+        concurrent = tight | {"max_concurrent_requests": 2}
+        self.record_canaries("--max-cost-usd", "0.12", runtime=concurrent)
+        capped = self.run_eval("--max-cost-usd", "0.12", runtime=concurrent, stub={"cost": 0.05}, canaries_passed=False)
         self.assertEqual(capped.returncode, 3, capped.stderr)
         self.assertIn("cost cap", json.loads(capped.stdout)["stopped"])
         self.assertEqual(len(self.model_calls()), 7)
@@ -699,7 +723,8 @@ class NativeRunner(unittest.TestCase):
         shutil.copytree(HERE / "fixtures", sandbox / "fixtures")
         corpus = sandbox / "custom-cases.json"
         cases_data = json.loads((HERE / "cases.json").read_text())
-        corpus.write_text(json.dumps(cases_data))
+        original_corpus = json.dumps(cases_data)
+        corpus.write_text(original_corpus)
         runtime_path = Path(self.temp.name) / "runtime.json"
         runtime_path.write_text(json.dumps(self.runtime))
         wrapper = (
@@ -730,7 +755,7 @@ class NativeRunner(unittest.TestCase):
         changed_corpus = run_custom("--execute")
         self.assertEqual(changed_corpus.returncode, 2)
         self.assertIn("different frozen configuration", changed_corpus.stderr)
-        corpus.write_text((HERE / "cases.json").read_text())
+        corpus.write_text(original_corpus)
         fixture_file = next(
             p for p in sorted((sandbox / "fixtures" / "harbor-importer").rglob("*")) if p.is_file()
         )
@@ -794,6 +819,240 @@ class NativeRunner(unittest.TestCase):
         steps = "\n".join(plan["live_steps_pending_approval"])
         self.assertNotIn("Edit", steps)
         self.assertIn("Write to a new path outside the fixture", steps)
+
+    def test_run_exceeding_budget_plus_bound_stops_pilot_and_blocks_resume(self):
+        first = self.run_eval("--repeats", "2", "--max-cost-usd", "1", stub={"cost": 0.20})
+        self.assertEqual(first.returncode, 3, first.stderr)
+        summary = json.loads(first.stdout)
+        self.assertIn("budget", summary["stopped"])
+        rid = next(iter(self.records()))
+        self.assertIn(rid, summary["stopped"])
+        self.assertEqual(len(self.model_calls()), 1)
+        resumed = self.run_eval("--repeats", "2", "--max-cost-usd", "1")
+        self.assertEqual(resumed.returncode, 3, resumed.stderr)
+        again = json.loads(resumed.stdout)
+        self.assertEqual(again["launched_now"], 0)
+        self.assertIn(rid, again["stopped"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_worst_request_and_concurrency_placeholders_block_execute(self):
+        for key in ("context_tokens", "output_tokens", "usd_per_mtok_input_max", "usd_per_mtok_output"):
+            for idx, bad in enumerate(("UNAPPROVED", True, 0, -1)):
+                with self.subTest(field=key, value=bad):
+                    self.use_pilot(f"bad-wr-{key}-{idx}")
+                    rt = self.runtime | {"worst_request": self.runtime["worst_request"] | {key: bad}}
+                    refused = self.run_eval("--max-cost-usd", "1", runtime=rt)
+                    self.assertEqual(refused.returncode, 2)
+                    self.assertIn(key, refused.stderr)
+        for idx, bad in enumerate(("UNAPPROVED", True, 0, 1.5)):
+            with self.subTest(field="max_concurrent_requests", value=bad):
+                self.use_pilot(f"bad-mcr-{idx}")
+                rt = self.runtime | {"max_concurrent_requests": bad}
+                refused = self.run_eval("--max-cost-usd", "1", runtime=rt)
+                self.assertEqual(refused.returncode, 2)
+                self.assertIn("max_concurrent_requests", refused.stderr)
+        self.assertEqual(self.model_calls(), [])
+        raw_runtime = json.loads((HERE / "runtime.native.json").read_text())
+        dry_raw = self.run_eval("--max-cost-usd", "1", runtime=raw_runtime, mode=None)
+        self.assertEqual(dry_raw.returncode, 0, dry_raw.stderr)
+        self.assertIn("runtime-complete", json.loads(dry_raw.stdout)["blockers"])
+        canaries_refused = self.run_eval("--max-cost-usd", "1", runtime=raw_runtime, mode="--canaries")
+        self.assertEqual(canaries_refused.returncode, 2)
+        self.assertIn("worst_request", canaries_refused.stderr)
+
+    def test_agent_tool_with_single_concurrent_request_blocks_execute(self):
+        for field in ("tools", "allowed_tools"):
+            with self.subTest(field=field):
+                self.use_pilot(f"agent-mcr1-{field}")
+                rt = self.runtime | {field: [*self.runtime[field], "Agent"], "max_concurrent_requests": 1}
+                refused = self.run_eval("--max-cost-usd", "1", runtime=rt)
+                self.assertEqual(refused.returncode, 2)
+                self.assertIn("Agent", refused.stderr)
+        allowed = self.runtime | {
+            "tools": [*self.runtime["tools"], "Agent"],
+            "allowed_tools": [*self.runtime["allowed_tools"], "Agent"],
+            "max_concurrent_requests": 2,
+        }
+        plan = json.loads(self.run_eval("--max-cost-usd", "1", runtime=allowed, mode=None).stdout)
+        self.assertEqual(plan["blockers"], ["canaries-not-passed"])
+        self.assertEqual(self.model_calls(), [])
+
+    def test_budget_ceiling_canary_fails_when_overshoot_exceeds_bound(self):
+        tight_bound = self.runtime | {
+            "worst_request": {
+                "context_tokens": 1000,
+                "output_tokens": 100,
+                "usd_per_mtok_input_max": 1.0,
+                "usd_per_mtok_output": 10.0,
+            },
+            "max_concurrent_requests": 1,
+        }
+        done = self.run_eval("--max-cost-usd", "5", runtime=tight_bound, stub={"ceiling": "stops"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        ceiling = json.loads((self.root / "canaries.json").read_text())["canaries"]["budget-ceiling"]
+        self.assertFalse(ceiling["passed"])
+        self.assertAlmostEqual(ceiling["overshoot_bound_usd"], 0.002)
+        self.assertNotIn("tolerance_usd", ceiling)
+
+    def test_read_outside_canary_rejects_wrong_target_path(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"outside_read": "wrong_read"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        read = json.loads((self.root / "canaries.json").read_text())["canaries"]["read-outside"]
+        self.assertFalse(read["passed"])
+        self.assertIn("never tried against the sentinel outside the fixture=['Read']", read["detail"])
+
+    def test_write_outside_canary_rejects_wrong_target_path(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        write = json.loads((self.root / "canaries.json").read_text())["canaries"]["write-outside"]
+        self.assertFalse(write["passed"])
+        self.assertIn("0 Write call(s)", write["detail"])
+
+    def test_fixture_change_during_execution_stops_before_next_launch(self):
+        sandbox = Path(self.temp.name) / "eval-live-drift"
+        sandbox.mkdir()
+        shutil.copy2(HERE / "facets.json", sandbox / "facets.json")
+        shutil.copytree(HERE / "fixtures", sandbox / "fixtures")
+        corpus = sandbox / "cases.json"
+        shutil.copy2(HERE / "cases.json", corpus)
+        fixture_file = next(
+            p for p in sorted((sandbox / "fixtures" / "harbor-importer").rglob("*")) if p.is_file()
+        )
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        wrapper = (
+            "import sys\n"
+            "from pathlib import Path\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            f"run_eval.se.HERE = Path({str(sandbox)!r})\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        dry = subprocess.run(
+            [sys.executable, "-c", wrapper, "--repeats", "2", "--runtime", str(runtime_path),
+             "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", str(self.output_root),
+             "--corpus", str(corpus), "--max-cost-usd", "1"],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(dry.returncode, 0, dry.stderr)
+        self.root.mkdir(parents=True, exist_ok=True)
+        (self.root / "canaries.json").write_text(json.dumps({
+            "config_sha256": json.loads(dry.stdout)["pilot"]["config_sha256"],
+            "canaries": {name: {"passed": True} for name in CANARY_NAMES},
+        }))
+        (self.stub_dir / "config.json").write_text(json.dumps({"append_fixture_file": str(fixture_file)}))
+        done = subprocess.run(
+            [sys.executable, "-c", wrapper, "--repeats", "2", "--runtime", str(runtime_path),
+             "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", str(self.output_root),
+             "--corpus", str(corpus), "--max-cost-usd", "1", "--execute"],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertIn("harbor-importer", summary["stopped"])
+        self.assertEqual(len(self.model_calls()), 1)
+        self.assertEqual(len(list((self.root / "runs").iterdir())), 1)
+
+    def test_isolation_marker_is_written_before_scoring_crash_blocks_resume(self):
+        self.record_canaries("--repeats", "2", "--max-cost-usd", "1")
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        (self.stub_dir / "config.json").write_text(json.dumps({"no_init": True}))
+        wrapper = (
+            "import sys\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            "real_score = run_eval.se.score\n"
+            "def score_then_crash(*args, **kw):\n"
+            "    real_score(*args, **kw)\n"
+            "    raise SystemExit(99)\n"
+            "run_eval.se.score = score_then_crash\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        crashed = subprocess.run(
+            [sys.executable, "-c", wrapper, "--repeats", "2", "--runtime", str(runtime_path),
+             "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", str(self.output_root),
+             "--max-cost-usd", "1", "--execute"],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(crashed.returncode, 99)
+        self.assertEqual(len(self.model_calls()), 1)
+        self.assertTrue((self.root / "isolation-violation.json").is_file())
+        resumed = self.run_eval("--repeats", "2", "--max-cost-usd", "1")
+        self.assertEqual(resumed.returncode, 3, resumed.stderr)
+        summary = json.loads(resumed.stdout)
+        self.assertEqual(summary["launched_now"], 0)
+        self.assertIn("isolation violation", summary["stopped"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_read_leak_canary_stops_after_first_canary_and_writes_marker(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"outside_read": "leaked"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertEqual(list(summary["canaries"]), ["read-outside"])
+        self.assertFalse(summary["canaries"]["read-outside"]["passed"])
+        self.assertIn("isolation violation", summary["stopped"])
+        self.assertTrue((self.root / "isolation-violation.json").is_file())
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_write_escape_canary_stops_after_second_canary_and_writes_marker(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrote"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertEqual(list(summary["canaries"]), ["read-outside", "write-outside"])
+        self.assertTrue(summary["canaries"]["read-outside"]["passed"])
+        self.assertFalse(summary["canaries"]["write-outside"]["passed"])
+        self.assertIn("isolation violation", summary["stopped"])
+        self.assertTrue((self.root / "isolation-violation.json").is_file())
+        self.assertEqual(len(self.model_calls()), 2)
+
+    def test_budget_marker_is_written_before_scoring_crash_blocks_resume(self):
+        self.record_canaries("--repeats", "2", "--max-cost-usd", "1")
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        (self.stub_dir / "config.json").write_text(json.dumps({"cost": 0.20}))
+        wrapper = (
+            "import sys\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            "real_score = run_eval.se.score\n"
+            "def score_then_crash(*args, **kw):\n"
+            "    real_score(*args, **kw)\n"
+            "    raise SystemExit(99)\n"
+            "run_eval.se.score = score_then_crash\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        crashed = subprocess.run(
+            [sys.executable, "-c", wrapper, "--repeats", "2", "--runtime", str(runtime_path),
+             "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", str(self.output_root),
+             "--max-cost-usd", "1", "--execute"],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(crashed.returncode, 99)
+        self.assertEqual(len(self.model_calls()), 1)
+        self.assertTrue((self.root / "budget-assumption-broken.json").is_file())
+        rid = next(iter(self.records()))
+        resumed = self.run_eval("--repeats", "2", "--max-cost-usd", "1")
+        self.assertEqual(resumed.returncode, 3, resumed.stderr)
+        summary = json.loads(resumed.stdout)
+        self.assertEqual(summary["launched_now"], 0)
+        self.assertIn("budget assumption broken", summary["stopped"])
+        self.assertIn(rid, summary["stopped"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_write_escape_to_other_outside_path_stops_canaries(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write_succeeded"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertEqual(list(summary["canaries"]), ["read-outside", "write-outside"])
+        self.assertTrue(summary["canaries"]["read-outside"]["passed"])
+        self.assertFalse(summary["canaries"]["write-outside"]["passed"])
+        self.assertIn("isolation violation", summary["stopped"])
+        self.assertTrue((self.root / "isolation-violation.json").is_file())
+        self.assertEqual(len(self.model_calls()), 2)
 
 
 if __name__ == "__main__":

@@ -16,6 +16,13 @@
   "restricted": true,
   "setting_sources": "project,local",
   "max_budget_usd_per_run": 0.5,
+  "worst_request": {
+    "context_tokens": "UNAPPROVED",
+    "output_tokens": "UNAPPROVED",
+    "usd_per_mtok_input_max": "UNAPPROVED",
+    "usd_per_mtok_output": "UNAPPROVED"
+  },
+  "max_concurrent_requests": "UNAPPROVED",
   "timeout_seconds": 600,
   "confinement": {"read": "confined", "write": "confined", "network": "confined"},
   "harness_deltas": [

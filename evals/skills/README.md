@@ -194,8 +194,9 @@ uv run evals/skills/run_eval.py --execute --pilot-id PILOT --max-cost-usd 20 \
 temporary directory, so no test writes under `artifacts/`.
 
 The runtime file `runtime.native.json` holds the model, effort, tools, permission mode, per-run
-budget, timeout, and the confinement each limit needs. Its model and effort say `UNAPPROVED` and
-`approval` is `null`. `--execute` and `--canaries` refuse until a person sets all three and the preflight passes.
+budget, worst-request cost bounds, timeout, and the confinement each limit needs. Its model, effort,
+`worst_request` fields, and `max_concurrent_requests` say `UNAPPROVED` and
+`approval` is `null`. `--execute` and `--canaries` refuse until a person sets them and the preflight passes.
 Both also need `--pilot-id` and `--max-cost-usd`. `--execute` also refuses until `canaries.json` holds
 a pass for every canary (see "Canaries"). The runtime file is part of the frozen
 configuration, so a changed file starts a new pilot.
@@ -220,8 +221,8 @@ artifacts/skill-evals/PILOT/
 
 `artifacts/` is ignored, so `--backup-dir` copies each finished run and the report to a destination
 outside the repository. The runner deletes only a run folder that never launched: a folder with no
-`run.json` left by an interrupted setup, and the folder it just materialized when the plugin catalog
-changed since the freeze. Both hold no model output. It never deletes or moves a run that launched. Case labels and oracles stay in `cases.json`;
+`run.json` left by an interrupted setup, and the folder it just materialized when a frozen input
+(corpus, fixture, plugin catalog, or harness) changed since the freeze. Both hold no model output. It never deletes or moves a run that launched. Case labels and oracles stay in `cases.json`;
 the run folder holds only the prompt, the fixture, and the frozen catalog.
 
 ### Preflight
@@ -271,10 +272,13 @@ version, so the `hook-on` and `hook-off` canaries confirm it.
 
 The rule is fixed in `pilot.json` before the first launch. Runs go repeat by repeat, then case, then
 arm, so any stop leaves the arms within one run of each other. A launch reserves its per-run budget plus
-an overshoot allowance of $0.05 (`BUDGET_OVERSHOOT_TOLERANCE_USD`, in the frozen `run_eval.py`). The
+`max_concurrent_requests * max_request_usd`, computed from the runtime's `worst_request` fields
+(`context_tokens`, `output_tokens`, `usd_per_mtok_input_max`, `usd_per_mtok_output`). The
 runner launches a run only when the known spend, plus the reservation of each run with unknown cost, plus
 the next run's reservation, stays within `--max-cost-usd`. It also stops after three failed runs in a
-row, on drift, on an isolation violation, and on an arm violation. Cost comes from the stream's `result`
+row, on drift, on an isolation violation, on an arm violation, and when a pilot run's known cost exceeds
+its budget plus `max_concurrent_requests * max_request_usd` (which writes `budget-assumption-broken.json`
+and blocks any future launch in that pilot). Cost comes from the stream's `result`
 event. A missing cost stays `null`, counts at the reservation for the cap, and shows in `report.json` as
 `unknown_cost_runs`. A run that already launched is never launched again. A rerun skips a run with
 `score.json`, rescores a run that finished without one, and leaves a run that launched but did not
@@ -292,16 +296,19 @@ the runner kills a child that already timed out is recorded as a killed child wi
 No test covers the block before the fork. Only the unblock and the kill are tested, so the fork race
 that the block closes is guarded by the code alone.
 
-The cap holds only if `claude --max-budget-usd` stops a run near its budget. The `budget-ceiling` canary
-is the one live check of that (see "Canaries"). It does not show that the cap is safe for every run:
+The cap rests on two assumptions, and the `budget-ceiling` canary checks only the first (see "Canaries"):
 
-- The canary measures one overshoot, on a task of small turns. A real run with larger turns can
-  overshoot by more, because the budget is checked between turns.
+- The CLI checks `--max-budget-usd` before each model request, so a run overshoots by at most the
+  in-flight requests, at most `max_concurrent_requests` of them.
+- The owner's `worst_request` numbers bound the cost of one request: the context window, the output
+  limit, and the highest input and output prices of the approved model.
+- The `budget-ceiling` canary is the one live check of the first point. A run that breaks the bound
+  writes `budget-assumption-broken.json` and stops the pilot.
 - The ordinary canaries only show that their own cost stayed within the per-run budget. Their prompts are
   trivial, so that holds whether or not the CLI enforces the budget.
 
 Treat the cap as unverified until `canaries.json` shows `budget-ceiling` passed, and read its
-`overshoot_usd` next to `BUDGET_OVERSHOOT_TOLERANCE_USD`.
+`overshoot_usd` next to `overshoot_bound_usd`.
 
 ### Canaries
 
@@ -323,16 +330,17 @@ materialized run folder under `canaries/NAME/` that the runner judges from its s
 - `hook-on` and `hook-off`: the stream matches the arm (see "Arm check"). The agent does nothing special.
 - `budget-ceiling`: a run with `--max-budget-usd 0.02`, far below the per-run budget, and a task of 40 `Read`
   calls, one per turn. It passes only if the budget caused the stop. That means fewer than 40 calls, a
-  `result` subtype other than `success`, a known cost of at least the $0.02 budget, and a cost at most
-  $0.05 above it. `canary.json` records `stopped`, `tool_calls`, `stop_subtype`, `overshoot_usd`, and
-  `tolerance_usd`. A run that keeps spending past the budget, one that overshoots by more than the
-  tolerance, one that finishes the task, and one that stops early with less than the budget spent (for
-  example `error_during_execution`) all fail.
+  `result` subtype other than `success`, a known cost of at least the $0.02 budget, and an overshoot at most
+  `max_concurrent_requests * max_request_usd` above it. `canary.json` records `stopped`, `tool_calls`,
+  `stop_subtype`, `overshoot_usd`, and `overshoot_bound_usd`. A run that keeps spending past the budget,
+  one that overshoots by more than the bound, one that finishes the task, and one that stops early with
+  less than the budget spent (for example `error_during_execution`) all fail.
 
 A canary also fails when its init event shows an isolation violation or drifts from the frozen
-effective session. Every canary except `budget-ceiling` also fails when its cost is not known and within
-the per-run budget. Only `read-outside`, `write-outside`, `playbook-read`, and `budget-ceiling` fail when
-the agent never attempts the call they judge. `canaries.json` holds the verdicts and the frozen
+effective session. A proven escape in `read-outside`, `write-outside`, or `network` writes
+`isolation-violation.json` and stops the canary phase at once. Every canary except `budget-ceiling` also
+fails when its cost is not known and within the per-run budget. Only `read-outside`, `write-outside`,
+`playbook-read`, and `budget-ceiling` fail when the agent never attempts the call they judge. `canaries.json` holds the verdicts and the frozen
 configuration digest. `--execute` refuses without it, with a different digest, or with any canary not
 passed or missing. A canary run counts toward `--max-cost-usd`. A canary that launched is never launched
 again, so a failed or interrupted canary needs a new `--pilot-id`.
