@@ -65,6 +65,14 @@ def now():
     return datetime.now(UTC).isoformat(timespec="seconds")
 
 
+def save_json(path, value):
+    """Write JSON through a temporary file, so a concurrent reader never sees a half-written file."""
+    path = Path(path)
+    tmp = path.with_name(f"{path.name}.{secrets.token_hex(4)}.tmp")
+    tmp.write_text(json.dumps(value, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    os.replace(tmp, path)
+
+
 def wilson(k, n, z=1.96):
     if n == 0:
         return None
@@ -173,8 +181,10 @@ def selected_cases(corpus_path, wanted):
     return [c for c in known if not wanted or c in wanted]
 
 
-def spend(out, reserve):
-    """Known cost of every launch so far, plus `reserve` for each launch whose cost is unknown."""
+def spend(out, reserve, active=frozenset()):
+    """Known cost of every launch so far, plus `reserve` for each launch whose cost is unknown.
+
+    `active` names run folders whose launch is in flight; the caller counts those itself."""
     known, unknown = 0.0, 0
     records = [
         *out.glob("runs/*/*/*/run.json"),
@@ -182,6 +192,8 @@ def spend(out, reserve):
         *out.glob("interrupted/*/run.json"),
     ]
     for record in records:
+        if record.parent in active:
+            continue
         cost = se.read_json(record).get("cost_usd")
         if isinstance(cost, (int, float)) and not isinstance(cost, bool):
             known += cost
@@ -403,6 +415,8 @@ def session_checks(run, arm, runtime, manifest):
     hooks = manifest.get("hooks", {}) if arm == "hook-on" else {}
     summary = hook_summary(hook_events(stream), hooks)
     found = []
+    if init.get("claude_code_version") != runtime["cli_version"]:
+        found.append(f"claude_code_version is {init.get('claude_code_version')}, not {runtime['cli_version']}")
     if init.get("model") != runtime["model"]:
         found.append(f"model is {init.get('model')}, not {runtime['model']}")
     if sorted(init.get("tools") or []) != sorted(runtime["tools"]):
@@ -446,8 +460,11 @@ def keep(run, kept):
     appended = bool(data) and not data.endswith(b"\n")
     (target / "stream.jsonl").write_bytes(data + b"\n" if appended else data)
     # capture copies <run>/workspace into final-files, so the workspace becomes the agent's final working folder.
+    # Copy first, so a failed copy leaves the fixture in place. On any failure the sandbox stays for a person.
+    final = run / "workspace.final"
+    shutil.copytree(kept / "sealed" / "home" / "cwd", final, symlinks=True)
     shutil.rmtree(run / "workspace")
-    shutil.copytree(kept / "sealed" / "home" / "cwd", run / "workspace", symlinks=True)
+    final.rename(run / "workspace")
     shutil.rmtree(kept)
     return appended
 
@@ -458,36 +475,32 @@ class Batch:
     def __init__(self, out, runtime, max_total_usd):
         self.out, self.runtime, self.max_total = out, runtime, max_total_usd
         self.lock = threading.Lock()
-        self.in_flight = 0
+        self.active = set()
         self.failures = 0
         self.stop = (
             se.read_json(out / "stop.json") if (out / "stop.json").exists() else None
         )
 
-    def reserve(self):
+    def reserve(self, run):
         stop_usd = self.runtime["per_run_stop_usd"]
         with self.lock:
             if self.stop:
                 return False
             worst = (
-                spend(self.out, stop_usd)["worst_case_usd"]
-                + (self.in_flight + 1) * stop_usd
+                spend(self.out, stop_usd, self.active)["worst_case_usd"]
+                + (len(self.active) + 1) * stop_usd
             )
             if worst > self.max_total:
                 self.halt(
                     f"budget: worst case ${worst:.2f} with the next launch is over ${self.max_total:.2f}"
                 )
                 return False
-            self.in_flight += 1
+            self.active.add(run)
             return True
 
-    def cancel(self):
+    def release(self, run, record):
         with self.lock:
-            self.in_flight -= 1
-
-    def release(self, record):
-        with self.lock:
-            self.in_flight -= 1
+            self.active.discard(run)
             cost, cap = record.get("cost_usd"), self.runtime["per_run_stop_usd"]
             if record.get("violations"):
                 self.halt(f"{record['run']}: {record['violations']}")
@@ -500,7 +513,7 @@ class Batch:
     def halt(self, reason):
         if not self.stop:
             self.stop = {"at": now(), "reason": reason}
-            se.save_json(self.out / "stop.json", self.stop)
+            save_json(self.out / "stop.json", self.stop)
 
 
 def launch(run, case_id, arm, runtime, prompt=None):
@@ -518,7 +531,7 @@ def launch(run, case_id, arm, runtime, prompt=None):
         "cost_usd": None,
         "error": None,
     }
-    se.save_json(run / "run.json", record)
+    save_json(run / "run.json", record)
     env = os.environ | {"CLAUDE_CODE_EFFORT_LEVEL": runtime["effort"]}
     try:
         proc = subprocess.run(
@@ -565,7 +578,7 @@ def launch(run, case_id, arm, runtime, prompt=None):
         except (OSError, ValueError) as error:
             record["error"] = record["error"] or f"keeping the sandbox failed: {error}"
     record["ended_at"] = now()
-    se.save_json(run / "run.json", record)
+    save_json(run / "run.json", record)
     return record
 
 
@@ -601,7 +614,7 @@ def check_config(out, config):
             raise ValueError(f"{path} froze a different configuration; use a new --out")
     else:
         out.mkdir(parents=True, exist_ok=True)
-        se.save_json(path, config)
+        save_json(path, config)
 
 
 def execute(args):
@@ -618,15 +631,17 @@ def execute(args):
     plan = plan_runs(cases, args.arms, args.repeats)
 
     def one(item):
-        if finished(run_dir(out, item)) or not batch.reserve():
+        run = run_dir(out, item)
+        if finished(run) or not batch.reserve(run):
             return
         try:
-            run = prepare(out, item, args)
-        except BaseException:
-            batch.cancel()
+            prepare(out, item, args)
+            record = launch(run, item["case"], item["arm"], runtime)
+        except Exception as error:
+            # Unknown cost and an error: release stops the batch, and a resume counts the run at the stop amount.
+            batch.release(run, {"run": str(run), "cost_usd": None, "error": f"runner failed: {error!r}"})
             raise
-        record = launch(run, item["case"], item["arm"], runtime)
-        batch.release(record)
+        batch.release(run, record)
         print(
             json.dumps(
                 {
@@ -664,7 +679,7 @@ def canary(args):
             run = out / "canaries" / name / arm
             if (run / "run.json").is_file():
                 continue
-            if not batch.reserve():
+            if not batch.reserve(run):
                 return {
                     "results": results,
                     "spend": spend(out, runtime["per_run_stop_usd"]),
@@ -690,12 +705,16 @@ def canary(args):
                 prompt = template.format(
                     sentinel=outside / "sentinel.txt", target=outside / "written.txt"
                 )
-                se.save_json(
+                save_json(
                     run / "probe.json",
                     {"token": token, "outside": str(outside), "prompt": prompt},
                 )
-            record = launch(run, case_id, arm, runtime, prompt)
-            batch.release(record)
+            try:
+                record = launch(run, case_id, arm, runtime, prompt)
+            except Exception as error:
+                batch.release(run, {"run": str(run), "cost_usd": None, "error": f"runner failed: {error!r}"})
+                raise
+            batch.release(run, record)
             results.append(
                 {k: record.get(k) for k in ("run", "cost_usd", "error", "violations")}
             )
@@ -718,7 +737,8 @@ def load_labels(path):
 
 
 def session_state(record, stream):
-    if "timed out" in str(record.get("error") or ""):
+    error = str(record.get("error") or "")
+    if "timed out" in error or "did not exit in time" in error:
         return "timeout"
     result = last_result(stream)
     return (
@@ -792,7 +812,7 @@ def score_all(args):
         group["false_activation_interval"] = wilson(
             counts.get("false_activations", 0), group["false_activation_denominator"]
         )
-    se.save_json(out / "report.json", report)
+    save_json(out / "report.json", report)
     return {k: v for k, v in report.items() if k != "aggregate"}
 
 

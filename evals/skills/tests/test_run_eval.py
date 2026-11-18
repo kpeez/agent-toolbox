@@ -73,6 +73,7 @@ project.mkdir(parents=True)
 meta = [{"type": "api-request-shape", "sessionId": sid, "effort": os.environ.get("STUB_EFFORT", "high")}]
 (project / (sid + ".jsonl")).write_text("".join(json.dumps(r) + "\n" for r in rows + meta))
 events = [{"type": "system", "subtype": "init", "model": argv[argv.index("--model") + 1], "tools": tools,
+           "claude_code_version": os.environ.get("STUB_CLI", "2.1.327"),
            "plugins": [{"name": p} for p in plugins + ["cc-plugin-privacy"]], "mcp_servers": [], "session_id": sid}]
 for p in hooks:
     events += [{"type": "system", "subtype": "hook_started", "hook_id": p, "hook_name": "SessionStart:startup"},
@@ -242,6 +243,7 @@ class PluginEvalAdapter(unittest.TestCase):
                 "tools are",
             ),
             ({"STUB_EFFORT": "medium"}, "effort"),
+            ({"STUB_CLI": "2.1.999"}, "claude_code_version"),
         ):
             with self.subTest(message=message):
                 self.out = self.root / ("out-" + message.split()[0])
@@ -252,6 +254,21 @@ class PluginEvalAdapter(unittest.TestCase):
                 report = json.loads(self.cli("score", "--out", self.out).stdout)
                 self.assertEqual(report["runs_scored"], 0)
                 self.assertEqual(report["skipped"][0]["reason"], "violations")
+
+    def test_parallel_runs_are_counted_once_while_in_flight(self):
+        # 8 runs at $0.10 with 4 at once: the worst case before any launch is at most 0.7 + 4 * 1.0 = 4.7.
+        cases = ("IM-01", "IM-02", "IM-03", "IM-04")
+        result = json.loads(self.run_eval("--max-total-usd", "5", "--jobs", "4", cases=cases).stdout)
+        self.assertIsNone(result["stopped"])
+        self.assertEqual((len(self.launches()), result["finished"]), (8, 8))
+
+    def test_a_runner_timeout_scores_as_a_timeout(self):
+        sys.path.insert(0, str(HERE))
+        import run_eval
+        stream = self.root / "stream.jsonl"
+        stream.write_text("")
+        self.assertEqual(run_eval.session_state({"error": "plugin eval did not exit in time"}, stream), "timeout")
+        self.assertEqual(run_eval.session_state({"error": "timed out after 900s"}, stream), "timeout")
 
     def test_a_different_configuration_needs_a_new_output_folder(self):
         self.run_eval("--max-total-usd", "5", "--arms", "hook-off")

@@ -236,8 +236,8 @@ records the agent's final files.
 
 ### Session checks and stopping rule
 
-Each kept session is checked against the frozen runtime: the model, the exact tool set, no MCP
-server, the `swe`, `lab`, and `uni` plugins loaded, `"effort":"high"` in the transcript, and the
+Each kept session is checked against the frozen runtime: the CLI version in the init event (so an
+auto-update during a batch stops it), the model, the exact tool set, no MCP server, the `swe`, `lab`, and `uni` plugins loaded, `"effort":"high"` in the transcript, and the
 hook arm. In `hook-on`, every plugin whose `SessionStart` hook the manifest froze needs a matched
 hook that succeeded; in `hook-off`, no hook may start. Hook events name no plugin, so a completed
 hook is matched to the plugin whose frozen `hooks/session-start.md` starts with its output. A
@@ -247,7 +247,8 @@ A case cannot cap its own cost, and `--max-cost-usd` is checked only before a la
 runner stops the batch after a run whose cost is unknown or over `per_run_stop_usd`. Before each
 launch it adds the known spend, the stop amount for each launch with unknown cost (including
 `interrupted/`), and the stop amount for each launch in flight and the next one. It launches only
-when that sum stays within `--max-total-usd`. Three runs in a row that end with an error also
+when that sum stays within `--max-total-usd`. A launch in flight counts once, at the stop amount.
+The sum covers one `--out` folder only, so pass the budget that is left across all folders. Three runs in a row that end with an error also
 stop the batch. Runs go repeat by repeat, then case, then arm, so a stop leaves the arms within
 one run of each other. A rerun skips each finished run. A run folder whose launch did not finish
 moves to `interrupted/` and runs again. `config.json` is frozen on the first `run`; a later `run`
