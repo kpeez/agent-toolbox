@@ -28,6 +28,18 @@ story there, so do not rebuild it from transcripts alone.
   `<branch>.decisions.jsonl`. See the [handoff](../handoff/SKILL.md) and
   [log-decisions](../log-decisions/SKILL.md) skills. Other branches of the
   same repository have their own files in the same directory.
+- **Atuin threads.** When Atuin captures agent threads, it indexes every
+  Claude Code, Codex, and OpenCode session with its working directory.
+  Search it first with the `atuin_threads_search` MCP tool and the topic as
+  `terms`: once for each path that `git worktree list` prints, with `cwd` set
+  to the path, and once with `cwd` set to the main checkout's parent folder,
+  `limit` 20, keeping only threads whose directory is the main checkout's
+  path followed by `.` or `/`, such as `<main>.<branch>`. The second search
+  finds threads from worktrees that were already removed.
+  Then read each hit with `atuin_threads_read`. In the CLI,
+  `atuin threads search --style json <terms>` prints each thread's directory.
+  Fall back to the transcripts below when Atuin is not available or finds
+  nothing for the topic.
 - **Claude Code transcripts.** `~/.claude/projects/<slug>/<session-id>.jsonl`,
   where `<slug>` is the working directory with each character that is not a
   letter or a digit changed to `-`. `/home/you/proj` becomes
@@ -62,9 +74,12 @@ user names that project.
    "all" into "recent N".
 3. Read the handoff file and decision log for each in-scope branch. They are
    the cheapest record and the most current written state.
-4. Fan out across your chat history. Start parallel subagents on a cheap
-   model (in Claude Code, `haiku` or `sonnet`; in Codex, low reasoning
-   effort), each taking a slice of the transcript list. Tell every subagent
+4. Search your chat history. Search Atuin threads first, once for each
+   worktree path, as the Atuin bullet above says, and read the matching
+   threads. Use the transcript fan-out below only when Atuin is not available
+   or finds nothing for the topic. For the fan-out, start parallel subagents
+   on a cheap model (in Claude Code, `haiku` or `sonnet`; in Codex, low
+   reasoning effort), each taking a slice of the transcript list. Tell every subagent
    to keep the script's order (real modification time, never the file name),
    grep the topic first, read only the matching transcripts and only their
    relevant regions, and skip the current session plus obvious noise (eval

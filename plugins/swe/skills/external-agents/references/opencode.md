@@ -128,7 +128,7 @@ Split the pane the user named, or your own pane (`$REX_BLOCK`), and start
 `mini` in the scout's or builder's directory:
 
 ```sh
-rex split -b <block> --split=below --focus=false --label "<agent> · <id>" -c <worktree> -- opencode mini --agent <scout-or-builder> -m <provider/model>#<effort> --session ses_<stamp>_<id> --prompt "Follow the brief at <run>/<id>.md."
+rex split -b <block> --split=below --focus=false --label "[<agent>] <id>" -c <worktree> -- opencode mini --agent <scout-or-builder> -m <provider/model>#<effort> --session ses_<stamp>_<id> --prompt "Follow the brief at <run>/<id>.md."
 ```
 
 - `mini` sends `--prompt` as the first message. It has no `-f`, so the

@@ -8,6 +8,7 @@ Antigravity CLI. Install the plugins you need. Each one works alone.
 | [`swe`](./plugins/swe/README.md) | A router that runs software work through playbooks, skills, and principles, and ends with evidence |
 | [`lab`](./plugins/lab/README.md) | Cited research memos and reports, experiment loops, and plot guidance |
 | [`uni`](./plugins/uni/README.md) | Interactive lessons, quizzes, reviews, and prerequisite-gated courses |
+| [`rex-agents`](./plugins/rex-agents/README.md) | Rex terminal hooks and skills: a live tab for each background command, event waits, and driven agent sessions |
 
 The [Claude Code mods](./docs/mods.md) add live panes for tool calls,
 subagents, and the session.
@@ -24,6 +25,7 @@ Claude Code:
 /plugin install swe@agent-toolbox
 /plugin install lab@agent-toolbox
 /plugin install uni@agent-toolbox
+/plugin install rex-agents@agent-toolbox
 ```
 
 Codex CLI:
@@ -33,6 +35,7 @@ codex plugin marketplace add kpeez/agent-toolbox
 codex plugin add swe@agent-toolbox
 codex plugin add lab@agent-toolbox
 codex plugin add uni@agent-toolbox
+codex plugin add rex-agents@agent-toolbox
 ```
 
 Antigravity CLI (`agy`):
@@ -43,8 +46,8 @@ agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/lab
 agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/uni
 ```
 
-`agy plugin install https://github.com/kpeez/agent-toolbox` installs all
-three. agy loads the skills and the session-start rule. It runs no hooks and
+`agy plugin install https://github.com/kpeez/agent-toolbox` installs every
+plugin. agy loads the skills and the session-start rule. It runs no hooks and
 skips the swe agents.
 
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), one

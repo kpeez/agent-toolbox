@@ -653,6 +653,7 @@ class OfflineCLIContract(unittest.TestCase):
             self.assertTrue((off_run / "inputs" / "plugins" / plugin / "rules" / "AGENTS.md").is_file())
         self.assertEqual(off_manifest["removed_bindings"], [
             "plugins/lab/hooks",
+            "plugins/rex-agents/hooks",
             "plugins/swe/hooks",
             "plugins/uni/hooks",
         ])
@@ -668,6 +669,7 @@ class OfflineCLIContract(unittest.TestCase):
             hooks_cfg = json.loads((hooks_dir / "hooks.json").read_text())["hooks"]
             self.assertEqual(list(hooks_cfg), ["SessionStart"])
         self.assertEqual(on_manifest["removed_bindings"], [
+            "plugins/rex-agents/hooks",
             "plugins/swe/hooks/hooks.json:PostCompact",
             "plugins/swe/hooks/hooks.json:PreToolUse",
         ])

@@ -1,0 +1,15 @@
+{
+  "name": "rex-agents",
+  "description": "Rex terminal plugin for agents: mirrors each background command into its own Rex tab with live status, waits on Rex events, drives other agent sessions in Rex blocks, and loads the using-rex rules in Rex panes",
+  "version": "0.1.0",
+  "author": {
+    "name": "kpeez",
+    "url": "https://github.com/kpeez"
+  },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "suggestedPrompts": [
+    "Run the training job in a Rex pane and wait for it.",
+    "Drive a second agent session in Rex for this task."
+  ]
+}

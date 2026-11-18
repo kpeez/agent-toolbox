@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-65 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+67 of 338 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -54,7 +54,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | kind | scored | recorded | invisible | total |
 |---|---|---|---|---|
-| activation | 9 | 28 | 0 | 37 |
+| activation | 9 | 30 | 0 | 39 |
 | hook-load | 0 | 5 | 0 | 5 |
 | route | 47 | 0 | 0 | 47 |
 | route-load | 19 | 0 | 0 | 19 |
@@ -77,6 +77,8 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | research | lab | 0 | 0 | recorded |
 | research-skill | lab | 0 | 0 | recorded |
 | visualizing-data | lab | 0 | 0 | recorded |
+| drive-agent | rex-agents | 0 | 0 | recorded |
+| using-rex | rex-agents | 0 | 0 | recorded |
 | blast-radius | swe | 0 | 0 | recorded |
 | codebase-design | swe | 7 | 3 | scored |
 | correct | swe | 0 | 0 | recorded |
@@ -115,6 +117,8 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 - `lab:research`
 - `lab:research-skill`
 - `lab:visualizing-data`
+- `rex-agents:drive-agent`
+- `rex-agents:using-rex`
 - `swe:blast-radius`
 - `swe:correct`
 - `swe:external-agents`

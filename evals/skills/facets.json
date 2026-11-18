@@ -197,6 +197,46 @@
         "positive": []
       },
       "evidence": "skill-call",
+      "id": "activation/rex-agents/drive-agent",
+      "kind": "activation",
+      "path": null,
+      "plugin": "rex-agents",
+      "required_by": {
+        "locator": "description",
+        "path": "plugins/rex-agents/skills/drive-agent/SKILL.md"
+      },
+      "requirement": "always",
+      "scope": "root",
+      "scorer": "recorded",
+      "source_text": "Start another agent session (Claude Code, Codex, OpenCode) in a Rex block, brief it, wait on its reported status, answer or escalate its prompts, and collect its report file. Use when REX_SESSION is set and you delegate a long, independent unit of work to a second interactive agent session, or test a setting in a fresh one.",
+      "subject": "drive-agent"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "skill-call",
+      "id": "activation/rex-agents/using-rex",
+      "kind": "activation",
+      "path": null,
+      "plugin": "rex-agents",
+      "required_by": {
+        "locator": "description",
+        "path": "plugins/rex-agents/skills/using-rex/SKILL.md"
+      },
+      "requirement": "always",
+      "scope": "root",
+      "scorer": "recorded",
+      "source_text": "How agents work in the Rex terminal: which commands get a pane, how to launch, wait on, and label blocks, and how to watch a pane, work on other hosts, and avoid known traps. Use when REX_SESSION is set and you start a command that may run for minutes, or open, watch, or arrange a pane.",
+      "subject": "using-rex"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "skill-call",
       "id": "activation/swe/blast-radius",
       "kind": "activation",
       "path": null,
@@ -10436,7 +10476,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -10461,7 +10501,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -10486,7 +10526,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -10511,7 +10551,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -11833,7 +11873,7 @@
   "schema_version": 1,
   "summary": {
     "activation": {
-      "recorded": 28,
+      "recorded": 30,
       "scored": 9
     },
     "hook-load": {
