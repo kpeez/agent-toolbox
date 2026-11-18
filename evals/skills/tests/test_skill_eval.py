@@ -1083,11 +1083,22 @@ class OfflineCLIContract(unittest.TestCase):
         listed = self.route_run("listed-route-keeps-its-label", self.case_named("DG-01"), [],
                                 "Playbook: diagnose. Reason: it fits.")
         self.assertEqual(listed["line"]["status"], "wrong")
+        playbook = self.route_run("route-label-on-a-playbook", self.case_named("swe-mode-refactor-structure"), [],
+                                  "Route: refactor-structure. Reason: it fits.")
+        self.assertEqual(playbook["line"], {"status": "wrong", "observed": "refactor-structure"})
 
-    def test_figure_it_out_allows_log_decisions_as_an_auxiliary(self):
+    def test_figure_it_out_allows_log_decisions(self):
         score = self.loads_score("figure-it-out-log-decisions", "swe-route-figure-it-out",
                                  "swe:swe-mode", "swe:figure-it-out", "swe:log-decisions")
         self.assertEqual(score["unexpected_skills"], [])
+
+    def test_a_routed_run_may_load_the_skills_its_router_triggers_name(self):
+        triggered = self.loads_score("router-triggers", "swe-route-blast-radius", "swe:swe-mode", "swe:blast-radius",
+                                     "swe:principle-model-the-domain", "swe:architect")
+        self.assertEqual(triggered["unexpected_skills"], [])
+        untriggered = self.loads_score("router-triggers-unnamed", "swe-route-blast-radius", "swe:swe-mode",
+                                       "swe:blast-radius", "swe:why")
+        self.assertEqual(untriggered["unexpected_skills"], ["swe:why"])
 
     def test_skill_route_scores_the_line_and_the_routed_skill_load(self):
         case = self.case_named("lab-mode-route-autoresearch")

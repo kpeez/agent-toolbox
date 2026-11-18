@@ -1040,11 +1040,16 @@ def route_facets(facets, route):
 
 
 def route_allowed(facets, route):
-    allowed = {f"{route['plugin']}:{ROUTERS[route['plugin']]}"}
+    """The skills a run on this route may load: the router, the routed skill, the skills its steps and reply line
+    name, and the skills its router's Triggers name, which hold in every route."""
+    router = ROUTERS[route["plugin"]]
+    allowed = {f"{route['plugin']}:{router}"}
     if route["route_type"] == "skill":
         allowed.add(f"{route['plugin']}:{route['subject']}")
-    for f in route_facets(facets, route):
-        target = load_target(f) if f["kind"] in {"step-load", "reply-load"} else None
+    triggers = [f for f in facets.values()
+                if f["kind"] == "trigger-load" and f["plugin"] == route["plugin"] and f["subject"] == router]
+    for f in route_facets(facets, route) + triggers:
+        target = load_target(f) if f["kind"] in {"step-load", "reply-load", "trigger-load"} else None
         if target and target[0] == "skill":
             allowed.add(target[1])
     return allowed

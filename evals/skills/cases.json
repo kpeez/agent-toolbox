@@ -2248,7 +2248,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/author-skill",
       "relevant_action": "Say Playbook: author-skill and read the playbook before any other step.",
-      "rationale": "The router names AGENTS.md in the author-skill line. The writing route covers other prose, so it is the near miss."
+      "rationale": "The author-skill line names AGENTS.md, and the writing route excludes a skill, AGENTS.md, and CLAUDE.md, so Match step 4 does not take it and step 6 picks author-skill."
     },
     {
       "id": "swe-route-autopilot-full",
@@ -2270,7 +2270,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/autopilot-full",
       "relevant_action": "Say Playbook: autopilot-full and read the playbook before any other step.",
-      "rationale": "A queue of independent PRs, each merged when it passes, with no human gate. The autopilot-stack playbook differs only by its no-merge rule."
+      "rationale": "A queue of independent PRs that should each merge. Match step 5 sends it to autopilot-full, also when the user is away. The autopilot-stack playbook takes PRs that depend on each other or that the user lands, and run-autonomously takes one long task, not a queue of PRs."
     },
     {
       "id": "swe-route-autopilot-stack",
@@ -2300,7 +2300,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/autopilot-stack",
       "relevant_action": "Say Playbook: autopilot-stack and read the playbook before any other step.",
-      "rationale": "The same queue as the autopilot-full case, with the merge left to the user. Only autopilot-stack stops before the merge. The queue is a new task and the earlier assistant turn only offered a choice, so go-deeper is allowed."
+      "rationale": "The same queue as the autopilot-full case, but the user lands the PRs. Match step 5 sends a queue that the user lands to autopilot-stack, and autopilot-full merges. The queue is a new task and the earlier assistant turn only offered a choice, so go-deeper is allowed."
     },
     {
       "id": "swe-route-babysit-pr",
@@ -2322,7 +2322,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/babysit-pr",
       "relevant_action": "Say Playbook: babysit-pr and read the playbook before any other step.",
-      "rationale": "A status request on an open PR: the router's PR-status trigger sends it to babysit-pr. The ship-pr route acts on a named conflict, thread, or check, and this request names none."
+      "rationale": "A status check on an open PR. The router's PR-status trigger names babysit-pr, and its check mode is one status pass and a report of what still blocks. The ship-pr route acts on a conflict, thread, or check, and this request asks for status only. The investigate-question playbook answers a question about code, not the merge state of a PR."
     },
     {
       "id": "swe-route-build-prototype",
@@ -2333,7 +2333,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "I cannot tell which ranking looks right. Sketch two throwaway versions of the search view, one that lists prefix matches first and one that lists recently opened records first, and show me what each prints for the same three queries."
+          "content": "I cannot tell which ranking looks right. Sketch two throwaway versions of the search view, one that lists prefix matches first and one that lists recently opened records first. Make up a dozen sample records with an opened-at time, and show me what each version prints for the same three queries."
         }
       ],
       "fixture": "sable-search",
@@ -2344,29 +2344,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/build-prototype",
       "relevant_action": "Say Playbook: build-prototype and read the playbook before any other step.",
-      "rationale": "A run can show which ranking is better, so the router sends the fork to build-prototype. The interview-user route covers a preference no run can settle."
-    },
-    {
-      "id": "swe-route-clean-worktrees",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "My disk is almost full. Check which of my old git worktrees are merged or abandoned, and prune the safe ones."
-        }
-      ],
-      "fixture": "pipeline",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/clean-worktrees",
-      "relevant_action": "Say Playbook: clean-worktrees and read the playbook before any other step.",
-      "rationale": "Reclaiming disk by pruning worktrees is the only task clean-worktrees owns. No other playbook deletes user state."
+      "rationale": "A run can show which ranking is better, so the router's fork trigger and the build-prototype line take it. The architect route explores designs before code, and the user asks for running sketches. The interview-user route covers a preference no run can settle. The request has the agent make up the sample records, because the fixture records have no opened-at time."
     },
     {
       "id": "swe-route-diagnose-runtime",
@@ -2388,7 +2366,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/diagnose-runtime",
       "relevant_action": "Say Playbook: diagnose-runtime and read the playbook before any other step.",
-      "rationale": "A live symptom, a spin, with nothing captured yet, diagnosed by instrumenting the running process. The fixture holds a worker script that spins on an empty queue. The diagnose route explains a failure, crash, hang, or leak from evidence that exists, and diagnose-trace reads a profile that already exists."
+      "rationale": "A live symptom, an idle CPU spin, diagnosed by instrumenting the running process with no fix. The diagnose-runtime line names a spin and instrumentation. The diagnose route explains a failure, crash, hang, or leak, and a busy loop that keeps running is none of these. The diagnose-trace playbook reads a profile that already exists, and none does. The fixture holds a worker script that spins on an empty queue."
     },
     {
       "id": "swe-route-hillclimb-metric",
@@ -2410,7 +2388,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/hillclimb-metric",
       "relevant_action": "Say Playbook: hillclimb-metric and read the playbook before any other step.",
-      "rationale": "A loop of measured keep-or-revert attempts toward one metric target. The improve-performance playbook needs a measured slowness and a hit rate is not a time, and run-autonomously has no per-attempt keep or revert."
+      "rationale": "A loop of measured keep-or-revert attempts toward one metric target, which the hillclimb-metric line names. Match step 6 reaches improve-performance first, but it needs a measured slowness, and a hit rate is not a time. The run-autonomously playbook has no per-attempt keep or revert."
     },
     {
       "id": "swe-route-match-visual-parity",
@@ -2432,7 +2410,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/match-visual-parity",
       "relevant_action": "Say Playbook: match-visual-parity and read the playbook before any other step.",
-      "rationale": "Pixel-exact equivalence against a baseline. The refactor-structure playbook keeps behavior but has no image-diff rule."
+      "rationale": "Pixel-exact equivalence against a baseline, which the match-visual-parity line names. It comes before refactor-structure in the playbook list, and refactor-structure keeps behavior but has no image-diff rule."
     },
     {
       "id": "swe-route-pick-up-session",
@@ -2454,7 +2432,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/pick-up-session",
       "relevant_action": "Say Playbook: pick-up-session and read the playbook before any other step.",
-      "rationale": "Resuming a prior agent's work from its handoff file. The fix-bug playbook would start by reproducing the bug again."
+      "rationale": "Resuming a prior agent's work from its handoff file, which the pick-up-session line names. The fix-bug playbook fits only the bug inside the handoff, not the whole task, and would start by reproducing the bug again. The handoff route writes state; it does not resume work."
     },
     {
       "id": "swe-route-run-autonomously",
@@ -2476,7 +2454,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/run-autonomously",
       "relevant_action": "Say Playbook: run-autonomously and read the playbook before any other step.",
-      "rationale": "The user asks to run until a checkable predicate holds and to keep going between iterations. That is the cue in the run-autonomously Applies line (\"run until done\"). The fix-bug playbook reproduces and fixes one reported defect, and the request names none: the green suite is the exit condition."
+      "rationale": "The user asks to run until a checkable predicate holds and to keep going between modules. The run-autonomously line names one long task driven to a checkable exit condition without stopping. The fix-bug and build-feature playbooks each fit one module's failures, not the whole run to a green suite, so they do not fit the whole task (Match step 6). It is one task, not a queue of PRs, so step 5 does not apply."
     },
     {
       "id": "swe-route-architect",
@@ -2498,7 +2476,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/architect",
       "relevant_action": "Say Route: architect and load the skill before any other step.",
-      "rationale": "Competing designs for something to build, before code. The codebase-design route reviews the boundaries that exist today and does not weigh designs against each other."
+      "rationale": "Competing designs for something to build, before code, which the architect line names. The codebase-design route reviews the boundaries that exist today and does not weigh designs against each other. The build-prototype playbook runs sketches, and the user asks for no code."
     },
     {
       "id": "swe-route-blast-radius",
@@ -2520,7 +2498,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/blast-radius",
       "relevant_action": "Say Route: blast-radius and load the skill before any other step.",
-      "rationale": "The question is how far one change reaches and what keeps it safe. The regression review in the negative cases reports defects in the diff only."
+      "rationale": "The question is how far one change reaches and what keeps it safe, which the blast-radius line names. The regression review in the negative cases reports defects in the diff only."
     },
     {
       "id": "swe-route-correct",
@@ -2552,7 +2530,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/correct",
       "relevant_action": "Say Route: correct and load the skill before any other step.",
-      "rationale": "The user corrects a mistake that agents have made before and asks to stop its class. A fix-bug run would patch this one failure."
+      "rationale": "The user corrects a mistake that agents have made before and asks to stop its class, which the correct line names. A fix-bug run would patch this one failure."
     },
     {
       "id": "swe-route-external-agents",
@@ -2563,7 +2541,7 @@
       "messages": [
         {
           "role": "user",
-          "content": "Hand this spec to an OpenCode worker to build: make the CSV adapter skip blank lines. Then review what it builds and fix what is wrong."
+          "content": "Hand this spec to an OpenCode worker to build: make the validator reject a row whose id is blank, and name the index of every bad row in its error. Then review what it builds and fix what is wrong."
         }
       ],
       "fixture": "pipeline",
@@ -2575,7 +2553,7 @@
       "expected_route": "route/swe/external-agents",
       "expected_mode": "delegate",
       "relevant_action": "Say Route: external-agents and load the skill before any other step.",
-      "rationale": "A whole spec goes to a worker on another agent CLI and comes back for review, which is the delegate mode. The questions mode covers a few small parallel questions."
+      "rationale": "A whole spec goes to a worker on another agent CLI that the user names and comes back for review, which is the delegate mode. The questions mode covers a few small parallel questions. The fixture validator checks only that each row has an id key, so the spec is a real change."
     },
     {
       "id": "swe-route-figure-it-out",
@@ -2586,15 +2564,14 @@
       "messages": [
         {
           "role": "user",
-          "content": "Rework the whole pipeline to read streams instead of files: every adapter, the validator, the normalizer, all callers and tests, while the nightly import keeps working."
+          "content": "Rework the whole import pipeline to read streams instead of file paths: every adapter, the validator, the normalizer, both callers, and all tests, while the nightly import keeps working."
         }
       ],
-      "fixture": "pipeline",
+      "fixture": "nightly-import",
       "expected_skills": [
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [
-        "swe:log-decisions",
         "swe:principle-prove-it-works",
         "swe:principle-never-block-on-the-human",
         "swe:principle-foundational-thinking",
@@ -2603,7 +2580,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/figure-it-out",
       "relevant_action": "Say Route: figure-it-out and load the skill before any other step.",
-      "rationale": "Large cross-cutting structural work. The refactor-structure playbook sends it to figure-it-out, and no other playbook fits."
+      "rationale": "A cross-cutting code change: every adapter, the validator, the normalizer, both callers (nightly_import.py and show.py), and every test change how they read input. No single-skill route owns it (Match step 4), and it is not a queue of PRs (step 5). Match step 6 picks refactor-structure, or build-feature if reading streams counts as new behavior, and its size rule sends a large or cross-cutting change in either one to figure-it-out."
     },
     {
       "id": "swe-route-handoff",
@@ -2614,10 +2591,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "Leave notes on this work for whoever picks it up tomorrow: what is done, what is left, and what to watch out for."
+          "content": "I changed the loop condition in poller.py from < to <= so that a job arriving at the timeout boundary comes back. I have not written a test or run the suite. Leave notes on this work for whoever picks it up tomorrow: what is done, what is left, and what to watch out for."
         }
       ],
-      "fixture": "worker-queue",
+      "fixture": "worker-queue-paused",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2625,7 +2602,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/handoff",
       "relevant_action": "Say Route: handoff and load the skill before any other step.",
-      "rationale": "The user asks for the state of the work in a file for a later session. The pause-safely playbook runs only on an explicit pause, and the ketchup route informs the user, not a new session."
+      "rationale": "The user asks for the state of in-flight work in notes for a later session, which the handoff line names. The pause-safely playbook runs only on an explicit pause, and the writing route covers other prose. The fixture poller holds the changed loop condition that the request describes."
     },
     {
       "id": "swe-route-interview-user",
@@ -2647,51 +2624,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/interview-user",
       "relevant_action": "Say Route: interview-user and load the skill before any other step.",
-      "rationale": "Open product decisions that no run can settle, and the user asks to be interviewed. The build-prototype playbook covers a fork a run can show."
-    },
-    {
-      "id": "swe-route-ketchup",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "I was out for four days. What happened in this repo while I was away?"
-        }
-      ],
-      "fixture": "notification-service",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/ketchup",
-      "relevant_action": "Say Route: ketchup and load the skill before any other step.",
-      "rationale": "A catch-up for the user after time away. The handoff route writes state for a new session, not for the user."
-    },
-    {
-      "id": "swe-route-reflect",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "Look back over the last session. Where did the agents waste time or do something I did not want, and what is worth remembering for next time?"
-        }
-      ],
-      "fixture": "harbor-importer",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/reflect",
-      "relevant_action": "Say Route: reflect and load the skill before any other step.",
-      "rationale": "A look back over a session for agent mistakes. The correct route fixes a mistake class the user has just named."
+      "rationale": "Open product decisions that no run can settle, and the user asks to be interviewed, which the interview-user line and the router's preference trigger name. The build-prototype playbook covers a fork a run can show."
     },
     {
       "id": "swe-route-ship-pr",
@@ -2714,7 +2647,7 @@
       "expected_route": "route/swe/ship-pr",
       "expected_mode": "drive-to-green",
       "relevant_action": "Say Route: ship-pr and load the skill before any other step.",
-      "rationale": "One conflict on one open PR, with no request for status. The fixture is a copy of the branch working tree with no git history or merge state; receipt.py holds the conflict markers and branch-commits.txt holds both sides' commit messages. The babysit-pr playbook covers a babysit or get-it-green request."
+      "rationale": "One conflict on one open PR, with no request for status. The ship-pr line names conflicts on an open PR, and single-skill routes come before the playbook list (Match step 4), where babysit-pr sits. The fixture is a copy of the branch working tree with no git history or merge state; receipt.py holds the conflict markers and branch-commits.txt holds both sides' commit messages."
     },
     {
       "id": "swe-route-verification-skill",
@@ -2725,10 +2658,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "I want agents to be able to start run_import on real input and see what it does, without me explaining it each time. Set that up for this repo, and list the features it covers."
+          "content": "I want agents to be able to run the nightly import on real inbox files and see what it does, without me explaining it each time. Set that up for this repo, and list the features it covers."
         }
       ],
-      "fixture": "pipeline",
+      "fixture": "nightly-import",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2737,7 +2670,7 @@
       "expected_route": "route/swe/verification-skill",
       "expected_mode": "create",
       "relevant_action": "Say Route: verification-skill and load the skill before any other step.",
-      "rationale": "The project's own skill for driving its app. The author-skill playbook writes any other skill."
+      "rationale": "The project's own skill that drives its app for verification, which the verification-skill line names. It is a single-skill route, so Match step 4 takes it before the author-skill playbook, which writes any other skill. The fixture holds the nightly import command and real inbox files."
     },
     {
       "id": "swe-route-writing",
@@ -2759,7 +2692,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/writing",
       "relevant_action": "Say Route: writing and load the skill before any other step.",
-      "rationale": "A README is prose, which the writing route owns. AGENTS.md goes to author-skill."
+      "rationale": "A README is prose, which the writing line names. That line excludes a skill, AGENTS.md, CLAUDE.md, and a plan of PRs, which go to author-skill and plan-multi-phase."
     },
     {
       "id": "lab-route-bootstrap-project",
@@ -2781,7 +2714,7 @@
       "forbidden_skills": [],
       "expected_route": "route/lab/bootstrap-project",
       "relevant_action": "Say Playbook: bootstrap-project and read the playbook before any other step.",
-      "rationale": "A request to set up research-context and a first skill. The codify-procedure playbook starts from a procedure that already ran."
+      "rationale": "A request to set up research-context and a first procedure skill, which the bootstrap-project line names. The codify-procedure playbook needs a procedure that the user names, gives, or did in this session, and this request names none."
     },
     {
       "id": "lab-route-codify-procedure",
@@ -2827,7 +2760,7 @@
       "forbidden_skills": [],
       "expected_route": "route/lab/codify-procedure",
       "relevant_action": "Say Playbook: codify-procedure and read the playbook before any other step.",
-      "rationale": "A procedure done and corrected twice in this session (pooling across the regime column, then ranking by accuracy instead of auroc) becomes a project skill. The research-skill route needs a procedure that is already clear."
+      "rationale": "The user does not state the procedure in full: it was done and corrected twice in this session (pooling across the regime column, then ranking by accuracy instead of auroc), which the codify-procedure line names. The research-skill route takes only a procedure that the user states in full."
     },
     {
       "id": "lab-route-maintain-project-skills",
@@ -2849,7 +2782,7 @@
       "forbidden_skills": [],
       "expected_route": "route/lab/maintain-project-skills",
       "relevant_action": "Say Playbook: maintain-project-skills and read the playbook before any other step.",
-      "rationale": "A check of the project's skills after the data changed. The fixture holds the research-context skill, one procedure skill, and a summary.csv whose column is already renamed. The bootstrap-project playbook creates the kit."
+      "rationale": "A check of the project's skills after the data changed, which the maintain-project-skills line names. The research-skill route takes stated edits only when the pipeline, the data, and the conventions did not change. The fixture holds the research-context skill, one procedure skill, and a summary.csv whose column is already renamed. The bootstrap-project playbook creates the kit."
     },
     {
       "id": "lab-route-making-plots",
@@ -2871,7 +2804,7 @@
       "forbidden_skills": [],
       "expected_route": "route/lab/making-plots",
       "relevant_action": "Say Route: making-plots and load the skill before any other step.",
-      "rationale": "A result figure to make. The visualizing-data route reviews a plot that exists."
+      "rationale": "A result figure to make, which the making-plots line names. The visualizing-data route reviews a plot that exists."
     },
     {
       "id": "lab-route-visualizing-data",
@@ -2893,7 +2826,7 @@
       "forbidden_skills": [],
       "expected_route": "route/lab/visualizing-data",
       "relevant_action": "Say Route: visualizing-data and load the skill before any other step.",
-      "rationale": "A plot to review for honest scales and accessibility. The making-plots route makes or revises a figure."
+      "rationale": "A plot to review for honest scales and accessibility, which the visualizing-data line names. The making-plots route makes or revises a figure."
     },
     {
       "id": "lab-route-research-skill",
@@ -2916,7 +2849,7 @@
       "expected_route": "route/lab/research-skill",
       "expected_mode": "create",
       "relevant_action": "Say Route: research-skill and load the skill before any other step.",
-      "rationale": "The research-context skill exists in this fixture and the user writes down the procedure, which is already clear, so research-skill picks create mode. The codify-procedure playbook reconstructs a procedure from a session."
+      "rationale": "The user states the procedure in full, so the research-skill line takes it, and the codify-procedure line sends such a procedure to research-skill. The research-context skill exists in this fixture, so research-skill picks create mode, not bootstrap-project."
     },
     {
       "id": "swe-mode-refactor-structure",
@@ -2937,7 +2870,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/refactor-structure",
       "relevant_action": "Say Playbook: refactor-structure and read the playbook before any other step.",
-      "rationale": "A structure change that keeps behavior. The codebase-design route only proposes, and build-feature changes behavior."
+      "rationale": "A structure change that keeps behavior. No single-skill route owns it: the codebase-design route only proposes (Match step 4). Match step 6 picks refactor-structure, the first playbook whose line fits, and the move touches two entrypoints and one new module, so the size rule does not send it to figure-it-out. The build-feature playbook changes behavior."
     },
     {
       "id": "swe-mode-improve-performance",
@@ -2947,10 +2880,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "The preview refresh takes 12.4 s for 18,000 tiles. Make it faster, and show me the numbers before and after."
+          "content": "The preview refresh takes about 15 s for 18,000 tiles. `python3 preview.py` measures it. Make it faster, and show me the numbers before and after."
         }
       ],
-      "fixture": "tile-renderer",
+      "fixture": "tile-preview",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -2958,7 +2891,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/improve-performance",
       "relevant_action": "Say Playbook: improve-performance and read the playbook before any other step.",
-      "rationale": "One measured slowness to improve against a baseline. The hillclimb-metric playbook is a loop toward a target."
+      "rationale": "One measured slowness to improve against a baseline, and the preview output is not wrong, so fix-bug, the first playbook in the list, does not fit and improve-performance, the second, does. The hillclimb-metric playbook is a loop toward a target. The tile-preview renderer rebuilds its 3,000-shade palette for every tile, which a profile shows."
     },
     {
       "id": "swe-mode-investigate-question",
@@ -2979,7 +2912,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/investigate-question",
       "relevant_action": "Say Playbook: investigate-question and read the playbook before any other step.",
-      "rationale": "A read-only why question with a cited answer. The diagnose route explains a failure, and nothing here fails."
+      "rationale": "A read-only why question with a cited answer, which the investigate-question line names. The diagnose route explains a failure, crash, hang, or leak, and nothing here fails. No playbook earlier in the list fits a read-only question."
     },
     {
       "id": "swe-mode-plan-multi-phase",
@@ -3000,7 +2933,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/plan-multi-phase",
       "relevant_action": "Say Playbook: plan-multi-phase and read the playbook before any other step.",
-      "rationale": "The plan is the deliverable and the user has settled the open decisions that the fixture README lists, so the request and the README agree. The interview-user route would apply if the decisions were open."
+      "rationale": "The plan of stacked PRs is the deliverable, which the plan-multi-phase line names. The writing route excludes a plan of PRs, and \"Do not implement\" rules out build-feature and figure-it-out. The user has settled the open decisions that the fixture README lists, so the request and the README agree and the interview-user route does not apply."
     },
     {
       "id": "swe-mode-pause-safely",
@@ -3031,36 +2964,36 @@
       ],
       "expected_route": "route/swe/pause-safely",
       "relevant_action": "Say Playbook: pause-safely and read the playbook before any other step.",
-      "rationale": "An explicit pause with work in flight. The handoff route writes state but does not stop work cleanly. The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
+      "rationale": "An explicit pause with work in flight: the user goes offline and asks to stop without losing anything, which the pause-safely line names. The handoff route writes state but does not stop the work, so it does not own the whole task (Match step 4). The last turn continues work that an earlier turn already framed, so go-deeper is skipped."
     },
     {
-      "id": "swe-mode-ship-stack",
+      "id": "swe-mode-build-feature",
       "target": "swe:swe-mode",
       "category": "contextual",
       "split": "development",
       "messages": [
         {
           "role": "user",
-          "content": "CI is green on all three receipt PRs and the review threads are resolved."
+          "content": "Which inbox files does the nightly import skip?"
         },
         {
           "role": "assistant",
-          "content": "I agree. Nothing is outstanding on any of them."
+          "content": "Every file whose suffix is not .csv, .json, or .jsonl. nightly_import.py imports a file only when its suffix is a key of pipeline.ADAPTERS, so it skips inbox/2026-11-17-west.tsv without a message."
         },
         {
           "role": "user",
-          "content": "Then land the stack."
+          "content": "The west stations send tab-separated files from now on. Make the nightly import read them too."
         }
       ],
-      "fixture": "receipt-totals",
+      "fixture": "nightly-import",
       "expected_skills": [
         "swe:swe-mode"
       ],
       "acceptable_auxiliaries": [],
       "forbidden_skills": [],
-      "expected_route": "route/swe/ship-stack",
-      "relevant_action": "Say Playbook: ship-stack and read the playbook before any other step.",
-      "rationale": "An explicit request to land a green stack. The babysit-pr playbook ends where this one begins. The earlier assistant turn only agreed with a status statement, so landing the stack is a new task and go-deeper may run."
+      "expected_route": "route/swe/build-feature",
+      "relevant_action": "Say Playbook: build-feature and read the playbook before any other step.",
+      "rationale": "New behavior: the nightly import must read a format that it skips today. The earlier answer shows that the skip is the suffix allow-list working as written, so the request reports no defect and fix-bug does not fit. No single-skill route owns the task (Match step 4), and it is not a queue of PRs (step 5). Match step 6 picks build-feature, and the change touches one adapter and the adapter map, so the size rule does not send it to figure-it-out. The earlier turns answered a question, and the last turn opens a new task that builds on the answer, so go-deeper may run."
     },
     {
       "id": "swe-mode-evaluate-agent-change",
@@ -3070,10 +3003,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "Use /swe:swe-mode to measure whether the rewritten description of the implement skill makes agents load it more often on feature requests."
+          "content": "Use /swe:swe-mode to measure whether the rewritten description in implement-description.diff makes agents load the implement skill more often on feature requests."
         }
       ],
-      "fixture": "pipeline",
+      "fixture": "skill-description-change",
       "expected_skills": [
         "swe:swe-mode"
       ],
@@ -3081,7 +3014,7 @@
       "forbidden_skills": [],
       "expected_route": "route/swe/evaluate-agent-change",
       "relevant_action": "Say Playbook: evaluate-agent-change and read the playbook before any other step.",
-      "rationale": "Measuring the effect of a skill change on agent behavior. The author-skill playbook writes the change."
+      "rationale": "Measuring how a skill change affects agent behavior, which the evaluate-agent-change line names. The fixture holds the rewritten description as a diff. The author-skill playbook writes or edits the skill, and the request asks for a measurement."
     },
     {
       "id": "swe-mode-chat",

@@ -486,13 +486,13 @@
           "swe-fallback-hillclimb-metric",
           "swe-fallback-plan-multi-phase",
           "swe-fallback-refactor-structure",
+          "swe-mode-build-feature",
           "swe-mode-evaluate-agent-change",
           "swe-mode-improve-performance",
           "swe-mode-investigate-question",
           "swe-mode-pause-safely",
           "swe-mode-plan-multi-phase",
           "swe-mode-refactor-structure",
-          "swe-mode-ship-stack",
           "swe-route-architect",
           "swe-route-author-skill",
           "swe-route-autopilot-full",
@@ -500,7 +500,6 @@
           "swe-route-babysit-pr",
           "swe-route-blast-radius",
           "swe-route-build-prototype",
-          "swe-route-clean-worktrees",
           "swe-route-correct",
           "swe-route-diagnose-runtime",
           "swe-route-external-agents",
@@ -508,10 +507,8 @@
           "swe-route-handoff",
           "swe-route-hillclimb-metric",
           "swe-route-interview-user",
-          "swe-route-ketchup",
           "swe-route-match-visual-parity",
           "swe-route-pick-up-session",
-          "swe-route-reflect",
           "swe-route-run-autonomously",
           "swe-route-ship-pr",
           "swe-route-verification-skill",
@@ -1081,7 +1078,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`codify-procedure`: a request to turn a procedure, done in this session or named by the user, into a project skill.",
+      "source_text": "`codify-procedure`: a request to turn a procedure that the user does not state in full into a new project skill: one done or corrected in this session, one the user only names, or one the user gives in part. A procedure that the user states in full goes to `research-skill`.",
       "subject": "codify-procedure"
     },
     {
@@ -1103,7 +1100,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`maintain-project-skills`: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.",
+      "source_text": "`maintain-project-skills`: a request to check, review, or update the project's procedure skills, also when the project has one skill, such as after the pipeline, the data, or the conventions changed. Edits that the user states when nothing upstream changed go to `research-skill`.",
       "subject": "maintain-project-skills"
     },
     {
@@ -1216,7 +1213,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -1249,7 +1246,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -1293,9 +1291,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/clean-worktrees",
@@ -1308,7 +1304,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
       "subject": "clean-worktrees"
     },
@@ -1602,15 +1598,13 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`run-autonomously`: a long task to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
       "subject": "run-autonomously"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/ship-stack",
@@ -1623,7 +1617,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
@@ -2468,7 +2462,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged. (ketchup)",
+      "source_text": "Reply: as autopilot-full, but list each PR with its verdict in place of what merged, and what step 3 landed. (ketchup)",
       "subject": "autopilot-stack"
     },
     {
@@ -2540,7 +2534,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "Write or update one project skill when the procedure is already clear: `research-skill`.",
+      "source_text": "Write one new project skill for a procedure that the user states in full, or make edits that the user states to existing project skills when the pipeline, the data, and the conventions did not change: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -2738,7 +2732,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "or work that no playbook fits goes to `figure-it-out`.",
+      "source_text": "When that playbook is `fix-bug`, `build-feature`, or `refactor-structure` and the code change is large, cross-cutting, or a multi-day program, use `figure-it-out` instead. | Work that no playbook fits also goes to `figure-it-out`.",
       "subject": "figure-it-out"
     },
     {
@@ -2792,9 +2786,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-ketchup"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "route-load/swe/ketchup",
@@ -2809,16 +2801,14 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "Catch the user up after time away: `ketchup`.",
       "subject": "ketchup"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-reflect"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "route-load/swe/reflect",
@@ -2833,7 +2823,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "Review a session for agent mistakes: `reflect`.",
       "subject": "reflect"
     },
@@ -2945,7 +2935,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "Write or edit a README, a docs page, or other prose: `writing`.",
+      "source_text": "Write or edit a README, a docs page, or other prose that is not a skill, `AGENTS.md`, `CLAUDE.md`, or a plan of PRs: `writing`.",
       "subject": "writing"
     },
     {
@@ -3117,7 +3107,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`codify-procedure`: a request to turn a procedure, done in this session or named by the user, into a project skill.",
+      "source_text": "`codify-procedure`: a request to turn a procedure that the user does not state in full into a new project skill: one done or corrected in this session, one the user only names, or one the user gives in part. A procedure that the user states in full goes to `research-skill`.",
       "subject": "codify-procedure"
     },
     {
@@ -3147,7 +3137,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`maintain-project-skills`: a request to check the project's procedure skills after the pipeline, the data, or the conventions changed.",
+      "source_text": "`maintain-project-skills`: a request to check, review, or update the project's procedure skills, also when the project has one skill, such as after the pipeline, the data, or the conventions changed. Edits that the user states when nothing upstream changed go to `research-skill`.",
       "subject": "maintain-project-skills"
     },
     {
@@ -3226,7 +3216,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "Write or update one project skill when the procedure is already clear: `research-skill`.",
+      "source_text": "Write one new project skill for a procedure that the user states in full, or make edits that the user states to existing project skills when the pipeline, the data, and the conventions did not change: `research-skill`.",
       "subject": "research-skill"
     },
     {
@@ -3435,8 +3425,9 @@
       },
       "evidence": "assistant-text",
       "handles": [
-        "1-stop-at-verified",
-        "2-stack-only-on-dependency"
+        "1-stack-only-on-dependency",
+        "2-stop-at-verified",
+        "3-land-on-request"
       ],
       "id": "route/swe/autopilot-stack",
       "kind": "route",
@@ -3450,7 +3441,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another.",
+      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -3524,7 +3515,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "assistant-text",
@@ -3594,9 +3586,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -3619,7 +3609,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
       "subject": "clean-worktrees"
     },
@@ -3900,7 +3890,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "or work that no playbook fits goes to `figure-it-out`.",
+      "source_text": "When that playbook is `fix-bug`, `build-feature`, or `refactor-structure` and the code change is large, cross-cutting, or a multi-day program, use `figure-it-out` instead. | Work that no playbook fits also goes to `figure-it-out`.",
       "subject": "figure-it-out"
     },
     {
@@ -4110,9 +4100,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-ketchup"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4131,7 +4119,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "Catch the user up after time away: `ketchup`.",
       "subject": "ketchup"
     },
@@ -4296,9 +4284,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-reflect"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4318,7 +4304,7 @@
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "Review a session for agent mistakes: `reflect`.",
       "subject": "reflect"
     },
@@ -4352,7 +4338,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`run-autonomously`: a long task to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
       "subject": "run-autonomously"
     },
     {
@@ -4416,9 +4402,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -4440,7 +4424,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
@@ -4568,7 +4552,7 @@
       "route_type": "skill",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "Write or edit a README, a docs page, or other prose: `writing`.",
+      "source_text": "Write or edit a README, a docs page, or other prose that is not a skill, `AGENTS.md`, `CLAUDE.md`, or a plan of PRs: `writing`.",
       "subject": "writing"
     },
     {
@@ -5903,7 +5887,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-name-the-procedure: Write the inputs, the outputs, the decisions, and the real commands from this session. (encode-the-procedure)",
+      "source_text": "1-name-the-procedure: Write the inputs, the outputs, the decisions, and the real commands from this session. For a procedure that did not run in this session, write the commands the user gave or that the repository holds; step 3 proves them. (encode-the-procedure)",
       "subject": "codify-procedure"
     },
     {
@@ -7476,48 +7460,22 @@
           "swe-route-autopilot-stack"
         ]
       },
-      "evidence": "full-read",
-      "handle": "1-stop-at-verified",
-      "id": "step-load/swe/autopilot-stack/1-stop-at-verified/autopilot-full",
-      "kind": "step-load",
-      "name": "autopilot-full",
-      "name_class": "playbook",
-      "path": "skills/swe-mode/playbooks/autopilot-full.md",
-      "plugin": "swe",
-      "required_by": {
-        "locator": "1-stop-at-verified",
-        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
-      },
-      "requirement": "always",
-      "scope": "delegate-allowed",
-      "scorer": "scored",
-      "source_text": "1-stop-at-verified: In place of autopilot-full step 8, stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. (autopilot-full)",
-      "subject": "autopilot-stack"
-    },
-    {
-      "cases": {
-        "negative": [],
-        "positive": [
-          "swe-fallback-autopilot-stack",
-          "swe-route-autopilot-stack"
-        ]
-      },
       "evidence": "skill-call",
-      "handle": "2-stack-only-on-dependency",
-      "id": "step-load/swe/autopilot-stack/2-stack-only-on-dependency/ship-pr",
+      "handle": "1-stack-only-on-dependency",
+      "id": "step-load/swe/autopilot-stack/1-stack-only-on-dependency/ship-pr",
       "kind": "step-load",
       "name": "ship-pr",
       "name_class": "visible-skill",
       "path": null,
       "plugin": "swe",
       "required_by": {
-        "locator": "2-stack-only-on-dependency",
+        "locator": "1-stack-only-on-dependency",
         "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
       },
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
+      "source_text": "1-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Each child's owner builds on its parent's branch, not on trunk, and rebases onto that branch in autopilot-full step 3. Subagents commit in their own worktrees and never push or open PRs. When every owner reports its code-ready commit, the coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. (ship-pr, ship-stack)",
       "subject": "autopilot-stack"
     },
     {
@@ -7529,21 +7487,73 @@
         ]
       },
       "evidence": "full-read",
-      "handle": "2-stack-only-on-dependency",
-      "id": "step-load/swe/autopilot-stack/2-stack-only-on-dependency/ship-stack",
+      "handle": "1-stack-only-on-dependency",
+      "id": "step-load/swe/autopilot-stack/1-stack-only-on-dependency/ship-stack",
       "kind": "step-load",
       "name": "ship-stack",
       "name_class": "playbook",
       "path": "skills/swe-mode/playbooks/ship-stack.md",
       "plugin": "swe",
       "required_by": {
-        "locator": "2-stack-only-on-dependency",
+        "locator": "1-stack-only-on-dependency",
         "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
       },
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "2-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Subagents commit in their own worktrees and never push or open PRs. The coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. (ship-pr, ship-stack)",
+      "source_text": "1-stack-only-on-dependency: A PR stacks only when it depends on another PR, and stacks stay shallow. This is the one exception to autopilot-full step 5. Each child's owner builds on its parent's branch, not on trunk, and rebases onto that branch in autopilot-full step 3. Subagents commit in their own worktrees and never push or open PRs. When every owner reports its code-ready commit, the coordinator rebases the unpushed branches into one line (root onto trunk, each child onto its parent branch), verifies the top branch, and runs one `gh stack link` (then updates and checks each PR body with `gh pr edit <n> --body-file <rendered>` and `pr_body.py check -`). Fall back to plain `gh pr create --draft --base <parent-branch>` only when `gh stack` is unavailable. (ship-pr, ship-stack)",
+      "subject": "autopilot-stack"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": [
+          "swe-fallback-autopilot-stack",
+          "swe-route-autopilot-stack"
+        ]
+      },
+      "evidence": "full-read",
+      "handle": "2-stop-at-verified",
+      "id": "step-load/swe/autopilot-stack/2-stop-at-verified/autopilot-full",
+      "kind": "step-load",
+      "name": "autopilot-full",
+      "name_class": "playbook",
+      "path": "skills/swe-mode/playbooks/autopilot-full.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "2-stop-at-verified",
+        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
+      },
+      "requirement": "always",
+      "scope": "delegate-allowed",
+      "scorer": "scored",
+      "source_text": "2-stop-at-verified: In place of autopilot-full step 8, run autopilot-full step 6 on each PR at its head in the linked stack, so a child's checks include its parent's code. An owner commits each fix in its worktree on the lowest branch that owns the code, and the coordinator replays the branches above it and pushes the line. A new head on a lower PR restacks the PRs above it, and a PR whose `git patch-id` the restack leaves unchanged keeps its verdict. Stop when each PR is verified and green at its current head, then hand the PRs to the operator. After the handoff, nobody pushes without the operator's go. A merge request in the user's task is that go. (autopilot-full)",
+      "subject": "autopilot-stack"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": [
+          "swe-fallback-autopilot-stack",
+          "swe-route-autopilot-stack"
+        ]
+      },
+      "evidence": "full-read",
+      "handle": "3-land-on-request",
+      "id": "step-load/swe/autopilot-stack/3-land-on-request/ship-stack",
+      "kind": "step-load",
+      "name": "ship-stack",
+      "name_class": "playbook",
+      "path": "skills/swe-mode/playbooks/ship-stack.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "3-land-on-request",
+        "path": "plugins/swe/skills/swe-mode/playbooks/autopilot-stack.md"
+      },
+      "requirement": "conditional",
+      "scope": "delegate-allowed",
+      "scorer": "scored",
+      "source_text": "3-land-on-request: When the user's task asked for the merge, run ship-stack on the handed-off stack. Otherwise skip this step and leave the landing to the operator. (ship-stack)",
       "subject": "autopilot-stack"
     },
     {
@@ -7702,7 +7712,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7754,7 +7765,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7783,7 +7795,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -7812,7 +7825,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -7841,7 +7855,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7870,7 +7885,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -7899,7 +7915,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7928,7 +7945,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7957,7 +7975,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -7986,7 +8005,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -8015,7 +8035,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8044,7 +8065,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8073,7 +8095,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -8102,7 +8125,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8131,7 +8155,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8160,7 +8185,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8189,7 +8215,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -8218,7 +8245,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "full-read",
@@ -8247,7 +8275,8 @@
           "IM-01",
           "IM-02",
           "IM-04",
-          "IM-10"
+          "IM-10",
+          "swe-mode-build-feature"
         ]
       },
       "evidence": "skill-call",
@@ -8375,9 +8404,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "1-snapshot-and-audit",
@@ -8393,16 +8420,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-snapshot-and-audit: Record `df -h /`, then run `bash <plugin-root>/scripts/worktree_audit.sh [-b origin/<branch>] [repo-path]` ([worktree_audit.sh](../../../scripts/worktree_audit.sh)). Pass `-b` when PRs target a branch other than `origin/HEAD`. It reads paths from `git worktree list`, never hand-typed. Run it in the background, because the session scan is slow. (build-the-lever, encode-lessons-in-structure)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "1-snapshot-and-audit",
@@ -8418,16 +8443,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-snapshot-and-audit: Record `df -h /`, then run `bash <plugin-root>/scripts/worktree_audit.sh [-b origin/<branch>] [repo-path]` ([worktree_audit.sh](../../../scripts/worktree_audit.sh)). Pass `-b` when PRs target a branch other than `origin/HEAD`. It reads paths from `git worktree list`, never hand-typed. Run it in the background, because the session scan is slow. (build-the-lever, encode-lessons-in-structure)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "2-cross-check-in-use",
@@ -8443,16 +8466,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "2-cross-check-in-use: The bucket is advice, not permission. The active sessions are the real artifact. Get that set from the user and cross-check every candidate; the in-use set wins over a `safe` bucket. (prove-it-works)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "3-verify-usage",
@@ -8468,16 +8489,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "3-verify-usage: For every `verify-recent-chat` row, or any row you doubt, have subagents read this project's session transcripts and report whether the session is ongoing and which worktrees it touches. A background subagent's worktree is in use even when the user never named it. (recall, guard-the-context-window)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "3-verify-usage",
@@ -8493,7 +8512,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "3-verify-usage: For every `verify-recent-chat` row, or any row you doubt, have subagents read this project's session transcripts and report whether the session is ongoing and which worktrees it touches. A background subagent's worktree is in use even when the user never named it. (recall, guard-the-context-window)",
       "subject": "clean-worktrees"
     },
@@ -11287,9 +11306,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "1-verify-each-pr",
@@ -11305,7 +11322,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-verify-each-pr: Give each PR its own verifier, an agent that did not write the code. It runs the change the way a user would, parent against head, with the project's verification skill when one exists, and records `PASS`, `PASS+NOTES`, or `FAIL` on that PR keyed to the patch-id. (ship-pr, reviewer agent, prove-it-works)",
       "subject": "ship-stack"
     },
@@ -11335,9 +11352,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "skill-call",
       "handle": "1-verify-each-pr",
@@ -11353,16 +11368,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-verify-each-pr: Give each PR its own verifier, an agent that did not write the code. It runs the change the way a user would, parent against head, with the project's verification skill when one exists, and records `PASS`, `PASS+NOTES`, or `FAIL` on that PR keyed to the patch-id. (ship-pr, reviewer agent, prove-it-works)",
       "subject": "ship-stack"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "skill-call",
       "handle": "3-recheck-patch-ids",
@@ -11378,16 +11391,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "3-recheck-patch-ids: Compare `git patch-id` at the verdict SHA with the current head before you trust an older verdict, since a chain rebase moves every PR above it. When only tests, docs, or lint config differ, a lane's result stands if what it ran builds the same at both SHAs apart from noise. Report each kind of noise with its files. Rerun a lane with no build output, and re-verify anything else that drifted. (ship-pr)",
       "subject": "ship-stack"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-mode-ship-stack"
-        ]
+        "positive": []
       },
       "evidence": "skill-call",
       "handle": "4-land-bottom-up",
@@ -11403,7 +11414,7 @@
       },
       "requirement": "conditional",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "4-land-bottom-up: When every PR in the stack is verified and `gh stack` is available, mark each draft ready with `gh pr ready <pr>`, run `gh stack merge <stack> --yes --squash` (or the repository's merge method), confirm each PR reads merged with `gh pr view <pr> --json state,mergedAt,baseRefName`, and delete the merged remote branches afterward. For a partial run stopping at step 2's ceiling, or when `gh stack` is unavailable, merge the run's lowest unmerged PR with `gh pr merge <pr> --squash --match-head-commit <sha>` (or the repository's merge method), read it back with `gh pr view <pr> --json state,mergedAt,baseRefName`, retarget the next PR to trunk with `gh pr edit <pr> --base <trunk>`, move its patch onto the merge result, push with `--force-with-lease`, and merge it once its checks pass and its verdict survives step 3. (ship-pr)",
       "subject": "ship-stack"
     },
@@ -11814,7 +11825,8 @@
       "recorded": 5
     },
     "playbook-read": {
-      "scored": 28
+      "recorded": 2,
+      "scored": 26
     },
     "principle-read": {
       "recorded": 11,
@@ -11824,18 +11836,20 @@
       "recorded": 2
     },
     "route": {
-      "scored": 47
+      "invisible": 4,
+      "scored": 43
     },
     "route-load": {
-      "scored": 19
+      "recorded": 2,
+      "scored": 17
     },
     "router-contract": {
       "invisible": 25
     },
     "step-load": {
       "invisible": 9,
-      "recorded": 2,
-      "scored": 231
+      "recorded": 11,
+      "scored": 223
     },
     "trigger-load": {
       "invisible": 2,

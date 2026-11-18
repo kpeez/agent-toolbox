@@ -27,12 +27,22 @@ read it. Put this file's absolute path in every delegate's brief.
    command. Ask the user only for a choice that no observation can settle.
 4. When one skill owns the whole task, use its line in
    [Single-skill routes](#single-skill-routes).
-5. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
-   fits. The list runs from narrow to broad.
-6. Large or cross-cutting work, work the user steps away from, or work that
-   no playbook fits goes to `figure-it-out`. It writes a bespoke playbook in
-   the same step format.
-7. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
+5. A queue of PRs to build goes to `autopilot-full` when the PRs are
+   independent and should merge, and to `autopilot-stack` when they depend
+   on each other or the user lands them. A dependent stack goes to
+   `autopilot-stack` also when the user asks for the merge. That request is
+   the operator's go, and the playbook lands the stack with `ship-stack`
+   after its handoff. This step holds also when the user is away.
+   A request to plan the queue only is not a build. It goes to
+   `plan-multi-phase`.
+6. Otherwise, pick the first playbook in [Playbooks](#playbooks) whose line
+   fits the whole task. The list runs from narrow to broad. When that
+   playbook is `fix-bug`, `build-feature`, or `refactor-structure` and the
+   code change is large, cross-cutting, or a multi-day program, use
+   `figure-it-out` instead. It writes a bespoke playbook in the same step
+   format.
+7. Work that no playbook fits also goes to `figure-it-out`.
+8. Say `Playbook: <slug>. Reason: <one clause>.` or, for a route,
    `Route: <skill>. Reason: <one clause>.`
 
 ## Track
@@ -261,14 +271,16 @@ PRs:
 
 Long runs and sessions:
 
-- `run-autonomously`: a long task to drive to a checkable exit condition
-  without stopping.
+- `run-autonomously`: one long task, not a queue of PRs, to drive to a
+  checkable exit condition without stopping.
 - `plan-multi-phase`: work that spans phases or stacked PRs. The plan is the
   deliverable.
 - `autopilot-full`: a queue of independent PRs run to merged, one owner per
   PR.
 - `autopilot-stack`: autopilot-full without the merge. Verified PRs the user
-  lands, linked as a stack only where one builds on another.
+  lands, linked as a stack only where one builds on another. PRs that depend
+  on each other come here also when the user asks for the merge. Then the
+  playbook lands them with `ship-stack` after its handoff.
 - `pick-up-session`: resume a prior agent's in-flight work from its handoff
   file, decision log, transcript, or branch.
 - `pause-safely`: stop in-flight work cleanly so a new session can resume it.
@@ -281,7 +293,8 @@ Long runs and sessions:
 - Prune or review an existing test suite: `testing-code`.
 - Explore competing designs before code: `architect`.
 - Propose deepening refactors; no implementation: `codebase-design`.
-- Write or edit a README, a docs page, or other prose: `writing`.
+- Write or edit a README, a docs page, or other prose that is not a skill,
+  `AGENTS.md`, `CLAUDE.md`, or a plan of PRs: `writing`.
 - Conflicts, review threads, or CI on an open PR, or mark ready and merge a
   verified PR: `ship-pr`.
 - Find what a change could break: `blast-radius`.

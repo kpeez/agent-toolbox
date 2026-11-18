@@ -4,7 +4,7 @@ Applies when: the user asks to land, ship, or merge a green PR or stack.
 
 You own what lands. Verify each PR independently, land only the verified run from the root, then keep your hands off the stack.
 
-This playbook runs only on an explicit request to land or ship. It begins where babysit-pr ends. The Land procedure of ship-pr governs each merge, its merge authority, and its release effects. Use `gh` and `gh stack`. Green CI and an approving bot review are not verdicts, because neither runs the change as a user would.
+This playbook runs only on an explicit request to land or ship. A merge request in an autopilot-stack task counts, and that playbook's step 3 runs this one. It begins where babysit-pr ends. The Land procedure of ship-pr governs each merge, its merge authority, and its release effects. Use `gh` and `gh stack`. Green CI and an approving bot review are not verdicts, because neither runs the change as a user would.
 
 1-verify-each-pr: Give each PR its own verifier, an agent that did not write the code. It runs the change the way a user would, parent against head, with the project's verification skill when one exists, and records `PASS`, `PASS+NOTES`, or `FAIL` on that PR keyed to the patch-id. (ship-pr, reviewer agent, prove-it-works)
 2-find-verified-run: Walk up from the lowest unmerged PR and stop at the first without `PASS` or `PASS+NOTES`. The PRs below it are the run, and the top one is the ceiling. A verified PR above an unverified one waits. One whose branch neither holds nor needs that code may move onto trunk and land alone after a fresh verdict.
