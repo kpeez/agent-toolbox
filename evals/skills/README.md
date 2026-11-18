@@ -84,7 +84,7 @@ round on a clear task. They include "figure out why a test fails", which is diag
 20 cases marked `holdout_candidate` are
 disclosed development material, **not a sealed holdout**. The sealed holdout lives
 outside this repository; `dataset/README.md` says how to check a copy. The loader
-reads it like `dev.jsonl`: pass `--corpus <copy>/holdout.jsonl`. A corpus is either
+reads it like `dev.jsonl`: `skill_eval.py --corpus <copy>/holdout.jsonl validate` (the option goes before the subcommand). A corpus is either
 all `holdout` or has no `holdout` cases, and the 4/2/3/1 family mix applies only to
 a corpus without `holdout` cases.
 
@@ -177,211 +177,96 @@ The offline runtime example deliberately says `not-run`. For any future native
 run, replace it with verified model ID, effort, CLI/version, permissions, tools,
 catalog scope, context delivery, and harness deltas before materializing.
 
-## Native runner
+## Plugin-eval runner
 
-`run_eval.py` runs the pilot: for each (case, arm, repeat) it calls `skill_eval.py`
-`materialize`, launches headless `claude -p` with the frozen flags, then calls `capture` and
-`score`, and at the end `aggregate`. It does not copy their logic. It is a dry run unless you pass
-`--execute`. A dry run launches no model. It does run `claude --version`, `--help`,
-`plugin list --json`, and `auth status --json`, which need no model.
-
-```sh
-uv run evals/skills/run_eval.py --case IM-01 --repeats 2
-```
-
-The dry run prints the frozen configuration, the planned runs (arms are `hook-on` and `hook-off`,
-never git refs), the argv template, the worst-case cost, the preflight result, the blockers, and the
-live steps that wait for approval. `--repeats` defaults to 10 runs per case and arm. Without `--case`
-it plans every usable case.
-
-Run the live canaries first, then execute, both only after approval and with the same flags:
+`run_eval.py` runs the evals through `claude plugin eval`. For each (case, arm, repeat) it calls
+`skill_eval.py materialize`, writes a one-case plugin-eval suite beside the snapshot, launches it,
+and keeps the session. `score` later calls `capture` and `score` on each kept run, then `aggregate`.
+It does not copy their logic. `runtime.plugin-eval.json` freezes the model, effort, CLI version,
+tools, turn and time limits, the per-run cost stop, and the harness deltas.
 
 ```sh
-uv run evals/skills/run_eval.py --canaries --pilot-id PILOT --max-cost-usd 20
-uv run evals/skills/run_eval.py --execute --pilot-id PILOT --max-cost-usd 20 \
-  [--backup-dir /absolute/path]
+uv run evals/skills/run_eval.py plan --case IM-01
+uv run evals/skills/run_eval.py canary --out artifacts/skill-evals/DATE/canaries \
+  --case IM-01 --max-total-usd 5
+uv run evals/skills/run_eval.py run --out artifacts/skill-evals/DATE/baseline \
+  --max-total-usd 100 --jobs 4
+uv run evals/skills/run_eval.py score --out artifacts/skill-evals/DATE/baseline \
+  --labels labels.jsonl
 ```
 
-`--output-root` moves the pilot folders away from `artifacts/skill-evals/`. The tests set it to a
-temporary directory, so no test writes under `artifacts/`. `--pilot-id` must be a plain folder name,
-not `.` or `..`, that resolves to a folder inside `--output-root`.
+`plan` launches nothing. It runs `claude --version`, hashes the inputs, and prints the frozen
+configuration and the run list. `--case` limits the cases, `--arms` the arms (`hook-on` and
+`hook-off`, never git refs), and `--repeats` the runs per case and arm (default 1).
 
-The runtime file `runtime.native.json` holds the model, effort, tools, permission mode, per-run
-budget, worst-request cost bounds, timeout, and the confinement each limit needs. Its model, effort,
-`worst_request` fields, and `max_concurrent_requests` say `UNAPPROVED` and
-`approval` is `null`. `--execute` and `--canaries` refuse until a person sets them and the preflight passes.
-Both also need `--pilot-id` and `--max-cost-usd`. `--execute` also refuses until `canaries.json` holds
-a pass for every canary (see "Canaries"). The runtime file is part of the frozen
-configuration, so a changed file starts a new pilot.
+### Launch
 
-### Layout
+Each run folder holds the materialized snapshot and a suite folder:
 
 ```text
-artifacts/skill-evals/PILOT/
-  pilot.json              frozen manifest, written once: runtime, stopping rule, harness and plugin digests, preflight
-  runtime.json            the runtime file that materialize read
-  mcp-empty.json          the strict MCP config
-  canaries.json           the canary verdicts for this frozen configuration, written by --canaries
-  canaries/NAME/          one run per canary, same layout as a run, plus canary.json (verdict, cost against budget)
-  effective-session.json  the init event (skills, tools, plugins, model) of the first canary that has one, the baseline for drift
-  report.json             run states, cost, aggregate with a Wilson 95% interval for recall and false activation
-  runs/r-<hash>/          one run per (case, arm, repeat); the hash hides the case id from the agent
-    run.json              argv, env keys, session id, exit code, timeout, duration, usage, effective session, violations
-    launch/stream.jsonl   raw stdout bytes; launch/stderr.txt
-    claude-home/          the run's own CLAUDE_CONFIG_DIR, with the session transcript and subagent files
-    workspace/ inputs/ manifest.json capture.json raw*.jsonl final-files/ evidence.json score.json   (skill_eval.py)
+OUT/
+  config.json        frozen once: runtime, CLI version, git SHA, catalog, corpus, fixture, and harness digests
+  stop.json          why the batch stopped, when it did; a later `run` launches nothing while it exists
+  report.json        written by `score`: run counts, spend, aggregate, Wilson 95% intervals
+  runs/CASE/ARM/rN/
+    manifest.json inputs/ workspace/      skill_eval.py materialize
+    suite/{swe,lab,uni}/                   copies of the snapshot's plugins; the session loads these
+    suite/evals/CASE/case.yaml fixture.sh  the prompt, limits, granted tools, and a scaffold that copies workspace/
+    plugin-eval.json plugin-eval.log plugin-eval.html
+    kept/transcript.jsonl kept/stream.jsonl   copied out of the sealed sandbox, which is then deleted
+    run.json           cost, error, turns, the session checks, and whether the stream needed a final newline
+  canaries/NAME/ARM/   same layout, for `canary`
+  interrupted/         run folders whose launch never finished, kept for the spend count
 ```
 
-`artifacts/` is ignored, so `--backup-dir` copies each finished run and the report to a destination
-outside the repository. The runner deletes only a run folder that never launched: a folder with no
-`run.json` left by an interrupted setup, and the folder it just materialized when a frozen input
-(corpus, fixture, plugin catalog, or harness) changed since the freeze. Both hold no model output. It never deletes or moves a run that launched. `materialize` also refuses when the copy of `plugins/` differs from the catalog it hashed just before (less `__pycache__` and `*.pyc`), so a change during the copy launches nothing. Case labels and oracles stay in `dataset/dev.jsonl`;
-the run folder holds only the prompt, the fixture, and the frozen catalog.
+The launch is `claude plugin eval SUITE --case CASE --ablation none --runs 1 --scaffold
+--trust-plugin --no-publish --allow-tools Write Edit --disallow-tools Task TaskStop NotebookEdit
+ToolSearch --max-cost-usd STOP --model MODEL --keep-temp`, with `CLAUDE_CODE_EFFORT_LEVEL` set to the
+frozen effort. The session has exactly `Read`, `Write`, `Edit`, `Glob`, `Grep`, and `Skill`: no
+shell and no Agent tool. In the `hook-off` arm materialize removed every plugin hook, so the suite
+copies have none. Plugin eval requires one grader per case, so each case has one that always passes;
+`skill_eval.py` scores the kept transcript instead.
 
-### Preflight
+After the launch, the runner opens the sealed sandbox, copies the session transcript, the stream
+trace, and the agent's final working folder, and deletes the sandbox. The stream trace lacks a final
+newline, which the scorer would count as lost coverage. The runner adds it and records
+`stream_appended_final_newline` in `run.json`; `capture` records it again as
+`stream.appended_final_newline`. The final working folder replaces `workspace/`, so `capture`
+records the agent's final files.
 
-Each check needs no model call, and a dry run writes nothing. A `fail` blocks `--canaries` and `--execute`.
+### Session checks and stopping rule
 
-- `runtime-complete`, `approval-recorded`: every field is set, and a person approved the model and effort.
-- `cli-version`: the installed CLI equals the frozen version.
-- `flags-in-help`: `claude --help` defines every flag a launch passes, `--include-hook-events` and `--plugin-dir` among them. The runner passes only flags that help lists.
-- `effort-allowed`, `permission_mode-allowed`, `permission_prompts-allowed`: the values are in the help's choices.
-- `config-home-isolated`: a fresh `CLAUDE_CONFIG_DIR` lists no installed plugin, so host plugins and
-  skills stay out. The run uses one such directory per run.
-- `auth-in-isolated-home`: the isolated home is logged in and honors the directory. It holds no OAuth
-  login, so the pilot bills `ANTHROPIC_API_KEY`.
-- `confine-read`, `confine-write`, `confine-network`: with `confined`, the tool set must hold no shell,
-  web, or MCP tool, and `restricted` must be true for read and write. No flag confines a shell tool, so a
-  tool set with one fails. Set the limit to `unconfined` to accept it. The manifest records that choice.
-  A passing check is `pending_live`: the CLI documents the limit, and a canary proves it.
-- `backup-dir`: writable, or creatable under a writable folder, and outside the repository. The check never creates it; the pilot creates it when it copies the first run.
+Each kept session is checked against the frozen runtime: the model, the exact tool set, no MCP
+server, the `swe`, `lab`, and `uni` plugins loaded, `"effort":"high"` in the transcript, and the
+hook arm. In `hook-on`, every plugin whose `SessionStart` hook the manifest froze needs a matched
+hook that succeeded; in `hook-off`, no hook may start. Hook events name no plugin, so a completed
+hook is matched to the plugin whose frozen `hooks/session-start.md` starts with its output. A
+violation stops the batch, and `score` skips that run.
 
-The launch environment holds only `PATH`, `HOME`, `TMPDIR`, locale, proxy and certificate variables,
-`ANTHROPIC_API_KEY`, and `CLAUDE_CONFIG_DIR`. After each run, the init event is checked: no MCP server,
-no shell or web tool under a confined limit, and the auto-memory path inside the run's config home. A
-check that fails stops the pilot. A run whose stream has no init event also stops it, because its isolation was not checked.
-Every launch, canary or run, is also checked for an escape in its stream, whatever its prompt asked: a
-`Write`, `Edit`, or `NotebookEdit` outside `<run>/workspace` and `<run>/inputs/plugins`, a `Read` of a
-file there that returned, a `Glob` or `Grep` result that names a path there, or any shell or web call,
-unless its `tool_result` is an error. A write, shell, or web call with no `tool_result` counts too. Both
-sides of each path are resolved first. An escape writes `isolation-violation.json` before `run.json`
-records it, and stops the pilot or the canary phase, so a crash after the launch cannot hide it.
-Every later canary and run must match the effective session that the first canary with an init event
-froze, which also freezes the bundled skills that the checked-out catalog does not list.
-
-### Arm check
-
-`--restricted` changes which settings load, so a `hook-on` run proves nothing unless its SessionStart
-hook ran. The runner passes `--include-hook-events`, reads the `hook_started` and `hook_response`
-events from `launch/stream.jsonl`, and records one entry per hook in `run.json` as `hook_events`:
-event, name, plugin, started, completed, outcome. The events carry no plugin name, so the runner
-attributes a completed hook to the plugin whose frozen `hooks/session-start.md` starts with the hook's
-output. An arm violation stops the pilot, like an init-event violation:
-
-- `hook-on`: some plugin that the manifest froze a SessionStart hook for has no matched SessionStart
-  hook that completed with outcome `success`. Every plugin in `manifest["hooks"]` needs one.
-- `hook-off`: any hook started or completed.
-
-The event shape comes from a stream-json capture in an earlier session transcript (`type: system`,
-`subtype: hook_started` or `hook_response`, `hook_id`, `hook_name` such as `SessionStart:startup`,
-`hook_event`, and on the response `output`, `exit_code`, `outcome`). That capture came from another CLI
-version, so the `hook-on` and `hook-off` canaries confirm it.
-
-### Stopping rule and cost
-
-The rule is fixed in `pilot.json` before the first launch. Runs go repeat by repeat, then case, then
-arm, so any stop leaves the arms within one run of each other. A launch reserves its per-run budget plus
-`max_concurrent_requests * max_request_usd`, computed from the runtime's `worst_request` fields
-(`context_tokens`, `output_tokens`, `usd_per_mtok_input_max`, `usd_per_mtok_output`). The
-runner launches a run only when the known spend, plus the reservation of each run with unknown cost, plus
-the next run's reservation, stays within `--max-cost-usd`. It also stops after three failed runs in a
-row, on drift, on an isolation violation, on an arm violation, and when a pilot run's known cost exceeds
-its budget plus `max_concurrent_requests * max_request_usd` (which writes `budget-assumption-broken.json`
-and blocks any future launch in that pilot). Cost comes from the stream's `result`
-event. The runner reads it and checks that bound first after the child exits, before it reads the init
-and hook events, so a run that fails later still records its cost. A missing cost stays `null`, counts at the reservation for the cap, and shows in `report.json` as
-`unknown_cost_runs`. A run that already launched is never launched again. A rerun skips a run with
-`score.json`, rescores a run that finished without one, and leaves a run that launched but did not
-finish where it is. That run is `aborted`: the runner was interrupted, was hard-killed (SIGKILL or power
-loss leaves a `run.json` with `started_at` and no `ended_at` or `outcome`), or failed while reading the
-stream after the launch. Its `run.json` records `outcome: aborted` and the reason. It is final and
-unscorable. `report.json` counts it under `run_states`. Its spend is the recorded cost, or the
-reservation when it has none (an interrupt or a hard kill records none). An interrupted or hard-killed
-run never reached the escape check, so the runner checks its retained stream once, when it records the
-interrupt or settles the hard kill. An escape there writes `isolation-violation.json` and stops the pilot.
-
-On SIGINT, SIGTERM, or SIGHUP, the runner kills the whole process group of the running `claude`, waits
-for it, records the run as `aborted` with the signal, and exits with a nonzero status. The signals are
-blocked from before the fork until `Popen` returns and while the kill runs, and only the first one
-raises, so a signal cannot leave a child that the runner does not know or skip the kill. A signal that
-arrives before the child starts is recorded as such, with no kill claimed. A signal that arrives while
-the runner kills a child that already timed out is recorded as a killed child with `timed_out: true`.
-No test covers the block before the fork. Only the unblock and the kill are tested, so the fork race
-that the block closes is guarded by the code alone.
-
-The cap rests on two assumptions:
-
-- The CLI checks `--max-budget-usd` before each model request, so a run overshoots by at most the
-  in-flight requests, at most `max_concurrent_requests` of them.
-- The owner's `worst_request` numbers bound the cost of one request: the context window, the output
-  limit, and the highest input and output prices of the approved model.
-
-The `budget-ceiling` canary is the one live check of the first assumption (see "Canaries"). Every launch,
-canary or run, checks its cost against the budget it launched with plus the bound, so `budget-ceiling`
-checks against $0.02 plus the bound. A launch whose cost breaks it writes `budget-assumption-broken.json`,
-which blocks every later launch in that pilot. The ordinary canaries
-only show that their own cost stayed within the per-run budget. Their prompts are trivial, so that holds
-whether or not the CLI enforces the budget.
-
-Treat the cap as unverified until `canaries.json` shows `budget-ceiling` passed, and read its
-`overshoot_usd` next to `overshoot_bound_usd`.
+A case cannot cap its own cost, and `--max-cost-usd` is checked only before a launch. So the
+runner stops the batch after a run whose cost is unknown or over `per_run_stop_usd`. Before each
+launch it adds the known spend, the stop amount for each launch with unknown cost (including
+`interrupted/`), and the stop amount for each launch in flight and the next one. It launches only
+when that sum stays within `--max-total-usd`. Three runs in a row that end with an error also
+stop the batch. Runs go repeat by repeat, then case, then arm, so a stop leaves the arms within
+one run of each other. A rerun skips each finished run. A run folder whose launch did not finish
+moves to `interrupted/` and runs again. `config.json` is frozen on the first `run`; a later `run`
+with a different configuration needs a new `--out`.
 
 ### Canaries
 
-`--canaries` runs seven live runs under the same frozen configuration and approval gate. Each is a
-materialized run folder under `canaries/NAME/` that the runner judges from its stream:
+`canary` runs two probes in the fixture of `--fixture-case` (default `IM-01`), in each arm, and
+each `--case` it is given. `read-outside` asks the agent to read a sentinel file outside the
+sandbox and quote it. `write-outside` asks it to write a file outside the sandbox. `probe.json`
+holds the sentinel token and the outside folder. A person reads each kept stream: the sentinel
+token must not appear, the outside file must not exist, and the session checks must pass.
 
-- `read-outside`: the agent must try each file-read tool in the session (`Read`, `Glob`, `Grep`) against
-  a sentinel file outside the fixture and the plugin snapshot. Each tool needs at least one attempt. A
-  call that succeeds and returns the sentinel's file name or its text counts as a read, whichever tool
-  made it, so a `Grep` that only lists the file fails too. The sentinel text must also not appear
-  anywhere in the stream. A file-read tool that was never tried fails the canary.
-- `write-outside`: a `Write` to a new path outside the fixture. At least one attempt must happen, every
-  one must be refused, and the file must not exist. The canary has no `Edit` probe. The CLI refuses an
-  `Edit` of a file it has not read, and `Read` is confined, so a refused `Edit` would not show that
-  writes are confined.
-- `network`: the session has no shell or web tool, and no call of one succeeded. The agent does not have
-  to try a web call.
-- `playbook-read`: a Read of a plugin playbook under `inputs/plugins` succeeds under `--restricted`.
-- `hook-on` and `hook-off`: the stream matches the arm (see "Arm check"). The agent does nothing special.
-- `budget-ceiling`: a run with `--max-budget-usd 0.02`, far below the per-run budget, and a task of 40 `Read`
-  calls, one per turn. It passes only if the budget caused the stop. That means fewer than 40 calls, a
-  `result` subtype other than `success`, a known cost of at least the $0.02 budget, and an overshoot at most
-  `max_concurrent_requests * max_request_usd` above it. `canary.json` records `stopped`, `tool_calls`,
-  `stop_subtype`, `overshoot_usd`, and `overshoot_bound_usd`. A run that keeps spending past the budget,
-  one that overshoots by more than the bound, one that finishes the task, and one that stops early with
-  less than the budget spent (for example `error_during_execution`) all fail.
+### Scoring
 
-A canary also fails when its init event shows an isolation violation or drifts from the frozen
-effective session. An escape in any canary (see "Preflight") writes `isolation-violation.json` and stops
-the canary phase at once. `read-outside` also counts the sentinel text anywhere in the stream as an
-escape, and `write-outside` counts its target file existing after the run. Every canary except `budget-ceiling` also
-fails when its cost is not known and within the per-run budget. Only `read-outside`, `write-outside`,
-`playbook-read`, and `budget-ceiling` fail when the agent never attempts the call they judge. `canaries.json` holds the verdicts and the frozen
-configuration digest. `--execute` refuses without it, with a different digest, or with any canary not
-passed or missing. A canary run counts toward `--max-cost-usd`. A canary that launched is never launched
-again, so a failed or interrupted canary needs a new `--pilot-id`. A canary that a hard kill left
-unjudged has its retained stream checked for escapes; an escape stops the canaries.
-
-### What still needs approval
-
-- Model, effort, runs per case, per-run budget, total cap, tool set, and the confinement choice.
-- The backup destination.
-- Running `--canaries`, and reading its verdicts and costs before `--execute`.
-- A relevant-action label. The runner passes none, so evidence stays partial and recall has a zero
-  denominator until a labeler runs. `claude plugin eval` does not replace this runner. Its help lists no hook arm, no effort flag,
-  and no way to keep the raw transcript or the final fixture. Its ablation compares a plugin with no
-  plugin, and it publishes its report to claude.ai unless `--no-publish` is set.
+`score --labels FILE` captures each kept run with its relevant-action label, a JSONL row of
+`case`, `arm`, `repeat`, and `tool_use_id` (see "Relevant-action labeler"). A run with no label
+is captured without one, so its evidence stays partial. `score` writes the capture files again on
+each pass, so it can run again after more labels.
 
 ### Relevant-action labeler
 
@@ -607,25 +492,15 @@ or justify a single pooled efficacy percentage.
 synthetic traces and minimal Claude-shaped transcripts. It checks leakage/isolation
 of fixtures, strict body identity, ordering, incomplete/failed reads, missing
 native evidence, aggregate denominators, and the Claude load proofs and message
-order. This verifies harness behavior only. `test_run_eval.py` runs `run_eval.py` against a stub `claude` on `PATH`. It checks that:
-a dry run launches no model and writes nothing, even with a new `--backup-dir`;
-the flags check covers `--plugin-dir`;
-a full run scores each arm and a rerun launches nothing;
-the cost cap stops before the next launch, and unknown cost counts at the run reservation;
-an unenforceable limit is rejected unless accepted as unconfined;
-a session whose tools break a confined limit, a hook-on run missing a plugin's hook, a hook-off run with
-any hook event, and a run with no init event each stop the pilot;
-each run records the hook events its arm allows;
-a run that launched and failed, and a run that a hard kill left without an end, are aborted and never
-launched again; a run that failed after the launch keeps its cost for the cap;
-an interrupt kills the child's process group and the run is aborted;
-`launch` restores the interrupt handlers and the child keeps no blocked signals;
-execute refuses without a canary record for the same configuration, or with a canary missing;
-passing canaries are recorded with their cost and the budget-ceiling overshoot, and allow execute;
-each failing canary variant is recorded and blocks execute;
-an escape in any canary or run writes the marker before the verdict and stops the launches;
-a canary that launched is never launched again; an unknown canary cost fails the canary; and a canary
-cost above the per-run budget is recorded against that budget. `test_facets.py` runs `facets.py`
+order. This verifies harness behavior only. `test_run_eval.py` runs `run_eval.py` against a stub
+`claude` that writes a kept sandbox like the real CLI. It checks that a run passes the frozen tool
+and effort flags, keeps the transcript and stream, records the added final newline, takes the final
+files from the agent's working folder, and leaves no hooks in a `hook-off` suite; that `score`
+scores each arm from the kept files and can run again; that a rerun launches nothing and an
+interrupted run moves aside and counts at the stop amount; that the total budget stops a launch
+before it starts; that a run over the per-run stop, a session with a wrong tool set, and a
+session with the wrong effort each stop the batch and are not scored; and that a different
+configuration needs a new output folder. `test_facets.py` runs `facets.py`
 on a copied catalog. It checks that `check` fails on a stale map and that
 `write` rejects a step name that nothing owns.
 The retained verification record is
@@ -646,17 +521,15 @@ by the linked delivered body, full `Read` reads of frozen `SKILL.md` and plugin 
 `child_resource_reads`), `Bash` commands mentioning frozen paths in `unproved_reads`,
 labeled action timing, and end coverage from stream-json. A `Skill` call with
 arguments counts when Claude Code appended them to the body as
-`ARGUMENTS: <args>`. It does not support typed slash-command loads, arguments
-substituted into a `$ARGUMENTS` placeholder, compaction, resumes,
+`ARGUMENTS: <args>`, and when Claude Code filled each `$ARGUMENTS` placeholder in the body
+with them and the frozen body digest matches. It does not support typed slash-command loads, compaction, resumes,
 repeat-load notes, Codex traces, unlabeled actions, or step-list extraction.
 These leave the session partial or the load unproved; they never count as a
 miss. EVIDENCE.md holds the contract and the raw-event audit.
 
-No activation baseline exists yet. A native run needs an authorized pilot:
-proposed model, effort, count, access, isolation limits and costs must go to the
-coordinator before starting. Do not run the model matrix from this README or assume stripping
-bindings disables manual external calls. `run_eval.py` runs the pilot (see "Native runner"), but no native run has happened and no
-limit is yet proved live.
+Native runs go through `run_eval.py` (see "Plugin-eval runner") with the owner-approved runtime
+in `runtime.plugin-eval.json`. Run the canaries and read their streams before a baseline. Do not
+assume that stripping bindings disables manual external calls; the canaries check the sandbox.
 
 Sources: the private source chat, especially its final two eval turns; the repository's current skill contracts; and OpenAI's
 [skill eval guidance](https://developers.openai.com/blog/eval-skills). The supplied
