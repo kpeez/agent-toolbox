@@ -117,6 +117,12 @@ def load_facets():
 
 DATASET = HERE / "dataset" / "dev.jsonl"
 FIXTURE_FILE = re.compile(r"\.\./fixtures/([^/]+)/(.+)")
+SPLITS = {"development", "holdout_candidate", "holdout"}
+
+
+def fixtures_root(path):
+    """Fixtures sit beside the corpus file: a `../fixtures/<fixture>/<path>` value is joined to the file's own path."""
+    return Path(path).absolute().parent / "fixtures"
 
 
 def read_cases(path=DATASET):
@@ -136,7 +142,7 @@ def read_cases(path=DATASET):
             names.add(match.group(1))
         if len(names) != 1:
             raise ValueError(f"line {number}: files must all come from exactly one fixture")
-        fixture = contained(HERE / "fixtures", next(iter(names)))
+        fixture = contained(fixtures_root(path), next(iter(names)))
         present = {f.relative_to(fixture).as_posix() for f in fixture.rglob("*") if f.is_file()}
         if present != set(sample["files"]):
             raise ValueError(f"line {number}: files must list exactly the files of its fixture, "
@@ -168,7 +174,7 @@ def corpus(path=DATASET):
                 case["category"] == "negative" or not case.get("expected_route"))):
             raise ValueError("unknown family, or an open-family case that is negative or sets no expected_route")
         groups[family][case["category"]] += 1
-        if case["split"] not in {"development", "holdout_candidate"}:
+        if case["split"] not in SPLITS:
             raise ValueError("unknown split")
         for field in ("expected_skills", "acceptable_auxiliaries", "forbidden_skills"):
             if not isinstance(case[field], list) or len(set(case[field])) != len(case[field]):
@@ -203,11 +209,15 @@ def corpus(path=DATASET):
             raise ValueError("facets must list unique load facets with skill-call or full-read evidence")
         if not case["relevant_action"].strip() or not case["rationale"].strip():
             raise ValueError("missing oracle/action boundary")
-        fixture = contained(HERE / "fixtures", case["fixture"])
+        fixture = contained(fixtures_root(path), case["fixture"])
         if not fixture.is_dir():
             raise ValueError(f"missing fixture: {fixture}")
-    if set(groups) - OPEN_FAMILIES != MIX_FAMILIES or any(
-            dict(groups[family]) != COUNTS for family in MIX_FAMILIES):
+    splits = {case["split"] for case in cases}
+    if "holdout" in splits and splits != {"holdout"}:
+        raise ValueError("a holdout corpus holds only holdout cases")
+    # The 4/2/3/1 family mix describes the development corpus; a holdout keeps its own mix.
+    if splits != {"holdout"} and (set(groups) - OPEN_FAMILIES != MIX_FAMILIES or any(
+            dict(groups[family]) != COUNTS for family in MIX_FAMILIES)):
         raise ValueError("expected the declared families, each with 4/2/3/1 cases")
     return cases
 
@@ -299,7 +309,7 @@ def materialize(args):
     source_catalog_files = inventory(REPO / "plugins")
     output.mkdir(parents=True, exist_ok=False)
     workspace = output / "workspace"
-    source = contained(HERE / "fixtures", case["fixture"])
+    source = contained(fixtures_root(args.corpus), case["fixture"])
     inventory(source)  # Reject links before copying.
     shutil.copytree(source, workspace)
     template = output / "empty-git-template"
@@ -368,7 +378,7 @@ def materialize(args):
         "facets_sha256": digest((HERE / "facets.json").read_bytes()),
         "hook_arm": hook_arm, "runtime": runtime, "plugin_versions": versions, "skills": skills,
         "resources": resources, "input_files": inventory(inputs), "fixture_files": inventory(workspace),
-        "fixture_catalog_files": inventory(HERE / "fixtures"), "source_catalog_files": source_catalog_files,
+        "fixture_catalog_files": inventory(fixtures_root(args.corpus)), "source_catalog_files": source_catalog_files,
         "removed_bindings": removed,
         "known_deltas": [
             "rules/AGENTS.md stays in the snapshot, so an Antigravity run sees the session-start text through it whatever the arm"

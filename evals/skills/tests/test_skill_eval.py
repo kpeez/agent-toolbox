@@ -1382,6 +1382,38 @@ class OfflineCLIContract(unittest.TestCase):
         self.corpus = self.root / f"{name}-corpus.jsonl"
         write_corpus(self.corpus, corpus["cases"])
 
+    def holdout_corpus(self, folder):
+        """A holdout-shaped corpus: holdout.jsonl beside its own fixtures/, open-family positives and router negatives."""
+        cases = [dict(c, split="holdout") for c in read_cases()
+                 if c.get("family") in {"swe-route-choice", "lab-route-choice"}
+                 or (c["target"] in {"swe:swe-mode", "lab:lab-mode"} and c["category"] == "negative")]
+        folder.mkdir()
+        write_corpus(folder / "holdout.jsonl", cases)
+        return folder / "holdout.jsonl", cases
+
+    def test_holdout_corpus_validates_and_materializes_from_the_fixtures_beside_it(self):
+        dev = (HERE / "dataset" / "dev.jsonl").read_bytes()
+        self.corpus, cases = self.holdout_corpus(self.root / "holdout")
+        self.assertEqual(self.cli("validate")["cases"], len(cases))
+        case = cases[0]
+        fixture = self.root / "holdout" / "fixtures" / case["fixture"]
+        changed = next(p for p in sorted(fixture.rglob("*")) if p.is_file())
+        changed.write_text(changed.read_text() + "\n# holdout copy\n")
+        run = self.root / "holdout-run"
+        self.cli("materialize", "--case", case["id"], "--runtime", HERE / "runtime.offline.json", "--output", run)
+        rel = changed.relative_to(fixture).as_posix()
+        self.assertEqual((run / "workspace" / rel).read_text(), changed.read_text())
+        manifest = json.loads((run / "manifest.json").read_text())
+        self.assertEqual(manifest["fixture_catalog_files"][f"{case['fixture']}/{rel}"],
+                         hashlib.sha256(changed.read_bytes()).hexdigest())
+        shutil.rmtree(self.root / "holdout" / "fixtures")
+        self.assertIn("skill-eval:", self.cli("validate", ok=False).stderr)
+        self.assertEqual((HERE / "dataset" / "dev.jsonl").read_bytes(), dev)
+
+    def test_corpus_rejects_a_holdout_case_among_development_cases(self):
+        self.validate_with("mixed-split", "IM-01", split="holdout")
+        self.assertIn("only holdout cases", self.cli("validate", ok=False).stderr)
+
     def test_corpus_rejects_a_bad_family_and_a_route_on_a_case_that_forbids_the_router(self):
         for name, case_id, update, message in (
                 ("family-unknown", "IM-01", {"family": "no-such-family"}, "unknown family"),

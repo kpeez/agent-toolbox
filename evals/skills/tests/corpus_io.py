@@ -1,5 +1,6 @@
 """Test helper: read the skill-eval corpus as case dicts and write a custom corpus as Inspect Sample JSONL."""
 import json
+import shutil
 import sys
 from pathlib import Path
 
@@ -15,10 +16,16 @@ def read_cases(path=DATASET):
 
 
 def write_corpus(path, cases):
-    """Write case dicts as one Sample per line; the inverse of skill_eval.read_cases, with no validation."""
+    """Write case dicts as one Sample per line; the inverse of skill_eval.read_cases, with no validation.
+
+    The loader reads fixtures beside the corpus file, so a corpus written elsewhere gets a copy of the
+    dataset fixtures there, unless that folder already exists."""
+    source = se.fixtures_root(DATASET)
+    if not se.fixtures_root(path).exists():
+        shutil.copytree(source, se.fixtures_root(path))
     lines = []
     for case in cases:
-        fixture = HERE / "fixtures" / case["fixture"]
+        fixture = source / case["fixture"]
         files = {p.relative_to(fixture).as_posix(): f"../fixtures/{case['fixture']}/{p.relative_to(fixture).as_posix()}"
                  for p in sorted(fixture.rglob("*")) if p.is_file()}
         metadata = {("target_skill" if k == "target" else k): v for k, v in case.items()
