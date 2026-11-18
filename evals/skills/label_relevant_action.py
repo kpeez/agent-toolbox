@@ -31,7 +31,8 @@ PROMPT_INSTRUCTIONS = (
 LABELER_SYSTEM_PROMPT = "You label coding-agent transcripts. Answer only through the structured output."
 PROMPT_SHA256 = se.digest((LABELER_SYSTEM_PROMPT + "\n\n" + PROMPT_INSTRUCTIONS).encode("utf-8"))
 TARGET_KEYS = ("file_path", "pattern", "path", "command")
-PATH_KEYS = ("file_path", "path", "notebook_path")
+# Keys whose value can name a file or folder; a Glob pattern is a path with wildcards.
+PATH_KEYS = ("file_path", "path", "notebook_path", "pattern")
 MAX_TARGET_CHARS = 300
 
 
@@ -76,20 +77,39 @@ def _path_in_plugin_dir(raw_path: str, roots: list[tuple[Path, Path, Path | None
     return any(rel_r is not None and rel_p.is_relative_to(rel_r) for _, _, rel_r in roots)
 
 
-def _is_dropped_call(name: object, inp: object, roots: list[tuple[Path, Path, Path | None]], bash_patterns: list[re.Pattern[str]]) -> bool:
+def _strings(value: object):
+    if isinstance(value, str):
+        yield value
+    elif isinstance(value, dict):
+        for item in value.values():
+            yield from _strings(item)
+    elif isinstance(value, list):
+        for item in value:
+            yield from _strings(item)
+
+
+def _is_dropped_call(
+    name: object,
+    inp: object,
+    roots: list[tuple[Path, Path, Path | None]],
+    root_patterns: list[re.Pattern[str]],
+    cwd: str | None = None,
+) -> bool:
+    """A Skill call, or a call whose input reaches a declared plugin dir: by path, by a path relative to the
+    session cwd, or by naming the dir anywhere in its input (a Bash command, a Glob pattern)."""
     if name == "Skill":
         return True
     if not isinstance(inp, dict):
         return False
     for key in PATH_KEYS:
         val = inp.get(key)
-        if isinstance(val, str) and val and _path_in_plugin_dir(val, roots):
+        if not isinstance(val, str) or not val:
+            continue
+        if _path_in_plugin_dir(val, roots):
             return True
-    if name == "Bash" and isinstance(inp.get("command"), str):
-        command = inp["command"]
-        if any(pattern.search(command) for pattern in bash_patterns):
+        if cwd and not os.path.isabs(val) and _path_in_plugin_dir(posixpath.join(cwd, val), roots):
             return True
-    return False
+    return any(pattern.search(text) for text in _strings(inp) for pattern in root_patterns)
 
 
 def _call_target(inp: object) -> str:
@@ -122,12 +142,13 @@ def build_view(
         None,
     )
     session = se.claude_session(root_rows, str(transcript_path), sid, None, issues, hook_arm="hook-on")
+    cwd = next((row["cwd"] for _, row in root_rows if isinstance(row.get("cwd"), str) and row["cwd"]), None)
     roots, bash_patterns = _plugin_matchers(plugin_dirs)
     tool_calls = []
     for tool_use_id, use in session["uses"].items():
         if not isinstance(tool_use_id, str) or not tool_use_id:
             raise ValueError(f"root tool_use missing string id at line {use['line']}")
-        if _is_dropped_call(use["name"], use["input"], roots, bash_patterns):
+        if _is_dropped_call(use["name"], use["input"], roots, bash_patterns, cwd):
             continue
         tool_calls.append({
             "tool_use_id": tool_use_id,

@@ -50,6 +50,7 @@ def write_claude_transcript(
     *,
     hook_rows: list[dict] | None = None,
     sid: str = "claude-session",
+    cwd: str | None = None,
 ) -> None:
     rows: list[dict] = []
 
@@ -60,6 +61,7 @@ def write_claude_transcript(
             "parentUuid": rows[-1]["uuid"] if rows else None,
             "sessionId": sid,
             "isSidechain": is_sidechain,
+            **({"cwd": cwd} if cwd else {}),
             **extra,
             **row,
         }
@@ -232,6 +234,24 @@ class RelevantActionLabelerTest(unittest.TestCase):
         for leaked in ("swe:implement", "swe-mode", "fix-bug", "SENTINEL_HOOK_TEXT", "SENTINEL_BODY", "hook-on", "hook-off", "sub-edit"):
             self.assertNotIn(leaked, serialized)
 
+    def test_view_drops_glob_and_grep_calls_that_reach_a_plugin_dir_by_pattern_or_relative_path(self) -> None:
+        transcript = self.root / "glob.jsonl"
+        cwd = self.root / "workspace"
+        skill_dir = self.plugin_dir / "skills" / "implement"
+        rel_skill = os.path.relpath(skill_dir, cwd)
+        steps = [
+            ("call", "m1", "abs-glob", {"name": "Glob", "input": {"pattern": f"{skill_dir}/references/*.md"}}),
+            ("call", "m2", "rel-glob", {"name": "Glob", "input": {"pattern": f"{rel_skill}/*.md"}}),
+            ("call", "m3", "rel-grep", {"name": "Grep", "input": {"pattern": "step", "path": rel_skill}}),
+            ("call", "m4", "named-grep", {"name": "Grep", "input": {"pattern": "x", "glob": f"{skill_dir}/*"}}),
+            ("call", "m5", "work-glob", {"name": "Glob", "input": {"pattern": "src/*.py"}}),
+            ("call", "m6", "work-edit", {"name": "Edit", "input": {"file_path": f"{cwd}/importer.py"}}),
+        ]
+        write_claude_transcript(transcript, steps, cwd=str(cwd))
+        view = self.run_cli("view", "--transcript", transcript, "--case", "IM-01", "--plugin-dir", self.plugin_dir)
+        self.assertEqual([c["tool_use_id"] for c in view["tool_calls"]], ["work-glob", "work-edit"])
+        self.assertNotIn("implement", json.dumps(view["tool_calls"]))
+
     def test_label_accepts_valid_id_and_none_and_rejects_bad_replies(self) -> None:
         transcript = self.root / "label.jsonl"
         write_claude_transcript(
@@ -253,9 +273,12 @@ class RelevantActionLabelerTest(unittest.TestCase):
 
         logged = json.loads(self.stub_log.read_text(encoding="utf-8").splitlines()[-1])
         argv = logged["argv"]
-        for flag in ("-p", "--no-session-persistence", "--effort", "low", "--model", "haiku", "--output-format", "json"):
+        for flag in ("-p", "--no-session-persistence", "--effort", "low", "--model", "haiku", "--output-format", "json",
+                     "--restricted", "--strict-mcp-config", "--disable-slash-commands"):
             self.assertIn(flag, argv)
         self.assertEqual(argv[argv.index("--tools") + 1], "")
+        self.assertEqual(argv[argv.index("--system-prompt") + 1],
+                         "You label coding-agent transcripts. Answer only through the structured output.")
         schema = json.loads(argv[argv.index("--json-schema") + 1])
         self.assertEqual(schema["properties"]["tool_use_id"]["enum"], ["use-read", "use-edit", "none"])
         self.assertIn(self.cases["IM-01"]["relevant_action"], logged["prompt"])
