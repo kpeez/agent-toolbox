@@ -1,0 +1,9 @@
+--- a/plugins/swe/skills/implement/SKILL.md
++++ b/plugins/swe/skills/implement/SKILL.md
+@@ -1,5 +1,5 @@
+ ---
+ name: implement
+-description: "Implement an authorized feature or fix through relevant verification. Use for scoped code changes."
++description: "Build an authorized feature or fix and verify it. Use whenever the user asks for new or changed behavior in code, even a small one."
+ argument-hint: "<feature or fix>"
+ ---

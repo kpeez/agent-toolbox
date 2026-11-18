@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 90 authored scenarios. Seventy are swe cases: ten each for `implement`, `diagnose`,
+The corpus has 126 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:
@@ -19,10 +19,36 @@ same mix, on the `classifier-figures` fixture. Three of its natural and contextu
 requests repeat a real session in which the skill did not load: regenerate the
 figures, transpose the results table, and apply a reference visual design.
 
+The `swe-mode-*` family adds ten cases for `swe:swe-mode` in the same mix. Its seven positives
+are router-load cases that also set `expected_route`, so each scores the route line, the read of
+the playbook, and the Steps section. Its three negatives are a closing remark, a quick fact that
+needs no repository, and a task outside software. A load of the router there is a false
+activation. The closing remark and the quick fact also forbid `swe:go-deeper`, because its skip rule
+excludes chat and quick facts. The software-free task allows it and `swe:writing`, because the session-start hook
+runs `go-deeper` on a task of any kind and sends the reply through `writing`. `swe-mode-pause-safely`
+forbids `go-deeper` too: it is a follow-up inside a task that an earlier turn framed.
+`swe-mode-improve-performance` runs on the `tile-preview` fixture, whose renderer rebuilds a palette of 3,000 shades
+for every tile. `python3 preview.py` (python 3.9) took 14.6 to 16.3 s over eight runs, median 14.8 s, so the request
+says "about 15 s".
+
 The `lab-mode-*` family adds ten cases for `lab:lab-mode` in the same mix, on
 the same fixture. Six of them set `expected_route`, the route the agent should
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
+
+The two route-choice families, `swe-route-choice` (20 cases) and `lab-route-choice` (6 cases), cover
+each playbook and single-skill route that no other case covers, with one case per route. They have
+no fixed mix: `validate` rejects a negative case, and a case with no `expected_route`, in an open family, because a route-choice case scores one route. A negative in a mix family may set `expected_route`. Every
+case instead resembles a neighbouring route and belongs to its own: the `rationale` names the
+near miss. Cases on a route with modes set `expected_mode`. A route-choice case holds one correct
+route that the router's own text supports, and its fixture holds every input that the task names.
+For example, `swe-route-diagnose-runtime` runs a worker script that spins, `swe-route-ship-pr` has a conflicted
+`receipt.py`, and `lab-route-maintain-project-skills` has project skills and a renamed column. Where two router lines overlap, such as the PR-status
+trigger and the `ship-pr` route, the case uses wording that only one of them matches.
+
+Four routes have no case. `ketchup` needs commit history, `reflect` needs a past session, `ship-stack`
+needs open PRs and their CI, and `clean-worktrees` needs worktrees. A workspace is a copy of the fixture plus a fresh `git init` with no commits, remote, or
+past sessions, so it holds none of these. Their cases wait until the setup can build that state.
 
 The "Activation facets with no case" list in [FACETS.md](FACETS.md) names each
 model-invocable skill that has no family yet.
@@ -130,8 +156,8 @@ catalog scope, context delivery, and harness deltas before materializing.
 
 A case may set four optional fields. `expected_route` is the id of a `route`
 facet in `facets.json`, such as `route/lab/analyze-results`. It must belong to the plugin of the
-case's target. A negative case may set it, unless the case forbids the plugin's router, because
-a route needs the router. `family` names the case's family (see above). `expected_mode` names the mode of a
+case's target. A negative case in a mix family may set it, unless the case forbids the plugin's router, because
+a route needs the router. An open family holds no negative case. `family` names the case's family (see above). `expected_mode` names the mode of a
 single-skill route whose skill has modes, such as `publish` for `route/swe/ship-pr`. A route
 with modes needs it, and any other route rejects it. `facets` lists facet ids whose evidence is `skill-call` or
 `full-read`. `score.json` then holds `route` (null without `expected_route`)
@@ -187,7 +213,7 @@ and `facets`, a `loaded`, `miss`, or `unavailable` value for each listed facet.
   else `true`.
 
 The router runs first, so a case's labels must agree with what a correct router-first run loads: the route, the
-`always` loads of its steps, the router's always-on triggers, and the session-start hooks. A negative for a leaf skill is
+`always` loads of its steps, the skills the router's Triggers name, and the session-start hooks. A negative for a leaf skill is
 valid only when the correct route for that request never loads that skill. A step text that carries its own condition
 counts. `SP-07` forbids `swe:ship-pr` because `fix-bug` step 14 runs "when publication is authorized" and the request says
 not to commit or push. `HO-07` forbids `swe:interview-user` because `build-feature` step 2 runs only when the user has not
@@ -202,6 +228,10 @@ A case that sets `expected_route` credits what a router-first run on that route 
 
 - the plugin's router and the routed skill;
 - every skill or principle that a step or reply line of the route names (`route_allowed_skills`);
+- every skill or principle that the Triggers section of the plugin's router names (the `trigger-load` facets), such
+  as `model-the-domain`, `architect`, `swarm`, `no-comments`, and `log-decisions`. The router says its Triggers "hold
+  in every playbook and route", so a correct run on any route may load them. A trigger that names a playbook or a
+  reference is a read, not a load, and a project skill is not scorable, so neither adds a credit;
 - the always-on triggers: `go-deeper` (Match step 2 of the router) and `swe:writing` (the swe router's prose trigger,
   "the reply included"). A swe route credits `swe:go-deeper` and `swe:writing`.
   A lab route credits `lab:go-deeper` (its own Match step 2), and also `swe:go-deeper` and `swe:writing`. The swe
@@ -216,15 +246,16 @@ applies. A `go-deeper` load there is then a false activation.
 The `go-deeper` skip rule is: chat, a quick factual answer, a mechanical or fully specified edit, a follow-up inside a
 task you already framed, and "just do it". It runs once per task. The corpus applies it as follows.
 
-- A quick factual answer: `HO-09`, `lab-mode-define-metric`,
+- Chat and a quick factual answer: `swe-mode-chat`, `swe-mode-quick-fact`, `HO-09`, `lab-mode-define-metric`,
   `lab-making-plots-read-table`, and the lookups `TA-07`, `DG-07`, and `TC-08`.
 - A mechanical or fully specified edit or action: the request names every constraint of the change or the action, so
   nothing is left to choose. These are `IM-10`, `AR-07`, `HO-07`, `TC-07` (run a named command and report), `SP-01`
   and `SP-10` (commit finished work and open a draft PR), `SP-04` (land an approved PR), and
   `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
 - A follow-up inside a framed task: the last user turn continues the work that an earlier assistant turn did. These
-  are `SP-05` (commit what the earlier turn reported complete) and `SP-06` (fix what it diagnosed). A user turn that opens a new task after an answer is
-  a new task, so `HO-05`, `HO-06`, and the lab contextual cases keep `go-deeper` allowed.
+  are `SP-05` (commit what the earlier turn reported complete), `SP-06` (fix what it diagnosed),
+  and `swe-mode-pause-safely`. A user turn that opens a new task after an answer is
+  a new task, so `HO-05`, `HO-06`, `swe-mode-build-feature`, and the lab contextual cases keep `go-deeper` allowed.
 
 A case that sets no `expected_route` gets only one automatic credit: `swe:writing`, when it lists the plugin's router as
 expected or auxiliary. It labels the rest itself:

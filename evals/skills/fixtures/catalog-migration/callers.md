@@ -1,4 +1,4 @@
-- Website: expects a string.
-- CSV export: writes the value without locale.
-- Local report A: groups by display name.
-- Local report B: sorts by display name.
+- Website (`website.py`): `render_product(product)` returns a one-line string using `catalog.display_name`.
+- CSV export (`export_csv.py`): `python3 export_csv.py --out products.csv` writes `id,display_name,price_cents` without locale.
+- Group-by-name report (`report_by_name.py`): `python3 report_by_name.py` prints product counts grouped by display name.
+- Sorted-catalog report (`report_sorted.py`): `python3 report_sorted.py` prints products sorted by display name.

@@ -1070,6 +1070,36 @@ class OfflineCLIContract(unittest.TestCase):
             route, _ = self.route_trace(f"route-label-{index}", line=line)
             self.assertEqual(route["line"], {"status": "match", "observed": "analyze-results"}, line)
 
+    def test_route_line_requires_the_label_to_match_the_route_type(self):
+        case = self.case_named("swe-route-figure-it-out")
+        matched = self.route_run("match-only-route", case, [("skill", "swe:figure-it-out")],
+                                 "Route: figure-it-out. Reason: the work is cross-cutting.")
+        self.assertEqual(matched["line"], {"status": "match", "observed": "figure-it-out"})
+        wrong_label = self.route_run("match-only-playbook", case, [("skill", "swe:figure-it-out")],
+                                     "Playbook: figure-it-out. Reason: the work is cross-cutting.")
+        self.assertEqual(wrong_label["line"]["status"], "wrong")
+        wrong = self.route_run("match-only-wrong-slug", case, [], "Playbook: fix-bug. Reason: it fits.")
+        self.assertEqual(wrong["line"]["status"], "wrong")
+        listed = self.route_run("listed-route-keeps-its-label", self.case_named("DG-01"), [],
+                                "Playbook: diagnose. Reason: it fits.")
+        self.assertEqual(listed["line"]["status"], "wrong")
+        playbook = self.route_run("route-label-on-a-playbook", self.case_named("swe-mode-refactor-structure"), [],
+                                  "Route: refactor-structure. Reason: it fits.")
+        self.assertEqual(playbook["line"], {"status": "wrong", "observed": "refactor-structure"})
+
+    def test_figure_it_out_allows_log_decisions(self):
+        score = self.loads_score("figure-it-out-log-decisions", "swe-route-figure-it-out",
+                                 "swe:swe-mode", "swe:figure-it-out", "swe:log-decisions")
+        self.assertEqual(score["unexpected_skills"], [])
+
+    def test_a_routed_run_may_load_the_skills_its_router_triggers_name(self):
+        triggered = self.loads_score("router-triggers", "swe-route-blast-radius", "swe:swe-mode", "swe:blast-radius",
+                                     "swe:principle-model-the-domain", "swe:architect")
+        self.assertEqual(triggered["unexpected_skills"], [])
+        untriggered = self.loads_score("router-triggers-unnamed", "swe-route-blast-radius", "swe:swe-mode",
+                                       "swe:blast-radius", "swe:why")
+        self.assertEqual(untriggered["unexpected_skills"], ["swe:why"])
+
     def test_skill_route_scores_the_line_and_the_routed_skill_load(self):
         case = self.case_named("lab-mode-route-autoresearch")
         line = "Route: autoresearch. Reason: the user wants a bounded experiment loop."
@@ -1206,6 +1236,14 @@ class OfflineCLIContract(unittest.TestCase):
         no_router = self.loads_score("always-on-no-router", "HO-09", "swe:writing")
         self.assertEqual(no_router["unexpected_skills"], ["swe:writing"])
         self.assertIs(no_router["false_activation"], False)
+
+    def test_go_deeper_on_chat_or_a_quick_fact_is_a_false_activation(self):
+        for case_id in ("swe-mode-chat", "swe-mode-quick-fact"):
+            score = self.loads_score("go-deeper-" + case_id, case_id, "swe:go-deeper")
+            self.assertEqual(score["unexpected_skills"], ["swe:go-deeper"], case_id)
+            self.assertIs(score["false_activation"], True, case_id)
+        allowed = self.loads_score("go-deeper-non-software", "swe-mode-non-software", "swe:go-deeper")
+        self.assertEqual(allowed["unexpected_skills"], [])
 
     def test_aggregate_keeps_two_families_of_one_target_apart(self):
         scores = []

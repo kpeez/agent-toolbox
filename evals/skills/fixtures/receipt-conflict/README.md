@@ -1,0 +1,1 @@
+Receipt text helpers for the point-of-sale printer. Amounts are integer cents. This folder is a copy of the working tree of open PR 12 after merging `main` stopped on a conflict. The copy has no git history or merge state. `receipt.py` holds the conflict markers, and `branch-commits.txt` holds each side's commit message.
