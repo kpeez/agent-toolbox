@@ -53,7 +53,7 @@ the whole `.claude/skills` folder: when a teammate keeps a local, ignored
   (`ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`),
   an older version of this layout added it with the ignore line
   `/.claude/skills/<skill-name>`. Remove both lines.
-- Otherwise, link the skill:
+- Then link the skill:
   `mkdir -p .claude/skills && ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`.
 - Then stage the link with `git add -f .claude/skills/<skill-name>` and commit
   it with the skill. The `-f` adds it even when `.gitignore` covers `.claude/`. Git applies no ignore
