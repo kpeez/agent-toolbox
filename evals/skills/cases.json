@@ -3231,10 +3231,10 @@
       "messages": [
         {
           "role": "user",
-          "content": "Does halving the fine-tuning learning rate change TPR at FPR 0.1 for the base model? Run the comparison."
+          "content": "Does halving the learning rate in config.json, from 0.1 to 0.05, change the held-out accuracy that eval.py prints for the ticket classifier? Run the comparison."
         }
       ],
-      "fixture": "classifier-figures",
+      "fixture": "ticket-classifier",
       "expected_skills": [
         "lab:lab-mode"
       ],
@@ -3245,7 +3245,7 @@
         "principle-read/lab/write-the-decision-first"
       ],
       "relevant_action": "Say Playbook: run-experiment and read the playbook before any other step.",
-      "rationale": "Step 1 writes the hypothesis, the metric, and the decision rule before any run, on any fixture. This fixture holds no training pipeline, so a correct run may skip the pilot, the noise floor, the full run, and the analysis steps. No principle from those steps is listed."
+      "rationale": "One designed comparison of two learning rates, so the run-experiment line takes it. No results exist yet, so analyze-results does not fit, and one comparison is not the repeated keep-or-discard loop of autoresearch. The ticket-classifier fixture holds the whole pipeline: generated data, train.py with --lr and --seed, config.json with lr 0.1, and eval.py, which prints the accuracy. Step 1-write-the-decision runs first on every correct run, before step 2 can stop the run, and it names write-the-decision-first. The principle is hidden from the skill list, so the agent reads it by path. The later steps are not listed: step 2 stops the run when a source already answers the question, so no later step is on every correct path."
     }
   ]
 }
