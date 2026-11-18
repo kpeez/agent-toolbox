@@ -492,7 +492,6 @@
           "swe-route-babysit-pr",
           "swe-route-blast-radius",
           "swe-route-build-prototype",
-          "swe-route-clean-worktrees",
           "swe-route-correct",
           "swe-route-diagnose-runtime",
           "swe-route-external-agents",
@@ -1280,9 +1279,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "id": "playbook-read/swe/clean-worktrees",
@@ -1295,7 +1292,7 @@
       },
       "requirement": "always",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
       "subject": "clean-worktrees"
     },
@@ -3529,9 +3526,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "assistant-text",
       "handles": [
@@ -3554,7 +3549,7 @@
       "requirement": "always",
       "route_type": "playbook",
       "scope": "root",
-      "scorer": "scored",
+      "scorer": "invisible",
       "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
       "subject": "clean-worktrees"
     },
@@ -8310,9 +8305,7 @@
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "1-snapshot-and-audit",
@@ -8328,16 +8321,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-snapshot-and-audit: Record `df -h /`, then run `bash <plugin-root>/scripts/worktree_audit.sh [-b origin/<branch>] [repo-path]` ([worktree_audit.sh](../../../scripts/worktree_audit.sh)). Pass `-b` when PRs target a branch other than `origin/HEAD`. It reads paths from `git worktree list`, never hand-typed. Run it in the background, because the session scan is slow. (build-the-lever, encode-lessons-in-structure)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "1-snapshot-and-audit",
@@ -8353,16 +8344,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "1-snapshot-and-audit: Record `df -h /`, then run `bash <plugin-root>/scripts/worktree_audit.sh [-b origin/<branch>] [repo-path]` ([worktree_audit.sh](../../../scripts/worktree_audit.sh)). Pass `-b` when PRs target a branch other than `origin/HEAD`. It reads paths from `git worktree list`, never hand-typed. Run it in the background, because the session scan is slow. (build-the-lever, encode-lessons-in-structure)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "2-cross-check-in-use",
@@ -8378,16 +8367,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "2-cross-check-in-use: The bucket is advice, not permission. The active sessions are the real artifact. Get that set from the user and cross-check every candidate; the in-use set wins over a `safe` bucket. (prove-it-works)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "3-verify-usage",
@@ -8403,16 +8390,14 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "3-verify-usage: For every `verify-recent-chat` row, or any row you doubt, have subagents read this project's session transcripts and report whether the session is ongoing and which worktrees it touches. A background subagent's worktree is in use even when the user never named it. (recall, guard-the-context-window)",
       "subject": "clean-worktrees"
     },
     {
       "cases": {
         "negative": [],
-        "positive": [
-          "swe-route-clean-worktrees"
-        ]
+        "positive": []
       },
       "evidence": "full-read",
       "handle": "3-verify-usage",
@@ -8428,7 +8413,7 @@
       },
       "requirement": "always",
       "scope": "delegate-allowed",
-      "scorer": "scored",
+      "scorer": "recorded",
       "source_text": "3-verify-usage: For every `verify-recent-chat` row, or any row you doubt, have subagents read this project's session transcripts and report whether the session is ongoing and which worktrees it touches. A background subagent's worktree is in use even when the user never named it. (recall, guard-the-context-window)",
       "subject": "clean-worktrees"
     },
@@ -11681,8 +11666,8 @@
       "recorded": 5
     },
     "playbook-read": {
-      "recorded": 1,
-      "scored": 27
+      "recorded": 2,
+      "scored": 26
     },
     "principle-read": {
       "recorded": 29
@@ -11691,8 +11676,8 @@
       "recorded": 2
     },
     "route": {
-      "invisible": 3,
-      "scored": 44
+      "invisible": 4,
+      "scored": 43
     },
     "route-load": {
       "recorded": 2,
@@ -11703,8 +11688,8 @@
     },
     "step-load": {
       "invisible": 9,
-      "recorded": 6,
-      "scored": 228
+      "recorded": 11,
+      "scored": 223
     },
     "trigger-load": {
       "invisible": 2,

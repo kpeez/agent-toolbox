@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-91 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+98 of 336 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -56,10 +56,10 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 |---|---|---|---|---|
 | activation | 9 | 28 | 0 | 37 |
 | hook-load | 0 | 5 | 0 | 5 |
-| route | 44 | 0 | 3 | 47 |
+| route | 43 | 0 | 4 | 47 |
 | route-load | 17 | 2 | 0 | 19 |
-| playbook-read | 27 | 1 | 0 | 28 |
-| step-load | 228 | 6 | 9 | 243 |
+| playbook-read | 26 | 2 | 0 | 28 |
+| step-load | 223 | 11 | 9 | 243 |
 | reply-load | 0 | 2 | 0 | 2 |
 | trigger-load | 0 | 16 | 2 | 18 |
 | principle-read | 0 | 29 | 0 | 29 |
@@ -88,7 +88,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | interview-user | swe | 7 | 3 | scored |
 | log-decisions | swe | 0 | 0 | recorded |
 | ship-pr | swe | 7 | 3 | scored |
-| swe-mode | swe | 28 | 3 | scored |
+| swe-mode | swe | 27 | 3 | scored |
 | testing-code | swe | 14 | 6 | scored |
 | typescript-best-practices | swe | 0 | 0 | recorded |
 | verification-skill | swe | 0 | 0 | recorded |
@@ -152,7 +152,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | skill `blast-radius` | 1-read-the-change, 2-find-safety-fact, 3-look-past-grep, 4-rate-each-risk, 5-prove-the-fact, 6-optional-independent-review | 1 | 0 |
 | playbook `build-feature` | 1-map-subsystem, 2-interview-on-open-decisions, 3-name-data-shape, 4-explore-designs, 5-write-throughput-checkpoint, 6-build-one-unit, 7-decide-tests, 8-verify-on-surface, 9-check-blast-radius, 10-review-if-contested, 11-independent-review, 12-order-commits, 13-update-obsolete-docs, 14-publish-draft-pr | 6 | 0 |
 | playbook `build-prototype` | 1-scope-the-decision, 2-gather-references, 3-build-throwaway, 4-switch-between-variants, 5-observe-on-surface, 6-recommend-direction | 1 | 0 |
-| playbook `clean-worktrees` | 1-snapshot-and-audit, 2-cross-check-in-use, 3-verify-usage, 4-pause-on-loss, 5-prune-confirmed-set, 6-prune-merged-scratch, 7-other-reclaimers | 1 | 0 |
+| playbook `clean-worktrees` | 1-snapshot-and-audit, 2-cross-check-in-use, 3-verify-usage, 4-pause-on-loss, 5-prune-confirmed-set, 6-prune-merged-scratch, 7-other-reclaimers | 0 | 0 |
 | skill `codebase-design` | design: 1-map-the-callers, 2-weigh-the-trade-offs, 3-specify-the-interface, 4-compare-interfaces; review: 1-explore-friction, 2-apply-deletion-test, 3-report-candidates, 4-interview-on-chosen-design | 1 | 0 |
 | skill `correct` | 1-find-the-mistake-classes, 2-fix-each-class, 3-fix-and-prove, 4-keep-the-rule-table | 1 | 0 |
 | skill `diagnose` | 1-state-exact-failure, 2-build-feedback-loop, 3-seed-from-history, 4-rank-hypotheses, 5-label-confidence, 6-remove-instrumentation | 7 | 0 |

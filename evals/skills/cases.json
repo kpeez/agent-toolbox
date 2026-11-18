@@ -2347,28 +2347,6 @@
       "rationale": "A run can show which ranking is better, so the router's fork trigger and the build-prototype line take it. The architect route explores designs before code, and the user asks for running sketches. The interview-user route covers a preference no run can settle. The request has the agent make up the sample records, because the fixture records have no opened-at time."
     },
     {
-      "id": "swe-route-clean-worktrees",
-      "target": "swe:swe-mode",
-      "category": "natural",
-      "split": "development",
-      "family": "swe-route-choice",
-      "messages": [
-        {
-          "role": "user",
-          "content": "My disk is almost full. Check which of my old git worktrees are merged or abandoned, and prune the safe ones."
-        }
-      ],
-      "fixture": "pipeline",
-      "expected_skills": [
-        "swe:swe-mode"
-      ],
-      "acceptable_auxiliaries": [],
-      "forbidden_skills": [],
-      "expected_route": "route/swe/clean-worktrees",
-      "relevant_action": "Say Playbook: clean-worktrees and read the playbook before any other step.",
-      "rationale": "Reclaiming disk by pruning worktrees is the only task clean-worktrees owns. No other playbook deletes user state."
-    },
-    {
       "id": "swe-route-diagnose-runtime",
       "target": "swe:swe-mode",
       "category": "natural",
