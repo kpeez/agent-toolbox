@@ -13,7 +13,6 @@ The pipeline steps are `skill_eval.py` functions; this file only orders them and
 from __future__ import annotations
 
 import argparse
-import fnmatch
 import json
 import math
 import os
@@ -63,6 +62,7 @@ EFFECTIVE_FIELDS = (
 )
 INTERRUPTS = (signal.SIGINT, signal.SIGTERM, signal.SIGHUP)
 READ_TOOLS = ("Read", "Glob", "Grep")
+WRITE_TOOLS = ("Write", "Edit", "NotebookEdit")
 CEILING_BUDGET_USD = 0.02
 CEILING_TURNS = 40
 # Confirmed against the live Claude CLI by the budget-ceiling canary.
@@ -85,6 +85,9 @@ LIVE_STEPS = [
     "max_concurrent_requests * max_request_usd above that budget",
     "--execute refuses until canaries.json holds a pass for every canary under the same frozen configuration",
     "first canary with an init event: freeze it as effective-session.json; every later canary and run must match it",
+    "every canary and run: a Write, Edit, or NotebookEdit outside the workspace and plugin snapshot, a Read of a "
+    "file there that returned, a Glob or Grep result that names a path there, or any shell or web call that was "
+    "not refused writes isolation-violation.json before run.json records it, and stops the pilot",
 ]
 
 
@@ -969,11 +972,13 @@ def launch_run(
     prompt=None,
     budget=None,
     ignore_arm_violations=False,
-    check_budget_bound=True,
+    secret=None,
+    absent=None,
 ):
     """Materialize `run` and launch claude once. A failure after the launch records the run as aborted.
 
-    `budget` replaces the runtime's per-run budget on the command line only."""
+    `budget` replaces the runtime's per-run budget on the command line and in the bound the cost must keep.
+    `secret` and `absent` are passed to `escapes`."""
     se.materialize(
         Namespace(
             case=item["case"],
@@ -1040,28 +1045,46 @@ def launch_run(
             if stop.started
             else f"interrupted by {stop} before the child started",
         )
+        record_retained_escapes(ctx["root"], run, record)
         se.save_json(run / "run.json", record)
         raise
-    ended = {
-        "ended_at": now(),
-        "exit_code": code,
-        "timed_out": timed_out,
-        "duration_s": round(time.monotonic() - began, 3),
-    }
+    record.update(
+        ended_at=now(),
+        exit_code=code,
+        timed_out=timed_out,
+        duration_s=round(time.monotonic() - began, 3),
+    )
     try:
+        # Cost and its bound come first, so a later failure still leaves the cost in run.json.
+        record["usage"] = usage_of(last_event(stream, "result"))
+        cost = record["usage"]["cost_usd"]
+        bound_total = reservation(ctx["runtime"], budget=budget)
+        if cost is not None and round(cost, 9) > round(bound_total, 9):
+            launch_budget = (
+                ctx["runtime"]["max_budget_usd_per_run"] if budget is None else budget
+            )
+            bdetail = (
+                f"run {run.name} ({run / 'run.json'}) cost {cost} exceeds budget+bound "
+                f"{bound_total} (budget {launch_budget} + bound {overshoot_bound(ctx['runtime'])})"
+            )
+            _record_marker(
+                ctx["root"], "budget-assumption-broken.json", run, bdetail
+            )
+        found_violations = escapes(stream, run, secret, absent)
+        if found_violations:
+            record["violations"] = found_violations
+            record_isolation_violation(ctx["root"], run, "; ".join(found_violations))
         init = init_event(stream)
         hooks = hook_summary(
             hook_events(stream),
             manifest.get("hooks", {}) if item["arm"] == "hook-on" else {},
         )
-        found_violations = (
+        found_violations += (
             violations(init, ctx["runtime"], home)
             if init
             else ["no init event in the stream, so isolation was not checked"]
         ) + arm_violations(item["arm"], hooks, list(manifest.get("hooks", {})))
         record.update(
-            ended,
-            usage=usage_of(last_event(stream, "result")),
             stdout_sha256=se.digest(stream.read_bytes()),
             stderr_sha256=se.digest((run / "launch" / "stderr.txt").read_bytes()),
             effective_session=effective(init) if init else None,
@@ -1075,28 +1098,8 @@ def launch_run(
         )
         if marker_violations:
             record_isolation_violation(ctx["root"], run, "; ".join(marker_violations))
-        cost = record["usage"].get("cost_usd")
-        bound_total = reservation(ctx["runtime"], budget=budget)
-        if (
-            check_budget_bound
-            and isinstance(cost, (int, float))
-            and not isinstance(cost, bool)
-            and round(cost, 9) > round(bound_total, 9)
-        ):
-            launch_budget = (
-                ctx["runtime"]["max_budget_usd_per_run"] if budget is None else budget
-            )
-            bdetail = (
-                f"run {run.name} ({run / 'run.json'}) cost {cost} exceeds budget+bound "
-                f"{bound_total} (budget {launch_budget} + bound {overshoot_bound(ctx['runtime'])})"
-            )
-            _record_marker(
-                ctx["root"], "budget-assumption-broken.json", run, bdetail
-            )
     except (ValueError, KeyError, TypeError, OSError) as error:
-        record.update(
-            ended, outcome="aborted", error=f"after the launch: {error}"
-        )
+        record.update(outcome="aborted", error=f"after the launch: {error}")
     se.save_json(run / "run.json", record)
     return record
 
@@ -1187,18 +1190,33 @@ def may_launch(ctx, failures, budget=None):
     return None
 
 
-def settle_aborted(run):
-    """A launched run without a recorded end is final. Record that once; never launch it again."""
+def record_retained_escapes(root, run, record):
+    """A launch that ended before its checks ran (an interrupt or a hard kill) keeps its stream; check it for escapes."""
+    stream = run / "launch" / "stream.jsonl"
+    found = escapes(stream, run) if stream.is_file() else []
+    if found:
+        record["violations"] = (record.get("violations") or []) + found
+        record_isolation_violation(root, run, "; ".join(found))
+    return found
+
+
+def settle_aborted(root, run):
+    """A launched run without a recorded end is final. Record that once; never launch it again.
+
+    Returns the escapes its retained stream shows."""
     record = se.read_json(run / "run.json")
-    if "outcome" not in record:
-        se.save_json(
-            run / "run.json",
-            record
-            | {
-                "outcome": "aborted",
-                "error": "the runner stopped after the launch and recorded no end",
-            },
-        )
+    if "outcome" in record:
+        return []
+    found = record_retained_escapes(root, run, record)
+    se.save_json(
+        run / "run.json",
+        record
+        | {
+            "outcome": "aborted",
+            "error": "the runner stopped after the launch and recorded no end",
+        },
+    )
+    return found
 
 
 def execute(ctx):
@@ -1206,8 +1224,9 @@ def execute(ctx):
     for item in ctx["plan"]:
         run = ctx["root"] / "runs" / item["rid"]
         state = run_state(run)
-        if state == "aborted":
-            settle_aborted(run)
+        if state == "aborted" and settle_aborted(ctx["root"], run):
+            stop = violation_blocker(ctx["root"])
+            break
         if state in {"scored", "unscorable", "aborted"}:
             skipped += 1
             continue
@@ -1266,7 +1285,8 @@ def stream_calls(stream):
             event = json.loads(line)
         except ValueError:
             continue
-        content = (event.get("message") or {}).get("content") if isinstance(event, dict) else None
+        message = event.get("message") if isinstance(event, dict) else None
+        content = message.get("content") if isinstance(message, dict) else None
         for block in content if isinstance(content, list) else []:
             if not isinstance(block, dict):
                 continue
@@ -1284,6 +1304,53 @@ def result_text(result):
     if isinstance(content, list):
         return " ".join(str(b.get("text", "")) for b in content if isinstance(b, dict))
     return str(content or "")
+
+
+def outside_run(path, run):
+    """Does `path` resolve outside the run's workspace and plugin snapshot? A relative path is under the workspace."""
+    try:
+        p = Path(os.path.expanduser(path))
+        resolved = (p if p.is_absolute() else run / "workspace" / p).resolve()
+        allowed = ((run / "workspace").resolve(), (run / "inputs" / "plugins").resolve())
+    except (ValueError, OSError, RuntimeError):
+        return True
+    return not any(resolved.is_relative_to(base) for base in allowed)
+
+
+def escapes(stream, run, secret=None, absent=None):
+    """Proof in the stream that a launch reached outside its run, whatever the prompt asked. One line per escape.
+
+    A call counts unless its tool_result is an error. A call that changes something (a write, a shell or
+    web call) counts with no tool_result too, since nothing shows it was refused. `secret` must not appear
+    in the stream, and the file `absent` must not exist after the run.
+    """
+    found = []
+    for use, result in stream_calls(stream):
+        if result is not None and result.get("is_error"):
+            continue
+        tool = base_tool(str(use.get("name", "")))
+        inp = use.get("input") if isinstance(use.get("input"), dict) else {}
+        path = inp.get("file_path") or inp.get("notebook_path")
+        if tool in SHELL_TOOLS | NETWORK_TOOLS:
+            found.append(f"escape: a {tool} call was not refused")
+        elif tool in WRITE_TOOLS and isinstance(path, str) and path and outside_run(path, run):
+            found.append(f"escape: a {tool} of {path} outside the run was not refused")
+        elif tool == "Read" and result is not None and isinstance(path, str) and path and outside_run(path, run):
+            found.append(f"escape: a Read of {path} outside the run returned")
+        elif tool in ("Glob", "Grep") and result is not None:
+            named = [
+                line.strip().split(":")[0]
+                for line in result_text(result).splitlines()
+                if line.strip().startswith("/")
+            ]
+            outside = [p for p in named if outside_run(p, run)]
+            if outside:
+                found.append(f"escape: a {tool} result names {outside[:3]} outside the run")
+    if secret and secret.encode() in stream.read_bytes():
+        found.append("escape: the sentinel text appears in the stream")
+    if absent is not None and absent.exists():
+        found.append(f"escape: {absent} exists after the run")
+    return found
 
 
 def canary_setup(name, ctx, run):
@@ -1322,6 +1389,44 @@ def canary_setup(name, ctx, run):
     return "CANARY hook: reply with the word ok.", None
 
 
+def glob_regex(pattern):
+    """A glob as a regex that keeps to folders, as Glob does.
+
+    `*`, `?`, and `[...]` never match `/`; a whole `**` segment matches zero or more folders."""
+    parts = pattern.split("/")
+    out = []
+    for index, part in enumerate(parts):
+        last = index == len(parts) - 1
+        if part == "**":
+            out.append(".*" if last else "(?:[^/]*/)*")
+            continue
+        i = 0
+        while i < len(part):
+            c = part[i]
+            close = -1
+            if c == "[":
+                j = i + 1 + (part[i + 1 : i + 2] in ("!", "^"))
+                close = part.find("]", j + (part[j : j + 1] == "]"))
+            if c == "*":
+                out.append("[^/]*")
+            elif c == "?":
+                out.append("[^/]")
+            elif close > 0:
+                body = part[i + 1 : close]
+                negate = body[:1] in ("!", "^")
+                body = "".join(
+                    "\\" + ch if ch in "\\[]^&~|" else ch for ch in body[negate:]
+                )
+                out.append(f"[^/{body}]" if negate else f"(?!/)[{body}]")
+                i = close
+            else:
+                out.append(re.escape(c))
+            i += 1
+        if not last:
+            out.append("/")
+    return re.compile("".join(out))
+
+
 def matches_canary_target(use, target):
     if target is None:
         return False
@@ -1342,7 +1447,7 @@ def matches_canary_target(use, target):
             if not isinstance(base, str) or not base:
                 return False
             pattern = os.path.join(base, pattern)
-        return fnmatch.fnmatchcase(target_norm, os.path.normpath(pattern))
+        return glob_regex(os.path.normpath(pattern)).fullmatch(target_norm) is not None
     if tool == "Grep":
         gpath = inp.get("path")
         return isinstance(gpath, str) and os.path.normpath(gpath) in {
@@ -1352,17 +1457,8 @@ def matches_canary_target(use, target):
     return False
 
 
-def _outside_allowed_dirs(file_path, run):
-    if not isinstance(file_path, str) or not file_path:
-        return False
-    p = Path(file_path)
-    resolved = p.resolve() if p.is_absolute() else (run / "workspace" / p).resolve()
-    allowed = ((run / "workspace").resolve(), (run / "inputs" / "plugins").resolve())
-    return not any(resolved.is_relative_to(base) for base in allowed)
-
-
-def canary_verdict(name, stream, record, target, run):
-    """Judge a canary from its stream. Returns (passed, detail, escaped)."""
+def canary_verdict(name, stream, record, target):
+    """Judge a canary from its stream. Returns (passed, detail). `escapes` in launch_run owns escape detection."""
     calls = stream_calls(stream)
     tools = {base_tool(t) for t in record["effective_session"]["tools"]}
     touching = [
@@ -1395,13 +1491,10 @@ def canary_verdict(name, stream, record, target, run):
             for t, results in by_tool.items()
             if any(r is not None and got(r) for r in results)
         )
-        any_got = any(r is not None and got(r) for _, r in calls)
-        escaped = bool(read or any_got or leaked)
         return (
             bool(probes) and not silent and not missing and not read and not leaked,
             f"file-read tools in the session={probes}, never tried against the sentinel outside the fixture={silent}, "
             f"missing tool_result={missing}, returned its file name or content={read}, sentinel text in the stream={leaked}",
-            escaped,
         )
     if name == "write-outside":
         attempts = [
@@ -1409,20 +1502,10 @@ def canary_verdict(name, stream, record, target, run):
             for u, r in touching
             if base_tool(u.get("name", "")) == "Write"
         ]
-        outside_write_succeeded = any(
-            base_tool(u.get("name", "")) in ("Write", "Edit")
-            and r is not None
-            and not r.get("is_error")
-            and _outside_allowed_dirs((u.get("input") or {}).get("file_path"), run)
-            for u, r in calls
-        )
-        escaped = target.exists() or outside_write_succeeded
         return (
             bool(attempts) and refused(attempts) and not target.exists(),
             f"{len(attempts)} Write call(s) to a new path outside the fixture, "
-            f"all refused={refused(attempts)}, new file absent={not target.exists()}, "
-            f"outside write or edit succeeded={outside_write_succeeded}",
-            escaped,
+            f"all refused={refused(attempts)}, new file absent={not target.exists()}",
         )
     if name == "network":
         banned = sorted(tools & (SHELL_TOOLS | NETWORK_TOOLS))
@@ -1435,7 +1518,6 @@ def canary_verdict(name, stream, record, target, run):
         return (
             not banned and not used,
             f"shell or network tools in the session={banned}, such calls that succeeded={used}",
-            bool(used),
         )
     if name == "playbook-read":
         reads = [
@@ -1449,9 +1531,8 @@ def canary_verdict(name, stream, record, target, run):
         return (
             bool(reads),
             f"{len(reads)} successful Read call(s) on the plugin playbook under --restricted",
-            False,
         )
-    return True, "no arm violation in the hook events", False
+    return True, "no arm violation in the hook events"
 
 
 def ceiling_verdict(stream, record, target, runtime):
@@ -1494,6 +1575,14 @@ def run_canary(ctx, name, arm):
         return se.read_json(done)
     result = {"canary": name, "arm": arm}
     if (run / "run.json").is_file():
+        record = se.read_json(run / "run.json")
+        found = [] if "ended_at" in record else record_retained_escapes(ctx["root"], run, record)
+        if found:
+            se.save_json(run / "run.json", record)
+            result |= {
+                "isolation_violation": "; ".join(found),
+                "isolation_violation_record": str(ctx["root"] / "isolation-violation.json"),
+            }
         result |= {
             "passed": False,
             "detail": "launched earlier and never judged; a launched run is never launched again",
@@ -1511,31 +1600,30 @@ def run_canary(ctx, name, arm):
             prompt,
             budget=CEILING_BUDGET_USD if ceiling else None,
             ignore_arm_violations=True,
-            check_budget_bound=not ceiling,
+            secret=target.read_text().strip() if name == "read-outside" else None,
+            absent=target if name == "write-outside" else None,
         )
         budget = CEILING_BUDGET_USD if ceiling else ctx["runtime"]["max_budget_usd_per_run"]
         cost = (record.get("usage") or {}).get("cost_usd")
         within = False if ceiling else cost is not None and cost <= budget
         problems, detail, extra = [], "", {}
+        iso = [
+            v
+            for v in record.get("violations") or []
+            if not v.startswith("arm violation:")
+        ]
+        if iso:
+            extra["isolation_violation"] = "; ".join(iso)
+            extra["isolation_violation_record"] = str(
+                ctx["root"] / "isolation-violation.json"
+            )
         if record.get("outcome") == "aborted":
             problems.append(f"run aborted: {record['error']}")
         elif not record.get("effective_session"):
-            detail = "; ".join(record.get("violations") or ["no init event in the stream"])
-            vpath = ctx["root"] / "isolation-violation.json"
-            extra["isolation_violation"] = detail
-            extra["isolation_violation_record"] = str(vpath)
-            problems.append(detail)
+            problems.append(
+                "; ".join(record.get("violations") or ["no init event in the stream"])
+            )
         else:
-            iso = [
-                v
-                for v in record["violations"]
-                if not v.startswith("arm violation:")
-            ]
-            if iso:
-                detail = "; ".join(iso)
-                vpath = ctx["root"] / "isolation-violation.json"
-                extra["isolation_violation"] = detail
-                extra["isolation_violation_record"] = str(vpath)
             problems += record["violations"] + [
                 d for d in [drift(ctx, record)] if d
             ]
@@ -1546,13 +1634,9 @@ def run_canary(ctx, name, arm):
                 extra |= ceiling_extra
                 within = passed
             else:
-                passed, detail, escaped = canary_verdict(
-                    name, run / "launch" / "stream.jsonl", record, target, run
+                passed, detail = canary_verdict(
+                    name, run / "launch" / "stream.jsonl", record, target
                 )
-                if escaped and not extra.get("isolation_violation"):
-                    vpath = record_isolation_violation(ctx["root"], run, detail)
-                    extra["isolation_violation"] = detail
-                    extra["isolation_violation_record"] = str(vpath)
             if not passed:
                 problems.append(detail)
         if not ceiling and not within:
@@ -1761,8 +1845,16 @@ def main():
             args.max_cost_usd is not None and args.max_cost_usd <= 0
         ):
             raise ValueError("--repeats and --max-cost-usd must be positive")
-        if not re.fullmatch(r"[A-Za-z0-9._-]+", args.pilot_id):
-            raise ValueError("--pilot-id must be a plain folder name")
+        pilot_root = (args.output_root / args.pilot_id).resolve()
+        if (
+            args.pilot_id in {".", ".."}
+            or not re.fullmatch(r"[A-Za-z0-9._-]+", args.pilot_id)
+            or pilot_root == args.output_root
+            or not pilot_root.is_relative_to(args.output_root)
+        ):
+            raise ValueError(
+                "--pilot-id must be a plain folder name that stays inside --output-root"
+            )
         runtime = se.read_json(args.runtime)
         cases, excluded = selected_cases(args.corpus, args.case)
         pilot = build_pilot(args, runtime, cases)

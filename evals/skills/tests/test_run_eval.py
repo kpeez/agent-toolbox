@@ -89,6 +89,11 @@ STUB = textwrap.dedent('''\
                           "authMethod": "api_key", "apiKeySource": "ANTHROPIC_API_KEY"}))
     elif "-p" in argv:
         sid = argv[argv.index("--session-id") + 1]
+        if config.get("stray_write"):
+            print(json.dumps({"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": "s1", "name": "Write", "input": {"file_path": config["stray_write"], "content": "x"}}]}}))
+            print(json.dumps({"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": "s1", "is_error": False, "content": "ok"}]}}), flush=True)
         if config.get("sleep"):
             import subprocess, time
             grandchild = subprocess.Popen(["sleep", "60"])
@@ -470,7 +475,7 @@ class NativeRunner(unittest.TestCase):
         self.assertEqual(again["run_states"], {"aborted": 1, "scored": 1})
         self.assertEqual(len(self.model_calls()), 2)
         self.assertEqual(sorted(p.name for p in (self.root / "runs").iterdir()), sorted(self.records()))
-        self.assertEqual(again["cost"]["unknown_cost_runs"], 1)
+        self.assertEqual((again["cost"]["unknown_cost_runs"], aborted["usage"]["cost_usd"]), (0, 0.06))
 
     def test_an_interrupt_kills_the_childs_process_group_and_records_the_run_as_aborted(self):
         for signum in (signal.SIGINT, signal.SIGTERM, signal.SIGHUP):
@@ -816,7 +821,7 @@ class NativeRunner(unittest.TestCase):
 
     def test_dry_run_plan_text_does_not_claim_write_canary_probes_edit(self):
         plan = json.loads(self.run_eval("--max-cost-usd", "1", mode=None).stdout)
-        steps = "\n".join(plan["live_steps_pending_approval"])
+        steps = next(s for s in plan["live_steps_pending_approval"] if s.startswith("--canaries"))
         self.assertNotIn("Edit", steps)
         self.assertIn("Write to a new path outside the fixture", steps)
 
@@ -1043,6 +1048,181 @@ class NativeRunner(unittest.TestCase):
         self.assertIn(rid, summary["stopped"])
         self.assertEqual(len(self.model_calls()), 1)
 
+    def test_a_run_whose_hook_file_vanished_keeps_its_cost_and_the_cap_counts_it(self):
+        done = self.run_eval("--max-cost-usd", "0.3", stub={"delete_swe_hook": True, "cost": 0.2})
+        self.assertEqual(done.returncode, 3, done.stderr)
+        self.assertEqual(len(self.model_calls()), 1)
+        aborted = next(iter(self.records().values()))
+        self.assertEqual((aborted["arm"], aborted["outcome"]), ("hook-on", "aborted"))
+        self.assertEqual(aborted["usage"]["cost_usd"], 0.2)
+        self.assertTrue((self.root / "budget-assumption-broken.json").is_file())
+        self.assertAlmostEqual(json.loads(done.stdout)["cost"]["known_usd"], 0.2)
+
+    def test_an_outside_write_during_the_read_canary_writes_the_marker_and_stops_the_canaries(self):
+        stray = str(Path(self.temp.name) / "stray.txt")
+        done = self.run_eval("--max-cost-usd", "5", stub={"stray_write": stray}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertEqual(list(summary["canaries"]), ["read-outside"])
+        self.assertFalse(summary["canaries"]["read-outside"]["passed"])
+        self.assertIn("isolation violation", summary["stopped"])
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_a_crash_before_the_canary_verdict_leaves_the_marker_and_a_resume_launches_nothing(self):
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        (self.stub_dir / "config.json").write_text(json.dumps({"outside_read": "leaked"}))
+        wrapper = (
+            "import sys\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            "def crash(*args, **kw):\n"
+            "    raise SystemExit(99)\n"
+            "run_eval.canary_verdict = crash\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        crashed = subprocess.run(
+            [sys.executable, "-c", wrapper, "--repeats", "1", "--runtime", str(runtime_path),
+             "--case", "IM-01", "--pilot-id", self.pilot_id, "--output-root", str(self.output_root),
+             "--max-cost-usd", "5", "--canaries"],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(crashed.returncode, 99, crashed.stderr)
+        self.assertTrue((self.root / "canaries" / "read-outside" / "run.json").is_file())
+        self.assertFalse((self.root / "canaries" / "read-outside" / "canary.json").exists())
+        self.assertTrue((self.root / "isolation-violation.json").is_file())
+        resumed = self.run_eval("--max-cost-usd", "5", mode="--canaries")
+        self.assertEqual(resumed.returncode, 3, resumed.stderr)
+        self.assertIn("isolation violation", json.loads(resumed.stdout)["stopped"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_an_outside_write_in_a_pilot_run_stops_the_pilot(self):
+        stray = str(Path(self.temp.name) / "stray.txt")
+        done = self.run_eval("--repeats", "2", "--max-cost-usd", "1", stub={"stray_write": stray})
+        self.assertEqual(done.returncode, 3, done.stderr)
+        self.assertIn("isolation violation", json.loads(done.stdout)["stopped"])
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def stray_stream(self, path):
+        return "\n".join(json.dumps(e) for e in (
+            {"type": "assistant", "message": {"content": [
+                {"type": "tool_use", "id": "s1", "name": "Write", "input": {"file_path": path, "content": "x"}}]}},
+            {"type": "user", "message": {"content": [
+                {"type": "tool_result", "tool_use_id": "s1", "is_error": False, "content": "ok"}]}},
+        )) + "\n"
+
+    def test_a_hard_killed_run_whose_stream_shows_an_escape_stops_the_resume(self):
+        first = self.run_eval("--max-cost-usd", "1")
+        self.assertEqual(first.returncode, 0, first.stderr)
+        victim = next(p for p in sorted((self.root / "runs").iterdir()) if self.records()[p.name]["arm"] == "hook-off")
+        record = json.loads((victim / "run.json").read_text())
+        killed = {k: record[k] for k in ("schema_version", "rid", "case", "arm", "repeat", "launch", "started_at")}
+        (victim / "run.json").write_text(json.dumps(killed))
+        for leftover in ("score.json", "capture.json"):
+            (victim / leftover).unlink(missing_ok=True)
+        stray = str(Path(self.temp.name) / "stray.txt")
+        (victim / "launch" / "stream.jsonl").write_text(self.stray_stream(stray))
+        second = self.run_eval("--max-cost-usd", "1")
+        self.assertEqual(second.returncode, 3, second.stderr)
+        self.assertIn("isolation violation", json.loads(second.stdout)["stopped"])
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        self.assertEqual(len(self.model_calls()), 2)
+
+    def test_an_interrupted_run_whose_stream_shows_an_escape_writes_the_marker(self):
+        pids = self.stub_dir / "pids"
+        self.record_canaries("--max-cost-usd", "1")
+        stray = str(Path(self.temp.name) / "stray.txt")
+        runner = self.start("--max-cost-usd", "1", stub={"sleep": 60, "stray_write": stray})
+        deadline = time.monotonic() + 30
+        while not pids.exists() and time.monotonic() < deadline:
+            time.sleep(0.05)
+        child, grandchild = map(int, pids.read_text().split())
+        self.addCleanup(self.kill_quietly, child, grandchild)
+        runner.send_signal(signal.SIGTERM)
+        runner.communicate(timeout=30)
+        self.assertIn(stray, json.loads((self.root / "isolation-violation.json").read_text())["detail"])
+        again = self.run_eval("--max-cost-usd", "1")
+        self.assertEqual(again.returncode, 3, again.stderr)
+        self.assertEqual(len(self.model_calls()), 1)
+
+    def test_a_canary_hard_killed_after_an_escape_stops_the_canaries(self):
+        earlier = self.root / "canaries" / "read-outside"
+        (earlier / "launch").mkdir(parents=True)
+        (earlier / "run.json").write_text(json.dumps({"started_at": "2026-01-01T00:00:00Z"}))
+        stray = str(Path(self.temp.name) / "stray.txt")
+        (earlier / "launch" / "stream.jsonl").write_text(self.stray_stream(stray))
+        done = self.run_eval("--max-cost-usd", "5", mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        summary = json.loads(done.stdout)
+        self.assertIn("isolation violation in canary read-outside", summary["stopped"])
+        self.assertEqual(list(summary["canaries"]), ["read-outside"])
+        self.assertEqual(len(self.model_calls()), 0)
+
+    def test_a_plugin_catalog_that_changes_while_it_is_copied_launches_nothing(self):
+        self.record_canaries("--max-cost-usd", "1")
+        runtime_path = Path(self.temp.name) / "runtime.json"
+        runtime_path.write_text(json.dumps(self.runtime))
+        (self.stub_dir / "config.json").write_text(json.dumps({}))
+        wrapper = (
+            "import shutil, sys\n"
+            "from pathlib import Path\n"
+            f"sys.path.insert(0, {str(HERE)!r})\n"
+            "import run_eval\n"
+            "real = shutil.copytree\n"
+            "def copy_then_change(src, dst, *args, **kw):\n"
+            "    out = real(src, dst, *args, **kw)\n"
+            f"    if Path(src) == Path({str(REPO / 'plugins')!r}):\n"
+            "        skill = sorted(Path(dst).rglob('SKILL.md'))[0]\n"
+            "        skill.write_text(skill.read_text() + 'changed during the copy\\n')\n"
+            "    return out\n"
+            "shutil.copytree = copy_then_change\n"
+            "sys.argv = ['run_eval.py'] + sys.argv[1:]\n"
+            "run_eval.main()\n"
+        )
+        done = subprocess.run(
+            [sys.executable, "-c", wrapper, *self.flags("--max-cost-usd", "1", mode="--execute")],
+            text=True, capture_output=True, cwd=REPO, env=self.env,
+        )
+        self.assertEqual(done.returncode, 2, done.stderr)
+        self.assertIn("plugins/ changed while it was copied", done.stderr)
+        self.assertEqual(self.model_calls(), [])
+        self.assertEqual(self.records(), {})
+
+    def test_a_budget_ceiling_canary_over_its_bound_writes_the_budget_marker_and_execute_stops(self):
+        done = self.run_eval("--max-cost-usd", "5", stub={"ceiling": "overshoots"}, mode="--canaries")
+        self.assertEqual(done.returncode, 3, done.stderr)
+        self.assertAlmostEqual(json.loads(done.stdout)["canaries"]["budget-ceiling"]["cost_usd"], 0.2)
+        marker = self.root / "budget-assumption-broken.json"
+        self.assertTrue(marker.is_file())
+        self.assertIn("budget-ceiling", json.loads(marker.read_text())["run"])
+        self.record_canaries("--max-cost-usd", "5")
+        blocked = self.run_eval("--max-cost-usd", "5", canaries_passed=False)
+        self.assertEqual(blocked.returncode, 3, blocked.stderr)
+        self.assertIn("budget assumption broken", json.loads(blocked.stdout)["stopped"])
+        self.assertEqual(len(self.model_calls()), len(CANARY_NAMES))
+
+    def test_a_pilot_id_that_leaves_the_output_root_is_refused(self):
+        tmp = Path(self.temp.name)
+        elsewhere = tmp / "elsewhere"
+        elsewhere.mkdir()
+        self.output_root.mkdir()
+        (self.output_root / "linked").symlink_to(elsewhere)
+        harness = {tmp / "runtime.json", self.stub_dir / "config.json", self.log}
+        def files():
+            return sorted(p for p in tmp.rglob("*") if p not in harness)
+        for pilot_id in ("..", ".", "linked"):
+            with self.subTest(pilot_id=pilot_id):
+                before = files()
+                self.pilot_id = pilot_id
+                done = self.run_eval("--max-cost-usd", "5", mode="--canaries")
+                self.assertEqual(done.returncode, 2, done.stderr)
+                self.assertIn("--pilot-id", done.stderr)
+                self.assertEqual(files(), before)
+        self.assertEqual(self.model_calls(), [])
+
     def test_write_escape_to_other_outside_path_stops_canaries(self):
         done = self.run_eval("--max-cost-usd", "5", stub={"outside_write": "wrong_write_succeeded"}, mode="--canaries")
         self.assertEqual(done.returncode, 3, done.stderr)
@@ -1053,6 +1233,27 @@ class NativeRunner(unittest.TestCase):
         self.assertIn("isolation violation", summary["stopped"])
         self.assertTrue((self.root / "isolation-violation.json").is_file())
         self.assertEqual(len(self.model_calls()), 2)
+
+
+class CanaryTargetGlob(unittest.TestCase):
+    def test_a_glob_counts_as_an_attempt_only_when_it_can_reach_the_sentinel(self):
+        root = Path("/pilot")
+        target = root / "canaries" / "outside" / "sentinel-x.txt"
+        cases = {
+            f"{root}/*.txt": False,
+            f"{root}/canaries?outside/sentinel-x.txt": False,
+            f"{root}/canaries[/]outside/sentinel-x.txt": False,
+            f"{root}/canaries/outside/sentinel-*.txt": True,
+            f"{root}/**/sentinel-*.txt": True,
+            f"{root}/canaries/**/outside/sentinel-?.txt": True,
+            f"{root}/**": True,
+        }
+        for pattern, expected in cases.items():
+            with self.subTest(pattern=pattern):
+                use = {"name": "Glob", "input": {"pattern": pattern}}
+                self.assertIs(run_eval.matches_canary_target(use, target), expected)
+        relative = {"name": "Glob", "input": {"pattern": "*.txt", "path": str(root)}}
+        self.assertFalse(run_eval.matches_canary_target(relative, target))
 
 
 if __name__ == "__main__":
