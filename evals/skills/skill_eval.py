@@ -47,11 +47,18 @@ CLAUDE_ATTACHMENT_TYPES = {
     "mcp_instructions_delta", "model", "prompt_snapshot", "remote_session_change",
     "session_context", "skill_listing", "total_tokens_reminder"}
 ROUTERS = {"swe": "swe-mode", "lab": "lab-mode"}
-# What a router-first run loads on any task its router takes. go-deeper: Match step 2 of each router and
-# the swe session-start hook ("a new task of any kind"), which a lab task also receives. writing: the swe
-# router's prose trigger ("the reply included") and the same hook. A forbidden_skills entry withholds a credit.
-ALWAYS_ON = {"swe": {"swe:go-deeper", "swe:writing"},
-             "lab": {"lab:go-deeper", "swe:go-deeper", "swe:writing"}}
+GO_DEEPER_COPIES = {"swe:go-deeper", "lab:go-deeper", "uni:go-deeper"}
+HOOK_ON_ALWAYS_ON = {"go-deeper", "swe:writing"}
+# What a router-first run loads on any task its router takes, by (plugin, hook_arm).
+# In hook-off, only the router text asks for anything: swe-mode asks for go-deeper, swe:writing, and
+# swe:in-your-own-words; lab-mode asks for go-deeper only. In hook-on, the SessionStart hooks add
+# go-deeper and swe:writing on every task. A forbidden_skills entry withholds a credit.
+ALWAYS_ON = {
+    ("swe", "hook-off"): {"go-deeper", "swe:writing", "swe:in-your-own-words"},
+    ("lab", "hook-off"): {"go-deeper"},
+    ("swe", "hook-on"): {"go-deeper", "swe:writing", "swe:in-your-own-words"},
+    ("lab", "hook-on"): {"go-deeper", "swe:writing"},
+}
 LINE_KIND = {"Playbook": "playbook", "Route": "skill"}
 ROUTE_LINE = re.compile(r"^\s*(?:[-*+]\s+)?\**(Playbook|Route)(?::\**|\*\*:)\s*`?(?:[a-z]+:)?([a-z0-9-]+)`?", re.M)
 STEPS_HEADING = re.compile(r"Steps\b")
@@ -63,6 +70,11 @@ CLAUDE_BASE_PREFIX = "Base directory for this skill: "
 # A delivered body that names another skill, or comes from outside the frozen catalog, breaks isolation.
 CLAUDE_IDENTITY_LOSS = {"base directory outside the declared snapshot",
                         "requested skill differs from the delivered base directory"}
+
+
+def canonical_skill(skill):
+    """Collapse the three byte-identical go-deeper copies into one canonical skill name."""
+    return "go-deeper" if skill in GO_DEEPER_COPIES else skill
 
 
 def digest(data):
@@ -163,7 +175,8 @@ def corpus(path=DATASET):
                 raise ValueError(f"invalid {field}")
             if set(case[field]) - skills:
                 raise ValueError(f"unknown skill in {field}")
-        if set(case["expected_skills"] + case["acceptable_auxiliaries"]) & set(case["forbidden_skills"]):
+        if ({canonical_skill(s) for s in case["expected_skills"] + case["acceptable_auxiliaries"]}
+                & {canonical_skill(s) for s in case["forbidden_skills"]}):
             raise ValueError("contradictory answer key")
         if case["category"] == "negative":
             if case["target"] not in case["forbidden_skills"]:
@@ -1162,25 +1175,33 @@ def score(args):
     configuration.update(hook_arm=hook_arm, facets_sha256=facets_sha256, adapter_version=evidence["adapter_version"], scorer_sha256=scorer_sha256)
     configuration_sha256 = digest(json.dumps(configuration, sort_keys=True).encode())
     save_json(run / "evidence.json", evidence)
-    observed = {load["skill"] for load in evidence["loads"] if load["status"] == "success"}
-    forbidden = set(case["forbidden_skills"])
+    observed = {canonical_skill(load["skill"]) for load in evidence["loads"] if load["status"] == "success"}
+    forbidden = {canonical_skill(s) for s in case["forbidden_skills"]}
     plugin = case["target"].split(":")[0]
     facets = load_facets()
     route_allowed_skills = set()
     if case.get("expected_route"):
-        route_allowed_skills = (route_allowed(facets, facets[case["expected_route"]]) | ALWAYS_ON[plugin]) - forbidden
-    elif f"{plugin}:{ROUTERS[plugin]}" in case["expected_skills"] + case["acceptable_auxiliaries"]:
-        route_allowed_skills = {"swe:writing"} - forbidden
-    allowed = set(case["expected_skills"] + case["acceptable_auxiliaries"]) | route_allowed_skills
+        route_skills = {canonical_skill(s) for s in route_allowed(facets, facets[case["expected_route"]])}
+        route_allowed_skills = (route_skills | ALWAYS_ON[(plugin, hook_arm)]) - forbidden
+    else:
+        if "swe:swe-mode" in case["expected_skills"] + case["acceptable_auxiliaries"]:
+            route_allowed_skills |= {"swe:writing"}
+        if hook_arm == "hook-on":
+            route_allowed_skills |= HOOK_ON_ALWAYS_ON
+        route_allowed_skills -= forbidden
+    allowed = {canonical_skill(s) for s in case["expected_skills"] + case["acceptable_auxiliaries"]} | route_allowed_skills
     complete = evidence["evidence_coverage"] == "complete" and evidence["session_state"] == "completed"
-    ambiguous_forbidden = any(l["skill"] in forbidden and l["status"] in {"partial", "unavailable"}
+    ambiguous_forbidden = any(canonical_skill(l["skill"]) in forbidden and l["status"] in {"partial", "unavailable"}
                               for l in evidence["loads"])
     activation = {}
     timing = {}
     actions = [a["seq"] for a in evidence["actions"] if a["kind"] == case["relevant_action"]]
     for skill in case["expected_skills"]:
-        loads = [l["completed_seq"] for l in evidence["loads"] if l["skill"] == skill and l["status"] == "success"]
-        ambiguous = any(l["skill"] == skill and l["status"] in {"partial", "unavailable"} for l in evidence["loads"])
+        target = canonical_skill(skill)
+        loads = [l["completed_seq"] for l in evidence["loads"]
+                 if canonical_skill(l["skill"]) == target and l["status"] == "success"]
+        ambiguous = any(canonical_skill(l["skill"]) == target and l["status"] in {"partial", "unavailable"}
+                        for l in evidence["loads"])
         activation[skill] = "loaded" if loads else "miss" if complete and not ambiguous else "unavailable"
         action_coverage = evidence["coverage"]["start"] and evidence["coverage"]["relevant_actions"] and not evidence["issues"]
         timing[skill] = ("before" if min(loads) < min(actions) else "late") if loads and actions and action_coverage else "unavailable"
@@ -1192,7 +1213,7 @@ def score(args):
               "session_state": evidence["session_state"], "evidence_coverage": evidence["evidence_coverage"],
               "activation": activation, "timing": timing, "observed_skills": sorted(observed),
               "expected_skills": case["expected_skills"], "allowed_skills": sorted(allowed),
-              "unresolved_skills": sorted({l["skill"] for l in evidence["loads"]
+              "unresolved_skills": sorted({canonical_skill(l["skill"]) for l in evidence["loads"]
                                              if l["status"] in {"partial", "unavailable"}} - observed),
               "false_activation": True if observed & forbidden else False if complete and not ambiguous_forbidden else None,
               "unexpected_skills": sorted(observed - allowed),

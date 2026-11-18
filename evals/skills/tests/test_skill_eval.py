@@ -64,10 +64,11 @@ regressions are crediting the router and `go-deeper` on every case of a plugin
 `expected_route` after a case forbids it, and dropping the credit that a route
 gives. Each was seen red under one mutation of skill_eval.py.
 
-Three more rules were seen red the same way: a routed run credits the always-on triggers of its router
-(`swe:writing`, and the swe `go-deeper` on a lab route), a case that lists the router also credits
-`swe:writing`, and a case may not list a skill as auxiliary and forbid it. An open family that holds a
-negative case is refused.
+Three more rules were seen red the same way: a routed run credits the arm-aware always-on triggers of its router
+(`go-deeper`, `swe:writing`, and `swe:in-your-own-words` on swe; `go-deeper` in hook-off and `go-deeper` + `swe:writing`
+in hook-on on lab), canonical `go-deeper` treats `swe:go-deeper`, `lab:go-deeper`, and `uni:go-deeper` as one skill,
+a case that lists `swe:swe-mode` also credits `swe:writing`, and a case may not list a skill as auxiliary and forbid it.
+An open family that holds a negative case is refused.
 
 The hillclimb fallback test protects the labels of `swe-fallback-hillclimb-metric`: a correct run on it
 delegates attempts to parallel worktrees and reviews their diffs, so it loads `swarm` and `no-comments`
@@ -1056,8 +1057,8 @@ class OfflineCLIContract(unittest.TestCase):
     def case_named(self, case_id):
         return next(c for c in read_cases() if c["id"] == case_id)
 
-    def route_run(self, name, case, reads, line, final=None, full=False):
-        run, _, _ = self.prepare(name, case)
+    def route_run(self, name, case, reads, line, final=None, full=False, hook_arm=None):
+        run, _, _ = self.prepare(name, case, hook_arm=hook_arm)
         manifest = json.loads((run / "manifest.json").read_text())
         events = [{"type": "session.started"}]
         for index, (kind, ident) in enumerate(reads):
@@ -1214,11 +1215,13 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertIn("3-prove-the-context", route["steps_section"]["done"])
         self.assertNotIn("research-context", route["step_loads"]["required"])
 
-    def loads_score(self, name, case_id, *skills, **update):
+    def loads_score(self, name, case_id, *skills, hook_arm=None, **update):
         if update:
             self.validate_with(name, case_id, **update)
         case = next(c for c in read_cases(self.corpus or HERE / "dataset" / "dev.jsonl") if c["id"] == case_id)
-        score, _ = self.route_run(name, case, [("skill", skill) for skill in skills], "Answer.", full=True)
+        score, _ = self.route_run(
+            name, case, [("skill", skill) for skill in skills], "Answer.", full=True, hook_arm=hook_arm
+        )
         self.corpus = None
         return score
 
@@ -1232,47 +1235,138 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(labeled["unexpected_skills"], [])
         cross_plugin = self.loads_score("credit-cross-plugin", "lab-mode-code-fix", *self.SWE_ROUTER, "swe:implement")
         self.assertEqual(cross_plugin["unexpected_skills"], [])
-        unlisted = self.loads_score("credit-unlisted", "HO-09", "swe:swe-mode")
+        ho09 = self.loads_score("credit-ho09-router", "HO-09", "swe:swe-mode")
+        self.assertEqual(ho09["unexpected_skills"], [])
+        self.assertIs(ho09["false_activation"], False)
+        unlisted = self.loads_score("credit-unlisted", "lab-mode-define-metric", "swe:swe-mode")
         self.assertEqual(unlisted["unexpected_skills"], ["swe:swe-mode"])
         self.assertIs(unlisted["false_activation"], False)
 
     def test_a_forbidden_router_or_go_deeper_is_a_false_activation_even_with_a_route(self):
         quick_fact = self.loads_score("forbid-quick-fact", "HO-09", "swe:go-deeper")
-        self.assertEqual(quick_fact["unexpected_skills"], ["swe:go-deeper"])
+        self.assertEqual(quick_fact["unexpected_skills"], ["go-deeper"])
         self.assertIs(quick_fact["false_activation"], True)
         skipped = self.loads_score("forbid-skip-rule-route", "IM-10", "swe:swe-mode", "swe:go-deeper", "swe:implement")
-        self.assertEqual(skipped["unexpected_skills"], ["swe:go-deeper"])
+        self.assertEqual(skipped["unexpected_skills"], ["go-deeper"])
         self.assertIs(skipped["false_activation"], True)
         lab_skipped = self.loads_score(
             "forbid-skip-rule-lab-route", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", "swe:go-deeper",
-            forbidden_skills=["lab:go-deeper", "swe:go-deeper"], acceptable_auxiliaries=["lab:making-plots"])
-        self.assertEqual(lab_skipped["unexpected_skills"], ["lab:go-deeper", "swe:go-deeper"])
+            forbidden_skills=["swe:go-deeper"], acceptable_auxiliaries=["lab:making-plots"])
+        self.assertEqual(lab_skipped["unexpected_skills"], ["go-deeper"])
         self.assertIs(lab_skipped["false_activation"], True)
-        for case_id in ("lab-making-plots-pipeline-diagram", "lab-making-plots-read-table",
+        for case_id in ("lab-making-plots-pipeline-diagram",
                         "lab-making-plots-crash-diagnosis", "lab-mode-define-metric"):
             score = self.loads_score("forbid-" + case_id, case_id, "lab:lab-mode")
             self.assertEqual(score["unexpected_skills"], ["lab:lab-mode"], case_id)
             self.assertIs(score["false_activation"], True, case_id)
+        read_table_lab = self.loads_score("read-table-lab-mode", "lab-making-plots-read-table", "lab:lab-mode")
+        self.assertEqual(read_table_lab["unexpected_skills"], [])
+        self.assertIs(read_table_lab["false_activation"], False)
+        read_table_plot = self.loads_score("read-table-plots", "lab-making-plots-read-table", "lab:making-plots")
+        self.assertEqual(read_table_plot["unexpected_skills"], ["lab:making-plots"])
+        self.assertIs(read_table_plot["false_activation"], True)
 
     def test_a_routed_run_may_load_the_always_on_triggers_of_its_router(self):
-        swe = self.loads_score("always-on-swe", "IM-04", *self.ALWAYS_ON, "swe:implement")
+        swe = self.loads_score("always-on-swe", "IM-04", *self.ALWAYS_ON, "swe:in-your-own-words", "swe:implement")
         self.assertEqual(swe["unexpected_skills"], [])
-        lab = self.loads_score("always-on-lab", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper",
-                               "swe:go-deeper", "swe:writing")
+        lab = self.loads_score("always-on-lab", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", "swe:go-deeper")
         self.assertEqual(lab["unexpected_skills"], [])
         labeled = self.loads_score("always-on-label", "AR-01", *self.ALWAYS_ON, "swe:codebase-design")
         self.assertEqual(labeled["unexpected_skills"], [])
-        no_router = self.loads_score("always-on-no-router", "HO-09", "swe:writing")
+        no_router = self.loads_score("always-on-no-router", "lab-mode-define-metric", "swe:writing")
         self.assertEqual(no_router["unexpected_skills"], ["swe:writing"])
         self.assertIs(no_router["false_activation"], False)
 
     def test_go_deeper_on_chat_or_a_quick_fact_is_a_false_activation(self):
         for case_id in ("swe-mode-chat", "swe-mode-quick-fact"):
             score = self.loads_score("go-deeper-" + case_id, case_id, "swe:go-deeper")
-            self.assertEqual(score["unexpected_skills"], ["swe:go-deeper"], case_id)
+            self.assertEqual(score["unexpected_skills"], ["go-deeper"], case_id)
             self.assertIs(score["false_activation"], True, case_id)
         allowed = self.loads_score("go-deeper-non-software", "swe-mode-non-software", "swe:go-deeper")
         self.assertEqual(allowed["unexpected_skills"], [])
+        sp09 = self.loads_score("go-deeper-sp09", "SP-09", "swe:swe-mode", "swe:go-deeper")
+        self.assertEqual(sp09["unexpected_skills"], [])
+        self.assertIs(sp09["false_activation"], False)
+
+    def test_lab_go_deeper_is_credited_on_a_lab_route_in_hook_off(self):
+        score = self.loads_score("lab-gd-hook-off", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", hook_arm="hook-off")
+        self.assertEqual(score["unexpected_skills"], [])
+        self.assertIs(score["false_activation"], False)
+        self.assertIn("go-deeper", score["allowed_skills"])
+
+    def test_uni_go_deeper_is_credited_in_hook_on_and_forbids_across_copies(self):
+        swe_on = self.loads_score("uni-gd-swe-on", "IM-04", "swe:swe-mode", "uni:go-deeper", "swe:implement", hook_arm="hook-on")
+        self.assertEqual(swe_on["unexpected_skills"], [])
+        self.assertIs(swe_on["false_activation"], False)
+        self.assertIn("go-deeper", swe_on["allowed_skills"])
+        lab_on = self.loads_score("uni-gd-lab-on", "lab-mode-analyze-results", "lab:lab-mode", "uni:go-deeper", hook_arm="hook-on")
+        self.assertEqual(lab_on["unexpected_skills"], [])
+        self.assertIs(lab_on["false_activation"], False)
+        self.assertIn("go-deeper", lab_on["allowed_skills"])
+        for arm in ("hook-off", "hook-on"):
+            forbid = self.loads_score("uni-gd-forbid-" + arm, "IM-10", "swe:swe-mode", "uni:go-deeper", "swe:implement", hook_arm=arm)
+            self.assertEqual(forbid["unexpected_skills"], ["go-deeper"], arm)
+            self.assertIs(forbid["false_activation"], True, arm)
+            self.assertNotIn("go-deeper", forbid["allowed_skills"], arm)
+        expected = self.loads_score(
+            "uni-gd-expected", "IM-04", "swe:swe-mode", "uni:go-deeper", "swe:implement",
+            expected_skills=["swe:implement", "swe:go-deeper"])
+        self.assertEqual(expected["activation"]["swe:go-deeper"], "loaded")
+
+    def test_swe_writing_is_unexpected_on_lab_route_in_hook_off_and_credited_in_hook_on(self):
+        off_score = self.loads_score("lab-writing-off", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", "swe:writing", hook_arm="hook-off")
+        self.assertEqual(off_score["unexpected_skills"], ["swe:writing"])
+        self.assertIs(off_score["false_activation"], False)
+        self.assertNotIn("swe:writing", off_score["allowed_skills"])
+        on_score = self.loads_score("lab-writing-on", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", "swe:writing", hook_arm="hook-on")
+        self.assertEqual(on_score["unexpected_skills"], [])
+        self.assertIs(on_score["false_activation"], False)
+        self.assertIn("swe:writing", on_score["allowed_skills"])
+
+    def test_swe_in_your_own_words_read_by_path_is_credited_on_a_swe_route(self):
+        case = self.case_named("IM-01")
+        for arm in ("hook-off", "hook-on"):
+            run, _, _ = self.prepare("own-words-" + arm, case, hook_arm=arm)
+            manifest = json.loads((run / "manifest.json").read_text())
+            own_words = manifest["skills"]["swe:in-your-own-words"]
+            own_text = Path(own_words["path"]).read_text()
+            own_lines = own_text.split("\n")
+            steps = []
+            for idx, skill_id in enumerate(("swe:swe-mode", "swe:go-deeper", "swe:writing", "swe:implement")):
+                skill = manifest["skills"][skill_id]
+                raw = Path(skill["path"]).read_text()
+                body = ("Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n"
+                        + raw.split("\n---\n", 1)[1].lstrip("\n"))
+                steps += [
+                    ("call", f"m-{idx}", f"u-{idx}", {"name": "Skill", "input": {"skill": skill_id}}),
+                    ("result", None, f"u-{idx}", {"success": True, "commandName": skill_id}),
+                    ("body", None, f"u-{idx}", body),
+                ]
+            steps += [
+                ("call", "m-own", "u-own", {"name": "Read", "input": {"file_path": own_words["path"]}}),
+                ("result", None, "u-own", {"type": "text", "file": {
+                    "filePath": own_words["path"], "content": own_text,
+                    "startLine": 1, "numLines": len(own_lines), "totalLines": len(own_lines)}}),
+                ("call", "m-edit", "u-edit", {"name": "Edit", "input": {"file_path": "importer.py"}}),
+                ("result", None, "u-edit", {"filePath": "importer.py"}),
+            ]
+            hooks = None
+            plugin_dirs = [run / "inputs" / "plugins" / "swe"]
+            if arm == "hook-on":
+                swe_stdout = Path(manifest["hooks"]["swe"]["path"]).read_text()
+                hooks = [{
+                    "type": "hook_success", "hookName": "SessionStart:startup", "hookEvent": "SessionStart",
+                    "toolUseID": "hook-1", "content": swe_stdout.rstrip("\n"), "stdout": swe_stdout,
+                    "stderr": "", "exitCode": 0, "command": "cat hook", "durationMs": 10,
+                }]
+            score = self.claude_trace(run, steps, "u-edit", hook_rows=hooks, plugin_dirs=plugin_dirs)
+            self.assertEqual(score["unexpected_skills"], [], arm)
+            self.assertIs(score["false_activation"], False, arm)
+            self.assertIn("swe:in-your-own-words", score["allowed_skills"], arm)
+        for arm in ("hook-off", "hook-on"):
+            lab = self.loads_score("own-words-lab-" + arm, "lab-mode-analyze-results", "lab:lab-mode", "swe:in-your-own-words", hook_arm=arm)
+            self.assertEqual(lab["unexpected_skills"], ["swe:in-your-own-words"], arm)
+            self.assertNotIn("swe:in-your-own-words", lab["allowed_skills"], arm)
 
     def test_aggregate_keeps_two_families_of_one_target_apart(self):
         scores = []
