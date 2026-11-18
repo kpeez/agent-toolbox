@@ -460,39 +460,48 @@ A case that sets `expected_route` credits what a router-first run on that route 
   as `model-the-domain`, `architect`, `swarm`, `no-comments`, and `log-decisions`. The router says its Triggers "hold
   in every playbook and route", so a correct run on any route may load them. A trigger that names a playbook or a
   reference is a read, not a load, and a project skill is not scorable, so neither adds a credit;
-- the always-on triggers: `go-deeper` (Match step 2 of the router) and `swe:writing` (the swe router's prose trigger,
-  "the reply included"). A swe route credits `swe:go-deeper` and `swe:writing`.
-  A lab route credits `lab:go-deeper` (its own Match step 2), and also `swe:go-deeper` and `swe:writing`. The swe
-  session-start hook says to run `swe:go-deeper` on "a new task of any kind" and to write replies with the `writing` skill,
-  and a snapshot with both plugins delivers it on a lab task too. The lab router names neither swe skill, so this is
-  a decision about the hook, and a lab run that loads either one is not unexpected.
+- the canonical `go-deeper` skill and arm-aware always-on triggers: `swe:go-deeper`, `lab:go-deeper`, and
+  `uni:go-deeper` are byte-identical copies, so the scorer maps any load or label of the three to `go-deeper`.
+  In `hook-off`, only the router text asks for anything: a swe route credits `go-deeper`, `swe:writing`, and
+  `swe:in-your-own-words` (the First-message trigger, read by path); a lab route credits `go-deeper` only (Match
+  step 2; `lab-mode` restates inline and names neither `writing` nor `in-your-own-words`). In `hook-on`, the
+  SessionStart hooks ask for `go-deeper` (`swe:go-deeper` and `uni:go-deeper`) and `swe:writing` on every task, so
+  `hook-on` adds `go-deeper` and `swe:writing` across both plugins while keeping `swe:in-your-own-words` on swe routes.
 
-A `forbidden_skills` entry removes its credit, even under `expected_route`. That is how a routed case withholds the
-`go-deeper` credit: list `go-deeper` (for a lab route, both `lab:go-deeper` and `swe:go-deeper`) where its skip rule
-applies. A `go-deeper` load there is then a false activation.
+A `forbidden_skills` entry removes its credit, even under `expected_route`. Because `go-deeper` is canonicalized,
+listing one copy (such as `swe:go-deeper`) in `forbidden_skills` forbids all three copies. A `go-deeper` load there
+is then a false activation.
 
 The `go-deeper` skip rule is: chat, a quick factual answer, a mechanical or fully specified edit, a follow-up inside a
-task you already framed, and "just do it". It runs once per task. The corpus applies it as follows.
+task you already framed, and "just do it". It runs once per task. For a quick factual answer or a fully specified
+mechanical edit, `go-deeper` is forbidden and the router is acceptable (an auxiliary), not required. On any other
+task, `go-deeper` is acceptable or expected, as the route says. The corpus applies it as follows.
 
-- Chat and a quick factual answer: `swe-mode-chat`, `swe-mode-quick-fact`, `HO-09`, `lab-mode-define-metric`,
-  `lab-making-plots-read-table`, and the lookups `TA-07`, `DG-07`, and `TC-08`.
+- Chat and a quick factual answer (one lookup or short explanation from named files, "change nothing"): `swe-mode-chat`,
+  `swe-mode-quick-fact`, `HO-09` (with `swe:swe-mode` acceptable), `lab-mode-define-metric`, `lab-making-plots-read-table`
+  (with `lab:lab-mode` acceptable, because `lab-mode` does not exclude a results-CSV lookup, and `lab:making-plots`
+  forbidden), and the lookups `TA-07`, `DG-07`, and `TC-08`. Checking whether `format_total` behaves right (`SP-09`)
+  is a correctness judgment, not a quick fact, so `go-deeper` stays allowed.
 - A mechanical or fully specified edit or action: the request names every constraint of the change or the action, so
   nothing is left to choose. These are `IM-10`, `AR-07`, `HO-07`, `TC-07` (run a named command and report), `SP-01`
   and `SP-10` (commit finished work and open a draft PR), `SP-04` (land an approved PR),
-  `swe-route-ship-stack` (land a named stack), and `lab-mode-rename-column`. `IM-01` and the other requests that leave a design or a cause open stay allowed.
+  `swe-route-ship-stack` (land a named stack), and `lab-mode-rename-column`. `IM-01`, `lab-mode-code-fix`, and the
+  other requests that leave a design or a cause open stay allowed.
 - A follow-up inside a framed task: the last user turn continues the work that an earlier assistant turn did. These
   are `SP-05` (commit what the earlier turn reported complete), `SP-06` (fix what it diagnosed),
   `swe-mode-pause-safely`, and `swe-route-ketchup` (catch up on the queue that the earlier turns framed). A user turn that opens a new task after an answer is
   a new task, so `HO-05`, `HO-06`, `swe-mode-build-feature`, and the lab contextual cases keep `go-deeper` allowed.
 
-A case that sets no `expected_route` gets only one automatic credit: `swe:writing`, when it lists the plugin's router as
-expected or auxiliary. It labels the rest itself:
+A case that sets no `expected_route` gets automatic credits only from `swe:swe-mode` (in `hook-off`, `swe:writing` when
+`swe:swe-mode` is expected or auxiliary) and from `hook-on` (`go-deeper` and `swe:writing`, minus `forbidden_skills`).
+It labels the rest itself:
 
 - `acceptable_auxiliaries` where the router text says they load. A swe case about code, a diff review, or a
-  README edit lists `swe:swe-mode` and `swe:go-deeper`. A lab case that edits code lists the swe pair too.
+  README edit lists `swe:swe-mode` and `swe:go-deeper`. A lab case that edits code lists `swe:swe-mode` and one
+  `go-deeper` copy (`swe:go-deeper`) too.
 - `forbidden_skills` where a load is a false activation: the lab router on an edit that is not research, or
-  `go-deeper` on a task its skip rule excludes.
-- Neither list where a load is merely unexpected, such as `swe:swe-mode` on a quick factual answer. It then
+  `swe:go-deeper` on a task its skip rule excludes.
+- Neither list where a load is merely unexpected, such as `swe:swe-mode` on `lab-mode-define-metric`. It then
   shows in `unexpected_skills` and does not count as a false activation.
 
 `aggregate` adds `route_followed_*`, `route_line_*`, `route_steps_*`, and `route_read_*` counts to each group.
