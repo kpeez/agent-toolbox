@@ -5634,7 +5634,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "recorded",
-      "source_text": "1-name-the-procedure: Write the inputs, the outputs, the decisions, and the real commands from this session. (encode-the-procedure)",
+      "source_text": "1-name-the-procedure: Write the inputs, the outputs, the decisions, and the real commands from this session. For a procedure that did not run in this session, write the commands the user gave or that the repository holds; step 3 proves them. (encode-the-procedure)",
       "subject": "codify-procedure"
     },
     {
