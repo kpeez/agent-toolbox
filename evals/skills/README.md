@@ -383,6 +383,18 @@ unjudged has its retained stream checked for escapes; an escape stops the canari
   and no way to keep the raw transcript or the final fixture. Its ablation compares a plugin with no
   plugin, and it publishes its report to claude.ai unless `--no-publish` is set.
 
+### Relevant-action labeler
+
+`label_relevant_action.py` labels native Claude Code transcripts for `skill_eval.py capture --relevant-action`.
+Its `view` subcommand builds a blinded input for each run:
+
+- **What the labeler sees:** the case's last user message, the case's `metadata.relevant_action` description, and an ordered list of root `tool_use` calls. Each call entry contains only `tool_use_id`, `tool`, and `target` (`file_path`, `pattern`, `path`, or `command`, else compact JSON of the input cut to 300 characters).
+- **What the labeler does not see:** `Skill` calls, calls that reach a declared `--plugin-dir` (skills, playbooks, references) by a path, by a path relative to the session's working folder, or by naming the folder anywhere in their input (a Glob pattern or a Bash command), sidechain calls, hook outputs, system text, assistant text, and anything that names the hook arm.
+
+Before using the labeler on a run, calibrate it with `label_relevant_action.py calibrate` against about 30 hand-labeled pilot transcripts.
+Pick the cheapest model that reaches at least 90% exact agreement with the hand labels.
+After the run, a person audits a random 5% sample of the labeled transcripts.
+
 ## Route scoring
 
 A case may set four optional fields. `expected_route` is the id of a `route`
