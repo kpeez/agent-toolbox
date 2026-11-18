@@ -1796,7 +1796,7 @@ def dry_plan(args, runtime, cases, excluded, pilot, checks, plan):
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--runtime", type=Path, default=HERE / "runtime.native.json")
-    parser.add_argument("--corpus", type=Path, default=se.HERE / "cases.json")
+    parser.add_argument("--corpus", type=Path, default=se.DATASET)
     parser.add_argument(
         "--case",
         action="append",

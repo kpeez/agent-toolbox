@@ -85,8 +85,11 @@ round on a clear task. They include "figure out why a test fails", which is diag
 disclosed development material, **not a sealed holdout**. An independent sealed
 set is still required before tuning from measured scores.
 
-`cases.json` holds evaluator labels, allowed auxiliary skills, forbidden skills,
-rationales, and case-specific action boundaries. `fixtures/` holds only task
+`dataset/dev.jsonl` holds the corpus as one [Inspect `Sample`](https://inspect.aisi.org.uk/datasets.html)
+per line, split by `split` inside `metadata` and not by file. Its card, `dataset/README.md`, maps the fields. The
+evaluator labels, allowed auxiliary skills, forbidden skills, rationales, and
+case-specific action boundaries sit in each sample's `metadata`. `skill_eval.corpus()` parses each
+sample back into the case dict that the rest of the code uses. `fixtures/` holds only task
 inputs. The materializer copies messages and fixture files; it never copies
 answer keys into the execution directory. Context is serialized as preceding
 USER/ASSISTANT messages in one prompt, not replayed as native multi-turn sessions.
@@ -110,7 +113,7 @@ uv run evals/skills/skill_eval.py score --run artifacts/skill-evals/RUN_ID
 uv run evals/skills/skill_eval.py aggregate artifacts/skill-evals/*/score.json
 ```
 
-Replace `CASE_ID` using `cases.json` and `RUN_ID` with a unique name. To score a
+Replace `CASE_ID` using the `id` fields of `dataset/dev.jsonl` and `RUN_ID` with a unique name. To score a
 Claude Code session, run it headless from the run's `workspace/` in the audited
 shape, then capture the session transcript:
 
@@ -141,7 +144,7 @@ starts, or `none`. Any other native trace, captured with the default
 uses `--state timeout` or `--state incomplete`. Import retains the raw bytes,
 capture digest, and final fixture files. Inputs and raw trace digests are checked
 before scoring. Materialize records `corpus_sha256` and `facets_sha256`, the
-digests of `cases.json` and `facets.json`. `score` refuses a run when either file
+digests of `dataset/dev.jsonl` and `facets.json`. `score` refuses a run when either file
 changed since materialization, because route scores read both. A manifest made
 before `facets_sha256` existed still scores. Both digests enter the frozen
 configuration, so runs scored under different maps never pool in `aggregate`.
@@ -229,7 +232,7 @@ artifacts/skill-evals/PILOT/
 `artifacts/` is ignored, so `--backup-dir` copies each finished run and the report to a destination
 outside the repository. The runner deletes only a run folder that never launched: a folder with no
 `run.json` left by an interrupted setup, and the folder it just materialized when a frozen input
-(corpus, fixture, plugin catalog, or harness) changed since the freeze. Both hold no model output. It never deletes or moves a run that launched. `materialize` also refuses when the copy of `plugins/` differs from the catalog it hashed just before (less `__pycache__` and `*.pyc`), so a change during the copy launches nothing. Case labels and oracles stay in `cases.json`;
+(corpus, fixture, plugin catalog, or harness) changed since the freeze. Both hold no model output. It never deletes or moves a run that launched. `materialize` also refuses when the copy of `plugins/` differs from the catalog it hashed just before (less `__pycache__` and `*.pyc`), so a change during the copy launches nothing. Case labels and oracles stay in `dataset/dev.jsonl`;
 the run folder holds only the prompt, the fixture, and the frozen catalog.
 
 ### Preflight
@@ -506,7 +509,7 @@ A facet is one workflow behavior that a transcript can show. Examples are a
 skill load, a route line, a full playbook read, a step load, and the Steps
 section. `facets.py` derives every facet from the skill sources: the routers,
 the playbooks, the session-start hooks, and the skill frontmatter. It also
-reads the eval corpus (`cases.json`) and the targets in `skill_eval.py` to
+reads the eval corpus (`dataset/dev.jsonl`) and the targets in `skill_eval.py` to
 find the cases that cover each facet. `facets.json` holds one record per
 facet. `FACETS.md` shows the same data as tables, with a legend for each
 facet kind. Do not edit either file by hand.
