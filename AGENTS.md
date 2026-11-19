@@ -25,6 +25,9 @@
   step.
 - Use only `node:` APIs, never `Bun.*` or `import.meta.dir`. The same file
   must run on bun and on Node unchanged.
+- Never use `import.meta.main`. Node 23.6 to 24.1 strips types but leaves it
+  undefined, so `main()` never runs. Compare `process.argv[1]` with the
+  module path, as `isMain` in `plugins/rex-agents/scripts/is_main.ts` does.
 - Start each Python script with `#!/usr/bin/env -S uv run --script` and a
   PEP 723 header that sets `requires-python = ">=3.11"` and lists its
   dependencies. Never use `python3`. The header keeps `uv run` from syncing the
