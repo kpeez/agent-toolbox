@@ -74,8 +74,13 @@ order. A bounded worker reports consequential uncertainty to its caller.
 
 Report the confirmed or most-supported cause, its evidence, and the
 uncertainty. Label the cause reproduced, inferred from the evidence, or
-unresolved. Diagnosis itself does not edit the implementation; an authorized
-fix goes through implement. Before you recommend a fix, follow
+unresolved. A pattern in observed data is a hypothesis about the mechanism,
+not the mechanism. Before you tell the user why a system behaves as observed,
+confirm the mechanism in the source or with a probe. For a query or a listing,
+read the actual predicate and any label expansion, because the column that
+looks like the discriminator can be expanded or overridden. Give an
+unconfirmed mechanism as inferred, never as the answer. Diagnosis itself does
+not edit the implementation; an authorized fix goes through implement. Before you recommend a fix, follow
 [fix-root-causes](../principle-fix-root-causes/SKILL.md). Keep the minimized
 reproduction: an authorized fix reruns it and decides through the
 `testing-code` admission gate whether it becomes a permanent test. If no
