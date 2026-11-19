@@ -14,12 +14,17 @@ Per-call events (PreToolUse, PostToolUse, PostToolUseFailure,
 PermissionRequest) allow:
 
 - `sh $ROOT/scripts/run-ts $ROOT/<path>.ts [args]`
-- `cat <file>.md`
+- `cat $ROOT/<path>.md`
 
 Every other event allows the same, plus
 `uv run --script $ROOT/<path>.py [args]`.
 
-$ROOT is the literal "$CLAUDE_PLUGIN_ROOT" or "${CLAUDE_PLUGIN_ROOT}" token.
+$ROOT is the double-quoted token "$CLAUDE_PLUGIN_ROOT" followed by `/`. The
+quotes stop word splitting on a root path with spaces. The braced form
+${CLAUDE_PLUGIN_ROOT} is not allowed because fish, which Codex may run through
+`$SHELL -lc`, rejects it. A path with a `..` segment is not allowed because it
+leaves the plugin folder.
+
 A plugin whose hooks use run-ts must ship scripts/run-ts, and every copy must
 be byte-identical.
 """
@@ -35,13 +40,20 @@ PLAIN = re.compile(r'[A-Za-z0-9_./" -]*')
 
 
 PER_CALL_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest"}
-ROOT = re.compile(r"\$(?:CLAUDE_PLUGIN_ROOT|\{CLAUDE_PLUGIN_ROOT\})/")
+QUOTED_ROOT = '"$CLAUDE_PLUGIN_ROOT"'
+ROOT = re.compile(r"\$CLAUDE_PLUGIN_ROOT/")
 RUN_TS = "scripts/run-ts"
 
 
 def _under_root(token: str, suffix: str) -> bool:
+    """True for a path under the plugin root that ends in suffix and has no `..` segment."""
     match = ROOT.match(token)
-    return match is not None and token.endswith(suffix) and len(token) > match.end() + len(suffix)
+    return (
+        match is not None
+        and token.endswith(suffix)
+        and len(token) > match.end() + len(suffix)
+        and ".." not in token.split("/")
+    )
 
 
 def _runs_run_ts(command: str) -> bool:
@@ -58,10 +70,12 @@ def check_command(command: str, event: str) -> str | None:
     """Return None when the command is allowed for the event, else a reason it fails."""
     # One plain command only. Any other character (an operator, a newline,
     # `$(`, a backtick, `#`) would let a second command ride behind an
-    # allowed first word, so allow plain words and the plugin root alone.
-    bare = command.replace("${CLAUDE_PLUGIN_ROOT}", "").replace("$CLAUDE_PLUGIN_ROOT", "")
+    # allowed first word, so allow plain words and the quoted plugin root
+    # alone. This raw-text check also rejects the braced and unquoted root,
+    # because shlex.split drops the quotes and hides them from the tokens.
+    bare = command.replace(QUOTED_ROOT, "")
     if not PLAIN.fullmatch(bare):
-        return "must be one plain command: letters, digits, _ . / - \" and the plugin root only"
+        return 'must be one plain command: letters, digits, _ . / - " and the double-quoted "$CLAUDE_PLUGIN_ROOT" only'
     try:
         tokens = shlex.split(command)
     except ValueError as error:
@@ -69,7 +83,7 @@ def check_command(command: str, event: str) -> str | None:
     if not tokens:
         return "empty command"
     head, *args = tokens
-    if head == "cat" and len(args) == 1 and args[0].endswith(".md"):
+    if head == "cat" and len(args) == 1 and _under_root(args[0], ".md"):
         return None
     if (
         head == "sh"
@@ -89,8 +103,8 @@ def check_command(command: str, event: str) -> str | None:
     ):
         return None
     if event in PER_CALL_EVENTS:
-        return f"{event} fires on every tool call: run `sh $CLAUDE_PLUGIN_ROOT/scripts/run-ts $CLAUDE_PLUGIN_ROOT/<path>.ts` or cat a .md file"
-    return "must run `sh $CLAUDE_PLUGIN_ROOT/scripts/run-ts $CLAUDE_PLUGIN_ROOT/<path>.ts`, `uv run --script $CLAUDE_PLUGIN_ROOT/<path>.py`, or cat a .md file"
+        return f'{event} fires on every tool call: run `sh "$CLAUDE_PLUGIN_ROOT"/scripts/run-ts "$CLAUDE_PLUGIN_ROOT"/<path>.ts` or cat `"$CLAUDE_PLUGIN_ROOT"/<path>.md`, with no `..` segment'
+    return 'must run `sh "$CLAUDE_PLUGIN_ROOT"/scripts/run-ts "$CLAUDE_PLUGIN_ROOT"/<path>.ts`, `uv run --script "$CLAUDE_PLUGIN_ROOT"/<path>.py`, or cat `"$CLAUDE_PLUGIN_ROOT"/<path>.md`, with no `..` segment'
 
 
 def _has_flag(args: list[str]) -> bool:
