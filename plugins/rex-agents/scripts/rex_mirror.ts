@@ -81,7 +81,7 @@ async function main(): Promise<number> {
   const label = process.argv[2] ?? "[claude] job";
   const sessionId = process.argv[3] ?? "";
   const log = join(tmpdir(), `rex-mirror-${randomUUID()}.log`);
-  writeFileSync(log, "", { flag: "wx" });
+  writeFileSync(log, "", { flag: "wx", mode: 0o600 });
   const nonce = randomBytes(8).toString("hex"); // the exit line names it, so command output cannot fake one
   const block = startViewer(label, log, nonce);
   if (block && sessionId) remember(sessionId, block, label);
