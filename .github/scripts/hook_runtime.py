@@ -11,6 +11,7 @@ port; each entry still has to run as `uv run --script`.
 """
 
 import json
+import re
 import shlex
 import sys
 from pathlib import Path
@@ -32,20 +33,23 @@ ALLOW_LIST = [
 ]
 
 
+PLAIN = re.compile(r'[A-Za-z0-9_./" -]*')
+
+
 def check_command(plugin: str, command: str) -> str | None:
     """Return None when the command is allowed, else a reason it fails."""
-    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
-    lexer.whitespace_split = True
+    # One plain command only. Any other character (an operator, a newline,
+    # `$(`, a backtick, `#`) would let a second command ride behind an
+    # allowed first word, so allow plain words and the plugin root alone.
+    bare = command.replace("${CLAUDE_PLUGIN_ROOT}", "").replace("$CLAUDE_PLUGIN_ROOT", "")
+    if not PLAIN.fullmatch(bare):
+        return "must be one plain command: letters, digits, _ . / - \" and the plugin root only"
     try:
-        tokens = list(lexer)
+        tokens = shlex.split(command)
     except ValueError as error:
         return f"cannot parse: {error}"
     if not tokens:
         return "empty command"
-    # One plain command only: an operator would let a second runtime ride
-    # behind an allowed first word.
-    if any(set(t) <= set("();<>|&") or "`" in t for t in tokens):
-        return "must be one command with no shell operators"
     head, *args = tokens
     if head == "bun" and args and args[0].endswith(".ts") and not _has_flag(args):
         return None
