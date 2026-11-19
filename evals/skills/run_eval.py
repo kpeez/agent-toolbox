@@ -38,8 +38,9 @@ ARMS = ("hook-on", "hook-off")
 RUNTIME = HERE / "runtime.plugin-eval.json"
 # The plugins each session loads. The checked-out catalog also has rex-agents, which the runner choice left out.
 LOADED_PLUGINS = ("swe", "lab", "uni")
-# case.yaml grants these; --allow-tools adds Write and Edit; --disallow-tools removes the other default tools.
-CASE_TOOLS = ("Read", "Glob", "Grep", "Skill")
+# case.yaml lists all six; Write and Edit are gated, so --allow-tools also grants them; --disallow-tools removes the
+# other default tools.
+CASE_TOOLS = ("Read", "Glob", "Grep", "Skill", "Write", "Edit")
 ALLOW_TOOLS = ("Write", "Edit")
 DISALLOW_TOOLS = ("Task", "TaskStop", "NotebookEdit", "ToolSearch")
 MAX_CONSECUTIVE_FAILURES = 3
@@ -106,10 +107,8 @@ def load_runtime(path):
     ) - runtime.keys()
     if missing:
         raise ValueError(f"runtime is missing {sorted(missing)}")
-    if sorted(runtime["tools"]) != sorted(CASE_TOOLS + ALLOW_TOOLS):
-        raise ValueError(
-            f"runtime tools must be exactly {sorted(CASE_TOOLS + ALLOW_TOOLS)}"
-        )
+    if sorted(runtime["tools"]) != sorted(CASE_TOOLS):
+        raise ValueError(f"runtime tools must be exactly {sorted(CASE_TOOLS)}")
     return runtime
 
 
@@ -128,9 +127,11 @@ def run_dir(out, item):
 
 
 def finished(run):
-    return (run / "run.json").is_file() and bool(
-        se.read_json(run / "run.json").get("ended_at")
-    )
+    """A run that ended on an API error is not finished: a resume moves it to interrupted/ and launches it again."""
+    if not (run / "run.json").is_file():
+        return False
+    record = se.read_json(run / "run.json")
+    return bool(record.get("ended_at")) and not record.get("api_error")
 
 
 def frozen_config(args, runtime, cases):
@@ -511,7 +512,8 @@ class Batch:
                 self.halt(f"{record['run']}: {record['violations']}")
             elif cost is None or cost > cap:
                 self.halt(f"{record['run']}: cost {cost} is unknown or over ${cap}")
-            self.failures = self.failures + 1 if record.get("error") else 0
+            failed = record.get("error") or record.get("api_error")
+            self.failures = self.failures + 1 if failed else 0
             if self.failures >= MAX_CONSECUTIVE_FAILURES:
                 self.halt(f"{self.failures} runs in a row ended with an error")
 
@@ -577,9 +579,10 @@ def launch(run, case_id, arm, runtime, prompt=None):
         try:
             record["stream_appended_final_newline"] = keep(run, kept)
             record.update(session_checks(run, arm, runtime, manifest))
-            record["stream_cost_usd"] = (
-                last_result(run / "kept" / "stream.jsonl") or {}
-            ).get("total_cost_usd")
+            final = last_result(run / "kept" / "stream.jsonl") or {}
+            record["stream_cost_usd"] = final.get("total_cost_usd")
+            if final.get("terminal_reason") == "api_error":
+                record["api_error"] = final.get("api_error") or final.get("api_error_type") or "api_error"
         except (OSError, ValueError) as error:
             record["error"] = record["error"] or f"keeping the sandbox failed: {error}"
     record["ended_at"] = now()
@@ -638,16 +641,12 @@ def execute(args):
             batch.release(run, {"run": str(run), "cost_usd": None, "error": f"runner failed: {error!r}"})
             raise
         batch.release(run, record)
-        print(
-            json.dumps(
-                {
-                    k: record.get(k)
-                    for k in ("case", "arm", "cost_usd", "error", "violations")
-                }
-            ),
-            file=sys.stderr,
-            flush=True,
-        )
+        if record.get("error") or record.get("api_error"):
+            print(
+                json.dumps({k: record.get(k) for k in ("case", "arm", "cost_usd", "error", "api_error")}),
+                file=sys.stderr,
+                flush=True,
+            )
 
     with ThreadPoolExecutor(max_workers=args.jobs) as pool:
         list(pool.map(one, plan))
@@ -753,16 +752,14 @@ def score_all(args):
     for item in plan:
         run = run_dir(out, item)
         record = se.read_json(run / "run.json") if (run / "run.json").is_file() else {}
-        if (
-            record.get("violations")
-            or not (run / "kept" / "transcript.jsonl").is_file()
-        ):
-            skipped.append(
-                {
-                    **item,
-                    "reason": "violations" if record.get("violations") else "not kept",
-                }
-            )
+        reason = (
+            "violations" if record.get("violations")
+            else "api error" if record.get("api_error")
+            else None if (run / "kept" / "transcript.jsonl").is_file()
+            else "not kept"
+        )
+        if reason:
+            skipped.append({**item, "reason": reason})
             continue
         for name in CAPTURE_OUTPUTS:
             target = run / name

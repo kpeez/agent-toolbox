@@ -12,7 +12,7 @@
   "tools": ["Read", "Write", "Edit", "Glob", "Grep", "Skill"],
   "max_turns": 30,
   "timeout_seconds": 900,
-  "per_run_stop_usd": 1.0,
+  "per_run_stop_usd": 2.0,
   "harness_deltas": [
     "billed to the owner's subscription; cost is the API-equivalent total_cost_usd plugin eval reports",
     "effort set by CLAUDE_CODE_EFFORT_LEVEL and checked in each transcript",
