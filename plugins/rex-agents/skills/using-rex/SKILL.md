@@ -35,6 +35,21 @@ mirrored into its own block by the `rex-agents` hook, with a working spinner, th
 for it. Set `REX_AGENTS_MIRROR=0` in the agent's environment to turn the mirror
 off.
 
+A long training or eval run is the exception: give it a standalone block even
+in auto mode. A mirrored background command ends with the agent session, and a
+block does not, so the run survives a pause and you can resume it.
+
+## Pass the agent's environment
+
+A block starts from the login shell's environment, not from yours. A run that
+calls Claude Code must get your `CLAUDE_CONFIG_DIR`, or it bills the login
+shell's default account. Pass it, and any other variable the run needs, with
+`/usr/bin/env`:
+
+```sh
+rex run --shell=none -- /usr/bin/env CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR" <absolute program path> <args>
+```
+
 ## Find where you are
 
 - `REX_SESSION` and `REX_BLOCK` come from the terminal that started your

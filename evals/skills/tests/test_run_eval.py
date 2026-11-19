@@ -22,6 +22,8 @@ SCRIPT = HERE / "run_eval.py"
 sys.path.insert(0, str(HERE))
 import skill_eval as se
 
+STOP = json.loads((HERE / "runtime.plugin-eval.json").read_text())["per_run_stop_usd"]
+
 STUB = r'''#!/usr/bin/env python3
 """Stub of `claude --version` and `claude plugin eval` that writes a kept sandbox like the real CLI."""
 import json, os, secrets, subprocess, sys
@@ -36,6 +38,7 @@ with open(os.environ["STUB_LOG"], "a") as log:
 suite = Path(argv[2])
 case = argv[argv.index("--case") + 1]
 cost = float(os.environ.get("STUB_COST", "0.1"))
+api_error = os.environ.get("STUB_API_ERROR") == "1"
 tools = json.loads(os.environ.get("STUB_TOOLS", '["Edit","Glob","Grep","Read","Skill","Write"]'))
 kept = Path(os.environ["STUB_TMP"]) / ("e-" + secrets.token_hex(4))
 cwd = kept / "sealed" / "home" / "cwd"
@@ -79,12 +82,17 @@ for p in hooks:
     events += [{"type": "system", "subtype": "hook_started", "hook_id": p, "hook_name": "SessionStart:startup"},
                {"type": "system", "subtype": "hook_response", "hook_id": p, "hook_name": "SessionStart:startup",
                 "outcome": "success", "output": (suite / p / "hooks" / "session-start.md").read_text()}]
-events.append({"type": "result", "subtype": "success", "is_error": False, "total_cost_usd": cost, "session_id": sid})
+final = {"type": "result", "subtype": "success", "is_error": api_error, "total_cost_usd": cost, "session_id": sid}
+if api_error:
+    final |= {"terminal_reason": "api_error", "api_error_status": 429, "api_error": "usage_limit_reached"}
+events.append(final)
 (kept / "out").mkdir()
 (kept / "out" / "trace.jsonl").write_text("\n".join(json.dumps(e) for e in events))
 Path(argv[argv.index("--json") + 1]).write_text(json.dumps({"costUsd": cost, "cases": [{"name": case, "arms": {
-    "with": [{"costUsd": cost, "error": None, "turns": 3, "tracePath": str(kept / "out" / "trace.jsonl")}]}}]}))
+    "with": [{"costUsd": cost, "error": "exit 1: usage limit" if api_error and not os.environ.get("STUB_QUIET") else None, "turns": 3,
+              "tracePath": str(kept / "out" / "trace.jsonl")}]}}]}))
 print(f"kept {kept}: home/ and tmp/ in it were written by the plugin under test")
+sys.exit(1 if api_error else 0)
 '''
 
 
@@ -218,7 +226,32 @@ class PluginEvalAdapter(unittest.TestCase):
             self.run_eval("--max-total-usd", "5", "--arms", "hook-off").stdout
         )["spend"]
         self.assertEqual(spend["unknown_cost_runs"], 1)
-        self.assertAlmostEqual(spend["worst_case_usd"], 0.1 + 1.0)
+        self.assertAlmostEqual(spend["worst_case_usd"], 0.1 + STOP)
+
+    def test_a_run_that_ended_on_an_api_error_runs_again_on_resume(self):
+        first = self.run_eval("--max-total-usd", "5", "--arms", "hook-off", STUB_API_ERROR="1")
+        self.assertEqual(json.loads(first.stdout)["finished"], 0)
+        self.assertIn("usage_limit_reached", first.stderr)
+        report = json.loads(self.cli("score", "--out", self.out).stdout)
+        self.assertEqual((report["runs_scored"], report["skipped"][0]["reason"]), (0, "api error"))
+        second = self.run_eval("--max-total-usd", "5", "--arms", "hook-off")
+        self.assertEqual((len(self.launches()), json.loads(second.stdout)["finished"]), (2, 1))
+        self.assertEqual(second.stderr, "")
+        self.assertEqual(len(list((self.out / "interrupted").glob("*/run.json"))), 1)
+        self.assertEqual(json.loads(self.cli("score", "--out", self.out).stdout)["runs_scored"], 1)
+
+    def test_api_errors_stop_the_batch_even_when_plugin_eval_reports_none(self):
+        cases = ("IM-01", "IM-02", "IM-03", "IM-04")
+        result = self.run_eval("--max-total-usd", "10", "--arms", "hook-off", code=3, cases=cases,
+                               STUB_API_ERROR="1", STUB_QUIET="1")
+        self.assertEqual(len(self.launches()), 3)
+        self.assertIn("3 runs in a row", json.loads(result.stdout)["stopped"]["reason"])
+        self.assertEqual(result.stderr.count("usage_limit_reached"), 3)
+
+    def test_case_yaml_lists_all_six_tools(self):
+        self.run_eval("--max-total-usd", "5", "--arms", "hook-off")
+        case = (self.out / "runs" / "IM-01" / "hook-off" / "r1" / "suite" / "evals" / "IM-01" / "case.yaml").read_text()
+        self.assertIn("  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]\n", case)
 
     def test_budget_refuses_a_launch_whose_worst_case_passes_the_total(self):
         result = json.loads(self.run_eval("--max-total-usd", "0.5", code=3).stdout)
@@ -227,10 +260,10 @@ class PluginEvalAdapter(unittest.TestCase):
 
     def test_a_run_over_the_per_run_cost_stops_the_batch(self):
         result = json.loads(
-            self.run_eval("--max-total-usd", "10", code=3, STUB_COST="1.5").stdout
+            self.run_eval("--max-total-usd", "10", code=3, STUB_COST=str(STOP + 0.5)).stdout
         )
         self.assertEqual(len(self.launches()), 1)
-        self.assertIn("over $1.0", result["stopped"]["reason"])
+        self.assertIn(f"over ${STOP}", result["stopped"]["reason"])
         self.run_eval("--max-total-usd", "10", code=3)
         self.assertEqual(len(self.launches()), 1)
 
@@ -256,15 +289,16 @@ class PluginEvalAdapter(unittest.TestCase):
                 self.assertEqual(report["skipped"][0]["reason"], "violations")
 
     def test_parallel_runs_are_counted_once_while_in_flight(self):
-        # 8 runs at $0.10 with 4 at once: the worst case before any launch is at most 0.7 + 4 * 1.0 = 4.7.
+        # 8 runs at $0.10 with 4 at once: the worst case before any launch is at most 0.7 + 4 * STOP.
         cases = ("IM-01", "IM-02", "IM-03", "IM-04")
-        result = json.loads(self.run_eval("--max-total-usd", "5", "--jobs", "4", cases=cases).stdout)
+        cap = str(0.7 + 4 * STOP + 0.05)
+        result = json.loads(self.run_eval("--max-total-usd", cap, "--jobs", "4", cases=cases).stdout)
         self.assertIsNone(result["stopped"])
         self.assertEqual((len(self.launches()), result["finished"]), (8, 8))
 
     def test_a_resume_counts_stale_folders_while_workers_reserve(self):
-        # A killed --jobs 4 batch left 4 started runs, each worth $1. With a $6 cap, 4 stale plus
-        # in-flight launches at $1 each leave room for 2, whatever order the workers reserve in.
+        # A killed --jobs 4 batch left 4 started runs, each worth STOP. With a 6 * STOP cap, 4 stale plus
+        # in-flight launches at STOP each leave room for 2, whatever order the workers reserve in.
         sys.path.insert(0, str(HERE))
         import run_eval
         runtime = json.loads((HERE / "runtime.plugin-eval.json").read_text())
@@ -272,9 +306,9 @@ class PluginEvalAdapter(unittest.TestCase):
         for run in runs:
             run.mkdir(parents=True)
             (run / "run.json").write_text(json.dumps({"started_at": "x", "cost_usd": None}))
-        batch = run_eval.Batch(self.out, runtime, 6.0)
+        batch = run_eval.Batch(self.out, runtime, 6 * STOP)
         self.assertEqual([batch.reserve(run) for run in runs], [True, True, False, False])
-        self.assertEqual(run_eval.spend(self.out, 1.0)["unknown_cost_runs"], 4)
+        self.assertEqual(run_eval.spend(self.out, STOP)["unknown_cost_runs"], 4)
         self.assertIn("budget", batch.stop["reason"])
 
     def test_a_runner_timeout_scores_as_a_timeout(self):

@@ -211,12 +211,12 @@ OUT/
   runs/CASE/ARM/rN/
     manifest.json inputs/ workspace/      skill_eval.py materialize
     suite/{swe,lab,uni}/                   copies of the snapshot's plugins; the session loads these
-    suite/evals/CASE/case.yaml fixture.sh  the prompt, limits, granted tools, and a scaffold that copies workspace/
+    suite/evals/CASE/case.yaml fixture.sh  the prompt, limits, the six tools, and a scaffold that copies workspace/
     plugin-eval.json plugin-eval.log plugin-eval.html
     kept/transcript.jsonl kept/stream.jsonl   copied out of the sealed sandbox, which is then deleted
-    run.json           cost, error, turns, the session checks, and whether the stream needed a final newline
+    run.json           cost, error, api_error, turns, the session checks, and whether the stream needed a final newline
   canaries/NAME/ARM/   same layout, for `canary`
-  interrupted/         run folders whose launch never finished, kept for the spend count
+  interrupted/         run folders whose launch never finished or ended on an API error, kept for the spend count
 ```
 
 The launch is `claude plugin eval SUITE --case CASE --ablation none --runs 1 --scaffold
@@ -251,7 +251,10 @@ when that sum stays within `--max-total-usd`. A launch in flight counts once, at
 The sum covers one `--out` folder only, so pass the budget that is left across all folders. Three runs in a row that end with an error also
 stop the batch. Runs go repeat by repeat, then case, then arm, so a stop leaves the arms within
 one run of each other. A rerun skips each finished run. A run folder whose launch did not finish
-moves to `interrupted/` and runs again. `config.json` is frozen on the first `run`; a later `run`
+moves to `interrupted/` and runs again. A run whose stream ends with `terminal_reason: api_error`
+(for example a 429 usage limit) records `api_error` in `run.json`. It is not finished: a rerun moves
+it to `interrupted/` and launches it again, and `score` skips it. The runner prints a line to stderr
+only for a run that ends with an error. `config.json` is frozen on the first `run`; a later `run`
 with a different configuration needs a new `--out`.
 
 ### Canaries
