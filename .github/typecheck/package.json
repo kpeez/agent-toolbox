@@ -1,0 +1,9 @@
+{
+  "name": "agent-toolbox-typecheck",
+  "private": true,
+  "description": "Pins the TypeScript compiler and Node types that CI uses to type-check plugin hooks.",
+  "devDependencies": {
+    "@types/node": "22.20.5",
+    "typescript": "7.0.2"
+  }
+}

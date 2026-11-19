@@ -22,6 +22,10 @@ jobs:
       - uses: actions/setup-node@949feb2413d6458794dcd2491c4babbbce0c15c1 # v7.1.0
         with:
           node-version: '26'
+      - name: Hook TypeScript type-checks
+        run: |
+          npm ci --prefix .github/typecheck
+          npx --prefix .github/typecheck tsc -p .github/typecheck/tsconfig.json
       - name: Shared skills are identical in every plugin
         run: |
           # Each line: a skill folder that swe, lab, and uni each carry.
@@ -37,7 +41,7 @@ jobs:
           exit $status
       - name: No plugin names another plugin's skills
         run: uv run .github/scripts/plugin_isolation.py
-      - name: Hook runtimes are bun TS or cat text
+      - name: Hook runtimes follow the per-event table
         run: uv run .github/scripts/hook_runtime.py
       - name: Antigravity rules match the session-start hook
         run: |

@@ -120,7 +120,7 @@ async function waitFor(cond: () => boolean, ms: number): Promise<void> {
   }
 }
 
-const SIGNALS: Array<[string, number]> = [
+const SIGNALS: Array<[NodeJS.Signals, number]> = [
   ["SIGTERM", 143],
   ["SIGINT", 130],
   ["SIGHUP", 129],
