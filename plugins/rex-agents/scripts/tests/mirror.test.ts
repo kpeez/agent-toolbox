@@ -4,23 +4,21 @@
  * The wrapper cases run the exact command the hook builds, in zsh and bash,
  * with the REX_* variables removed so no viewer block opens. The signal cases
  * put a fake rex on PATH so a block is "opened" and the log survives for
- * inspection. Every case runs the scripts with bun and with node.
+ * inspection. Every case runs the scripts with bun and with node. The wrapper
+ * cases use the runtime that runs the tests.
  */
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawn, spawnSync } from "node:child_process";
 import {
-  accessSync,
   chmodSync,
-  constants,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -32,19 +30,8 @@ const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const MIRROR = join(PLUGIN, "scripts", "rex_mirror.ts");
 const VIEWER = join(PLUGIN, "scripts", "rex_mirror_view.ts");
 const RUNTIMES = ["bun", "node"];
-
-function which(name: string): string | null {
-  for (const dir of (process.env.PATH ?? "").split(":")) {
-    const p = join(dir, name);
-    try {
-      accessSync(p, constants.X_OK);
-      if (statSync(p).isFile()) return p;
-    } catch {
-      // keep searching
-    }
-  }
-  return null;
-}
+// The tests launch node as run-ts does, so the launch itself adds no warning to stderr.
+const flagsFor = (rt: string): string[] => (rt === "node" ? ["--disable-warning=ExperimentalWarning"] : []);
 
 const NO_REX: Record<string, string> = {};
 for (const [k, v] of Object.entries(process.env)) {
@@ -67,14 +54,13 @@ const CASES: Array<[string, string, string, number]> = [
 ];
 const SHELLS = ["/bin/zsh", "/bin/bash"].filter((s) => existsSync(s));
 
-const BUN = which("bun");
 for (const shell of SHELLS) {
   for (const [name, cmd, wantOut, wantRc] of CASES) {
     test(`wrapper ${shell}: ${name}`, () => {
-      if (BUN === null) throw new Error("bun must be on PATH");
-      const wrapped = mirrored(cmd, "[claude] test", "", BUN);
+      const wrapped = mirrored(cmd, "[claude] test", "", process.execPath);
       const r = spawnSync(shell, ["-c", wrapped], { env: NO_REX, encoding: "utf8", timeout: 30_000 });
       assert.equal(r.stdout, wantOut);
+      assert.equal(r.stderr, "", "the runtime prints no warning into the command's stderr");
       assert.equal(r.status, wantRc);
     });
   }
@@ -82,7 +68,7 @@ for (const shell of SHELLS) {
 
 for (const rt of RUNTIMES) {
   test(`missing marker exits 125 (${rt})`, () => {
-    const r = spawnSync(rt, [MIRROR, "[claude] test"], {
+    const r = spawnSync(rt, [...flagsFor(rt), MIRROR, "[claude] test"], {
       input: "output without a marker\n",
       env: NO_REX,
       encoding: "utf8",
@@ -137,7 +123,7 @@ async function waitFor(cond: () => boolean, ms: number): Promise<void> {
   }
 }
 
-const SIGNALS: Array<[string, number]> = [
+const SIGNALS: Array<[NodeJS.Signals, number]> = [
   ["SIGTERM", 143],
   ["SIGINT", 130],
   ["SIGHUP", 129],
@@ -147,7 +133,7 @@ for (const rt of RUNTIMES) {
   for (const [sig, code] of SIGNALS) {
     test(`a killed mirror settles its block (${rt} ${sig})`, { timeout: 30_000 }, async () => {
       const home = mkdtempSync(join(tmpdir(), "rex-sig-home-"));
-      const child = spawn(rt, [MIRROR, "[claude] sig", "s-sig"], {
+      const child = spawn(rt, [...flagsFor(rt), MIRROR, "[claude] sig", "s-sig"], {
         env: { ...NO_REX, HOME: home, TMPDIR: join(home, "tmp"), PATH: `${join(home, "bin")}:${process.env.PATH}`, REX_SESSION: "session:test" },
         stdio: ["pipe", "pipe", "pipe"],
       });
@@ -155,7 +141,7 @@ for (const rt of RUNTIMES) {
         mkdirSync(join(home, "bin"));
         mkdirSync(join(home, "tmp"));
         const fakeRex = join(home, "bin", "rex");
-        writeFileSync(fakeRex, '#!/bin/sh\nprintf \'{"block_ids":["b-fake"]}\\n\'\n');
+        writeFileSync(fakeRex, '#!/bin/sh\nprintf \'%s\\n\' "$@" > "$HOME/rex-args"\nprintf \'{"block_ids":["b-fake"]}\\n\'\n');
         chmodSync(fakeRex, 0o755);
         const fed = "hello world, this is more than thirty-two bytes of output\n";
         let out = "";
@@ -179,6 +165,13 @@ for (const rt of RUNTIMES) {
         const content = readFileSync(join(home, "tmp", logs[0]), "utf8");
         assert.ok(content.startsWith(fed));
         assert.match(content, new RegExp(`\\n__rex_mirror_exit_[0-9a-f]{16}=${code}\\n$`));
+        const rexArgs = readFileSync(join(home, "rex-args"), "utf8").split("\n");
+        const viewerArgs = rexArgs.slice(rexArgs.indexOf("--") + 1);
+        assert.deepEqual(
+          viewerArgs.slice(1, 2),
+          rt === "node" ? ["--disable-warning=ExperimentalWarning"] : [VIEWER],
+          "node runs the viewer with the warning suppressed; bun needs no flag",
+        );
         const cache = readFileSync(join(home, ".cache", "rex-agents", "s-sig.jsonl"), "utf8");
         assert.equal(cache, JSON.stringify({ block: "b-fake", rex_session: "session:test", label: "[claude] sig" }) + "\n");
       } finally {

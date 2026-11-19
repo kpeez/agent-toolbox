@@ -399,7 +399,7 @@ function expanduser(path: string): string {
 
 function block(reason: string): number {
   process.stderr.write(
-    `PR body blocked by ship-pr: ${reason}\nRender: bun ${SCRIPT} render <slot-folder> -o body.md\n`,
+    `PR body blocked by ship-pr: ${reason}\nRender: ${process.versions.bun ? "bun" : "node"} ${SCRIPT} render <slot-folder> -o body.md\n`,
   );
   return 2;
 }

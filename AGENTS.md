@@ -8,21 +8,31 @@
   A minor or major bump requires explicit permission in the request;
   precedent in the git history is not permission.
 - Keep every marketplace catalog entry pointed at a plugin folder that exists.
-- Run hooks and agent-tooling scripts as `.ts` files with `bun`. Bun starts
-  in about 10 ms, against about 40 ms for `uv run --script` or Node. A
-  PreToolUse hook runs on every tool call, so startup cost adds up.
+- A hook that fires on every tool call (`PreToolUse`, `PostToolUse`,
+  `PostToolUseFailure`, `PermissionRequest`) runs TypeScript through
+  `scripts/run-ts`, or cats a `.md` file. Startup cost adds up on these
+  hooks. Bun starts in about 12 ms. `uv run --script` starts in about 33 ms
+  (measured on an M-series Mac).
+- `scripts/run-ts` runs the file with bun when bun is installed. Otherwise it
+  runs the file with Node 22.18 or later. Each plugin whose hooks use run-ts
+  ships its own copy. The copies stay byte-identical.
+- A hook on any other event may also run a `uv run --script` Python file.
+  Agent scripts off the per-call path default to Python. Analysis, plotting,
+  and experiment tools stay Python. TypeScript stays where the code is synced
+  from upstream pstack (statechart, recall transcripts) or already exists.
 - Use erasable TypeScript syntax only (`erasableSyntaxOnly`). No enums,
   namespaces, or parameter properties. Use `import type` for type-only
-  imports. Node then runs the same `.ts` files with no build step as a
-  fallback.
+  imports. Node 22.18 and later then runs the same `.ts` files with no build
+  step.
 - Use only `node:` APIs, never `Bun.*` or `import.meta.dir`. The same file
-  must run on Node unchanged. A user without Bun changes one word in
-  hooks.json.
-- Keep Python scripts on `uv run`, never `python3`. Each starts with
-  `#!/usr/bin/env -S uv run --script` and a PEP 723 header that sets
-  `requires-python = ">=3.11"` and lists its dependencies. The header keeps
-  `uv run` from syncing the project that a hook runs in. Analysis, plotting,
-  and experiment tools stay Python. There is no blanket language mandate.
+  must run on bun and on Node unchanged.
+- Never use `import.meta.main`. Node 23.6 to 24.1 strips types but leaves it
+  undefined, so `main()` never runs. Compare `process.argv[1]` with the
+  module path, as `isMain` in `plugins/rex-agents/scripts/is_main.ts` does.
+- Start each Python script with `#!/usr/bin/env -S uv run --script` and a
+  PEP 723 header that sets `requires-python = ">=3.11"` and lists its
+  dependencies. Never use `python3`. The header keeps `uv run` from syncing the
+  project that a hook runs in.
 - `.github/scripts/hook_runtime.py` enforces these runtimes. It fails CI
   when a plugin hook runs anything else.
 - `plugins/` holds plugins every supported agent can use. `claude-mods/` holds

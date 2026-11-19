@@ -5,6 +5,7 @@
 import { readFileSync } from "node:fs";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isMain } from "../scripts/is_main.ts";
 
 const SKILL = resolve(dirname(fileURLToPath(import.meta.url)), "..", "skills", "using-rex");
 
@@ -24,4 +25,4 @@ function main(): number {
   return 0;
 }
 
-if (import.meta.main) process.exit(main());
+if (isMain(import.meta.url)) process.exit(main());
