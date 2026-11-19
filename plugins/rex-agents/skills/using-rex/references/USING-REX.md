@@ -156,15 +156,17 @@ In the `auto` and `bypassPermissions` permission modes, the `rex-agents`
 PreToolUse hook rewrites a background Bash call into this form, so its output and exit status pass through unchanged:
 
 ```sh
-{ ( <cmd>
- ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | <abs uv> run --script <plugin>/scripts/rex_mirror.py '<label>' <session id>
+{ ( :; <cmd>
+ ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | <abs bun> <plugin>/scripts/rex_mirror.ts '<label>' <session id>
 ```
 
-`rex_mirror.py` opens a block labelled `[claude] <description>`
+`rex_mirror.ts` opens a block labelled `[claude] <description>`
 (`[claude:sub]` for a subagent) that shows the output and reports `working`,
 then `done` or `error` with `<label>: exit <n>`. Permission rules still see
-`<cmd>`. When the session ends, the hook closes its `done` mirror blocks and
-keeps the `error` blocks. `REX_AGENTS_MIRROR=0` turns the mirror off.
+`<cmd>`. Commands that start with `rex ` stay unchanged, so a driven agent's
+wait gets no tab of its own. When the session ends, the hook closes its `done`
+mirror blocks and keeps the `error` blocks. `REX_AGENTS_MIRROR=0` turns the
+mirror off.
 
 ## Facts
 

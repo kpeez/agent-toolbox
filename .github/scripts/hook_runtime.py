@@ -20,12 +20,6 @@ from pathlib import Path
 # step ports them. The allow-list excuses the runtime, not the command:
 # an allow-listed hook must still run as `uv run --script <file>.py`.
 ALLOW_LIST = [
-    # Removed by step 2-port-rex-agents.
-    ("rex-agents", "hooks/session_start.py"),
-    ("rex-agents", "hooks/mirror_hook.py"),
-    ("rex-agents", "hooks/subagent_start.py"),
-    ("rex-agents", "hooks/session_end.py"),
-
     # Removed by step 3-retire-handoff-script.
     ("swe", "scripts/handoff.py"),
     # Removed by step 4-port-swe-scripts.

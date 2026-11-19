@@ -5,7 +5,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --script \"$CLAUDE_PLUGIN_ROOT\"/hooks/session_start.py",
+            "command": "bun \"$CLAUDE_PLUGIN_ROOT\"/hooks/session_start.ts",
             "timeout": 5
           }
         ]
@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --script \"$CLAUDE_PLUGIN_ROOT\"/hooks/mirror_hook.py",
+            "command": "bun \"$CLAUDE_PLUGIN_ROOT\"/hooks/mirror_hook.ts",
             "timeout": 10
           }
         ]
@@ -28,7 +28,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --script \"$CLAUDE_PLUGIN_ROOT\"/hooks/subagent_start.py",
+            "command": "bun \"$CLAUDE_PLUGIN_ROOT\"/hooks/subagent_start.ts",
             "timeout": 5
           }
         ]
@@ -39,7 +39,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "uv run --script \"$CLAUDE_PLUGIN_ROOT\"/hooks/session_end.py",
+            "command": "bun \"$CLAUDE_PLUGIN_ROOT\"/hooks/session_end.ts",
             "timeout": 30
           }
         ]
