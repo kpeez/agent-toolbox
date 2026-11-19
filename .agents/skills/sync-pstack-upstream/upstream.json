@@ -688,7 +688,7 @@
       "class": "modified",
       "local": [
         "plugins/swe/skills/recall/SKILL.md",
-        "plugins/swe/skills/recall/scripts/transcripts.py"
+        "plugins/swe/skills/recall/scripts/transcripts.ts"
       ]
     },
     {

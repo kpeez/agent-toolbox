@@ -58,9 +58,11 @@ jobs:
       - name: Unit tests
         run: |
           status=0
-          for suite in evals/skills/tests plugins/swe/skills/ship-pr/scripts/tests plugins/lab/skills/autoresearch/scripts/tests; do
+          for suite in evals/skills/tests plugins/lab/skills/autoresearch/scripts/tests; do
             uv run -m unittest discover -s "$suite" || status=1
           done
+          bun test plugins/swe/skills/ship-pr/scripts/tests || status=1
+          node --test plugins/swe/skills/ship-pr/scripts/tests/ || status=1
           bun test plugins/rex-agents/scripts/tests || status=1
           node --test plugins/rex-agents/scripts/tests/ || status=1
           exit $status
