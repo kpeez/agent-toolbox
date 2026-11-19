@@ -109,8 +109,8 @@ instruction.
    the revision, relevant uncommitted content, environment, and coverage still
    match; identify them as recorded results, not checks rerun here. Do not
    invent a generic lint, type-check, or test stack. When a runner the
-   repository declares is absent from `PATH`, run it through the project's
-   runner, such as `uvx prek run --all-files`, instead of reporting the gate as
+   repository declares is absent from `PATH`, run it through a tool launcher
+   such as `uvx` (`uvx prek run --all-files`) instead of reporting the gate as
    unavailable. A required failure stops publication. When a pull-request
    check fails, classify it with [ci-checks](references/ci-checks.md) before
    any rerun or fix commit.
@@ -124,11 +124,17 @@ instruction.
    already appears in the repository history proves nothing: the block follows
    the pushing account's setting. Rewrite both addresses on the unpushed
    commits to that account's noreply form, then push again. Keep the messages
-   and the content; only the identity fields change.
+   and the content; only the identity fields change. Rewrite only the commits
+   that are not on the remote, so the push needs no force, and keep the branch
+   on its current base.
 
    ```bash
+   # The branch has no upstream yet: keep its current base.
    git -c user.name="<name>" -c user.email="<id>+<login>@users.noreply.github.com" \
-     rebase <base> --exec 'git commit --amend --no-edit --author="<name> <id>+<login>@users.noreply.github.com>"'
+     rebase --keep-base <base> --exec 'git commit --amend --no-edit --author="<name> <id>+<login>@users.noreply.github.com>"'
+   # The branch has an upstream: rewrite only the commits after it.
+   git -c user.name="<name>" -c user.email="<id>+<login>@users.noreply.github.com" \
+     rebase @{upstream} --exec 'git commit --amend --no-edit --author="<name> <id>+<login>@users.noreply.github.com>"'
    ```
 5. `5-open-draft-pr`: Reuse the branch's existing pull request. Otherwise
    create one draft against the confirmed base. Build the body with

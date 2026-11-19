@@ -4,7 +4,7 @@ Two ways to settle a claim on a running service instead of a proxy: probe the de
 
 ## Anonymous protocol probes
 
-A deployment setting is proved by the request a real client makes, not by a config file or a dashboard screenshot. Write the table of setting, request, and expected answer, then run it as a script so it reruns. A hosted OAuth server protected API is the worked example:
+A deployment setting is proved by the request a real client makes, not by a config file or a dashboard screenshot. Write the table of setting, request, and expected answer, then run it as a script so it reruns. The worked example is an API protected by a hosted OAuth server:
 
 | Setting | Request | Passes when |
 | --- | --- | --- |
@@ -38,5 +38,5 @@ Pitfalls that cost a run:
 
 - **Copied config carries absolute URLs.** Auth `site_url`, redirect allow-lists, issuer URLs, and webhook targets still name the app's canonical port. A suite that asserts a redirect to the app origin then fails on the port mismatch, and the failure reads like a product bug. Serve the app on the port the copied config names, or rewrite those URLs too.
 - **Parallel worktrees share one dev stack.** Either give each branch its own disposable stack or run the suites one at a time. A `db reset` from one branch pulls the database out from under the other mid-run.
-- **A first-run failure in a port, host, or origin assertion is harness setup until proven otherwise.** Fix the harness, rerun, and only then judge the branch. Reporting that failure as a branch defect wastes the run in both directions.
+- **A first-run failure in a port, host, or origin assertion is harness setup until proven otherwise.** Fix the harness, rerun, and only then judge the branch. Reporting that failure as a branch defect sends the branch back for a fix it does not need.
 - **Keep the prep in a script** in the scratch directory, with the port offset as a constant, so the next run is one command. An ad-hoc shell sequence gets retyped and drifts.

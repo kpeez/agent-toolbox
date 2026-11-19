@@ -21,9 +21,9 @@ When workflow runs exist, wait up to ten minutes for checks to appear, then
 report the missing checks as a blocker. When `--required` lists nothing but
 checks exist, use every check that `gh pr checks <pr>` lists.
 
-`gh run watch <run-id>` can stop with a local network error, such as
-`failed to get run ... can't assign requested address`, while the run itself
-succeeds. The watcher's exit is not the run's verdict. Confirm the real
+A watcher (`gh pr checks --watch` or `gh run watch`) can stop with a local
+network error, such as `failed to get run ... can't assign requested address`,
+while the run itself succeeds. The watcher's exit is not the run's verdict. Confirm the real
 outcome with `gh run view <run-id> --json status,conclusion` before you treat
 the run as failed or spend a rerun.
 

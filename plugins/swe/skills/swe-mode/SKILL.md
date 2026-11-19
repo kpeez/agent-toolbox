@@ -223,8 +223,7 @@ loaded in this session.
   `swe:daedalus`; Codex: the `daedalus` agent; OpenCode: the `subagent`
   tool with agent `daedalus`, when the user's config defines it). Give it
   the step, the file paths, the named data shape, and the success check.
-  Search, review, and
-  verification: native subagents. A reviewer gets the
+  Search, review, and verification: native subagents. A reviewer gets the
   [review brief](../../references/review-brief.md).
 - Match the model to the job: the strongest model for judgment, prose, and
   the hardest code; a faster one for routine and mechanical work.
