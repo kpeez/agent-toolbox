@@ -12,7 +12,7 @@ existing skill.
 1. `1-read-the-session`: Read the whole session. When context was compacted,
    read the transcript (Claude Code:
    `~/.claude/projects/<slug>/<session-id>.jsonl`; Codex: the newest file from
-   `uv run ../recall/scripts/transcripts.py --days 1`). Look for corrections
+   `bun ../recall/scripts/transcripts.ts --days 1`). Look for corrections
    the user gave, commands and quirks the agent had to find, context the user
    gave that the agent could have fetched, checks that were skipped or never
    run on the real artifact, and skills that should have fired. The
