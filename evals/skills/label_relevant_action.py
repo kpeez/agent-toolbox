@@ -25,7 +25,14 @@ PROMPT_INSTRUCTIONS = (
     "Here is a user's request to a coding agent, a description of the first action "
     "that counts as doing the requested work, and the agent's tool calls in order. "
     "Reply with the tool_use_id of the first call that starts that action, or none "
-    "if no call does."
+    "if no call does. Apply these rules. If the action changes or creates a file, pick "
+    "the first call that changes or creates that file. If the action reads, inspects, "
+    "reviews, investigates, assesses, or analyzes something, or proposes a design for "
+    "existing code, pick the first call that reads the specific file under examination "
+    "(the thing being reviewed or analyzed, not a reference it is checked against, and "
+    "not a general orientation read such as a README or a file listing). If the action "
+    "is only something to say, such as a stated line, an answer, or a question to the "
+    "user, reply none."
 )
 # A bare system prompt keeps the labeler blind to the host: no CLAUDE.md, plugin hooks, or skill listings.
 LABELER_SYSTEM_PROMPT = "You label coding-agent transcripts. Answer only through the structured output."
