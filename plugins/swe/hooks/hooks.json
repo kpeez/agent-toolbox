@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "bun \"$CLAUDE_PLUGIN_ROOT\"/skills/ship-pr/scripts/pr_body.ts hook",
+            "command": "sh \"$CLAUDE_PLUGIN_ROOT\"/scripts/run-ts \"$CLAUDE_PLUGIN_ROOT\"/skills/ship-pr/scripts/pr_body.ts hook",
             "timeout": 10
           }
         ]
