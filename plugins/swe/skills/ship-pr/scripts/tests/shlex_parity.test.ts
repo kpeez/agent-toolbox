@@ -5,9 +5,9 @@
  * The lexer decides which words the hook sees in a `gh pr create` call, so a
  * divergence can turn a block into an allow. A Python oracle (shlex_oracle.py)
  * splits a hand-written corpus plus a seeded fuzz corpus; every command must give
- * the same segments. When shlex raises on unbalanced quotes, both sides use the
- * same whitespace-split fallback, so a match there also proves both sides fail
- * on the same inputs.
+ * the same segments. When shlex raises on unbalanced quotes, both sides use a
+ * whitespace-split fallback, and the segments must match there too. The test
+ * requires at least 20 such cases, so the fallback path is always covered.
  */
 
 import assert from "node:assert/strict";
