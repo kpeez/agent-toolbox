@@ -4,8 +4,9 @@
  * The wrapper cases run the exact command the hook builds, in zsh and bash,
  * with the REX_* variables removed so no viewer block opens. The signal cases
  * put a fake rex on PATH so a block is "opened" and the log survives for
- * inspection. Every case runs the scripts with bun and with node. The wrapper
- * cases use the runtime that runs the tests.
+ * inspection. Every case runs the scripts with bun and with node, and skips a
+ * runtime that is not on PATH. The wrapper cases use the runtime that runs the
+ * tests.
  */
 
 import assert from "node:assert/strict";
@@ -30,6 +31,8 @@ const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const MIRROR = join(PLUGIN, "scripts", "rex_mirror.ts");
 const VIEWER = join(PLUGIN, "scripts", "rex_mirror_view.ts");
 const RUNTIMES = ["bun", "node"];
+const skipFor = (rt: string): string | false =>
+  spawnSync(rt, ["--version"], { stdio: "ignore" }).status === 0 ? false : `${rt} is not on PATH`;
 // The tests launch node as run-ts does, so the launch itself adds no warning to stderr.
 const flagsFor = (rt: string): string[] => (rt === "node" ? ["--disable-warning=ExperimentalWarning"] : []);
 
@@ -67,7 +70,7 @@ for (const shell of SHELLS) {
 }
 
 for (const rt of RUNTIMES) {
-  test(`missing marker exits 125 (${rt})`, () => {
+  test(`missing marker exits 125 (${rt})`, { skip: skipFor(rt) }, () => {
     const r = spawnSync(rt, [...flagsFor(rt), MIRROR, "[claude] test"], {
       input: "output without a marker\n",
       env: NO_REX,
@@ -84,7 +87,7 @@ const report = (state: string, msg: string): string =>
   `\x1b]7501;state=${state}:app=rex-mirror:msg=${Buffer.from(msg, "utf8").toString("base64")}\x1b\\`;
 
 for (const rt of RUNTIMES) {
-  test(`only the nonce exit line ends the view (${rt})`, () => {
+  test(`only the nonce exit line ends the view (${rt})`, { skip: skipFor(rt) }, () => {
     const tmp = mkdtempSync(join(tmpdir(), "rex-view-test-"));
     try {
       const log = join(tmp, "mirror.log");
@@ -131,7 +134,7 @@ const SIGNALS: Array<[NodeJS.Signals, number]> = [
 
 for (const rt of RUNTIMES) {
   for (const [sig, code] of SIGNALS) {
-    test(`a killed mirror settles its block (${rt} ${sig})`, { timeout: 30_000 }, async () => {
+    test(`a killed mirror settles its block (${rt} ${sig})`, { timeout: 30_000, skip: skipFor(rt) }, async () => {
       const home = mkdtempSync(join(tmpdir(), "rex-sig-home-"));
       const child = spawn(rt, [...flagsFor(rt), MIRROR, "[claude] sig", "s-sig"], {
         env: { ...NO_REX, HOME: home, TMPDIR: join(home, "tmp"), PATH: `${join(home, "bin")}:${process.env.PATH}`, REX_SESSION: "session:test" },

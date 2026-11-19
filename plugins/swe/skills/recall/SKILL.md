@@ -55,7 +55,7 @@ skill's folder. Resolve it from this skill's directory, not the current
 working directory:
 
 ```bash
-bun scripts/transcripts.ts --days 7 --exclude "${CLAUDE_SESSION_ID}"
+sh ../../scripts/run-ts scripts/transcripts.ts --days 7 --exclude "${CLAUDE_SESSION_ID}"
 ```
 
 It matches only the main checkout and the worktrees of the current
