@@ -116,22 +116,6 @@ function fuzzCorpus(count: number): string[] {
   return out;
 }
 
-/**
- * Known divergences, each skipped only when its exact condition holds.
- * Any other difference fails the test.
- *
- * On the unbalanced-quote fallback path Python's str.split() treats \x1f as
- * whitespace and a BOM (﻿) as a word character; the TypeScript fallback
- * splits on JS \s, which has them the other way round. Only a command that
- * contains one of them and makes shlex raise reaches this.
- */
-const KNOWN_DIVERGENCES: { name: string; applies: (command: string, oracle: OracleResult) => boolean }[] = [
-  {
-    name: "fallback whitespace: \\x1f and BOM differ between Python split() and JS \\s",
-    applies: (command, oracle) => oracle.error && /[\x1f﻿]/.test(command),
-  },
-];
-
 const uv = spawnSync("uv", ["--version"], { encoding: "utf-8" });
 const uvMissing = uv.error !== undefined || uv.status !== 0;
 
@@ -155,7 +139,6 @@ test(
       if (oracle[i].error) errorCases++;
       const actual = splitSegments(command);
       if (JSON.stringify(actual) === JSON.stringify(oracle[i].segments)) return;
-      if (KNOWN_DIVERGENCES.some((d) => d.applies(command, oracle[i]))) return;
       failures.push(
         `#${i} ${JSON.stringify(command)}\n  ts:     ${JSON.stringify(actual)}\n  python: ${JSON.stringify(oracle[i].segments)}`,
       );

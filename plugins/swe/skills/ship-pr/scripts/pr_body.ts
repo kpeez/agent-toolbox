@@ -201,6 +201,9 @@ function* shlexTokens(input: string): Generator<string> {
   }
 }
 
+// Python str.split() whitespace (str.isspace). JS \s differs: it adds BOM and lacks \x1c-\x1f and \x85.
+const PY_WHITESPACE = /[\t\n\v\f\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/;
+
 /** Tokenize a shell command and split it into command segments. */
 export function splitSegments(command: string): string[][] {
   command = command.replaceAll("\\\n", " ");
@@ -210,7 +213,7 @@ export function splitSegments(command: string): string[][] {
   } catch {
     tokens = [];
     for (const line of splitLines(command)) {
-      tokens.push(...line.split(/[\s\x1c\x1d\x1e\x85]+/).filter((t) => t !== ""));
+      tokens.push(...line.split(PY_WHITESPACE).filter((t) => t !== ""));
       tokens.push("\n");
     }
   }
