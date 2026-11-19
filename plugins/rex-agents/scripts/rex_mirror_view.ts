@@ -1,7 +1,7 @@
 /**
  * Show a mirror log in a Rex block and report its state with OSC 7501.
  *
- * Usage: bun rex_mirror_view.ts LOG LABEL NONCE
+ * Usage: RUNTIME rex_mirror_view.ts LOG LABEL NONCE
  *
  * Reports `working` at start. When rex_mirror.ts writes its exit line
  * `__rex_mirror_exit_<NONCE>=N`, reports `done` for status 0 or `error`

@@ -1,7 +1,7 @@
 /**
  * Tests for the hook decisions, the session-end cleanup, and the node fallback.
  *
- * The decide cases pass a fake which, so they need no real rex or bun. The
+ * The decide cases pass a fake which, so they need no real rex. The
  * session-end cases run the hook against a fake rex script and a temporary
  * HOME. The smoke cases spawn every hook with node and sample stdin, which
  * proves the erasable syntax and the node: APIs run without bun.
@@ -38,23 +38,24 @@ function event(
 }
 
 const whichAll = (name: string): string => `/usr/local/bin/${name}`;
+const RUNTIME = "/opt/rt/bin/node";
 const ENV = { REX_SESSION: "session:x" };
 
 function wrappedCommand(e: Record<string, unknown>, env: Record<string, string> = ENV): string {
-  const out = decide(e, env, whichAll);
+  const out = decide(e, env, whichAll, RUNTIME);
   if (out === null) throw new Error("expected a rewrite");
   return String(out.hookSpecificOutput.updatedInput.command);
 }
 
 test("rewrites a background call in rex", () => {
-  const out = decide(event(), ENV, whichAll);
+  const out = decide(event(), ENV, whichAll, RUNTIME);
   if (out === null) throw new Error("expected a rewrite");
   const spec = out.hookSpecificOutput;
   assert.equal(spec.hookEventName, "PreToolUse");
   assert.ok(!("permissionDecision" in spec));
   const updated = spec.updatedInput;
   const cmd = String(updated.command);
-  assert.ok(cmd.includes(`{ ( :; make test\n ); printf '\\n__rex_rc=%d\\n' "$?"; } 2>&1 | /usr/local/bin/bun `));
+  assert.ok(cmd.includes(`{ ( :; make test\n ); printf '\\n__rex_rc=%d\\n' "$?"; } 2>&1 | ${RUNTIME} `));
   assert.ok(cmd.includes(MIRROR));
   assert.ok(cmd.includes("'[claude] Run the tests' s-1"));
   const rest = { ...updated };
@@ -81,9 +82,12 @@ test("no double wrap", () => {
   assert.equal(decide(event(once), ENV, whichAll), null);
 });
 
-test("needs rex and bun", () => {
+test("needs rex, and runs the mirror with the running runtime", () => {
   assert.equal(decide(event(), ENV, (n) => (n === "rex" ? null : whichAll(n))), null);
-  assert.equal(decide(event(), ENV, (n) => (n === "bun" ? null : whichAll(n))), null);
+  const onlyRex = (n: string): string | null => (n === "rex" ? "/usr/local/bin/rex" : null);
+  const out = decide(event(), ENV, onlyRex);
+  if (out === null) throw new Error("expected a rewrite without bun on PATH");
+  assert.ok(String(out.hookSpecificOutput.updatedInput.command).includes(` | ${process.execPath} `));
 });
 
 test("only modes that do not prompt", () => {

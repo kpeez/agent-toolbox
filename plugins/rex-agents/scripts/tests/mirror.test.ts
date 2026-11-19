@@ -4,23 +4,21 @@
  * The wrapper cases run the exact command the hook builds, in zsh and bash,
  * with the REX_* variables removed so no viewer block opens. The signal cases
  * put a fake rex on PATH so a block is "opened" and the log survives for
- * inspection. Every case runs the scripts with bun and with node.
+ * inspection. Every case runs the scripts with bun and with node. The wrapper
+ * cases use the runtime that runs the tests.
  */
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawn, spawnSync } from "node:child_process";
 import {
-  accessSync,
   chmodSync,
-  constants,
   existsSync,
   mkdirSync,
   mkdtempSync,
   readFileSync,
   readdirSync,
   rmSync,
-  statSync,
   writeFileSync,
 } from "node:fs";
 import { tmpdir } from "node:os";
@@ -32,19 +30,6 @@ const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const MIRROR = join(PLUGIN, "scripts", "rex_mirror.ts");
 const VIEWER = join(PLUGIN, "scripts", "rex_mirror_view.ts");
 const RUNTIMES = ["bun", "node"];
-
-function which(name: string): string | null {
-  for (const dir of (process.env.PATH ?? "").split(":")) {
-    const p = join(dir, name);
-    try {
-      accessSync(p, constants.X_OK);
-      if (statSync(p).isFile()) return p;
-    } catch {
-      // keep searching
-    }
-  }
-  return null;
-}
 
 const NO_REX: Record<string, string> = {};
 for (const [k, v] of Object.entries(process.env)) {
@@ -67,12 +52,10 @@ const CASES: Array<[string, string, string, number]> = [
 ];
 const SHELLS = ["/bin/zsh", "/bin/bash"].filter((s) => existsSync(s));
 
-const BUN = which("bun");
 for (const shell of SHELLS) {
   for (const [name, cmd, wantOut, wantRc] of CASES) {
     test(`wrapper ${shell}: ${name}`, () => {
-      if (BUN === null) throw new Error("bun must be on PATH");
-      const wrapped = mirrored(cmd, "[claude] test", "", BUN);
+      const wrapped = mirrored(cmd, "[claude] test", "", process.execPath);
       const r = spawnSync(shell, ["-c", wrapped], { env: NO_REX, encoding: "utf8", timeout: 30_000 });
       assert.equal(r.stdout, wantOut);
       assert.equal(r.status, wantRc);

@@ -4,7 +4,7 @@
  * The mirror hook pipes a background command into this script in this form:
  *
  *     { ( :; CMD
- *      ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | bun rex_mirror.ts LABEL [SESSION_ID]
+ *      ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | RUNTIME rex_mirror.ts LABEL [SESSION_ID]
  *
  * The printf after the subshell appends a status marker. This script holds back
  * the last bytes of the stream so the marker never reaches stdout, then exits
@@ -47,13 +47,12 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 /** Open a Rex block that shows the log. Return its block ID, or null. */
 export function startViewer(label: string, log: string, nonce: string): string | null {
   const rex = which("rex");
-  const bun = which("bun");
   const session = process.env.REX_SESSION;
-  if (!rex || !bun || !session) return null;
+  if (!rex || !session) return null;
   const viewer = resolve(dirname(fileURLToPath(import.meta.url)), "rex_mirror_view.ts");
   const r = spawnSync(
     rex,
-    ["run", "-s", session, "--focus=false", "--keep-open", "--shell=none", "--label", label, "--json", "--", bun, viewer, log, label, nonce],
+    ["run", "-s", session, "--focus=false", "--keep-open", "--shell=none", "--label", label, "--json", "--", process.execPath, viewer, log, label, nonce],
     { encoding: "utf8", timeout: 15_000 },
   );
   if (r.error || r.status !== 0) return null;

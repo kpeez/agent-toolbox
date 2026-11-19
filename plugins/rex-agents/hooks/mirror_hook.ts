@@ -3,7 +3,7 @@
  *
  * Rewrites a Bash call only when all of these hold: `run_in_background` is true,
  * the permission mode is `auto` or `bypassPermissions`, REX_SESSION is set, `rex`
- * and `bun` are on PATH, REX_AGENTS_MIRROR is not `0`, the command is not
+ * is on PATH, REX_AGENTS_MIRROR is not `0`, the command is not
  * already mirrored, and the command does not start with `rex ` (a driven
  * agent's wait-status call must not get its own tab). The hook returns
  * `updatedInput` and no permission decision. Claude Code checks permission
@@ -64,10 +64,10 @@ export function labelFor(toolInput: Record<string, unknown>, agentId: unknown): 
  * `:;` prefix keeps an empty or comment-only command valid in bash and zsh,
  * which reject `( )` and `( # note )` with exit 2.
  */
-export function mirrored(command: string, label: string, sessionId: string, bun: string): string {
+export function mirrored(command: string, label: string, sessionId: string, runtime: string): string {
   return (
     `{ ( :; ${command}\n ); printf '\\n__rex_rc=%d\\n' "$?"; } 2>&1 | ` +
-    `${shquote(bun)} ${shquote(MIRROR)} ${shquote(label)} ${shquote(sessionId)}`
+    `${shquote(runtime)} ${shquote(MIRROR)} ${shquote(label)} ${shquote(sessionId)}`
   );
 }
 
@@ -83,6 +83,7 @@ export function decide(
   data: unknown,
   env: Record<string, string | undefined>,
   whichFn: (name: string) => string | null = which,
+  runtime: string = process.execPath,
 ): MirrorDecision | null {
   if (!isRecord(data)) return null;
   const toolInput = isRecord(data.tool_input) ? data.tool_input : {};
@@ -91,11 +92,10 @@ export function decide(
   if (toolInput.run_in_background !== true) return null;
   if (typeof data.permission_mode !== "string" || !MIRROR_MODES.has(data.permission_mode)) return null;
   if (!env.REX_SESSION || env.REX_AGENTS_MIRROR === "0") return null;
-  const bun = whichFn("bun");
-  if (!bun || !whichFn("rex")) return null;
+  if (!whichFn("rex")) return null;
   if (command.includes("rex_mirror.ts") || command.startsWith("rex ")) return null;
   const label = labelFor(toolInput, data.agent_id);
-  const updated = { ...toolInput, command: mirrored(command, label, String(data.session_id ?? ""), bun) };
+  const updated = { ...toolInput, command: mirrored(command, label, String(data.session_id ?? ""), runtime) };
   return { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: updated } };
 }
 
