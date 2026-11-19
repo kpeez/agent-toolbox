@@ -31,6 +31,8 @@ jobs:
           exit $status
       - name: No plugin names another plugin's skills
         run: uv run .github/scripts/plugin_isolation.py
+      - name: Hook runtimes are bun TS or cat text
+        run: uv run .github/scripts/hook_runtime.py
       - name: Antigravity rules match the session-start hook
         run: |
           # Antigravity CLI skips hooks/hooks.json and loads rules/AGENTS.md
