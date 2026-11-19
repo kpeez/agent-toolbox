@@ -639,7 +639,7 @@ def claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues):
     else:
         load.update(skill_path=use["input"].get("file_path"), proof="full_body_read", transform=None)
         load["skill"] = frozen[posixpath.normpath(load["skill_path"])]
-    load = claude_proof(load, use, result, body, frozen, manifest)
+    load = claude_proof(load, use, result, body, frozen, manifest, sid)
     unresolved = load["status"] in {"partial", "unavailable"} and load["skill"] not in manifest["skills"]
     if agent is None and (unresolved or load["detail"] in CLAUDE_IDENTITY_LOSS):
         issues.append(f"{use['ref']['file']} line {use['line']}: skill identity unresolved ({load['detail']})")
@@ -678,7 +678,7 @@ def claude_resource_read(tool_use_id, session, frozen_resources, manifest, sid, 
     return record
 
 
-def claude_proof(load, use, result, body, frozen, manifest):
+def claude_proof(load, use, result, body, frozen, manifest, sid=None):
     if use["name"] != "Skill":
         load.update(claude_full_read(load["skill_path"], result, manifest["skills"][load["skill"]]["sha256"]))
         return load
@@ -709,7 +709,8 @@ def claude_proof(load, use, result, body, frozen, manifest):
     expected = manifest["skills"][skill]["body_sha256"]
     args_value = use["input"].get("args")
     # Claude Code appends Skill call arguments to a body that has no $ARGUMENTS placeholder,
-    # and replaces every $ARGUMENTS placeholder when the body contains one.
+    # replaces every $ARGUMENTS placeholder when the body contains one, and replaces every
+    # ${CLAUDE_SESSION_ID} with the session id.
     suffix = "\n\nARGUMENTS: " + str(args_value or "")
     substituted = False
     if args_value and text.endswith(suffix) and digest(text[:-len(suffix)].encode()) == expected:
@@ -720,10 +721,17 @@ def claude_proof(load, use, result, body, frozen, manifest):
         if not skill_file.is_file() or digest(skill_file.read_bytes()) != manifest["skills"][skill]["sha256"]:
             skill_file = Path(manifest["skills"][skill]["path"])
         frozen_body = delivered_body(skill_file.read_text(encoding="utf-8"))
-        if (frozen_body is not None and digest(frozen_body.encode()) == expected and "$ARGUMENTS" in frozen_body
-                and text == frozen_body.replace("$ARGUMENTS", str(args_value or ""))):
-            substituted = True
-            load["transform"] += "_arguments_substituted"
+        if frozen_body is not None and digest(frozen_body.encode()) == expected:
+            filled, tags = frozen_body, ""
+            if "$ARGUMENTS" in frozen_body:
+                filled, tags = filled.replace("$ARGUMENTS", str(args_value or "")), "_arguments_substituted"
+            elif args_value:
+                filled, tags = filled + suffix, "_arguments_suffix_removed"
+            if sid and "${CLAUDE_SESSION_ID}" in frozen_body:
+                filled, tags = filled.replace("${CLAUDE_SESSION_ID}", sid), tags + "_session_id_substituted"
+            if tags and text == filled:
+                substituted = True
+                load["transform"] += tags
     mismatch = None if separator and (substituted or digest(text.encode()) == expected) else "body digest mismatch"
     load.update(status="partial" if mismatch else "success", detail=mismatch, body_sha256=digest(text.encode()),
                 completed_seq=max(result["line"], body["line"]), ordering="source_sequence")

@@ -1616,6 +1616,34 @@ class OfflineCLIContract(unittest.TestCase):
         evidence = json.loads((run / "evidence.json").read_text())
         self.assertEqual(evidence["final_reply"], "Steps:\n1-locate-raw-results: done")
 
+    def test_claude_skill_body_substitutes_the_session_id(self):
+        # Claude Code 2.1.327 fills ${CLAUDE_SESSION_ID} in a delivered body, as in swe:handoff.
+        base = "frontmatter_removed_leading_newlines_stripped"
+        rows = [("own-session", None, "claude-session", "success", base + "_session_id_substituted"),
+                ("other-session", None, "some-other-session", "partial", base),
+                ("with-args", "note this", "claude-session", "success",
+                 base + "_arguments_suffix_removed_session_id_substituted")]
+        for name, call_args, filled_id, expected_status, expected_transform in rows:
+            with self.subTest(name=name):
+                run, _, _ = self.prepare("claude-session-id-" + name)
+                skill = json.loads((run / "manifest.json").read_text())["skills"]["swe:handoff"]
+                frozen_body = Path(skill["path"]).read_text(encoding="utf-8").split("\n---\n", 1)[1].lstrip("\n")
+                self.assertIn("${CLAUDE_SESSION_ID}", frozen_body)
+                delivered = frozen_body.replace("${CLAUDE_SESSION_ID}", filled_id)
+                if call_args:
+                    delivered += "\n\nARGUMENTS: " + call_args
+                body = "Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n" + delivered
+                skill_input = {"skill": "swe:handoff", **({"args": call_args} if call_args else {})}
+                steps = [("call", "message-skill", "use-skill", {"name": "Skill", "input": skill_input}),
+                         ("result", None, "use-skill", {"success": True, "commandName": "swe:handoff"}),
+                         ("body", None, "use-skill", body),
+                         ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
+                         ("result", None, "use-edit", {"filePath": "calc.py"})]
+                score = self.claude_trace(run, steps, "use-edit")
+                load = json.loads((run / "evidence.json").read_text())["loads"][0]
+                self.assertEqual((load["status"], load["transform"]), (expected_status, expected_transform))
+                self.assertEqual("swe:handoff" in score["observed_skills"], expected_status == "success")
+
     def test_claude_skill_body_substitutes_arguments_placeholder(self):
         rows = [
             ("no-args", None, lambda b: b.replace("$ARGUMENTS", ""), "success", None,
