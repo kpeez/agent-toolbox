@@ -47,7 +47,7 @@ shell's default account. Pass it, and any other variable the run needs, with
 `/usr/bin/env`:
 
 ```sh
-rex run --shell=none -- /usr/bin/env CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR" /opt/homebrew/bin/uv run run_eval.py run
+rex run --shell=none -- /usr/bin/env CLAUDE_CONFIG_DIR="$CLAUDE_CONFIG_DIR" <absolute program path> <args>
 ```
 
 ## Find where you are
