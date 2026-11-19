@@ -108,14 +108,28 @@ instruction.
    behavior-specific evidence named by the work. Reuse prior results only when
    the revision, relevant uncommitted content, environment, and coverage still
    match; identify them as recorded results, not checks rerun here. Do not
-   invent a generic lint, type-check, or test stack. A required failure stops
-   publication. When a pull-request check fails, classify it with
-   [ci-checks](references/ci-checks.md) before any rerun or fix commit.
+   invent a generic lint, type-check, or test stack. When a runner the
+   repository declares is absent from `PATH`, run it through the project's
+   runner, such as `uvx prek run --all-files`, instead of reporting the gate as
+   unavailable. A required failure stops publication. When a pull-request
+   check fails, classify it with [ci-checks](references/ci-checks.md) before
+   any rerun or fix commit.
 3. `3-group-and-commit`: Check proposed public branch, commit, and PR text
    against the privacy rule above. Build the smallest coherent commit groups.
    Stage and commit one group at a time, checking status between groups.
 4. `4-push`: Push the current branch without force. Confirm the intended
-   remote and upstream when they are ambiguous.
+   remote and upstream when they are ambiguous. When the host rejects the push
+   with an email-privacy restriction, it refuses an author or committer address
+   on your unpushed commits, not the branch and not the token. An address that
+   already appears in the repository history proves nothing: the block follows
+   the pushing account's setting. Rewrite both addresses on the unpushed
+   commits to that account's noreply form, then push again. Keep the messages
+   and the content; only the identity fields change.
+
+   ```bash
+   git -c user.name="<name>" -c user.email="<id>+<login>@users.noreply.github.com" \
+     rebase <base> --exec 'git commit --amend --no-edit --author="<name> <id>+<login>@users.noreply.github.com>"'
+   ```
 5. `5-open-draft-pr`: Reuse the branch's existing pull request. Otherwise
    create one draft against the confirmed base. Build the body with
    `scripts/pr_body.ts render` from slot files, as the
@@ -130,7 +144,10 @@ instruction.
 6. `6-link-issue`: When the work has an issue, pass
    `--link "Fixes ABC-123"` (or `Fixes #123` on GitHub) to `render` so the tracker's GitHub
    integration moves the issue on merge. Use `Part of ABC-123` when this pull
-   request does not finish the issue. Do not hand-edit status that git moves.
+   request does not finish the issue, including when it ships the code but the
+   remaining acceptance needs an interactive step or a credential only the
+   owner holds: `Fixes` closes the issue on merge and hides that work. Do not
+   hand-edit status that git moves.
 7. `7-report`: Give the branch, base, commits, pull-request URL and state,
    the linked issue, checks run, behavior evidence, and known gaps.
 
