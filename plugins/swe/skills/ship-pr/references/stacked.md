@@ -21,12 +21,12 @@ the git common directory or `gh stack` succeeds).
    locally). Do not hand-chain `gh pr create --base <parent-branch>` in a
    `gh-stack` repository.
 2. **Replace auto-generated PR bodies.** `gh stack` writes its own titles and
-   bodies. After `gh stack link`, render each body with `scripts/pr_body.py render`,
+   bodies. After `gh stack link`, render each body with `scripts/pr_body.ts render`,
    update each pull request, and check the published body:
 
    ```bash
    gh pr edit <n> --title "<title>" --body-file <rendered>
-   gh pr view <n> --json body --jq .body | uv run <ship-pr>/scripts/pr_body.py check -
+   gh pr view <n> --json body --jq .body | bun <ship-pr>/scripts/pr_body.ts check -
    ```
 
 3. **Land a fully verified stack.** `gh stack merge` is all-or-nothing and
