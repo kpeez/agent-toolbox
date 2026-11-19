@@ -23,9 +23,10 @@ checks exist, use every check that `gh pr checks <pr>` lists.
 
 A watcher (`gh pr checks --watch` or `gh run watch`) can stop with a local
 network error, such as `failed to get run ... can't assign requested address`,
-while the run itself succeeds. The watcher's exit is not the run's verdict. Confirm the real
-outcome with `gh run view <run-id> --json status,conclusion` before you treat
-the run as failed or spend a rerun.
+while the run itself succeeds. The watcher's exit is not the run's verdict.
+Confirm the real outcome before you treat the run as failed or spend a rerun:
+run `gh run view <run-id> --json status,conclusion`, where the run id is in
+the check's link, or read `gh pr checks <pr>` again.
 
 ## Read pull-request status
 

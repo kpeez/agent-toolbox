@@ -111,5 +111,5 @@ points to. "No flags" is a valid list. The model line is required.
 The [handoff](../handoff/SKILL.md) skill posts the log's key rows to the
 work's tracker issue as one comment, then deletes the file. The comment holds
 the trail after the scratch folder is gone. When a reviewer needs the trail
-to trust the result before the handoff, copy the rows into the pull request
-first.
+to trust the result before the handoff, copy the rows into a pull request
+comment first.

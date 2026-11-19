@@ -132,9 +132,10 @@ instruction.
    # The branch has no upstream yet: keep its current base.
    git -c user.name="<name>" -c user.email="<id>+<login>@users.noreply.github.com" \
      rebase --keep-base <base> --exec 'git commit --amend --no-edit --author="<name> <id>+<login>@users.noreply.github.com>"'
-   # The branch has an upstream: rewrite only the commits after it.
+   # The branch has an upstream (its own remote branch or trunk): rewrite only
+   # the commits after it, on the same base.
    git -c user.name="<name>" -c user.email="<id>+<login>@users.noreply.github.com" \
-     rebase @{upstream} --exec 'git commit --amend --no-edit --author="<name> <id>+<login>@users.noreply.github.com>"'
+     rebase --keep-base @{upstream} --exec 'git commit --amend --no-edit --author="<name> <id>+<login>@users.noreply.github.com>"'
    ```
 5. `5-open-draft-pr`: Reuse the branch's existing pull request. Otherwise
    create one draft against the confirmed base. Build the body with
