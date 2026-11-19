@@ -277,8 +277,14 @@ Its `view` subcommand builds a blinded input for each run:
 - **What the labeler sees:** the case's last user message, the case's `metadata.relevant_action` description, and an ordered list of root `tool_use` calls. Each call entry contains only `tool_use_id`, `tool`, and `target` (`file_path`, `pattern`, `path`, or `command`, else compact JSON of the input cut to 300 characters).
 - **What the labeler does not see:** `Skill` calls, calls that reach a declared `--plugin-dir` (skills, playbooks, references) by a path, by a path relative to the session's working folder, or by naming the folder anywhere in their input (a Glob pattern or a Bash command), sidechain calls, hook outputs, system text, assistant text, and anything that names the hook arm.
 
+The prompt gives the labeler three rules, the same ones a person uses for hand labels:
+
+- An action that changes or creates a file starts at the first call that changes or creates that file.
+- An action that reads, reviews, investigates, assesses, or analyzes something, or proposes a design for existing code, starts at the first read of the file under examination: the thing reviewed, not a reference it is checked against, and not a README or a file listing.
+- An action that is only something to say (a stated line, an answer, a question to the user) has no starting call, so the label is `none`. A router case's "say the route and read the playbook" is `none` too, because playbook reads are outside the view.
+
 Before using the labeler on a run, calibrate it with `label_relevant_action.py calibrate` against about 30 hand-labeled pilot transcripts.
-Pick the cheapest model that reaches at least 90% exact agreement with the hand labels.
+Pick the cheapest model that reaches at least 90% exact agreement with the hand labels. When a change to the prompt follows a calibration, check it on fresh hand labels too, because the calibration set has then informed the prompt.
 After the run, a person audits a random 5% sample of the labeled transcripts.
 
 ## Route scoring
