@@ -14,11 +14,12 @@
   hooks. Bun starts in about 12 ms. `uv run --script` starts in about 33 ms
   (measured on an M-series Mac).
 - `scripts/run-ts` runs the file with bun when bun is installed. Otherwise it
-  runs the file with Node 22.18 or later. Each plugin that has hooks ships its
-  own copy. The copies stay byte-identical.
+  runs the file with Node 22.18 or later. Each plugin whose hooks use run-ts
+  ships its own copy. The copies stay byte-identical.
 - A hook on any other event may also run a `uv run --script` Python file.
   Agent scripts off the per-call path default to Python. Analysis, plotting,
-  and experiment tools stay Python. There is no blanket language mandate.
+  and experiment tools stay Python. TypeScript stays where the code is synced
+  from upstream pstack (statechart, recall transcripts) or already exists.
 - Use erasable TypeScript syntax only (`erasableSyntaxOnly`). No enums,
   namespaces, or parameter properties. Use `import type` for type-only
   imports. Node 22.18 and later then runs the same `.ts` files with no build
