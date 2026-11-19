@@ -3,10 +3,25 @@
 # requires-python = ">=3.11"
 # dependencies = []
 # ///
-"""Fail when a plugin hook runs a runtime other than bun TS or cat text.
+"""Fail when a plugin hook runs a runtime its event class does not allow.
 
-Hooks run on every tool call, so the agent stack keeps them on fast bun
-TypeScript.
+A hook that fires on every tool call pays its startup cost each time, so it
+runs TypeScript through scripts/run-ts (bun, else node 22.18+) or cats a text
+file. A hook on any other event may also run a uv Python script. A bare `bun`
+command is not allowed because it has no node fallback.
+
+Per-call events (PreToolUse, PostToolUse, PostToolUseFailure,
+PermissionRequest) allow:
+
+- `sh $ROOT/scripts/run-ts $ROOT/<path>.ts [args]`
+- `cat <file>.md`
+
+Every other event allows the same, plus
+`uv run --script $ROOT/<path>.py [args]`.
+
+$ROOT is the literal "$CLAUDE_PLUGIN_ROOT" or "${CLAUDE_PLUGIN_ROOT}" token.
+A plugin whose hooks use run-ts must ship scripts/run-ts, and every copy must
+be byte-identical.
 """
 
 import json
@@ -19,8 +34,28 @@ from pathlib import Path
 PLAIN = re.compile(r'[A-Za-z0-9_./" -]*')
 
 
-def check_command(command: str) -> str | None:
-    """Return None when the command is allowed, else a reason it fails."""
+PER_CALL_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "PermissionRequest"}
+ROOT = re.compile(r"\$(?:CLAUDE_PLUGIN_ROOT|\{CLAUDE_PLUGIN_ROOT\})/")
+RUN_TS = "scripts/run-ts"
+
+
+def _under_root(token: str, suffix: str) -> bool:
+    match = ROOT.match(token)
+    return match is not None and token.endswith(suffix) and len(token) > match.end() + len(suffix)
+
+
+def _runs_run_ts(command: str) -> bool:
+    """True when the command runs the plugin's scripts/run-ts launcher."""
+    try:
+        tokens = shlex.split(command)
+    except ValueError:
+        return False
+    match = ROOT.match(tokens[1]) if len(tokens) > 1 else None
+    return tokens[:1] == ["sh"] and match is not None and tokens[1][match.end():] == RUN_TS
+
+
+def check_command(command: str, event: str) -> str | None:
+    """Return None when the command is allowed for the event, else a reason it fails."""
     # One plain command only. Any other character (an operator, a newline,
     # `$(`, a backtick, `#`) would let a second command ride behind an
     # allowed first word, so allow plain words and the plugin root alone.
@@ -34,11 +69,28 @@ def check_command(command: str) -> str | None:
     if not tokens:
         return "empty command"
     head, *args = tokens
-    if head == "bun" and args and args[0].endswith(".ts") and not _has_flag(args):
-        return None
     if head == "cat" and len(args) == 1 and args[0].endswith(".md"):
         return None
-    return "must run a .ts file with bun or cat a .md file"
+    if (
+        head == "sh"
+        and len(args) >= 2
+        and _runs_run_ts(command)
+        and _under_root(args[1], ".ts")
+        and not _has_flag(args)
+    ):
+        return None
+    if (
+        event not in PER_CALL_EVENTS
+        and head == "uv"
+        and args[:2] == ["run", "--script"]
+        and len(args) >= 3
+        and _under_root(args[2], ".py")
+        and not _has_flag(args[3:])
+    ):
+        return None
+    if event in PER_CALL_EVENTS:
+        return f"{event} fires on every tool call: run `sh $CLAUDE_PLUGIN_ROOT/scripts/run-ts $CLAUDE_PLUGIN_ROOT/<path>.ts` or cat a .md file"
+    return "must run `sh $CLAUDE_PLUGIN_ROOT/scripts/run-ts $CLAUDE_PLUGIN_ROOT/<path>.ts`, `uv run --script $CLAUDE_PLUGIN_ROOT/<path>.py`, or cat a .md file"
 
 
 def _has_flag(args: list[str]) -> bool:
@@ -53,27 +105,38 @@ def main() -> int:
     )
     failures = 0
     commands = 0
+    launchers: dict[Path, bytes] = {}
     files = sorted((root / "plugins").glob("*/hooks/hooks.json"))
     for path in files:
         data = json.loads(path.read_text(encoding="utf-8"))
+        launcher = path.parents[1] / RUN_TS
         for event, groups in data.get("hooks", {}).items():
             for group in groups:
                 for hook in group.get("hooks", []):
                     command = hook.get("command", "")
                     commands += 1
-                    reason = check_command(command)
+                    reason = check_command(command, event)
+                    if reason is None and _runs_run_ts(command):
+                        if not launcher.is_file():
+                            reason = f"needs {launcher.relative_to(root)}, which is missing"
+                        else:
+                            launchers[launcher] = launcher.read_bytes()
                     if reason is not None:
                         print(
                             f"{path.relative_to(root)} {event}: `{command}` {reason}"
                         )
                         failures += 1
+    if len(set(launchers.values())) > 1:
+        names = ", ".join(str(p.relative_to(root)) for p in sorted(launchers))
+        print(f"the run-ts copies differ and must be byte-identical: {names}")
+        failures += 1
     if failures:
         print(
-            f"{failures} hook command(s) use a forbidden runtime. See AGENTS.md."
+            f"{failures} hook problem(s) found. See AGENTS.md."
         )
         return 1
     print(
-        f"ok: {commands} hook commands in {len(files)} plugins run bun TS or cat text"
+        f"ok: {commands} hook commands in {len(files)} plugins run run-ts TS, uv Python off the per-call path, or cat text"
     )
     return 0
 
