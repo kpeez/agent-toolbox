@@ -28,7 +28,9 @@ landed, what is next, and the open decisions. Give each decision its reason.
   not check as not verified.
 - Name files, commands, branches, and pull requests exactly. Leave out what
   the next session can read from the code or `git log`.
-- With no tracker, write the same state into the pull request body instead.
+- With no tracker, post the same state as one comment on the pull request:
+  `gh pr comment <pr> --body-file <file>`. Keep it out of the pull request
+  body, which describes the change as it will merge.
 - With neither a tracker nor a pull request, keep the state in your reply.
 
 Apply the [prose rules](../writing/references/prose.md). Show a design or a
@@ -38,8 +40,8 @@ code path with [show-me](../writing/references/show-me.md) visuals.
 
 When a decision log exists, read its rows. Post the key rows to the issue as
 one comment: each fork, pivot, and blocker that shaped the work, with its
-reason. With no tracker, add the rows to the pull request body; with neither,
-keep them in your reply. Then delete the log file. The comment holds the
+reason. With no tracker, add the rows to the pull request comment; with
+neither, keep them in your reply. Then delete the log file. The comment holds the
 trail; the file is scratch. [log-decisions](../log-decisions/SKILL.md) owns
 the row format.
 

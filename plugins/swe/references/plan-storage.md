@@ -12,7 +12,7 @@ The HTML plan workflow owns the plan's format.
   are the record.
 
 Handoffs are not files. The [handoff](../skills/handoff/SKILL.md) skill writes
-the work's current state to its tracker issue, or to the pull request body
+the work's current state to its tracker issue, or to a pull request comment
 when the project has no tracker. The
 [log-decisions](../skills/log-decisions/SKILL.md) skill keeps the decision log
 at `.agents/scratch/<branch-slug>/decisions.jsonl` during the run.

@@ -64,7 +64,7 @@ flowchart LR
 ```
 
 - **Same machine, same agent.** Run `claude --resume`. The transcript is the full state. Claude Code's idle compaction keeps a resume cheap.
-- **New session, other agent, or other host.** Run the [`handoff`](../skills/handoff/SKILL.md) skill. It updates the issue with the current state, posts the decision log's key rows as one comment, deletes the log, and gives you the prompt `Continue <issue key>.` for the new session. With no tracker, the state goes into the pull request body; with neither, the prompt stands alone.
+- **New session, other agent, or other host.** Run the [`handoff`](../skills/handoff/SKILL.md) skill. It updates the issue with the current state, posts the decision log's key rows as one comment, deletes the log, and gives you the prompt `Continue <issue key>.` for the new session. With no tracker, the state goes into one pull request comment; with neither, the prompt stands alone.
 - **Compaction.** A compaction summary stays in the session transcript. No hook writes it to a file. The decision log and the issue hold the state a new session needs.
 
 ## Let idle compaction run
@@ -114,6 +114,6 @@ Reviews and searches use the host's own subagents, with the rules in the [review
 | ADRs, notes, research | `.agents/docs/adrs/`, `notes/`, and `research/`, unless the project or user names another place. It can be a folder or a symlink, tracked or ignored. See the [ADR format](../references/ADR-FORMAT.md). |
 | Plans | `.agents/docs/plans/<slug>.plan.src.html` when the project has a `.agents/docs` folder, else `.agents/scratch/<branch-slug>/`. See [plan storage](../references/plan-storage.md). |
 | Decision logs | `.agents/scratch/<branch-slug>/decisions.jsonl`, one per branch. The handoff posts the key rows to the tracker issue and deletes the file. |
-| Handoffs | The work's tracker issue. With no tracker, the pull request body. |
+| Handoffs | The work's tracker issue. With no tracker, one pull request comment. |
 
 Next: [Steer with principle names](08-principles.md).
