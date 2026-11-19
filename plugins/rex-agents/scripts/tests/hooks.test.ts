@@ -87,7 +87,8 @@ test("needs rex, and runs the mirror with the running runtime", () => {
   const onlyRex = (n: string): string | null => (n === "rex" ? "/usr/local/bin/rex" : null);
   const out = decide(event(), ENV, onlyRex);
   if (out === null) throw new Error("expected a rewrite without bun on PATH");
-  assert.ok(String(out.hookSpecificOutput.updatedInput.command).includes(` | ${process.execPath} `));
+  const flag = process.versions.bun === undefined ? " --disable-warning=ExperimentalWarning" : "";
+  assert.ok(String(out.hookSpecificOutput.updatedInput.command).includes(` | ${process.execPath}${flag} ${MIRROR} `));
 });
 
 test("only modes that do not prompt", () => {

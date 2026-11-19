@@ -20,6 +20,7 @@ import { accessSync, constants, readFileSync, statSync } from "node:fs";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { isMain } from "../scripts/is_main.ts";
+import { runtimeFlags } from "../scripts/runtime_flags.ts";
 
 const MIRROR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "rex_mirror.ts");
 const LABEL_MAX = 60;
@@ -68,7 +69,7 @@ export function labelFor(toolInput: Record<string, unknown>, agentId: unknown): 
 export function mirrored(command: string, label: string, sessionId: string, runtime: string): string {
   return (
     `{ ( :; ${command}\n ); printf '\\n__rex_rc=%d\\n' "$?"; } 2>&1 | ` +
-    `${shquote(runtime)} ${shquote(MIRROR)} ${shquote(label)} ${shquote(sessionId)}`
+    [shquote(runtime), ...runtimeFlags(), shquote(MIRROR), shquote(label), shquote(sessionId)].join(" ")
   );
 }
 
