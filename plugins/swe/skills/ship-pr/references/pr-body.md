@@ -18,11 +18,12 @@ template:
 | `blast_radius.md` | One word, then optional ramifications. See [Risk](#risk). |
 
 ```bash
-bun <ship-pr>/scripts/pr_body.ts render <slot-folder> --link "Fixes ABC-123" -o body.md
+sh <ship-pr>/../../scripts/run-ts <ship-pr>/scripts/pr_body.ts render <slot-folder> --link "Fixes ABC-123" -o body.md
 gh pr create --draft --title "<title>" --body-file body.md
 ```
 
-`<ship-pr>` is this skill's directory. `render` refuses a slot that is
+`<ship-pr>` is this skill's directory. `run-ts` runs the script with bun, or
+with Node 22.18 or later when bun is missing. `render` refuses a slot that is
 missing or empty, holds a heading, or names the requester or the chat. A
 swe `PreToolUse` hook runs the same check before every `gh pr create` and
 `gh pr edit`. It blocks an inline `--body`, `--fill`, and any body file that
