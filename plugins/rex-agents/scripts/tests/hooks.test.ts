@@ -168,7 +168,8 @@ const row = (block: string, i: number): string =>
   JSON.stringify({ block, rex_session: "session:end", label: `l${i}` });
 
 for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[string, boolean]>) {
-  test(`session end is best-effort per block (${rt})`, { timeout: 60_000 }, () => {
+  const skip = spawnSync(rt, ["--version"], { stdio: "ignore" }).status === 0 ? false : `${rt} is not on PATH`;
+  test(`session end is best-effort per block (${rt})`, { timeout: 60_000, skip }, () => {
     const home = mkdtempSync(join(tmpdir(), "rex-end-home-"));
     try {
       const bin = join(home, "bin");
