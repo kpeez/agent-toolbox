@@ -45,7 +45,7 @@ codex plugin add rex-agents@agent-toolbox
 agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/rex-agents
 ```
 
-The hooks need `bun` and `rex` on PATH. Outside Rex (`REX_SESSION` unset), they
+The hooks need `bun` or Node 22.18 or later, and `rex`, on PATH. Outside Rex (`REX_SESSION` unset), they
 do nothing.
 
 ## Turn the mirror off

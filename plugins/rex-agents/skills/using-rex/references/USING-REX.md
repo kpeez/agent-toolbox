@@ -157,7 +157,7 @@ PreToolUse hook rewrites a background Bash call into this form, so its output an
 
 ```sh
 { ( :; <cmd>
- ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | <abs bun> <plugin>/scripts/rex_mirror.ts '<label>' <session id>
+ ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | <abs runtime> <plugin>/scripts/rex_mirror.ts '<label>' <session id>
 ```
 
 `rex_mirror.ts` opens a block labelled `[claude] <description>`
