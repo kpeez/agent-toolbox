@@ -4,10 +4,11 @@ rex-agents makes the [Rex terminal](https://www.superlogical.com/rex) the place
 where agent work runs and where you watch it, on the Mac and in Rex for iOS.
 Hooks do the work, so it does not depend on what the agent remembers:
 
-- Each background command that Claude Code starts in auto mode gets its own
-  Rex tab. The tab shows the output live, with a working spinner, and ends
-  `done` or `error` with the exit code. The agent gets the same output and
-  exit status as before, and permission rules still see the original command.
+- Each background command that Claude Code starts in auto or
+  bypassPermissions mode gets its own Rex tab. The tab shows the output live,
+  with a working spinner, and ends `done` or `error` with the exit code. The
+  agent gets the same output and exit status as before, and permission rules
+  still see the original command.
 - When the session ends, its `done` tabs close. Its `error` tabs stay for you.
 - A session in a Rex pane starts with the `using-rex` skill in context.
 - A subagent is told to leave panes and sessions alone.
@@ -21,7 +22,7 @@ Hooks do the work, so it does not depend on what the agent remembers:
 | --- | --- |
 | `scripts/wait-status.lua` | `rex do` script: wait until a block reports a settled status, with no sleep loop |
 | `scripts/agent-inbox.lua` | `rex do` script: list every blocked, done, or error block on this server and each host |
-| `scripts/rex_mirror.py`, `scripts/rex_mirror_view.py` | The mirror: pass output through and show it in a block |
+| `scripts/rex_mirror.ts`, `scripts/rex_mirror_view.ts` | The mirror: pass output through and show it in a block |
 
 The Rex CLI reference is Rex's own `rex` skill (`rex skill setup`). This plugin
 covers how agents work in Rex.
@@ -44,7 +45,7 @@ codex plugin add rex-agents@agent-toolbox
 agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/rex-agents
 ```
 
-The hooks need `uv` and `rex` on PATH. Outside Rex (`REX_SESSION` unset), they
+The hooks need `bun` and `rex` on PATH. Outside Rex (`REX_SESSION` unset), they
 do nothing.
 
 ## Turn the mirror off
@@ -60,8 +61,11 @@ keep the command unchanged.
 ## Test
 
 ```text
-uv run -m unittest discover -s plugins/rex-agents/scripts/tests
+bun test plugins/rex-agents/scripts/tests
+node --test plugins/rex-agents/scripts/tests/
 ```
 
-The tests run the wrapper on 10 command shapes in zsh and bash, check the exit
+The tests run the wrapper on 12 command shapes in zsh and bash, check the exit
 status for a stream without the status marker, and check each hook decision.
+They also kill the mirror mid-stream and run every hook under node. Both
+runtimes run the same files.
