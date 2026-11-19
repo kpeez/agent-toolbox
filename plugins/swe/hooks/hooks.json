@@ -11,17 +11,6 @@
         ]
       }
     ],
-    "PostCompact": [
-      {
-        "hooks": [
-          {
-            "type": "command",
-            "command": "uv run --script \"$CLAUDE_PLUGIN_ROOT\"/scripts/handoff.py hook",
-            "timeout": 10
-          }
-        ]
-      }
-    ],
     "PreToolUse": [
       {
         "matcher": "Bash",

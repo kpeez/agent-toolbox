@@ -54,12 +54,11 @@ affected documentation left stale and the reason.
 
 ## Plans and issues
 
-- When the caller names a plan (for example `fix-login-redirect.md`), read it
-  first and work to it. Follow [plan storage](../../references/plan-storage.md)
-  to find plans in the main checkout; resolve `../../scripts/handoff.py` from
-  this skill's directory, not the current working directory, when running `dir`.
-  If a material design choice changes during the work, update the plan's
-  Decisions section.
+- When the caller names a plan (for example
+  `feature-export-json.plan.src.html`), read it first and work to it. Follow
+  [plan storage](../../references/plan-storage.md) to find the plan's HTML
+  source. If a material design choice changes during the work, update the
+  plan.
 - For work with an issue, include its key when creating a branch; preserve an
   established branch name. Git and the pull request move the issue's status;
   comment on the issue only for a blocker or a decision that needs the user.

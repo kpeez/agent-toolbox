@@ -281,8 +281,8 @@ Long runs and sessions:
   lands, linked as a stack only where one builds on another. PRs that depend
   on each other come here also when the user asks for the merge. Then the
   playbook lands them with `ship-stack` after its handoff.
-- `pick-up-session`: resume a prior agent's in-flight work from its handoff
-  file, decision log, transcript, or branch.
+- `pick-up-session`: resume a prior agent's in-flight work from its tracker
+  issue, decision log, transcript, or branch.
 - `pause-safely`: stop in-flight work cleanly so a new session can resume it.
 - `clean-worktrees`: reclaim disk from merged or abandoned git worktrees.
 

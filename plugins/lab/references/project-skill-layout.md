@@ -18,7 +18,7 @@ A skill that a lab skill generates for a project follows this layout.
   files from its own location, not from the working directory.
 - Commit the skill folder with the change that adds it, so every clone gets
   the skill. Many repositories ignore parts of `.agents/` (for example
-  `.agents/docs/` or `.agents/plans/`). Before you commit, run
+  `.agents/docs/` or `.agents/scratch/`). Before you commit, run
   `git check-ignore -v .agents/skills/<skill-name>/SKILL.md`. When it prints a
   rule, change `.gitignore` so it ignores only those other parts. Git cannot
   re-include a file under an ignored directory, so `!/.agents/skills/` after

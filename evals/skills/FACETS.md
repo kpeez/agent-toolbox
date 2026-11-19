@@ -166,7 +166,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | skill `external-agents` | questions: 1-check-the-harness, 2-choose-models, 3-frame-the-questions, 4-write-the-briefs, 5-run-the-workers, 6-verify-the-answers, 7-check-for-changes-and-clean-up, 8-report; delegate: 1-check-and-choose, 2-fix-the-spec, 3-start-clean, 4-run-the-builder, 5-review-the-round, 6-close-gaps, 7-report | 1 | 0 |
 | skill `figure-it-out` | 1-read-principles, 2-frame-the-run, 3-design-the-playbook, 4-run-the-loop, 5-keep-the-audit-trail, 6-verify-and-hand-back | 1 | 0 |
 | playbook `fix-bug` | 1-reproduce-failure, 2-binary-search-cause, 3-confirm-mechanism, 4-sweep-for-pattern, 5-plan-fix, 6-decide-regression-test, 7-commit-failing-repro, 8-apply-smallest-fix, 9-verify-original-repro, 10-encode-bug-class, 11-check-blast-radius, 12-clean-the-diff, 13-update-obsolete-docs, 14-publish-draft-pr | 4 | 0 |
-| skill `handoff` | 1-find-the-file, 2-write-the-file | 1 | 0 |
+| skill `handoff` | 1-find-the-record, 2-update-the-issue, 3-close-the-log, 4-seed-the-next-session | 1 | 0 |
 | playbook `hillclimb-metric` | 1-ground-workload, 2-fix-metric-and-stop, 3-freeze-harness, 4-open-decision-log, 5-ground-each-hypothesis, 6-delegate-attempt, 7-measure-and-decide, 8-commit-and-log, 9-push-past-plateau, 10-stop-on-predicate, 11-publish-draft-pr | 2 | 0 |
 | playbook `improve-performance` | 1-measure-baseline, 2-ground-hypotheses, 3-name-limiter, 4-try-mantras, 5-plan-fix, 6-change-one-thing, 7-compare-artifacts, 8-explain-the-gain, 9-verify-behavior-unchanged, 10-update-obsolete-docs, 11-publish-draft-pr | 1 | 0 |
 | skill `interview-user` | 1-ask-a-round, 2-find-facts-and-leave-decisions, 3-confirm-the-shared-understanding | 1 | 0 |

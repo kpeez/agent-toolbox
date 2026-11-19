@@ -6,9 +6,12 @@ description: "Keep an append-only log of each decision in a long, multi-phase, o
 # Log decisions
 
 A decision log records each fork, unit result, pivot, and blocker of one piece
-of work, with evidence a reviewer can open. It sits beside the work's handoff
-file. The handoff holds the current state; the log holds how the work got
-there. Keep one log per piece of work.
+of work, with evidence a reviewer can open. You append the rows yourself as
+the run proceeds. The log lives at
+`.agents/scratch/<branch-slug>/decisions.jsonl`, where `<branch-slug>` is the
+branch name with `/` changed to `-`.
+[Agent scratch](../../references/agent-scratch.md) defines the folder and how
+to create its link. Keep one log per piece of work. No script writes the log.
 
 Keep a log for an unattended or autonomous run, a multi-phase run, work a
 person reviews after stepping away, or when the user asks. Skip it for short,
@@ -19,37 +22,27 @@ this skill and let it own the format. They do not restate the fields.
 
 ## Write a row
 
-Run this in the target repository. Resolve the script from this skill's
-directory, not the current working directory:
-
-```bash
-uv run ../../scripts/handoff.py log --session "${CLAUDE_SESSION_ID}" \
-  --phase <phase> --decision "<what>" --why "<reason>" \
-  --evidence <pointer> [--evidence <pointer> ...] --result "<outcome>"
-```
-
-It appends one JSON line to `<main checkout>/.agents/plans/<branch>.decisions.jsonl`
-and prints the path. The script stamps `ts`. Git ignores the file.
-
-- **phase**: the phase or workstream. Use `start` only for a run's first row,
-  as "Runs and start rows" says.
-- **decision**: what was chosen or done, one line.
-- **why**: the reason in plain words, per the
-  the [prose rules](../writing/references/prose.md) rules. When a principle drove the decision,
-  say what it made you do, not its name as a tag.
-- **evidence**: pointers only: a commit SHA, a PR, `file:line`, or an
-  artifact, trace, or screenshot path. Never a paragraph. Prefer output of a
-  committed script over a one-off, per
-  [encode-lessons-in-structure](../principle-encode-lessons-in-structure/SKILL.md).
-- **result**: the outcome, such as `tests pass`, `reverted`, `pixel-diff 0`,
-  `INCONCLUSIVE`, or `open`.
-
-Write each row the way you would tell a teammate what you did: plain words
-and concrete actions. A reviewer reads this row at a glance:
+Append one JSON line to the log file. Each row holds four fields:
 
 ```json
-{"ts": "2026-05-24T12:30:00+00:00", "phase": "widget", "decision": "threw out a helper's work because its screenshots were blank", "why": "checked the real files instead of trusting its summary", "evidence": ["worktree reset"], "result": "reverted, tightened the brief for next time"}
+{"ts": "2026-05-24T12:30:00+00:00", "step": "widget", "decision": "threw out a helper's work because its screenshots were blank", "reason": "checked the real files instead of trusting its summary"}
 ```
+
+- **ts**: the current time in ISO 8601 with the UTC offset. Read the clock
+  with `date` when you append.
+- **step**: the phase, workstream, or playbook step the decision belongs to.
+  Use `start` only for a run's first row, as "Runs and start rows" says.
+- **decision**: what was chosen or done, one line. Name the evidence in the
+  line: a commit SHA, a PR, `file:line`, or an artifact, trace, or screenshot
+  path. Never a paragraph. Prefer output of a committed script over a
+  one-off, per
+  [encode-lessons-in-structure](../principle-encode-lessons-in-structure/SKILL.md).
+- **reason**: the reason in plain words, per the
+  [prose rules](../writing/references/prose.md). When a principle drove the
+  decision, say what it made you do, not its name as a tag.
+
+Write each row the way you would tell a teammate what you did: plain words
+and concrete actions. A reviewer reads this row at a glance.
 
 Write a row at decision points and checkpoints: a fork chosen, a unit done
 with its check result, a pivot or revert with its trigger, a blocker found, a
@@ -64,16 +57,12 @@ Never edit or delete a row.
 A run is one agent conversation, including its later turns and any summary of
 it. A pickup, a replacement agent, or a new chat starts a new run.
 
-- When a run adds to a log that already has rows, its first row has phase
+- When a run adds to a log that already has rows, its first row has step
   `start`. So does its first row after another run's `start` row.
 - When a run comes back to the log in a later turn, it first reads the last
   rows to see whether another run wrote since.
 - A `start` row names, in `decision`, the `ts` range of the earlier rows this
-  run did not write. Its evidence names this run, such as its session id.
-
-## Link it
-
-When you write the handoff file, end its Decisions section with the log path.
+  run did not write, and names this run, such as its session id.
 
 ## Before you hand back
 
@@ -86,7 +75,7 @@ When you write the handoff file, end its Decisions section with the log path.
    `~/.codex/sessions/`. Read only this project's transcript, never other
    projects' sessions.
 3. Check that every row maps to a real decision or action, and that each
-   evidence pointer exists and shows what the row claims.
+   evidence pointer in it exists and shows what the row claims.
 4. A fork, pivot, or abandoned approach that shaped the work but has no row
    is a gap. Append a row for it.
 5. Correct the log, not the story. For a wrong row, even an invented one,
@@ -117,8 +106,10 @@ Every reply for a run with a log ends with an "Attention" section. Its first
 line is `reviewed by <model>`. Then list each flag with the rows or moments it
 points to. "No flags" is a valid list. The model line is required.
 
-## After the work
+## At handoff
 
-Delete the log with the handoff file when the pull request merges. When a
-reviewer needs the trail to trust the result, copy the log into the pull
-request first.
+The [handoff](../handoff/SKILL.md) skill posts the log's key rows to the
+work's tracker issue as one comment, then deletes the file. The comment holds
+the trail after the scratch folder is gone. When a reviewer needs the trail
+to trust the result before the handoff, copy the rows into the pull request
+first.

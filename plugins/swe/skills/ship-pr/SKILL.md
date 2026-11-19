@@ -149,11 +149,9 @@ the intent of the work, push back. A draft is not
 human-review-ready; product delivery and merge remain separate outcomes.
 
 Create a local PR markdown artifact only when the user requests one or the
-authorized publication route is unavailable. Follow
-[plan storage](../../references/plan-storage.md) to find the plans
-directory; resolve `../../scripts/handoff.py` from this skill's directory,
-not the current working directory, when running `dir`. Use a name such as
-`pr-<branch>.md`, so it does not replace the branch's plan. Include the proposed
+authorized publication route is unavailable. Write it to
+`.agents/scratch/<branch-slug>/pr-<branch>.md`
+([agent scratch](../../references/agent-scratch.md)). Include the proposed
 title, body, commit grouping, and relevant diff references.
 
 ## Drive to green

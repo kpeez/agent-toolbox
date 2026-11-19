@@ -1,17 +1,18 @@
 # Plan storage
 
-Plans and handoffs live in `<main checkout>/.agents/plans/`, shared by the
-repository's worktrees and kept out of Git. Resolve
-`plugins/swe/scripts/handoff.py` from the installed SWE plugin, not from the
-current skill or repository directory. Run
-`uv run <plugin-root>/scripts/handoff.py dir` in the target repository to
-create and print the directory. Do not use `.agents/docs/` or a notes vault for
-plans.
+A plan is an HTML source file. It lives at
+`.agents/docs/plans/<slug>.plan.src.html` when the project has a
+`.agents/docs` folder. Otherwise it lives in `.agents/scratch/<branch-slug>/`.
+The slug is the work's branch name with `/` changed to `-`.
+[Agent scratch](agent-scratch.md) defines the scratch folder and its link.
+The HTML plan workflow owns the plan's format.
 
-- A plan is named `<slug>.md`, where the slug is the work's branch name with
-  `/` changed to `-`. The [handoff](../skills/handoff/SKILL.md) skill and its hook
-  update the same file, so one file follows the branch from plan to merge.
 - Plans are local only. Nothing syncs them to a tracker.
+- Delete a plan when its pull request merges. The pull request and the code
+  are the record.
 
-The `dir` command creates the plans directory and its ignore file; do not
-describe it as a read-only check.
+Handoffs are not files. The [handoff](../skills/handoff/SKILL.md) skill writes
+the work's current state to its tracker issue, or to the pull request body
+when the project has no tracker. The
+[log-decisions](../skills/log-decisions/SKILL.md) skill keeps the decision log
+at `.agents/scratch/<branch-slug>/decisions.jsonl` during the run.

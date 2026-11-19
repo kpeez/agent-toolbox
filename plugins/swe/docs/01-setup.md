@@ -46,9 +46,7 @@ The plugin adds a SessionStart hook. At the start of every session, it puts a sh
 
 So you do not have to type `/swe:swe-mode` each time. The agent starts the router itself, also after a short prompt such as "continue". The rule does not apply to chat, quick factual answers, and work that is not software.
 
-The plugin also adds a PostCompact hook that saves a session summary to the branch's handoff file. [Run long work](07-long-runs.md) covers it.
-
-agy runs no hooks. It loads the same rule from [rules/AGENTS.md](../rules/AGENTS.md) at the start of every session, so the router starts the same way. agy has no PostCompact hook and skips the `daedalus` and `comment-sicko` agents, so delegated work uses agy's own subagents.
+agy runs no hooks. It loads the same rule from [rules/AGENTS.md](../rules/AGENTS.md) at the start of every session, so the router starts the same way. agy skips the `daedalus` and `comment-sicko` agents, so delegated work uses agy's own subagents.
 
 ## Add the router rule to AGENTS.md (Codex)
 

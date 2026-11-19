@@ -74,8 +74,10 @@ class FacetMapContract(unittest.TestCase):
         path = self.root / skill
         path.write_text(
             path.read_text(encoding="utf-8")
-            .replace("## 1-find-the-file", "## Find the file")
-            .replace("## 2-write-the-file", "## Write the file"),
+            .replace("## 1-find-the-record", "## Find the record")
+            .replace("## 2-update-the-issue", "## Update the issue")
+            .replace("## 3-close-the-log", "## Close the log")
+            .replace("## 4-seed-the-next-session", "## Seed the next session"),
             encoding="utf-8",
         )
         result = self.cli("write")

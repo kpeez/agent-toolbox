@@ -348,7 +348,7 @@ them, such as `/swe:how`.
 | [`/swe:no-comments [path or diff]`](./skills/no-comments/SKILL.md) | You want comments that do not explain a non-obvious why removed |
 | [`/swe:ketchup`](./skills/ketchup/SKILL.md) | You come back after time away and want to catch up |
 | [`/swe:ketchup-video`](./skills/ketchup-video/SKILL.md) | You want the catch-up as a short subtitled video of slides, with the waiting calls as text under it |
-| [`/swe:recall [topic]`](./skills/recall/SKILL.md) | You want recent context rebuilt from chat history and the handoff file |
+| [`/swe:recall [topic]`](./skills/recall/SKILL.md) | You want recent context rebuilt from chat history and the tracker issue |
 | [`/swe:reflect`](./skills/reflect/SKILL.md) | You want a session reviewed for agent mistakes |
 | [`/swe:in-your-own-words`](./skills/in-your-own-words/SKILL.md) | You want the agent to restate your goal before it starts |
 | [`/swe:typescript-best-practices`](./skills/typescript-best-practices/SKILL.md) | You read or edit TypeScript. It also loads on its own for `.ts` and `.tsx` files |
