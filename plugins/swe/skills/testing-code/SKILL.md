@@ -174,6 +174,11 @@ Choose the smallest mode that distinguishes the risk:
   file only when it is an intentional durable artifact; otherwise remove it as
   described above.
 
+When the evidence needs a running service, read
+[references/live-service-checks.md](references/live-service-checks.md) for the
+disposable-stack setup, the pitfalls of a second local stack, and the anonymous
+protocol probes that settle each deployment setting.
+
 A metamorphic relation or trusted simpler model can supply an oracle when its
 relation is known independently. Do not use one that merely seems plausible or
 shares production assumptions.
