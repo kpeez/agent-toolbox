@@ -8,10 +8,23 @@
   A minor or major bump requires explicit permission in the request;
   precedent in the git history is not permission.
 - Keep every marketplace catalog entry pointed at a plugin folder that exists.
-- Run every repo and plugin Python script with `uv run`, never `python3`. Each
-  script starts with `#!/usr/bin/env -S uv run --script` and a PEP 723 header
-  that sets `requires-python = ">=3.11"` and lists its dependencies. The
-  header keeps `uv run` from syncing the project that a hook runs in.
+- Run hooks and agent-tooling scripts as `.ts` files with `bun`. Bun starts
+  in about 10 ms, against about 40 ms for `uv run --script` or Node. A
+  PreToolUse hook runs on every tool call, so startup cost adds up.
+- Use erasable TypeScript syntax only (`erasableSyntaxOnly`). No enums,
+  namespaces, or parameter properties. Use `import type` for type-only
+  imports. Node then runs the same `.ts` files with no build step as a
+  fallback.
+- Use only `node:` APIs, never `Bun.*` or `import.meta.dir`. The same file
+  must run on Node unchanged. A user without Bun changes one word in
+  hooks.json.
+- Keep Python scripts on `uv run`, never `python3`. Each starts with
+  `#!/usr/bin/env -S uv run --script` and a PEP 723 header that sets
+  `requires-python = ">=3.11"` and lists its dependencies. The header keeps
+  `uv run` from syncing the project that a hook runs in. Analysis, plotting,
+  and experiment tools stay Python. There is no blanket language mandate.
+- `.github/scripts/hook_runtime.py` enforces these runtimes. It fails CI
+  when a plugin hook runs anything else.
 - `plugins/` holds plugins every supported agent can use. `claude-mods/` holds
   Claude Code function-hook mods, which only the Claude catalog lists.
 - Keep every skill reference pointed at a resource or script that exists in
