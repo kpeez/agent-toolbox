@@ -15,7 +15,7 @@ import shlex
 import sys
 from pathlib import Path
 
-# (plugin, script-path substring) for Python hooks that stay until a later
+# (plugin, script path under the plugin root) for Python hooks that stay until a later
 # step ports them. The allow-list excuses the runtime, not the command:
 # an allow-listed hook must still run as `uv run --script <file>.py`.
 ALLOW_LIST = [
@@ -34,24 +34,40 @@ ALLOW_LIST = [
 
 def check_command(plugin: str, command: str) -> str | None:
     """Return None when the command is allowed, else a reason it fails."""
-    tokens = shlex.split(command)
+    lexer = shlex.shlex(command, posix=True, punctuation_chars=True)
+    lexer.whitespace_split = True
+    try:
+        tokens = list(lexer)
+    except ValueError as error:
+        return f"cannot parse: {error}"
     if not tokens:
         return "empty command"
-    head = tokens[0]
-    args = tokens[1:]
-    if head == "bun" and any(a.endswith(".ts") for a in args):
+    # One plain command only: an operator would let a second runtime ride
+    # behind an allowed first word.
+    if any(set(t) <= set("();<>|&") or "`" in t for t in tokens):
+        return "must be one command with no shell operators"
+    head, *args = tokens
+    if head == "bun" and args and args[0].endswith(".ts") and not _has_flag(args):
         return None
-    if head == "cat" and any(a.endswith(".md") for a in args):
+    if head == "cat" and len(args) == 1 and args[0].endswith(".md"):
         return None
-    # Match the allow-list on the script path token, not the raw command, so a
-    # quoting change to $CLAUDE_PLUGIN_ROOT cannot shift what is matched.
-    script_paths = [a for a in args if a.endswith(".py")]
-    for entry_plugin, substring in ALLOW_LIST:
-        if entry_plugin == plugin and any(substring in p for p in script_paths):
-            if head == "uv" and args[:2] == ["run", "--script"]:
-                return None
-            return "allow-listed script must run as `uv run --script <file>.py`"
+    if head == "uv" and args[:2] == ["run", "--script"] and len(args) > 2:
+        script, rest = args[2], args[3:]
+        for entry_plugin, path in ALLOW_LIST:
+            if entry_plugin == plugin and _below_root(script) == path:
+                return "unexpected flag" if _has_flag(rest) else None
     return "must run a .ts file with bun or cat a .md file"
+
+
+def _has_flag(args: list[str]) -> bool:
+    return any(a.startswith("-") for a in args)
+
+
+def _below_root(script: str) -> str | None:
+    for root in ("${CLAUDE_PLUGIN_ROOT}/", "$CLAUDE_PLUGIN_ROOT/"):
+        if script.startswith(root):
+            return script.removeprefix(root)
+    return None
 
 
 def main() -> int:
