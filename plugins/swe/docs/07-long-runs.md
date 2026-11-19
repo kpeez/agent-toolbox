@@ -33,44 +33,39 @@ A large or cross-cutting code change, or a multi-day program of one, goes to [`f
 
 ## Keep a decision log
 
-For a long, multi-phase, or unattended run, the [`log-decisions`](../skills/log-decisions/SKILL.md) skill keeps an append-only log next to the handoff file: `<branch>.decisions.jsonl`. Each line is one decision with `ts`, `phase`, `decision`, `why`, `evidence` (a list of pointers), and `result`. Append a row:
+For a long, multi-phase, or unattended run, the [`log-decisions`](../skills/log-decisions/SKILL.md) skill keeps an append-only log in the branch's scratch folder: `.agents/scratch/<branch-slug>/decisions.jsonl`, with `/` in the branch changed to `-`. The model appends each row itself; no script writes the log. Each line is one decision with `ts`, `step`, `decision`, and `reason`:
 
-```bash
-uv run plugins/swe/scripts/handoff.py log --phase frame \
-  --decision "Split the migration into 3 PRs" --why "Each PR stays reviewable" \
-  --evidence docs/plan.md --result open
+```json
+{"ts": "2026-11-18T12:30:00-08:00", "step": "frame", "decision": "Split the migration into 3 PRs", "reason": "Each PR stays reviewable"}
 ```
 
-The script stamps `ts`. Read the log with `jq -c . <log>` or, in Nushell, `open --raw <log> | from json --objects`. To correct a row, the agent appends a row that supersedes it. A new session that adds to the log starts with a `start` row.
+Read the log with `jq -c . <log>` or, in Nushell, `open --raw <log> | from json --objects`. To correct a row, the agent appends a row that supersedes it. A new session that adds to the log starts with a `start` row.
 
 Before the agent hands back, a reviewer on a different model reads the log and the transcript. The reply ends with an "Attention" section. Its first line is `reviewed by <model>`, then each flag with the rows it points to. Read that section first. To get a summary when you return, type `/swe:ketchup`.
 
-Delete the log with the handoff file when the pull request merges. When a reviewer needs the trail to trust the result, copy the log into the pull request first.
+At handoff, the log's key rows go to the work's tracker issue as one comment, and the log file is deleted. When a reviewer needs the trail to trust the result, copy the rows into the pull request first.
 
 ## Hand work to a new session
 
-A handoff file holds the current state of one piece of work, so a new session, another agent, or another host can continue it. Each branch has one file, `<main checkout>/.agents/plans/<branch>.md`, with `/` changed to `-`. Delete it when the pull request merges. The code and the pull request are the record.
+A handoff writes the current state of one piece of work to its tracker issue, so a new session, another agent, or another host can continue it. The issue holds the state, what landed, what is next, and the open decisions. The code and the pull request are the record; no handoff file exists.
 
 ```mermaid
 flowchart LR
-  plan["plan-multi-phase<br/>(large work only)"]
   resume["claude --resume<br/>(same machine and agent)"]
   manual["/swe:handoff<br/>(new session, agent, or host)"]
-  compact["Compaction: /compact, auto,<br/>or idle (about 54 min)"]
-  hook["PostCompact hook<br/>handoff.py hook"]
-  file[("plans/#lt;branch#gt;.md")]
-  next["Next session:<br/>Continue the work in #lt;path#gt;"]
+  log[("scratch<br/>decisions.jsonl")]
+  issue[("Tracker issue")]
+  next["Next session:<br/>Continue #lt;issue key#gt;"]
 
-  plan --> file
-  manual -- "whole file" --> file
-  compact --> hook -- "Session summary section" --> file
-  file --> next
-  resume -. "no file needed" .-> next
+  manual -- "current state" --> issue
+  log -- "key rows, one comment" --> issue
+  issue --> next
+  resume -. "no handoff needed" .-> next
 ```
 
 - **Same machine, same agent.** Run `claude --resume`. The transcript is the full state. Claude Code's idle compaction keeps a resume cheap.
-- **New session, other agent, or other host.** Run the [`handoff`](../skills/handoff/SKILL.md) skill. The session model overwrites the file with Goal, Done, Decisions, Next, Open questions, and Branch and PR. It gives you the prompt `Continue the work in <path>.` for the new session. Codex has the skill only.
-- **Compaction.** The PostCompact hook ([`handoff.py hook`](../scripts/handoff.py)) gets the summary that the session model just wrote (`compact_summary`). It puts the summary in the file's `## Session summary` section. It replaces the earlier summary, keeps the rest of the file, and makes no model call. It skips `main`, `master`, and a detached HEAD, and it never fails the session.
+- **New session, other agent, or other host.** Run the [`handoff`](../skills/handoff/SKILL.md) skill. It updates the issue with the current state, posts the decision log's key rows as one comment, deletes the log, and gives you the prompt `Continue <issue key>.` for the new session. With no tracker, the state goes into one pull request comment; with neither, the prompt stands alone.
+- **Compaction.** A compaction summary stays in the session transcript. No hook writes it to a file. The decision log and the issue hold the state a new session needs.
 
 ## Let idle compaction run
 
@@ -78,13 +73,13 @@ Claude Code 2.1.299 compacts a session that has been idle for about 54 minutes, 
 
 ## Pause and pick up
 
-To stop a run on purpose, say so, or say that you are going offline or restarting. The [`pause-safely`](../skills/swe-mode/playbooks/pause-safely.md) playbook finishes or backs out of the current step and commits a local `wip:` commit. Then it writes the resume note to the handoff file. It opens no PR. "Keep going" never triggers a pause.
+To stop a run on purpose, say so, or say that you are going offline or restarting. The [`pause-safely`](../skills/swe-mode/playbooks/pause-safely.md) playbook finishes or backs out of the current step and commits a local `wip:` commit. Then it runs the handoff skill to write the resume state to the work's tracker issue. It opens no PR. "Keep going" never triggers a pause.
 
 ```text
 /swe:swe-mode pick up the work on this branch.
 ```
 
-The [`pick-up-session`](../skills/swe-mode/playbooks/pick-up-session.md) playbook reads the handoff file and decision log first, then this project's transcripts or the pushed branch. It names the resume point, does not redo finished work, and verifies inherited claims on the real artifact.
+The [`pick-up-session`](../skills/swe-mode/playbooks/pick-up-session.md) playbook reads the tracker issue and the scratch decision log first, then this project's transcripts or the pushed branch. It names the resume point, does not redo finished work, and verifies inherited claims on the real artifact.
 
 ## Run a queue of PRs
 
@@ -117,6 +112,8 @@ Reviews and searches use the host's own subagents, with the rules in the [review
 | Files | Location |
 | --- | --- |
 | ADRs, notes, research | `.agents/docs/adrs/`, `notes/`, and `research/`, unless the project or user names another place. It can be a folder or a symlink, tracked or ignored. See the [ADR format](../references/ADR-FORMAT.md). |
-| Plans and handoffs | `<main checkout>/.agents/plans/<branch>.md`, with an optional `<branch>.decisions.jsonl` decision log, shared by all worktrees and kept out of git by its own `.gitignore`. |
+| Plans | `.agents/docs/plans/<slug>.plan.src.html` when the project has a `.agents/docs` folder, else `.agents/scratch/<branch-slug>/`. See [plan storage](../references/plan-storage.md). |
+| Decision logs | `.agents/scratch/<branch-slug>/decisions.jsonl`, one per branch. The handoff posts the key rows to the tracker issue and deletes the file. |
+| Handoffs | The work's tracker issue. With no tracker, one pull request comment. |
 
 Next: [Steer with principle names](08-principles.md).

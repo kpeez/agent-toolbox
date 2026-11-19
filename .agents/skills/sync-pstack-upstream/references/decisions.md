@@ -32,6 +32,7 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `setup-pstack` | Cursor setup. swe installs as a plugin. | #174 |
 | `poteto-mode/scripts/` (`watch-pr`, `orch`, `bootstrap.ts`, bun files) | Cursor, Origin, and Graphite tooling. swe uses `gh` and its own Python scripts. | #174 |
 | `show-me-your-work` TSV template | `log-decisions` writes JSONL. | #171 |
+| `show-me-your-work/scripts/log.sh` | The model appends `log-decisions` rows itself, and the handoff posts them to the tracker issue. No script writes the log. | #24 |
 | `docs/harness/` | swe is written for Claude Code and Codex already. | #190 |
 | `assets/`, `automations/`, `docs/guide/images/`, plugin manifests | Cursor packaging. | #179 |
 

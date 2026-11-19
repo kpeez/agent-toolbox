@@ -11,7 +11,7 @@ Codex, type `$swe:` in place of `/swe:`.
 - `/swe:swe-mode investigate why <symptom>. give me what we know, what data you used, and your best hypotheses. don't change any code yet.`
 - `/swe:how <subsystem>. then /swe:why to find out why it broke recently.`
 - `/swe:recall my work on <topic> from last week, then read <issue>.`
-- `/swe:swe-mode take over this branch. read the handoff and the decision log, find what's done, and continue. don't redo finished work.`
+- `/swe:swe-mode take over this branch. read the issue and the decision log, find what's done, and continue. don't redo finished work.`
 
 ## Build
 

@@ -1,6 +1,6 @@
 ---
 name: recall
-description: "Rebuild your recent working context from this project's chat history, handoff file, live state, and the shared record, then hand back a tight current-state brief."
+description: "Rebuild your recent working context from this project's tracker issue, chat history, live state, and the shared record, then hand back a tight current-state brief."
 argument-hint: "[topic]"
 disable-model-invocation: true
 ---
@@ -13,7 +13,7 @@ and hand back a tight brief of where things stand now and what to do next.
 Keep it tight and on-topic. Read only what the in-scope threads need, then
 stop.
 
-Your context lives in three records. The handoff file holds the last written
+Your context lives in three records. The tracker issue holds the last written
 state of the work. Your own chat history holds what you did and decided. The
 shared record holds everything that happened around the same code under other
 names: the symptoms users keep reporting, the fixes that shipped and got
@@ -23,11 +23,13 @@ story there, so do not rebuild it from transcripts alone.
 
 ## Where the records are
 
-- **Handoff file.** `<main checkout>/.agents/plans/<branch>.md`, with `/` in
-  the branch changed to `-`. A decision log may sit beside it as
-  `<branch>.decisions.jsonl`. See the [handoff](../handoff/SKILL.md) and
-  [log-decisions](../log-decisions/SKILL.md) skills. Other branches of the
-  same repository have their own files in the same directory.
+- **Tracker issue.** The work's issue holds the last written state: what
+  landed, what is next, and the open decisions. The
+  [handoff](../handoff/SKILL.md) skill writes it. While a run is in flight, a
+  decision log may sit at `.agents/scratch/<branch-slug>/decisions.jsonl`,
+  with `/` in the branch changed to `-`. See the
+  [log-decisions](../log-decisions/SKILL.md) skill. Other branches of the
+  same repository have their own issues and scratch folders.
 - **Atuin threads.** When Atuin captures agent threads, it indexes every
   Claude Code, Codex, and OpenCode session with its working directory.
   Search it first with the `atuin_threads_search` MCP tool and the topic as
@@ -72,8 +74,8 @@ user names that project.
    default the last 7 days), the topic if the user named one, and the project
    (default the current repository). State the scope back. Never quietly turn
    "all" into "recent N".
-3. Read the handoff file and decision log for each in-scope branch. They are
-   the cheapest record and the most current written state.
+3. Read the tracker issue and any scratch decision log for each in-scope
+   branch. They are the cheapest record and the most current written state.
 4. Search your chat history. Search Atuin threads first, once for each
    worktree path, as the Atuin bullet above says, and read the matching
    threads. Use the transcript fan-out below only when Atuin is not available

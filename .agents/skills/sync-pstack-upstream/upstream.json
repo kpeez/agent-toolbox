@@ -723,11 +723,7 @@
     },
     {
       "upstream": "skills/show-me-your-work/scripts/log.sh",
-      "class": "modified",
-      "local": [
-        "plugins/swe/scripts/handoff.py"
-      ],
-      "note": "handoff.py log appends JSONL rows"
+      "class": "dropped"
     },
     {
       "upstream": "skills/statechart/SKILL.md",

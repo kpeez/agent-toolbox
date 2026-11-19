@@ -44,7 +44,7 @@ The two skills combine well. "do why first, then how" is a good prompt when you 
 /swe:recall catch me up on the export work from last week
 ```
 
-[`recall`](../skills/recall/SKILL.md) reads three records. The handoff file and decision log in `.agents/plans/` hold the last written state. Your Claude Code or Codex transcripts for this repository hold what you did and decided. The shared record (PRs, issues, and chat) holds what happened around the same code. `recall` defaults to the last 7 days and states its scope back to you.
+[`recall`](../skills/recall/SKILL.md) reads three records. The work's tracker issue and any scratch decision log hold the last written state. Your Claude Code or Codex transcripts for this repository hold what you did and decided. The shared record (PRs, issues, and chat) holds what happened around the same code. `recall` defaults to the last 7 days and states its scope back to you.
 
 The brief has a short summary, one line per thread with a status tag such as `[open PR #N]`, the recurring problems, and the next move. Load old context first, then give the new input:
 

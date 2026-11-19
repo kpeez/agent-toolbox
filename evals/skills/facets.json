@@ -392,7 +392,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "recorded",
-      "source_text": "Write the current state of the work to its handoff file so a new session can continue it. Use when the user asks for a handoff, or before a session ends with work left to do.",
+      "source_text": "Write the current state of the work to its tracker issue so a new session can continue it. Use when the user asks for a handoff, or before a session ends with work left to do.",
       "subject": "handoff"
     },
     {
@@ -1572,7 +1572,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`pick-up-session`: resume a prior agent's in-flight work from its handoff file, decision log, transcript, or branch.",
+      "source_text": "`pick-up-session`: resume a prior agent's in-flight work from its tracker issue, decision log, transcript, or branch.",
       "subject": "pick-up-session"
     },
     {
@@ -3992,8 +3992,10 @@
       },
       "evidence": "assistant-text",
       "handles": [
-        "1-find-the-file",
-        "2-write-the-file"
+        "1-find-the-record",
+        "2-update-the-issue",
+        "3-close-the-log",
+        "4-seed-the-next-session"
       ],
       "id": "route/swe/handoff",
       "kind": "route",
@@ -4259,7 +4261,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`pick-up-session`: resume a prior agent's in-flight work from its handoff file, decision log, transcript, or branch.",
+      "source_text": "`pick-up-session`: resume a prior agent's in-flight work from its tracker issue, decision log, transcript, or branch.",
       "subject": "pick-up-session"
     },
     {
@@ -10426,7 +10428,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "4-write-handoff: Write the resume note to the work's handoff file. Capture intent, what you were doing, progress and what is verified, current state, next steps, key files, and gotchas. When a decision log exists, point at it instead of copying it. (handoff, log-decisions)",
+      "source_text": "4-write-handoff: Run the handoff skill to write the resume state to the work's tracker issue. Capture intent, what you were doing, progress and what is verified, current state, next steps, key files, and gotchas. The decision log's key rows go to the issue as one comment. (handoff, log-decisions)",
       "subject": "pause-safely"
     },
     {
@@ -10451,7 +10453,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "4-write-handoff: Write the resume note to the work's handoff file. Capture intent, what you were doing, progress and what is verified, current state, next steps, key files, and gotchas. When a decision log exists, point at it instead of copying it. (handoff, log-decisions)",
+      "source_text": "4-write-handoff: Run the handoff skill to write the resume state to the work's tracker issue. Capture intent, what you were doing, progress and what is verified, current state, next steps, key files, and gotchas. The decision log's key rows go to the issue as one comment. (handoff, log-decisions)",
       "subject": "pause-safely"
     },
     {
@@ -10476,7 +10478,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's tracker issue and its comments first, then the scratch decision log at `.agents/scratch/<branch-slug>/decisions.jsonl` when it exists. When the user names a prior note or file, read it too. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -10501,7 +10503,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's tracker issue and its comments first, then the scratch decision log at `.agents/scratch/<branch-slug>/decisions.jsonl` when it exists. When the user names a prior note or file, read it too. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -10526,7 +10528,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's tracker issue and its comments first, then the scratch decision log at `.agents/scratch/<branch-slug>/decisions.jsonl` when it exists. When the user names a prior note or file, read it too. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -10551,7 +10553,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-locate-prior-trail: Read the work's handoff file and its decision log first. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
+      "source_text": "1-locate-prior-trail: Read the work's tracker issue and its comments first, then the scratch decision log at `.agents/scratch/<branch-slug>/decisions.jsonl` when it exists. When the user names a prior note or file, read it too. Then find the prior session in Atuin threads when Atuin captures them: search once for each path that `git worktree list` prints (`atuin_threads_search` with `cwd` set to the path), and once with `cwd` set to the main checkout's parent folder and `limit` 20, keeping threads whose directory is the main checkout's path followed by `.` or `/`, which finds removed worktrees. Then read the hit with `atuin_threads_read`. When Atuin is not available or finds nothing, use a session transcript of this project only (Claude Code `~/.claude/projects/<project-slug>/*.jsonl`, Codex `~/.codex/sessions/`, or the recall skill's `transcripts.py`), a cloud session, or a pushed branch. Never read transcripts of unrelated projects. Read the last messages, then scan back for the decision points. Parse a long transcript in a subagent and keep only the reduced timeline. (handoff, log-decisions, recall, guard-the-context-window)",
       "subject": "pick-up-session"
     },
     {
@@ -10654,7 +10656,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "3-write-plan-file: Write the plan file in the plans directory. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
+      "source_text": "3-write-plan-file: Write the plan's HTML source where [plan storage](../../../references/plan-storage.md) puts it: `.agents/docs/plans/<slug>.plan.src.html` when the project has a `.agents/docs` folder, else `.agents/scratch/<branch-slug>/`. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
       "subject": "plan-multi-phase"
     },
     {
@@ -10680,7 +10682,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "3-write-plan-file: Write the plan file in the plans directory. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
+      "source_text": "3-write-plan-file: Write the plan's HTML source where [plan storage](../../../references/plan-storage.md) puts it: `.agents/docs/plans/<slug>.plan.src.html` when the project has a `.agents/docs` folder, else `.agents/scratch/<branch-slug>/`. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
       "subject": "plan-multi-phase"
     },
     {
