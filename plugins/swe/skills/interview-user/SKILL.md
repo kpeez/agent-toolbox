@@ -29,6 +29,12 @@ other options. When the frontier exceeds the tool's per-call limit, ask first
 the decisions that unblock the most others and carry the rest to the next
 round. Ask open-ended questions, which have no short set of answers, in text.
 
+A round that returns `timed_out` with every response unanswered may mean the
+card never reached the user, not that they declined. Re-issue it once if they
+ask. Otherwise, switch to the text round below; do not retry the form. An
+unanswered or timed-out round is never consent. Do not proceed on your own
+recommendations.
+
 Without such a tool, write the round in text, and word each question so "yes"
 accepts your recommendation:
 
