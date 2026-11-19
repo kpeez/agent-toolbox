@@ -13,6 +13,7 @@
  */
 
 import { closeSync, openSync, readSync, unlinkSync, writeSync } from "node:fs";
+import { isMain } from "./is_main.ts";
 
 const CONTROL = /[\x00-\x1f\x7f-\x9f]/g;
 // An SGR color sequence, kept; or any other C0 or C1 control (ESC included), removed.
@@ -61,4 +62,4 @@ async function main(): Promise<number> {
   }
 }
 
-if (import.meta.main) main().then((rc) => process.exit(rc));
+if (isMain(import.meta.url)) main().then((rc) => process.exit(rc));

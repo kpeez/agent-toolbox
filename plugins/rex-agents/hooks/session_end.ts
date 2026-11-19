@@ -12,6 +12,7 @@ import { existsSync, readFileSync, unlinkSync, writeFileSync, accessSync, consta
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
+import { isMain } from "../scripts/is_main.ts";
 
 const CACHE = join(homedir(), ".cache", "rex-agents");
 
@@ -90,4 +91,4 @@ function main(): number {
   return 0;
 }
 
-if (import.meta.main) process.exit(main());
+if (isMain(import.meta.url)) process.exit(main());

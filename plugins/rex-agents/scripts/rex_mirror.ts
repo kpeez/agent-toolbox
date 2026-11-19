@@ -20,6 +20,7 @@ import { dirname, join, resolve } from "node:path";
 import { randomBytes, randomUUID } from "node:crypto";
 import { spawnSync } from "node:child_process";
 import { fileURLToPath } from "node:url";
+import { isMain } from "./is_main.ts";
 
 // Scan the tail as latin1 so regex offsets stay byte offsets, as in Python's bytes regex.
 const MARKER = /\n__rex_rc=(\d+)\n\n?$/;
@@ -131,4 +132,4 @@ async function main(): Promise<number> {
   return rc;
 }
 
-if (import.meta.main) main().then((rc) => process.exit(rc));
+if (isMain(import.meta.url)) main().then((rc) => process.exit(rc));

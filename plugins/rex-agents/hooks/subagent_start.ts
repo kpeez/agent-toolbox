@@ -2,6 +2,8 @@
  * SubagentStart hook: tell a subagent in a Rex pane to leave panes and sessions alone.
  */
 
+import { isMain } from "../scripts/is_main.ts";
+
 export const RULE =
   "You are a subagent. Never open, rename, or arrange Rex panes or sessions. " +
   "In auto or bypassPermissions mode, your background commands are mirrored into Rex automatically.";
@@ -19,4 +21,4 @@ function main(): number {
   return 0;
 }
 
-if (import.meta.main) process.exit(main());
+if (isMain(import.meta.url)) process.exit(main());

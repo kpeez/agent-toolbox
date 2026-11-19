@@ -19,6 +19,7 @@
 import { accessSync, constants, readFileSync, statSync } from "node:fs";
 import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { isMain } from "../scripts/is_main.ts";
 
 const MIRROR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "rex_mirror.ts");
 const LABEL_MAX = 60;
@@ -105,4 +106,4 @@ function main(): number {
   return 0;
 }
 
-if (import.meta.main) process.exit(main());
+if (isMain(import.meta.url)) process.exit(main());
