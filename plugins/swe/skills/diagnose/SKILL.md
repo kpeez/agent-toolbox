@@ -40,8 +40,8 @@ targeted script, static comparison, or measured performance baseline. Logs,
 traces, static reasoning, and partial evidence can still support a diagnosis
 when a complete reproducer is unavailable. Read
 [references/feedback-loops.md](references/feedback-loops.md) when a specialized
-harness, flaky trigger, bisection, differential comparison, or performance
-measurement needs guidance.
+harness, flaky trigger, bisection, differential comparison, static-checker
+diagnostic, or performance measurement needs guidance.
 
 Run the signal when possible and record the exact symptom it distinguishes. For
 intermittent behavior, seek a useful reproduction rate or compare captured

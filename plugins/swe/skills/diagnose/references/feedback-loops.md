@@ -46,3 +46,31 @@ meets the target:
 5. Do it while nothing waits for it.
 6. Do it concurrently.
 7. Do it cheaper.
+
+## Static-checker diagnostics
+
+For a linter or type-checker false positive, or a suppression you want to
+delete because an upstream fix supposedly shipped:
+
+- Reproduce under the project's own config, not tool defaults. A bare file
+  outside the project runs under the tool's default preset, which can disable
+  the very check you are chasing and read as "already fixed". Run the repro
+  inside the project or pass its preset explicitly. For example, pyrefly 1.5
+  checks a file outside any configured project with its `basic` preset, which
+  skips checks that a project with `[tool.pyrefly]` runs at `default`. Pass
+  `--preset default` to match.
+- Confirm the latest version from the package registry (for PyPI,
+  `https://pypi.org/pypi/<pkg>/json` gives `info.version`); a tracking issue's
+  "latest is X" goes stale. Then bracket the regression with a version sweep,
+  `uvx <tool>@<version> check <repro>`, across last-known-good, first-bad, and
+  the candidate, pinning the preset on every run. Run the binary; release
+  notes may not mention the regression.
+- Confirm a "fixed in the new version" claim on the real surface: in a
+  worktree, delete the suppression comments, run the project's own check
+  command, then restore them. Delete a suppression only when that run is clean.
+- Use `reveal_type` to expose binding and descriptor bugs: reveal the member on
+  the class and on an instance. If instance access still carries a `self` or
+  first parameter that class access has, the descriptor binding did not fire.
+- Isolate the trigger with control repros that remove one factor at a time
+  (the decorator, the overload, the inheritance). The intersection that still
+  fails names the mechanism.
