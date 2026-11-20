@@ -68,7 +68,5 @@ question.
 The session is done when the frontier is empty: every branch visited, nothing
 silently assumed. Summarize the settled decisions, the alternatives rejected and
 why, and any decision left open with its owner. Act on the result only after the
-user confirms the shared understanding.
-
-When a decision meets the criteria in the
-[ADR format](../../references/ADR-FORMAT.md), offer to record it as an ADR.
+user confirms the shared understanding. Put each decided point in the plan,
+the issue, or the PR.
