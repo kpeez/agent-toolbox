@@ -14,7 +14,9 @@ split tightly coupled work, and do not split work only to add workers.
 Before you launch, check each worker's model, provider, tools, and write scope
 against the user's and the project's constraints. A role name does not prove
 them. When a permitted route is not available, say so. Do not fall back to
-another model or provider without telling the user.
+another model or provider without telling the user. When many workers share
+one metered account, check its remaining quota first: a wide fan-out can
+spend a usage window in minutes, and the reset can be hours away.
 
 ## Shapes
 
@@ -84,12 +86,15 @@ name it in the brief. The worker creates its worktree from it.
 Every brief stands alone. Include the goal, the scope (paths it may and may
 not write, and its worktree or branch), the context it cannot see (paste
 source text and upstream reports), the exact slice or race arm, checkable
-acceptance criteria, how to verify, a timebox, forbidden actions, and what to
-report. Reports use `PASS`, `ISSUES`, or `BLOCKED`
+acceptance criteria, how to verify, its budget or stop condition, forbidden
+actions, and what to report. Reports use `PASS`, `ISSUES`, or `BLOCKED`
 with evidence. A worker that can prove a defect reports `ISSUES` and lists
 every issue it can prove, not only the first.
 
-If a worker drops out, proceed with N-1 and note it.
+If a worker drops out, proceed with N-1 and note it. A degenerate result, such
+as a long run of repeated filler lines or a header with no content, counts as
+a dropout. For a required slice, respawn it once as Phase C says, on a route
+the pre-launch check allowed.
 
 ## Phase C: Aggregate
 
