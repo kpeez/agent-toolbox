@@ -1,7 +1,8 @@
 # agent-toolbox
 
-Plugins of skills for AI coding agents, for Claude Code, Codex CLI, and
-Antigravity CLI. Install the plugins you need. Each one works alone.
+Plugins of skills for AI coding agents, for Claude Code, Codex CLI,
+Antigravity CLI, and Hermes Agent. Install the plugins you need. Each one
+works alone.
 
 | Plugin | What it does |
 | --- | --- |
@@ -49,6 +50,22 @@ agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/uni
 `agy plugin install https://github.com/kpeez/agent-toolbox` installs every
 plugin. agy loads the skills and the session-start rule. It runs no hooks and
 skips the swe agents.
+
+Hermes Agent, pinned to one commit (`--ref` takes a full 40-character SHA):
+
+```text
+hermes plugins install kpeez/agent-toolbox/plugins/swe --ref <sha> --enable
+hermes plugins install kpeez/agent-toolbox/plugins/lab --ref <sha> --enable
+hermes plugins install kpeez/agent-toolbox/plugins/uni --ref <sha> --enable
+hermes plugins install kpeez/agent-toolbox/plugins/rex-agents --ref <sha> --enable
+```
+
+Hermes loads each plugin from its root `plugin.json` (Agent Plugins v1) and
+names the skills `<plugin>:<skill>`. It loads the skills only, and it cannot
+edit them. Do not list a checkout's `plugins/<plugin>/skills` in Hermes
+`skills.external_dirs`: Hermes then edits the checkout in place. Each
+profile has its own plugins, so run `hermes -p <profile> plugins install …`
+for each profile.
 
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), one
 plugin per command:

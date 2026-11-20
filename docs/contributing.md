@@ -18,12 +18,16 @@ This page is for people who change this repository. Agent rules live in
 
 ## Versions
 
-Set each plugin's version by hand in all three manifests, and keep them the
+Set each plugin's version by hand in all four manifests, and keep them the
 same:
 
 - `plugins/<plugin>/.claude-plugin/plugin.json`
 - `plugins/<plugin>/.codex-plugin/plugin.json`
 - `plugins/<plugin>/.antigravity-plugin/plugin.json`
+- `plugins/<plugin>/plugin.json`, the Agent Plugins v1 manifest that Hermes
+  Agent reads. Its `$schema` is
+  `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`; check it with
+  `hermes plugins validate plugins/<plugin>`.
 
 A mod has the Claude manifest only. Bump the patch number by default.
 
