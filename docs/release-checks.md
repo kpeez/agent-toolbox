@@ -6,6 +6,8 @@ offline checks:
 - Check that every relative link in changed Markdown resolves.
 - Run `claude plugin validate --strict` on the repository root and on each
   changed plugin.
+- Run `hermes plugins validate plugins/<plugin>` on each changed plugin when
+  Hermes Agent is installed.
 - Load each `agents/*.toml` with Python's `tomllib.load` and each
   `agents/openai.yaml` with `nu -c 'open <file>'`.
 - Run `uv run evals/skills/skill_eval.py validate`,

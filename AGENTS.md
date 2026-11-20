@@ -2,8 +2,9 @@
 
 - Preserve unrelated working-tree changes.
 - When a plugin has more than one of `.claude-plugin/plugin.json`,
-  `.codex-plugin/plugin.json`, and `.antigravity-plugin/plugin.json`, keep
-  their versions identical.
+  `.codex-plugin/plugin.json`, `.antigravity-plugin/plugin.json`, and the
+  root `plugin.json` (Agent Plugins v1, for Hermes Agent), keep their
+  versions identical.
 - Bump plugin versions by patch by default, including when adding a skill.
   A minor or major bump requires explicit permission in the request;
   precedent in the git history is not permission.

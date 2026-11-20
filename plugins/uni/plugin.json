@@ -1,0 +1,23 @@
+{
+  "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
+  "name": "uni",
+  "description": "Interactive lessons, quizzes, reviews, and prerequisite-gated courses",
+  "version": "0.1.16",
+  "author": {
+    "name": "kpeez",
+    "email": "25070796+kpeez@users.noreply.github.com"
+  },
+  "homepage": "https://github.com/kpeez/agent-toolbox",
+  "repository": "https://github.com/kpeez/agent-toolbox",
+  "license": "MIT",
+  "keywords": [
+    "learning",
+    "tutoring",
+    "teaching",
+    "quiz",
+    "active-recall",
+    "exercises",
+    "curriculum",
+    "prerequisites"
+  ]
+}
