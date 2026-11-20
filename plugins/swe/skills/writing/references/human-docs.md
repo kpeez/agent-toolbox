@@ -30,7 +30,7 @@ owns the fact, add a page named for its topic and link it from the README.
 | What the project is, who it is for, how to install it, one first example | `README.md` |
 | How to do one task | `docs/<task>.md` |
 | What a component is and how it behaves | `docs/<component>.md` |
-| Why a design is the way it is | an ADR, linked from the component page |
+| Why a design is the way it is | the PR and the commit, or a short note on the component page |
 | Rules for contributors and agents | `AGENTS.md` or `docs/contributing.md` |
 | What changed in a release | the PR and the release notes |
 | Research, pilots, proposals | the project's notes location, not `docs/` |

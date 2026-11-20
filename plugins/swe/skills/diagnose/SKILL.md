@@ -11,9 +11,6 @@ outcome. Diagnosis and repair are separate outcomes: a request to diagnose or
 explain does not authorize implementation edits. When repair is authorized,
 diagnose first, then make the fix with [implement](../implement/SKILL.md).
 
-Consult relevant `.agents/docs/adrs/` only when they bear on the behavior or
-decision under investigation.
-
 ## Procedure
 
 1. `1-state-exact-failure`: State the exact failure mode and the surface where

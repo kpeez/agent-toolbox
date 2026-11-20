@@ -3,8 +3,7 @@
 Details for [review mode](../SKILL.md#review-mode). Use the vocabulary and key
 tests in [SKILL.md](../SKILL.md#vocabulary).
 
-Consult relevant `.agents/docs/adrs/` when they bear on the friction or
-recommendation. Do not require a document preflight for every review.
+Do not require a document preflight for every review.
 
 ## 1-explore-friction
 
@@ -59,10 +58,8 @@ behind the seam, and what tests survive. Keep documentation side effects
 conditional on the requested design workflow:
 
 - If the user rejects a candidate for a load-bearing reason a future review would
-  re-suggest, consider an ADR only when all three
-  [decision-record criteria](../../../references/ADR-FORMAT.md) hold and the
-  document update is in scope. Skip ephemeral ("not worth it right now") and
-  self-evident reasons.
+  re-suggest, state the reason in the issue or PR. Skip ephemeral ("not worth
+  it right now") and self-evident reasons.
 
 When a candidate is chosen for design, classify its dependencies and pick the
 test seam with [deepening](deepening.md) (in-process / local-substitutable /
