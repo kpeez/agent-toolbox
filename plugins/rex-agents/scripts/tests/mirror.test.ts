@@ -25,6 +25,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
+import { closeBlock } from "../rex_mirror_view.ts";
 import { mirrored } from "../../hooks/mirror_hook.ts";
 
 const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -101,7 +102,7 @@ for (const rt of RUNTIMES) {
           "\x9d7501;state=done\x9c\x1b[31mred\x1b[0m\tok\r\n" +
           "\n__rex_mirror_exit_abc123=3\n",
       );
-      const r = spawnSync(rt, [VIEWER, log, "[claude] t", "abc123"], { encoding: "utf8", timeout: 30_000 });
+      const r = spawnSync(rt, [VIEWER, log, "[claude] t", "abc123"], { env: NO_REX, encoding: "utf8", timeout: 30_000 });
       assert.equal(r.status, 0);
       assert.equal(
         r.stdout,
@@ -117,6 +118,58 @@ for (const rt of RUNTIMES) {
     }
   });
 }
+
+for (const rt of RUNTIMES) {
+  test(`an exited view closes its own block (${rt})`, { skip: skipFor(rt) }, () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-view-close-"));
+    try {
+      const bin = join(home, "bin");
+      mkdirSync(bin);
+      writeFileSync(join(bin, "rex"), '#!/bin/sh\nprintf \'%s\\n\' "$@" >> "$HOME/rex-args"\n');
+      chmodSync(join(bin, "rex"), 0o755);
+      const log = join(home, "mirror.log");
+      writeFileSync(log, "out\n\n__rex_mirror_exit_abc123=7\n");
+      const r = spawnSync(rt, [...flagsFor(rt), VIEWER, log, "[claude] t", "abc123"], {
+        env: { ...NO_REX, HOME: home, PATH: `${bin}:${process.env.PATH}`, REX_SESSION: "session:t", REX_BLOCK: "block:b" },
+        encoding: "utf8",
+        timeout: 30_000,
+      });
+      assert.equal(r.status, 0);
+      assert.equal(r.stdout, report("working", "[claude] t") + "out\n\n" + report("error", "[claude] t: exit 7"));
+      assert.equal(readFileSync(join(home, "rex-args"), "utf8"), "block\nclose\n-s\nsession:t\nblock:b\n");
+      assert.ok(!existsSync(log));
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test(`an exited view outside rex closes nothing (${rt})`, { skip: skipFor(rt) }, () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-view-noclose-"));
+    try {
+      const bin = join(home, "bin");
+      mkdirSync(bin);
+      writeFileSync(join(bin, "rex"), '#!/bin/sh\nprintf \'%s\\n\' "$@" >> "$HOME/rex-args"\n');
+      chmodSync(join(bin, "rex"), 0o755);
+      const log = join(home, "mirror.log");
+      writeFileSync(log, "out\n\n__rex_mirror_exit_abc123=0\n");
+      const r = spawnSync(rt, [...flagsFor(rt), VIEWER, log, "[claude] t", "abc123"], {
+        env: { ...NO_REX, HOME: home, PATH: `${bin}:${process.env.PATH}` },
+        encoding: "utf8",
+        timeout: 30_000,
+      });
+      assert.equal(r.status, 0);
+      assert.ok(!existsSync(join(home, "rex-args")));
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+}
+
+test("closeBlock needs both ids", () => {
+  assert.equal(closeBlock(undefined, undefined), false);
+  assert.equal(closeBlock("session:s", undefined), false);
+  assert.equal(closeBlock(undefined, "block:b"), false);
+});
 
 async function waitFor(cond: () => boolean, ms: number): Promise<void> {
   const deadline = Date.now() + ms;

@@ -201,10 +201,10 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
       });
       assert.equal(r.status, 0);
       assert.equal(r.stdout, "");
-      const keepBlocks = blocks.filter((b) => !["b-done", "b-gone", "b-multi"].includes(b));
+      const keepBlocks = blocks.filter((b) => !["b-done", "b-error", "b-gone", "b-multi", "b-tie"].includes(b));
       const kept = readFileSync(join(cacheDir, "s-end.jsonl"), "utf8").split("\n").filter((l: string) => l.length > 0);
       assert.deepEqual(kept, lines.filter((l) => keepBlocks.includes(JSON.parse(l).block)));
-      assert.equal(readFileSync(closed, "utf8"), "b-done\nb-multi\n");
+      assert.equal(readFileSync(closed, "utf8"), "b-done\nb-error\nb-multi\nb-tie\n");
     } finally {
       rmSync(home, { recursive: true, force: true });
     }

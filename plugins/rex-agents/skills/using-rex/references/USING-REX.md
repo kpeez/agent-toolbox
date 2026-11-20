@@ -161,11 +161,11 @@ PreToolUse hook rewrites a background Bash call into this form, so its output an
 ```
 
 `rex_mirror.ts` opens a block labelled `[claude] <description>`
-(`[claude:sub]` for a subagent) that shows the output and reports `working`,
-then `done` or `error` with `<label>: exit <n>`. Permission rules still see
-`<cmd>`. Commands that start with `rex ` stay unchanged, so a driven agent's
-wait gets no tab of its own. When the session ends, the hook closes its `done`
-mirror blocks and keeps the `error` blocks. `REX_AGENTS_MIRROR=0` turns the
+(`[claude:sub]` for a subagent) that shows the output, reports `working`,
+then `done` or `error` with `<label>: exit <n>`, and closes the block.
+Permission rules still see `<cmd>`. Commands that start with `rex ` stay
+unchanged, so a driven agent's wait gets no tab of its own. The SessionEnd
+hook closes a mirror block whose close failed. `REX_AGENTS_MIRROR=0` turns the
 mirror off.
 
 ## Facts
