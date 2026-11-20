@@ -3,8 +3,6 @@
 Details for [review mode](../SKILL.md#review-mode). Use the vocabulary and key
 tests in [SKILL.md](../SKILL.md#vocabulary).
 
-Do not require a document preflight for every review.
-
 ## 1-explore-friction
 
 Start with the requested area and its callers. Walk the codebase, delegating
