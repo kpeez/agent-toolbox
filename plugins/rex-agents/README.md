@@ -6,10 +6,11 @@ Hooks do the work, so it does not depend on what the agent remembers:
 
 - Each background command that Claude Code starts in auto or
   bypassPermissions mode gets its own Rex tab. The tab shows the output live,
-  with a working spinner, and ends `done` or `error` with the exit code. The
-  agent gets the same output and exit status as before, and permission rules
-  still see the original command.
-- When the session ends, its `done` tabs close. Its `error` tabs stay for you.
+  with a working spinner, ends `done` or `error` with the exit code, and
+  closes when the command exits. The agent gets the same output and exit
+  status as before, and permission rules still see the original command.
+- A tab whose close fails stays; the SessionEnd hook retries the close when
+  the session ends.
 - A session in a Rex pane starts with the `using-rex` skill in context.
 - A subagent is told to leave panes and sessions alone.
 
@@ -67,5 +68,5 @@ node --test plugins/rex-agents/scripts/tests/
 
 The tests run the wrapper on 12 command shapes in zsh and bash, check the exit
 status for a stream without the status marker, and check each hook decision.
-They also kill the mirror mid-stream and run every hook under node. Both
-runtimes run the same files.
+They also kill the mirror mid-stream, check that an exited viewer closes its
+block, and run every hook under node. Both runtimes run the same files.

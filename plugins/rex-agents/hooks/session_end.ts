@@ -1,11 +1,12 @@
 /**
- * SessionEnd hook: close this session's mirror blocks that ended `done`.
+ * SessionEnd hook: close this session's mirror blocks that ended `done` or `error`.
  *
  * rex_mirror.ts lists each block it opens in ~/.cache/rex-agents/<session_id>.jsonl.
- * A block whose newest status record is `done` is closed. An `error` block and a
- * block still `working` stay open for the user, and stay in the list. Each block
- * is best-effort: a rex timeout, non-JSON stdout, or a missing key leaves the
- * row in place and the hook moves on to the next block.
+ * The viewer closes its own block when the command exits, so this hook retries
+ * a close that failed. A block whose newest status record is `done` or `error`
+ * is closed; a block still `working` stays open for the user and stays in the
+ * list. Each block is best-effort: a rex timeout, non-JSON stdout, or a missing
+ * key leaves the row in place and the hook moves on to the next block.
  */
 
 import { existsSync, readFileSync, unlinkSync, writeFileSync, accessSync, constants, statSync } from "node:fs";
@@ -77,7 +78,7 @@ function main(): number {
       continue;
     }
     const state = newestState(rex, entry.rex_session, entry.block);
-    if (state === "done") {
+    if (state === "done" || state === "error") {
       spawnSync(rex, ["block", "close", "-s", entry.rex_session, entry.block], {
         encoding: "utf8",
         timeout: 10_000,

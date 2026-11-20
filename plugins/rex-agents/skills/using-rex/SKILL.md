@@ -31,9 +31,10 @@ tests, and a tool's help, version, or status.
 
 In auto or bypassPermissions mode, a background command (Claude Code
 `run_in_background`) is mirrored into its own block by the `rex-agents` hook,
-with a working spinner, then `done` or `error` and the exit code. Start it in
-the background as usual; open no block for it. Set `REX_AGENTS_MIRROR=0` in the
-agent's environment to turn the mirror off.
+with a working spinner, then `done` or `error` and the exit code. The block
+closes when the command exits. Start it in the background as usual; open no
+block for it. Set `REX_AGENTS_MIRROR=0` in the agent's environment to turn the
+mirror off.
 
 A long training or eval run is the exception: give it a standalone block even
 in auto mode. A mirrored background command ends with the agent session, and a
