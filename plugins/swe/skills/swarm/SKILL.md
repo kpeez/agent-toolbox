@@ -46,9 +46,9 @@ Open the host's task list with one entry per phase before you launch anything.
 2. Choose the shape. Partition into slices, race N workers on identical
    briefs, or mix both. For a race or a mixed shape, declare `first pass`,
    `rank all`, or `best-of` before you spawn.
-3. Pick the worker model by role. In Claude Code, use `sonnet` for routine
-   workers, `haiku` for mechanical lanes, and `opus` for judgment or the
-   hardest code. In Codex, set reasoning effort the same way. For a model
+3. Pick the worker model by role: a mid-tier model for routine workers, the
+   fastest model for mechanical lanes, and the strongest model for judgment or
+   the hardest code. In Codex, set reasoning effort the same way. For a model
    race, name each arm's model up front. A diversity arm can run on a
    different Claude model, or on another agent CLI through
    [external-agents](../external-agents/SKILL.md) when the user asked for it. If
