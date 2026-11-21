@@ -84,8 +84,9 @@ When a worker must start from a non-default branch, push that branch and
 name it in the brief. The worker creates its worktree from it.
 
 Every brief stands alone. Include the goal, the scope (paths it may and may
-not write, and its worktree or branch), the context it cannot see (paste
-source text and upstream reports), the exact slice or race arm, checkable
+not write, and its worktree or branch), the context it cannot see (paths
+for files the worker can read; paste only text it cannot reach, such as
+upstream reports), the exact slice or race arm, checkable
 acceptance criteria, how to verify, its budget or stop condition, forbidden
 actions, and what to report. Reports use `PASS`, `ISSUES`, or `BLOCKED`
 with evidence. A worker that can prove a defect reports `ISSUES` and lists

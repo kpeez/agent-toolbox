@@ -2,7 +2,7 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "swe",
   "description": "SWE skills for AI coding agents: an SWE router that runs a task through a step-by-step playbook, design interviews, short handoff plans, behavioral verification, CI triage and verified landing, and more",
-  "version": "1.21.53",
+  "version": "1.21.54",
   "author": {
     "name": "kpeez",
     "email": "25070796+kpeez@users.noreply.github.com"
