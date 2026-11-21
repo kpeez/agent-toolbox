@@ -231,7 +231,7 @@ def write_case(run, case_id, prompt, runtime):
         f"  prompt: {json.dumps(prompt, ensure_ascii=False)}",
         f"  max_turns: {runtime['max_turns']}",
         f"  timeout_seconds: {runtime['timeout_seconds']}",
-        f"  allowed_tools: [{', '.join(runtime['tools'])}]",
+        f"  allowed_tools: [{', '.join([*CASE_TOOLS, *(t for t in runtime['tools'] if t not in CASE_TOOLS)])}]",
         "context:",
         "  scaffold_script: fixture.sh",
         # skill_eval.py scores the kept transcript. Plugin eval needs one grader, so this one always passes.
