@@ -66,8 +66,12 @@ their counts and intervals. No significance claim is made from fewer than 10 run
 ## Results (2026-11-21)
 
 Runs: 12 cases x 2 repeats x 2 SHAs = 48 scored runs, all complete, none excluded, no stop. The
-base SHA is `514b8bc` and the head SHA is `a536e03` (the later commits on the branch change only
-`evals/skills/delegation_metrics.py` and this file; `plugins/` is identical). Spend: $10.32 head,
+base SHA is `514b8bc` and the head SHA is `a536e03`. `plugins/` is identical at `a536e03` and at the
+final PR head. The later commits change `evals/skills/delegation_metrics.py`, this file, and one
+line of `evals/skills/run_eval.py`: the order of the tools in the generated `case.yaml`. The scored
+runs used the earlier order (Read, Write, Edit, Glob, Grep, Skill, Task) and the final head writes
+the six base tools first (Read, Glob, Grep, Skill, Write, Edit, Task). The tool set is the same.
+Spend: $10.32 head,
 $9.96 base, and $1.04 for the dry run, $21.32 of the $40 cap. Raw runs, `metrics.json`, and the
 commands are in `artifacts/delegation-arm/2026-11-21/`.
 The cost estimate above was high: the 48 scored runs cost $0.42 each on average, against $1.04 for the
@@ -93,7 +97,9 @@ spawn in 2 (base) and 3 (head); task done in 5 and 6.
 
 Reading: the two SHAs are indistinguishable on these 12 cases. The base catalog already spawns
 `daedalus` in 16 of 18 edit runs, which leaves little room for the bullets to move that rate. The
-root thread still edits in 14 of 18 edit runs under both SHAs. Per-case counts differ by one or two edits in `IM-01`, `IM-04`, and
-`swe-mode-build-feature`, in both directions. The intervals overlap everywhere and each case has
+root thread still edits in 14 of 18 edit runs under both SHAs. Six cases differ by one or two
+root-thread edits, in both directions (base to head, over two runs each): `IM-01` 12 to 10,
+`IM-04` 5 to 3, `IM-06` 2 to 1, `IM-10` 3 to 2, `swe-mode-build-feature` 1 to 3, and
+`swe-fallback-fix-bug` 1 to 2. The intervals overlap everywhere and each case has
 two runs per SHA, so the data show no effect, not an effect of zero. The token difference is
 inside one standard deviation. `IM-02` ended with no source change under both SHAs, in all four runs.
