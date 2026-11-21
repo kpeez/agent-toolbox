@@ -34,6 +34,16 @@ Some forks are product or preference calls that no run can settle. [`interview-u
 
 The build playbooks run it only on decisions you have not made. It ends with a summary of settled decisions, rejected options, and open items with an owner.
 
+## Review a plan in your browser
+
+```text
+/swe:swe-mode show me a plan for quiet hours per notification channel that i can review on my phone.
+```
+
+The router runs [`html-plan`](../skills/html-plan/SKILL.md). The agent writes one HTML page. It holds a tree of claims, and one exhibit proves each claim: a mockup, a state machine, a call stack, a schema, or code. Each decision you must make sits on the claim it changes. Open the tree one level at a time, pick options, edit a schema, and comment on any claim. Then press **Respond**, press **Copy response**, and paste the response into the session. The agent applies your answers and builds nothing before you sign off.
+
+The agent saves the page in `.agents/docs/plans/`. If the `tailnet-share` command exists, the agent runs it and gives you a link. Otherwise the agent gives you the file path. Ask for a private published page when you want one. After you sign off, the agent links the plan on the tracker issue and starts work. The skill is a copy of Thariq Shihipar's `html-plan`. The [credits](../../../README.md#credits) name its source.
+
 ## Prototype instead of debating
 
 When a run can show the answer, the router does not ask you. It runs the [build-prototype playbook](../skills/swe-mode/playbooks/build-prototype.md):
@@ -97,7 +107,7 @@ For work that spans phases or stacked PRs, the [plan-multi-phase playbook](../sk
 
 It has five steps. It skips the plan for a one or two file change. Otherwise it settles open questions by prototype. Then it writes the plan file. The file lists what changes, the PR ids in landing order, and a dependency graph. Then it has one section per PR with checkboxes: depends on, files, the one change, the result you see, and verification. A PR is verified only when its unit, live, and perf boxes are checked. The playbook hands back the plan path and stops. The plan is the deliverable, so it implements nothing until you say go.
 
-Smaller work needs no plan file. Use plan mode, or ask for a plan in chat. A plan's HTML source lives in `.agents/docs/plans/`, or in `.agents/scratch/<branch-slug>/` when the project has no `.agents/docs` folder. Both stay outside Git. Delete a plan when its PR merges, because the PR and the code are the record. [Plan storage](../references/plan-storage.md) covers where these files live.
+Smaller work needs no plan file. Use plan mode, or ask for a plan in chat. A plan's HTML source lives in `.agents/docs/plans/`, or in `.agents/scratch/<branch-slug>/` when the project has no `.agents/docs` folder. Keep a plan in `.agents/docs/plans/` after its PR merges, because it states the intent of the work. Delete a scratch plan when its PR merges. [Plan storage](../references/plan-storage.md) covers where these files live.
 
 ## Match the design work to the task
 
@@ -108,6 +118,7 @@ Most changes need none of this. Use this list to pick:
 - One new interface with an obvious shape gets `codebase-design` in design mode.
 - A question a run can answer, such as a layout, a timing, or an approach, gets a prototype.
 - A product or preference call gets `interview-user`.
+- A plan or design you want to review and answer in a browser gets `html-plan`.
 - A coverage matrix or a set of parallel checks gets `swarm`.
 - A contested design gets a reviewer agent before you ship.
 - Work across several PRs gets a plan after the design settles.

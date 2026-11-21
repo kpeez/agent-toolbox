@@ -82,6 +82,7 @@ and give one example prompt.
 | Check that the agent understood the goal before it starts | [in-your-own-words](../in-your-own-words/SKILL.md) |
 | Make a task deeper, not bigger, before it starts | [go-deeper](../go-deeper/SKILL.md) |
 | Settle open plan or design decisions in an interview | [interview-user](../interview-user/SKILL.md) |
+| Review a plan or design in a browser, answer its decisions there, and paste one response back | [html-plan](../html-plan/SKILL.md) |
 | Get a walkthrough of how a subsystem works, from one read-only subagent | [how](../how/SKILL.md) |
 | Know why code is shaped this way, from commits and PR discussions | [why](../why/SKILL.md) |
 | Catch up on their own recent work on a topic | [recall](../recall/SKILL.md) |

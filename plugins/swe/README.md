@@ -338,6 +338,7 @@ them, such as `/swe:how`.
 | [`/swe:help [question]`](./skills/help/SKILL.md) | You want to know which swe skill, playbook, or principle fits |
 | [`/swe:how <subsystem or question>`](./skills/how/SKILL.md) | You want a walkthrough of how a subsystem works. Nothing routes to it. It starts one read-only subagent |
 | [`/swe:architect <feature or interface>`](./skills/architect/SKILL.md) | You want a design shape picked before code |
+| [`/swe:html-plan <what to build>`](./skills/html-plan/SKILL.md) | You want a plan as one HTML page that you review and answer in a browser, with a link you can open on your phone |
 | [`/swe:swarm <task>`](./skills/swarm/SKILL.md) | You want parallel workers: coverage matrices, races, or verifier lanes |
 | [`/swe:figure-it-out <task>`](./skills/figure-it-out/SKILL.md) | No playbook fits, and you want a bespoke one |
 | [`/swe:create-formal-verification-skill [area or bug]`](./skills/create-formal-verification-skill/SKILL.md) | Tests cannot reach the case that breaks a race, retry, state machine, or parser |

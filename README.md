@@ -101,6 +101,9 @@ New here? Ask `/swe:help` which skill fits, or read the
 - The `swe` router, its playbooks and principles, and most `swe` skills adapt
   Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/e1cc03121a0e71129a4fb730d7c5528a0a3e43c8/pstack).
   The [swe guide](./plugins/swe/docs/README.md) follows the layout of the pstack guide.
+- `swe/skills/html-plan` copies Thariq Shihipar's
+  [html-plan](https://github.com/anthropics/claude-plugins-community/tree/88003be1129c09381d27100b37a8fdc21b3214bf/html-plan).
+  Only its `SKILL.md` changed. Its `NOTICE` holds the licenses.
 - Many `swe` skills, and `uni/skills/teach`, adapt Matt Pocock's
   [skills](https://github.com/mattpocock/skills).
 - The `ship-pr` PR-body template copies Matt Pocock's

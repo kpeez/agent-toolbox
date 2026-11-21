@@ -18,7 +18,7 @@ All writing advice lives here. Follow these steps.
 | README, docs page, plugin guide | [human docs](references/human-docs.md) |
 | Skill, `AGENTS.md`, `CLAUDE.md`, agent brief | [writing-for-agents](../writing-for-agents/SKILL.md), and the ASD-STE100 section of the prose rules |
 | PR body, commit message | [PR body](../ship-pr/references/pr-body.md) |
-| Handoff, plan | its rules ([handoff](../handoff/SKILL.md), [plan-multi-phase](../swe-mode/playbooks/plan-multi-phase.md)), [show-me](references/show-me.md) for a design or a change, and the ASD-STE100 section |
+| Handoff, plan | its rules ([handoff](../handoff/SKILL.md), [plan-multi-phase](../swe-mode/playbooks/plan-multi-phase.md), [html-plan](../html-plan/SKILL.md) for a plan the user reviews in a browser), [show-me](references/show-me.md) for a design or a change, and the ASD-STE100 section |
 | Reply to the user | the ASD-STE100 section; [show-me](references/show-me.md) when the reply explains a design |
 | Code comment | only a non-obvious why ([no-comments](../no-comments/SKILL.md)) |
 
