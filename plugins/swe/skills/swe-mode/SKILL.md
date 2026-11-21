@@ -225,6 +225,10 @@ loaded in this session.
   the step, the file paths, the named data shape, and the success check.
   Search, review, and verification: native subagents. A reviewer gets the
   [review brief](../../references/review-brief.md).
+- Send broad searches, multi-file reads, and web research to a read-only
+  subagent. It returns `file:line` or URL pointers, not file contents.
+- Brief a delegate with the paths to read, not pasted file contents. Prose you
+  own (a skill, a doc, the reply) stays with you.
 - Match the model to the job: the strongest model for judgment, prose, and
   the hardest code; a faster one for routine and mechanical work.
 - Fresh subagents by default. A fix round, a retry, or a follow-up goes to a

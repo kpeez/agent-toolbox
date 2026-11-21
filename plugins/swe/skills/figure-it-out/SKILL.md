@@ -62,9 +62,9 @@ the **foundational-thinking** principle.
   [swarm](../swarm/SKILL.md). Give
   each worker its own worktree or branch, per the
   **separate-before-serializing-shared-state** principle. Do not over-fan.
-  Pick each worker's model by role. In Claude Code, use `opus` for judgment
-  and the hardest code, `sonnet` for routine code, and `haiku` for mechanical
-  edits. In Codex, set reasoning effort the same way.
+  Pick each worker's model by role: the strongest model for judgment and the
+  hardest code, a mid-tier model for routine code, and the fastest model for
+  mechanical edits. In Codex, set reasoning effort the same way.
 
 Write the designed workflow in the swe playbook file format, so the
 [swe-mode router](../swe-mode/SKILL.md#track) can track it. That file is what

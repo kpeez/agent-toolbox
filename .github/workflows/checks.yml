@@ -55,6 +55,20 @@ jobs:
             fi
           done
           exit $status
+      - name: Skills name model roles, not model names
+        run: |
+          # Exit 1 from grep means no match. Any status above 1 is a grep error and fails the step.
+          status=0
+          found=$(grep -rnwiE 'opus|sonnet|haiku' plugins) || status=$?
+          if [ "$status" -gt 1 ]; then
+            echo "::error::grep failed with status $status"
+            exit 1
+          fi
+          hits=$(printf '%s\n' "$found" | grep -v '^plugins/[^/]*/agents/' || true)
+          if [ -n "$hits" ]; then
+            printf '%s\n' "$hits"
+            exit 1
+          fi
       - name: Eval facet map matches the skill sources
         run: uv run evals/skills/facets.py check
       - name: Eval cases are valid

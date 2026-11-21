@@ -38,8 +38,9 @@ ARMS = ("hook-on", "hook-off")
 RUNTIME = HERE / "runtime.plugin-eval.json"
 # The plugins each session loads. The checked-out catalog also has rex-agents, which the runner choice left out.
 LOADED_PLUGINS = ("swe", "lab", "uni")
-# case.yaml lists all six; Write and Edit are gated, so --allow-tools also grants them; --disallow-tools removes the
-# other default tools.
+# case.yaml lists the runtime's tools; Write and Edit are gated, so --allow-tools also grants them; --disallow-tools
+# removes the default tools the runtime does not list. A runtime may add the Agent tool (named Task in the session)
+# to the six tools below.
 CASE_TOOLS = ("Read", "Glob", "Grep", "Skill", "Write", "Edit")
 ALLOW_TOOLS = ("Write", "Edit")
 DISALLOW_TOOLS = ("Task", "TaskStop", "NotebookEdit", "ToolSearch")
@@ -107,8 +108,8 @@ def load_runtime(path):
     ) - runtime.keys()
     if missing:
         raise ValueError(f"runtime is missing {sorted(missing)}")
-    if sorted(runtime["tools"]) != sorted(CASE_TOOLS):
-        raise ValueError(f"runtime tools must be exactly {sorted(CASE_TOOLS)}")
+    if not set(CASE_TOOLS) <= set(runtime["tools"]):
+        raise ValueError(f"runtime tools must include {sorted(CASE_TOOLS)}")
     return runtime
 
 
@@ -230,7 +231,7 @@ def write_case(run, case_id, prompt, runtime):
         f"  prompt: {json.dumps(prompt, ensure_ascii=False)}",
         f"  max_turns: {runtime['max_turns']}",
         f"  timeout_seconds: {runtime['timeout_seconds']}",
-        f"  allowed_tools: [{', '.join(CASE_TOOLS)}]",
+        f"  allowed_tools: [{', '.join([*CASE_TOOLS, *(t for t in runtime['tools'] if t not in CASE_TOOLS)])}]",
         "context:",
         "  scaffold_script: fixture.sh",
         # skill_eval.py scores the kept transcript. Plugin eval needs one grader, so this one always passes.
@@ -262,7 +263,7 @@ def launch_argv(suite, case_id, run, runtime):
         "--allow-tools",
         *ALLOW_TOOLS,
         "--disallow-tools",
-        *DISALLOW_TOOLS,
+        *(t for t in DISALLOW_TOOLS if t not in runtime["tools"]),
         "--max-cost-usd",
         str(runtime["per_run_stop_usd"]),
         "--model",
