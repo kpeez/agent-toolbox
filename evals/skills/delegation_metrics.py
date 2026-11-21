@@ -74,6 +74,7 @@ def is_source(name):
         path.name.startswith("test_")
         or path.name == "README.md"
         or "__pycache__" in path.parts
+        or ".git" in path.parts
     )
 
 

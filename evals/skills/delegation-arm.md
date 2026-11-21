@@ -62,3 +62,37 @@ their counts and intervals. No significance claim is made from fewer than 10 run
 - Per-run stop: $2, the current `per_run_stop_usd` of the repository runner (the closed KP-598
   program raised it from $1 to $2). A run over the stop ends the batch.
 - Runs go from a clean tree at each pinned SHA.
+
+## Results (2026-11-21)
+
+Runs: 12 cases x 2 repeats x 2 SHAs = 48 scored runs, all complete, none excluded, no stop. The
+base SHA is `514b8bc` and the head SHA is `a536e03` (the later commits on the branch change only
+`evals/skills/delegation_metrics.py` and this file; `plugins/` is identical). Spend: $10.32 head,
+$9.96 base, and $1.04 for the dry run, $21.32 of the $40 cap. Raw runs, `metrics.json`, and the
+commands are in `artifacts/delegation-arm/2026-11-21/`.
+
+One scoring fix after the first look: the sandbox puts a `.git` folder in the working folder, and
+the first version of `is_source` counted it as a changed source file. It marked the control cases
+as not done. `.git` is now ignored. The fix came from a control-case count that made no sense, and
+the other metrics did not change.
+
+| Metric (24 runs per SHA) | base | head |
+| --- | --- | --- |
+| Root-thread edit calls per run, all cases | 1.25 | 1.12 |
+| Root-thread edit calls per run, nine edit cases | 1.67 | 1.50 |
+| Runs with a root-thread edit | 14/24, 0.58 [0.39, 0.76] | 14/24, 0.58 [0.39, 0.76] |
+| Runs with a `daedalus` spawn | 18/24, 0.75 [0.55, 0.88] | 19/24, 0.79 [0.60, 0.91] |
+| Task done (proxy) | 21/24, 0.88 [0.69, 0.96] | 22/24, 0.92 [0.74, 0.98] |
+| Total tokens, mean (median, SD) | 241k (224k, 144k) | 262k (210k, 160k) |
+
+Edit cases only (18 runs per SHA): a root-thread edit in 14 and 14, a `daedalus` spawn in 16 and 16,
+task done in 16 and 16. Control cases (6 runs per SHA): no root-thread edit in either; a `daedalus`
+spawn in 2 (base) and 3 (head); task done in 5 and 6.
+
+Reading: the two SHAs are indistinguishable on these 12 cases. The base catalog already spawns
+`daedalus` in 16 of 18 edit runs, which leaves little room for the bullets to move that rate. The
+root thread still edits in 14 of 18 edit runs under both SHAs, mostly small fixes next to the
+`daedalus` call. Per-case counts differ by one or two edits in `IM-01`, `IM-04`, and
+`swe-mode-build-feature`, in both directions. The intervals overlap everywhere and each case has
+two runs per SHA, so the data show no effect, not an effect of zero. The token difference is
+inside one standard deviation. `IM-02` ended with no source change under both SHAs, in all four runs.
