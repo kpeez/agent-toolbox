@@ -300,6 +300,8 @@ Long runs and sessions:
   verified PR: `ship-pr`.
 - Find what a change could break: `blast-radius`.
 - Settle open decisions in a plan or design with the user: `interview-user`.
+- Show a plan or design for the user to review and answer in a browser:
+  `html-plan`.
 - Write the work's current state for a new session: `handoff`.
 - Catch the user up after time away: `ketchup`.
 - The user corrects a mistake agents have made before: `correct`.

@@ -7,9 +7,16 @@ The slug is the work's branch name with `/` changed to `-`.
 [Agent scratch](agent-scratch.md) defines the scratch folder and its link.
 The HTML plan workflow owns the plan's format.
 
-- Plans are local only. Nothing syncs them to a tracker.
-- Delete a plan when its pull request merges. The pull request and the code
-  are the record.
+A packed page, `<slug>.plan.html`, sits next to its source.
+
+- A plan in `.agents/docs/plans/` is the lasting statement of the work's
+  intent. Keep it after the pull request merges. `.agents/docs` is the
+  project's folder in the notes vault, and the vault decides how it stores
+  the packed page.
+- A plan in `.agents/scratch/<branch-slug>/` is local only. Delete it when
+  its pull request merges.
+- When the user signs off on a plan, link the plan's path on the tracker
+  issue.
 
 Handoffs are not files. The [handoff](../skills/handoff/SKILL.md) skill writes
 the work's current state to its tracker issue, or to a pull request comment

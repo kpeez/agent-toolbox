@@ -16,7 +16,7 @@ configs:
 # Skill activation evals
 
 Synthetic scenarios that test whether an agent loads the right skill. Authored
-for this repository. They hold no real user data. There are 136 samples; the
+for this repository. They hold no real user data. There are 137 samples; the
 20 with `metadata.split` set to `holdout_candidate` are disclosed development
 material, not a sealed holdout, so they stay in `dev.jsonl`.
 

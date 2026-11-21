@@ -4,7 +4,7 @@ This is an offline-ready first slice, not a measured baseline. It evaluates
 activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
-The corpus has 136 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
+The corpus has 137 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
 `testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
 `family` field, else by its target. The audit-mode cases set `family:
@@ -36,7 +36,7 @@ the same fixture, except `lab-mode-run-experiment`, which needs a training pipel
 pick, and the scorer checks whether the agent followed it (see "Route scoring").
 The others set no route.
 
-The two route-choice families, `swe-route-choice` (24 cases) and `lab-route-choice` (6 cases), cover
+The two route-choice families, `swe-route-choice` (25 cases) and `lab-route-choice` (6 cases), cover
 each playbook and single-skill route that no other case covers, with one case per route. They have
 no fixed mix: `validate` rejects a negative case, and a case with no `expected_route`, in an open family, because a route-choice case scores one route. A negative in a mix family may set `expected_route`. Every
 case instead resembles a neighbouring route and belongs to its own: the `rationale` names the
