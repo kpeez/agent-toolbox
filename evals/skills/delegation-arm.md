@@ -70,6 +70,8 @@ base SHA is `514b8bc` and the head SHA is `a536e03` (the later commits on the br
 `evals/skills/delegation_metrics.py` and this file; `plugins/` is identical). Spend: $10.32 head,
 $9.96 base, and $1.04 for the dry run, $21.32 of the $40 cap. Raw runs, `metrics.json`, and the
 commands are in `artifacts/delegation-arm/2026-11-21/`.
+The cost estimate above was high: the 48 scored runs cost $0.42 each on average, against $1.04 for the
+`IM-01` dry run.
 
 One scoring fix after the first look: the sandbox puts a `.git` folder in the working folder, and
 the first version of `is_source` counted it as a changed source file. It marked the control cases
@@ -91,8 +93,7 @@ spawn in 2 (base) and 3 (head); task done in 5 and 6.
 
 Reading: the two SHAs are indistinguishable on these 12 cases. The base catalog already spawns
 `daedalus` in 16 of 18 edit runs, which leaves little room for the bullets to move that rate. The
-root thread still edits in 14 of 18 edit runs under both SHAs, mostly small fixes next to the
-`daedalus` call. Per-case counts differ by one or two edits in `IM-01`, `IM-04`, and
+root thread still edits in 14 of 18 edit runs under both SHAs. Per-case counts differ by one or two edits in `IM-01`, `IM-04`, and
 `swe-mode-build-feature`, in both directions. The intervals overlap everywhere and each case has
 two runs per SHA, so the data show no effect, not an effect of zero. The token difference is
 inside one standard deviation. `IM-02` ended with no source change under both SHAs, in all four runs.
