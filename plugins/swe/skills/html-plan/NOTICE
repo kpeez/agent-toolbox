@@ -12,7 +12,8 @@ Licenses
 The upstream repository carries the Apache License, Version 2.0. Its text
 follows below. The html-plan plugin manifest in that repository declares the
 license "MIT". The repository holds no separate MIT text and no copyright
-line for either license.
+line for either license. This folder is distributed under Apache-2.0,
+although the swe plugin manifests say MIT.
 
 Changes
 -------

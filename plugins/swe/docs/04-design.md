@@ -42,7 +42,7 @@ The build playbooks run it only on decisions you have not made. It ends with a s
 
 The router runs [`html-plan`](../skills/html-plan/SKILL.md). The agent writes one HTML page. It holds a tree of claims, and one exhibit proves each claim: a mockup, a state machine, a call stack, a schema, or code. Each decision you must make sits on the claim it changes. Open the tree one level at a time, pick options, edit a schema, and comment on any claim. Then press **Respond**, press **Copy response**, and paste the response into the session. The agent applies your answers and builds nothing before you sign off.
 
-The agent saves the page in `.agents/docs/plans/`. If the `tailnet-share` command exists, the agent runs it and gives you a link. Otherwise the agent gives you the file path. Ask for a private published page when you want one. After you sign off, the agent links the plan on the tracker issue and starts work. The skill is a copy of Thariq Shihipar's `html-plan`. The [credits](../../../README.md#credits) name its source.
+The agent saves the page in `.agents/docs/plans/`. If the `tailnet-share` command exists, the agent runs it and gives you a link. Otherwise the agent gives you the file path. Ask for a private published page when you want one. After you sign off, the agent links the plan on the tracker issue and starts work. The skill is a copy of Thariq Shihipar's `html-plan`. Only its `SKILL.md` changed. The [credits](../../../README.md#credits) name its source.
 
 ## Prototype instead of debating
 

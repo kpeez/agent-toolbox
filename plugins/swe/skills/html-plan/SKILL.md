@@ -5,11 +5,13 @@ argument-hint: "<what to build>"
 disable-model-invocation: true
 ---
 
+<!-- Changed from upstream html-plan 88003be; see NOTICE. -->
+
 # html-plan
 
 Plan this: $ARGUMENTS
 
-You write **one HTML file by hand**. It holds a tree of claims. A small runtime draws the tree and lets the reader open it level by level, answer decisions, edit schemas, comment on anything, and copy one response back to you. Do not start building until that response arrives.
+You write **one HTML file by hand**. It holds a tree of claims. A small runtime draws the tree and lets the reader open it level by level, answer decisions, edit schemas, comment on anything, and copy one response back to you. Until the user signs off, change no file except the plan's source and packed page: no code, tests, or config, and no unrelated fixes. Report what you find in the hand-over.
 
 ```
 <this skill's directory>/
@@ -130,8 +132,8 @@ These are not STE and stay as they are: the words of the user in a `doc-quote`, 
 3. `3-write-the-plan`: Add the how and where claims, then the exhibits, then the decisions. Read `references/blocks.md` for syntax. Save the source as `<slug>.plan.src.html` in `.agents/docs/plans/` when the project has a `.agents/docs` folder, and in `.agents/scratch/<branch-slug>/` otherwise ([plan storage](../../references/plan-storage.md)).
 4. `4-pack`: Run `node <skill dir>/runtime/pack.mjs <source> --root <repo top level>`. It reports errors and warnings by line or claim number on stdout. If it exits 1, fix the plan and run it again. It writes `<slug>.plan.html` next to the source: one file that works offline.
 5. `5-look-at-it`: Open the packed page in a browser if you can: closed, with each claim open, and at each decision (the "to answer" button goes to them). Check that mockups are not clipped and arrows do not cross labels.
-6. `6-hand-over`: If the `tailnet-share` command exists, run `tailnet-share <packed file>` and give its URL. Otherwise give the path of the packed file. Add one line: "Four decisions. The defaults are what I would build." If the user asks for a private page and the host can publish one, use the artifact route in the next section.
-7. `7-act-on-response`: Apply changed decisions, schema edits, struck calls and each comment. Refer to claims by number. If the answers change the shape of the plan, update the page and send it again. When the user signs off, link the plan's path and its URL on the tracker issue. Then build.
+6. `6-hand-over`: If the `tailnet-share` command exists, run `tailnet-share <packed file>` and give its URL. Otherwise give the path of the packed file. Add one line: "Four decisions. The defaults are what I would build." If the user asks for a private page and the host can publish one, use the artifact route in the next section. Then end your turn.
+7. `7-act-on-response`: Apply changed decisions, schema edits, struck calls and each comment. Refer to claims by number. If the answers change the shape of the plan, update the page and send it again. Sign-off is the user's explicit go to build. When it comes, link the plan's path on the tracker issue, and its URL when step 6 gave one. Then build.
 
 ## Getting the answer back
 
