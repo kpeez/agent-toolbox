@@ -545,6 +545,7 @@
           "swe-route-figure-it-out",
           "swe-route-handoff",
           "swe-route-hillclimb-metric",
+          "swe-route-html-plan",
           "swe-route-interview-user",
           "swe-route-ketchup",
           "swe-route-match-visual-parity",
@@ -2807,6 +2808,30 @@
       "cases": {
         "negative": [],
         "positive": [
+          "swe-route-html-plan"
+        ]
+      },
+      "evidence": "full-read",
+      "id": "route-load/swe/html-plan",
+      "kind": "route-load",
+      "name": "html-plan",
+      "name_class": "hidden-skill",
+      "path": "skills/html-plan/SKILL.md",
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Single-skill routes: html-plan",
+        "path": "plugins/swe/skills/swe-mode/SKILL.md"
+      },
+      "requirement": "always",
+      "scope": "root",
+      "scorer": "scored",
+      "source_text": "Show a plan or design for the user to review and answer in a browser: `html-plan`.",
+      "subject": "html-plan"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": [
           "swe-route-interview-user"
         ]
       },
@@ -4049,6 +4074,39 @@
       "scorer": "scored",
       "source_text": "`hillclimb-metric`: sustained improvement of one metric against a target, with one keep-or-revert decision per attempt.",
       "subject": "hillclimb-metric"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": [
+          "swe-route-html-plan"
+        ]
+      },
+      "evidence": "assistant-text",
+      "handles": [
+        "1-read-first",
+        "2-write-level-1-claims",
+        "3-write-the-plan",
+        "4-pack",
+        "5-look-at-it",
+        "6-hand-over",
+        "7-act-on-response"
+      ],
+      "id": "route/swe/html-plan",
+      "kind": "route",
+      "modes": {},
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Single-skill routes: html-plan",
+        "path": "plugins/swe/skills/swe-mode/SKILL.md"
+      },
+      "requirement": "always",
+      "route_type": "skill",
+      "scope": "root",
+      "scorer": "scored",
+      "source_text": "Show a plan or design for the user to review and answer in a browser: `html-plan`.",
+      "subject": "html-plan"
     },
     {
       "cases": {
@@ -11892,10 +11950,10 @@
       "recorded": 2
     },
     "route": {
-      "scored": 47
+      "scored": 48
     },
     "route-load": {
-      "scored": 19
+      "scored": 20
     },
     "router-contract": {
       "invisible": 25
