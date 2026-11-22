@@ -355,9 +355,9 @@ valid only when the correct route for that request never loads that skill. A ste
 counts. `SP-07` forbids `swe:ship-pr` because `fix-bug` step 14 runs "when publication is authorized" and the request says
 not to commit or push. `HO-07` forbids `swe:interview-user` because `build-feature` step 2 runs only when the user has not
 decided, and the request states the decision. A step that only the user's wording lets a run skip does not count: the
-requests `TC-08`, `DG-07`, `TA-07`, and `AR-07` were rewritten for that reason (`fix-bug` steps 6 and 7 name
-`verifying-work`, step 1 names `diagnose`, `refactor-structure` step 1 names `verifying-work`, and `build-feature` step 4 names
-`codebase-design`). Their requests now route to no playbook that loads the forbidden skill: three are read-only lookups, and
+requests `TC-08`, `DG-07`, and `AR-07` were rewritten for that reason (`fix-bug` steps 6 and 7 name
+`verifying-work`, step 1 names `diagnose`, and `build-feature` step 4 names
+`codebase-design`). Their requests now route to no playbook that loads the forbidden skill: two are read-only lookups, and
 `AR-07` is a one-function change with no interface, so step 4 does not apply. `validate` refuses a case that lists a skill
 as expected or auxiliary and also forbids it.
 

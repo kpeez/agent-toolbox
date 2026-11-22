@@ -30,8 +30,11 @@ settles the risk.
 
 ## Rungs
 
-A higher rung makes a class of bugs impossible, or covers every case in a
-stated scope. A lower rung covers only the cases someone wrote.
+Rungs 1 to 3 rule out a class of bugs: a model checker covers every state in
+its scope, and types and lint reject the bug before it runs. Rung 4 proves
+the behavior users observe. Rungs 5 and 6 check one unit's logic: a property
+covers a domain of inputs, and an example test covers only the cases someone
+wrote.
 
 1. **Model check.** A state machine, event order, retries, or concurrency.
    Run the project's formal verification skill when one exists. When the
@@ -118,9 +121,11 @@ clear and nobody asked for one.
 
 1. Understand the bug. Name the intended behavior, the current behavior, the
    affected path, and the smallest observable reproduction.
-2. Choose the highest rung that reproduces the bug: a type or lint rule that
-   rejects it, an end-to-end check through the entry point, a property that
-   finds the counterexample, or a unit test at the public seam. Reuse a check
+2. Choose the highest rung that reproduces the bug: a model check that finds
+   the bad order of events, a type or lint rule that rejects it, an
+   end-to-end check through the entry point, a property that finds the
+   counterexample, or a unit test at the public seam. For a defect at a
+   boundary or in a parser, use the captured offending payload. Reuse a check
    that the codebase already runs where one fits.
 3. Write the smallest check that would have caught the bug. It encodes the
    intended behavior, not the current implementation.

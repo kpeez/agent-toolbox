@@ -40,7 +40,8 @@ current diff against the base branch, default `main`, touches or owns.
 5. `5-edit-in-small-batches`: Fix the approved findings one coherent
    owner-boundary batch at a time. Delete the test-only seams the removed
    tests kept alive. Add each missing check at the strongest rung through
-   `verifying-work`. Rerun the owner and sibling tests after each batch.
+   `verifying-work`. Each added or rewritten check passes its admission gate.
+   Rerun the owner and sibling tests after each batch.
    Sequence the batches as in
    [principle-sequence-verifiable-units](../principle-sequence-verifiable-units/SKILL.md).
 6. `6-mutate-changed-contracts`: Mutate the production owner of each
