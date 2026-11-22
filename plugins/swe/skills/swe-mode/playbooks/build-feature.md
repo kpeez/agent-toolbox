@@ -8,11 +8,11 @@ Delegate implementation and stay in the lead. Delegation is mandatory and the la
 
 1-map-subsystem: Trace the affected subsystem yourself.
 2-interview-on-open-decisions: When scope or behavior rests on a product or preference decision the user has not made, run interview-user on those decisions only. Settle facts a run can show by prototype instead. (interview-user, build-prototype)
-3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. (model-the-domain, foundational-thinking)
+3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. Name the types, inputs, and outputs, and the check that will prove the behavior. (model-the-domain, foundational-thinking)
 4-explore-designs: When the code crosses a function boundary, run architect for the shape. For a consequential interface, map callers, invariants, and errors. (architect, codebase-design, redesign-from-first-principles)
 5-write-throughput-checkpoint: Add four task items for blocking first steps, independent workstreams, shared mutable state, and the smallest safe decomposition. Mark one that does not apply `n/a: <reason>`. (separate-before-serializing-shared-state)
 6-build-one-unit: Delegate each unit with file paths, the data shape, and success criteria, and verify it before the next. Port a shared-primitive improvement to every consumer. Commit liberally. (implement, sequence-verifiable-units, laziness-protocol)
-7-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)
+7-decide-tests: Choose each check at the strongest rung that settles the risk, and pass the admission gate before you keep one. (verifying-work, test-behavior-not-implementation)
 8-verify-on-surface: Run the feature through its real entry point, with the project's verification skill when one exists. Inconclusive or wrong-surface is not a pass. (prove-it-works)
 9-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)
 10-review-if-contested: When the design is contested, give the design and its evidence to a reviewer agent before shipping. (reviewer agent)

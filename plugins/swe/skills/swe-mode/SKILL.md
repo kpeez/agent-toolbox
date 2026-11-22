@@ -185,7 +185,7 @@ it applies. The leaf is `../principle-<slug>/SKILL.md`.
 - `ancillary-fixes`: you find an issue outside the task. Decide to fix it now
   or report it.
 
-Only these are principles; another skill, such as `testing-code`, is not.
+Only these are principles; another skill, such as `verifying-work`, is not.
 
 Load a principle before you apply it. In the final reply, name each principle
 that changed a decision and the choice it changed. Cite only principles you
@@ -290,8 +290,9 @@ Long runs and sessions:
 ## Single-skill routes
 
 - Explain a failure, crash, hang, or leak; no fix requested: `diagnose`.
-- Design or judge a new test or a disposable probe: `testing-code`.
-- Prune or review an existing test suite: `testing-code`.
+- Choose how to verify a change, or design or judge a new test or a
+  disposable probe: `verifying-work`.
+- Audit or prune an existing test suite: `test-audit`.
 - Explore competing designs before code: `architect`.
 - Propose deepening refactors; no implementation: `codebase-design`.
 - Write or edit a README, a docs page, or other prose that is not a skill,

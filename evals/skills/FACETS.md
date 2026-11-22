@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-67 of 338 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+67 of 341 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -54,10 +54,10 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | kind | scored | recorded | invisible | total |
 |---|---|---|---|---|
-| activation | 9 | 30 | 0 | 39 |
+| activation | 10 | 30 | 0 | 40 |
 | hook-load | 0 | 5 | 0 | 5 |
-| route | 47 | 0 | 0 | 47 |
-| route-load | 19 | 0 | 0 | 19 |
+| route | 48 | 0 | 0 | 48 |
+| route-load | 20 | 0 | 0 | 20 |
 | playbook-read | 28 | 0 | 0 | 28 |
 | step-load | 232 | 2 | 9 | 243 |
 | reply-load | 0 | 2 | 0 | 2 |
@@ -91,9 +91,10 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | log-decisions | swe | 0 | 0 | recorded |
 | ship-pr | swe | 7 | 3 | scored |
 | swe-mode | swe | 36 | 3 | scored |
-| testing-code | swe | 14 | 6 | scored |
+| test-audit | swe | 7 | 3 | scored |
 | typescript-best-practices | swe | 0 | 0 | recorded |
 | verification-skill | swe | 0 | 0 | recorded |
+| verifying-work | swe | 7 | 3 | scored |
 | wait-what | swe | 0 | 0 | recorded |
 | why | swe | 0 | 0 | recorded |
 | writing | swe | 0 | 0 | recorded |
@@ -181,8 +182,9 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | playbook `run-autonomously` | 1-state-exit-predicate, 2-pick-wake-mechanism, 3-open-decision-log, 4-iterate-smallest-change, 5-own-mid-run-discoveries, 6-log-each-iteration, 7-stop-on-predicate, 8-publish-draft-pr | 1 | 0 |
 | skill `ship-pr` | publish: 1-inspect, 2-verify, 3-group-and-commit, 4-push, 5-open-draft-pr, 6-link-issue, 7-report; drive-to-green: 1-resolve-conflicts, 2-triage-review-threads, 3-classify-ci-failures, 4-push-one-wave, 5-reply-to-threads, 6-update-pr-body; land: 1-get-independent-verdict, 2-key-verdict-to-patch, 3-recheck-before-landing, 4-mark-ready, 5-merge; finalize: 1-locate-pr, 2-account-for-local-changes, 3-reverify, 4-ready-or-land, 5-set-issue-status, 6-report | 1 | 0 |
 | playbook `ship-stack` | 1-verify-each-pr, 2-find-verified-run, 3-recheck-patch-ids, 4-land-bottom-up, 5-hands-off-while-landing, 6-stop-at-ceiling | 1 | 0 |
-| skill `testing-code` | new-tests-and-probes: 1-name-the-contract, 2-pass-the-admission-gate, 3-choose-the-evidence, 4-see-it-fail, 5-clean-up-and-report; audit: 1-record-suite-baseline, 2-mark-candidates, 3-edit-in-small-batches, 4-mutate-changed-contracts, 5-independent-preservation-review, 6-publish-draft-pr | 16 | 0 |
+| skill `test-audit` | 1-record-suite-baseline, 2-map-the-behavior, 3-find-flaws, 4-report-findings, 5-edit-in-small-batches, 6-mutate-changed-contracts, 7-independent-preservation-review, 8-publish-draft-pr | 7 | 0 |
 | skill `verification-skill` | create: 1-interview-the-repo, 2-fix-the-checkout, 3-generate-the-skill, 4-seed-the-feature-map, 5-prove-the-generated-skill, 6-hand-over; maintain: 1-clean-the-index, 2-run-the-source-wave, 3-reconcile, 4-run-the-live-pass, 5-triage, 6-ship-or-stop | 1 | 0 |
+| skill `verifying-work` | 1-name-the-behavior, 2-choose-the-rung, 3-pass-the-admission-gate, 4-see-it-fail, 5-clean-up-and-report | 9 | 0 |
 | skill `writing` | 1-find-the-surface, 2-read-its-row, 3-apply-the-prose-rules | 1 | 0 |
 
 ### Playbook `author-skill` step loads
@@ -250,7 +252,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 6-build-one-unit | laziness-protocol | principle | full-read | always | - |
 | 6-build-one-unit | sequence-verifiable-units | principle | full-read | always | - |
 | 7-decide-tests | test-behavior-not-implementation | principle | full-read | always | - |
-| 7-decide-tests | testing-code | visible-skill | skill-call | always | - |
+| 7-decide-tests | verifying-work | visible-skill | skill-call | always | - |
 | 8-verify-on-surface | prove-it-works | principle | full-read | always | - |
 | 9-check-blast-radius | blast-radius | visible-skill | skill-call | conditional | - |
 | 10-review-if-contested | reviewer agent | reviewer-agent | agent-spawn | conditional | - |
@@ -321,9 +323,9 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 5-plan-fix | architect | hidden-skill | full-read | conditional | - |
 | 5-plan-fix | implement | visible-skill | skill-call | conditional | - |
 | 6-decide-regression-test | test-behavior-not-implementation | principle | full-read | always | - |
-| 6-decide-regression-test | testing-code | visible-skill | skill-call | always | - |
+| 6-decide-regression-test | verifying-work | visible-skill | skill-call | always | - |
 | 7-commit-failing-repro | sequence-verifiable-units | principle | full-read | conditional | - |
-| 7-commit-failing-repro | testing-code | visible-skill | skill-call | conditional | - |
+| 7-commit-failing-repro | verifying-work | visible-skill | skill-call | conditional | - |
 | 8-apply-smallest-fix | implement | visible-skill | skill-call | always | - |
 | 8-apply-smallest-fix | laziness-protocol | principle | full-read | always | - |
 | 8-apply-smallest-fix | subtract-before-you-add | principle | full-read | always | - |
@@ -420,7 +422,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | handle | name | name class | evidence | requirement | supplied by |
 |---|---|---|---|---|---|
-| 1-pin-behavior | testing-code | visible-skill | skill-call | always | - |
+| 1-pin-behavior | verifying-work | visible-skill | skill-call | always | - |
 | 2-name-missing-structure | model-the-domain | principle | full-read | always | - |
 | 3-name-target-shape | architect | hidden-skill | full-read | always | - |
 | 3-name-target-shape | codebase-design | visible-skill | skill-call | always | - |
@@ -477,8 +479,9 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | ketchup | hidden-skill | full-read | scored | Single-skill routes: ketchup |
 | reflect | hidden-skill | full-read | scored | Single-skill routes: reflect |
 | ship-pr | visible-skill | skill-call | scored | Single-skill routes: ship-pr |
-| testing-code | visible-skill | skill-call | scored | Single-skill routes: testing-code |
+| test-audit | visible-skill | skill-call | scored | Single-skill routes: test-audit |
 | verification-skill | visible-skill | skill-call | scored | Single-skill routes: verification-skill |
+| verifying-work | visible-skill | skill-call | scored | Single-skill routes: verifying-work |
 | writing | visible-skill | skill-call | scored | Single-skill routes: writing |
 
 ### Trigger loads

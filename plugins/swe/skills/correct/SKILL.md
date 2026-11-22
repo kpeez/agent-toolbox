@@ -48,7 +48,7 @@ Fix each class at the highest level that works:
 4. `test`: test the behavior. Fix or delete any test that still passes when
    the behavior it checks breaks, or that fails when only the internals
    change. Every new permanent test goes
-   through the admission gate in [testing-code](../testing-code/SKILL.md).
+   through the admission gate in [verifying-work](../verifying-work/SKILL.md).
 5. `docs-last`: write a doc or agent rule only for a judgment call. Nothing
    fails when an agent skips a doc, so make the rule prominent and add an
    example of the mistake.
