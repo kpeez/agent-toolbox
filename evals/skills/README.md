@@ -211,7 +211,7 @@ OUT/
   runs/CASE/ARM/rN/
     manifest.json inputs/ workspace/      skill_eval.py materialize
     suite/{swe,lab,uni}/                   copies of the snapshot's plugins; the session loads these
-    suite/evals/CASE/case.yaml fixture.sh  the prompt, limits, the six tools, and a scaffold that copies workspace/
+    suite/evals/CASE/case.yaml fixture.sh  the prompt, limits, the tools, and a scaffold that copies workspace/
     plugin-eval.json plugin-eval.log plugin-eval.html
     kept/transcript.jsonl kept/stream.jsonl   copied out of the sealed sandbox, which is then deleted
     run.json           cost, error, api_error, turns, the session checks, and whether the stream needed a final newline
@@ -223,7 +223,8 @@ The launch is `claude plugin eval SUITE --case CASE --ablation none --runs 1 --s
 --trust-plugin --no-publish --allow-tools Write Edit --disallow-tools Task TaskStop NotebookEdit
 ToolSearch --max-cost-usd STOP --model MODEL --keep-temp`, with `CLAUDE_CODE_EFFORT_LEVEL` set to the
 frozen effort. The session has exactly `Read`, `Write`, `Edit`, `Glob`, `Grep`, and `Skill`: no
-shell and no Agent tool. In the `hook-off` arm materialize removed every plugin hook, so the suite
+shell and no Agent tool by default. A runtime file may add the Agent tool (`Task`), as
+`runtime.delegation-arm.json` does. In the `hook-off` arm materialize removed every plugin hook, so the suite
 copies have none. Plugin eval requires one grader per case, so each case has one that always passes;
 `skill_eval.py` scores the kept transcript instead.
 

@@ -70,9 +70,11 @@ their counts and intervals. No significance claim is made from fewer than 10 run
 ## Results (2026-11-21)
 
 Runs: 12 cases x 2 repeats x 2 SHAs = 48 scored runs, all complete, none excluded, no stop. The
-base SHA is `514b8bc` and the head SHA is `a536e03`. `plugins/` is identical at `a536e03` and at the
-final PR head. The later commits change `evals/skills/delegation_metrics.py`, this file, and one
-line of `evals/skills/run_eval.py`: the order of the tools in the generated `case.yaml`. The scored
+base SHA is `514b8bc` and the head SHA is `a536e03`, the SHA the scored runs
+measured. After the null result the PR removed the two coordinator bullets and the
+`refactor-structure` sentence, so `plugins/` at the final PR head differs from `a536e03` by exactly
+those removals. The later commits also change `evals/skills/delegation_metrics.py`, this file, the
+`checks.yml` model-name step, and one line of `evals/skills/run_eval.py`: the order of the tools in the generated `case.yaml`. The scored
 runs used the earlier order (Read, Write, Edit, Glob, Grep, Skill, Task) and the final head writes
 the six base tools first (Read, Glob, Grep, Skill, Write, Edit, Task). The tool set is the same.
 Spend: $10.32 head,
