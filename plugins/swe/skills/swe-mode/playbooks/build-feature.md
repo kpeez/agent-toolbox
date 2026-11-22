@@ -13,7 +13,7 @@ Delegate implementation and stay in the lead. Delegation is mandatory and the la
 5-write-throughput-checkpoint: Add four task items for blocking first steps, independent workstreams, shared mutable state, and the smallest safe decomposition. Mark one that does not apply `n/a: <reason>`. (separate-before-serializing-shared-state)
 6-build-one-unit: Delegate each unit with file paths, the data shape, and success criteria, and verify it before the next. Port a shared-primitive improvement to every consumer. Commit liberally. (implement, sequence-verifiable-units, laziness-protocol)
 7-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)
-8-verify-on-surface: Run the feature through its real entry point, with the project's verification skill when one exists. Inconclusive or wrong-surface is not a pass. (prove-it-works)
+8-verify-on-surface: Run the feature through its real entry point, with the project's verification skill when one exists. Inconclusive or wrong-surface is not a pass. A verification skill proves the paths you drive, and some bugs live on paths nobody drives. When the change touches retries, locks, event order, or a state machine, suggest `create-formal-verification-skill`. (prove-it-works)
 9-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)
 10-review-if-contested: When the design is contested, give the design and its evidence to a reviewer agent before shipping. (reviewer agent)
 11-independent-review: Give the diff and evidence to an agent that did not write it. (reviewer agent, no-comments)

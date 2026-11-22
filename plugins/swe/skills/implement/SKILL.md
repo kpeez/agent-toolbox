@@ -24,18 +24,22 @@ smallest justified code change with evidence.
    [diagnose](../diagnose/SKILL.md) before you change code, and rerun its
    reproduction after the fix. Before you apply the fix, and after a fix
    fails, follow [fix-root-causes](../principle-fix-root-causes/SKILL.md).
-3. Choose evidence by behavioral risk, and name the behavior check before
-   writing code. A static check, reproducible demonstration, existing
+3. Choose evidence by behavioral risk. Before your first edit, write one
+   `Check:` line: the entry point you will drive, the command you will run,
+   and the result that would show the change is wrong. A static check, reproducible demonstration, existing
    workflow, or explicit no-permanent-test decision is often enough. Before adding or rewriting a permanent test, or when behavior
    is uncertain or a probe is requested, pass the `testing-code` admission
    gate. Before claiming the change works, follow
    [prove-it-works](../principle-prove-it-works/SKILL.md).
-4. Run relevant repository gates and behavior-specific checks. A failing
+4. Run relevant repository gates and behavior-specific checks. Do not
+   special-case a test or a check to make it pass; report it. A failing
    required gate blocks completion and publication, but continue authorized
    diagnosis and correction when that can resolve the failure. When you find an
    issue outside the task, such as an unrelated baseline failure, follow
    [ancillary-fixes](../principle-ancillary-fixes/SKILL.md).
-5. Report the change, evidence, verification, and unresolved concerns.
+5. Report the change, the evidence, and unresolved concerns. Give one
+   `Verification:` line with the entry point, the exact command you ran
+   (pipes included), and the result you observed. Name a check you could not run as not run.
 
 ## Documentation completion
 

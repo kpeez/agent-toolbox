@@ -64,7 +64,7 @@ After that, every verify step in a playbook uses the skill. Name it in a prompt 
 /swe:swe-mode build the bulk-archive action. use verify-<app> to prove it and show me screenshots.
 ```
 
-Commit the verification skill so every person and agent drives the app the same way.
+Commit the verification skill so every person and agent drives the app the same way. A large repo can have one verification skill per area. Each one lists the files it covers in its `paths` frontmatter, and Claude Code loads it when those files change.
 
 ## Keep the verification skill current
 

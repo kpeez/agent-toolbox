@@ -10,11 +10,11 @@ A verification skill is a project-local skill that launches the real app, drives
 
 ## Choose the mode
 
-Find the project's existing verification skill by observation: a project-local skill whose body has launch and drive sections and a feature map, usually `verify-<app>`. Look in `.claude/skills/` and `.agents/skills/`, in each directory from the working directory up to the repository root. When the user named an app or surface, consider only skills that cover it.
+Find the project's existing verification skill by observation: a project-local skill whose body has launch and drive sections and a feature map, usually `verify-<app>`. Look in `.claude/skills/` and `.agents/skills/`, in each directory from the working directory up to the repository root. A project can have one verification skill per area. Each one lists the files it covers in its `paths` frontmatter. When the user named an app or surface, or the change touches known files, consider only the skills that cover them.
 
 - None found: use create mode.
 - One found: use maintain mode.
-- Several found: ask which one, and name the candidates.
+- Several found for the same area: ask which one, and name the candidates.
 
 Say which mode you chose.
 
@@ -33,7 +33,7 @@ Say which mode you chose.
 
 3. `3-generate-the-skill`: Write `.agents/skills/verify-<app>/SKILL.md`, and lay the skill out as [project skill layout](../../references/project-skill-layout.md) says: helper scripts under the skill's `scripts/`, paths in `SKILL.md` relative to the skill folder, and the `.claude/skills` link, committed with the skill. Codex reads `.agents/skills/` directly. Claude Code reads it through the link.
 
-   The frontmatter needs `name: verify-<app>` and a `description` that names the app, the surface, and when to use the skill. Without frontmatter the skill never registers. Give the body these sections. Ground each in what the interview found. Leave no placeholder.
+   The frontmatter needs `name: verify-<app>`, a `description` that names the app, the surface, and when to use the skill, and `paths`: glob patterns for the files the skill covers. Claude Code loads the skill when those files change. Without frontmatter the skill never registers. Give the body these sections. Ground each in what the interview found. Leave no placeholder.
    - **Launch.** The exact command that starts the app for verification, and how to tell it is ready (a log line, a prompt). Ready means usable, not only that a process answers: a database health check can pass while its init scripts still run. Launch reaches a usable state from an empty data dir, including migrations and seed data. Include teardown. A short-lived CLI or TUI has no server to keep alive. Its Launch builds the binary or installs dependencies once, and each drive starts in its own isolated PTY or tmux session.
    - **Doctor.** One read-only check that answers whether this instance is worth driving: process up, right version or build, port owned by us, auth valid. The agent runs it first, and again whenever anything looks off.
    - **Drive.** The harness recipe with this repo's real selectors and commands. Prefer stable handles (ARIA labels, data attributes, prompt strings, route paths) over coordinates and tab order.

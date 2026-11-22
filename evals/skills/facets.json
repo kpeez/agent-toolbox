@@ -8303,7 +8303,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "8-verify-on-surface: Run the feature through its real entry point, with the project's verification skill when one exists. Inconclusive or wrong-surface is not a pass. (prove-it-works)",
+      "source_text": "8-verify-on-surface: Run the feature through its real entry point, with the project's verification skill when one exists. Inconclusive or wrong-surface is not a pass. A verification skill proves the paths you drive, and some bugs live on paths nobody drives. When the change touches retries, locks, event order, or a state machine, suggest `create-formal-verification-skill`. (prove-it-works)",
       "subject": "build-feature"
     },
     {

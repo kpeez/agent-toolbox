@@ -1,6 +1,10 @@
 ---
 name: verify-tech-tree
 description: Explore every order of learner events (lesson, review, placement, a day passing) on the real uni tech-tree script and check its gate and scheduling rules in every state. Use when a change touches plugins/uni/skills/tech-tree/scripts/tech_tree.py (cmd_record, cmd_place, cmd_next, frontier, unmet_ancestors, credit) or the rules in its SKILL.md or GRAPH-FORMAT.md, or when the check fails.
+paths:
+  - plugins/uni/skills/tech-tree/scripts/tech_tree.py
+  - plugins/uni/skills/tech-tree/SKILL.md
+  - plugins/uni/skills/tech-tree/GRAPH-FORMAT.md
 ---
 
 # Verify the tech-tree gate

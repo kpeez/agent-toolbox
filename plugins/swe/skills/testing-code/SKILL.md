@@ -97,8 +97,10 @@ bug; do not replay the same scenario at every layer it crosses.
 
 When a change makes existing tests obsolete or duplicative, delete or
 consolidate them in the same change. Use audit mode for broader pruning.
-During implementation, never delete, skip, or loosen an existing test to get
-green; if a test looks wrong, report it with evidence.
+During implementation, never delete, skip, loosen, or special-case a test or
+a check to get green. Special-casing includes hard-coding the expected output
+and detecting that a test is running. If a test looks wrong, report it with
+evidence.
 
 ## Failing test first
 
@@ -173,6 +175,12 @@ Choose the smallest mode that distinguishes the risk:
   demonstration's verdict or reproducible command as evidence. Retain a probe
   file only when it is an intentional durable artifact; otherwise remove it as
   described above.
+
+When more than one mode settles the risk, prefer the evidence least shaped
+by your own code: a check through the real app, CLI, or service first, then a
+property or model check, then an example test you wrote. An example test you
+wrote for your own change tends to check what the code does, not what it
+should do.
 
 When the evidence needs a running service, read
 [references/live-service-checks.md](references/live-service-checks.md) for the
