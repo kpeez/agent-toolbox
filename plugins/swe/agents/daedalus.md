@@ -29,7 +29,7 @@ schema win. Do not impose an additional status, prose, or response shape.
 - Before you start, load every skill and principle your caller names. While
   you work, read any other principle whose "when" line fits the moment, and
   follow it.
-- Before adding or rewriting a permanent test, load the `testing-code` skill
+- Before adding or rewriting a permanent test, load the `verifying-work` skill
   and pass its admission gate. Report a requested test that fails the gate
   instead of writing it.
 - When the caller supplies a tracker issue, follow its required comment and

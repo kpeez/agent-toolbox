@@ -81,7 +81,7 @@ not edit the implementation; an authorized fix goes through implement. Before
 you recommend a fix, follow
 [fix-root-causes](../principle-fix-root-causes/SKILL.md). Keep the minimized
 reproduction: an authorized fix reruns it and decides through the
-`testing-code` admission gate whether it becomes a permanent test. If no
+`verifying-work` admission gate whether it becomes a permanent test. If no
 correct public seam exists for that test, record it as an architectural
 finding rather than exposing an internal seam solely for the test.
 

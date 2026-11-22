@@ -1386,11 +1386,14 @@ class OfflineCLIContract(unittest.TestCase):
 
     def test_aggregate_keeps_two_families_of_one_target_apart(self):
         scores = []
-        for name, case_id in (("family-new-tests", "TC-01"), ("family-audit", "TA-01")):
-            _, run = self.route_run(name, self.case_named(case_id), [], "Route: testing-code. Reason: it fits.", full=True)
+        for name, case_id, line in (
+            ("family-target", "swe-mode-refactor-structure", "Playbook: refactor-structure. Reason: it fits."),
+            ("family-route-choice", "swe-route-author-skill", "Playbook: author-skill. Reason: it fits."),
+        ):
+            _, run = self.route_run(name, self.case_named(case_id), [], line, full=True)
             scores.append(run / "score.json")
         groups = self.cli("aggregate", *scores)["groups"]
-        self.assertEqual(sorted(g["family"] for g in groups), ["swe:testing-code", "testing-code-audit"])
+        self.assertEqual(sorted(g["family"] for g in groups), ["swe-route-choice", "swe:swe-mode"])
 
     def validate_with(self, name, case_id, **update):
         corpus = {"cases": read_cases()}
@@ -1435,7 +1438,7 @@ class OfflineCLIContract(unittest.TestCase):
                 ("family-unknown", "IM-01", {"family": "no-such-family"}, "unknown family"),
                 ("open-family-no-route", "IM-01", {"family": "swe-route-choice", "expected_route": None}, "unknown family"),
                 ("open-family-negative", "IM-07", {"family": "swe-route-choice"}, "unknown family"),
-                ("forbidden-auxiliary", "IM-04", {"forbidden_skills": ["swe:testing-code"]}, "contradictory"),
+                ("forbidden-auxiliary", "IM-04", {"forbidden_skills": ["swe:verifying-work"]}, "contradictory"),
                 ("router-forbidden-route", "lab-mode-define-metric", {"expected_route": "route/lab/analyze-results"},
                  "forbids the router")):
             self.validate_with(name, case_id, **update)

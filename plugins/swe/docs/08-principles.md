@@ -100,7 +100,7 @@ The meta principles change the project, not only the current task.
 - [Encode lessons in structure](../skills/principle-encode-lessons-in-structure/SKILL.md) applies when the same instruction comes up a second time. It encodes the rule as a lint, flag, check, or script. The [correct](../skills/correct/SKILL.md) skill applies it to a whole repository, as [Make it yours](09-make-it-yours.md#fix-the-repository-with-correct) shows.
 - [Ancillary fixes](../skills/principle-ancillary-fixes/SKILL.md) applies when the agent finds an issue outside the task, such as a stale doc, a conflict, a bug, or an unrelated failing check. A lead fixes it when the fix is small, safe, and within the task's authority, and reports it otherwise. A subagent only reports it to its caller.
 
-Only these 25 are principles. A skill such as `testing-code` is not a principle, even when a step names it next to one.
+Only these 25 are principles. A skill such as `verifying-work` is not a principle, even when a step names it next to one.
 
 Do not memorize the list. Skim it now. Come back when you see the agent do something that one of these names would have prevented.
 

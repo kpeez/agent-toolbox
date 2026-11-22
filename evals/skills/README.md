@@ -5,11 +5,9 @@ activation evidence independently of task utility. No provider is invoked,
 and no dashboard, database, package installation, or global settings are needed.
 
 The corpus has 136 authored scenarios. Eighty are swe cases in the 4/2/3/1 mix: ten each for `swe-mode`, `implement`, `diagnose`,
-`testing-code` (new-test and probe mode), `testing-code` audit mode, `codebase-design`,
+`verifying-work`, `test-audit`, `codebase-design`,
 `ship-pr`, and `interview-user`. A case belongs to the family named by its
-`family` field, else by its target. The audit-mode cases set `family:
-testing-code-audit`, so the two `testing-code` families keep their own 4/2/3/1 mix and their own
-`aggregate` group. Each family
+`family` field, else by its target. Each family
 has four natural requests, two contextual requests, three nearby negatives, and
 one explicit invocation control. Some negatives are direct diff-review requests,
 which expect no `swe` skill.
@@ -357,9 +355,9 @@ valid only when the correct route for that request never loads that skill. A ste
 counts. `SP-07` forbids `swe:ship-pr` because `fix-bug` step 14 runs "when publication is authorized" and the request says
 not to commit or push. `HO-07` forbids `swe:interview-user` because `build-feature` step 2 runs only when the user has not
 decided, and the request states the decision. A step that only the user's wording lets a run skip does not count: the
-requests `TC-08`, `DG-07`, `TA-07`, and `AR-07` were rewritten for that reason (`fix-bug` steps 6 and 7 name
-`testing-code`, step 1 names `diagnose`, `refactor-structure` step 1 names `testing-code`, and `build-feature` step 4 names
-`codebase-design`). Their requests now route to no playbook that loads the forbidden skill: three are read-only lookups, and
+requests `TC-08`, `DG-07`, and `AR-07` were rewritten for that reason (`fix-bug` steps 6 and 7 name
+`verifying-work`, step 1 names `diagnose`, and `build-feature` step 4 names
+`codebase-design`). Their requests now route to no playbook that loads the forbidden skill: two are read-only lookups, and
 `AR-07` is a one-function change with no interface, so step 4 does not apply. `validate` refuses a case that lists a skill
 as expected or auxiliary and also forbids it.
 
@@ -439,7 +437,7 @@ item that starts with a handle (``1. `1-name`: ...``) or a heading that is a han
 (`## 1-name`). Other numbered lists are not steps. Items belong to the nearest `##` heading
 above them. A skill with one such list has `handles`. A skill with several has `modes`,
 keyed by the heading in lowercase with hyphens and without a trailing "mode" (`## Drive to
-green` is `drive-to-green`, `## Audit mode` is `audit`), and its `handles` is empty. Handles
+green` is `drive-to-green`, `## Maintain mode` is `maintain`), and its `handles` is empty. Handles
 count from 1 in order. `write` fails when a routed skill has no steps or breaks these rules.
 
 Regenerate both files after you change a skill, a router, a playbook, a hook,

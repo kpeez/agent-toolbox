@@ -1,6 +1,6 @@
 # Test audit detail
 
-Read this reference in audit mode. The numbered audit procedure in
+Read this reference during a test audit. The numbered procedure in
 [SKILL.md](../SKILL.md) names the steps. This file holds the detail for each
 step.
 
@@ -9,7 +9,7 @@ should name the contract it guards and the regression it catches. Expect large
 cuts in suites that were written without that bar. Deletion count is not the
 goal: do not delete a test that still names a contract with no verified keeper.
 
-Audit mode has two sizes. Both share one value bar:
+A test audit has two sizes. Both share one value bar:
 
 - **Audit:** a focused sweep that prepares one coherent batch of deletions,
   consolidations, and repairs for review. Continue broad audits as follow-up
@@ -20,7 +20,7 @@ Audit mode has two sizes. Both share one value bar:
 
 ## Value bar
 
-Read [the test value bar](test-value.md). Its junk patterns, retention bar, and
+Read [the test value bar](../../verifying-work/references/test-value.md). Its junk patterns, retention bar, and
 burden of proof decide every mark. An existing test that must change for a
 behavior-preserving refactor is suspect, not automatically deletable.
 
@@ -85,7 +85,7 @@ Do not edit source or tests while a test runner is watching the checkout.
   owns the real contract.
 - For each `consolidate` or `repair` contract, make one deliberate mutation of
   the production owner, confirm the keeper fails, then restore the source byte
-  for byte. See [mutation audits](mutation-audits.md).
+  for byte. See [mutation audits](../../verifying-work/references/mutation-audits.md).
 - Run formatting, `git diff --check`, and the repository's required gates for
   the changed paths.
 - Inspect `git diff --numstat`. Report production and tooling lines separately

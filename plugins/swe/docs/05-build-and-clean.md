@@ -63,22 +63,22 @@ Both performance playbooks vet their numbers with [`benchmark-checklist`](../ski
 Implement the plan in .agents/scratch/feature-export-json/feature-export-json.plan.html
 ```
 
-## Write the failing test first with testing-code
+## Choose the check with verifying-work
 
-[`testing-code`](../skills/testing-code/SKILL.md) owns every decision about tests. Its default is no new permanent test. A new test must pass a six-question admission gate (behavior, failure, oracle, owner, seam, and cost), and you must see it fail before you keep it.
+[`verifying-work`](../skills/verifying-work/SKILL.md) owns every decision about how to prove a change. The agent plans the change as types, inputs, and outputs, then takes the strongest rung that settles the risk: a model check, types, a lint rule, an end-to-end check, a property test, or a unit test. A unit test is valid but often the weakest evidence. The default is no new permanent test. A kept test or check must pass a six-question admission gate (behavior, failure, oracle, owner, seam, and cost), and you must see it fail before you keep it.
 
-For a bug with a cheap local test path, ask for the failing test first:
+For a bug with a cheap reproduction, ask for the failing check first:
 
 ```text
-/swe:testing-code failing test first for the duplicate-record bug, then fix it.
+/swe:verifying-work failing check first for the duplicate-record bug, then fix it.
 ```
 
-It writes the smallest test that fails for the intended reason, makes the smallest fix, and runs the test again. When a test needs broad harness setup or brittle mocks, it uses the closest executable check instead, such as a script or a reproduction command. In the `fix-bug` playbook, the failing repro is committed before the fix when the test is cheap.
+It reproduces the bug at the highest rung that fires, makes the smallest fix, and runs the check again. In the `fix-bug` playbook, the failing check is committed before the fix when it is cheap.
 
-To prune an existing suite, ask for audit mode:
+To audit and prune an existing suite, ask for `test-audit`. It also finds states that no check reaches, and checks on a lower rung than the risk needs:
 
 ```text
-/swe:testing-code audit the tests under src/export/. delete what does not earn its cost.
+/swe:test-audit audit the tests under src/export/. delete what does not earn its cost.
 ```
 
 ## Apply the TypeScript rules

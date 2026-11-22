@@ -313,7 +313,8 @@ Each of these also starts on its own when its task comes up.
 | [`/swe:log-decisions`](./skills/log-decisions/SKILL.md) | You want an append-only decision log for a long or unattended run |
 | [`/swe:implement <feature or fix>`](./skills/implement/SKILL.md) | You approved a feature or fix and want it built and verified |
 | [`/swe:diagnose <symptom or failing check>`](./skills/diagnose/SKILL.md) | You want the cause of a bug or a performance regression |
-| [`/swe:testing-code [code, diff, or test suite]`](./skills/testing-code/SKILL.md) | You design, gate, or audit tests, or want test-first work |
+| [`/swe:verifying-work [change, diff, or behavior]`](./skills/verifying-work/SKILL.md) | You want the strongest check for a change: model check, types, lint, end-to-end, property test, or unit test |
+| [`/swe:test-audit [tests, path, or diff]`](./skills/test-audit/SKILL.md) | You want flaws found in a test suite: missed states, tests that check implementation, duplicates, and checks weaker than the risk needs. Then it fixes the findings you approve |
 | [`/swe:codebase-design <interface or module>`](./skills/codebase-design/SKILL.md) | You design a new interface, or want deeper module boundaries proposed |
 | [`/swe:blast-radius [diff, branch, or PR]`](./skills/blast-radius/SKILL.md) | You want to know what a change could break beyond its diff |
 | [`/swe:why <code, config, or decision>`](./skills/why/SKILL.md) | You want to know why code or a decision exists |

@@ -577,10 +577,7 @@
         "negative": [
           "TA-07",
           "TA-08",
-          "TA-09",
-          "TC-07",
-          "TC-08",
-          "TC-09"
+          "TA-09"
         ],
         "positive": [
           "TA-01",
@@ -589,30 +586,23 @@
           "TA-04",
           "TA-05",
           "TA-06",
-          "TA-10",
-          "TC-01",
-          "TC-02",
-          "TC-03",
-          "TC-04",
-          "TC-05",
-          "TC-06",
-          "TC-10"
+          "TA-10"
         ]
       },
       "evidence": "skill-call",
-      "id": "activation/swe/testing-code",
+      "id": "activation/swe/test-audit",
       "kind": "activation",
       "path": null,
       "plugin": "swe",
       "required_by": {
         "locator": "description",
-        "path": "plugins/swe/skills/testing-code/SKILL.md"
+        "path": "plugins/swe/skills/test-audit/SKILL.md"
       },
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "Gate, design, and audit tests. Use before adding or rewriting any permanent test, for probes, TDD, regression coverage, testing strategy, and judging a diff's tests. Also for reviewing or pruning existing test suites.",
-      "subject": "testing-code"
+      "source_text": "Audit an existing test suite: find missed states, tests that check implementation, duplicates, and checks weaker than the risk needs, then fix the findings the user approves. Use to audit, prune, or review existing tests.",
+      "subject": "test-audit"
     },
     {
       "cases": {
@@ -653,6 +643,38 @@
       "scorer": "recorded",
       "source_text": "Create or maintain this project's verification skill: a reusable way to launch, drive, and observe the real app, plus a feature map. Use when the user asks for a verification skill or to audit one.",
       "subject": "verification-skill"
+    },
+    {
+      "cases": {
+        "negative": [
+          "TC-07",
+          "TC-08",
+          "TC-09"
+        ],
+        "positive": [
+          "TC-01",
+          "TC-02",
+          "TC-03",
+          "TC-04",
+          "TC-05",
+          "TC-06",
+          "TC-10"
+        ]
+      },
+      "evidence": "skill-call",
+      "id": "activation/swe/verifying-work",
+      "kind": "activation",
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "description",
+        "path": "plugins/swe/skills/verifying-work/SKILL.md"
+      },
+      "requirement": "always",
+      "scope": "root",
+      "scorer": "scored",
+      "source_text": "Choose the strongest check that proves a change: a model check, types, a lint rule, an end-to-end check, a property test, or a unit test. Use before you add or rewrite a permanent test, for a failing check before a fix, for probes and regression evidence, and to judge a diff's tests.",
+      "subject": "verifying-work"
     },
     {
       "cases": {
@@ -2903,40 +2925,31 @@
       "cases": {
         "negative": [],
         "positive": [
-          "DG-08",
-          "IM-09",
           "TA-01",
           "TA-02",
           "TA-03",
           "TA-04",
           "TA-05",
           "TA-06",
-          "TA-10",
-          "TC-01",
-          "TC-02",
-          "TC-03",
-          "TC-04",
-          "TC-05",
-          "TC-06",
-          "TC-10"
+          "TA-10"
         ]
       },
       "evidence": "skill-call",
-      "id": "route-load/swe/testing-code",
+      "id": "route-load/swe/test-audit",
       "kind": "route-load",
-      "name": "testing-code",
+      "name": "test-audit",
       "name_class": "visible-skill",
       "path": null,
       "plugin": "swe",
       "required_by": {
-        "locator": "Single-skill routes: testing-code",
+        "locator": "Single-skill routes: test-audit",
         "path": "plugins/swe/skills/swe-mode/SKILL.md"
       },
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "Design or judge a new test or a disposable probe: `testing-code`. | Prune or review an existing test suite: `testing-code`.",
-      "subject": "testing-code"
+      "source_text": "Audit or prune an existing test suite: `test-audit`.",
+      "subject": "test-audit"
     },
     {
       "cases": {
@@ -2961,6 +2974,38 @@
       "scorer": "scored",
       "source_text": "Build or audit the project's own skill that drives its app for verification: `verification-skill`.",
       "subject": "verification-skill"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": [
+          "DG-08",
+          "IM-09",
+          "TC-01",
+          "TC-02",
+          "TC-03",
+          "TC-04",
+          "TC-05",
+          "TC-06",
+          "TC-10"
+        ]
+      },
+      "evidence": "skill-call",
+      "id": "route-load/swe/verifying-work",
+      "kind": "route-load",
+      "name": "verifying-work",
+      "name_class": "visible-skill",
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Single-skill routes: verifying-work",
+        "path": "plugins/swe/skills/swe-mode/SKILL.md"
+      },
+      "requirement": "always",
+      "scope": "root",
+      "scorer": "scored",
+      "source_text": "Choose how to verify a change, or design or judge a new test or a disposable probe: `verifying-work`.",
+      "subject": "verifying-work"
     },
     {
       "cases": {
@@ -4488,57 +4533,41 @@
       "cases": {
         "negative": [],
         "positive": [
-          "DG-08",
-          "IM-09",
           "TA-01",
           "TA-02",
           "TA-03",
           "TA-04",
           "TA-05",
           "TA-06",
-          "TA-10",
-          "TC-01",
-          "TC-02",
-          "TC-03",
-          "TC-04",
-          "TC-05",
-          "TC-06",
-          "TC-10"
+          "TA-10"
         ]
       },
       "evidence": "assistant-text",
-      "handles": [],
-      "id": "route/swe/testing-code",
+      "handles": [
+        "1-record-suite-baseline",
+        "2-map-the-behavior",
+        "3-find-flaws",
+        "4-report-findings",
+        "5-edit-in-small-batches",
+        "6-mutate-changed-contracts",
+        "7-independent-preservation-review",
+        "8-publish-draft-pr"
+      ],
+      "id": "route/swe/test-audit",
       "kind": "route",
-      "modes": {
-        "audit": [
-          "1-record-suite-baseline",
-          "2-mark-candidates",
-          "3-edit-in-small-batches",
-          "4-mutate-changed-contracts",
-          "5-independent-preservation-review",
-          "6-publish-draft-pr"
-        ],
-        "new-tests-and-probes": [
-          "1-name-the-contract",
-          "2-pass-the-admission-gate",
-          "3-choose-the-evidence",
-          "4-see-it-fail",
-          "5-clean-up-and-report"
-        ]
-      },
+      "modes": {},
       "path": null,
       "plugin": "swe",
       "required_by": {
-        "locator": "Single-skill routes: testing-code",
+        "locator": "Single-skill routes: test-audit",
         "path": "plugins/swe/skills/swe-mode/SKILL.md"
       },
       "requirement": "always",
       "route_type": "skill",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "Design or judge a new test or a disposable probe: `testing-code`. | Prune or review an existing test suite: `testing-code`.",
-      "subject": "testing-code"
+      "source_text": "Audit or prune an existing test suite: `test-audit`.",
+      "subject": "test-audit"
     },
     {
       "cases": {
@@ -4581,6 +4610,45 @@
       "scorer": "scored",
       "source_text": "Build or audit the project's own skill that drives its app for verification: `verification-skill`.",
       "subject": "verification-skill"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": [
+          "DG-08",
+          "IM-09",
+          "TC-01",
+          "TC-02",
+          "TC-03",
+          "TC-04",
+          "TC-05",
+          "TC-06",
+          "TC-10"
+        ]
+      },
+      "evidence": "assistant-text",
+      "handles": [
+        "1-name-the-behavior",
+        "2-choose-the-rung",
+        "3-pass-the-admission-gate",
+        "4-see-it-fail",
+        "5-clean-up-and-report"
+      ],
+      "id": "route/swe/verifying-work",
+      "kind": "route",
+      "modes": {},
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Single-skill routes: verifying-work",
+        "path": "plugins/swe/skills/swe-mode/SKILL.md"
+      },
+      "requirement": "always",
+      "route_type": "skill",
+      "scope": "root",
+      "scorer": "scored",
+      "source_text": "Choose how to verify a change, or design or judge a new test or a disposable probe: `verifying-work`.",
+      "subject": "verifying-work"
     },
     {
       "cases": {
@@ -7973,7 +8041,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. (model-the-domain, foundational-thinking)",
+      "source_text": "3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. Name the types, inputs, and outputs, and the check that will prove the behavior. (model-the-domain, foundational-thinking)",
       "subject": "build-feature"
     },
     {
@@ -8003,7 +8071,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. (model-the-domain, foundational-thinking)",
+      "source_text": "3-name-data-shape: Name the data shape, its states, their owners, and its organizing structure before logic. Prefer a state machine to scattered booleans and a table to branching. Name the types, inputs, and outputs, and the check that will prove the behavior. (model-the-domain, foundational-thinking)",
       "subject": "build-feature"
     },
     {
@@ -8243,7 +8311,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "7-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)",
+      "source_text": "7-decide-tests: Choose each check at the strongest rung that settles the risk, and pass the admission gate before you keep one. (verifying-work, test-behavior-not-implementation)",
       "subject": "build-feature"
     },
     {
@@ -8260,9 +8328,9 @@
       },
       "evidence": "skill-call",
       "handle": "7-decide-tests",
-      "id": "step-load/swe/build-feature/7-decide-tests/testing-code",
+      "id": "step-load/swe/build-feature/7-decide-tests/verifying-work",
       "kind": "step-load",
-      "name": "testing-code",
+      "name": "verifying-work",
       "name_class": "visible-skill",
       "path": null,
       "plugin": "swe",
@@ -8273,7 +8341,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "7-decide-tests: Decide each new permanent test through the admission gate. (testing-code, test-behavior-not-implementation)",
+      "source_text": "7-decide-tests: Choose each check at the strongest rung that settles the risk, and pass the admission gate before you keep one. (verifying-work, test-behavior-not-implementation)",
       "subject": "build-feature"
     },
     {
@@ -9370,7 +9438,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "6-decide-regression-test: Decide through the admission gate whether the reproduction becomes a permanent test. (testing-code, test-behavior-not-implementation)",
+      "source_text": "6-decide-regression-test: Choose the strongest rung that reproduces the bug, and decide through the admission gate whether that check stays. (verifying-work, test-behavior-not-implementation)",
       "subject": "fix-bug"
     },
     {
@@ -9385,9 +9453,9 @@
       },
       "evidence": "skill-call",
       "handle": "6-decide-regression-test",
-      "id": "step-load/swe/fix-bug/6-decide-regression-test/testing-code",
+      "id": "step-load/swe/fix-bug/6-decide-regression-test/verifying-work",
       "kind": "step-load",
-      "name": "testing-code",
+      "name": "verifying-work",
       "name_class": "visible-skill",
       "path": null,
       "plugin": "swe",
@@ -9398,7 +9466,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "6-decide-regression-test: Decide through the admission gate whether the reproduction becomes a permanent test. (testing-code, test-behavior-not-implementation)",
+      "source_text": "6-decide-regression-test: Choose the strongest rung that reproduces the bug, and decide through the admission gate whether that check stays. (verifying-work, test-behavior-not-implementation)",
       "subject": "fix-bug"
     },
     {
@@ -9426,7 +9494,7 @@
       "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "7-commit-failing-repro: When the bug has a cheap local test path, commit the failing repro before the fix. Skip when the test is expensive, integration-heavy, or unclear. (testing-code, sequence-verifiable-units)",
+      "source_text": "7-commit-failing-repro: When a cheap check reproduces the bug, commit it failing before the fix. Skip when no such check is clear. (verifying-work, sequence-verifiable-units)",
       "subject": "fix-bug"
     },
     {
@@ -9441,9 +9509,9 @@
       },
       "evidence": "skill-call",
       "handle": "7-commit-failing-repro",
-      "id": "step-load/swe/fix-bug/7-commit-failing-repro/testing-code",
+      "id": "step-load/swe/fix-bug/7-commit-failing-repro/verifying-work",
       "kind": "step-load",
-      "name": "testing-code",
+      "name": "verifying-work",
       "name_class": "visible-skill",
       "path": null,
       "plugin": "swe",
@@ -9454,7 +9522,7 @@
       "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "7-commit-failing-repro: When the bug has a cheap local test path, commit the failing repro before the fix. Skip when the test is expensive, integration-heavy, or unclear. (testing-code, sequence-verifiable-units)",
+      "source_text": "7-commit-failing-repro: When a cheap check reproduces the bug, commit it failing before the fix. Skip when no such check is clear. (verifying-work, sequence-verifiable-units)",
       "subject": "fix-bug"
     },
     {
@@ -10721,9 +10789,9 @@
       },
       "evidence": "skill-call",
       "handle": "1-pin-behavior",
-      "id": "step-load/swe/refactor-structure/1-pin-behavior/testing-code",
+      "id": "step-load/swe/refactor-structure/1-pin-behavior/verifying-work",
       "kind": "step-load",
-      "name": "testing-code",
+      "name": "verifying-work",
       "name_class": "visible-skill",
       "path": null,
       "plugin": "swe",
@@ -10734,7 +10802,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "1-pin-behavior: Trace the code to learn the contract, then pin it with a characterization test, snapshot, or equivalence harness before any structure moves. Type check and lint are not a pin. (testing-code)",
+      "source_text": "1-pin-behavior: Trace the code to learn the contract, then pin it with a characterization test, snapshot, or equivalence harness before any structure moves. Type check and lint are not a pin. (verifying-work)",
       "subject": "refactor-structure"
     },
     {
@@ -11876,7 +11944,7 @@
   "summary": {
     "activation": {
       "recorded": 30,
-      "scored": 9
+      "scored": 10
     },
     "hook-load": {
       "recorded": 5
@@ -11892,10 +11960,10 @@
       "recorded": 2
     },
     "route": {
-      "scored": 47
+      "scored": 48
     },
     "route-load": {
-      "scored": 19
+      "scored": 20
     },
     "router-contract": {
       "invisible": 25

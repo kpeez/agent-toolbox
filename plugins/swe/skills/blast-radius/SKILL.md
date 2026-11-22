@@ -58,7 +58,7 @@ application ships and calls the exact function in question.
 5. `5-prove-the-fact`: Write a probe that runs the real code, run it, and
    paste the result. Put the probe in `.agents/scratch/<branch-slug>/`
    ([agent scratch](../../references/agent-scratch.md)). It becomes a permanent test only through the admission
-   gate in [testing-code](../testing-code/SKILL.md).
+   gate in [verifying-work](../verifying-work/SKILL.md).
 6. `6-optional-independent-review`: For a large or wide change, give the
    change and your write-up to a reviewer with the
    [review brief](../../references/review-brief.md), and ask it to find a

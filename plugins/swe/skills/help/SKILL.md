@@ -94,7 +94,8 @@ and give one example prompt.
 | Design a new interface, or review module boundaries | [codebase-design](../codebase-design/SKILL.md) |
 | Run parallel checks over slices, or race workers | [swarm](../swarm/SKILL.md) |
 | Run workers on OpenCode, Antigravity, or another agent CLI | [external-agents](../external-agents/SKILL.md) |
-| Gate, design, or audit tests | [testing-code](../testing-code/SKILL.md) |
+| Choose the strongest check, or gate and design tests | [verifying-work](../verifying-work/SKILL.md) |
+| Find flaws in a test suite, then fix the findings the user approves | [test-audit](../test-audit/SKILL.md) |
 | Apply TypeScript rules to `.ts` or `.tsx` work | [typescript-best-practices](../typescript-best-practices/SKILL.md) |
 | Strip comments before review | [no-comments](../no-comments/SKILL.md) |
 | Write a README, docs page, PR body, or commit message | [writing](../writing/SKILL.md) |

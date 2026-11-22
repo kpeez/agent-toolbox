@@ -16,7 +16,7 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | `sharpen` | `go-deeper` | go-deeper frames each new task and then does it. It also has a prompt-only mode. One copy each in swe, lab, and uni. | #192 |
 | `show-me-your-work` | `log-decisions` | swe names skills with verbs. JSONL log, not TSV. | #171 |
 | `bro` | `wait-what` | Existing swe name. | #174 |
-| `tdd` | `testing-code` | swe already had a test skill. The failing-test-first cadence is merged into it. | #174 |
+| `tdd` | `verifying-work` | swe already had a test skill, then named `testing-code`. The skill was renamed to `verifying-work`. The failing-test-first cadence is merged into it. | #174 |
 | `technical-writing`, `unslop` | `writing` | One writing hub with prose, ASD-STE100, and show-me references. | #176 |
 | `create-verification-skill`, `maintain-verification-skill` | `verification-skill` | One skill creates the skill, or audits it when it exists. | #174 |
 | `interrogate` | `references/review-brief.md` | Cross-model review adds little when only Claude runs. Callers start a fresh reviewer subagent with the brief. | #175 |
