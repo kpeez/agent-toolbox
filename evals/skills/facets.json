@@ -10656,7 +10656,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "3-write-plan-file: Write the plan's HTML source where [plan storage](../../../references/plan-storage.md) puts it: `.agents/docs/plans/<slug>.plan.src.html` when the project has a `.agents/docs` folder, else `.agents/scratch/<branch-slug>/`. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
+      "source_text": "3-write-plan-file: Write the plan from the template, where [plan storage](../../../references/plan-storage.md) says. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
       "subject": "plan-multi-phase"
     },
     {
@@ -10682,7 +10682,7 @@
       "requirement": "always",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "3-write-plan-file: Write the plan's HTML source where [plan storage](../../../references/plan-storage.md) puts it: `.agents/docs/plans/<slug>.plan.src.html` when the project has a `.agents/docs` folder, else `.agents/scratch/<branch-slug>/`. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
+      "source_text": "3-write-plan-file: Write the plan from the template, where [plan storage](../../../references/plan-storage.md) says. Open with what changes, the PR ids in landing order, and the dependency graph: which PRs are independent and branch from trunk, which wait for which, and the files each may touch. Then one section per PR, with checkboxes for what it depends on, the files it edits, the one change it builds, the result you see, and its verification. (sequence-verifiable-units, writing)",
       "subject": "plan-multi-phase"
     },
     {

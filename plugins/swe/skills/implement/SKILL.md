@@ -50,7 +50,7 @@ affected documentation left stale and the reason.
 ## Plans and issues
 
 - When the caller names a plan (for example
-  `feature-export-json.plan.src.html`), read it first and work to it. Follow
+  `feature-export-json.plan.html`), read it first and work to it. Follow
   [plan storage](../../references/plan-storage.md) to find the plan's HTML
   source. If a material design choice changes during the work, update the
   plan.

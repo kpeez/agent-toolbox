@@ -112,7 +112,7 @@ Reviews and searches use the host's own subagents, with the rules in the [review
 | Files | Location |
 | --- | --- |
 | Notes, research | `.agents/docs/notes/` and `.agents/docs/research/`, unless the project or user names another place. It can be a folder or a symlink, tracked or ignored. |
-| Plans | `.agents/docs/plans/<slug>.plan.src.html` when the project has a `.agents/docs` folder, else `.agents/scratch/<branch-slug>/`. See [plan storage](../references/plan-storage.md). |
+| Plans | `.agents/scratch/<branch-slug>/<slug>.plan.html`. See [plan storage](../references/plan-storage.md). |
 | Decision logs | `.agents/scratch/<branch-slug>/decisions.jsonl`, one per branch. The handoff posts the key rows to the tracker issue and deletes the file. |
 | Handoffs | The work's tracker issue. With no tracker, one pull request comment. |
 
