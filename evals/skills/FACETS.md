@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-67 of 338 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+70 of 341 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -54,10 +54,10 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 
 | kind | scored | recorded | invisible | total |
 |---|---|---|---|---|
-| activation | 9 | 30 | 0 | 39 |
+| activation | 9 | 31 | 0 | 40 |
 | hook-load | 0 | 5 | 0 | 5 |
-| route | 47 | 0 | 0 | 47 |
-| route-load | 19 | 0 | 0 | 19 |
+| route | 47 | 0 | 1 | 48 |
+| route-load | 19 | 1 | 0 | 20 |
 | playbook-read | 28 | 0 | 0 | 28 |
 | step-load | 232 | 2 | 9 | 243 |
 | reply-load | 0 | 2 | 0 | 2 |
@@ -89,6 +89,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | implement | swe | 7 | 3 | scored |
 | interview-user | swe | 7 | 3 | scored |
 | log-decisions | swe | 0 | 0 | recorded |
+| plan-page | swe | 0 | 0 | recorded |
 | ship-pr | swe | 7 | 3 | scored |
 | swe-mode | swe | 36 | 3 | scored |
 | testing-code | swe | 14 | 6 | scored |
@@ -125,6 +126,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 - `swe:go-deeper`
 - `swe:handoff`
 - `swe:log-decisions`
+- `swe:plan-page`
 - `swe:typescript-best-practices`
 - `swe:verification-skill`
 - `swe:wait-what`
@@ -176,6 +178,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | playbook `pause-safely` | 1-stop-at-safe-boundary, 2-take-no-irreversible-action, 3-commit-wip, 4-write-handoff | 1 | 0 |
 | playbook `pick-up-session` | 1-locate-prior-trail, 2-reconstruct-state, 3-diff-done-vs-pending, 4-route-remaining-work, 5-verify-inherited-claims | 1 | 0 |
 | playbook `plan-multi-phase` | 1-skip-small-change, 2-settle-by-prototype, 3-write-plan-file, 4-require-real-verification, 5-hand-back | 2 | 0 |
+| skill `plan-page` | 1-copy-the-template, 2-fill-the-page, 3-show-the-page, 4-settle-the-decisions | 0 | 0 |
 | playbook `refactor-structure` | 1-pin-behavior, 2-name-missing-structure, 3-name-target-shape, 4-subtract-first, 5-move-in-small-steps, 6-migrate-then-delete, 7-prove-equivalence, 8-confirm-reader-gain, 9-independent-review, 10-order-commits, 11-update-obsolete-docs, 12-publish-draft-pr | 2 | 0 |
 | skill `reflect` | 1-read-the-session, 2-keep-durable-findings, 3-present-and-wait | 1 | 0 |
 | playbook `run-autonomously` | 1-state-exit-predicate, 2-pick-wake-mechanism, 3-open-decision-log, 4-iterate-smallest-change, 5-own-mid-run-discoveries, 6-log-each-iteration, 7-stop-on-predicate, 8-publish-draft-pr | 1 | 0 |
@@ -475,6 +478,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | handoff | visible-skill | skill-call | scored | Single-skill routes: handoff |
 | interview-user | visible-skill | skill-call | scored | Single-skill routes: interview-user |
 | ketchup | hidden-skill | full-read | scored | Single-skill routes: ketchup |
+| plan-page | visible-skill | skill-call | recorded | Single-skill routes: plan-page |
 | reflect | hidden-skill | full-read | scored | Single-skill routes: reflect |
 | ship-pr | visible-skill | skill-call | scored | Single-skill routes: ship-pr |
 | testing-code | visible-skill | skill-call | scored | Single-skill routes: testing-code |

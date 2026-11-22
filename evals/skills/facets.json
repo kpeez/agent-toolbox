@@ -481,6 +481,26 @@
     },
     {
       "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "skill-call",
+      "id": "activation/swe/plan-page",
+      "kind": "activation",
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "description",
+        "path": "plugins/swe/skills/plan-page/SKILL.md"
+      },
+      "requirement": "always",
+      "scope": "root",
+      "scorer": "recorded",
+      "source_text": "Show a plan, design, or set of options as one HTML page the user reads and answers on a phone. Use when the user must read a plan before deciding, or asks for an HTML plan.",
+      "subject": "plan-page"
+    },
+    {
+      "cases": {
         "negative": [
           "SP-07",
           "SP-08",
@@ -2854,6 +2874,28 @@
     {
       "cases": {
         "negative": [],
+        "positive": []
+      },
+      "evidence": "skill-call",
+      "id": "route-load/swe/plan-page",
+      "kind": "route-load",
+      "name": "plan-page",
+      "name_class": "visible-skill",
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Single-skill routes: plan-page",
+        "path": "plugins/swe/skills/swe-mode/SKILL.md"
+      },
+      "requirement": "always",
+      "scope": "root",
+      "scorer": "recorded",
+      "source_text": "Show a plan, design, or options as an HTML page for the user to read and answer: `plan-page`.",
+      "subject": "plan-page"
+    },
+    {
+      "cases": {
+        "negative": [],
         "positive": [
           "swe-route-reflect"
         ]
@@ -4294,6 +4336,34 @@
       "scorer": "scored",
       "source_text": "`plan-multi-phase`: work that spans phases or stacked PRs. The plan is the deliverable.",
       "subject": "plan-multi-phase"
+    },
+    {
+      "cases": {
+        "negative": [],
+        "positive": []
+      },
+      "evidence": "assistant-text",
+      "handles": [
+        "1-copy-the-template",
+        "2-fill-the-page",
+        "3-show-the-page",
+        "4-settle-the-decisions"
+      ],
+      "id": "route/swe/plan-page",
+      "kind": "route",
+      "modes": {},
+      "path": null,
+      "plugin": "swe",
+      "required_by": {
+        "locator": "Single-skill routes: plan-page",
+        "path": "plugins/swe/skills/swe-mode/SKILL.md"
+      },
+      "requirement": "always",
+      "route_type": "skill",
+      "scope": "root",
+      "scorer": "invisible",
+      "source_text": "Show a plan, design, or options as an HTML page for the user to read and answer: `plan-page`.",
+      "subject": "plan-page"
     },
     {
       "cases": {
@@ -11875,7 +11945,7 @@
   "schema_version": 1,
   "summary": {
     "activation": {
-      "recorded": 30,
+      "recorded": 31,
       "scored": 9
     },
     "hook-load": {
@@ -11892,9 +11962,11 @@
       "recorded": 2
     },
     "route": {
+      "invisible": 1,
       "scored": 47
     },
     "route-load": {
+      "recorded": 1,
       "scored": 19
     },
     "router-contract": {
