@@ -60,7 +60,7 @@ Both performance playbooks vet their numbers with [`benchmark-checklist`](../ski
 `implement` also updates documentation the change makes obsolete, without asking you. When you name a plan file, it reads the plan first and works to it:
 
 ```text
-Implement the plan in .agents/docs/plans/feature-export-json.plan.src.html
+Implement the plan in .agents/scratch/feature-export-json/feature-export-json.plan.html
 ```
 
 ## Write the failing test first with testing-code
