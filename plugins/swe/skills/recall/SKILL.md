@@ -80,7 +80,7 @@ user names that project.
    worktree path, as the Atuin bullet above says, and read the matching
    threads. Use the transcript fan-out below only when Atuin is not available
    or finds nothing for the topic. For the fan-out, start parallel subagents
-   on a cheap model (in Claude Code, `haiku` or `sonnet`; in Codex, low
+   on the fastest model (in Codex, low
    reasoning effort), each taking a slice of the transcript list. Tell every subagent
    to keep the script's order (real modification time, never the file name),
    grep the topic first, read only the matching transcripts and only their

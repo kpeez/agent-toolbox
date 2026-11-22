@@ -46,9 +46,9 @@ Open the host's task list with one entry per phase before you launch anything.
 2. Choose the shape. Partition into slices, race N workers on identical
    briefs, or mix both. For a race or a mixed shape, declare `first pass`,
    `rank all`, or `best-of` before you spawn.
-3. Pick the worker model by role. In Claude Code, use `sonnet` for routine
-   workers, `haiku` for mechanical lanes, and `opus` for judgment or the
-   hardest code. In Codex, set reasoning effort the same way. For a model
+3. Pick the worker model by role: a mid-tier model for routine workers, the
+   fastest model for mechanical lanes, and the strongest model for judgment or
+   the hardest code. In Codex, set reasoning effort the same way. For a model
    race, name each arm's model up front. A diversity arm can run on a
    different Claude model, or on another agent CLI through
    [external-agents](../external-agents/SKILL.md) when the user asked for it. If
@@ -84,8 +84,9 @@ When a worker must start from a non-default branch, push that branch and
 name it in the brief. The worker creates its worktree from it.
 
 Every brief stands alone. Include the goal, the scope (paths it may and may
-not write, and its worktree or branch), the context it cannot see (paste
-source text and upstream reports), the exact slice or race arm, checkable
+not write, and its worktree or branch), the context it cannot see (paths
+for files the worker can read; paste only text it cannot reach, such as
+upstream reports), the exact slice or race arm, checkable
 acceptance criteria, how to verify, its budget or stop condition, forbidden
 actions, and what to report. Reports use `PASS`, `ISSUES`, or `BLOCKED`
 with evidence. A worker that can prove a defect reports `ISSUES` and lists

@@ -62,15 +62,15 @@ Without these lines, type `$swe:swe-mode <task>` to start the router in Codex.
 
 swe spends extra tokens on subagents. Code goes to delegates, and reviews go to a fresh reviewer. That is the price of independent checks.
 
-The router picks a model for each job. You do not configure it. In Claude Code, the [router's Subagents section](../skills/swe-mode/SKILL.md#subagents) uses these models:
+The router picks a model for each job. You do not configure it. The [router's Subagents section](../skills/swe-mode/SKILL.md#subagents) uses these model tiers:
 
-| Job | Model |
+| Job | Model tier |
 | --- | --- |
-| Judgment, prose, and the hardest code | `opus` |
-| Routine code | `sonnet` |
-| Mechanical edits | `haiku` |
+| Judgment, prose, and the hardest code | strongest |
+| Routine code | mid-tier |
+| Mechanical edits | fastest |
 
-In Codex, the router raises or lowers reasoning effort the same way. The `daedalus` code agent runs on `sonnet` with medium effort in Claude Code. Its Codex definition, [daedalus.toml](../agents/daedalus.toml), pins its own model with maximum reasoning effort.
+In Codex, the router raises or lowers reasoning effort the same way. The `daedalus` code agent runs on a mid-tier model with medium effort in Claude Code. Its Codex definition, [daedalus.toml](../agents/daedalus.toml), pins its own model with maximum reasoning effort.
 
 To spend fewer tokens:
 
