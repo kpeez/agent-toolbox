@@ -74,3 +74,6 @@
   `uv run .agents/skills/verify-tech-tree/scripts/check.py`. It checks the
   gate and scheduling rules in every reachable state. The
   `verify-tech-tree` skill says what it covers.
+- After you change a path that a skill in `.agents/skills/verify-*` lists in its
+  `paths`, run that skill. For `plugins/swe` hooks, run
+  `uv run .agents/skills/verify-swe-hooks/scripts/check.py`.
