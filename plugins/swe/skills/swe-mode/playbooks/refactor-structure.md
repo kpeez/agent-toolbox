@@ -2,7 +2,7 @@
 
 Applies when: change structure, keep behavior.
 
-You own the contract. The structure changes. The behavior does not. Delegate the reshape and review the diff.
+You own the contract. The structure changes. The behavior does not.
 
 When the cleanup reveals a missing feature or a real bug, split it out and ship the structural change first against the pinned contract. A named redesign routes to build-feature. Large or cross-cutting structural work goes to figure-it-out.
 

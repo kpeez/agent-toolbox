@@ -3,6 +3,10 @@
 This file is the pre-registration. It was written and committed before any scored run. A later edit
 must say what changed and why.
 
+Update, 2026-11-21: the result was null, so the PR no longer ships the two coordinator bullets or the
+`refactor-structure` sentence. The eval measured them at head `a536e03`. The question and design below
+describe that measured run, not the current PR content. The current head has no coordinator bullets.
+
 ## Question
 
 After the two coordinator bullets in `swe-mode` `## Subagents`, does the lead agent make fewer

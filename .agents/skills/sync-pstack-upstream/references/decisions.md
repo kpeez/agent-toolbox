@@ -27,7 +27,6 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | pstack | Why | PR |
 | --- | --- | --- |
 | `arena` | Dropped. The eval playbook runs candidates and the blinded judge through `swarm`. | #174 |
-| `orchestrate` (cursor/plugins#1043, deleted upstream in #1249) | Not imported again. Its planner rules already live in swe: `swe-mode` Subagents, `plan-multi-phase`, `figure-it-out`, and `swarm`. KP-599 adds two coordinator bullets to `swe-mode` instead. | #36 |
 | `teach` | The uni plugin owns teaching. | #174 |
 | `automate-me`, `make-bot-ui` | Persona and Cursor UI. | #174 |
 | `setup-pstack` | Cursor setup. swe installs as a plugin. | #174 |
