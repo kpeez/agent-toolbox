@@ -140,7 +140,7 @@ The [`ship-stack`](../skills/swe-mode/playbooks/ship-stack.md) playbook gives ea
 
 ```mermaid
 flowchart LR
-  publish["ship-pr or gh stack link<br/>draft PRs"] --> babysit["babysit-pr<br/>merge-ready"]
+  publish["ship-pr or gh stack submit<br/>draft PRs"] --> babysit["babysit-pr<br/>merge-ready"]
   babysit --> verify["ship-stack<br/>verdict per PR"]
   verify --> land["gh stack merge, or<br/>bottom-up to ceiling"]
 ```
