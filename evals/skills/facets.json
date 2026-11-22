@@ -4420,7 +4420,7 @@
           "2-account-for-local-changes",
           "3-reverify",
           "4-ready-or-land",
-          "5-leave-issue-status",
+          "5-set-issue-status",
           "6-report"
         ],
         "land": [

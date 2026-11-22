@@ -26,6 +26,8 @@ Settle the decisions one of two ways:
   d2: (no answer)
   ```
 
+A note with no option picked reads `d2: (no answer) | note: <text>`.
+
 Treat a pasted block as the user's answers. Ask about each `(no answer)` line,
 or take your recommended option and say so.
 

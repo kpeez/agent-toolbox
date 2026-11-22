@@ -18,7 +18,7 @@ template:
 | `blast_radius.md` | One word, then optional ramifications. See [Risk](#risk). |
 
 ```bash
-sh <ship-pr>/../../scripts/run-ts <ship-pr>/scripts/pr_body.ts render <slot-folder> --link "Fixes ABC-123" -o body.md
+sh <ship-pr>/../../scripts/run-ts <ship-pr>/scripts/pr_body.ts render <slot-folder> --link "Closes ABC-123" -o body.md
 gh pr create --draft --title "<title>" --body-file body.md
 ```
 
@@ -191,4 +191,4 @@ The blast radius is the potential impact or scope of the changes introduced by t
 
 ## Closing line
 
-Pass `--link "Fixes #123"` (or `--link "Part of #123"`) to `render` when the work has an issue. See `6-link-issue` in [ship-pr](../SKILL.md).
+Pass `--link "Closes #123"` (or `--link "Part of #123"`) to `render` when the work has an issue. See `6-link-issue` in [ship-pr](../SKILL.md).

@@ -17,7 +17,7 @@ const SCRIPT = realpathSync(fileURLToPath(import.meta.url));
 const TEMPLATE = resolve(dirname(SCRIPT), "..", "templates", "pr-body.md");
 const SLOT = /\{(\w+)\}/g;
 // Python's $ also matches just before one trailing newline; linkValid below keeps that.
-const LINK = /^(?:Fixes|Part of) [\p{L}\p{N}_#/.-]+$/u;
+const LINK = /^(?:Closes|Fixes|Part of) [\p{L}\p{N}_#/.-]+$/u;
 const FENCE = /^\s*(```|~~~)/;
 
 const VERBS =
@@ -349,7 +349,7 @@ export function render(folder: string, link: string | null): { body: string | nu
     errors.push(...slotErrors(name, slots[name]));
   }
   if (link && !linkValid(link)) {
-    errors.push(`link '${link}' must be 'Fixes <key>' or 'Part of <key>'.`);
+    errors.push(`link '${link}' must be 'Closes <key>', 'Fixes <key>', or 'Part of <key>'.`);
   }
   if (errors.length > 0) return { body: null, errors };
   const body = template.replace(SLOT, (_m, name: string) => slots[name]).replace(/\n+$/, "") + "\n";
@@ -371,7 +371,7 @@ export function check(body: string): string[] {
     .split(SLOT)
     .map((part, i) => (i % 2 === 0 ? escapeRegex(part) : `(?<${part}>.+?)`))
     .join("");
-  const full = new RegExp(`^(?:${pattern}(?:\\n\\n(?<link>(?:Fixes|Part of) \\S+))?\\n*)$`, "s");
+  const full = new RegExp(`^(?:${pattern}(?:\\n\\n(?<link>(?:Closes|Fixes|Part of) \\S+))?\\n*)$`, "s");
   const match = full.exec(body.replaceAll("\r\n", "\n"));
   if (!match) {
     return ["body does not match templates/pr-body.md. Build it with `pr_body.ts render`."];
