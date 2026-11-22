@@ -95,9 +95,9 @@ For work that spans phases or stacked PRs, the [plan-multi-phase playbook](../sk
 /swe:swe-mode turn this design into a plan. small verifiable PRs, each with its own verification steps.
 ```
 
-It has five steps. It skips the plan for a one or two file change. Otherwise it settles open questions by prototype. Then it writes the plan file. The file lists what changes, the PR ids in landing order, and a dependency graph. Then it has one section per PR with checkboxes: depends on, files, the one change, the result you see, and verification. A PR is verified only when its unit, live, and perf boxes are checked. The playbook hands back the plan path and stops. The plan is the deliverable, so it implements nothing until you say go.
+It has five steps. It skips the plan for a one or two file change. Otherwise it settles open questions by prototype. Then it writes the plan folder. Its `plan.json` lists the PRs in landing order. Each PR names what it depends on, its files, the one change, the result you see, and three verify boxes. A script checks the plan and renders the page you read. A PR is verified only when its unit, live, and perf boxes are done, each with its evidence. The playbook hands back the plan path and stops. The plan is the deliverable, so it implements nothing until you say go.
 
-Smaller work needs no plan file. Use plan mode, or ask for a plan in chat. A plan is one HTML file in `.agents/scratch/<branch-slug>/`, outside Git. Delete a plan when its PR merges, because the PR and the code are the record. [Plan storage](../references/plan-storage.md) covers where these files live.
+Smaller work needs no plan. Use plan mode, or ask for a plan in chat. A plan is a folder in `.agents/scratch/<branch-slug>/`, outside Git. It holds `plan.json`, its Markdown files, and the generated `plan.html`. Delete the plan when its PR merges, because the PR and the code are the record. [Plan storage](../references/plan-storage.md) covers where these files live.
 
 ## Match the design work to the task
 

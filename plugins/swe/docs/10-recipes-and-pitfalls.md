@@ -32,7 +32,7 @@ The [build-prototype](../skills/swe-mode/playbooks/build-prototype.md) playbook 
 /swe:swe-mode turn this design into a plan. small verifiable PRs, each with its own proof.
 ```
 
-Ask only after the design settles. The [plan-multi-phase](../skills/swe-mode/playbooks/plan-multi-phase.md) playbook settles open questions by prototype and writes the plan file. It hands back the plan path and stops until you say go.
+Ask only after the design settles. The [plan-multi-phase](../skills/swe-mode/playbooks/plan-multi-phase.md) playbook settles open questions by prototype and writes the plan folder. It hands back the plan path and stops until you say go.
 
 ## Check independent slices in parallel
 

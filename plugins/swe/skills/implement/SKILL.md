@@ -50,10 +50,12 @@ affected documentation left stale and the reason.
 ## Plans and issues
 
 - When the caller names a plan (for example
-  `feature-export-json.plan.html`), read it first and work to it. Follow
-  [plan storage](../../references/plan-storage.md) to find the plan file.
-  If a material design choice changes during the work, update the
-  plan.
+  `feature-export-json.plan`), first read its `plan.json` and the Markdown
+  files it names, and work to them.
+  Follow [plan storage](../../references/plan-storage.md) to find the plan
+  folder. When you prove a verify box, set its `done` and `evidence`. If a
+  material design choice changes during the work, update the plan. Render
+  the plan again after each edit.
 - For work with an issue, include its key when creating a branch; preserve an
   established branch name. When the plan is agreed and the branch or worktree
   exists, move the issue from its backlog or todo state to the started state

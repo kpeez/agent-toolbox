@@ -154,7 +154,7 @@ The Playbooks section of [swe-mode](../swe-mode/SKILL.md) lists every
 playbook and when it applies. Page `06-verify-and-ship.md` covers opening,
 babysitting, and landing a PR. For work across phases or stacked PRs, ask
 `/swe:swe-mode` for a plan. It runs the `plan-multi-phase` playbook, which
-writes the plan file, hands back its path, and does not implement it.
+writes the plan folder, hands back its path, and does not implement it.
 
 Principles are one-rule skills that `/swe:swe-mode` reads by path and cites
 in its replies. They are hidden from the model listing. The user steers with

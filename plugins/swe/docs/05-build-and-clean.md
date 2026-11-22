@@ -57,10 +57,10 @@ Both performance playbooks vet their numbers with [`benchmark-checklist`](../ski
 
 [`implement`](../skills/implement/SKILL.md) makes one authorized, scoped change with evidence. The build playbooks load it for their build steps. It also starts on its own for a small, clear task. It makes the smallest justified change, names the behavior check before it writes code, and runs the repository gates. A failing required gate blocks completion.
 
-`implement` also updates documentation the change makes obsolete, without asking you. When you name a plan file, it reads the plan first and works to it:
+`implement` also updates documentation the change makes obsolete, without asking you. When you name a plan, it reads the plan first, works to it, and records each verify box it proves:
 
 ```text
-Implement the plan in .agents/scratch/feature-export-json/feature-export-json.plan.html
+Implement the plan in .agents/scratch/feature-export-json/feature-export-json.plan
 ```
 
 ## Write the failing test first with testing-code
