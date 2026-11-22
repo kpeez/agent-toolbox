@@ -51,12 +51,16 @@ affected documentation left stale and the reason.
 
 - When the caller names a plan (for example
   `feature-export-json.plan.html`), read it first and work to it. Follow
-  [plan storage](../../references/plan-storage.md) to find the plan's HTML
-  source. If a material design choice changes during the work, update the
+  [plan storage](../../references/plan-storage.md) to find the plan file.
+  If a material design choice changes during the work, update the
   plan.
 - For work with an issue, include its key when creating a branch; preserve an
-  established branch name. Git and the pull request move the issue's status;
-  comment on the issue only for a blocker or a decision that needs the user.
+  established branch name. When the plan is agreed and the branch or worktree
+  exists, move the issue from its backlog or todo state to the started state
+  (In Progress in Linear). Never move an issue backward, and never change the
+  status of an issue this work does not own. In a run with several owners,
+  the coordinator owns the status. Ship-pr sets the later states. Comment on
+  the issue only for a blocker or a decision that needs the user.
 - For substantive changes, give an independent reviewer the actual diff,
   accepted requirements, and relevant verification evidence. Ask it to report
   only gaps in correctness or the stated requirements.

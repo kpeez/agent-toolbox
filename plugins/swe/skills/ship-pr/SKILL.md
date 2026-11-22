@@ -80,7 +80,7 @@ Run the numbered procedure of the chosen mode, in order.
 - Merge only through Land mode.
 - Never put private identifiers, URLs, or content into a public branch, commit,
   pull-request body, or bot output. The one exception is an issue key (such as
-  `ABC-123`) in the branch name and a `Fixes ABC-123` line, which link the
+  `ABC-123`) in the branch name and a `Closes ABC-123` line, which link the
   tracker; never add tracker URLs or issue content. Do not add agent
   attribution, generated-by footers, or session links.
 - Before committing, confirm applicable repository checks and runnable
@@ -148,13 +148,18 @@ instruction.
    request because `gh stack` writes its own titles and bodies, and verifies
    each published body with
    `gh pr view <n> --json body --jq .body | sh <ship-pr>/../../scripts/run-ts <ship-pr>/scripts/pr_body.ts check -`.
-6. `6-link-issue`: When the work has an issue, pass
-   `--link "Fixes ABC-123"` (or `Fixes #123` on GitHub) to `render` so the tracker's GitHub
-   integration moves the issue on merge. Use `Part of ABC-123` when this pull
-   request does not finish the issue, including when it ships the code but the
-   remaining acceptance needs an interactive step or a credential only the
-   owner holds: `Fixes` closes the issue on merge and hides that work. Do not
-   hand-edit status that git moves.
+6. `6-link-issue`: When the work has an issue, pass a link to `render`. The
+   pull request that finishes the issue uses `--link "Closes ABC-123"` (or
+   `Closes #123` on GitHub). `Closes` reads correctly for features, docs, and
+   config, and the tracker's GitHub integration treats it as a closing word.
+   Every other pull request for the issue uses `Part of ABC-123`, so the first
+   merge does not close an issue that has more pull requests. Use `Part of`
+   also when this pull request ships the code but the remaining acceptance
+   needs an interactive step or a credential only the owner holds: `Closes`
+   closes the issue on merge and hides that work. For an issue with several
+   pull requests, the coordinator may change the last link from `Part of` to
+   `Closes` just before that pull request merges. `render` also accepts
+   `Fixes`, a synonym of `Closes`.
 7. `7-report`: Give the branch, base, commits, pull-request URL and state,
    the linked issue, checks run, behavior evidence, and known gaps.
 
@@ -288,6 +293,12 @@ Finalize makes an existing draft ready for review, and it never deploys.
    Land procedure. It marks the draft
    ready and merges only when its conditions hold. Otherwise mark the draft
    ready.
-5. `5-leave-issue-status`: Leave issue status to the tracker's GitHub
-   integration; a ready pull request does not mark work delivered.
+5. `5-set-issue-status`: Set the issue's status through the tracker, for an
+   issue this work owns. When every pull request for the issue is verified and
+   waits for merge, move the issue to the review state (In Review in Linear).
+   After the last pull request merges and the acceptance checks hold, move it
+   to the completed state (Done in Linear). Never move it to completed at
+   merge-ready. Never move an issue backward. In a run with several owners,
+   the coordinator owns the status; an owner reports merge-ready and leaves
+   the move to the coordinator.
 6. `6-report`: Report the pull request, verification, and state changes.

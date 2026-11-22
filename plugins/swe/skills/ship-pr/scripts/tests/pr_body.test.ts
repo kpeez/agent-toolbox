@@ -299,3 +299,19 @@ test("node fallback: check a rendered file", () => {
     assert.ok(result.stdout.includes("pr_body: ok"), result.stdout);
   });
 });
+
+test("render accepts Closes, Fixes, and Part of links, and the hook passes each", () => {
+  withTemp((root) => {
+    const slots = join(root, "slots");
+    renderValidBody(root);
+    for (const link of ["Closes", "Fixes", "Part of"].map((word) => `${word} ABC-123`)) {
+      const { body, errors } = render(slots, link);
+      assert.ok(body !== null && errors.length === 0, errors.join("\n"));
+      assert.ok(body.endsWith(`\n\n${link}\n`));
+      writeFileSync(join(root, "linked.md"), body, "utf-8");
+      const res = runHook("gh pr create --body-file linked.md", root);
+      assert.equal(res.status, 0, res.stderr);
+    }
+    assert.ok(render(slots, "Resolves ABC-123").errors.length > 0);
+  });
+});
