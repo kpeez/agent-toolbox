@@ -22,4 +22,6 @@ Give one verdict. VERIFIED means you saw the expected behavior on the real
 surface. NOT VERIFIED means you saw wrong behavior, or the check failed.
 INCONCLUSIVE means you could not reach the real surface, or the observation
 cannot tell success from failure. Say what blocked it. INCONCLUSIVE is not a
-pass.
+pass. These three words judge a change. A reviewer's verdict on a pull request
+uses PASS, PASS+NOTES, or FAIL, and a swarm worker's report uses PASS,
+ISSUES, or BLOCKED.

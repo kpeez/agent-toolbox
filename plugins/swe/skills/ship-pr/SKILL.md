@@ -91,6 +91,15 @@ Run the numbered procedure of the chosen mode, in order.
 - Before committing, confirm applicable repository checks and runnable
   behavior-specific evidence pass under the verification rule in
   `2-verify`. Report failures as failures.
+- End each commit message with a `Verification:` trailer, in the last
+  paragraph with no blank line before or after another trailer, so
+  `git interpret-trailers` reads it. Its value is a
+  [prove-it-works](../principle-prove-it-works/SKILL.md) verdict and the
+  check that produced it, such as `Verification: VERIFIED (verify-swe-hooks)`,
+  or `none` and the reason, such as `Verification: none (docs only)`. When a
+  verify skill ran through `verify_gate.ts run`, the verdict is the one in its
+  record for these files; never write a verdict the record does not hold.
+  `git log --grep "Verification: none"` then lists the unverified commits.
 
 ## Publish
 

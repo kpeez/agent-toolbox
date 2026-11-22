@@ -77,7 +77,7 @@ paths:
   - src/**
 ```
 
-Globs follow Claude Code's path rules: a pattern with no `/` matches at any depth (`*.tsx`), and `{ts,tsx}` and `[ab]` work. A glob the gate cannot parse is reported on stderr and covers every file. A skill with no `paths` is never required. A commit outside every skill's paths needs nothing. To commit without a check, put a line in the commit message: `Verification: none (<reason>)`.
+Globs follow Claude Code's path rules: a pattern with no `/` matches at any depth (`*.tsx`), and `{ts,tsx}` and `[ab]` work. A glob the gate cannot parse is reported on stderr and covers every file. A skill with no `paths` is never required. A commit outside every skill's paths needs nothing. To commit without a check, put a line in the commit message: `Verification: none (<reason>)`. `ship-pr` ends every commit with the same `Verification:` trailer: the verdict from the gate's record and the skill that produced it, or `none` and the reason. `git log --grep "Verification: none"` lists the commits nobody verified.
 
 `SWE_VERIFY_GATE` sets the mode:
 
