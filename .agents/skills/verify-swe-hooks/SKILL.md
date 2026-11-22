@@ -58,8 +58,9 @@ example `Bash(gh pr create:*)`). Hooks fire before the permission check. Any
 other command is denied, not prompted, because `-p` cannot ask.
 
 The session runs in a throwaway git repo at
-`.agents/scratch/verify-swe-hooks/<feature>/`. Each feature has its own repo,
-so parallel sessions do not share state.
+`.agents/scratch/verify-swe-hooks-<random>/<feature>/`. Each run has its own
+folder and each feature its own repo, so parallel runs and sessions do not
+share state.
 
 ## Evidence
 
@@ -97,17 +98,14 @@ fine. The feature checks only the hook.
    lists none. Name the exact command in the prompt.
 3. Add a row to the feature map above.
 
-For the commit gate, this means one prompt that runs a `git commit` the gate
-must refuse, and one judge that finds the gate's block message in a
-`tool_result`.
-
 Prove each new judge can fail: break the hook on purpose, run the check, see
 `FAIL`, and revert the break.
 
 ## Cleanup
 
-The check removes `.agents/scratch/verify-swe-hooks/` at the end, also on
-error. It starts no other process. After a run you killed, delete that folder.
+The check removes its own `.agents/scratch/verify-swe-hooks-<random>/` folder
+at the end, also on error. It starts no other process. With `--keep`, it
+prints the folder's path. After a run you killed, delete that folder.
 
 ## Helpers
 

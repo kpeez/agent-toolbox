@@ -15,6 +15,7 @@ import os
 import shutil
 import subprocess
 import sys
+import tempfile
 from collections.abc import Callable
 from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
@@ -23,7 +24,7 @@ from pathlib import Path
 SKILL_DIR = Path(__file__).resolve().parent.parent
 ROOT = SKILL_DIR.parents[2]
 PLUGIN = ROOT / "plugins" / "swe"
-SCRATCH = ROOT / ".agents" / "scratch" / "verify-swe-hooks"
+SCRATCH = ROOT / ".agents" / "scratch"
 TIMEOUT_SECONDS = 240
 
 GOOD_BODY = """## Summary
@@ -127,8 +128,8 @@ FEATURES: dict[str, Feature] = {
 }
 
 
-def run_session(name: str, feature: Feature, model: str | None) -> tuple[str, str | None]:
-    repo = SCRATCH / name
+def run_session(run_dir: Path, name: str, feature: Feature, model: str | None) -> tuple[str, str | None]:
+    repo = run_dir / name
     repo.mkdir(parents=True)
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
     for filename, text in feature.files.items():
@@ -172,14 +173,16 @@ def main() -> int:
     if unknown:
         parser.error(f"unknown feature {unknown}; known: {list(FEATURES)}")
 
-    shutil.rmtree(SCRATCH, ignore_errors=True)
-    SCRATCH.mkdir(parents=True)
+    SCRATCH.mkdir(parents=True, exist_ok=True)
+    run_dir = Path(tempfile.mkdtemp(prefix="verify-swe-hooks-", dir=SCRATCH))
     try:
         with ThreadPoolExecutor(max_workers=len(names)) as pool:
-            results = list(pool.map(lambda n: run_session(n, FEATURES[n], args.model), names))
+            results = list(pool.map(lambda n: run_session(run_dir, n, FEATURES[n], args.model), names))
     finally:
-        if not args.keep:
-            shutil.rmtree(SCRATCH, ignore_errors=True)
+        if args.keep:
+            print(f"kept {run_dir}")
+        else:
+            shutil.rmtree(run_dir, ignore_errors=True)
     for name, problem in results:
         print(f"PASS {name}" if problem is None else f"FAIL {name}: {problem}")
     return 0 if all(p is None for _, p in results) else 1
