@@ -7,6 +7,11 @@
             "type": "command",
             "command": "cat \"$CLAUDE_PLUGIN_ROOT\"/hooks/session-start.md",
             "timeout": 5
+          },
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PLUGIN_ROOT\"/scripts/run-ts \"$CLAUDE_PLUGIN_ROOT\"/scripts/verify_gate.ts session-start",
+            "timeout": 5
           }
         ]
       }
@@ -18,6 +23,11 @@
           {
             "type": "command",
             "command": "sh \"$CLAUDE_PLUGIN_ROOT\"/scripts/run-ts \"$CLAUDE_PLUGIN_ROOT\"/skills/ship-pr/scripts/pr_body.ts hook",
+            "timeout": 10
+          },
+          {
+            "type": "command",
+            "command": "sh \"$CLAUDE_PLUGIN_ROOT\"/scripts/run-ts \"$CLAUDE_PLUGIN_ROOT\"/scripts/verify_gate.ts hook",
             "timeout": 10
           }
         ]

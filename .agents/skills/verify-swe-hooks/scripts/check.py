@@ -42,6 +42,26 @@ The check printed PASS for each feature.
 """
 BAD_BODY = GOOD_BODY.replace("Adds the verify skill.", "Requested by the user in chat.")
 
+DEMO_SKILL = """---
+name: verify-demo
+description: Demo check for the commit gate. Use when src changes.
+paths:
+  - src/**
+---
+
+# Verify the demo
+
+The check is `true`.
+"""
+GATE_FILES = {
+    ".agents/skills/verify-demo/SKILL.md": DEMO_SKILL,
+    "src/a.txt": "one\n",
+    "docs/d.md": "one\n",
+}
+GATE_RUN = f"sh {PLUGIN}/scripts/run-ts {PLUGIN}/scripts/verify_gate.ts run --skill verify-demo -- true"
+GATE_BLOCK = "Commit blocked by the verify gate"
+GATE_TOOLS = ["Bash(echo:*)", "Bash(tee:*)", "Bash(git commit:*)", f"Bash(sh {PLUGIN}/scripts/run-ts:*)"]
+
 Events = list[dict]
 
 
@@ -51,6 +71,8 @@ class Feature:
     judge: Callable[[Events], str | None]
     files: dict[str, str] = field(default_factory=dict)
     allowed_tools: list[str] = field(default_factory=list)
+    env: dict[str, str] = field(default_factory=dict)
+    commit_files: bool = False
 
 
 def hook_responses(events: Events, hook_name: str) -> Events:
@@ -76,9 +98,13 @@ def judge_session_start(events: Events) -> str | None:
     if not responses:
         return "no SessionStart hook_response event"
     expected = (PLUGIN / "hooks" / "session-start.md").read_text()
-    got = responses[0].get("stdout")
-    if responses[0].get("exit_code") != 0 or got != expected:
-        return f"exit_code={responses[0].get('exit_code')}, stdout differs from hooks/session-start.md"
+    bad = [r.get("exit_code") for r in responses if r.get("exit_code") != 0]
+    if bad:
+        return f"a SessionStart hook exited {bad}"
+    if not any(r.get("stdout") == expected for r in responses):
+        return "no SessionStart hook printed hooks/session-start.md"
+    if any(r.get("stdout") not in ("", expected) for r in responses):
+        return "a SessionStart hook printed text in a repo with no verify skill"
     return None
 
 
@@ -86,9 +112,8 @@ def judge_blocked(events: Events) -> str | None:
     responses = hook_responses(events, "PreToolUse:Bash")
     if not responses:
         return "PreToolUse:Bash hook never fired"
-    r = responses[0]
-    if r.get("exit_code") != 2 or "PR body blocked by ship-pr" not in r.get("stderr", ""):
-        return f"hook exit_code={r.get('exit_code')}, stderr={r.get('stderr', '')[:120]!r}"
+    if not any(r.get("exit_code") == 2 and "PR body blocked by ship-pr" in r.get("stderr", "") for r in responses):
+        return f"no hook blocked: exit_codes={[r.get('exit_code') for r in responses]}"
     if not any("PR body blocked by ship-pr" in t for t in tool_results(events)):
         return "hook blocked, but no tool_result carries the block message"
     return None
@@ -98,11 +123,64 @@ def judge_allowed(events: Events) -> str | None:
     responses = hook_responses(events, "PreToolUse:Bash")
     if not responses:
         return "PreToolUse:Bash hook never fired"
-    r = responses[0]
-    if r.get("exit_code") != 0:
-        return f"hook exit_code={r.get('exit_code')}, stderr={r.get('stderr', '')[:120]!r}"
+    bad = [r for r in responses if r.get("exit_code") != 0]
+    if bad:
+        return f"hook exit_code={bad[0].get('exit_code')}, stderr={bad[0].get('stderr', '')[:120]!r}"
     if any("blocked by ship-pr" in t for t in tool_results(events)):
         return "a tool_result carries a ship-pr block message"
+    return None
+
+
+def gate_block_stderrs(events: Events) -> list[str]:
+    return [
+        r.get("stderr", "") for r in hook_responses(events, "PreToolUse:Bash")
+        if r.get("exit_code") == 2 and GATE_BLOCK in r.get("stderr", "")
+    ]
+
+
+def judge_gate_session_start(events: Events) -> str | None:
+    outputs = [r.get("stdout", "") for r in hook_responses(events, "SessionStart")]
+    if not any("verify_gate.ts run --skill" in o and str(PLUGIN) in o for o in outputs):
+        return f"no SessionStart hook printed the gate run command: {outputs!r}"
+    return None
+
+
+def judge_gate_blocks_unverified(events: Events) -> str | None:
+    blocks = gate_block_stderrs(events)
+    if not blocks:
+        return "no PreToolUse hook blocked the commit with the gate message"
+    if "verify-demo" not in blocks[0] or "run --skill verify-demo" not in blocks[0]:
+        return f"block message does not name the skill and the run command: {blocks[0][:200]!r}"
+    if not any(GATE_BLOCK in t for t in tool_results(events)):
+        return "hook blocked, but no tool_result carries the gate message"
+    return None
+
+
+def judge_gate_allows_verified(events: Events) -> str | None:
+    if gate_block_stderrs(events):
+        return "the gate blocked a commit after a passing run"
+    results = tool_results(events)
+    if not any("verify-demo VERIFIED" in t for t in results):
+        return "the run command printed no `verify-demo VERIFIED` line"
+    if not any("verified-change" in t and "[" in t for t in results):
+        return "no tool_result shows the commit landing"
+    return None
+
+
+def judge_gate_blocks_stale(events: Events) -> str | None:
+    blocks = gate_block_stderrs(events)
+    if not blocks:
+        return "no PreToolUse hook blocked the commit with the gate message"
+    if "verify result is stale: files changed since the run" not in blocks[0]:
+        return f"block message is not the stale message: {blocks[0][:200]!r}"
+    return None
+
+
+def judge_gate_allows_outside_paths(events: Events) -> str | None:
+    if gate_block_stderrs(events):
+        return "the gate blocked a commit outside src/**"
+    if not any("docs-only-change" in t and "[" in t for t in tool_results(events)):
+        return "no tool_result shows the commit landing"
     return None
 
 
@@ -124,6 +202,37 @@ FEATURES: dict[str, Feature] = {
         {"good.md": GOOD_BODY},
         ["Bash(gh pr create:*)"],
     ),
+    "gate-session-start": Feature(
+        "Reply with the word ok.", judge_gate_session_start, GATE_FILES, [],
+        {"SWE_VERIFY_GATE": "enforce"}, True,
+    ),
+    "gate-blocks-unverified": Feature(
+        "Run these two commands in order, each once with the Bash tool. If one is blocked, stop.\n"
+        "1. echo two | tee src/a.txt\n"
+        "2. git commit -am blocked-change",
+        judge_gate_blocks_unverified, GATE_FILES, GATE_TOOLS, {"SWE_VERIFY_GATE": "enforce"}, True,
+    ),
+    "gate-allows-verified": Feature(
+        "Run these three commands in order, each once with the Bash tool. If one is blocked, stop.\n"
+        "1. echo two | tee src/a.txt\n"
+        f"2. {GATE_RUN}\n"
+        "3. git commit -am verified-change",
+        judge_gate_allows_verified, GATE_FILES, GATE_TOOLS, {"SWE_VERIFY_GATE": "enforce"}, True,
+    ),
+    "gate-blocks-stale": Feature(
+        "Run these four commands in order, each once with the Bash tool. If one is blocked, stop.\n"
+        "1. echo two | tee src/a.txt\n"
+        f"2. {GATE_RUN}\n"
+        "3. echo three | tee src/a.txt\n"
+        "4. git commit -am stale-change",
+        judge_gate_blocks_stale, GATE_FILES, GATE_TOOLS, {"SWE_VERIFY_GATE": "enforce"}, True,
+    ),
+    "gate-allows-outside-paths": Feature(
+        "Run these two commands in order, each once with the Bash tool. If one is blocked, stop.\n"
+        "1. echo two | tee docs/d.md\n"
+        "2. git commit -am docs-only-change",
+        judge_gate_allows_outside_paths, GATE_FILES, GATE_TOOLS, {"SWE_VERIFY_GATE": "enforce"}, True,
+    ),
 }
 
 
@@ -132,7 +241,17 @@ def run_session(name: str, feature: Feature, model: str | None) -> tuple[str, st
     repo.mkdir(parents=True)
     subprocess.run(["git", "init", "-q", str(repo)], check=True)
     for filename, text in feature.files.items():
+        (repo / filename).parent.mkdir(parents=True, exist_ok=True)
         (repo / filename).write_text(text)
+    identity = {
+        "GIT_AUTHOR_NAME": "Check", "GIT_AUTHOR_EMAIL": "check@example.com",
+        "GIT_COMMITTER_NAME": "Check", "GIT_COMMITTER_EMAIL": "check@example.com",
+    }
+    if feature.commit_files:
+        subprocess.run(["git", "add", "-A"], cwd=repo, check=True)
+        subprocess.run(
+            ["git", "commit", "-q", "-m", "seed"], cwd=repo, check=True, env={**os.environ, **identity},
+        )
     cmd = [
         "claude", "-p", feature.prompt,
         "--plugin-dir", str(PLUGIN),
@@ -147,7 +266,7 @@ def run_session(name: str, feature: Feature, model: str | None) -> tuple[str, st
     try:
         proc = subprocess.run(
             cmd, cwd=repo, capture_output=True, text=True, timeout=TIMEOUT_SECONDS,
-            stdin=subprocess.DEVNULL, env=os.environ, check=False,
+            stdin=subprocess.DEVNULL, env={**os.environ, **identity, **feature.env}, check=False,
         )
     except subprocess.TimeoutExpired:
         return name, f"claude -p timed out after {TIMEOUT_SECONDS}s"

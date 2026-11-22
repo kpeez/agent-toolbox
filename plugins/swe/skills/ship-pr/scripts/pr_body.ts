@@ -234,7 +234,7 @@ export function splitSegments(command: string): string[][] {
 }
 
 /** Drop leading env assignments and wrappers, and reduce a path to `gh`. */
-function commandWords(segment: string[]): string[] {
+export function commandWords(segment: string[]): string[] {
   const words = [...segment];
   while (words.length > 0 && (ENV_ASSIGNMENT.test(words[0]) || WRAPPERS.has(words[0]))) {
     words.shift();

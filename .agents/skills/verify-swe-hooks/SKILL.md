@@ -82,6 +82,13 @@ it, the failure line is the evidence.
 | `session-start` | `SessionStart` | a one-word reply | the hook exits 0 and its stdout equals `hooks/session-start.md` |
 | `pr-body-blocks-bad` | `PreToolUse` on `Bash` | `gh pr create` with a body that names a requester | the hook exits 2 with `PR body blocked by ship-pr`, and a `tool_result` carries that text |
 | `pr-body-allows-good` | `PreToolUse` on `Bash` | `gh pr create` with a body that fills the template | the hook fires, exits 0, and no `tool_result` carries a block message |
+| `gate-session-start` | `SessionStart` | a one-word reply in a repo with a `verify-demo` skill | a hook prints the gate `run` command with the plugin path |
+| `gate-blocks-unverified` | `PreToolUse` on `Bash` | edit `src/a.txt`, then `git commit` with `SWE_VERIFY_GATE=enforce` | the hook exits 2 with `Commit blocked by the verify gate`, and a `tool_result` carries it |
+| `gate-allows-verified` | `PreToolUse` on `Bash` | edit, run the check through the gate `run` command, then commit | the run prints `verify-demo VERIFIED`, no hook blocks, and the commit lands |
+| `gate-blocks-stale` | `PreToolUse` on `Bash` | edit, run through the gate, edit again, then commit | the block message says `verify result is stale: files changed since the run` |
+| `gate-allows-outside-paths` | `PreToolUse` on `Bash` | edit `docs/d.md`, outside `src/**`, then commit | no hook blocks and the commit lands |
+
+The gate features run in a throwaway repo with a `verify-demo` skill (`paths: [src/**]`) and `SWE_VERIFY_GATE=enforce`. They edit files with `tee`, because Claude Code asks before a shell redirection writes a file.
 
 `gh pr create` itself may fail in the repo, which has no remote. That is
 fine. The feature checks only the hook.
@@ -96,10 +103,6 @@ fine. The feature checks only the hook.
    command needs, such as `Bash(git commit:*)`. A feature with no tool use
    lists none. Name the exact command in the prompt.
 3. Add a row to the feature map above.
-
-For the commit gate, this means one prompt that runs a `git commit` the gate
-must refuse, and one judge that finds the gate's block message in a
-`tool_result`.
 
 Prove each new judge can fail: break the hook on purpose, run the check, see
 `FAIL`, and revert the break.

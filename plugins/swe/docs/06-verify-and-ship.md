@@ -66,6 +66,39 @@ After that, every verify step in a playbook uses the skill. Name it in a prompt 
 
 Commit the verification skill so every person and agent drives the app the same way.
 
+## Gate commits on a passing verify run
+
+Agents sometimes say a check passed when it did not. The commit gate removes that claim. A verify skill runs its check through `verify_gate.ts run`, which records the verdict from the exit code. The record binds to a hash of the exact files, so any later edit makes it stale. The agent never writes a verdict.
+
+A `PreToolUse` hook on `git commit` then needs a passing record from each `verify-*` skill whose `paths` the commit touches. Set `paths` in the skill frontmatter as a list of globs relative to the repository root:
+
+```yaml
+paths:
+  - src/**
+```
+
+Globs follow Claude Code's path rules: a pattern with no `/` matches at any depth (`*.tsx`), and `{ts,tsx}` and `[ab]` work. A glob the gate cannot parse is reported on stderr and covers every file. A skill with no `paths` is never required. A commit outside every skill's paths needs nothing. To commit without a check, put a line in the commit message: `Verification: none (<reason>)`.
+
+`SWE_VERIFY_GATE` sets the mode:
+
+- `observe` (default) logs each commit that would block to `swe-verify/log.jsonl` in the git directory, and allows it. Read the log to count false blocks.
+- `enforce` blocks the commit with a message that names each missing skill and the exact `run` command. After two blocks in one session, the next commit passes.
+- `off` disables the gate.
+
+Records live in the git directory of each worktree, so they are never committed.
+
+The record binds to the whole working tree, not to the index. Commit from a clean tree: any file you change, add, or delete after the run makes the record stale, and untracked files under a skill's paths count. A run is INCONCLUSIVE (exit 3) when a file changes while it runs, so a check writes evidence to a Git-ignored folder.
+
+Known limits:
+
+- A Git alias such as `git ci` is not recognized as a commit.
+- The gate does not check staged content that differs from the working tree.
+- `git commit --amend --no-edit` does not read the old message, so it cannot use the escape line.
+- Records under `swe-verify/` in the git directory are not pruned.
+- A `cd` inside a subshell carries to later segments of the same command, and `pushd` is not followed.
+- `env` after `sudo` with options is not unwrapped.
+- In a path glob, a leading `]` in a bracket class is not literal, and `[!x]` can match `/`.
+
 ## Keep the verification skill current
 
 Run `/swe:verification-skill` again when the skill already exists, and it audits the skill instead. It checks each feature from source in parallel, then drives every feature live. It ends in one outcome. `clean` means nothing to ship. `changed` means proven corrections to the skill's own folder. `blocked` names the blocker. It never edits product code, and it reports a product regression instead of hiding it in the docs.
