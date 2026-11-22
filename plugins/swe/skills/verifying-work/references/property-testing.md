@@ -8,15 +8,15 @@ implementation.
 In Python, [Hypothesis](https://hypothesis.readthedocs.io/) provides shrinking
 and stateful testing. Useful independent relations include:
 
-- round trips: decoding an encoding returns the normalized original;
+- round trips: decoding an encoding returns the normalized original, as in
+  `decompress(compress(x)) == x`;
 - idempotence: normalizing twice equals normalizing once;
 - conservation: totals, membership, or mass are not created or lost;
 - monotonicity and bounds: changed inputs preserve promised order or range;
 - permutation invariance: irrelevant ordering does not change the result;
 - model equivalence: production agrees with a smaller independently trusted
-  reference; and
+  reference;
 - state invariants: generated action sequences preserve public rules;
-- inverse pairs: `decompress(compress(x)) == x`;
 - cheap checks of costly work: `is_sorted(sort(xs))`; and
 - algebra: commutativity `f(a, b) == f(b, a)`, associativity, and an
   identity element `f(x, e) == x` for combining operations.
