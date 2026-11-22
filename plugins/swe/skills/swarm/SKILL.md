@@ -68,14 +68,13 @@ or turned on ultracode. A router that read this file by path is not opt-in.
 Load `workflow-authoring` first. In the script, run `pipeline()` over the
 slices or race arms, with one `agent()` per worker. Give each worker a
 `schema` for its `PASS`, `ISSUES`, or `BLOCKED` report. A worker that writes
-code gets `agentType: "swe:daedalus"` and `isolation: "worktree"`. `log()`
+code gets `isolation: "worktree"`. `log()`
 each lane the script drops. Apply the Phase C rules to the returned results.
 In every other case, and in Codex, use the Agent path below.
 
 **Agent path.** Spawn all N workers in one message, in the background. In Claude Code, use
-the Agent tool with `run_in_background: true`. Use `swe:daedalus` for workers
-that change code, and a native subagent for search or review. Give a writing
-worker `isolation: "worktree"`. When the user has cloud sessions, a Claude Code
+the Agent tool with `run_in_background: true`. Give a writing worker
+`isolation: "worktree"`. When the user has cloud sessions, a Claude Code
 cloud session can run a worker instead. In Codex, use subagents or cloud
 tasks. Run a worker locally only when it needs something on the user's
 computer.

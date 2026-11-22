@@ -359,15 +359,12 @@ them, such as `/swe:how`.
 ## Agents
 
 The chat that runs `/swe:swe-mode` owns the playbook, the task list, and every
-subagent. swe ships two agents for delegates:
+subagent. swe ships one agent:
+[`comment-sicko`](./agents/comment-sicko.md) reviews a diff for comments to
+delete. `no-comments` starts it.
 
-- [`daedalus`](./agents/daedalus.md) does one bounded task (code,
-  tests, docs, or tracker work) under the caller's brief. It publishes nothing
-  without explicit authority.
-- [`comment-sicko`](./agents/comment-sicko.md) reviews a diff for
-  comments to delete. `no-comments` starts it.
-
-Reviews and searches use the host's own subagents with the
+Code, review, and search delegates use the host's own subagents. Each one
+reads [worker.md](./skills/swe-mode/worker.md) first. A reviewer also gets the
 [review brief](./references/review-brief.md).
 
 ## Principles

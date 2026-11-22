@@ -28,7 +28,7 @@
     "four policy-managed plugins load in every run: cc-plugin-sec-default, cc-plugin-agents-md, cc-plugin-privacy, cc-plugin-plugin-authoring",
     "plugin hooks and MCP bindings stripped by materialize, except SessionStart in the hook-on arm",
     "a scaffold script copies the materialized fixture into the sandbox working folder",
-    "no shell tool; the Agent tool is on (named Task in the session), so a case can spawn the swe daedalus subagent"
+    "no shell tool; the Agent tool is on (named Task in the session), so a case can spawn a subagent"
   ],
   "catalog_scope": "full_checkedout_catalog",
   "context_delivery": "serialized_conversation"

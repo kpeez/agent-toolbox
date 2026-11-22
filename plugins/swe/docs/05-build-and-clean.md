@@ -39,7 +39,7 @@ Each prompt routes to its playbook:
 
 The four playbooks end the same way. They check the blast radius when the change touches shared state, a wire format, or a public interface. An agent that did not write the diff reviews it. They update the docs the change makes obsolete. Then they push and update the draft PR when publication is authorized. [Verify and ship](06-verify-and-ship.md) covers those steps.
 
-In `build-feature` and `fix-bug`, the lead delegates the code to the `daedalus` agent and reviews its diff. The gain is the separation between the agent that writes and the agent that reviews.
+In `build-feature` and `fix-bug`, the lead delegates the code to a subagent and reviews its diff. The gain is the separation between the agent that writes and the agent that reviews.
 
 ## Improve one number with hillclimb-metric
 
