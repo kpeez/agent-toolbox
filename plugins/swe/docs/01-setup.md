@@ -38,7 +38,7 @@ npx skills@latest add https://github.com/kpeez/agent-toolbox/tree/main/plugins/s
 
 This installs the swe skills and no other plugin. Install all of them, because the router and the playbooks read the other skills by path. Add `-g` to install for your user instead of the current project. Run `npx skills update` to update.
 
-The skills-only install has no hooks and no agents. To make the agent start the router, add the lines in [Add the router rule to AGENTS.md](#add-the-router-rule-to-agentsmd-codex) to `AGENTS.md` or `CLAUDE.md`. Delegated work uses the host's own subagents instead of `daedalus` and `comment-sicko`. The rest of this guide assumes the full plugin.
+The skills-only install has no hooks and no agents. To make the agent start the router, add the lines in [Add the router rule to AGENTS.md](#add-the-router-rule-to-agentsmd-codex) to `AGENTS.md` or `CLAUDE.md`. `no-comments` uses a host subagent instead of `comment-sicko`. The rest of this guide assumes the full plugin.
 
 ## Let the hook start the router (Claude Code)
 
@@ -46,7 +46,7 @@ The plugin adds a SessionStart hook. At the start of every session, it puts a sh
 
 So you do not have to type `/swe:swe-mode` each time. The agent starts the router itself, also after a short prompt such as "continue". The rule does not apply to chat, quick factual answers, and work that is not software.
 
-agy runs no hooks. It loads the same rule from [rules/AGENTS.md](../rules/AGENTS.md) at the start of every session, so the router starts the same way. agy skips the `daedalus` and `comment-sicko` agents, so delegated work uses agy's own subagents.
+agy runs no hooks. It loads the same rule from [rules/AGENTS.md](../rules/AGENTS.md) at the start of every session, so the router starts the same way. agy skips the `comment-sicko` agent, so `no-comments` uses an agy subagent.
 
 ## Add the router rule to AGENTS.md (Codex)
 
@@ -70,7 +70,7 @@ The router picks a model for each job. You do not configure it. The [router's Su
 | Routine code | mid-tier |
 | Mechanical edits | fastest |
 
-In Codex, the router raises or lowers reasoning effort the same way. The `daedalus` code agent runs on a mid-tier model with medium effort in Claude Code. Its Codex definition, [daedalus.toml](../agents/daedalus.toml), pins its own model with maximum reasoning effort.
+In Codex, the router raises or lowers reasoning effort the same way. The router picks the model for each code delegate from this table.
 
 To spend fewer tokens:
 

@@ -66,7 +66,7 @@ playbook keeps. Read [references/prompting.md](references/prompting.md)
 before you help word one. The swe `README.md` Usage section has examples.
 
 Mid-chat, "new task" makes the router match a fresh playbook. The router
-gives code work to the `daedalus` agent, and gives it the router's path so it
+gives code work to a native subagent, and gives it the router's path so it
 reads the same principles.
 
 ## Pick a skill

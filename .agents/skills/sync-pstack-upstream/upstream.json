@@ -36,11 +36,7 @@
     },
     {
       "upstream": "agents/poteto-agent.md",
-      "class": "modified",
-      "local": [
-        "plugins/swe/agents/daedalus.md",
-        "plugins/swe/agents/daedalus.toml"
-      ]
+      "class": "dropped"
     },
     {
       "upstream": "assets/",

@@ -103,7 +103,7 @@ The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playboo
 
 The router's Subagents section sets the rules. The chat that runs the playbook owns it, code goes to delegates, and each new round goes to a fresh subagent. It picks the strongest model for judgment and the hardest code, a mid-tier model for routine code, and the fastest model for mechanical edits. In Codex it sets reasoning effort the same way.
 
-`implement` fans out large work with independent parts through [`swarm`](../skills/swarm/SKILL.md). Code delegates go to the [`daedalus`](../agents/daedalus.md) agent, which publishes nothing without explicit authority. Every subagent that `swe-mode` starts reads [`worker.md`](../skills/swe-mode/worker.md) first. It holds your rules for started agents. The kickoff's bar is the whole bar. The agent decides reversible calls instead of asking you. It publishes PRs as the [`ship-pr`](../skills/ship-pr/SKILL.md) skill says. The swe README lists [both swe agents](../README.md#agents).
+`implement` fans out large work with independent parts through [`swarm`](../skills/swarm/SKILL.md). Every subagent that `swe-mode` starts reads [`worker.md`](../skills/swe-mode/worker.md) first. It holds your rules for started agents. The kickoff's bar is the whole bar. The agent decides reversible calls instead of asking you. It publishes PRs as the [`ship-pr`](../skills/ship-pr/SKILL.md) skill says. The swe README covers [agents and delegates](../README.md#agents).
 
 Reviews and searches use the host's own subagents, with the rules in the [review brief](../references/review-brief.md). By default a reviewer fixes small, sure findings and reports each fix. A landing verdict edits nothing.
 

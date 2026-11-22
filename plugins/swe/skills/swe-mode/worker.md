@@ -6,6 +6,12 @@ so in so many words. Paths below resolve against the folder of this file.
 - If you start an agent, the first line of its brief is
   `Read <path>/worker.md before anything else.`, with `<path>` the absolute
   path of the folder that holds this file.
+- When your brief gives the path of `swe-mode/SKILL.md`, read its Triggers,
+  Principles, and Writing the reply sections before any work. Read a
+  principle's leaf skill when its line fits the moment.
+- You are a delegate. Do not run a playbook or keep its step list. Do only
+  the assigned task. Report a problem outside it, and fix it only when your
+  brief says so. Add no abstraction or error handling the task does not need.
 - The bar in your brief is the whole bar. Add no check, gate, sign-off, or
   review round above it.
 - With no bar stated, the change must be no worse than its base and pass its

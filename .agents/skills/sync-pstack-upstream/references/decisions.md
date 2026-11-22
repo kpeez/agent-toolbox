@@ -28,6 +28,7 @@ line for each entry, with the PR. Do not record a skipped wording change.
 | --- | --- | --- |
 | `arena` | Dropped. The eval playbook runs candidates and the blinded judge through `swarm`. | #174 |
 | `teach` | The uni plugin owns teaching. | #174 |
+| `agents/poteto-agent.md` (swe `daedalus`) | Code delegates are native subagents. The router picks each model, and `worker.md` holds the delegate rules. | #51 |
 | `automate-me`, `make-bot-ui` | Persona and Cursor UI. | #174 |
 | `setup-pstack` | Cursor setup. swe installs as a plugin. | #174 |
 | `poteto-mode/scripts/` (`watch-pr`, `orch`, `bootstrap.ts`, bun files) | Cursor, Origin, and Graphite tooling. swe uses `gh` and its own scripts. | #174 |

@@ -42,7 +42,7 @@ def root_edits(transcript):
     )
 
 
-def daedalus_spawns(transcript):
+def agent_spawns(transcript):
     return sum(
         1
         for row in transcript
@@ -50,7 +50,6 @@ def daedalus_spawns(transcript):
         for block in row["message"]["content"]
         if block.get("type") == "tool_use"
         and block["name"] in ("Agent", "Task")
-        and "daedalus" in str(block["input"].get("subagent_type", ""))
     )
 
 
@@ -108,7 +107,7 @@ def score_run(run, case_id, case, corpus_path):
         "repeat": run.name,
         "wants_edit": wants_edit,
         "root_edits": root_edits(transcript),
-        "daedalus_spawns": daedalus_spawns(transcript),
+        "agent_spawns": agent_spawns(transcript),
         "task_done": ok and changed == wants_edit,
         "total_tokens": total_tokens(stream),
         "cost_usd": record.get("cost") or result.get("total_cost_usd"),
@@ -154,8 +153,8 @@ def summarize(rows):
         "runs_with_a_root_thread_edit": share(
             [{**r, "x": r["root_edits"] > 0} for r in rows], "x"
         ),
-        "runs_with_a_daedalus_spawn": share(
-            [{**r, "x": r["daedalus_spawns"] > 0} for r in rows], "x"
+        "runs_with_an_agent_spawn": share(
+            [{**r, "x": r["agent_spawns"] > 0} for r in rows], "x"
         ),
         "task_done": share(rows, "task_done"),
         "total_tokens_mean": statistics.mean(tokens) if rows else None,
