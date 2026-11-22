@@ -64,8 +64,13 @@ Run the numbered procedure of the chosen mode, in order.
 - Before each commit, apply the `writing` prose rules to new prose and review your
   own diff for slop. Before review, run the `no-comments` skill. Write each
   title, body, and commit body with the `writing` skill.
-- Prefer several narrow pull requests to one large one. Branch independent
-  work from trunk.
+- Size the work before you publish it. One concern (a part a reviewer could
+  approve or revert alone) in at most 200 changed lines, lockfiles and
+  generated files excluded, is a small patch: one pull request. Anything else
+  is a [stack](references/stacked.md) with one layer per concern, bottom to
+  top, published with `gh stack`. Cut a long single-concern diff into layers at
+  its natural seam; with no seam, ship one pull request. Concerns that do not depend on each other are separate pull
+  requests from trunk.
 - Give each writer its own worktree. Parallel subagents on one branch each
   get a separate worktree. When a branch holds unrelated dirty work, leave it
   in place, start a fresh worktree from the base, and apply your patch there.
@@ -86,10 +91,6 @@ Run the numbered procedure of the chosen mode, in order.
 - Before committing, confirm applicable repository checks and runnable
   behavior-specific evidence pass under the verification rule in
   `2-verify`. Report failures as failures.
-- Use [stacked pull requests](references/stacked.md) only when changes depend
-  on each other and the user or established task design calls for a dependent
-  branch chain. Keep stacks shallow, and publish with `gh stack` when
-  available.
 
 ## Publish
 
@@ -142,8 +143,9 @@ instruction.
    `scripts/pr_body.ts render` from slot files, as the
    [pull-request body template](references/pr-body.md) says, and pass it with
    `--body-file`. Never write the body by hand. For a dependent stack in a
-   `gh stack` repository, do not hand-chain `--base`: the coordinator runs
-   `gh stack link` (see [stacked pull requests](references/stacked.md)), then
+   `gh stack` repository, do not hand-chain `--base`: the coordinator adopts
+   the branches with `gh stack init <bottom> <middle>... <top>` (every branch, bottom to top) and runs
+   `gh stack submit --auto` (see [stacked pull requests](references/stacked.md)), then
    runs `gh pr edit <n> --title "<title>" --body-file <rendered>` on each pull
    request because `gh stack` writes its own titles and bodies, and verifies
    each published body with

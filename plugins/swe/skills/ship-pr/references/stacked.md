@@ -1,10 +1,9 @@
 # Stacked pull requests
 
-Read this reference only when the user or established task design calls for a
-dependent branch chain. Stack only when changes depend on each other, and keep
-stacks shallow. Branch independent work from trunk. Confirm the stack order and
-base relationships from current evidence. Each pull request must stand alone for
-its own diff.
+Read this reference when the sizing rule in ship-pr calls for a stack: more
+than one concern, or more than 200 changed lines. Keep stacks shallow.
+Independent concerns are separate pull requests from trunk, not a stack. Confirm the stack order and base relationships from
+current evidence. Each pull request must stand alone for its own diff.
 
 Rebase onto trunk before substantial stack work. Put a fix on the lowest branch
 that owns the code, then replay the branches above it.
@@ -16,13 +15,18 @@ the git common directory or `gh stack` succeeds).
 
 1. **Publish.** Keep subagents committing in their own worktrees without pushing
    or opening pull requests. The coordinator rebases the unpushed branches into
-   one line, verifies the top branch, and runs one `gh stack link` command from
-   bottom to top (or `gh stack submit --auto` when the stack is already tracked
-   locally). Do not hand-chain `gh pr create --base <parent-branch>` in a
-   `gh-stack` repository.
+   one line, verifies the top branch, adopts the branches with
+   `gh stack init <bottom> <middle>... <top>` (every branch, bottom to top), and runs `gh stack submit --auto`. A branch left out gets no
+   layer. When the branches are already tracked as a stack, run only
+   `gh stack submit --auto`; `init` fails there. Adopt existing pull requests
+   by number or URL with `gh stack link <branch-or-pr>...`, or grow a remote
+   stack with `gh stack link <stack-number> <branch-or-pr>...`. Do not
+   hand-merge them to trunk. Read the result with `gh stack view --json`. Do not
+   hand-chain `gh pr create --base <parent-branch>` in a `gh-stack` repository.
 2. **Replace auto-generated PR bodies.** `gh stack` writes its own titles and
-   bodies. After `gh stack link`, render each body with `scripts/pr_body.ts render`,
-   update each pull request, and check the published body:
+   bodies. After `gh stack submit --auto`, render each body with
+   `scripts/pr_body.ts render`, update each pull request, and check the
+   published body:
 
    ```bash
    gh pr edit <n> --title "<title>" --body-file <rendered>
