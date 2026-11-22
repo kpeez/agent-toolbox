@@ -18,9 +18,11 @@
   runs the file with Node 22.18 or later. Each plugin whose hooks use run-ts
   ships its own copy. The copies stay byte-identical.
 - A hook on any other event may also run a `uv run --script` Python file.
-  Agent scripts off the per-call path default to Python. Analysis, plotting,
-  and experiment tools stay Python. TypeScript stays where the code is synced
-  from upstream pstack (statechart, recall transcripts) or already exists.
+  Agent scripts off the per-call path default to Python. A plugin that ships
+  `run-ts` and no user-facing Python writes new agent scripts in TypeScript, so
+  its users need one runtime. Analysis, plotting, and experiment tools stay
+  Python. TypeScript stays where the code is synced from upstream pstack
+  (statechart, recall transcripts) or already exists.
 - Use erasable TypeScript syntax only (`erasableSyntaxOnly`). No enums,
   namespaces, or parameter properties. Use `import type` for type-only
   imports. Node 22.18 and later then runs the same `.ts` files with no build
