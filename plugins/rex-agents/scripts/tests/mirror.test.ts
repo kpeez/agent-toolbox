@@ -239,6 +239,14 @@ function readRexCalls(home: string): string[][] {
     .map((line) => line.replace(/\t$/, "").split("\t"));
 }
 
+/** The rows that remember wrote for a session: one `<session>.<uuid>.json` file each. */
+function readRows(home: string, session: string): unknown[] {
+  const dir = join(home, ".cache", "rex-agents");
+  return readdirSync(dir)
+    .filter((f: string) => f.startsWith(`${session}.`) && f.endsWith(".json"))
+    .map((f: string) => JSON.parse(readFileSync(join(dir, f), "utf8")));
+}
+
 const SIGNALS: Array<[NodeJS.Signals, number]> = [
   ["SIGTERM", 143],
   ["SIGINT", 130],
@@ -395,8 +403,7 @@ for (const rt of RUNTIMES) {
       const logText = readFileSync(join(home, "tmp", logs[0]), "utf8");
       assert.ok(logText.startsWith("before delay\nafter delay\n"));
       assert.match(logText, /\n__rex_mirror_exit_[0-9a-f]{16}=0\n$/);
-      const cache = readFileSync(join(home, ".cache", "rex-agents", "s-delay.jsonl"), "utf8");
-      assert.equal(cache, JSON.stringify({ block: "b-fake", rex_session: "session:test", label: "[claude] delayed" }) + "\n");
+      assert.deepEqual(readRows(home, "s-delay"), [{ block: "b-fake", rex_session: "session:test", label: "[claude] delayed" }]);
     } finally {
       child.kill("SIGKILL");
       child.stdin.end();
@@ -442,8 +449,7 @@ for (const rt of RUNTIMES) {
         "--json",
         "--",
       ]);
-      const cache = readFileSync(join(home, ".cache", "rex-agents", "s-fb.jsonl"), "utf8");
-      assert.equal(cache, JSON.stringify({ block: "b-fallback", rex_session: "session:test", label: "[claude] fb" }) + "\n");
+      assert.deepEqual(readRows(home, "s-fb"), [{ block: "b-fallback", rex_session: "session:test", label: "[claude] fb" }]);
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
