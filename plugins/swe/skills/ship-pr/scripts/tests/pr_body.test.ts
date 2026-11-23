@@ -191,13 +191,34 @@ test("flags requester attribution", () => {
   });
 });
 
-test("hook blocks an unrendered body with an unfilled slot", () => {
+test("hook blocks a body with an empty slot", () => {
   withTemp((root) => {
     const unrendered = readFileSync(TEMPLATE, "utf-8").replace("{summary}", "");
     writeFileSync(join(root, "unrendered.md"), unrendered, "utf-8");
     const res = runHook("gh pr create --body-file unrendered.md", root);
     assert.equal(res.status, 2, res.stderr);
     assert.ok(res.stderr.includes("PR body blocked by ship-pr"), res.stderr);
+  });
+});
+
+test("hook and check block the raw template and a body with one placeholder left", () => {
+  withTemp((root) => {
+    const oneLeft = readFileSync(renderValidBody(root), "utf-8").replace("Before: 4 s. After: 0.2 s.", "{evidence}");
+    writeFileSync(join(root, "one-left.md"), oneLeft, "utf-8");
+    for (const [file, slot] of [[TEMPLATE, "summary"], [join(root, "one-left.md"), "evidence"]]) {
+      const res = runHook(`gh pr create --body-file ${file}`, root);
+      assert.equal(res.status, 2, `${file}: ${res.stderr}`);
+      const checked = spawnSync("node", [SCRIPT, "check", file], { encoding: "utf-8" });
+      assert.notEqual(checked.status, 0, `${file}: ${checked.stdout}`);
+      assert.ok(checked.stderr.includes(`{${slot}}`), checked.stderr);
+    }
+  });
+});
+
+test("a filled slot may name another slot's placeholder in its text", () => {
+  withTemp((root) => {
+    const res = hookOnSummary(root, "The check now rejects a body that still holds `{evidence}`.");
+    assert.equal(res.status, 0, res.stderr);
   });
 });
 
