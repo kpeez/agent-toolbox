@@ -53,6 +53,8 @@ jobs:
         run: uv run .github/scripts/manifest_versions.py
       - name: Hook runtimes follow the per-event table
         run: uv run .github/scripts/hook_runtime.py
+      - name: Every named path, heading, skill, step, and eval target exists
+        run: uv run .github/scripts/stale_references.py
       - name: Antigravity rules match the session-start hook
         run: |
           # Antigravity CLI skips hooks/hooks.json and loads rules/AGENTS.md

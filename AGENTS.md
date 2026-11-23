@@ -35,8 +35,7 @@
   when a plugin hook runs anything else.
 - `plugins/` holds plugins every supported agent can use. `claude-mods/` holds
   Claude Code function-hook mods, which only the Claude catalog lists.
-- Keep every skill reference pointed at a resource or script that exists in
-  the same plugin. A plugin never names another plugin's skill, agent, or
+- Keep every skill reference inside its own plugin. A plugin never names another plugin's skill, agent, or
   playbook, not even "when it is installed". Write the rule inline. Copy a
   skill into each plugin, as with `go-deeper`, only when every plugin needs
   it, it is not specific to one domain, and a few inline lines cannot replace
@@ -57,7 +56,7 @@
 ## Verification
 
 - For plugin packaging changes, parse the affected manifests, catalogs, and hooks
-  as direct JSON and verify catalog and resource-reference invariants.
+  as direct JSON.
 - For changed shell or runtime scripts, run `bash -n`, Python help/usage checks,
   and `uv run -m py_compile` as applicable. Do not run every repository check
   for a docs-only change.
