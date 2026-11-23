@@ -5,9 +5,10 @@
 # ///
 """Run the project-skill link script end to end in throwaway repositories.
 
-Each scenario builds a repository with a remote, writes the skill
-.agents/skills/demo, runs the script twice, commits with `git add -A`, pushes, and
-checks a fresh clone and a teammate's pull. Prints `PASS <scenario>` or
+Each scenario builds a repository with a remote and writes the skill .agents/skills/demo.
+A refusal scenario runs the script once and checks that nothing changed. Any other
+scenario runs it twice, commits with `git add -A`, pushes, and checks a fresh clone and
+a teammate's pull. Prints `PASS <scenario>` or
 `FAIL <scenario>: <check>, ...` per scenario. Exits 0 only when every scenario passes.
 """
 
