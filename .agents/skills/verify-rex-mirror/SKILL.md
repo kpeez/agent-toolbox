@@ -147,9 +147,11 @@ and the nonce check (unit tests in `plugins/rex-agents/scripts/tests/` cover
 them), more than one session, and a Rex server restart.
 
 Before its pass, the hook turns each line of an old shared
-`<session_id>.jsonl` into a row file named by the line's hash, then deletes
-the old file (`drainLegacyList`). A unit test covers it, including a rerun
-after a kill before the delete; the model starts with no old file.
+`<session_id>.jsonl` into a row file named by the line's hash, written to a
+temp file and renamed so it is complete or absent, then deletes the old file
+(`drainLegacyList`). Unit tests cover it, including a rerun after a kill
+before the delete and an empty row file left by a kill; the model starts
+with no old file.
 
 `remember` writes its row file in one `writeFileSync`. A pass that reads the
 file before the write ends finds invalid JSON and keeps the file, so the

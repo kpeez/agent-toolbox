@@ -10,6 +10,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawnSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -264,7 +265,7 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
   });
 
   // A session that started under the old plugin listed its blocks in one shared <session>.jsonl.
-  test(`session end settles the rows of an old shared list, and a rerun adds no duplicate (${rt})`, { timeout: 60_000, skip }, () => {
+  test(`session end settles the rows of an old shared list, and a rerun after a kill lists each row once (${rt})`, { timeout: 60_000, skip }, () => {
     const h = endHome(rt);
     try {
       const cacheDir = join(h.home, ".cache", "rex-agents");
@@ -281,6 +282,28 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
       h.run();
       assert.equal(existsSync(legacy), false);
       assert.deepEqual(listedBlocks(h.home), ["b-working"]);
+    } finally {
+      rmSync(h.home, { recursive: true, force: true });
+    }
+  });
+
+  // A kill between the open and the write of a row file leaves it empty, with the old list still there.
+  test(`session end rewrites an empty row file from the old shared list, and drops stale temp files (${rt})`, { timeout: 60_000, skip }, () => {
+    const h = endHome(rt);
+    try {
+      const cacheDir = join(h.home, ".cache", "rex-agents");
+      const legacy = join(cacheDir, "s-end.jsonl");
+      const line = row("b-done");
+      const hash = createHash("sha256").update(line).digest("hex");
+      const id = `${hash.slice(0, 8)}-${hash.slice(8, 12)}-${hash.slice(12, 16)}-${hash.slice(16, 20)}-${hash.slice(20, 32)}`;
+      mkdirSync(cacheDir, { recursive: true });
+      writeFileSync(legacy, line + "\n");
+      writeFileSync(join(cacheDir, `s-end.${id}.json`), "");
+      writeFileSync(join(cacheDir, `s-end.${id}.json.tmp.99999`), line); // a killed pass's temp file
+      h.run();
+      assert.equal(existsSync(legacy), false);
+      assert.deepEqual(closedBlocks(h.home), ["b-done"]);
+      assert.deepEqual(readdirSync(cacheDir), []);
     } finally {
       rmSync(h.home, { recursive: true, force: true });
     }

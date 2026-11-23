@@ -16,7 +16,7 @@
  * first turns each of its lines into a row file, then deletes it.
  */
 
-import { readFileSync, readdirSync, unlinkSync, writeFileSync, accessSync, constants, statSync } from "node:fs";
+import { readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync, accessSync, constants, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
@@ -84,7 +84,9 @@ export function rowFiles(dir: string, sessionId: string): string[] {
 /**
  * Turn each line of the old shared list into a row file, then delete the list.
  * A line's file name comes from its hash, so a pass killed before the delete
- * finds the files it already wrote and adds no duplicate.
+ * rewrites the same files and adds no duplicate. Each file is written to a
+ * temp name and renamed, so it appears complete or not at all; the list is
+ * deleted only after every line has a complete row file.
  */
 export function drainLegacyList(dir: string, sessionId: string): void {
   const path = join(dir, `${sessionId}.jsonl`);
@@ -94,14 +96,27 @@ export function drainLegacyList(dir: string, sessionId: string): void {
   } catch {
     return; // no old list
   }
+  // A killed pass can leave temp files; rowFiles never reads them.
+  for (const name of readdirSync(dir)) {
+    if (name.startsWith(`${sessionId}.`) && name.includes(".json.tmp.")) {
+      try {
+        unlinkSync(join(dir, name));
+      } catch {
+        // another pass removed it
+      }
+    }
+  }
   for (const line of text.split("\n")) {
     if (line.length === 0) continue;
     const h = createHash("sha256").update(line).digest("hex");
     const id = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+    const file = join(dir, `${sessionId}.${id}.json`);
+    const temp = `${file}.tmp.${process.pid}`;
     try {
-      writeFileSync(join(dir, `${sessionId}.${id}.json`), line + "\n", { flag: "wx" });
-    } catch (e) {
-      if ((e as NodeJS.ErrnoException).code !== "EEXIST") return; // keep the list for a later pass
+      writeFileSync(temp, line + "\n");
+      renameSync(temp, file);
+    } catch {
+      return; // keep the list for a later pass
     }
   }
   try {
