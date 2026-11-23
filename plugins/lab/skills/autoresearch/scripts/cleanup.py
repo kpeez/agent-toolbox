@@ -405,6 +405,7 @@ def publish_lightweight(run_dir: Path, staging: Path, source: Snapshot, trash_co
     if not snapshot_equal(source, snapshot(run_dir)):
         fail(f"run changed before retirement; originals and staging retained: {staging}")
     print(f"cleanup original recovery: {recovery}", file=sys.stderr, flush=True)
+    # A rename cannot freeze open file descriptors, so the caller must stop all writers first.
     os.rename(run_dir, recovery)
     try:
         if not snapshot_equal(source, snapshot(recovery)):
