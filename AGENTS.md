@@ -108,3 +108,8 @@
   `manifest_versions.py`, run
   `uv run .agents/skills/verify-plugin-rollout/scripts/check.py`. It
   model-checks the rollout from PR to every config folder with TLC.
+- After a change to the Publish, Land, or Finalize rules in
+  `plugins/swe/skills/ship-pr/` or to the `babysit-pr`, `ship-stack`,
+  `autopilot-full`, or `autopilot-stack` playbooks, run
+  `uv run .agents/skills/verify-pr-lifecycle/scripts/check.py`. It
+  model-checks the verdict, ready, merge, frontier, and issue-status rules.

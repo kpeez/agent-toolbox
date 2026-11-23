@@ -259,3 +259,20 @@ jobs:
       - name: Plugin rollout rules hold, and each past bug breaks them
         timeout-minutes: 2
         run: uv run .agents/skills/verify-plugin-rollout/scripts/check.py
+
+  pr-lifecycle-model-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
+        with:
+          install: false
+          cache: false
+      - name: Install the statechart skill's pinned TLC and Java
+        run: uv run .github/scripts/statechart_tlc.py >> "$GITHUB_ENV"
+      - name: PR lifecycle rules hold, and each past bug breaks them
+        timeout-minutes: 5
+        run: uv run .agents/skills/verify-pr-lifecycle/scripts/check.py
