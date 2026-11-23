@@ -9,6 +9,8 @@
   A minor or major bump requires explicit permission in the request;
   precedent in the git history is not permission.
 - Keep every marketplace catalog entry pointed at a plugin folder that exists.
+  `uv run .github/scripts/plugin_catalogs.py` checks this, and that each
+  catalog lists every plugin folder it should.
 - A hook that fires on every tool call (`PreToolUse`, `PostToolUse`,
   `PostToolUseFailure`, `PermissionRequest`) runs TypeScript through
   `scripts/run-ts`, or cats a `.md` file. Startup cost adds up on these

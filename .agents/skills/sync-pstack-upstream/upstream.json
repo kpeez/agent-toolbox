@@ -905,10 +905,11 @@
     },
     {
       "upstream": "skills/statechart/scripts/run.ts",
-      "class": "copied",
+      "class": "modified",
       "local": [
         "plugins/swe/skills/statechart/scripts/run.ts"
-      ]
+      ],
+      "note": "exitClass declares its return type CheckResult[\"exit\"], so the statechart tsconfig type check passes"
     },
     {
       "upstream": "skills/statechart/scripts/statechart",
@@ -961,10 +962,11 @@
     },
     {
       "upstream": "skills/statechart/scripts/test/cli.test.ts",
-      "class": "copied",
+      "class": "modified",
       "local": [
         "plugins/swe/skills/statechart/scripts/test/cli.test.ts"
-      ]
+      ],
+      "note": "linkedLauncher builds the relative link from fs.realpathSync(second), so the test passes on macOS; two signal tests await signalWhile, so the type check passes"
     },
     {
       "upstream": "skills/statechart/scripts/test/config-fuzz.test.ts",

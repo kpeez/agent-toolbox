@@ -45,6 +45,13 @@ changing them to suit agy changes which model Claude Code runs.
 
 ## Checks
 
+The `checks` workflow also runs the tech-tree model check and the statechart
+tests with the statechart skill's pinned TLC and Java. To run the statechart
+tests with TLC locally, run `uv run .github/scripts/statechart_tlc.py`. It
+installs both with mise and prints the `TLA2TOOLS` and `JAVA` values. Set
+them, then run `npm test` in `plugins/swe/skills/statechart/scripts`. Without
+`TLA2TOOLS`, the TLC tests skip.
+
 A broad plugin release runs the [release checks](release-checks.md). A repeated
 agent mistake gets an enforcer from the `correct` skill, recorded in
 [agent rule enforcers](agent-rule-enforcers.md).
