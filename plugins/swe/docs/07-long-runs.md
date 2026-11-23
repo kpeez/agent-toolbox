@@ -105,7 +105,7 @@ The router's Subagents section sets the rules. The chat that runs the playbook o
 
 `implement` fans out large work with independent parts through [`swarm`](../skills/swarm/SKILL.md). Every subagent that `swe-mode` starts reads [`worker.md`](../skills/swe-mode/worker.md) first. It holds your rules for started agents. The kickoff's bar is the whole bar. The agent decides reversible calls instead of asking you. It publishes PRs as the [`ship-pr`](../skills/ship-pr/SKILL.md) skill says. The swe README covers [agents and delegates](../README.md#agents).
 
-Reviews and searches use the host's own subagents, with the rules in the [review brief](../references/review-brief.md). By default a reviewer fixes small, sure findings and reports each fix. A landing verdict edits nothing.
+Reviews and searches use the host's own subagents, with the rules in the [review brief](../references/review-brief.md). By default a reviewer fixes small, sure findings and reports each fix. A landing verdict edits nothing. Every reviewer checks that each new or changed test fails when its production code breaks.
 
 ## Find the project files
 
