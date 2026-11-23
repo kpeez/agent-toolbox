@@ -1,6 +1,6 @@
 # babysit-pr
 
-Applies when: the user asks to babysit, get green, or check on an open PR or stack, including its conflicts, review threads, and CI ("anything outstanding on X").
+Applies when: the user asks to babysit, get green, or check on an open PR or stack, to drive it to merge-ready: its conflicts, review threads, and CI ("anything outstanding on X").
 
 You own the merge frontier. Declare a mode, clear one PR at a time, and stop where the human's call begins. Opening a PR never starts this playbook. A request to land or ship is ship-stack.
 

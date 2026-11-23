@@ -1,6 +1,6 @@
 # diagnose-trace
 
-Applies when: diagnose a captured profiling artifact, such as a cpuprofile, trace, spindump, or heap snapshot, handed over after the fact.
+Applies when: diagnose a captured profiling artifact, such as a cpuprofile, trace, spindump, or heap snapshot, handed over after the fact. No fix.
 
 You own the diagnosis from the artifact.
 

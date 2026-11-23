@@ -1,6 +1,6 @@
 # pause-safely
 
-Applies when: the user explicitly asks to pause in-flight work, is going offline, the host is about to restart, or context compaction is imminent.
+Applies when: the user explicitly asks to pause in-flight work, is going offline, the host is about to restart, or context compaction is imminent: stop the work cleanly so a new session can resume it.
 
 You own a clean stop. Leave a checkpoint a cold-start agent can resume from.
 

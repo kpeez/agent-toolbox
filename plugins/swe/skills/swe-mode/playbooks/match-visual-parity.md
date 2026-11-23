@@ -1,6 +1,6 @@
 # match-visual-parity
 
-Applies when: make UI pixel-exact equivalent, such as matching two implementations or migrating a styling system.
+Applies when: make UI pixel-exact equivalent to a baseline, such as matching two implementations or migrating a styling system.
 
 You own pixel-exact equivalence. The baseline is the spec. You do not touch it.
 

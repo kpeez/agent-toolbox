@@ -5,7 +5,8 @@
 # ///
 """Derive every testable workflow facet from the skill sources, and write or check the facet map.
 
-`write` regenerates facets.json and FACETS.md. `check` exits 1 when either differs from the sources.
+`write` regenerates facets.json, FACETS.md, and each router's Playbooks entries from the playbooks'
+"Applies when" lines. `check` exits 1 when any of them differs from the sources.
 """
 
 from __future__ import annotations
@@ -15,6 +16,7 @@ import difflib
 import json
 import re
 import sys
+import textwrap
 from collections import Counter, defaultdict
 from pathlib import Path
 from typing import NamedTuple
@@ -263,6 +265,7 @@ CONTRACTS = [
 
 STEP = re.compile(r"(\d+-[a-z0-9-]+): (.+)")
 REPLY = re.compile(r"Reply: (.+)")
+APPLIES = re.compile(r"Applies when: (.+)")
 SKILL_STEP_ITEM = re.compile(r"\d+\. `(\d+-[a-z0-9-]+)`:")
 SKILL_STEP_HEADING = re.compile(r"\d+-[a-z0-9-]+")
 PARENS = re.compile(r"\(([^()]+)\)\s*$")
@@ -331,6 +334,39 @@ def leading_slug(bullet, path, heading):
             f"{rel(path)}: '{heading}' bullet does not start with a backticked slug: {bullet}"
         )
     return match.group(1)
+
+
+def applies_when(file):
+    lines = file.read_text(encoding="utf-8").split("\n")
+    found = [m.group(1) for m in map(APPLIES.fullmatch, lines) if m]
+    if len(found) != 1:
+        raise FacetError(
+            f"{rel(file)}: needs one 'Applies when: ' line; the router's Playbooks entry copies it"
+        )
+    return found[0]
+
+
+def router_text(plugin):
+    lines = plugin.router_file.read_text(encoding="utf-8").split("\n")
+    index = lines.index("## Playbooks") + 1
+    out = lines[:index]
+    while index < len(lines) and not lines[index].startswith("## "):
+        line = lines[index]
+        index += 1
+        if not line.startswith("- "):
+            out.append(line)
+            continue
+        while index < len(lines) and lines[index].startswith(" ") and lines[index].strip():
+            index += 1
+        slug = leading_slug(line[2:], plugin.router_file, "Playbooks")
+        out += textwrap.wrap(
+            f"- `{slug}`: {applies_when(plugin.playbooks[slug])}",
+            width=78,
+            subsequent_indent="  ",
+            break_long_words=False,
+            break_on_hyphens=False,
+        )
+    return "\n".join(out + lines[index:])
 
 
 class Resolution(NamedTuple):
@@ -801,9 +837,10 @@ def router_facets(plugin):
             raise FacetError(
                 f"{rel(router)}: project skill {name} lost its anchor {anchor!r}"
             )
-    listed = {}
-    for bullet in bullets(section(router, "Playbooks")):
-        listed[leading_slug(bullet, router, "Playbooks")] = bullet
+    listed = [
+        leading_slug(bullet, router, "Playbooks")
+        for bullet in bullets(section(router, "Playbooks"))
+    ]
     if set(listed) != set(plugin.playbooks):
         raise FacetError(
             f"{rel(router)}: Playbooks entries {sorted(set(listed) ^ set(plugin.playbooks))} "
@@ -813,15 +850,16 @@ def router_facets(plugin):
         slug: parse_playbook(plugin, slug, file)
         for slug, file in plugin.playbooks.items()
     }
-    for slug, bullet in listed.items():
+    for slug in listed:
         locator = f"Playbooks: {slug}"
+        entry = f"`{slug}`: {applies_when(plugin.playbooks[slug])}"
         yield make(
             "route",
             plugin.name,
             slug,
             required_by=router,
             locator=locator,
-            source_text=bullet,
+            source_text=entry,
             route_type="playbook",
             handles=[h for h, _, _ in steps[slug] if h != "Reply"],
         )
@@ -831,7 +869,7 @@ def router_facets(plugin):
             slug,
             required_by=router,
             locator=locator,
-            source_text=bullet,
+            source_text=entry,
             path=plugin.plugin_path(plugin.playbooks[slug]),
         )
     routes = defaultdict(list)
@@ -1243,6 +1281,7 @@ def outputs():
     return {
         JSON_OUT: json.dumps(data, indent=2, sort_keys=True) + "\n",
         MD_OUT: render(data, unreached),
+        **{p.router_file: router_text(p) for p in map(Plugin, ROUTERS)},
     }
 
 
@@ -1265,7 +1304,8 @@ def check(expected):
             print("\n".join(diff[:40]))
     if stale:
         print(
-            "facets: the facet map is stale; run `uv run evals/skills/facets.py write`",
+            "facets: the facet map or a router's Playbooks list is stale; "
+            "run `uv run evals/skills/facets.py write`",
             file=sys.stderr,
         )
     return stale

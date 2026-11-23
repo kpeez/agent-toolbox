@@ -1,6 +1,6 @@
 # hillclimb-metric
 
-Applies when: sustained improvement of one measurable metric against a target, through a loop of measured attempts.
+Applies when: sustained improvement of one measurable metric against a target, through a loop of measured attempts with one keep-or-revert decision per attempt.
 
 You own the metric and the experiment's integrity. Supervise and review. Delegate the attempts.
 

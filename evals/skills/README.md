@@ -442,15 +442,19 @@ keyed by the heading in lowercase with hyphens and without a trailing "mode" (`#
 green` is `drive-to-green`, `## Maintain mode` is `maintain`), and its `handles` is empty. Handles
 count from 1 in order. `write` fails when a routed skill has no steps or breaks these rules.
 
-Regenerate both files after you change a skill, a router, a playbook, a hook,
-or an eval case:
+Each entry in a router's `## Playbooks` section copies its playbook's
+`Applies when:` line, so the two cannot disagree. `write` rewrites the entries
+and keeps the group lines and the order. Edit the playbook line, not the router.
+
+Regenerate the map and the router entries after you change a skill, a router,
+a playbook, a hook, or an eval case:
 
 ```sh
 uv run evals/skills/facets.py write
 ```
 
 CI runs `uv run evals/skills/facets.py check`. The check fails when a skill
-change leaves the map stale. `write` also fails when a playbook step names a
+change leaves the map or a router's Playbooks entries stale. `write` also fails when a playbook step names a
 skill, principle, playbook, or reference that does not exist.
 
 Each facet has a scorer status:
