@@ -144,7 +144,8 @@ def cmd_merge(args):
 
 def cmd_check(args):
     """Check that the manifest covers every pinned pstack file, that each local
-    path exists, and that the README credit names the pin."""
+    path exists, that the README credit names the pin, and that
+    THIRD_PARTY_NOTICES names the pin and lists every copied or modified file."""
     manifest = load()
     clone = upstream(args, manifest)
     pin = manifest["commit"]
@@ -176,19 +177,32 @@ def cmd_check(args):
         problems += [f"missing local: {p}" for p in local if not (REPO / p).exists()]
     if pin not in (REPO / "README.md").read_text():
         problems.append("README.md Credits does not link the pinned commit")
+    notices = (REPO / "plugins/swe/THIRD_PARTY_NOTICES").read_text()
+    if pin not in notices:
+        problems.append("plugins/swe/THIRD_PARTY_NOTICES does not name the pinned commit")
+    listed = {l.removeprefix("- ") for l in notices.splitlines() if l.startswith("- ")}
+    expected = {
+        p
+        for i in manifest["items"]
+        if i["class"] in ("copied", "modified")
+        for p in i.get("local", [])
+    }
+    problems += [f"THIRD_PARTY_NOTICES lacks: {p}" for p in sorted(expected - listed)]
+    problems += [f"THIRD_PARTY_NOTICES lists unknown: {p}" for p in sorted(listed - expected)]
     print("\n".join(problems) or f"ok: {len(files)} pinned files covered")
     sys.exit(1 if problems else 0)
 
 
 def cmd_pin(args):
-    """Move the pin to a new commit and update the README credit link."""
+    """Move the pin to a new commit and update the README credit link
+    and the notices pin."""
     manifest = load()
     clone = upstream(args, manifest)
     new, old = resolve(clone, args.to), manifest["commit"]
     manifest["commit"] = new
     MANIFEST.write_text(json.dumps(manifest, indent=2) + "\n")
-    readme = REPO / "README.md"
-    readme.write_text(readme.read_text().replace(old, new))
+    for path in (REPO / "README.md", REPO / "plugins/swe/THIRD_PARTY_NOTICES"):
+        path.write_text(path.read_text().replace(old, new))
     print(f"pinned {new}")
 
 
