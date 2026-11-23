@@ -32,6 +32,12 @@ rule that breaks, it prints the shortest event path.
 
 `--no-mutants` skips the mutants.
 
+It also runs `tech_tree.py place` as a program under four fixed
+`PYTHONHASHSEED` values, on a six-topic graph. `PlaceListsInGraphOrder`
+holds when each output lists the topics in the graph's order. A list built
+from a set changes order with the hash seed, so a `place` message would
+change between runs of the same command.
+
 ## How it works
 
 This is not a hand model. `scripts/check.py` loads

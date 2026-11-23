@@ -39,6 +39,9 @@ function mulberry32(seed: number): () => number {
 }
 
 const singleQuote = (s: string): string => `'${s.replaceAll("'", `'\\''`)}'`;
+// Inside $( ), bash 5.2.21 (the bash on CI) rejects a compound command that holds a heredoc and is followed by `;`,
+// such as `x=$( ( cat <<E\na\nE\n); true\n)`, with a syntax error. bash 3.2 and 5.3 run it.
+const bash52RejectsInsideComsub = (s: string): boolean => /<<['A-Z][^]*\n(?:\)|\}|fi|done) *;/.test(s);
 const oneLine = (s: string): boolean => !s.includes("\n");
 
 function generator(seed: number, binDir: string): () => string {
@@ -111,7 +114,7 @@ function generator(seed: number, binDir: string): () => string {
       () => `cat > note.md <<'NOTE${depth}'\nThen run \`${a}\` by hand.\nNOTE${depth}`,
       () => `cat > note.md <<NOTE${depth}\nThen run ${a} by hand.\nNOTE${depth}`,
     ];
-    if (!a.includes("<<")) forms.push(() => `out=$( ${a}\n)`, () => `echo "$( ${a}\n)"`);
+    if (!bash52RejectsInsideComsub(a)) forms.push(() => `out=$( ${a}\n)`, () => `echo "$( ${a}\n)"`);
     if (!a.includes("'")) forms.push(() => `echo '${a}'`);
     if (!/["$`\\]/.test(a)) forms.push(() => `echo "note:\n${a}"`, () => `true # ${a}`.replaceAll("\n", " "));
     if (oneLine(a) && !/[`\\$]/.test(a)) {
@@ -256,10 +259,18 @@ test("the hook blocks a command exactly when bash runs a gh call that breaks the
   assert.equal(failures.length, 0, `${failures.length}/${corpus.length} disagree with bash:\n${failures.slice(0, 12).join("\n")}`);
 });
 
+test("the hook blocks a gh call in a heredoc that bash 5.2 cannot parse inside $( )", async () => {
+  const command = "x=$( ( bash <<'E'\ngh pr create --body=x\nE\n); true\n)";
+  assert.ok(bash52RejectsInsideComsub(command));
+  const hook = await run(HOOK[0], HOOK.slice(1), { cwd: tmpdir(), input: JSON.stringify({ tool_input: { command }, cwd: tmpdir() }) });
+  assert.equal(hook.status, 2, hook.stderr);
+});
+
 const missingShells = ["nu", "fish"].filter((shell) => onPath(shell) === undefined);
 test(
   "the hook agrees with nu -c and fish -c on which gh calls they run",
-  { timeout: 120_000, skip: missingShells.length > 0 ? `not on PATH: ${missingShells.join(", ")}` : false },
+  // CI installs both shells, so there a missing shell fails the test instead of skipping it.
+  { timeout: 120_000, skip: missingShells.length > 0 && !process.env.CI ? `not on PATH: ${missingShells.join(", ")}` : false },
   async () => {
     const corpus = [...otherShellCorpus("nu"), ...otherShellCorpus("fish")];
     const { failures, blocking } = await agreement(corpus, ["nu", "fish"]);

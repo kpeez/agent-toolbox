@@ -19,7 +19,10 @@ import copy
 import datetime as dt
 import importlib.util
 import json
+import os
+import subprocess
 import sys
+import tempfile
 from collections import deque
 from pathlib import Path
 
@@ -162,6 +165,33 @@ def words(event):
     return f"{kind} {tid} {result}" + (" --helped" if helped else "")
 
 
+PLACE_RUNS = {
+    ("place", "f", "pass"): "conditional credit: f, a, b, c, d, e",
+    ("place", "a", "fail"): "a and its descendants are not placed; removed credit: a, b, c, d, e, f",
+}
+
+
+def place_order_breaks():
+    """Run ``place`` under four hash seeds; return the first output not in graph order, or None.
+
+    A set's order changes with PYTHONHASHSEED, so a list built from one changes between runs.
+    """
+    requires = {"a": [], "b": ["a"], "c": ["a"], "d": ["a"], "e": ["a"], "f": ["b", "c", "d", "e"]}
+    topics = [{"id": t, "title": t, "goal": "g", "check": "c", "requires": {r: "needed" for r in reqs},
+               "kps": [{"title": "k", "key": []}]} for t, reqs in requires.items()]
+    for seed in range(4):
+        with tempfile.TemporaryDirectory() as d:
+            graph = Path(d) / "tech-tree.json"
+            graph.write_text(json.dumps({"course": "order", "topics": topics}))
+            for cmd, want in PLACE_RUNS.items():
+                out = subprocess.run([sys.executable, str(SCRIPT), "--graph", str(graph), "--date", TODAY, *cmd],
+                                     env={**os.environ, "PYTHONHASHSEED": str(seed)},
+                                     capture_output=True, text=True).stdout.strip()
+                if out != want:
+                    return f"PYTHONHASHSEED={seed} {' '.join(cmd)}: {out!r}, want {want!r}"
+    return None
+
+
 def mutant_gate(tt):
     tt.unmet_ancestors = lambda g, state, tid: []
 
@@ -230,6 +260,9 @@ def main():
     print(f"{states} distinct states, depth {MAX_DEPTH}, bounds: fails <= {MAX_FAILS}, "
           f"reps <= {MAX_REPS}, overdue <= {MAX_OVERDUE} days")
     ok = True
+    place_broken = place_order_breaks()
+    ok &= place_broken is None
+    print("PlaceListsInGraphOrder: " + ("holds" if place_broken is None else f"breaks\n  {place_broken}"))
     for name, holds_expected in EXPECTED.items():
         holds = name not in broken
         status = "holds" if holds else "breaks"
