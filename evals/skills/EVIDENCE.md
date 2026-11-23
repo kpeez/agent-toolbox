@@ -7,8 +7,10 @@ it does not accept an execution agent's self-report as a grade.
 The normalized record has `schema_version`, `provider`, `adapter_version`,
 `evidence_kind`, `session_id`, `session_state`, `evidence_coverage`, `coverage`,
 `raw_trace`, `loads`, `child_loads`, `resource_reads`, `child_resource_reads`,
-`unproved_reads`, `hook_deliveries`, `actions`, and `issues`. In the Claude
-transcript adapter, load records add `agent_id`, `detail`, and `transform`.
+`unproved_reads`, `hook_deliveries`, `actions`, `issues`, and `warnings`. In
+the Claude transcript adapter, load records add `agent_id`, `detail`, and
+`transform`. `score.json` copies `warnings`, and `aggregate` counts them in
+each group.
 
 `score` hashes `hook_arm` into `configuration_sha256` and writes `hook_arm` to
 `score.json`. `aggregate` adds `hook_arm` to its group key and to every
@@ -66,8 +68,9 @@ unavailable timing; no inferred timing from a final answer or skill mention.
 
 `coverage` separately records `start`, `end`, `skill_delivery`, and
 `relevant_actions`. A byte-complete file does not prove observable instruction
-delivery or action coverage. Unknown records, malformed events, interrupted
-sessions, or missing coverage make the session partial/unavailable. Failed
+delivery or action coverage. Malformed events, unknown synthetic records,
+interrupted sessions, or missing coverage make the session partial/unavailable.
+The Claude adapter's rule for shapes the audit did not see is below. Failed
 read attempts remain failed; partial bodies and pending reads remain distinct.
 Absence of a provider error flag alone cannot establish success.
 
@@ -172,7 +175,21 @@ which no frozen plugin hook uses and both arms reject as an issue. This
 
 `body_sha256` is the digest of `SKILL.md` with its frontmatter removed and its
 leading newlines stripped. The load record names this transform.
-It also accepts an appended `\n\nARGUMENTS: <args>` suffix (`_arguments_suffix_removed`) and, when the body holds `$ARGUMENTS`, replacement by `args` (`_arguments_substituted`, keeping `body_sha256` as the delivered digest).
+A delivered body that differs from the frozen body still proves the load in
+two cases, which can combine:
+
+- It ends with `\n\nARGUMENTS: <args>`, where `<args>` is the `Skill` call's
+  `args`, and the rest matches (`_arguments_suffix_removed`).
+- The frozen body matches its frozen digest and holds placeholders, and the
+  delivered body equals the frozen body with each placeholder filled
+  (`_placeholders_filled`). A placeholder is `$NAME` or `${NAME}`, where
+  `NAME` matches `[A-Z_][A-Z0-9_]*`. One placeholder takes one value at all
+  its occurrences. The value is the `Skill` call's `args` exactly, or any text
+  with no newline, which includes the placeholder itself. So a filled body
+  can differ from the frozen body only inside the lines that hold a
+  placeholder, unless the value is the call's own `args`.
+
+`body_sha256` is then the digest of the delivered body, less the suffix.
 A failed
 result is `failed`. A success without proof is `partial`: no linked body, a
 digest mismatch, or a sliced read. No result, no success flag, a path outside
@@ -213,9 +230,8 @@ session with `subtype: success` and `is_error: false`. `relevant_actions` needs 
 valid label. `skill_delivery` needs no issues. Each of these is an issue and
 makes the session partial:
 
-- a line type, `system` subtype, or attachment type that the audit did not see;
-  the allowed sets are `CLAUDE_LINE_TYPES`, `CLAUDE_SYSTEM_SUBTYPES`, and
-  `CLAUDE_ATTACHMENT_TYPES` in `skill_eval.py`;
+- a shape that the audit did not see (see below) and that may hold a skill
+  load;
 - in `hook-off`, any `hook_success` or `hook_additional_context` attachment row
   (the isolation failed);
 - in `hook-on`, any `hook_additional_context` row, any `hook_success` row whose
@@ -236,10 +252,24 @@ makes the session partial:
 - a subagent call whose sidechain file was not captured;
 - a stream without one successful `result` event, or an invalid label.
 
-[README.md](README.md) lists what the adapter does not support. Two reasons
-are not stated there. Only the typed form was seen to append arguments to the
-body, so a `Skill` body that arguments changed is `partial`. No probe exercised
-compaction or resume, so only the chain checks above detect them.
+A record type, `system` subtype, or attachment type that the audit did not
+see is a shape outside `CLAUDE_LINE_TYPES`, `CLAUDE_SYSTEM_SUBTYPES`, or
+`CLAUDE_ATTACHMENT_TYPES` in `skill_eval.py`. It goes to `warnings` and keeps
+coverage, unless it may hold a skill load that the adapter cannot read. It may
+hold one when its row text contains `Base directory for this skill: ` or
+`SKILL.md`, or when it is a record type with a `uuid`, which puts it in the
+message chain. Such a shape is an issue. A malformed line stays an issue.
+
+[README.md](README.md) lists what the adapter does not support. One reason is
+not stated there. No probe exercised compaction or resume, so only the chain
+checks above detect them.
+
+`tests/test_claude_transcript_fixtures.py` scores one real transcript per
+Claude Code version in `tests/fixtures/claude-transcripts/`: 2.1.325, 2.1.327,
+and 2.1.330. Each must score complete, with no issue, no warning, and every
+`Skill` load proved. To add a version, run `reduce.py` in that folder on an
+eval run. It keeps every row and its chain links, drops the fields the adapter
+does not read, and replaces private paths and the session id.
 
 ## Assistant text and the final reply
 

@@ -247,6 +247,8 @@ class OfflineCLIContract(unittest.TestCase):
                         {"type": "tool_result", "tool_use_id": tool_use_id, "content": "ok"}]}}, parent)
                 elif kind == "attachment":
                     add({"type": "attachment", "attachment": payload})
+                elif kind == "record":
+                    rows.append({"sessionId": sid, **payload})
                 elif kind == "text":
                     add({"type": "assistant", "message": {"id": message_id, "content": [{"type": "text", "text": payload}]}})
                 else:
@@ -323,22 +325,27 @@ class OfflineCLIContract(unittest.TestCase):
                 self.assertEqual((score["evidence_coverage"], score["activation"]["swe:implement"],
                                   score["timing"]["swe:implement"]), outcome)
 
-    def test_a_harness_reminder_attachment_keeps_coverage_and_an_unknown_one_does_not(self):
+    def test_an_unaudited_shape_is_a_warning_unless_it_may_hold_a_skill_load(self):
         # Claude Code 2.1.327 wrote this attachment mid-session in a plugin-eval canary run.
         reminder = {"type": "silent_turn_reminder", "text": "The user hasn't heard from you in a while."}
-        for name, attachment, coverage in (("reminder", reminder, "complete"),
-                                           ("unknown", {"type": "not_audited_yet"}, "partial")):
+        rows = [("reminder", "attachment", reminder, "complete", 0),
+                ("unknown-attachment", "attachment", {"type": "not_audited_yet"}, "complete", 1),
+                ("unknown-attachment-naming-a-skill", "attachment",
+                 {"type": "not_audited_yet", "path": "skills/implement/SKILL.md"}, "partial", 0),
+                ("unknown-record-beside-the-chain", "record", {"type": "not_audited_yet"}, "complete", 1),
+                ("unknown-record-in-the-chain", "record", {"type": "not_audited_yet", "uuid": "chained"}, "partial", 0)]
+        for name, kind, payload, coverage, warnings in rows:
             with self.subTest(name=name):
                 run, skill, text = self.prepare("attachment-" + name)
                 body = ("Base directory for this skill: " + str(Path(skill["path"]).parent) + "\n\n"
                         + text.split("\n---\n", 1)[1].lstrip("\n"))
                 steps = [("call", "message-skill", "use-skill", {"name": "Skill", "input": {"skill": "swe:implement"}}),
                          ("result", None, "use-skill", {"success": True, "commandName": "swe:implement"}),
-                         ("body", None, "use-skill", body), ("attachment", None, None, attachment),
+                         ("body", None, "use-skill", body),
                          ("call", "message-edit", "use-edit", {"name": "Edit", "input": {"file_path": "calc.py"}}),
-                         ("result", None, "use-edit", {"filePath": "calc.py"})]
+                         ("result", None, "use-edit", {"filePath": "calc.py"}), (kind, None, None, payload)]
                 score = self.claude_trace(run, steps, "use-edit")
-                self.assertEqual(score["evidence_coverage"], coverage)
+                self.assertEqual((score["evidence_coverage"], len(score["warnings"])), (coverage, warnings))
 
     def test_isolation_native_unknown_and_frozen_input_integrity(self):
         run, skill, body = self.prepare("identity")
@@ -1621,10 +1628,11 @@ class OfflineCLIContract(unittest.TestCase):
     def test_claude_skill_body_substitutes_the_session_id(self):
         # Claude Code 2.1.327 fills ${CLAUDE_SESSION_ID} in a delivered body, as in swe:recall.
         base = "frontmatter_removed_leading_newlines_stripped"
-        rows = [("own-session", None, "claude-session", "success", base + "_session_id_substituted"),
-                ("other-session", None, "some-other-session", "partial", base),
+        rows = [("own-session", None, "claude-session", "success", base + "_placeholders_filled"),
+                ("other-session", None, "some-other-session", "success", base + "_placeholders_filled"),
+                ("two-lines", None, "claude-session\nmore", "partial", base),
                 ("with-args", "note this", "claude-session", "success",
-                 base + "_arguments_suffix_removed_session_id_substituted")]
+                 base + "_arguments_suffix_removed_placeholders_filled")]
         for name, call_args, filled_id, expected_status, expected_transform in rows:
             with self.subTest(name=name):
                 run, _, _ = self.prepare("claude-session-id-" + name)
@@ -1649,9 +1657,13 @@ class OfflineCLIContract(unittest.TestCase):
     def test_claude_skill_body_substitutes_arguments_placeholder(self):
         rows = [
             ("no-args", None, lambda b: b.replace("$ARGUMENTS", ""), "success", None,
-             "frontmatter_removed_leading_newlines_stripped_arguments_substituted", True),
+             "frontmatter_removed_leading_newlines_stripped_placeholders_filled", True),
             ("with-args", "fix the parser", lambda b: b.replace("$ARGUMENTS", "fix the parser"), "success", None,
-             "frontmatter_removed_leading_newlines_stripped_arguments_substituted", True),
+             "frontmatter_removed_leading_newlines_stripped_placeholders_filled", True),
+            ("multi-line-args", "fix\nthe parser", lambda b: b.replace("$ARGUMENTS", "fix\nthe parser"), "success", None,
+             "frontmatter_removed_leading_newlines_stripped_placeholders_filled", True),
+            ("multi-line-fill-not-args", "fix the parser", lambda b: b.replace("$ARGUMENTS", "fix\nthe parser"),
+             "partial", "body digest mismatch", "frontmatter_removed_leading_newlines_stripped", False),
             ("other-byte-mismatch", "fix the parser",
              lambda b: b.replace("$ARGUMENTS", "fix the parser").replace("route a task", "route A task", 1),
              "partial", "body digest mismatch", "frontmatter_removed_leading_newlines_stripped", False),
