@@ -3,15 +3,23 @@ const m = "m1";
 
 export const title = "A mirrored background command's Rex block";
 
+// The block that opened: the floating layer, or else the fallback `rex run` block.
+const slot = (v) => (v.block[m].layer !== "none" ? "layer" : "run");
+
 export const state = (v) => {
-  const block = v.block[m];
-  const status = v.status[m];
-  if (block === "none") return ["start", "log"].includes(v.mpc[m]) ? "Starting" : "No block";
+  const k = slot(v);
+  const block = v.block[m][k];
+  const status = v.status[m][k];
+  if (block === "none") {
+    if (v.mpc[m] === "ended" || v.mpc[m] === "dead") return "No block";
+    return v.opc[m] === "timer" || v.opc[m] === "none" ? "Starting" : "Opening";
+  }
   if (block === "closed") return status === "done" ? "Closed after done" : "Closed after error";
   if (status === "done" || status === "error") {
-    return v.closeFailed[m] ? `Shows ${status}, left open` : `Shows ${status}, closes in 1 s`;
+    return v.closeFailed[m][k] ? `Shows ${status}, left open` : `Shows ${status}, closes in 1 s`;
   }
-  return v.mpc[m] === "dead" ? "Working forever" : "Working";
+  const stuck = (v.mpc[m] === "ended" || v.mpc[m] === "dead") && v.exitLine[m] === -1;
+  return stuck ? "Working forever" : "Working";
 };
 
 export const group = (v) => {
@@ -25,16 +33,21 @@ export const colors = { running: "blue", settled: "teal", stuck: "orange" };
 
 const labels = {
   MirrorCreatesLog: "the mirror creates its log",
-  MirrorOpensBlock: "the mirror opens a block",
-  MirrorGetsNoBlock: "rex run fails",
-  Kill: "Claude Code stops the task [before the mirror sets its signal handlers]",
+  MirrorInstallsHandlers: "the mirror sets its signal handlers",
+  MirrorTimerFires: "the open delay passes",
+  MirrorInspects: "the mirror asks Rex for a floating pane",
+  ServerOpens: "Rex opens the pane",
+  ServerRefuses: "Rex refuses the pane",
+  MirrorLayerGivesUp: "the pane request dies before its reply",
+  MirrorRunGivesUp: "the `rex run` request dies before its reply",
+  Kill: "Claude Code stops the task",
   ViewerClosesBlock: "the viewer closes the block",
   ViewerCloseFails: "the close fails (session end retries it)",
 };
 
 export const step = (action, from, to) => {
   if (action === "ViewerReadsExitLine") {
-    return to.status[m] === "done" ? "the command exits 0" : "the command fails, or is stopped";
+    return to.status[m][slot(to)] === "done" ? "the command exits 0" : "the command fails, or is stopped";
   }
   return labels[action] ?? action;
 };

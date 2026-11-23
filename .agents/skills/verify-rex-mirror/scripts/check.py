@@ -35,6 +35,8 @@ BASE = {
     "Codes": "{0, 1}",
     "Kinds": '{"plain", "exec"}',
     "KillFrom": '"start"',
+    "DelayZero": "FALSE",
+    "LayerCanFail": "TRUE",
     "ReplyCanTimeOut": "FALSE",
     "EndOn": "TRUE",
     "EndFaults": "TRUE",
@@ -42,11 +44,20 @@ BASE = {
     "Watched": '"m1"',
     "Variant": '"fixed"',
 }
-TWO = {"Mirrors": '{"m1", "m2"}', "Kinds": '{"plain"}', "WaiterOn": "FALSE"}
+# Two mirrors at delay 0, with no refused layer: a timer and a fallback for each would
+# put the run above 10 million states.
+TWO = {
+    "Mirrors": '{"m1", "m2"}',
+    "Kinds": '{"plain"}',
+    "WaiterOn": "FALSE",
+    "DelayZero": "TRUE",
+    "LayerCanFail": "FALSE",
+}
 
 ALL_RULES = [
     "ExitLineWritten",
     "ReportsCommandStatus",
+    "OneBlockPerMirror",
     "NoLostRow",
     "SettledBlockCloses",
     "EndPassClosesSettledRows",
@@ -74,45 +85,67 @@ def holds(name: str, overrides: dict[str, str], without: set[str]) -> Run:
     return Run(name, "holds", [r for r in ALL_RULES if r not in without], overrides)
 
 
+# The rules that the floating open's late or killed `rex` replies break (SKILL.md).
+LATE_REPLY_RULES = {
+    "ExitLineWritten",
+    "OneBlockPerMirror",
+    "SettledBlockCloses",
+    "WaiterStartedOpenSeesOutcome",
+}
+
 RUNS = [
     # The current code.
     holds(
-        "current code, one mirror, kill after the handlers",
-        {"KillFrom": '"reading"'},
+        "current code, delay 0, one mirror, kill after the handlers",
+        {"DelayZero": "TRUE", "KillFrom": '"reading"'},
         {"LateWaiterSeesOutcome"},
     ),
     holds(
-        "current code, one mirror, kill at any step",
+        "current code, delay above 0, one mirror, kill at any step",
         {},
-        {"ExitLineWritten", "LateWaiterSeesOutcome"},
+        LATE_REPLY_RULES | {"LateWaiterSeesOutcome"},
     ),
     holds(
         "current code, two mirrors",
         TWO,
-        {"ExitLineWritten"} | WAITER_RULES,
+        LATE_REPLY_RULES | WAITER_RULES,
     ),
     # Findings in the current code. Each is replayed against the real code (SKILL.md).
     Run(
-        "finding: a kill before the handlers leaves the block working",
+        "finding: at delay 0, a kill during the open, before the handlers, leaves the block working",
         "finding",
         ["ExitLineWritten"],
+        {"DelayZero": "TRUE"},
     ),
     Run(
-        "finding: a waiter that starts after the close gets 'not found'",
+        "finding: a new_layer reply after its client died opens a second block",
         "finding",
-        ["LateWaiterSeesOutcome"],
+        ["OneBlockPerMirror"],
+        {"ReplyCanTimeOut": "TRUE"},
     ),
     Run(
-        "finding: a late `rex run` reply leaves a settled block open",
+        "finding: of two blocks, one viewer crashes and leaves a settled block open",
         "finding",
         ["SettledBlockCloses"],
         {"ReplyCanTimeOut": "TRUE"},
     ),
     Run(
-        "finding: a late `rex run` reply crashes the viewer before a waiter sees the status",
+        "finding: a late reply leaves a block with no exit line, working forever",
+        "finding",
+        ["ExitLineWritten"],
+        {"ReplyCanTimeOut": "TRUE"},
+    ),
+    Run(
+        "finding: a late reply leaves a block whose viewer crashes before a waiter sees the status",
         "finding",
         ["WaiterStartedOpenSeesOutcome"],
         {"ReplyCanTimeOut": "TRUE"},
+    ),
+    Run(
+        "finding: a waiter that starts after the close gets 'not found'",
+        "finding",
+        ["LateWaiterSeesOutcome"],
+        {"DelayZero": "TRUE", "KillFrom": '"reading"'},
     ),
     # Past bugs: each variant is the code before its fix.
     Run(
@@ -157,9 +190,9 @@ RUNS = [
         ["EndPassClosesSettledRows"],
         {"Variant": '"endPassKeepsError"'},
     ),
-    # The statechart's config must still parse. It shows the stop before the handlers.
+    # The statechart's config must still parse. It shows a stop during the layer call.
     Run(
-        "finding: the chart config (chart.cfg) shows a kill before the handlers",
+        "finding: the chart config (chart.cfg) shows a stop during the layer call",
         "finding",
         ["ExitLineWritten"],
         config_file=CHART,
