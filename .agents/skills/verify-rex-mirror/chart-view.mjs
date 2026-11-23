@@ -40,6 +40,8 @@ const labels = {
   ServerRefuses: "Rex refuses the pane",
   MirrorLayerGivesUp: "the pane request dies before its reply",
   MirrorRunGivesUp: "the `rex run` request dies before its reply",
+  MirrorReadsEnd: "the mirror reads the end of the output",
+  MirrorHandlesSignal: "the mirror handles the stop signal",
   Kill: "Claude Code stops the task",
   ViewerClosesBlock: "the viewer closes the block",
   ViewerCloseFails: "the close fails (session end retries it)",
