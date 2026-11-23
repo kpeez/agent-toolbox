@@ -191,6 +191,15 @@ test("flags requester attribution", () => {
   });
 });
 
+test("a heading counts only after a CommonMark line ending", () => {
+  withTemp((root) => {
+    for (const [text, blocked] of [["Fine.\n## Heading", true], ["Fine.\r## Heading", true], ["Fine.\x1c## Heading", false], ["Fine.\u2028## Heading", false]] as const) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
 test("hook blocks a body with an empty slot", () => {
   withTemp((root) => {
     const unrendered = readFileSync(TEMPLATE, "utf-8").replace("{summary}", "");
