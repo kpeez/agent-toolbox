@@ -465,6 +465,7 @@ function repoHasOwnTemplate(cwd: string): boolean {
 
 function slotErrors(name: string, text: string): string[] {
   if (text.trim() === "") return [`${name}: empty.`];
+  if (text.trim() === `{${name}}`) return [`${name}: still holds the template placeholder {${name}}.`];
   const errors: string[] = [];
   let inFence = false;
   const lines = splitOnPythonLineBoundaries(text);
