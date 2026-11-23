@@ -87,6 +87,14 @@ jobs:
         run: uv run evals/skills/facets.py check
       - name: Eval cases are valid
         run: uv run evals/skills/skill_eval.py validate
+      # The PR-body hook property test runs real `nu -c` and `fish -c` commands.
+      - name: Install nu and fish
+        run: |
+          sudo apt-get update -q && sudo apt-get install -y -q fish
+          curl -fsSL -o "$RUNNER_TEMP/nu.tar.gz" https://github.com/nushell/nushell/releases/download/0.117.0/nu-0.117.0-x86_64-unknown-linux-gnu.tar.gz
+          echo "33b907da92b0e80bd10fea9fa0e8a1624cabfebd89ee2568e365da3c492ffc68  $RUNNER_TEMP/nu.tar.gz" | sha256sum -c -
+          tar -xzf "$RUNNER_TEMP/nu.tar.gz" -C "$RUNNER_TEMP"
+          echo "$RUNNER_TEMP/nu-0.117.0-x86_64-unknown-linux-gnu" >> "$GITHUB_PATH"
       - name: Unit tests
         run: |
           status=0

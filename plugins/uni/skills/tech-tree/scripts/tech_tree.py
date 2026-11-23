@@ -345,11 +345,13 @@ def cmd_place(g, progress, tid, passed, today):
     state = progress["topics"]
     progress["log"].append({"date": today, "id": tid, "kind": "place", "result": "pass" if passed else "fail", "helped": False})
     if passed:
-        changed = [t for t in [tid, *g.ancestors(tid)] if state[t]["status"] != "mastered"]
+        anc = g.ancestors(tid)
+        changed = [t for t in [tid, *(a for a in g.topological_order() if a in anc)] if state[t]["status"] != "mastered"]
         for t in changed:
             state[t].update(status="conditional", reps=1, due=add_days(today, 3))
         return f"conditional credit: {', '.join(changed) or 'none'}"
-    changed = [t for t in [tid, *g.descendants(tid)] if state[t]["status"] == "conditional"]
+    desc = g.descendants(tid)
+    changed = [t for t in [tid, *(d for d in g.topological_order() if d in desc)] if state[t]["status"] == "conditional"]
     for t in changed:
         state[t].update(status="unseen", reps=0, due=None)
     return f"{tid} and its descendants are not placed" + (f"; removed credit: {', '.join(changed)}" if changed else "")
