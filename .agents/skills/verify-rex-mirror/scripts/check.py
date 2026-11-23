@@ -6,8 +6,8 @@
 """Model-check the rex-agents mirror block lifecycle (RexMirror.tla) with TLC.
 
 Exits 0 only when every run in RUNS gives its expected result: each rule holds
-on the current code, each known finding still breaks, and each past bug and
-mutant breaks the rule it targets. For a rule that breaks, prints TLC's
+on the current code, each known finding still breaks, and each past bug, past
+race, and mutant breaks the rule it targets. For a rule that breaks, prints TLC's
 shortest path as a list of actions.
 
 TLC and Java: TLA2TOOLS and JAVA from the environment, or the statechart

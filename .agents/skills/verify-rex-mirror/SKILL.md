@@ -185,7 +185,8 @@ complete or absent. The temp name starts with `.`, so `drainLegacyList`,
 which deletes this session's `*.json.tmp.*` files, never deletes it.
 `rowNotAtomic` is the code before: `writeFileSync` with `wx` created the row
 file empty and then wrote it. A reader that ran beside 50,000 such writes
-found an empty row 141 to 240 times per run. A pass that reads an empty row
+found empty rows in every run, a count that varies by run and machine
+(141 to 1,300 across runs); after the fix it found none. A pass that reads an empty row
 keeps the file and never checks its block, which breaks
 `EndPassClosesSettledRows`. That is a `past race`, not a `past bug`: the
 block of an empty row is still working, because the open runs with no await,
