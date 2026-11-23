@@ -140,11 +140,11 @@ export function demo(now: number): Demo {
   calls.sort((a, b) => a.startedAt - b.startedAt)
 
   const files: FileTouch[] = [
-    { path: '/Users/kyle/.claude/dev-mods/session-panel/hooks/register.tsx', reads: 4, edits: 6, lastAt: at(10 * MIN) },
-    { path: '/Users/kyle/.claude/dev-mods/session-panel/hooks/svg.ts', reads: 2, edits: 3, lastAt: at(9 * MIN) },
-    { path: '/Users/kyle/.claude/dev-mods/session-panel/hooks/text.ts', reads: 3, edits: 1, lastAt: at(11 * MIN) },
-    { path: '/Users/kyle/code/agent-toolbox/claude-mods/subagents/hooks/desktop.ts', reads: 2, edits: 0, lastAt: at(1.9 * MIN) },
-    { path: '/Users/kyle/code/agent-toolbox/AGENTS.md', reads: 1, edits: 0, lastAt: at(0.4 * MIN) },
+    { path: '/home/demo/.claude/dev-mods/session-panel/hooks/register.tsx', reads: 4, edits: 6, lastAt: at(10 * MIN) },
+    { path: '/home/demo/.claude/dev-mods/session-panel/hooks/svg.ts', reads: 2, edits: 3, lastAt: at(9 * MIN) },
+    { path: '/home/demo/.claude/dev-mods/session-panel/hooks/text.ts', reads: 3, edits: 1, lastAt: at(11 * MIN) },
+    { path: '/home/demo/projects/demo/claude-mods/subagents/hooks/desktop.ts', reads: 2, edits: 0, lastAt: at(1.9 * MIN) },
+    { path: '/home/demo/projects/demo/AGENTS.md', reads: 1, edits: 0, lastAt: at(0.4 * MIN) },
   ]
 
   return { calls, shell, agents, files, usage: { tokensIn: 412_000, tokensOut: 31_500, turns: 7 } }

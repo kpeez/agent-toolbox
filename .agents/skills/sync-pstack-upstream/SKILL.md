@@ -59,7 +59,9 @@ path). Run it from the repository root. When `.agents/scratch` is missing, make 
    a new skill or playbook. Add each import, drop, and deletion to
    `references/decisions.md`. Import upstream scripts in their own language.
 6. `6-move-the-pin`: Run `pstack_sync.py pin`. It writes the new commit to
-   `upstream.json` and to the README Credits link. Then run `check` again.
+   `upstream.json`, to the README Credits link, and to
+   `plugins/swe/THIRD_PARTY_NOTICES`. Then run `check` again. `check` fails
+   when that file lacks a copied or modified local file.
 7. `7-ship`: Bump the swe patch version in both plugin manifests. Run the
    checks that `AGENTS.md` names for the changed files. Open a draft PR with
    the `ship-pr` skill. Put the upstream commit range and the step 4 lines
@@ -68,6 +70,9 @@ path). Run it from the repository root. When `.agents/scratch` is missing, make 
 ## Rules
 
 - Keep the Credits entry for pstack in `README.md`.
+- When a merge adds or drops a local file, regenerate the file list in
+  `plugins/swe/THIRD_PARTY_NOTICES` from `upstream.json`. `check` names each
+  line that is missing or unknown.
 - When a merge or review changes a file into or out of the `copied` shape,
   change its class in `upstream.json`.
 - When a swe change moves pstack content to another file, update `local`.

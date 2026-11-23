@@ -98,6 +98,7 @@ New here? Ask `/swe:help` which skill fits, or read the
 
 ## Credits
 
+- [`plugins/swe/THIRD_PARTY_NOTICES`](./plugins/swe/THIRD_PARTY_NOTICES) holds the pstack MIT license and the list of files that `swe` copies or adapts from it.
 - The `swe` router, its playbooks and principles, and most `swe` skills adapt
   Lauren Tan's [pstack](https://github.com/cursor/plugins/tree/e1cc03121a0e71129a4fb730d7c5528a0a3e43c8/pstack).
   The [swe guide](./plugins/swe/docs/README.md) follows the layout of the pstack guide.
