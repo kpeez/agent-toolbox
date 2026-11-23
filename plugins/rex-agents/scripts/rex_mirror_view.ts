@@ -27,6 +27,13 @@ export function safe(text: string): string {
   return text.replace(UNSAFE, (m) => (m.startsWith("\x1b[") ? m : ""));
 }
 
+export function formatHeader(label: string, now: Date = new Date()): string {
+  const hh = String(now.getHours()).padStart(2, "0");
+  const mm = String(now.getMinutes()).padStart(2, "0");
+  const ss = String(now.getSeconds()).padStart(2, "0");
+  return `\x1b[2m${label.replace(CONTROL, " ")} · started ${hh}:${mm}:${ss}\x1b[0m\n`;
+}
+
 export function status(state: string, msg: string): void {
   const b64 = Buffer.from(msg.replace(CONTROL, " "), "utf8").toString("base64");
   writeSync(1, `\x1b]7501;state=${state}:app=rex-mirror:msg=${b64}\x1b\\`);
@@ -50,6 +57,7 @@ async function main(): Promise<number> {
   const escaped = nonce.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
   const exitLine = new RegExp(`^__rex_mirror_exit_${escaped}=(\\d+)$`);
   status("working", label);
+  writeSync(1, formatHeader(label));
   const fd = openSync(log, "r");
   const buf = Buffer.alloc(65536);
   const decoder = new TextDecoder("utf-8");

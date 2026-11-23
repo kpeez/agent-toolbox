@@ -27,7 +27,21 @@ import { runtimeFlags } from "./runtime_flags.ts";
 const MARKER = /\n__rex_rc=(\d+)\n\n?$/;
 const HOLD = 32; // longer than any marker, so a marker split across reads is still held back
 const NO_MARKER = 125;
+const OPEN_DELAY_MS = 1_500;
+const FLOAT_BOUNDS: readonly [number, number, number, number] = [0.15, 0.15, 0.7, 0.7];
 const CACHE = join(homedir(), ".cache", "rex-agents");
+
+type ViewerState =
+  | { kind: "pending"; timer: ReturnType<typeof setTimeout> }
+  | { kind: "open"; block: string }
+  | { kind: "skipped" };
+
+export function openDelayMs(env: NodeJS.ProcessEnv = process.env): number {
+  const raw = env.REX_AGENTS_MIRROR_DELAY_MS?.trim();
+  if (!raw) return OPEN_DELAY_MS;
+  const parsed = Number(raw);
+  return Number.isFinite(parsed) && parsed >= 0 ? Math.floor(parsed) : OPEN_DELAY_MS;
+}
 
 function which(name: string): string | null {
   for (const dir of (process.env.PATH ?? "").split(":")) {
@@ -46,15 +60,84 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-/** Open a Rex block that shows the log. Return its block ID, or null. */
+function windowForBlock(rex: string, session: string, blockId: string): string | null {
+  const r = spawnSync(rex, ["block", "inspect", blockId, "-s", session, "--json"], {
+    encoding: "utf8",
+    timeout: 5_000,
+  });
+  if (r.error || r.status !== 0) return null;
+  try {
+    const parsed: unknown = JSON.parse(r.stdout);
+    if (!isRecord(parsed) || !isRecord(parsed.block)) return null;
+    const windowId = parsed.block.window_id;
+    return typeof windowId === "string" && windowId.length > 0 ? windowId : null;
+  } catch {
+    return null;
+  }
+}
+
+/** Open a minimized floating Rex pane (or fallback block) that shows the log. Return its block ID, or null. */
 export function startViewer(label: string, log: string, nonce: string): string | null {
   const rex = which("rex");
   const session = process.env.REX_SESSION;
   if (!rex || !session) return null;
   const viewer = resolve(dirname(fileURLToPath(import.meta.url)), "rex_mirror_view.ts");
+  const command = [process.execPath, ...runtimeFlags(), viewer, log, label, nonce];
+  const windowId = process.env.REX_BLOCK ? windowForBlock(rex, session, process.env.REX_BLOCK) : null;
+  const params: Record<string, unknown> = {
+    bounds: FLOAT_BOUNDS,
+    focus: false,
+    layout: {
+      block: {
+        flavor: "com.superlogical.terminal.shell",
+        label,
+        options: {
+          shell: "none",
+          login: false,
+          command,
+          exit: { on_completion: false },
+        },
+      },
+    },
+  };
+  if (windowId) params.window_id = windowId;
+  const layer = spawnSync(
+    rex,
+    ["api", "call", "-s", session, "session.new_layer", JSON.stringify(params)],
+    { encoding: "utf8", timeout: 15_000 },
+  );
+  if (!layer.error && layer.status === 0) {
+    try {
+      const parsed: unknown = JSON.parse(layer.stdout);
+      if (
+        isRecord(parsed) &&
+        typeof parsed.layer_id === "string" &&
+        parsed.layer_id.length > 0 &&
+        Array.isArray(parsed.block_ids) &&
+        typeof parsed.block_ids[0] === "string" &&
+        parsed.block_ids[0].length > 0
+      ) {
+        spawnSync(
+          rex,
+          [
+            "api",
+            "call",
+            "-s",
+            session,
+            "session.set_layer_state",
+            JSON.stringify({ layer_id: parsed.layer_id, state: "minimized" }),
+          ],
+          { stdio: "ignore", timeout: 5_000 },
+        );
+        return parsed.block_ids[0];
+      }
+    } catch {
+      // fall through to rex run
+    }
+  }
   const r = spawnSync(
     rex,
-    ["run", "-s", session, "--focus=false", "--keep-open", "--shell=none", "--label", label, "--json", "--", process.execPath, ...runtimeFlags(), viewer, log, label, nonce],
+    ["run", "-s", session, "--focus=false", "--keep-open", "--shell=none", "--label", label, "--json", "--", ...command],
     { encoding: "utf8", timeout: 15_000 },
   );
   if (r.error || r.status !== 0) return null;
@@ -62,7 +145,7 @@ export function startViewer(label: string, log: string, nonce: string): string |
     const parsed: unknown = JSON.parse(r.stdout);
     if (!isRecord(parsed)) return null;
     const ids = parsed.block_ids;
-    if (Array.isArray(ids) && typeof ids[0] === "string") return ids[0];
+    if (Array.isArray(ids) && typeof ids[0] === "string" && ids[0].length > 0) return ids[0];
     return null;
   } catch {
     return null;
@@ -87,14 +170,66 @@ async function main(): Promise<number> {
   const sessionId = process.argv[3] ?? "";
   const log = join(tmpdir(), `rex-mirror-${randomUUID()}.log`);
   writeFileSync(log, "", { flag: "wx", mode: 0o600 });
-  const nonce = randomBytes(8).toString("hex"); // the exit line names it, so command output cannot fake one
-  const block = startViewer(label, log, nonce);
-  if (block && sessionId) remember(sessionId, block, label);
   const logf = openSync(log, "a");
+  const nonce = randomBytes(8).toString("hex"); // the exit line names it, so command output cannot fake one
+  let viewer: ViewerState = { kind: "skipped" };
+  const openViewer = (): void => {
+    const block = startViewer(label, log, nonce);
+    if (block) {
+      if (sessionId) remember(sessionId, block, label);
+      viewer = { kind: "open", block };
+    } else {
+      viewer = { kind: "skipped" };
+    }
+  };
+  if (process.env.REX_SESSION && which("rex")) {
+    const delay = openDelayMs();
+    if (delay === 0) {
+      openViewer();
+    } else {
+      viewer = { kind: "pending", timer: setTimeout(openViewer, delay) };
+    }
+  }
   let tail = Buffer.alloc(0);
   const emit = (buf: Buffer): void => {
     writeSync(1, buf);
     writeSync(logf, buf);
+  };
+  const closeAndUnlinkLog = (): void => {
+    try {
+      closeSync(logf);
+    } catch {
+      // best-effort
+    }
+    try {
+      unlinkSync(log);
+    } catch {
+      // already gone
+    }
+  };
+  const settleLog = (code: number): void => {
+    switch (viewer.kind) {
+      case "pending":
+        clearTimeout(viewer.timer);
+        viewer = { kind: "skipped" };
+        closeAndUnlinkLog();
+        return;
+      case "open":
+        try {
+          writeSync(logf, `\n__rex_mirror_exit_${nonce}=${code}\n`);
+          closeSync(logf);
+        } catch {
+          // best-effort: the exit code still reaches the caller
+        }
+        return;
+      case "skipped":
+        closeAndUnlinkLog();
+        return;
+      default: {
+        const _exhaustive: never = viewer;
+        return _exhaustive;
+      }
+    }
   };
   const onSignal = (code: number): void => {
     try {
@@ -102,19 +237,7 @@ async function main(): Promise<number> {
     } catch {
       // stdout may already be closed; the exit line still settles the block
     }
-    try {
-      writeSync(logf, `\n__rex_mirror_exit_${nonce}=${code}\n`);
-      closeSync(logf);
-    } catch {
-      // best-effort: the exit code below still reaches the caller
-    }
-    if (!block) {
-      try {
-        unlinkSync(log);
-      } catch {
-        // already gone
-      }
-    }
+    settleLog(code);
     process.exit(code);
   };
   process.on("SIGTERM", () => onSignal(143));
@@ -130,9 +253,7 @@ async function main(): Promise<number> {
   const m = MARKER.exec(tail.toString("latin1"));
   const rc = m ? Number(m[1]) : NO_MARKER;
   emit(m ? tail.subarray(0, m.index) : tail);
-  writeSync(logf, `\n__rex_mirror_exit_${nonce}=${rc}\n`);
-  closeSync(logf);
-  if (!block) unlinkSync(log);
+  settleLog(rc);
   if (!m) console.error("rex_mirror: the command's exit status marker is missing");
   return rc;
 }

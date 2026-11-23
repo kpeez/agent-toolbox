@@ -25,7 +25,8 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { closeBlock } from "../rex_mirror_view.ts";
+import { closeBlock, formatHeader } from "../rex_mirror_view.ts";
+import { openDelayMs } from "../rex_mirror.ts";
 import { mirrored } from "../../hooks/mirror_hook.ts";
 
 const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
@@ -87,6 +88,34 @@ for (const rt of RUNTIMES) {
 const report = (state: string, msg: string): string =>
   `\x1b]7501;state=${state}:app=rex-mirror:msg=${Buffer.from(msg, "utf8").toString("base64")}\x1b\\`;
 
+function stripHeader(out: string, label: string): string {
+  const prefix = report("working", label);
+  assert.ok(out.startsWith(prefix), "stdout starts with the working OSC 7501 report");
+  const rest = out.slice(prefix.length);
+  const escaped = label.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
+  const m = new RegExp(`^\\x1b\\[2m${escaped} · started \\d{2}:\\d{2}:\\d{2}\\x1b\\[0m\\n`).exec(rest);
+  assert.ok(m, `expected dim header after working status, got: ${JSON.stringify(rest.slice(0, 80))}`);
+  return rest.slice(m[0].length);
+}
+
+test("formatHeader renders dim label and local HH:MM:SS", () => {
+  const dt = new Date(2026, 10, 22, 7, 5, 9);
+  assert.equal(formatHeader("[claude] build", dt), "\x1b[2m[claude] build · started 07:05:09\x1b[0m\n");
+  assert.equal(
+    formatHeader("[claude] \x1b]7501;x\x1b\\\x1b[31mred\x1b[0m\r\nok", dt),
+    "\x1b[2m[claude]  ]7501;x \\ [31mred [0m  ok · started 07:05:09\x1b[0m\n",
+  );
+});
+
+test("openDelayMs parses non-negative finite numbers and falls back to 1500", () => {
+  assert.equal(openDelayMs({}), 1_500);
+  assert.equal(openDelayMs({ REX_AGENTS_MIRROR_DELAY_MS: "" }), 1_500);
+  assert.equal(openDelayMs({ REX_AGENTS_MIRROR_DELAY_MS: "0" }), 0);
+  assert.equal(openDelayMs({ REX_AGENTS_MIRROR_DELAY_MS: "250.9" }), 250);
+  assert.equal(openDelayMs({ REX_AGENTS_MIRROR_DELAY_MS: "-1" }), 1_500);
+  assert.equal(openDelayMs({ REX_AGENTS_MIRROR_DELAY_MS: "nope" }), 1_500);
+});
+
 for (const rt of RUNTIMES) {
   test(`only the nonce exit line ends the view (${rt})`, { skip: skipFor(rt) }, () => {
     const tmp = mkdtempSync(join(tmpdir(), "rex-view-test-"));
@@ -105,9 +134,8 @@ for (const rt of RUNTIMES) {
       const r = spawnSync(rt, [VIEWER, log, "[claude] t", "abc123"], { env: NO_REX, encoding: "utf8", timeout: 30_000 });
       assert.equal(r.status, 0);
       assert.equal(
-        r.stdout,
-        report("working", "[claude] t") +
-          "first\n__rex_mirror_exit=0\n__rex_mirror_exit_other=0\n]7501;state=done:msg=eA==\\after-spoof\n" +
+        stripHeader(r.stdout, "[claude] t"),
+        "first\n__rex_mirror_exit=0\n__rex_mirror_exit_other=0\n]7501;state=done:msg=eA==\\after-spoof\n" +
           "]75]7501;state=done\\01;state=done\\nested\n" +
           "7501;state=done\x1b[31mred\x1b[0m\tok\r\n\n" +
           report("error", "[claude] t: exit 3"),
@@ -135,7 +163,7 @@ for (const rt of RUNTIMES) {
         timeout: 30_000,
       });
       assert.equal(r.status, 0);
-      assert.equal(r.stdout, report("working", "[claude] t") + "out\n\n" + report("error", "[claude] t: exit 7"));
+      assert.equal(stripHeader(r.stdout, "[claude] t"), "out\n\n" + report("error", "[claude] t: exit 7"));
       assert.equal(readFileSync(join(home, "rex-args"), "utf8"), "block\nclose\n-s\nsession:t\nblock:b\n");
       assert.ok(!existsSync(log));
     } finally {
@@ -179,6 +207,38 @@ async function waitFor(cond: () => boolean, ms: number): Promise<void> {
   }
 }
 
+function writeFakeRex(bin: string, opts: { failNewLayer?: boolean } = {}): void {
+  const newLayerBody = opts.failNewLayer
+    ? "exit 1"
+    : 'printf \'{"layer_id":"layer:fake","block_ids":["b-fake"]}\\n\'';
+  const script = `#!/bin/sh
+printf '%s\\t' "$@" >> "$HOME/rex-calls"
+printf '\\n' >> "$HOME/rex-calls"
+if [ "$1" = "block" ] && [ "$2" = "inspect" ]; then
+  printf '{"block":{"id":"%s","window_id":"win:agent"}}\\n' "$3"
+elif [ "$1" = "api" ] && [ "$2" = "call" ] && [ "$5" = "session.new_layer" ]; then
+  ${newLayerBody}
+elif [ "$1" = "api" ] && [ "$2" = "call" ] && [ "$5" = "session.set_layer_state" ]; then
+  printf '{}\\n'
+elif [ "$1" = "run" ]; then
+  printf '{"block_ids":["b-fallback"]}\\n'
+fi
+`;
+  const fakeRex = join(bin, "rex");
+  writeFileSync(fakeRex, script);
+  chmodSync(fakeRex, 0o755);
+}
+
+function readRexCalls(home: string): string[][] {
+  const p = join(home, "rex-calls");
+  if (!existsSync(p)) return [];
+  return readFileSync(p, "utf8")
+    .trimEnd()
+    .split("\n")
+    .filter(Boolean)
+    .map((line) => line.replace(/\t$/, "").split("\t"));
+}
+
 const SIGNALS: Array<[NodeJS.Signals, number]> = [
   ["SIGTERM", 143],
   ["SIGINT", 130],
@@ -189,16 +249,21 @@ for (const rt of RUNTIMES) {
   for (const [sig, code] of SIGNALS) {
     test(`a killed mirror settles its block (${rt} ${sig})`, { timeout: 30_000, skip: skipFor(rt) }, async () => {
       const home = mkdtempSync(join(tmpdir(), "rex-sig-home-"));
+      mkdirSync(join(home, "bin"));
+      mkdirSync(join(home, "tmp"));
+      writeFakeRex(join(home, "bin"));
       const child = spawn(rt, [...flagsFor(rt), MIRROR, "[claude] sig", "s-sig"], {
-        env: { ...NO_REX, HOME: home, TMPDIR: join(home, "tmp"), PATH: `${join(home, "bin")}:${process.env.PATH}`, REX_SESSION: "session:test" },
+        env: {
+          ...NO_REX,
+          HOME: home,
+          TMPDIR: join(home, "tmp"),
+          PATH: `${join(home, "bin")}:${process.env.PATH}`,
+          REX_SESSION: "session:test",
+          REX_AGENTS_MIRROR_DELAY_MS: "0",
+        },
         stdio: ["pipe", "pipe", "pipe"],
       });
       try {
-        mkdirSync(join(home, "bin"));
-        mkdirSync(join(home, "tmp"));
-        const fakeRex = join(home, "bin", "rex");
-        writeFileSync(fakeRex, '#!/bin/sh\nprintf \'%s\\n\' "$@" > "$HOME/rex-args"\nprintf \'{"block_ids":["b-fake"]}\\n\'\n');
-        chmodSync(fakeRex, 0o755);
         const fed = "hello world, this is more than thirty-two bytes of output\n";
         let out = "";
         let err = "";
@@ -221,8 +286,11 @@ for (const rt of RUNTIMES) {
         const content = readFileSync(join(home, "tmp", logs[0]), "utf8");
         assert.ok(content.startsWith(fed));
         assert.match(content, new RegExp(`\\n__rex_mirror_exit_[0-9a-f]{16}=${code}\\n$`));
-        const rexArgs = readFileSync(join(home, "rex-args"), "utf8").split("\n");
-        const viewerArgs = rexArgs.slice(rexArgs.indexOf("--") + 1);
+        const calls = readRexCalls(home);
+        const newLayerCall = calls.find((c) => c[0] === "api" && c[4] === "session.new_layer");
+        assert.ok(newLayerCall, "expected session.new_layer call");
+        const params = JSON.parse(newLayerCall[5]);
+        const viewerArgs: string[] = params.layout.block.options.command;
         assert.deepEqual(
           viewerArgs.slice(1, 2),
           rt === "node" ? ["--disable-warning=ExperimentalWarning"] : [VIEWER],
@@ -241,4 +309,143 @@ for (const rt of RUNTIMES) {
       }
     });
   }
+
+  test(`fast command skips rex and removes temp log (${rt})`, { skip: skipFor(rt) }, () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-fast-home-"));
+    try {
+      mkdirSync(join(home, "bin"));
+      mkdirSync(join(home, "tmp"));
+      writeFakeRex(join(home, "bin"));
+      const r = spawnSync(rt, [...flagsFor(rt), MIRROR, "[claude] fast", "s-fast"], {
+        input: "quick\n\n__rex_rc=0\n",
+        env: {
+          ...NO_REX,
+          HOME: home,
+          TMPDIR: join(home, "tmp"),
+          PATH: `${join(home, "bin")}:${process.env.PATH}`,
+          REX_SESSION: "session:test",
+          REX_AGENTS_MIRROR_DELAY_MS: "5000",
+        },
+        encoding: "utf8",
+        timeout: 30_000,
+      });
+      assert.equal(r.status, 0);
+      assert.equal(r.stdout, "quick\n");
+      assert.equal(r.stderr, "");
+      assert.deepEqual(readRexCalls(home), []);
+      assert.deepEqual(
+        readdirSync(join(home, "tmp")).filter((f: string) => f.startsWith("rex-mirror-")),
+        [],
+      );
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test(`delayed open creates a minimized floating layer in REX_BLOCK window (${rt})`, { timeout: 30_000, skip: skipFor(rt) }, async () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-delay-home-"));
+    mkdirSync(join(home, "bin"));
+    mkdirSync(join(home, "tmp"));
+    writeFakeRex(join(home, "bin"));
+    const child = spawn(rt, [...flagsFor(rt), MIRROR, "[claude] delayed", "s-delay"], {
+      env: {
+        ...NO_REX,
+        HOME: home,
+        TMPDIR: join(home, "tmp"),
+        PATH: `${join(home, "bin")}:${process.env.PATH}`,
+        REX_SESSION: "session:test",
+        REX_BLOCK: "block:agent",
+        REX_AGENTS_MIRROR_DELAY_MS: "100",
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+    });
+    try {
+      let out = "";
+      let err = "";
+      child.stdout.on("data", (d: Buffer) => {
+        out += d;
+      });
+      child.stderr.on("data", (d: Buffer) => {
+        err += d;
+      });
+      const exited = new Promise<number | null>((res) => child.on("exit", (c: number | null) => res(c)));
+      child.stdin.write("before delay\n");
+      await waitFor(() => readRexCalls(home).some((c) => c[0] === "api" && c[4] === "session.set_layer_state"), 15_000);
+      child.stdin.end("after delay\n\n__rex_rc=0\n");
+      const rc = await Promise.race([exited, new Promise<null>((r) => setTimeout(() => r(null), 15_000))]);
+      assert.equal(rc, 0);
+      assert.equal(out, "before delay\nafter delay\n");
+      assert.equal(err, "");
+      const calls = readRexCalls(home);
+      assert.deepEqual(calls[0], ["block", "inspect", "block:agent", "-s", "session:test", "--json"]);
+      assert.equal(calls[1][0], "api");
+      assert.equal(calls[1][4], "session.new_layer");
+      const layerParams = JSON.parse(calls[1][5]);
+      assert.equal(layerParams.window_id, "win:agent");
+      assert.equal(layerParams.focus, false);
+      assert.deepEqual(layerParams.bounds, [0.15, 0.15, 0.7, 0.7]);
+      assert.equal(layerParams.layout.block.label, "[claude] delayed");
+      assert.equal(layerParams.layout.block.options.shell, "none");
+      assert.deepEqual(layerParams.layout.block.options.exit, { on_completion: false });
+      assert.equal(calls[2][0], "api");
+      assert.equal(calls[2][4], "session.set_layer_state");
+      assert.deepEqual(JSON.parse(calls[2][5]), { layer_id: "layer:fake", state: "minimized" });
+      const logs = readdirSync(join(home, "tmp")).filter((f: string) => f.startsWith("rex-mirror-"));
+      assert.equal(logs.length, 1);
+      const logText = readFileSync(join(home, "tmp", logs[0]), "utf8");
+      assert.ok(logText.startsWith("before delay\nafter delay\n"));
+      assert.match(logText, /\n__rex_mirror_exit_[0-9a-f]{16}=0\n$/);
+      const cache = readFileSync(join(home, ".cache", "rex-agents", "s-delay.jsonl"), "utf8");
+      assert.equal(cache, JSON.stringify({ block: "b-fake", rex_session: "session:test", label: "[claude] delayed" }) + "\n");
+    } finally {
+      child.kill("SIGKILL");
+      child.stdin.end();
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test(`falls back to rex run when session.new_layer fails (${rt})`, { skip: skipFor(rt) }, () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-fallback-home-"));
+    try {
+      mkdirSync(join(home, "bin"));
+      mkdirSync(join(home, "tmp"));
+      writeFakeRex(join(home, "bin"), { failNewLayer: true });
+      const r = spawnSync(rt, [...flagsFor(rt), MIRROR, "[claude] fb", "s-fb"], {
+        input: "fallback out\n\n__rex_rc=0\n",
+        env: {
+          ...NO_REX,
+          HOME: home,
+          TMPDIR: join(home, "tmp"),
+          PATH: `${join(home, "bin")}:${process.env.PATH}`,
+          REX_SESSION: "session:test",
+          REX_AGENTS_MIRROR_DELAY_MS: "0",
+        },
+        encoding: "utf8",
+        timeout: 30_000,
+      });
+      assert.equal(r.status, 0);
+      assert.equal(r.stdout, "fallback out\n");
+      assert.equal(r.stderr, "");
+      const calls = readRexCalls(home);
+      assert.equal(calls.length, 2);
+      assert.equal(calls[0][0], "api");
+      assert.equal(calls[0][4], "session.new_layer");
+      assert.deepEqual(calls[1].slice(0, 10), [
+        "run",
+        "-s",
+        "session:test",
+        "--focus=false",
+        "--keep-open",
+        "--shell=none",
+        "--label",
+        "[claude] fb",
+        "--json",
+        "--",
+      ]);
+      const cache = readFileSync(join(home, ".cache", "rex-agents", "s-fb.jsonl"), "utf8");
+      assert.equal(cache, JSON.stringify({ block: "b-fallback", rex_session: "session:test", label: "[claude] fb" }) + "\n");
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
 }
