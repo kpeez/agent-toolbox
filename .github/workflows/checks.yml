@@ -215,3 +215,14 @@ jobs:
         run: diff plugins/swe/scripts/link_project_skill.py plugins/lab/scripts/link_project_skill.py
       - name: The link script works end to end in throwaway repositories
         run: uv run .agents/skills/verify-project-skill-link/scripts/check.py
+
+  autoresearch-cleanup-crash-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+      - name: A crash at any point of autoresearch cleanup keeps the original run recoverable
+        timeout-minutes: 5
+        run: uv run .agents/skills/verify-autoresearch-cleanup/scripts/check.py
