@@ -87,8 +87,8 @@ comment above each action names the file and the function.
 
 - The command and its wrapper: `mirrored` in `hooks/mirror_hook.ts`. The
   subshell ends, `printf` writes the marker, and the pipe closes in one step.
-- The mirror: `main`, `openViewer`, `startViewer`, `remember`, `settleLog`,
-  and `onSignal` in `scripts/rex_mirror.ts`. `mpc` follows `main`: the log,
+- The mirror: `main`, `withSignalHandlers`, `openViewer`, `startViewer`,
+  `remember`, `settleLog`, and `onSignal` in `scripts/rex_mirror.ts`. `mpc` follows `main`: the log,
   the handlers, and the read loop. `opc` follows the open: the delay timer
   (or none at delay 0), `rex block inspect`, `session.new_layer`,
   `session.set_layer_state`, and the fallback `rex run`, each one step.
@@ -112,15 +112,16 @@ comment above each action names the file and the function.
 `trapWrapper` (before `2a8e0e6`), `noSignalHandlers` and `endPassAborts`
 (before `d53f272`), `noViewerClose` and `endPassKeepsError` (before
 `9338e63`), `endPassRewrites` (before the per-row session-end list),
-`floatAsWritten` (the floating open as first written), and the mutant
-`closeBeforeStatus`.
+`floatAsWritten` (the floating open as first written), `rowNotAtomic`
+(`remember` before KP-678), and the mutant `closeBeforeStatus`.
 
 `floatAsWritten` opened the block at delay 0 before it set the signal
 handlers, so a stop during the open left the block `working`. When the
 `session.new_layer` client died before its reply, it fell back to
 `rex run`, and a late layer then opened a second block on the same log.
 When the `rex run` client died, it counted no block, and deleted the log
-with no exit line. The current code sets the handlers first. A client that
+with no exit line. The current code sets the handlers first: only `withSignalHandlers`
+returns the open, so a call before the handlers fails the type check. A client that
 dies (a signal, its timeout, or an exit status of 128 or more) makes the
 open `maybeOpen`: no fallback, the exit line is written, and the log stays
 for a viewer that may open.
@@ -177,16 +178,21 @@ A reply to `new_layer` or `rex run` that exits 0 but cannot be read counts
 as `maybeOpen`, like a dead client; the model does not have that reply. When
 the open is `maybeOpen` and no block ever opens, the log stays in `TMPDIR`.
 
-`remember` writes its row file in one `writeFileSync`. A pass that reads the
-file before the write ends finds invalid JSON and keeps the file, so the
-model treats the write as one step. No unit test covers that order.
+`remember` writes its row to a temp file and renames it, so the row file is
+complete or absent. The temp name starts with `.`, so `drainLegacyList`,
+which deletes this session's `*.json.tmp.*` files, never deletes it.
+`rowNotAtomic` is the code before: `writeFileSync` with `wx` created the row
+file empty and then wrote it. A reader that ran beside 50,000 such writes
+found an empty row 141 to 240 times per run. A pass that reads an empty row
+keeps the file and never checks its block, which breaks
+`EndPassClosesSettledRows`.
 
 ## Coverage
 
 | Code | Actions |
 | --- | --- |
 | `hooks/mirror_hook.ts` `mirrored` | `CommandEnds` |
-| `scripts/rex_mirror.ts` `main`, `openViewer`, `startViewer`, `diedBeforeReply`, `remember`, `settleLog`, `onSignal` | `MirrorCreatesLog` to `MirrorHandlesSignal`, `Kill` |
+| `scripts/rex_mirror.ts` `main`, `withSignalHandlers`, `openViewer`, `startViewer`, `diedBeforeReply`, `remember`, `settleLog`, `onSignal` | `MirrorCreatesLog` to `MirrorHandlesSignal`, `Kill` |
 | The Rex server's side of `new_layer` and `rex run` | `ServerOpens`, `ServerRefuses` |
 | `scripts/rex_mirror_view.ts` `main`, `closeBlock` | `ViewerReportsWorking` to `ViewerCloseFails` |
 | `hooks/session_end.ts` `main`, `rowFiles`, `settle`, `newestState` (`drainLegacyList` is left out) | `EndReads`, `EndChecks`, `EndCloseFails`, `EndKilled`, `EndWrites` |
@@ -194,10 +200,10 @@ model treats the write as one step. No unit test covers that order.
 
 All paths are under `plugins/rex-agents/`.
 
-Sync commit: the commit that makes a `rex` client that dies before its reply
-open no second block (`git log -S diedBeforeReply`). At that commit the model
-describes the code. `scripts/rex_mirror.ts` last changed there; the other
-covered files changed in earlier commits. Move the sync commit forward only
+Sync commit: the commit that makes `remember` write its row atomically
+(`git log -S rowNotAtomic`). At that commit the model describes the code.
+`scripts/rex_mirror.ts` and `hooks/session_end.ts` last changed there; the
+other covered files changed in earlier commits. Move the sync commit forward only
 after you confirm that the model describes the code at the new commit.
 
 The check does not run the real code. A change to a covered file passes the

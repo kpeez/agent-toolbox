@@ -182,6 +182,12 @@ RUNS = [
         ["EndPassClosesSettledRows"],
         {"Variant": '"endPassKeepsError"'},
     ),
+    Run(
+        "KP-678: remember creates its row file empty, and session_end skips a row it reads empty",
+        "past bug",
+        ["EndPassClosesSettledRows"],
+        {"Variant": '"rowNotAtomic"'},
+    ),
     # The statechart's config must still parse, and its rules hold.
     Run(
         "the chart config (chart.cfg)",

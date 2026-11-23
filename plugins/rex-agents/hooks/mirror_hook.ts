@@ -13,6 +13,8 @@ import { runtimeFlags } from "../scripts/runtime_flags.ts";
 
 const MIRROR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "rex_mirror.ts");
 const LABEL_MAX = 60;
+// In default and acceptEdits mode, Claude Code 2.1.331 asks before it runs the wrapped form of a command that an
+// allow rule permits: "Contains brace with quote character (expansion obfuscation)". In auto mode it runs.
 const MODES_WITHOUT_PROMPTS = new Set(["auto", "bypassPermissions"]);
 const SAFE = /^[a-zA-Z0-9_@%+=:,./-]+$/;
 

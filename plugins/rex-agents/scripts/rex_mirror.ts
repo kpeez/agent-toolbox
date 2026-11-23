@@ -1,4 +1,4 @@
-import { closeSync, mkdirSync, openSync, unlinkSync, writeFileSync, writeSync, accessSync, constants, statSync } from "node:fs";
+import { closeSync, mkdirSync, openSync, renameSync, unlinkSync, writeFileSync, writeSync, accessSync, constants, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { randomBytes, randomUUID } from "node:crypto";
@@ -147,17 +147,25 @@ export function startViewer(label: string, log: string, unforgeableExitTag: stri
 
 export function remember(sessionId: string, block: string, label: string): void {
   mkdirSync(CACHE, { recursive: true });
-  writeFileSync(
-    join(CACHE, `${sessionId}.${randomUUID()}.json`),
-    JSON.stringify({ block, rex_session: process.env.REX_SESSION, label }) + "\n",
-    { flag: "wx" },
-  );
+  // The temp name does not start with the session ID, so drainLegacyList never deletes it.
+  const temp = join(CACHE, `.${randomUUID()}.tmp`);
+  writeFileSync(temp, JSON.stringify({ block, rex_session: process.env.REX_SESSION, label }) + "\n");
+  renameSync(temp, join(CACHE, `${sessionId}.${randomUUID()}.json`));
 }
 
 // latin1 maps each byte to one UTF-16 code unit, so the match index is a byte offset into tail.
 function markerAt(tail: Buffer): { rc: number; offset: number } | null {
   const match = MARKER.exec(tail.toString("latin1"));
   return match ? { rc: Number(match[1]), offset: match.index } : null;
+}
+
+// A stop during an open with no handler kills the mirror before it writes the exit line, and the block shows
+// working forever. Only this function returns the open, so no code can open a block before the handlers exist.
+function withSignalHandlers(onSignal: (code: number) => void, open: () => void): () => void {
+  process.on("SIGTERM", () => onSignal(143));
+  process.on("SIGINT", () => onSignal(130));
+  process.on("SIGHUP", () => onSignal(129));
+  return open;
 }
 
 async function main(): Promise<number> {
@@ -211,14 +219,11 @@ async function main(): Promise<number> {
     settleLog(code);
     process.exit(code);
   };
-  process.on("SIGTERM", () => onSignal(143));
-  process.on("SIGINT", () => onSignal(130));
-  process.on("SIGHUP", () => onSignal(129));
-  const openViewer = (): void => {
+  const openViewer = withSignalHandlers(onSignal, (): void => {
     const opened = startViewer(label, log, unforgeableExitTag);
     if (opened.kind === "open" && sessionId) remember(sessionId, opened.block, label);
     viewer = opened.kind === "none" ? { kind: "skipped" } : { kind: opened.kind };
-  };
+  });
   if (process.env.REX_SESSION && which("rex")) {
     const delay = openDelayMs();
     if (delay === 0) {

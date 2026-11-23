@@ -140,10 +140,17 @@ Kill(m) ==
 (* loop), "ended", or "dead". opc follows openViewer: "none", "timer" (the *)
 (* delay is pending), "inspect", "layer", "minimize", "run" (a `rex` call  *)
 (* in flight), then "opened", "listed", "noBlock", "unknown", or           *)
-(* "cancelled".                                                            *)
+(* "cancelled". RowNotAtomic adds "rowEmpty".                              *)
 
 \* "opened": startViewer returned, and openViewer still has to call remember.
-Opening(m) == opc[m] \in {"inspect", "layer", "minimize", "run", "opened"}
+\* "rowEmpty": RowNotAtomic's remember created the row file and has not written it.
+Opening(m) == opc[m] \in {"inspect", "layer", "minimize", "run", "opened", "rowEmpty"}
+
+\* Variant "rowNotAtomic" is remember before KP-678: writeFileSync(row, data, { flag: "wx" })
+\* creates the row file empty, then writes it, so a session-end read in between finds no JSON.
+RowNotAtomic == Variant = "rowNotAtomic"
+\* The row file of block <<m, k>> exists and is empty.
+RowEmpty(m, k) == opc[m] = "rowEmpty" /\ known[m] = k
 
 Alive(m) == mpc[m] \notin {"dead", "ended"}
 
@@ -156,7 +163,7 @@ MirrorCreatesLog(m) ==
   /\ UNCHANGED <<cmdVars, known, killed, sigPending, exitLine,
                  req, callDead, viewVars, cacheVars, endVars, waitVars>>
 
-\* The three process.on(...) calls. At a delay above 0, setTimeout(openViewer, delay).
+\* withSignalHandlers: the three process.on(...) calls. At a delay above 0, setTimeout(openViewer, delay).
 \* OpenFirst: at delay 0 the open already ran, before the handlers.
 MirrorInstallsHandlers(m) ==
   /\ mpc[m] = "log"
@@ -274,16 +281,26 @@ MirrorRunGivesUp(m) ==
   /\ UNCHANGED <<cmdVars, mpc, known, killed, sigPending, exitLine, logExists,
                  req, callDead, viewVars, cacheVars, endVars, waitVars>>
 
-\* openViewer: remember writes one row file, then viewer = { kind: "open" }.
+\* openViewer: remember writes a temp file and renames it to the row file, then
+\* viewer = { kind: "open" }. RowNotAtomic: the row file appears empty here.
 MirrorRemembers(m) ==
   /\ Alive(m)
   /\ opc[m] = "opened"
-  /\ opc' = [opc EXCEPT ![m] = "listed"]
+  /\ opc' = [opc EXCEPT ![m] = IF RowNotAtomic THEN "rowEmpty" ELSE "listed"]
   /\ rows' = rows \cup {<<m, known[m]>>}
   /\ fileExists' = TRUE
-  /\ listed' = [listed EXCEPT ![m][known[m]] = TRUE]
+  /\ listed' = IF RowNotAtomic THEN listed ELSE [listed EXCEPT ![m][known[m]] = TRUE]
   /\ UNCHANGED <<cmdVars, mpc, known, killed, sigPending, exitLine, logExists,
                  req, callDead, viewVars, endVars, waitVars>>
+
+\* RowNotAtomic: remember writes the row into the empty file.
+MirrorFillsRow(m) ==
+  /\ Alive(m)
+  /\ opc[m] = "rowEmpty"
+  /\ opc' = [opc EXCEPT ![m] = "listed"]
+  /\ listed' = [listed EXCEPT ![m][known[m]] = TRUE]
+  /\ UNCHANGED <<cmdVars, mpc, known, killed, sigPending, exitLine, logExists,
+                 req, callDead, viewVars, rows, fileExists, endVars, waitVars>>
 
 \* settleLog(code). An open viewer, or one that may have opened ("maybeOpen", the model's "unknown"): write the exit
 \* line and keep the log, which the viewer deletes. A pending timer: clear it. Otherwise:
@@ -428,6 +445,7 @@ Closes == IF Variant = "endPassKeepsError" THEN {"done"} ELSE Settled
 EndChecks(m, k) ==
   /\ spc = "checking"
   /\ <<m, k>> \in todo
+  /\ ~RowEmpty(m, k)
   /\ \E a \in Answers(m, k):
        /\ seen' = [seen EXCEPT ![m][k] = a]
        /\ todo' = todo \ {<<m, k>>}
@@ -443,6 +461,16 @@ EndChecks(m, k) ==
                  /\ UNCHANGED <<spc, block, vpc>>
   /\ UNCHANGED <<snapshot, endCloseFailed, cmdVars, mirrorVars, req, callDead, status, shown, closeFailed,
                  fileExists, listed, waitVars>>
+
+\* settle for one row: JSON.parse of an empty row file throws, and settle returns. The
+\* hook never checks the block and keeps the row file. Only RowNotAtomic reaches it.
+EndReadsEmptyRow(m, k) ==
+  /\ spc = "checking"
+  /\ <<m, k>> \in todo
+  /\ RowEmpty(m, k)
+  /\ todo' = todo \ {<<m, k>>}
+  /\ UNCHANGED <<spc, snapshot, keep, seen, endCloseFailed, cmdVars, mirrorVars, req, callDead, viewVars,
+                 cacheVars, waitVars>>
 
 \* settle for one row: newestState answers done or error, and `rex block close` fails or
 \* times out. The hook keeps the row file. Rewrites ignores the result and drops the row.
@@ -534,6 +562,7 @@ Next ==
        \/ MirrorRunRefused(m)
        \/ MirrorRunGivesUp(m)
        \/ MirrorRemembers(m)
+       \/ MirrorFillsRow(m)
        \/ MirrorReadsEnd(m)
        \/ MirrorHandlesSignal(m)
   \/ \E m \in Mirrors, k \in Slots :
@@ -545,6 +574,7 @@ Next ==
        \/ ViewerClosesBlock(m, k)
        \/ ViewerCloseFails(m, k)
        \/ EndChecks(m, k)
+       \/ EndReadsEmptyRow(m, k)
        \/ EndCloseFails(m, k)
   \/ EndReads
   \/ EndWrites

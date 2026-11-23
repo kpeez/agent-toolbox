@@ -43,6 +43,7 @@ const CASES: Array<[string, string, string, number]> = [
   ["trailing comment", "echo hi # note", "hi\n", 0],
   ["empty command", "", "", 0],
   ["comment-only", "# just a note", "", 0],
+  ["multibyte output before the marker", "printf 'é→😀'", "é→😀", 0],
 ];
 const SHELLS = ["/bin/zsh", "/bin/bash"].filter((s) => existsSync(s));
 
