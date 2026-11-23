@@ -57,6 +57,9 @@
 - `go-deeper` lives in `plugins/swe`, `plugins/lab`, and `plugins/uni` so each
   plugin installs alone. Edit all three copies together; the `checks`
   workflow fails when they differ.
+- `scripts/link_project_skill.py` lives in `plugins/swe` and `plugins/lab`
+  for the same reason. Edit both copies together; the `checks` workflow fails
+  when they differ.
 - Put repo-local skills in `.agents/skills/`. `.claude/skills` is a committed
   link to that folder, so Claude Code and Codex read one copy.
 - To pull upstream pstack changes into swe, use the repo-local
@@ -87,6 +90,8 @@
   `uv run .agents/skills/verify-swe-hooks/scripts/check.py`. For the
   rex-agents mirror, its hooks, and `wait-status.lua`, run
   `uv run .agents/skills/verify-rex-mirror/scripts/check.py`.
+  For the project-skill link script, run
+  `uv run .agents/skills/verify-project-skill-link/scripts/check.py`.
 - After a change to the eval-batch budget in `evals/skills/run_eval.py`
   (`Batch`, `spend`, `finished`, `prepare`, `launch`, or `execute`), run
   `uv run .agents/skills/verify-eval-budget/scripts/check.py`. It

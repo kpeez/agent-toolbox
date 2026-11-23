@@ -38,7 +38,7 @@ describe the code again, and then the property fails on it.
 ## Edit scope
 
 Edit only the verification: models, harnesses, property files, the verify
-skill itself, and the setup line, check recipe, and `AGENTS.md` line that
+skill itself, and the `.claude/skills` link, check recipe, and `AGENTS.md` line that
 [project skill layout](../../references/project-skill-layout.md) asks for. Do
 not edit product code unless the user asks. When a property
 fails on the current code, do not weaken the property or the model to make it

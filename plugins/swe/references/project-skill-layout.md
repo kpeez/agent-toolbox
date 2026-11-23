@@ -17,14 +17,7 @@ A skill that a swe skill generates for a project follows this layout.
   `.agents/skills/<skill-name>/scripts/check.py`. A script finds its sibling
   files from its own location, not from the working directory.
 - Commit the skill folder with the change that adds it, so every clone gets
-  the skill. Many repositories ignore parts of `.agents/` (for example
-  `.agents/docs/` or `.agents/scratch/`). Before you commit, run
-  `git check-ignore -v .agents/skills/<skill-name>/SKILL.md`. When it prints a
-  rule, change `.gitignore` so it ignores only those other parts. Git cannot
-  re-include a file under an ignored directory, so `!/.agents/skills/` after
-  `.agents/` has no effect. Write `/.agents/*` and then `!/.agents/skills/`
-  instead. Then confirm that
-  `git ls-files .agents/skills/<skill-name>` lists every file of the skill.
+  the skill. The link script below stages it.
 
 ## Claude Code sees it through a link
 
@@ -35,33 +28,39 @@ committed link works on clone with no setup step. Do not commit a link for
 the whole `.claude/skills` folder: when a teammate keeps a local, ignored
 `.claude/skills/` directory, their next pull deletes it without a warning.
 
-- When `git ls-files -s .claude/skills` already lists `.claude/skills`
-  itself with mode `120000`, the repository commits a folder link. When
-  `.claude/skills/<skill-name>/SKILL.md` resolves to the same file as
-  `.agents/skills/<skill-name>/SKILL.md` (compare `realpath` of both), add
-  nothing, and skip the rest of this list. Otherwise, stop: tell the user
-  that the folder link does not reach this skill, and do not change it.
-- When `.claude/skills` is a link that Git does not track
-  (`[ -L .claude/skills ]` and `git ls-files .claude/skills` prints
-  nothing), an older version of this layout made it in a setup step. Delete
-  the link with `rm .claude/skills`, and remove the setup-step line that made
-  it. Leave `.gitignore` as it is.
-- When `.claude/skills/<skill-name>` is a real directory, stop. `ln -sfn`
-  would put the link inside it. Tell the user that the directory hides the
-  skill, and do not move or delete it.
-- When the setup step has a line that links this one skill
-  (`ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`),
-  an older version of this layout added it with the ignore line
-  `/.claude/skills/<skill-name>`. Remove both lines.
-- Then link the skill:
-  `mkdir -p .claude/skills && ln -sfn ../../.agents/skills/<skill-name> .claude/skills/<skill-name>`.
-- Then stage the link with `git add -f .claude/skills/<skill-name>` and commit
-  it with the skill. The `-f` adds it even when `.gitignore` covers `.claude/`. Git applies no ignore
-  rule to a tracked path, so do not edit `.gitignore` for the link. If the
-  link later leaves the index, add it again with `git add -f`;
-  `git add -A` does not.
-- Confirm that `git ls-files -s .claude/skills` shows the link with mode
-  `120000`, and that `.claude/skills/<skill-name>/SKILL.md` resolves.
+After you write the skill folder, run the link script. The script is
+[`../scripts/link_project_skill.py`](../scripts/link_project_skill.py),
+relative to this file. Build its absolute path from this file's folder, and
+run it from inside the repository:
+
+```sh
+uv run <absolute path of link_project_skill.py> <skill-name>
+```
+
+The script stages the skill folder, makes the link, stages it with
+`git add -f`, and checks that Git records it with mode `120000`. It also
+handles these cases:
+
+- A root `.gitignore` rule for the whole `.agents/` folder hides the skill:
+  it rewrites the rule to `/.agents/*` and `!/.agents/skills/`.
+- The repository commits a `.claude/skills` folder link that reaches the
+  skill: it adds no link.
+- An older version of this layout made an untracked `.claude/skills` link in
+  a setup step: it removes that link.
+- A real file or folder is at `.claude/skills/<skill-name>`: it refuses.
+
+It is safe to run again. Read its exit code:
+
+- `0`: commit the staged files with the skill. For each `note:` line that
+  names an old setup line or ignore line, remove that line.
+- `1`: stop and tell the user the `refused:` or `failed:` line. After
+  `refused:`, the script changed nothing. After `failed:`, the changes it
+  printed stay in place.
+- `2`: run it inside the repository, with the name of a folder in
+  `.agents/skills/` that holds a `SKILL.md`.
+
+If the link later leaves the index, run the script again. `git add -A` does
+not add it back when `.gitignore` covers `.claude/`.
 
 ## One repo-level command
 
