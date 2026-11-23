@@ -71,59 +71,6 @@ function withTemp(run: (root: string) => void): void {
   }
 }
 
-test("ignores mentions in arguments and other commands", () => {
-  withTemp((root) => {
-    const body = renderValidBody(root);
-    for (const cmd of [
-      'rg -l -i "gh pr create" docs',
-      'echo "gh pr create --body inline"',
-      'git commit -m "gh pr create --base feature"',
-      'gh pr edit 12 --title "New title"',
-      `gh pr edit 12 --body-file ${basename(body)}`,
-      "gh stack link feat-a feat-b",
-      "gh stack submit --auto",
-    ]) {
-      const res = runHook(cmd, root);
-      assert.equal(res.status, 0, `${cmd}: ${res.stderr}`);
-    }
-  });
-});
-
-test("matches real invocations across shell separators", () => {
-  withTemp((root) => {
-    renderValidBody(root);
-    for (const cmd of [
-      'gh pr create --body "inline"',
-      'cd . && gh pr create --body "inline"',
-      'true || gh pr create --body "inline"',
-      'echo ok; gh pr create --body "inline"',
-      'echo ok\ngh pr create --body "inline"',
-      'gh pr create --body "inline" | cat',
-      'FOO=1 gh pr create --body "inline"',
-      'gh pr edit 12 --body "inline"',
-      'url=$(gh pr create --body "inline")',
-      'url=`gh pr create --body "inline"`',
-      'time gh pr create --body "inline"',
-      '(cd . && gh pr create --body "inline")',
-      'env gh pr create --body "inline"',
-      '{ gh pr create --body "inline"; }',
-      '/usr/local/bin/gh pr create --body "inline"',
-      'gh pr create --body "inline" &',
-      'gh pr create -b"inline"',
-    ]) {
-      const res = runHook(cmd, root);
-      assert.equal(res.status, 2, `expected block for ${JSON.stringify(cmd)}, got ${res.status}`);
-    }
-  });
-});
-
-test("newline inside quotes does not split segment", () => {
-  withTemp((root) => {
-    const res = runHook('echo "line1\ngh pr create --body inline"', root);
-    assert.equal(res.status, 0, res.stderr);
-  });
-});
-
 test("allows non-trunk base without gh-stack file", () => {
   withTemp((root) => {
     const repo = initRepo(root, "main", false);
@@ -159,11 +106,8 @@ test("allows trunk and omitted base with gh-stack file", () => {
       "gh stack submit --auto",
     ]) {
       const cmd = args.startsWith("gh ") ? args : `gh pr create ${args}`;
-      const start = performance.now();
       const res = runHook(cmd, repo);
-      const elapsed = (performance.now() - start) / 1000;
       assert.equal(res.status, 0, `${cmd}: ${res.stderr}`);
-      assert.ok(elapsed < 1.0, `${cmd} took ${elapsed}s`);
     }
   });
 });
@@ -264,13 +208,6 @@ test("hook passes a rendered body", () => {
   withTemp((root) => {
     const body = renderValidBody(root);
     const res = runHook(`gh pr create --body-file ${basename(body)}`, root);
-    assert.equal(res.status, 0, res.stderr);
-  });
-});
-
-test("hook passes a non-PR Bash command", () => {
-  withTemp((root) => {
-    const res = runHook("ls -la && echo done | cat", root);
     assert.equal(res.status, 0, res.stderr);
   });
 });

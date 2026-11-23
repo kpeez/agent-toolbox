@@ -34,9 +34,6 @@ const ATTRIBUTION: RegExp[] = [
   new RegExp(`\\b(?!(?:This|That|It|Which|What)\\b)[A-Z][a-z]+ ${REQUESTER_VERBS}\\b`),
   /\b[A-Z][a-z]+'s (?:request|ask|decisions?|preference|instructions?)\b/,
 ];
-const SEGMENT_SEPARATORS = new Set([";", "&&", "||", "|", "&", "\n", "(", ")", "`"]);
-const WRAPPERS = new Set(["{", "env", "command", "exec", "time"]);
-const ENV_ASSIGNMENT = /^[A-Za-z_][A-Za-z0-9_]*=/;
 
 function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
@@ -66,181 +63,363 @@ function splitLines(text: string): string[] {
   return parts;
 }
 
-// The lexer mirrors shlex.shlex(posix=True, punctuation_chars=True) with
-// whitespace " \t\r", commenters "", and wordchars extended by "!#$%+,:@[]^{}";
-// punctuation_chars=True also adds "~-./*?=" to wordchars. States: " " start,
-// "a" word, "c" punctuation run, the two quote chars, and the escape char.
-const WORDCHARS = new Set(
-  "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789_" +
-    "ßàáâãäåæçèéêëìíîïðñòóôõöøùúûüýþÿÀÁÂÃÄÅÆÇÈÉÊËÌÍÎÏÐÑÒÓÔÕÖØÙÚÛÜÝÞ" +
-    "~-./*?=" +
-    "!#$%+,:@[]^{}",
-);
-const PUNCTUATION = new Set("();<>|&");
-const LEX_WHITESPACE = new Set(" \t\r");
-const QUOTES = new Set(["'", '"']);
-const ESCAPE = "\\";
-
-function* shlexTokens(input: string): Generator<string> {
-  // Iterate code points, as Python does; a surrogate half is not a character.
-  const chars = Array.from(input);
-  let pos = 0;
-  const pushback: string[] = [];
-  let state = " ";
-  let escapedstate = " ";
-  const nextChar = (): string => {
-    if (pushback.length > 0) return pushback.pop() as string;
-    return pos < chars.length ? chars[pos++] : "";
-  };
-  while (state !== "end") {
-    let token = "";
-    let quoted = false;
-    for (;;) {
-      const ch = nextChar();
-      if (state === " ") {
-        if (ch === "") {
-          state = "end";
-          break;
-        }
-        if (LEX_WHITESPACE.has(ch)) {
-          if (token || quoted) break;
-          continue;
-        }
-        if (ch === ESCAPE) {
-          escapedstate = "a";
-          state = ESCAPE;
-          continue;
-        }
-        if (WORDCHARS.has(ch)) {
-          token = ch;
-          state = "a";
-          continue;
-        }
-        if (PUNCTUATION.has(ch)) {
-          token = ch;
-          state = "c";
-          continue;
-        }
-        if (QUOTES.has(ch)) {
-          state = ch;
-          continue;
-        }
-        token = ch;
-        break;
-      }
-      if (state === "'" || state === '"') {
-        quoted = true;
-        if (ch === "") throw new Error("No closing quotation");
-        if (ch === state) {
-          state = "a";
-          continue;
-        }
-        if (ch === ESCAPE && state === '"') {
-          escapedstate = state;
-          state = ESCAPE;
-          continue;
-        }
-        token += ch;
-        continue;
-      }
-      if (state === ESCAPE) {
-        if (ch === "") throw new Error("No escaped character");
-        // Inside double quotes only " and \ lose the backslash; elsewhere it stays literal.
-        if ((escapedstate === "'" || escapedstate === '"') && ch !== ESCAPE && ch !== escapedstate) {
-          token += ESCAPE;
-        }
-        token += ch;
-        state = escapedstate;
-        continue;
-      }
-      if (state === "a") {
-        if (ch === "") {
-          state = "end";
-          break;
-        }
-        if (LEX_WHITESPACE.has(ch)) {
-          state = " ";
-          break;
-        }
-        if (QUOTES.has(ch)) {
-          state = ch;
-          continue;
-        }
-        if (ch === ESCAPE) {
-          escapedstate = "a";
-          state = ESCAPE;
-          continue;
-        }
-        if (WORDCHARS.has(ch)) {
-          token += ch;
-          continue;
-        }
-        pushback.push(ch);
-        state = " ";
-        break;
-      }
-      // state "c": a run of punctuation characters forms one token.
-      if (ch === "") {
-        state = "end";
-        break;
-      }
-      if (LEX_WHITESPACE.has(ch)) {
-        state = " ";
-        break;
-      }
-      if (PUNCTUATION.has(ch)) {
-        token += ch;
-        continue;
-      }
-      pushback.push(ch);
-      state = " ";
-      break;
-    }
-    if (!quoted && token === "") return;
-    yield token;
-  }
+// A command the shell will run is a simple command: its words after quote
+// removal, plus any heredoc bodies on its stdin. The parser below finds every
+// simple command bash would run from a command line: in lists, pipelines,
+// groups, subshells, $( ), backticks, <( ), and unquoted heredoc bodies. It
+// skips data: quoted text, comments, and quoted heredoc bodies. A word with an
+// expansion keeps its source text and is marked dynamic, because its value is
+// known only at run time.
+interface Word {
+  text: string;
+  dynamic: boolean;
+}
+interface Heredoc {
+  body: string;
+  quoted: boolean;
+}
+interface SimpleCommand {
+  words: Word[];
+  heredocs: Heredoc[];
 }
 
-// Python str.split() whitespace (str.isspace). JS \s differs: it adds BOM and lacks \x1c-\x1f and \x85.
-const PY_WHITESPACE = /[\t\n\v\f\r \x1c-\x1f\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/;
+const OPERATORS = ["&&", "||", ";;", ";&", "|&", ";", "|", "&", "(", ")"];
+const REDIRECT = /(?:\d+|\{\w+\})?(?:<<<|<<-|<<|<>|<&|>>|>&|>\||&>>|&>|<|>)/y;
+const WORD_END = new Set([" ", "\t", "\n", ";", "&", "|", "(", ")", "<", ">"]);
 
-/** Tokenize a shell command and split it into command segments. */
-export function splitSegments(command: string): string[][] {
-  command = command.replaceAll("\\\n", " ");
-  let tokens: string[];
-  try {
-    tokens = [...shlexTokens(command)];
-  } catch {
-    tokens = [];
-    for (const line of splitLines(command)) {
-      tokens.push(...line.split(PY_WHITESPACE).filter((t) => t !== ""));
-      tokens.push("\n");
-    }
+class ShellParser {
+  pos = 0;
+  private pending: { delimiter: string; stripTabs: boolean; heredoc: Heredoc }[] = [];
+  readonly src: string;
+  readonly out: SimpleCommand[];
+  constructor(src: string, out: SimpleCommand[]) {
+    this.src = src;
+    this.out = out;
   }
-  const segments: string[][] = [];
-  let current: string[] = [];
-  for (const token of tokens) {
-    if (SEGMENT_SEPARATORS.has(token)) {
-      if (current.length > 0) {
-        segments.push(current);
-        current = [];
+
+  /** Parse commands until the end, or until an unmatched `)` when `inSubstitution`. */
+  list(inSubstitution: boolean): void {
+    let command: SimpleCommand = { words: [], heredocs: [] };
+    let depth = 0;
+    const flush = (): void => {
+      if (command.words.length > 0 || command.heredocs.length > 0) this.out.push(command);
+      command = { words: [], heredocs: [] };
+    };
+    const src = this.src;
+    while (this.pos < src.length) {
+      const ch = src[this.pos];
+      if (ch === " " || ch === "\t") {
+        this.pos++;
+      } else if (ch === "\\" && src[this.pos + 1] === "\n") {
+        this.pos += 2;
+      } else if (ch === "#") {
+        const end = src.indexOf("\n", this.pos);
+        this.pos = end < 0 ? src.length : end;
+      } else if (ch === "\n") {
+        this.pos++;
+        flush();
+        this.readHeredocs();
+      } else if ((ch === "<" || ch === ">") && src[this.pos + 1] === "(") {
+        command.words.push(this.word());
+      } else if (src.startsWith("((", this.pos) && this.arithmeticEnd(this.pos + 2) > 0) {
+        // An arithmetic command: `<<` in `(( x = 1 << 3 ))` is a shift, not a heredoc.
+        this.pos = this.arithmeticEnd(this.pos + 2);
+      } else if (this.redirect(command)) {
+        continue;
+      } else {
+        const op = OPERATORS.find((o) => src.startsWith(o, this.pos));
+        if (op === undefined) {
+          const start = this.pos;
+          command.words.push(this.word());
+          if (this.pos === start) this.pos++;
+          continue;
+        }
+        this.pos += op.length;
+        flush();
+        if (op === "(") depth++;
+        if (op === ")" && depth-- === 0 && inSubstitution) return;
       }
+    }
+    flush();
+  }
+
+  private redirect(command: SimpleCommand): boolean {
+    REDIRECT.lastIndex = this.pos;
+    const match = REDIRECT.exec(this.src);
+    if (!match) return false;
+    this.pos += match[0].length;
+    while (this.src[this.pos] === " " || this.src[this.pos] === "\t") this.pos++;
+    const start = this.pos;
+    const target = this.word();
+    const op = match[0].replace(/^(?:\d+|\{\w+\})/, "");
+    if (op === "<<" || op === "<<-") {
+      const heredoc = { body: "", quoted: /['"\\]/.test(this.src.slice(start, this.pos)) };
+      command.heredocs.push(heredoc);
+      this.pending.push({ delimiter: target.text, stripTabs: op === "<<-", heredoc });
+    }
+    return true;
+  }
+
+  private readHeredocs(): void {
+    for (const { delimiter, stripTabs, heredoc } of this.pending) {
+      const lines: string[] = [];
+      while (this.pos < this.src.length) {
+        const end = this.src.indexOf("\n", this.pos);
+        const line = this.src.slice(this.pos, end < 0 ? this.src.length : end);
+        this.pos = end < 0 ? this.src.length : end + 1;
+        if ((stripTabs ? line.replace(/^\t+/, "") : line) === delimiter) break;
+        lines.push(line);
+      }
+      heredoc.body = lines.join("\n");
+      if (!heredoc.quoted) new ShellParser(heredoc.body, this.out).doubleQuoted(false);
+    }
+    this.pending = [];
+  }
+
+  private word(): Word {
+    const src = this.src;
+    let text = "";
+    let dynamic = false;
+    if (src[this.pos] === "<" || src[this.pos] === ">") {
+      const start = this.pos;
+      this.pos += 2;
+      this.list(true);
+      return { text: src.slice(start, this.pos), dynamic: true };
+    }
+    while (this.pos < src.length && !WORD_END.has(src[this.pos])) {
+      const ch = src[this.pos];
+      if (ch === "\\") {
+        if (src[this.pos + 1] !== "\n") text += src[this.pos + 1] ?? "";
+        this.pos += 2;
+      } else if (ch === "'") {
+        const end = src.indexOf("'", this.pos + 1);
+        text += src.slice(this.pos + 1, end < 0 ? src.length : end);
+        this.pos = end < 0 ? src.length : end + 1;
+      } else if (ch === '"') {
+        this.pos++;
+        const part = this.doubleQuoted(true);
+        text += part.text;
+        dynamic ||= part.dynamic;
+      } else {
+        const expansion = this.expansion();
+        if (expansion === null) {
+          text += ch;
+          this.pos++;
+        } else {
+          text += expansion;
+          dynamic = true;
+        }
+      }
+    }
+    return { text, dynamic };
+  }
+
+  /** Read double-quoted text up to the closing quote, or heredoc text up to the end. */
+  doubleQuoted(closes: boolean): Word {
+    const src = this.src;
+    let text = "";
+    let dynamic = false;
+    while (this.pos < src.length) {
+      const ch = src[this.pos];
+      if (closes && ch === '"') {
+        this.pos++;
+        break;
+      }
+      if (ch === "\\" && '$`"\\\n'.includes(src[this.pos + 1] ?? "")) {
+        if (src[this.pos + 1] !== "\n") text += src[this.pos + 1];
+        this.pos += 2;
+        continue;
+      }
+      const expansion = this.expansion();
+      if (expansion === null) {
+        text += ch;
+        this.pos++;
+      } else {
+        text += expansion;
+        dynamic = true;
+      }
+    }
+    return { text, dynamic };
+  }
+
+  /** The end of `$(( ... ))` when its parentheses close with `))`, else 0: `$((cmd) )` is a command. */
+  private arithmeticEnd(from: number): number {
+    let depth = 2;
+    for (let i = from; i < this.src.length; i++) {
+      if (this.src[i] === "(") depth++;
+      if (this.src[i] === ")" && --depth === 1) return this.src[i + 1] === ")" ? i + 2 : 0;
+    }
+    return 0;
+  }
+
+  /** Consume a $ or backtick expansion and return its source text; parse the commands it runs. */
+  private expansion(): string | null {
+    const src = this.src;
+    const start = this.pos;
+    const next = src[start + 1] ?? "";
+    if (src[start] === "`") {
+      let inner = "";
+      this.pos++;
+      while (this.pos < src.length && src[this.pos] !== "`") {
+        if (src[this.pos] === "\\" && "$`\\".includes(src[this.pos + 1] ?? "")) this.pos++;
+        inner += src[this.pos++];
+      }
+      this.pos++;
+      new ShellParser(inner, this.out).list(false);
+    } else if (src[start] !== "$") {
+      return null;
+    } else if (src.startsWith("$((", start) && this.arithmeticEnd(start + 3) > 0) {
+      this.pos = this.arithmeticEnd(start + 3);
+    } else if (next === "(") {
+      this.pos += 2;
+      this.list(true);
+    } else if (next === "{") {
+      this.pos += 2;
+      while (this.pos < src.length && src[this.pos] !== "}") {
+        if (src[this.pos] === '"') {
+          this.pos++;
+          this.doubleQuoted(true);
+        } else if (this.expansion() === null) {
+          this.pos++;
+        }
+      }
+      this.pos++;
+    } else if (next === "'") {
+      const end = src.slice(start + 2).search(/(?<!\\)'/);
+      this.pos = end < 0 ? src.length : start + 3 + end;
+    } else if (/[\w@*#?$!-]/.test(next)) {
+      this.pos += /\w/.test(next) ? 1 + /^\w+/.exec(src.slice(start + 1))![0].length : 2;
     } else {
-      current.push(token);
+      return null;
     }
+    this.pos = Math.min(this.pos, src.length);
+    return src.slice(start, this.pos);
   }
-  if (current.length > 0) segments.push(current);
-  return segments;
 }
 
-/** Drop leading env assignments and wrappers, and reduce a path to `gh`. */
-function commandWords(segment: string[]): string[] {
-  const words = [...segment];
-  while (words.length > 0 && (ENV_ASSIGNMENT.test(words[0]) || WRAPPERS.has(words[0]))) {
-    words.shift();
+// `and`, `or`, and `not` are fish keywords.
+const RESERVED = new Set(["!", "{", "}", "if", "then", "elif", "else", "fi", "while", "until", "do", "done", "time", "-p", "and", "or", "not"]);
+const ASSIGNMENT = /^[A-Za-z_]\w*(?:\[[^\]]*\])?\+?=/;
+const SHELLS = new Set(["bash", "sh", "zsh", "dash", "ksh", "fish", "nu"]);
+// Options that take a separate argument, for each wrapper that runs its arguments as a command.
+const WRAPPER_OPTIONS: Record<string, Set<string>> = {
+  env: new Set(["-u", "-C", "-P", "-S", "--unset", "--chdir"]),
+  command: new Set(),
+  exec: new Set(["-a"]),
+  nohup: new Set(),
+  sudo: new Set(["-u", "-g", "-C", "-D", "-p", "-r", "-t", "-T", "-U", "-R", "--user", "--group", "--prompt", "--chdir"]),
+  xargs: new Set(["-I", "-J", "-L", "-n", "-P", "-R", "-s", "-S", "-E", "-d", "-a", "--arg-file", "--delimiter", "--max-args", "--max-procs"]),
+  nice: new Set(["-n", "--adjustment"]),
+  timeout: new Set(["-s", "-k", "--signal", "--kill-after"]),
+};
+// Positional arguments before the wrapped command: `timeout 60 cmd`.
+const WRAPPER_POSITIONALS: Record<string, number> = { timeout: 1 };
+const DEPTH_LIMIT = 8;
+
+function parseCommands(src: string): SimpleCommand[] {
+  const out: SimpleCommand[] = [];
+  new ShellParser(src, out).list(false);
+  return out;
+}
+
+/**
+ * Find the gh call a simple command runs, through wrappers and nested shells,
+ * and return its block message, or null. A command name with an expansion,
+ * such as `$GH` or the output of `eval "$(tool)"`, passes: its value is known
+ * only at run time. The pr-body CI workflow still checks the published body.
+ */
+function inspect(words: Word[], heredocs: Heredoc[], cwd: string, depth: number): string | null {
+  let i = 0;
+  while (i < words.length && (RESERVED.has(words[i].text) || ASSIGNMENT.test(words[i].text))) i++;
+  if (i >= words.length || words[i].dynamic || depth > DEPTH_LIMIT) return null;
+  // nu runs an external command written `^gh`.
+  const name = (words[i].text.split("/").pop() as string).replace(/^\^/, "");
+  const args = words.slice(i + 1);
+  const nested = (src: string): string | null => {
+    for (const command of parseCommands(src)) {
+      const reason = inspect(command.words, command.heredocs, cwd, depth + 1);
+      if (reason !== null) return reason;
+    }
+    return null;
+  };
+  if (name === "for" || name === "select" || name === "case") return null;
+  if (name === "command" && /^-[vV]/.test(args[0]?.text ?? "")) return null;
+  if (name in WRAPPER_OPTIONS) {
+    const takesValue = WRAPPER_OPTIONS[name];
+    let j = 0;
+    while (j < args.length && args[j].text.startsWith("-")) {
+      const text = args[j].text;
+      if (text === "--") {
+        j++;
+        break;
+      }
+      const split = name === "env" ? /^(?:-S|--split-string=?)(.*)$/s.exec(text) : null;
+      if (split) {
+        const rest = args.slice(j + 1).map((w) => w.text);
+        return nested((split[1] === "" ? rest : [split[1], ...rest]).join(" "));
+      }
+      j += takesValue.has(text) ? 2 : 1;
+    }
+    return inspect(args.slice(j + (WRAPPER_POSITIONALS[name] ?? 0)), heredocs, cwd, depth + 1);
   }
-  if (words.length > 0) words[0] = words[0].split("/").pop() as string;
-  return words;
+  if (name === "eval") return nested(args.map((w) => w.text).join(" "));
+  if (SHELLS.has(name)) {
+    let runsString = false;
+    for (let j = 0; j < args.length; j++) {
+      const text = args[j].text;
+      if (/^[-+][oO]$/.test(text) || text === "--rcfile" || text === "--init-file") j++;
+      else if (/^-[A-Za-z]*c/.test(text) || text === "--command" || text === "--commands") runsString = true;
+      else if (text === "--" || !/^[-+]/.test(text)) return runsString ? nested(text === "--" ? (args[j + 1]?.text ?? "") : text) : null;
+    }
+    return runsString ? null : nested(heredocs.map((h) => h.body).join("\n"));
+  }
+  if (name !== "gh") return null;
+  const texts = args.map((w) => w.text);
+  if (texts[0] === "pr" && ["create", "new", "edit"].includes(texts[1])) {
+    return checkPrSegment(texts[1] === "edit" ? "edit" : "create", texts.slice(2), cwd);
+  }
+  if (texts[0] === "api") return checkApi(texts.slice(1));
+  return null;
+}
+
+const API_VALUE_FLAGS = new Set(["-X", "--method", "-f", "--raw-field", "-F", "--field", "-H", "--header", "--input", "-q", "--jq", "-t", "--template", "--hostname", "-p", "--preview", "--cache"]);
+const PULLS_ENDPOINT = /^\/?repos\/[^/]+\/[^/]+\/pulls(?:\/[^/?]+)?\/?(?:\?.*)?$/;
+
+/** Block `gh api` calls that create or edit a pull request, which skip the body checks. */
+function checkApi(args: string[]): string | null {
+  let endpoint: string | null = null;
+  let method: string | null = null;
+  let sendsFields = false;
+  let setsBodyOrBase = false;
+  for (let i = 0; i < args.length; i++) {
+    const arg = args[i];
+    const flag = /^(-[A-Za-z]|--[\w-]+)/.exec(arg)?.[0] ?? "";
+    const attached = arg.startsWith("--") ? arg.slice(flag.length + 1) : arg.slice(2);
+    const value = API_VALUE_FLAGS.has(arg) ? (args[++i] ?? "") : attached;
+    if (["-X", "--method"].includes(flag)) method = value.toUpperCase();
+    else if (["-f", "--raw-field", "-F", "--field", "--input"].includes(flag)) {
+      sendsFields = true;
+      setsBodyOrBase ||= flag === "--input" || /^(?:body|base)=/.test(value);
+    }
+    else if (!arg.startsWith("-") && endpoint === null) endpoint = arg;
+  }
+  method ??= sendsFields ? "POST" : "GET";
+  // POST creates a PR. PATCH passes unless it sets the body or the base; `-f state=closed` passes.
+  if (endpoint === null || !PULLS_ENDPOINT.test(endpoint)) return null;
+  if (method !== "POST" && !(method === "PATCH" && setsBodyOrBase)) return null;
+  return blockMessage(
+    `gh api ${method} ${endpoint} creates or edits a pull request without the body check. ` +
+      "Use `gh pr create` or `gh pr edit` with --body-file.",
+  );
+}
+
+/** The block message for the first gh call in `command` that breaks the PR-body rules, or null. */
+function checkCommand(command: string, cwd: string): string | null {
+  for (const simple of parseCommands(command)) {
+    const reason = inspect(simple.words, simple.heredocs, cwd, 0);
+    if (reason !== null) return reason;
+  }
+  return null;
 }
 
 function extractBase(args: string[]): string | null {
@@ -400,35 +579,27 @@ function expanduser(path: string): string {
   return path;
 }
 
-function block(reason: string): number {
-  process.stderr.write(
-    `PR body blocked by ship-pr: ${reason}\nRender: ${process.versions.bun ? "bun" : "node"} ${SCRIPT} render <slot-folder> -o body.md\n`,
-  );
-  return 2;
+function blockMessage(reason: string): string {
+  return `PR body blocked by ship-pr: ${reason}\nRender: ${process.versions.bun ? "bun" : "node"} ${SCRIPT} render <slot-folder> -o body.md\n`;
 }
 
-function blockStack(reason: string): number {
-  process.stderr.write(`PR base blocked by ship-pr: ${reason}\n`);
-  return 2;
-}
-
-function checkPrSegment(action: string, args: string[], cwd: string): number {
+function checkPrSegment(action: string, args: string[], cwd: string): string | null {
   const base = extractBase(args);
   if (base !== null && repoUsesGhStack(cwd) && !repoTrunks(cwd).has(base)) {
-    return blockStack(
-      `this repo uses gh-stack, so --base ${pyRepr(base)} is not allowed. ` +
-        "Publish stacked branches with `gh stack link` or `gh stack submit` instead, " +
-        "then update each PR body with `gh pr edit <n> --body-file <rendered>`.",
+    return (
+      `PR base blocked by ship-pr: this repo uses gh-stack, so --base ${pyRepr(base)} is not allowed. ` +
+      "Publish stacked branches with `gh stack link` or `gh stack submit` instead, " +
+      "then update each PR body with `gh pr edit <n> --body-file <rendered>`.\n"
     );
   }
   let bodyFile: string | null = null;
   for (let i = 0; i < args.length; i++) {
     const word = args[i];
     if (word === "--body" || word.startsWith("--body=") || word.startsWith("-b")) {
-      return block("inline --body is not allowed. Build the body with `pr_body.ts render`, then pass --body-file.");
+      return blockMessage("inline --body is not allowed. Build the body with `pr_body.ts render`, then pass --body-file.");
     }
     if (word === "--fill" || word.startsWith("--fill-")) {
-      return block("--fill writes the body from commits. Build it with `pr_body.ts render`, then pass --body-file.");
+      return blockMessage("--fill writes the body from commits. Build it with `pr_body.ts render`, then pass --body-file.");
     }
     if ((word === "--body-file" || word === "-F") && i + 1 < args.length) {
       bodyFile = args[i + 1];
@@ -439,15 +610,15 @@ function checkPrSegment(action: string, args: string[], cwd: string): number {
     }
   }
   if (bodyFile === null) {
-    return action === "create" ? block("gh pr create needs --body-file from `pr_body.ts render`.") : 0;
+    return action === "create" ? blockMessage("gh pr create needs --body-file from `pr_body.ts render`.") : null;
   }
   if (bodyFile === "-") {
-    return block("--body-file - reads stdin, which this hook cannot check. Pass the rendered file.");
+    return blockMessage("--body-file - reads stdin, which this hook cannot check. Pass the rendered file.");
   }
   const expanded = expanduser(bodyFile);
   const path = isAbsolute(expanded) ? expanded : join(cwd, expanded);
   if (!isFile(path)) {
-    return block(`body file ${path} does not exist yet. Run \`pr_body.ts render\` first.`);
+    return blockMessage(`body file ${path} does not exist yet. Run \`pr_body.ts render\` first.`);
   }
   const text = readFileSync(path, "utf-8");
   let errors: string[];
@@ -456,10 +627,10 @@ function checkPrSegment(action: string, args: string[], cwd: string): number {
   } else {
     errors = check(text);
   }
-  return errors.length > 0 ? block(errors.join("\n")) : 0;
+  return errors.length > 0 ? blockMessage(errors.join("\n")) : null;
 }
 
-/** PreToolUse hook: enforce PR body checks and gh-stack publishing on `gh pr create|edit`. */
+/** PreToolUse hook: enforce PR body checks and gh-stack publishing on every gh call that creates or edits a PR. */
 function hook(): number {
   const event: unknown = JSON.parse(readFileSync(0, "utf-8"));
   if (!isRecord(event)) throw new TypeError("hook event must be an object");
@@ -470,14 +641,10 @@ function hook(): number {
   if (typeof command !== "string") throw new TypeError("command must be a string");
   const cwd = event.cwd || ".";
   if (typeof cwd !== "string") throw new TypeError("cwd must be a string");
-  for (const segment of splitSegments(command)) {
-    const words = commandWords(segment);
-    if (words.length >= 3 && words[0] === "gh" && words[1] === "pr" && (words[2] === "create" || words[2] === "edit")) {
-      const rc = checkPrSegment(words[2], words.slice(3), cwd);
-      if (rc !== 0) return rc;
-    }
-  }
-  return 0;
+  const reason = checkCommand(command, cwd);
+  if (reason === null) return 0;
+  process.stderr.write(reason);
+  return 2;
 }
 
 const PROG = basename(process.argv[1] ?? "pr_body.ts");

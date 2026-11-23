@@ -55,7 +55,8 @@ To update:
 In Claude Code, a SessionStart hook tells the agent to start the router for
 each new software task, so you can also type the task without the command.
 A PreToolUse hook blocks `gh pr create` and `gh pr edit` unless the body is
-the filled `ship-pr` template, built with `pr_body.ts render`. When the
+the filled `ship-pr` template, built with `pr_body.ts render`. It also blocks
+`gh api` calls that create a pull request or change its body or base. When the
 repository uses `gh-stack`, it also blocks a `gh pr create` or `gh pr edit`
 whose `--base` is not trunk.
 agy runs no hooks, but it loads the same rule from
