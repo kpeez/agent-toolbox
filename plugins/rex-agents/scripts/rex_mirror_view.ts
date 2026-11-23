@@ -6,6 +6,7 @@ const CONTROL = /[\x00-\x1f\x7f-\x9f]/g;
 const SGR_SEQUENCE = /\x1b\[[0-9;:]*m/;
 const CONTROLS_EXCEPT_TAB_LF_CR = /[\x00-\x08\x0b\x0c\x0e-\x1f\x7f-\x9f]/;
 const SGR_OR_CONTROL = new RegExp(`${SGR_SEQUENCE.source}|${CONTROLS_EXCEPT_TAB_LF_CR.source}`, "g");
+// A waiter already running gets the final status without this delay. The using-rex skill promises a late waiter 1 s.
 const STATUS_GRACE_MS = 1_000;
 const CLOSE_TIMEOUT_MS = 5_000;
 
@@ -25,12 +26,12 @@ export function status(state: string, msg: string): void {
   writeSync(1, `\x1b]7501;state=${state}:app=rex-mirror:msg=${b64}\x1b\\`);
 }
 
-function closeBlock(session: string, block: string): boolean {
-  const r = spawnSync("rex", ["block", "close", "-s", session, block], {
+// Rex sends SIGHUP to this process when its block closes, so nothing after a successful close runs.
+function closeBlock(session: string, block: string): void {
+  spawnSync("rex", ["block", "close", "-s", session, block], {
     stdio: "ignore",
     timeout: CLOSE_TIMEOUT_MS,
   });
-  return !r.error && r.status === 0;
 }
 
 async function main(): Promise<number> {
