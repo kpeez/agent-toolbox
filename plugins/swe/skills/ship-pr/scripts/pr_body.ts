@@ -121,6 +121,9 @@ class ShellParser {
         this.readHeredocs();
       } else if ((ch === "<" || ch === ">") && src[this.pos + 1] === "(") {
         command.words.push(this.word());
+      } else if (src.startsWith("((", this.pos) && this.arithmeticEnd(this.pos + 2) > 0) {
+        // An arithmetic command: `<<` in `(( x = 1 << 3 ))` is a shift, not a heredoc.
+        this.pos = this.arithmeticEnd(this.pos + 2);
       } else if (this.redirect(command)) {
         continue;
       } else {
@@ -294,9 +297,10 @@ class ShellParser {
   }
 }
 
-const RESERVED = new Set(["!", "{", "}", "if", "then", "elif", "else", "fi", "while", "until", "do", "done", "time", "-p"]);
+// `and`, `or`, and `not` are fish keywords.
+const RESERVED = new Set(["!", "{", "}", "if", "then", "elif", "else", "fi", "while", "until", "do", "done", "time", "-p", "and", "or", "not"]);
 const ASSIGNMENT = /^[A-Za-z_]\w*(?:\[[^\]]*\])?\+?=/;
-const SHELLS = new Set(["bash", "sh", "zsh", "dash", "ksh"]);
+const SHELLS = new Set(["bash", "sh", "zsh", "dash", "ksh", "fish", "nu"]);
 // Options that take a separate argument, for each wrapper that runs its arguments as a command.
 const WRAPPER_OPTIONS: Record<string, Set<string>> = {
   env: new Set(["-u", "-C", "-P", "-S", "--unset", "--chdir"]),
@@ -305,7 +309,11 @@ const WRAPPER_OPTIONS: Record<string, Set<string>> = {
   nohup: new Set(),
   sudo: new Set(["-u", "-g", "-C", "-D", "-p", "-r", "-t", "-T", "-U", "-R", "--user", "--group", "--prompt", "--chdir"]),
   xargs: new Set(["-I", "-J", "-L", "-n", "-P", "-R", "-s", "-S", "-E", "-d", "-a", "--arg-file", "--delimiter", "--max-args", "--max-procs"]),
+  nice: new Set(["-n", "--adjustment"]),
+  timeout: new Set(["-s", "-k", "--signal", "--kill-after"]),
 };
+// Positional arguments before the wrapped command: `timeout 60 cmd`.
+const WRAPPER_POSITIONALS: Record<string, number> = { timeout: 1 };
 const DEPTH_LIMIT = 8;
 
 function parseCommands(src: string): SimpleCommand[] {
@@ -324,7 +332,8 @@ function inspect(words: Word[], heredocs: Heredoc[], cwd: string, depth: number)
   let i = 0;
   while (i < words.length && (RESERVED.has(words[i].text) || ASSIGNMENT.test(words[i].text))) i++;
   if (i >= words.length || words[i].dynamic || depth > DEPTH_LIMIT) return null;
-  const name = words[i].text.split("/").pop() as string;
+  // nu runs an external command written `^gh`.
+  const name = (words[i].text.split("/").pop() as string).replace(/^\^/, "");
   const args = words.slice(i + 1);
   const nested = (src: string): string | null => {
     for (const command of parseCommands(src)) {
@@ -339,13 +348,19 @@ function inspect(words: Word[], heredocs: Heredoc[], cwd: string, depth: number)
     const takesValue = WRAPPER_OPTIONS[name];
     let j = 0;
     while (j < args.length && args[j].text.startsWith("-")) {
-      if (args[j].text === "--") {
+      const text = args[j].text;
+      if (text === "--") {
         j++;
         break;
       }
-      j += takesValue.has(args[j].text) ? 2 : 1;
+      const split = name === "env" ? /^(?:-S|--split-string=?)(.*)$/s.exec(text) : null;
+      if (split) {
+        const rest = args.slice(j + 1).map((w) => w.text);
+        return nested((split[1] === "" ? rest : [split[1], ...rest]).join(" "));
+      }
+      j += takesValue.has(text) ? 2 : 1;
     }
-    return inspect(args.slice(j), heredocs, cwd, depth + 1);
+    return inspect(args.slice(j + (WRAPPER_POSITIONALS[name] ?? 0)), heredocs, cwd, depth + 1);
   }
   if (name === "eval") return nested(args.map((w) => w.text).join(" "));
   if (SHELLS.has(name)) {
@@ -353,7 +368,7 @@ function inspect(words: Word[], heredocs: Heredoc[], cwd: string, depth: number)
     for (let j = 0; j < args.length; j++) {
       const text = args[j].text;
       if (/^[-+][oO]$/.test(text) || text === "--rcfile" || text === "--init-file") j++;
-      else if (/^-[A-Za-z]*c/.test(text)) runsString = true;
+      else if (/^-[A-Za-z]*c/.test(text) || text === "--command" || text === "--commands") runsString = true;
       else if (text === "--" || !/^[-+]/.test(text)) return runsString ? nested(text === "--" ? (args[j + 1]?.text ?? "") : text) : null;
     }
     return runsString ? null : nested(heredocs.map((h) => h.body).join("\n"));
@@ -375,17 +390,23 @@ function checkApi(args: string[]): string | null {
   let endpoint: string | null = null;
   let method: string | null = null;
   let sendsFields = false;
+  let setsBodyOrBase = false;
   for (let i = 0; i < args.length; i++) {
     const arg = args[i];
     const flag = /^(-[A-Za-z]|--[\w-]+)/.exec(arg)?.[0] ?? "";
     const attached = arg.startsWith("--") ? arg.slice(flag.length + 1) : arg.slice(2);
     const value = API_VALUE_FLAGS.has(arg) ? (args[++i] ?? "") : attached;
     if (["-X", "--method"].includes(flag)) method = value.toUpperCase();
-    else if (["-f", "--raw-field", "-F", "--field", "--input"].includes(flag)) sendsFields = true;
+    else if (["-f", "--raw-field", "-F", "--field", "--input"].includes(flag)) {
+      sendsFields = true;
+      setsBodyOrBase ||= flag === "--input" || /^(?:body|base)=/.test(value);
+    }
     else if (!arg.startsWith("-") && endpoint === null) endpoint = arg;
   }
   method ??= sendsFields ? "POST" : "GET";
-  if (endpoint === null || !PULLS_ENDPOINT.test(endpoint) || (method !== "POST" && method !== "PATCH")) return null;
+  // POST creates a PR. PATCH passes unless it sets the body or the base; `-f state=closed` passes.
+  if (endpoint === null || !PULLS_ENDPOINT.test(endpoint)) return null;
+  if (method !== "POST" && !(method === "PATCH" && setsBodyOrBase)) return null;
   return blockMessage(
     `gh api ${method} ${endpoint} creates or edits a pull request without the body check. ` +
       "Use `gh pr create` or `gh pr edit` with --body-file.",
