@@ -169,6 +169,8 @@ fi
 exit 1
 `;
 
+const row = (block: string): string => JSON.stringify({ block, rex_session: "session:end", label: "l" });
+
 type EndHome = { home: string; rt: string; remember: (block: string) => void; run: (closeFail?: string) => void };
 
 /** A scratch HOME with the fake rex, a remember helper, and a runner for session_end.ts. */
@@ -256,6 +258,29 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
       h.run();
       assert.deepEqual(listedBlocks(h.home), []);
       assert.deepEqual(closedBlocks(h.home), ["b-closefail", "b-done"]);
+    } finally {
+      rmSync(h.home, { recursive: true, force: true });
+    }
+  });
+
+  // A session that started under the old plugin listed its blocks in one shared <session>.jsonl.
+  test(`session end settles the rows of an old shared list, and a rerun adds no duplicate (${rt})`, { timeout: 60_000, skip }, () => {
+    const h = endHome(rt);
+    try {
+      const cacheDir = join(h.home, ".cache", "rex-agents");
+      const legacy = join(cacheDir, "s-end.jsonl");
+      const rows = ["b-done", "b-working"].map(row).join("\n") + "\n";
+      mkdirSync(cacheDir, { recursive: true });
+      writeFileSync(legacy, rows);
+      h.run();
+      assert.equal(existsSync(legacy), false);
+      assert.deepEqual(closedBlocks(h.home), ["b-done"]);
+      assert.deepEqual(listedBlocks(h.home), ["b-working"]);
+      // A pass killed after it converted the rows but before it deleted the old file.
+      writeFileSync(legacy, rows);
+      h.run();
+      assert.equal(existsSync(legacy), false);
+      assert.deepEqual(listedBlocks(h.home), ["b-working"]);
     } finally {
       rmSync(h.home, { recursive: true, force: true });
     }

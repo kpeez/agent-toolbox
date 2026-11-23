@@ -146,6 +146,11 @@ at any step), SIGINT and SIGHUP (the same handler as SIGTERM), the held tail
 and the nonce check (unit tests in `plugins/rex-agents/scripts/tests/` cover
 them), more than one session, and a Rex server restart.
 
+Before its pass, the hook turns each line of an old shared
+`<session_id>.jsonl` into a row file named by the line's hash, then deletes
+the old file (`drainLegacyList`). A unit test covers it, including a rerun
+after a kill before the delete; the model starts with no old file.
+
 `remember` writes its row file in one `writeFileSync`. A pass that reads the
 file before the write ends finds invalid JSON and keeps the file, so the
 model treats the write as one step. No unit test covers that order.
@@ -157,13 +162,13 @@ model treats the write as one step. No unit test covers that order.
 | `hooks/mirror_hook.ts` `mirrored` | `CommandEnds` |
 | `scripts/rex_mirror.ts` `main`, `startViewer`, `remember`, `onSignal` | `MirrorCreatesLog` to `MirrorHandlesSignal`, `Kill` |
 | `scripts/rex_mirror_view.ts` `main`, `closeBlock` | `ViewerReportsWorking` to `ViewerCloseFails` |
-| `hooks/session_end.ts` `main`, `rowFiles`, `settle`, `newestState` | `EndReads`, `EndChecks`, `EndCloseFails`, `EndKilled`, `EndWrites` |
+| `hooks/session_end.ts` `main`, `rowFiles`, `settle`, `newestState` (`drainLegacyList` is left out) | `EndReads`, `EndChecks`, `EndCloseFails`, `EndKilled`, `EndWrites` |
 | `scripts/wait-status.lua` | `WaiterStarts`, `WaiterWakes` |
 
 All paths are under `plugins/rex-agents/`.
 
-Sync commit: the commit that makes `remember` write one row file per block
-(`git log -S rowFiles`). At that commit the model describes the code, and
+Sync commit: the commit that drains the old shared row list
+(`git log -S drainLegacyList`). At that commit the model describes the code, and
 the covered files last changed there. Move the sync commit forward only
 after you confirm that the model describes the code at the new commit.
 

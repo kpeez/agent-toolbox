@@ -11,9 +11,13 @@
  * the hook moves on to the next block. The hook never rewrites a file, so a
  * row that a mirror writes during the pass, or a pass that is killed, loses
  * no row.
+ *
+ * An older rex_mirror.ts listed every block in one <session_id>.jsonl. The hook
+ * first turns each of its lines into a row file, then deletes it.
  */
 
-import { readFileSync, readdirSync, unlinkSync, accessSync, constants, statSync } from "node:fs";
+import { readFileSync, readdirSync, unlinkSync, writeFileSync, accessSync, constants, statSync } from "node:fs";
+import { createHash } from "node:crypto";
 import { homedir } from "node:os";
 import { join } from "node:path";
 import { spawnSync } from "node:child_process";
@@ -77,6 +81,36 @@ export function rowFiles(dir: string, sessionId: string): string[] {
     .map((n) => join(dir, n));
 }
 
+/**
+ * Turn each line of the old shared list into a row file, then delete the list.
+ * A line's file name comes from its hash, so a pass killed before the delete
+ * finds the files it already wrote and adds no duplicate.
+ */
+export function drainLegacyList(dir: string, sessionId: string): void {
+  const path = join(dir, `${sessionId}.jsonl`);
+  let text: string;
+  try {
+    text = readFileSync(path, "utf8");
+  } catch {
+    return; // no old list
+  }
+  for (const line of text.split("\n")) {
+    if (line.length === 0) continue;
+    const h = createHash("sha256").update(line).digest("hex");
+    const id = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+    try {
+      writeFileSync(join(dir, `${sessionId}.${id}.json`), line + "\n", { flag: "wx" });
+    } catch (e) {
+      if ((e as NodeJS.ErrnoException).code !== "EEXIST") return; // keep the list for a later pass
+    }
+  }
+  try {
+    unlinkSync(path);
+  } catch {
+    // another pass deleted it
+  }
+}
+
 /** Close the row's block if it settled, and delete the row once the block is closed or gone. */
 function settle(rex: string, file: string): void {
   let entry: unknown;
@@ -108,6 +142,7 @@ function main(): number {
   const sessionId = isRecord(data) && typeof data.session_id === "string" ? data.session_id : "";
   const rex = which("rex");
   if (!sessionId || !rex) return 0;
+  drainLegacyList(CACHE, sessionId);
   for (const file of rowFiles(CACHE, sessionId)) settle(rex, file);
   return 0;
 }
