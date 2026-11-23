@@ -47,7 +47,6 @@ repo="${1:-$(git rev-parse --show-toplevel 2>/dev/null)}"
 cd "$repo" || exit 1
 git rev-parse --git-dir >/dev/null 2>&1 || { echo "error: not a git repo: $repo" >&2; exit 1; }
 
-# The main worktree is the first entry; every other entry is a candidate.
 main_wt=$(git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print; exit}')
 
 if [ -z "$base" ]; then
@@ -58,17 +57,13 @@ if [ -z "$base" ]; then
 	echo "warn: no -b given; MERGED checks against $base" >&2
 fi
 
-# Fetch the base before the merge check, since -b may name a branch not
-# fetched yet. Best effort: a stale base is fine for a first pass. The
-# explicit refspec creates the ref even in a single-branch clone.
+# The explicit refspec creates the ref even in a single-branch clone.
 case "$base" in
 origin/*) git fetch origin "+refs/heads/${base#origin/}:refs/remotes/$base" --quiet 2>/dev/null \
 	|| echo "warn: could not fetch $base; MERGED may be stale" >&2 ;;
 esac
 git rev-parse --verify --quiet "$base^{commit}" >/dev/null 2>&1 || { echo "error: base ref not found: $base" >&2; exit 1; }
 
-# PR state by branch, fetched once as "<head>\t#<number>/<state>\t<head-oid>"
-# lines with a lowercase state. Empty when gh cannot read this repository's PRs.
 prs=$(mktemp)
 trap 'rm -f "$prs"' EXIT
 if command -v gh >/dev/null 2>&1; then
@@ -81,9 +76,6 @@ else
 	echo "warn: gh not found; PR column is empty" >&2
 fi
 
-# Claude Code keeps sessions in ~/.claude/projects/<slug>/*.jsonl, where the
-# slug is the session's working directory with every character outside
-# [A-Za-z0-9] changed to "-".
 projects="$HOME/.claude/projects"
 slug() { printf '%s' "$1" | sed 's/[^A-Za-z0-9]/-/g'; }
 main_sessions="$projects/$(slug "$main_wt")"
@@ -91,7 +83,6 @@ main_sessions="$projects/$(slug "$main_wt")"
 mtime() { stat -c '%Y' "$1" 2>/dev/null || stat -f '%m' "$1" 2>/dev/null; }
 day() { date -d "@$1" '+%Y-%m-%d' 2>/dev/null || date -r "$1" '+%Y-%m-%d' 2>/dev/null; }
 search() {
-	# search <dir> <pattern...>: list session files that contain any pattern.
 	local dir="$1"; shift
 	local args=()
 	for p in "$@"; do args+=(-e "$p"); done
@@ -100,6 +91,26 @@ search() {
 	else
 		grep -rlF --include='*.jsonl' "${args[@]}" "$dir" 2>/dev/null
 	fi
+}
+
+sessions_naming_worktree() {
+	local sessions_dir="$1" worktree="$2"
+	search "$sessions_dir" "${worktree}/" "${worktree}\""
+}
+
+scratch_folder_merged() {
+	local name="$1" merged_oids="$2" tips="$3" live_names="$4" tip
+	[ -n "$merged_oids" ] || return 1
+	if awk -F'\t' -v n="$name" '{h = $1; gsub("/", "-", h)} h == n && $2 ~ /\/(open|draft)$/ {f=1} END {exit !f}' "$prs"; then
+		return 1
+	fi
+	if printf '%s\n' "$live_names" | grep -qxF -- "$name"; then
+		return 1
+	fi
+	for tip in $tips; do
+		printf '%s\n' "$merged_oids" | grep -qxF -- "$tip" || return 1
+	done
+	return 0
 }
 
 now=$(date +%s)
@@ -116,11 +127,8 @@ git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}'
 	head_ts=$(git -C "$wt" log -1 --format='%ct' HEAD 2>/dev/null || echo 0)
 	age=$([ "${head_ts:-0}" -gt 0 ] 2>/dev/null && echo "$(( (now - head_ts) / 86400 ))d" || echo "?")
 
-	# Squash-merged branches are not ancestors of the base, so PR state is the
-	# real signal; the ancestor check only catches fast-forward and rebase merges.
-	git merge-base --is-ancestor "$head" "$base" 2>/dev/null && merged=YES || merged=no
+	git merge-base --is-ancestor "$head" "$base" 2>/dev/null && is_ancestor_of_base=YES || is_ancestor_of_base=no
 
-	# Tell real work in progress (tracked edits) from untracked scratch.
 	porcelain=$(git -C "$wt" status --porcelain 2>/dev/null)
 	if [ -z "$porcelain" ]; then dirty=clean
 	elif printf '%s\n' "$porcelain" | grep -qv '^??'; then
@@ -141,9 +149,6 @@ git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}'
 		[ -n "$found" ] && pr="$found"
 	fi
 
-	# Newest session that ran in this worktree, or that named its path in the
-	# main checkout's sessions. Match the path followed by "/" or a quote, so
-	# fix-48 does not match fix-482.
 	last="-"; last_ts=0
 	files=()
 	wt_sessions="$projects/$(slug "$wt")"
@@ -151,7 +156,7 @@ git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}'
 		while IFS= read -r f; do files+=("$f"); done < <(find "$wt_sessions" -maxdepth 1 -name '*.jsonl' -type f 2>/dev/null)
 	fi
 	if [ -d "$main_sessions" ]; then
-		while IFS= read -r f; do files+=("$f"); done < <(search "$main_sessions" "${wt}/" "${wt}\"")
+		while IFS= read -r f; do files+=("$f"); done < <(sessions_naming_worktree "$main_sessions" "$wt")
 	fi
 	for f in ${files[@]+"${files[@]}"}; do
 		ts=$(mtime "$f")
@@ -163,17 +168,15 @@ git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}'
 	case "$dirty" in wip:*) bucket=hold-wip ;; *)
 		case "$pr" in */open|*/draft) bucket=hold-open-pr ;; *)
 			if [ "$recent" = yes ]; then bucket=verify-recent-chat
-			elif [ "$merged" = YES ] || [ "$pr" != "-" ]; then bucket=safe
+			elif [ "$is_ancestor_of_base" = YES ] || [ "$pr" != "-" ]; then bucket=safe
 			else bucket=review; fi ;;
 		esac ;;
 	esac
 
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
-		"$size" "$age" "$merged" "$dirty" "$remote" "$pr" "$last" "$bucket" "$wt"
+		"$size" "$age" "$is_ancestor_of_base" "$dirty" "$remote" "$pr" "$last" "$bucket" "$wt"
 done | sort -t$'\t' -k1,1 -rh
 
-# Scratch folders. .agents/scratch is a link to one folder shared by every
-# checkout, so resolving it from the main checkout covers them all.
 scratch=$(cd -P "$main_wt/.agents/scratch" 2>/dev/null && pwd -P)
 if [ -n "$scratch" ]; then
 	echo
@@ -191,15 +194,7 @@ if [ -n "$scratch" ]; then
 		tips=$(git for-each-ref --format='%(refname:lstrip=2) %(objectname)' refs/heads \
 			| awk -v n="$name" '{h = $1; gsub("/", "-", h)} h == n {print $2}')
 		group=""
-		# A false merged deletes data, so every check must pass.
-		if [ -n "$merged_oids" ] \
-			&& ! awk -F'\t' -v n="$name" '{h = $1; gsub("/", "-", h)} h == n && $2 ~ /\/(open|draft)$/ {f=1} END {exit !f}' "$prs" \
-			&& ! printf '%s\n' "$live" | grep -qxF -- "$name"; then
-			group=merged
-			for t in $tips; do
-				printf '%s\n' "$merged_oids" | grep -qxF -- "$t" || group=""
-			done
-		fi
+		scratch_folder_merged "$name" "$merged_oids" "$tips" "$live" && group=merged
 		if [ -z "$group" ]; then
 			if [ -z "$tips" ] && [ -z "$merged_oids" ]; then group=orphan
 			elif [ "$age" -gt 30 ]; then group=stale

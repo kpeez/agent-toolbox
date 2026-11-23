@@ -1,17 +1,3 @@
-/**
- * Property: for every generated command line, the PR-body hook blocks if and
- * only if real bash runs a `gh` call that breaks the PR-body rules.
- *
- * Oracle: each command runs in bash with a fake `gh` (and fake `sudo` and
- * `time` that run their arguments) first on PATH. The fake records each argv. The rule on
- * one argv is the small `violates` table below. Bash, not the hook's parser,
- * decides which `gh` calls run and with what arguments.
- *
- * The generator only builds commands in which every command is reached
- * (`false || x`, never `true || x`): the hook cannot evaluate conditions, so
- * it treats every command it can see as run.
- */
-
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawn } from "node:child_process";
@@ -23,15 +9,10 @@ import { render } from "../pr_body.ts";
 
 const CASES = 300;
 const SEED = 20261122;
-// The hook runs as hooks.json runs it: through the shell gate, which starts the
-// runtime only when the payload can name gh. So a gate that skips a command the
-// hook must block fails this test too. Its PATH holds only the test's own
-// runtime, so run-ts picks bun under `bun test` and node under `node --test`.
 const GATE = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "hooks", "pr-body-gate.sh");
 const HOOK = ["sh", GATE];
 
-/** The PR-body rules on one recorded `gh` argv, for the calls the generator makes. */
-function violates(argv: string[]): boolean {
+function violatesSimplifiedRuleForGeneratedCalls(argv: string[]): boolean {
   const [group, action, ...rest] = argv;
   if (group === "pr" && (action === "create" || action === "new" || action === "edit")) {
     if (rest.some((a) => a === "--fill" || a.startsWith("--body=") || a === "--body" || /^-b/.test(a))) return true;
@@ -40,15 +21,14 @@ function violates(argv: string[]): boolean {
     return rest[i + 1] !== "body.md";
   }
   if (group === "api" && /\/pulls(\/\d+)?$/.test(action)) {
-    // Fields without -X make a POST, which creates a PR. A PATCH breaks the rules only when it sets body or base.
+    // Fields without -X make a POST, which creates a PR.
     if (!rest.includes("-X")) return rest.includes("-f");
     return rest.some((a) => /^(?:body|base)=/.test(a));
   }
   return false;
 }
 
-// Seeded PRNG (mulberry32) so a failure reproduces from the printed command.
-function rng(seed: number): () => number {
+function mulberry32(seed: number): () => number {
   let a = seed;
   return () => {
     a = (a + 0x6d2b79f5) | 0;
@@ -62,7 +42,7 @@ const singleQuote = (s: string): string => `'${s.replaceAll("'", `'\\''`)}'`;
 const oneLine = (s: string): boolean => !s.includes("\n");
 
 function generator(seed: number, binDir: string): () => string {
-  const next = rng(seed);
+  const next = mulberry32(seed);
   const pick = <T,>(xs: T[]): T => xs[Math.floor(next() * xs.length)];
   const ghCalls = [
     "gh pr create --body x",
@@ -86,11 +66,9 @@ function generator(seed: number, binDir: string): () => string {
     "gh api repos/{owner}/{repo}/pulls/12/comments -f body=b",
     `gh pr create --body "$(cat <<'EOF'\nSummary text.\nEOF\n)"`,
   ];
-  // Each plain command succeeds even with xargs' extra argument, so `&&` always runs its right side.
-  const plain = ["true", "echo hi", "echo ok >/dev/null 2>&1"];
-  const atom = (): string => (next() < 0.7 ? pick(ghCalls) : pick(plain));
+  const commandsSucceedingWithExtraArgument = ["true", "echo hi", "echo ok >/dev/null 2>&1"];
+  const atom = (): string => (next() < 0.7 ? pick(ghCalls) : pick(commandsSucceedingWithExtraArgument));
 
-  // A simple command, optionally behind wrappers that run their arguments.
   const simple = (depth: number, shellLevel: boolean): string => {
     if (depth === 0 || next() < 0.4) return atom();
     const inner = simple(depth - 1, false);
@@ -130,11 +108,9 @@ function generator(seed: number, binDir: string): () => string {
       () => `bash <<'RUN${depth}'\n${a}\nRUN${depth}`,
       // `<<` in arithmetic is a shift, not a heredoc.
       () => `x=$(( 1 << 3 ))\n${a}`,
-      // Data: bash runs none of these.
       () => `cat > note.md <<'NOTE${depth}'\nThen run \`${a}\` by hand.\nNOTE${depth}`,
       () => `cat > note.md <<NOTE${depth}\nThen run ${a} by hand.\nNOTE${depth}`,
     ];
-    // bash 5.2 misparses some heredocs nested in $( ), so only heredoc-free commands go there.
     if (!a.includes("<<")) forms.push(() => `out=$( ${a}\n)`, () => `echo "$( ${a}\n)"`);
     if (!a.includes("'")) forms.push(() => `echo '${a}'`);
     if (!/["$`\\]/.test(a)) forms.push(() => `echo "note:\n${a}"`, () => `true # ${a}`.replaceAll("\n", " "));
@@ -152,7 +128,6 @@ function generator(seed: number, binDir: string): () => string {
   return () => (next() < 0.15 ? "(( x = 1 << 3 ))\n" : "") + command(3);
 }
 
-// Fixed cases from KP-667: the heredoc false positive and the nine missed forms.
 const REGRESSIONS = [
   "cat > notes.md <<'EOF'\nThen run `gh pr create --draft` by hand.\nEOF",
   "bash -c 'gh pr create --body x'",
@@ -171,7 +146,6 @@ const REGRESSIONS = [
   "g\\\nh pr create --body x",
 ];
 
-/** Run a process; with no input its stdin is /dev/null. */
 function run(cmd: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; input?: string }) {
   return new Promise<{ status: number | null; stderr: string }>((done) => {
     const child = spawn(cmd, args, { cwd: options.cwd, env: options.env, stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"] });
@@ -198,7 +172,6 @@ async function bashRuns(command: string, root: string, fakeBin: string, index: n
     .map((record) => record.split("\x1f").slice(0, -1));
 }
 
-/** Commands for nu and fish: each runs real gh calls, data, or both, in that shell's syntax. */
 function otherShellCorpus(shell: "nu" | "fish"): string[] {
   const calls = [
     "gh pr create --body x",
@@ -218,7 +191,6 @@ function otherShellCorpus(shell: "nu" | "fish"): string[] {
   return calls.flatMap((a, i) => forms.map((form) => `${shell} -c ${singleQuote(form(a, calls[(i + 1) % calls.length]))}`));
 }
 
-/** Run each command in bash and through the hook; return the disagreements and the count bash should block. */
 async function agreement(corpus: string[], shells: string[] = []): Promise<{ failures: string[]; blocking: number }> {
   const root = mkdtempSync(join(tmpdir(), "pr-body-property-"));
   try {
@@ -238,7 +210,7 @@ async function agreement(corpus: string[], shells: string[] = []): Promise<{ fai
     const runtimeBin = join(root, "runtime");
     mkdirSync(runtimeBin);
     symlinkSync(process.execPath, join(runtimeBin, process.versions.bun ? "bun" : "node"));
-    const hookEnv = { ...process.env, PATH: `${runtimeBin}:/usr/bin:/bin` };
+    const envPathHoldingOnlyTestRuntime = { ...process.env, PATH: `${runtimeBin}:/usr/bin:/bin` };
     for (const [slot, text] of Object.entries({ summary: "Each save rewrites the cache.", evidence: "Before: 4 s.", reversible: "yes", blast_radius: "local" })) {
       writeFileSync(join(work, "slots", `${slot}.md`), `${text}\n`);
     }
@@ -255,9 +227,9 @@ async function agreement(corpus: string[], shells: string[] = []): Promise<{ fai
         const command = corpus[i].replaceAll("@FAKE_BIN@", fakeBin);
         const [calls, hook] = await Promise.all([
           bashRuns(command, root, fakeBin, i),
-          run(HOOK[0], HOOK.slice(1), { cwd: work, env: hookEnv, input: JSON.stringify({ tool_input: { command }, cwd: work }) }),
+          run(HOOK[0], HOOK.slice(1), { cwd: work, env: envPathHoldingOnlyTestRuntime, input: JSON.stringify({ tool_input: { command }, cwd: work }) }),
         ]);
-        const expected = calls.some(violates);
+        const expected = calls.some(violatesSimplifiedRuleForGeneratedCalls);
         if (expected) blocking++;
         if (hook.status !== (expected ? 2 : 0)) {
           failures.push(
@@ -284,7 +256,6 @@ test("the hook blocks a command exactly when bash runs a gh call that breaks the
   assert.equal(failures.length, 0, `${failures.length}/${corpus.length} disagree with bash:\n${failures.slice(0, 12).join("\n")}`);
 });
 
-// CI has neither shell, so this runs only where both are installed.
 const missingShells = ["nu", "fish"].filter((shell) => onPath(shell) === undefined);
 test(
   "the hook agrees with nu -c and fish -c on which gh calls they run",

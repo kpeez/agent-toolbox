@@ -1,11 +1,3 @@
-/**
- * Tests for pr_body.ts hook command matching, gh-stack enforcement, and attribution checks.
- *
- * Ported 1:1 from the Python unittest suite. The hook cases spawn `bun pr_body.ts hook`
- * with PreToolUse stdin JSON; the smoke case spawns `node pr_body.ts check`,
- * which proves the erasable syntax and node: APIs run without bun.
- */
-
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawnSync } from "node:child_process";
@@ -201,8 +193,6 @@ test("flags requester attribution", () => {
 
 test("hook blocks an unrendered body with an unfilled slot", () => {
   withTemp((root) => {
-    // The template with one slot left empty: check cannot match it. A raw
-    // template with {slot} placeholders still matches (the braces are content).
     const unrendered = readFileSync(TEMPLATE, "utf-8").replace("{summary}", "");
     writeFileSync(join(root, "unrendered.md"), unrendered, "utf-8");
     const res = runHook("gh pr create --body-file unrendered.md", root);

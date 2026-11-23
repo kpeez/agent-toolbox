@@ -12,6 +12,7 @@
   },
   "include": [
     "../../plugins/rex-agents/**/*.ts",
+    "../../plugins/swe/skills/recall/scripts/**/*.ts",
     "../../plugins/swe/skills/ship-pr/scripts/**/*.ts"
   ]
 }
