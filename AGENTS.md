@@ -102,3 +102,9 @@
   `uv run .agents/skills/verify-autoresearch-cleanup/scripts/check.py`. It
   kills the real cleanup before each filesystem change and checks that the
   original run stays recoverable.
+- After a change to the install or update steps in `README.md` or a plugin
+  README, `docs/contributing.md`, a marketplace catalog, or
+  `.github/scripts/plugin_catalogs.py`, `plugin_isolation.py`, or
+  `manifest_versions.py`, run
+  `uv run .agents/skills/verify-plugin-rollout/scripts/check.py`. It
+  model-checks the rollout from PR to every config folder with TLC.
