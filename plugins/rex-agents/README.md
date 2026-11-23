@@ -5,8 +5,10 @@ where agent work runs and where you watch it, on the Mac and in Rex for iOS.
 Hooks do the work, so it does not depend on what the agent remembers:
 
 - Each background command that Claude Code starts in auto or
-  bypassPermissions mode opens as a minimized floating Rex pane in the agent's
-  tab after 1.5 seconds. Commands that finish sooner open no pane. At startup,
+  bypassPermissions mode opens as a minimized floating Rex pane after 1.5
+  seconds: in the agent's tab when `REX_BLOCK` is set and `rex block inspect`
+  finds its window, otherwise where Rex chooses. Commands that finish sooner
+  open no pane. At startup,
   the pane prints a dim one-line header with the label and start time, shows
   the output live with a working spinner, ends `done` or `error` with the exit
   code, and closes when the command exits. The agent gets the same output and

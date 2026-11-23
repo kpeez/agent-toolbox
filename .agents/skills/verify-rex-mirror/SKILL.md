@@ -193,7 +193,8 @@ All paths are under `plugins/rex-agents/`.
 
 Sync commit: the commit that makes a `rex` client that dies before its reply
 open no second block (`git log -S diedBeforeReply`). At that commit the model
-describes the code, and the covered files last changed there. Move the sync commit forward only
+describes the code. `scripts/rex_mirror.ts` last changed there; the other
+covered files changed in earlier commits. Move the sync commit forward only
 after you confirm that the model describes the code at the new commit.
 
 The check does not run the real code. A change to a covered file passes the

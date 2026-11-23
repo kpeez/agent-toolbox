@@ -30,8 +30,13 @@ Run everything else in your shell tool: reads, searches, git, quick builds and
 tests, and a tool's help, version, or status.
 
 In auto or bypassPermissions mode, a background command (Claude Code
-`run_in_background`) opens as a minimized floating pane in your tab after 1.5
-seconds. Commands that finish sooner open no pane. At startup, the pane prints
+`run_in_background`) opens as a minimized floating pane after 1.5 seconds. It
+opens in your tab when `REX_BLOCK` is set and `rex block inspect` finds your
+block's window; otherwise Rex chooses where it opens. Commands that finish
+sooner open no pane. If a `rex` call of the open dies before its reply (its
+timeout or a stop), the mirror opens no second pane. Rex may still open the
+pane late, and it then settles; if no pane opens, the command's log stays in
+`TMPDIR` with mode 0600. At startup, the pane prints
 a dim one-line header with the label and start time, shows a working spinner,
 ends `done` or `error` with the exit code, and closes when the command exits.
 Start it in the background as usual; open no block for it. Set
@@ -104,8 +109,9 @@ Wait on Rex events, never on a sleep loop or a capture on a timer.
   `rex do -s <session> ../../scripts/wait-status.lua block=<block>`. It reads
   the current status first, so a status reported before the wait began is not
   missed while the block exists. A mirror block closes 1 s after its command
-  ends; a wait that starts later prints `block not found` and exits 1. It prints one JSON object with the state, kind, message, and
-  `updated_at`, and exits 2 on timeout. Pass `after=<updated_at>` of the last
+  ends; a wait that starts later prints `block not found` and exits 1. It
+  prints one JSON object with the state, kind, message, and `updated_at`, and
+  exits 2 on timeout. Pass `after=<updated_at>` of the last
   record you acted on to wait for a newer one.
 - A block whose program exits when done: `rex wait --for <duration> <block>`.
 - Run a long wait in the background where the harness wakes you when it ends

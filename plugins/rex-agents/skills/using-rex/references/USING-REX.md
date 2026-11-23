@@ -166,12 +166,15 @@ PreToolUse hook rewrites a background Bash call into this form, so its output an
 
 `rex_mirror.ts` waits 1.5 seconds (`REX_AGENTS_MIRROR_DELAY_MS` overrides the
 delay in milliseconds; `0` opens at once), then opens a minimized floating pane
-in the agent's tab labelled `[claude] <description>` (`[claude:sub]` for a
-subagent). Commands that exit before the delay open no pane. If Rex refuses
-the floating layer, `rex_mirror.ts` falls back to `rex run`. If a `rex` call
-times out or is stopped before its reply, it opens no second pane, and a
-pane that Rex opens late still settles. At startup, the
-viewer prints a dim one-line header with the label and local start time, shows
+labelled `[claude] <description>` (`[claude:sub]` for a subagent). The pane
+opens in the agent's tab when `REX_BLOCK` is set and `rex block inspect` returns
+that block's window; otherwise Rex chooses where it opens. Commands that exit
+before the delay open no pane. If Rex refuses the floating layer,
+`rex_mirror.ts` falls back to `rex run`. If a `rex` call times out or is
+stopped before its reply, the outcome is unknown: `rex_mirror.ts` opens no
+second pane, and writes the exit line for a pane that Rex may still open late.
+If no pane opens, the command's log stays in `TMPDIR` with mode 0600. At
+startup, the viewer prints a dim one-line header with the label and local start time, shows
 the output live from byte 0, reports `working`, then `done` or `error` with
 `<label>: exit <n>`, and closes the block. Permission rules still see `<cmd>`.
 Commands that start with `rex ` stay unchanged, so a driven agent's wait gets
