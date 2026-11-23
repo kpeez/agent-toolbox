@@ -3,6 +3,10 @@
 Read this reference when changed or high-risk core logic may have weak evidence,
 such as parsers, calculations, authorization, normalization, branching business
 rules, or state transitions. A mutation audit is not a routine release gate.
+The landing verdict in
+[ship-pr's verdict brief](../../ship-pr/references/verdict-brief.md) breaks
+the code behind one or two new tests. That check repeats the writer's Seen red
+rule on a sample. It is not an audit.
 
 Scope the audit to the changed or high-risk files. Sample a few plausible faults:
 inverted comparisons, off-by-one boundaries, omitted branches, swapped
