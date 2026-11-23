@@ -2,7 +2,7 @@
 EXTENDS Integers
 
 CONSTANTS
-    ClaudeDirs,  \* Claude Code config folders (CLAUDE_CONFIG_DIR values)
+    ClaudeDirs,
     ActiveDir,
     HermesDirs,
     PRs,
