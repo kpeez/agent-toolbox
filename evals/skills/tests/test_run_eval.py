@@ -11,6 +11,7 @@ from __future__ import annotations
 
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -22,11 +23,12 @@ SCRIPT = HERE / "run_eval.py"
 sys.path.insert(0, str(HERE))
 import skill_eval as se
 
-STOP = json.loads((HERE / "runtime.plugin-eval.json").read_text())["per_run_stop_usd"]
+RUNTIME = json.loads((HERE / "runtime.plugin-eval.json").read_text())
+STOP = RUNTIME["per_run_stop_usd"]
 
 STUB = r'''#!/usr/bin/env python3
 """Stub of `claude --version` and `claude plugin eval` that writes a kept sandbox like the real CLI."""
-import json, os, secrets, subprocess, sys
+import json, os, secrets, subprocess, sys, time
 from pathlib import Path
 
 argv = sys.argv[1:]
@@ -88,8 +90,11 @@ if api_error:
 events.append(final)
 (kept / "out").mkdir()
 (kept / "out" / "trace.jsonl").write_text("\n".join(json.dumps(e) for e in events))
+if os.environ.get("STUB_HANG"):
+    print(f"kept {kept}: home/ and tmp/ in it were written by the plugin under test", flush=True)
+    time.sleep(60)
 Path(argv[argv.index("--json") + 1]).write_text(json.dumps({"costUsd": cost, "cases": [{"name": case, "arms": {
-    "with": [{"costUsd": cost, "error": "exit 1: usage limit" if api_error and not os.environ.get("STUB_QUIET") else None, "turns": 3,
+    "with": [{"costUsd": cost, "error": "exit 1: usage limit" if api_error and not os.environ.get("STUB_QUIET") else os.environ.get("STUB_ERROR"), "turns": 3,
               "tracePath": str(kept / "out" / "trace.jsonl")}]}}]}))
 print(f"kept {kept}: home/ and tmp/ in it were written by the plugin under test")
 sys.exit(1 if api_error else 0)
@@ -172,6 +177,8 @@ class PluginEvalAdapter(unittest.TestCase):
             self.assertIn(
                 "  prompt: " + json.dumps(prompt, ensure_ascii=False) + "\n", case_yaml
             )
+            tools = re.search(r"^  allowed_tools: \[(.*)\]$", case_yaml, re.M).group(1).split(",")
+            self.assertEqual(sorted(t.strip() for t in tools), sorted(RUNTIME["tools"]))
         labels = self.root / "labels.jsonl"
         labels.write_text(
             "".join(
@@ -248,11 +255,6 @@ class PluginEvalAdapter(unittest.TestCase):
         self.assertIn("3 runs in a row", json.loads(result.stdout)["stopped"]["reason"])
         self.assertEqual(result.stderr.count("usage_limit_reached"), 3)
 
-    def test_case_yaml_lists_all_six_tools(self):
-        self.run_eval("--max-total-usd", "5", "--arms", "hook-off")
-        case = (self.out / "runs" / "IM-01" / "hook-off" / "r1" / "suite" / "evals" / "IM-01" / "case.yaml").read_text()
-        self.assertIn("  allowed_tools: [Read, Glob, Grep, Skill, Write, Edit]\n", case)
-
     def test_budget_refuses_a_launch_whose_worst_case_passes_the_total(self):
         result = json.loads(self.run_eval("--max-total-usd", "0.5", code=3).stdout)
         self.assertEqual(self.launches(), [])
@@ -296,13 +298,22 @@ class PluginEvalAdapter(unittest.TestCase):
         self.assertIsNone(result["stopped"])
         self.assertEqual((len(self.launches()), result["finished"]), (8, 8))
 
-    def test_a_runner_timeout_scores_as_a_timeout(self):
-        sys.path.insert(0, str(HERE))
-        import run_eval
-        stream = self.root / "stream.jsonl"
-        stream.write_text("")
-        self.assertEqual(run_eval.session_state({"error": "plugin eval did not exit in time"}, stream), "timeout")
-        self.assertEqual(run_eval.session_state({"error": "timed out after 900s"}, stream), "timeout")
+    def test_a_timed_out_session_scores_as_a_timeout(self):
+        runtime = self.root / "runtime.json"
+        runtime.write_text(json.dumps(RUNTIME | {"timeout_seconds": 2 - 600}))
+        # Claude Code 2.1.330 plugin eval reports its own case timeout as `timed out after <timeout_seconds>s`.
+        for name, runtime_args, env, code in (
+            ("plugin-eval-hangs", ["--runtime", runtime], {"STUB_HANG": "1"}, 3),
+            ("case-times-out", [], {"STUB_ERROR": f"timed out after {RUNTIME['timeout_seconds']}s"}, 0),
+        ):
+            with self.subTest(name):
+                self.out = self.root / name
+                self.cli(*runtime_args, "run", "--case", "IM-01", "--arms", "hook-off", "--out", self.out,
+                         "--max-total-usd", "5", code=code, **env)
+                self.assertEqual(json.loads(self.cli("score", "--out", self.out).stdout)["runs_scored"], 1)
+                run = self.out / "runs" / "IM-01" / "hook-off" / "r1"
+                self.assertEqual(json.loads((run / "score.json").read_text())["session_state"], "timeout")
+                self.assertTrue((run / "plugin-eval.log").read_text().startswith("kept "))
 
     def test_a_different_configuration_needs_a_new_output_folder(self):
         self.run_eval("--max-total-usd", "5", "--arms", "hook-off")

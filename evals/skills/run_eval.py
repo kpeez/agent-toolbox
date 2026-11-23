@@ -554,7 +554,8 @@ def launch(run, case_id, arm, runtime, prompt=None):
         log = proc.stdout + proc.stderr
         record["exit_code"] = proc.returncode
     except subprocess.TimeoutExpired as error:
-        log = f"{error.stdout or ''}{error.stderr or ''}"
+        # On POSIX the output caught before the timeout is bytes, even with text=True.
+        log = ((error.stdout or b"") + (error.stderr or b"")).decode(errors="replace")
         record["error"] = "plugin eval did not exit in time"
     (run / "plugin-eval.log").write_text(log, encoding="utf-8")
     result = (

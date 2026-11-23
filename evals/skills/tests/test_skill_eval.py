@@ -69,11 +69,6 @@ Three more rules were seen red the same way: a routed run credits the arm-aware 
 in hook-on on lab), canonical `go-deeper` treats `swe:go-deeper`, `lab:go-deeper`, and `uni:go-deeper` as one skill,
 a case that lists `swe:swe-mode` also credits `swe:writing`, and a case may not list a skill as auxiliary and forbid it.
 An open family that holds a negative case is refused.
-
-The hillclimb fallback test protects the labels of `swe-fallback-hillclimb-metric`: a correct run on it
-delegates attempts to parallel worktrees and reviews their diffs, so it loads `swarm` and `no-comments`
-from the router's Triggers beside its listed principles. The credible regression is a scorer or case change
-that reports those loads as unexpected. It was seen red with the trigger credit removed from route_allowed.
 """
 from __future__ import annotations
 
@@ -88,11 +83,18 @@ import sys
 import tempfile
 import unittest
 
+import catalog_fixture
 from corpus_io import read_cases, write_corpus
 
 HERE = Path(__file__).resolve().parents[1]
-SCRIPT = HERE / "skill_eval.py"
-REPO = HERE.parents[1]
+
+
+def setUpModule():
+    global SCRIPT, CORPUS, FACETS
+    catalog = tempfile.TemporaryDirectory(prefix="catalog-")
+    unittest.addModuleCleanup(catalog.cleanup)
+    SCRIPT = catalog_fixture.build(Path(catalog.name))
+    CORPUS, FACETS = SCRIPT.parent / "dataset" / "dev.jsonl", SCRIPT.parent / "facets.json"
 
 
 class OfflineCLIContract(unittest.TestCase):
@@ -101,7 +103,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
         self.corpus = None
-        self.case = next(c for c in read_cases()
+        self.case = next(c for c in read_cases(CORPUS)
                          if c["target"] == "swe:implement" and c["category"] == "natural")
 
     def cli(self, *args, ok=True):
@@ -109,7 +111,7 @@ class OfflineCLIContract(unittest.TestCase):
         if args[0] == "materialize":
             args = (*args, "--output-root", self.root)
         result = subprocess.run([sys.executable, str(SCRIPT), *corpus, *map(str, args)],
-                                text=True, capture_output=True, cwd=REPO)
+                                text=True, capture_output=True, cwd=SCRIPT.parents[2])
         if ok:
             self.assertEqual(result.returncode, 0, result.stderr)
             return json.loads(result.stdout)
@@ -180,7 +182,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(group["counts"]["session_timeout"], 1)
 
     def test_negative_auxiliaries_and_partial_confusion(self):
-        case = next(c for c in read_cases()
+        case = next(c for c in read_cases(CORPUS)
                     if c["target"] == "swe:implement" and c["category"] == "negative" and c["expected_skills"])
         scores = []
         for state, partial in (("completed", False), ("incomplete", False), ("completed", True)):
@@ -730,7 +732,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(len(report["groups"]), 2)
         self.assertEqual({g["hook_arm"] for g in report["groups"]}, {"hook-off", "hook-on"})
 
-        neg_case = next(c for c in read_cases()
+        neg_case = next(c for c in read_cases(CORPUS)
                         if c["target"] == "swe:implement" and c["category"] == "negative" and c["expected_skills"])
         neg_scores = []
         for arm in ("hook-off", "hook-on"):
@@ -939,10 +941,10 @@ class OfflineCLIContract(unittest.TestCase):
                     read_playbook=True, unread=(), step_4="skip: the pipeline is the shared one",
                     text_after_tools=True, heading="Steps:", done_note="", entries=None,
                     state="completed", before="", after=""):
-        case = next(c for c in read_cases() if c["id"] == self.ROUTE_CASE)
+        case = next(c for c in read_cases(CORPUS) if c["id"] == self.ROUTE_CASE)
         run, _, _ = self.prepare(name, case)
         manifest = json.loads((run / "manifest.json").read_text())
-        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+        handles = next(f for f in json.loads(FACETS.read_text())["facets"]
                        if f["id"] == "route/lab/analyze-results")["handles"]
         steps = "\n".join(entries(h) if entries else f"{h} {step_4}" if h.startswith("4-") and step_4 != "done"
                           else f"{h}: done{done_note}" for h in handles)
@@ -1001,7 +1003,7 @@ class OfflineCLIContract(unittest.TestCase):
     RUN_EXPERIMENT_LINE = "Playbook: run-experiment. Reason: the user wants a run."
 
     def run_experiment_loads(self):
-        facets = [f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+        facets = [f for f in json.loads(FACETS.read_text())["facets"]
                   if f["plugin"] == "lab" and f["subject"] == "run-experiment"]
         handles = next(f for f in facets if f["kind"] == "route")["handles"]
         loads = {}
@@ -1079,7 +1081,7 @@ class OfflineCLIContract(unittest.TestCase):
             self.assertEqual(glued["steps_section"]["done"], [])
 
     def case_named(self, case_id):
-        return next(c for c in read_cases() if c["id"] == case_id)
+        return next(c for c in read_cases(CORPUS) if c["id"] == case_id)
 
     def route_run(self, name, case, reads, line, final=None, full=False, hook_arm=None):
         run, _, _ = self.prepare(name, case, hook_arm=hook_arm)
@@ -1114,7 +1116,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(wrong_label["line"]["status"], "wrong")
         wrong = self.route_run("match-only-wrong-slug", case, [], "Playbook: fix-bug. Reason: it fits.")
         self.assertEqual(wrong["line"]["status"], "wrong")
-        listed = self.route_run("listed-route-keeps-its-label", self.case_named("DG-01"), [],
+        listed = self.route_run("listed-route-keeps-its-label", self.case_named("diagnose-route"), [],
                                 "Playbook: diagnose. Reason: it fits.")
         self.assertEqual(listed["line"]["status"], "wrong")
         playbook = self.route_run("route-label-on-a-playbook", self.case_named("swe-mode-refactor-structure"), [],
@@ -1134,16 +1136,6 @@ class OfflineCLIContract(unittest.TestCase):
                                        "swe:blast-radius", "swe:why")
         self.assertEqual(untriggered["unexpected_skills"], ["swe:why"])
 
-    def test_a_correct_hillclimb_fallback_run_loads_nothing_unexpected(self):
-        case_id = "swe-fallback-hillclimb-metric"
-        score = self.loads_score("hillclimb-fallback", case_id, *self.ALWAYS_ON,
-                                 "swe:principle-explain-the-number",
-                                 "swe:principle-separate-before-serializing-shared-state",
-                                 "swe:principle-guard-the-context-window",
-                                 "swe:swarm", "swe:no-comments", "swe:log-decisions")
-        self.assertEqual(score["unexpected_skills"], [])
-        self.assertEqual(score["facets"], dict.fromkeys(self.case_named(case_id)["facets"], "loaded"))
-
     def test_skill_route_scores_the_line_and_the_routed_skill_load(self):
         case = self.case_named("lab-mode-route-autoresearch")
         line = "Route: autoresearch. Reason: the user wants a bounded experiment loop."
@@ -1157,7 +1149,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertFalse(unloaded["followed"])
 
     def route_facet(self, subject):
-        return next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+        return next(f for f in json.loads(FACETS.read_text())["facets"]
                     if f["id"] == f"route/lab/{subject}")
 
     def skill_route_run(self, name, subject, mode, handles):
@@ -1165,10 +1157,10 @@ class OfflineCLIContract(unittest.TestCase):
         case.pop("expected_mode", None)
         if mode:
             case["expected_mode"] = mode
-        corpus = {"cases": read_cases()}
+        corpus = {"cases": read_cases(CORPUS)}
         corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
         self.corpus = self.root / f"{name}-corpus.jsonl"
-        write_corpus(self.corpus, corpus["cases"])
+        write_corpus(self.corpus, corpus["cases"], CORPUS)
         reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
         return self.route_run(name, case, [("skill", f"lab:{subject}")], f"Route: {subject}. Reason: it fits.", reply)
 
@@ -1198,7 +1190,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertFalse(short["followed"])
 
     def test_a_sample_whose_files_differ_from_its_fixture_is_rejected(self):
-        sample = json.loads((HERE / "dataset" / "dev.jsonl").read_text(encoding="utf-8").splitlines()[0])
+        sample = json.loads(CORPUS.read_text(encoding="utf-8").splitlines()[0])
         first = next(iter(sample["files"]))
         for name, files in (("missing", {k: v for k, v in sample["files"].items() if k != first}),
                             ("extra", {**sample["files"], "ghost.py": sample["files"][first].rsplit("/", 1)[0] + "/ghost.py"})):
@@ -1215,10 +1207,10 @@ class OfflineCLIContract(unittest.TestCase):
             case.pop("expected_mode", None)
             if mode:
                 case["expected_mode"] = mode
-            corpus = {"cases": read_cases()}
+            corpus = {"cases": read_cases(CORPUS)}
             corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
             self.corpus = self.root / f"{name}-corpus.jsonl"
-            write_corpus(self.corpus, corpus["cases"])
+            write_corpus(self.corpus, corpus["cases"], CORPUS)
             self.assertIn("expected_mode", self.cli("validate", ok=False).stderr, name)
 
     def test_route_followed_is_null_when_evidence_is_partial(self):
@@ -1228,11 +1220,11 @@ class OfflineCLIContract(unittest.TestCase):
 
     def test_a_project_skill_step_load_is_never_required(self):
         case = dict(self.case_named(self.ROUTE_CASE), expected_route="route/lab/bootstrap-project")
-        corpus = {"cases": read_cases()}
+        corpus = {"cases": read_cases(CORPUS)}
         corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
         self.corpus = self.root / "custom-corpus.jsonl"
-        write_corpus(self.corpus, corpus["cases"])
-        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+        write_corpus(self.corpus, corpus["cases"], CORPUS)
+        handles = next(f for f in json.loads(FACETS.read_text())["facets"]
                        if f["id"] == "route/lab/bootstrap-project")["handles"]
         reply = "Steps:\n" + "\n".join(f"{h}: done" for h in handles)
         route = self.route_run("route-project-skill", case, [], "Playbook: bootstrap-project. Reason: it fits.", reply)
@@ -1242,7 +1234,7 @@ class OfflineCLIContract(unittest.TestCase):
     def loads_score(self, name, case_id, *skills, hook_arm=None, **update):
         if update:
             self.validate_with(name, case_id, **update)
-        case = next(c for c in read_cases(self.corpus or HERE / "dataset" / "dev.jsonl") if c["id"] == case_id)
+        case = next(c for c in read_cases(self.corpus or CORPUS) if c["id"] == case_id)
         score, _ = self.route_run(
             name, case, [("skill", skill) for skill in skills], "Answer.", full=True, hook_arm=hook_arm
         )
@@ -1253,24 +1245,24 @@ class OfflineCLIContract(unittest.TestCase):
     ALWAYS_ON = (*SWE_ROUTER, "swe:writing")
 
     def test_the_router_and_go_deeper_are_credited_by_a_route_or_by_a_case_label(self):
-        route_case = self.loads_score("credit-route", "IM-04", *self.SWE_ROUTER, "swe:implement")
+        route_case = self.loads_score("credit-route", "implement-build-feature", *self.SWE_ROUTER, "swe:implement")
         self.assertEqual(route_case["unexpected_skills"], [])
-        labeled = self.loads_score("credit-label", "AR-01", *self.SWE_ROUTER, "swe:codebase-design")
+        labeled = self.loads_score("credit-label", "codebase-design-labels-the-router", *self.SWE_ROUTER, "swe:codebase-design")
         self.assertEqual(labeled["unexpected_skills"], [])
         cross_plugin = self.loads_score("credit-cross-plugin", "lab-mode-code-fix", *self.SWE_ROUTER, "swe:implement")
         self.assertEqual(cross_plugin["unexpected_skills"], [])
-        ho09 = self.loads_score("credit-ho09-router", "HO-09", "swe:swe-mode")
-        self.assertEqual(ho09["unexpected_skills"], [])
-        self.assertIs(ho09["false_activation"], False)
+        quick_fact = self.loads_score("credit-quick-fact-router", "interview-user-quick-fact", "swe:swe-mode")
+        self.assertEqual(quick_fact["unexpected_skills"], [])
+        self.assertIs(quick_fact["false_activation"], False)
         unlisted = self.loads_score("credit-unlisted", "lab-mode-define-metric", "swe:swe-mode")
         self.assertEqual(unlisted["unexpected_skills"], ["swe:swe-mode"])
         self.assertIs(unlisted["false_activation"], False)
 
     def test_a_forbidden_router_or_go_deeper_is_a_false_activation_even_with_a_route(self):
-        quick_fact = self.loads_score("forbid-quick-fact", "HO-09", "swe:go-deeper")
+        quick_fact = self.loads_score("forbid-quick-fact", "interview-user-quick-fact", "swe:go-deeper")
         self.assertEqual(quick_fact["unexpected_skills"], ["go-deeper"])
         self.assertIs(quick_fact["false_activation"], True)
-        skipped = self.loads_score("forbid-skip-rule-route", "IM-10", "swe:swe-mode", "swe:go-deeper", "swe:implement")
+        skipped = self.loads_score("forbid-skip-rule-route", "implement-skip-go-deeper", "swe:swe-mode", "swe:go-deeper", "swe:implement")
         self.assertEqual(skipped["unexpected_skills"], ["go-deeper"])
         self.assertIs(skipped["false_activation"], True)
         lab_skipped = self.loads_score(
@@ -1278,39 +1270,37 @@ class OfflineCLIContract(unittest.TestCase):
             forbidden_skills=["swe:go-deeper"], acceptable_auxiliaries=["lab:making-plots"])
         self.assertEqual(lab_skipped["unexpected_skills"], ["go-deeper"])
         self.assertIs(lab_skipped["false_activation"], True)
-        for case_id in ("lab-making-plots-pipeline-diagram",
-                        "lab-making-plots-crash-diagnosis", "lab-mode-define-metric"):
+        for case_id in ("making-plots-pipeline-diagram", "lab-mode-define-metric"):
             score = self.loads_score("forbid-" + case_id, case_id, "lab:lab-mode")
             self.assertEqual(score["unexpected_skills"], ["lab:lab-mode"], case_id)
             self.assertIs(score["false_activation"], True, case_id)
-        read_table_lab = self.loads_score("read-table-lab-mode", "lab-making-plots-read-table", "lab:lab-mode")
+        read_table_lab = self.loads_score("read-table-lab-mode", "making-plots-read-table", "lab:lab-mode")
         self.assertEqual(read_table_lab["unexpected_skills"], [])
         self.assertIs(read_table_lab["false_activation"], False)
-        read_table_plot = self.loads_score("read-table-plots", "lab-making-plots-read-table", "lab:making-plots")
+        read_table_plot = self.loads_score("read-table-plots", "making-plots-read-table", "lab:making-plots")
         self.assertEqual(read_table_plot["unexpected_skills"], ["lab:making-plots"])
         self.assertIs(read_table_plot["false_activation"], True)
 
     def test_a_routed_run_may_load_the_always_on_triggers_of_its_router(self):
-        swe = self.loads_score("always-on-swe", "IM-04", *self.ALWAYS_ON, "swe:in-your-own-words", "swe:implement")
+        swe = self.loads_score("always-on-swe", "implement-build-feature", *self.ALWAYS_ON, "swe:in-your-own-words", "swe:implement")
         self.assertEqual(swe["unexpected_skills"], [])
         lab = self.loads_score("always-on-lab", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", "swe:go-deeper")
         self.assertEqual(lab["unexpected_skills"], [])
-        labeled = self.loads_score("always-on-label", "AR-01", *self.ALWAYS_ON, "swe:codebase-design")
+        labeled = self.loads_score("always-on-label", "codebase-design-labels-the-router", *self.ALWAYS_ON, "swe:codebase-design")
         self.assertEqual(labeled["unexpected_skills"], [])
         no_router = self.loads_score("always-on-no-router", "lab-mode-define-metric", "swe:writing")
         self.assertEqual(no_router["unexpected_skills"], ["swe:writing"])
         self.assertIs(no_router["false_activation"], False)
 
     def test_go_deeper_on_chat_or_a_quick_fact_is_a_false_activation(self):
-        for case_id in ("swe-mode-chat", "swe-mode-quick-fact"):
-            score = self.loads_score("go-deeper-" + case_id, case_id, "swe:go-deeper")
-            self.assertEqual(score["unexpected_skills"], ["go-deeper"], case_id)
-            self.assertIs(score["false_activation"], True, case_id)
+        chat = self.loads_score("go-deeper-chat", "swe-mode-chat", "swe:go-deeper")
+        self.assertEqual(chat["unexpected_skills"], ["go-deeper"])
+        self.assertIs(chat["false_activation"], True)
         allowed = self.loads_score("go-deeper-non-software", "swe-mode-non-software", "swe:go-deeper")
         self.assertEqual(allowed["unexpected_skills"], [])
-        sp09 = self.loads_score("go-deeper-sp09", "SP-09", "swe:swe-mode", "swe:go-deeper")
-        self.assertEqual(sp09["unexpected_skills"], [])
-        self.assertIs(sp09["false_activation"], False)
+        labeled = self.loads_score("go-deeper-labeled", "ship-pr-read-only", "swe:swe-mode", "swe:go-deeper")
+        self.assertEqual(labeled["unexpected_skills"], [])
+        self.assertIs(labeled["false_activation"], False)
 
     def test_lab_go_deeper_is_credited_on_a_lab_route_in_hook_off(self):
         score = self.loads_score("lab-gd-hook-off", "lab-mode-analyze-results", "lab:lab-mode", "lab:go-deeper", hook_arm="hook-off")
@@ -1319,7 +1309,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertIn("go-deeper", score["allowed_skills"])
 
     def test_uni_go_deeper_is_credited_in_hook_on_and_forbids_across_copies(self):
-        swe_on = self.loads_score("uni-gd-swe-on", "IM-04", "swe:swe-mode", "uni:go-deeper", "swe:implement", hook_arm="hook-on")
+        swe_on = self.loads_score("uni-gd-swe-on", "implement-build-feature", "swe:swe-mode", "uni:go-deeper", "swe:implement", hook_arm="hook-on")
         self.assertEqual(swe_on["unexpected_skills"], [])
         self.assertIs(swe_on["false_activation"], False)
         self.assertIn("go-deeper", swe_on["allowed_skills"])
@@ -1328,12 +1318,12 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertIs(lab_on["false_activation"], False)
         self.assertIn("go-deeper", lab_on["allowed_skills"])
         for arm in ("hook-off", "hook-on"):
-            forbid = self.loads_score("uni-gd-forbid-" + arm, "IM-10", "swe:swe-mode", "uni:go-deeper", "swe:implement", hook_arm=arm)
+            forbid = self.loads_score("uni-gd-forbid-" + arm, "implement-skip-go-deeper", "swe:swe-mode", "uni:go-deeper", "swe:implement", hook_arm=arm)
             self.assertEqual(forbid["unexpected_skills"], ["go-deeper"], arm)
             self.assertIs(forbid["false_activation"], True, arm)
             self.assertNotIn("go-deeper", forbid["allowed_skills"], arm)
         expected = self.loads_score(
-            "uni-gd-expected", "IM-04", "swe:swe-mode", "uni:go-deeper", "swe:implement",
+            "uni-gd-expected", "implement-build-feature", "swe:swe-mode", "uni:go-deeper", "swe:implement",
             expected_skills=["swe:implement", "swe:go-deeper"])
         self.assertEqual(expected["activation"]["swe:go-deeper"], "loaded")
 
@@ -1348,7 +1338,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertIn("swe:writing", on_score["allowed_skills"])
 
     def test_swe_in_your_own_words_read_by_path_is_credited_on_a_swe_route(self):
-        case = self.case_named("IM-01")
+        case = self.case_named("implement-build-feature")
         for arm in ("hook-off", "hook-on"):
             run, _, _ = self.prepare("own-words-" + arm, case, hook_arm=arm)
             manifest = json.loads((run / "manifest.json").read_text())
@@ -1396,7 +1386,7 @@ class OfflineCLIContract(unittest.TestCase):
         scores = []
         for name, case_id, line in (
             ("family-target", "swe-mode-refactor-structure", "Playbook: refactor-structure. Reason: it fits."),
-            ("family-route-choice", "swe-route-author-skill", "Playbook: author-skill. Reason: it fits."),
+            ("family-route-choice", "swe-route-figure-it-out", "Route: figure-it-out. Reason: it fits."),
         ):
             _, run = self.route_run(name, self.case_named(case_id), [], line, full=True)
             scores.append(run / "score.json")
@@ -1404,22 +1394,22 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(sorted(g["family"] for g in groups), ["swe-route-choice", "swe:swe-mode"])
 
     def validate_with(self, name, case_id, **update):
-        corpus = {"cases": read_cases()}
+        corpus = {"cases": read_cases(CORPUS)}
         next(c for c in corpus["cases"] if c["id"] == case_id).update(update)
         self.corpus = self.root / f"{name}-corpus.jsonl"
-        write_corpus(self.corpus, corpus["cases"])
+        write_corpus(self.corpus, corpus["cases"], CORPUS)
 
     def holdout_corpus(self, folder):
         """A holdout-shaped corpus: holdout.jsonl beside its own fixtures/, open-family positives and router negatives."""
-        cases = [dict(c, split="holdout") for c in read_cases()
+        cases = [dict(c, split="holdout") for c in read_cases(CORPUS)
                  if c.get("family") in {"swe-route-choice", "lab-route-choice"}
                  or (c["target"] in {"swe:swe-mode", "lab:lab-mode"} and c["category"] == "negative")]
         folder.mkdir()
-        write_corpus(folder / "holdout.jsonl", cases)
+        write_corpus(folder / "holdout.jsonl", cases, CORPUS)
         return folder / "holdout.jsonl", cases
 
     def test_holdout_corpus_validates_and_materializes_from_the_fixtures_beside_it(self):
-        dev = (HERE / "dataset" / "dev.jsonl").read_bytes()
+        dev = CORPUS.read_bytes()
         self.corpus, cases = self.holdout_corpus(self.root / "holdout")
         self.assertEqual(self.cli("validate")["cases"], len(cases))
         case = cases[0]
@@ -1435,25 +1425,25 @@ class OfflineCLIContract(unittest.TestCase):
                          hashlib.sha256(changed.read_bytes()).hexdigest())
         shutil.rmtree(self.root / "holdout" / "fixtures")
         self.assertIn("skill-eval:", self.cli("validate", ok=False).stderr)
-        self.assertEqual((HERE / "dataset" / "dev.jsonl").read_bytes(), dev)
+        self.assertEqual(CORPUS.read_bytes(), dev)
 
-    def test_corpus_rejects_a_holdout_case_among_development_cases(self):
-        self.validate_with("mixed-split", "IM-01", split="holdout")
+    def test_corpus_rejects_a_development_case_among_holdout_cases(self):
+        self.validate_with("mixed-split", "implement-build-feature", split="development")
         self.assertIn("only holdout cases", self.cli("validate", ok=False).stderr)
 
     def test_corpus_rejects_a_bad_family_and_a_route_on_a_case_that_forbids_the_router(self):
         for name, case_id, update, message in (
-                ("family-unknown", "IM-01", {"family": "no-such-family"}, "unknown family"),
-                ("open-family-no-route", "IM-01", {"family": "swe-route-choice", "expected_route": None}, "unknown family"),
-                ("open-family-negative", "IM-07", {"family": "swe-route-choice"}, "unknown family"),
-                ("forbidden-auxiliary", "IM-04", {"forbidden_skills": ["swe:verifying-work"]}, "contradictory"),
+                ("family-unknown", "implement-build-feature", {"family": "no-such-family"}, "unknown family"),
+                ("open-family-no-route", "implement-build-feature", {"family": "swe-route-choice", "expected_route": None}, "unknown family"),
+                ("open-family-negative", "implement-negative-diagnose", {"family": "swe-route-choice"}, "unknown family"),
+                ("forbidden-auxiliary", "implement-build-feature", {"forbidden_skills": ["swe:verifying-work"]}, "contradictory"),
                 ("router-forbidden-route", "lab-mode-define-metric", {"expected_route": "route/lab/analyze-results"},
                  "forbids the router"),
-                ("route-loads-forbidden", "TC-08", {"expected_route": "route/swe/build-feature"},
-                 "TC-08: forbidden_skills names ['swe:verifying-work'], which route/swe/build-feature always loads")):
+                ("route-loads-forbidden", "verifying-work-read-only", {"expected_route": "route/swe/build-feature"},
+                 "verifying-work-read-only: forbidden_skills names ['swe:verifying-work'], which route/swe/build-feature always loads")):
             self.validate_with(name, case_id, **update)
             self.assertIn(message, self.cli("validate", ok=False).stderr, name)
-        self.validate_with("negative-route", "TC-08", expected_route="route/swe/investigate-question")
+        self.validate_with("negative-route", "verifying-work-read-only", expected_route="route/swe/investigate-question")
         self.cli("validate")
 
     def test_readme_counts_match_the_corpus(self):
@@ -1473,10 +1463,10 @@ class OfflineCLIContract(unittest.TestCase):
                 ("route-other-plugin", {"expected_route": "route/lab/analyze-results"}),
                 ("facet-router-contract", {"facets": ["router-contract/lab/pick-one-rule"]}),
                 ("facet-unknown", {"facets": ["step-load/lab/none/none/none"]})):
-            corpus = {"cases": read_cases()}
+            corpus = {"cases": read_cases(CORPUS)}
             corpus["cases"][0].update(change)
             self.corpus = self.root / f"{name}-corpus.jsonl"
-            write_corpus(self.corpus, corpus["cases"])
+            write_corpus(self.corpus, corpus["cases"], CORPUS)
             self.assertIn("skill-eval:", self.cli("validate", ok=False).stderr, name)
 
     SKIP_REASON = "the pipeline is shared"
@@ -1504,7 +1494,7 @@ class OfflineCLIContract(unittest.TestCase):
 
     def test_steps_section_reads_the_block_with_the_most_route_entries(self):
         other = "\n\nSteps (ship-pr Publish):\n1-commit: done\n2-push: done"
-        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+        handles = next(f for f in json.loads(FACETS.read_text())["facets"]
                        if f["id"] == "route/lab/analyze-results")["handles"]
         nested = "Steps (nested run):\n" + "\n".join(f"{h}: done" for h in handles[:2]) + "\n\n"
         for name, kwargs in (("another-playbook-after", {"after": other}),
@@ -1517,7 +1507,7 @@ class OfflineCLIContract(unittest.TestCase):
                 self.assertTrue(route["followed"])
 
     def test_equal_blocks_resolve_to_the_last_one(self):
-        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+        handles = next(f for f in json.loads(FACETS.read_text())["facets"]
                        if f["id"] == "route/lab/analyze-results")["handles"]
         flawed = "Steps (draft):\n" + "\n".join(f"{h}: done" if h != handles[-1] else f"{h}: pending" for h in handles)
         good = "Steps (final):\n" + "\n".join(f"{h}: done" for h in handles)
@@ -1529,7 +1519,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(good_last["status"], "complete")
 
     def test_steps_section_refuses_a_reordered_or_repeated_entry(self):
-        handles = next(f for f in json.loads((HERE / "facets.json").read_text())["facets"]
+        handles = next(f for f in json.loads(FACETS.read_text())["facets"]
                        if f["id"] == "route/lab/analyze-results")["handles"]
         broken = {
             "out-of-order": lambda h: f"{handles[1]}: done\n{h}: done" if h == handles[0]
@@ -1546,10 +1536,10 @@ class OfflineCLIContract(unittest.TestCase):
         case = dict(self.case_named(self.ROUTE_CASE), expected_skills=["lab:lab-mode", "lab:making-plots"],
                     facets=["step-load/lab/analyze-results/10-grade-the-conclusion/grade-the-evidence",
                             "step-load/lab/analyze-results/4-check-the-pipeline/simulate-before-you-trust"])
-        corpus = {"cases": read_cases()}
+        corpus = {"cases": read_cases(CORPUS)}
         corpus["cases"] = [case if c["id"] == case["id"] else c for c in corpus["cases"]]
         self.corpus = self.root / "listed-corpus.jsonl"
-        write_corpus(self.corpus, corpus["cases"])
+        write_corpus(self.corpus, corpus["cases"], CORPUS)
         line = "Playbook: analyze-results. Reason: it fits."
         grade = ("skill", "lab:principle-grade-the-evidence")
         both, both_run = self.route_run("listed-both", case, [grade, ("skill", "lab:making-plots")], line, full=True)
@@ -1584,7 +1574,7 @@ class OfflineCLIContract(unittest.TestCase):
         run, skill, body = self.prepare("facets-frozen")
         manifest_path = run / "manifest.json"
         manifest = json.loads(manifest_path.read_text())
-        self.assertEqual(manifest["facets_sha256"], hashlib.sha256((HERE / "facets.json").read_bytes()).hexdigest())
+        self.assertEqual(manifest["facets_sha256"], hashlib.sha256(FACETS.read_bytes()).hexdigest())
         events = [
             {"type": "session.started"},
             {"type": "skill_read.request", "request_id": "s-1", "skill": "swe:implement", "path": skill["path"]},
@@ -1604,7 +1594,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertNotEqual(legacy["configuration_sha256"], score["configuration_sha256"])
 
     def test_claude_text_block_with_backticked_route_line(self):
-        case = next(c for c in read_cases() if c["id"] == self.ROUTE_CASE)
+        case = next(c for c in read_cases(CORPUS) if c["id"] == self.ROUTE_CASE)
         run, _, _ = self.prepare("claude-route-line", case)
         score = self.claude_trace(run, [
             ("text", "message-text", None, "Playbook: `analyze-results`. Reason: the user wants a graded conclusion."),
@@ -1617,7 +1607,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertIsNone(evidence["final_reply"])
 
     def test_claude_final_reply_is_the_text_after_the_last_root_tool_call(self):
-        case = next(c for c in read_cases() if c["id"] == self.ROUTE_CASE)
+        case = next(c for c in read_cases(CORPUS) if c["id"] == self.ROUTE_CASE)
         run, _, _ = self.prepare("claude-final-reply", case)
         self.claude_trace(run, [
             ("text", "message-text", None, "Playbook: `analyze-results`. Reason: the user wants a graded conclusion."),

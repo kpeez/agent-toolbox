@@ -15,12 +15,9 @@ def read_cases(path=DATASET):
     return se.read_cases(path)
 
 
-def write_corpus(path, cases):
-    """Write case dicts as one Sample per line; the inverse of skill_eval.read_cases, with no validation.
-
-    The loader reads fixtures beside the corpus file, so a corpus written elsewhere gets a copy of the
-    dataset fixtures there, unless that folder already exists."""
-    source = se.fixtures_root(DATASET)
+def write_corpus(path, cases, source=DATASET):
+    """Write case dicts as one Sample per line; the inverse of skill_eval.read_cases, with no validation."""
+    source = se.fixtures_root(source)
     if not se.fixtures_root(path).exists():
         shutil.copytree(source, se.fixtures_root(path))
     lines = []
