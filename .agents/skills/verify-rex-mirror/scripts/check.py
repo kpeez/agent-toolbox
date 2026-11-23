@@ -28,6 +28,7 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parent.parent
 ROOT = SKILL.parent.parent.parent
 SPEC = SKILL / "RexMirror.tla"
+CHART = SKILL / "chart.cfg"
 
 BASE = {
     "Mirrors": '{"m1"}',
@@ -36,6 +37,7 @@ BASE = {
     "KillFrom": '"start"',
     "ReplyCanTimeOut": "FALSE",
     "EndOn": "TRUE",
+    "EndFaults": "TRUE",
     "WaiterOn": "TRUE",
     "Watched": '"m1"',
     "Variant": '"fixed"',
@@ -61,6 +63,7 @@ class Run:
     kind: str  # "holds", "finding", "past bug", or "mutant"
     rules: list[str]
     overrides: dict[str, str] = field(default_factory=dict)
+    config_file: Path | None = None  # a checked-in config, used as is
 
     @property
     def breaks(self) -> bool:
@@ -86,19 +89,13 @@ RUNS = [
     holds(
         "current code, two mirrors",
         TWO,
-        {"ExitLineWritten", "NoLostRow"} | WAITER_RULES,
+        {"ExitLineWritten"} | WAITER_RULES,
     ),
     # Findings in the current code. Each is replayed against the real code (SKILL.md).
     Run(
         "finding: a kill before the handlers leaves the block working",
         "finding",
         ["ExitLineWritten"],
-    ),
-    Run(
-        "finding: session_end loses a row that remember appends",
-        "finding",
-        ["NoLostRow"],
-        TWO,
     ),
     Run(
         "finding: a waiter that starts after the close gets 'not found'",
@@ -118,6 +115,18 @@ RUNS = [
         {"ReplyCanTimeOut": "TRUE"},
     ),
     # Past bugs: each variant is the code before its fix.
+    Run(
+        "the rewriting session_end: it loses a row that remember writes during the pass",
+        "past bug",
+        ["NoLostRow"],
+        TWO | {"Variant": '"endPassRewrites"', "EndFaults": "FALSE"},
+    ),
+    Run(
+        "the rewriting session_end: it drops the row of a block whose close failed",
+        "past bug",
+        ["NoLostRow"],
+        {"Variant": '"endPassRewrites"'},
+    ),
     Run(
         "2a8e0e6: the EXIT-trap wrapper loses the marker",
         "past bug",
@@ -147,6 +156,13 @@ RUNS = [
         "past bug",
         ["EndPassClosesSettledRows"],
         {"Variant": '"endPassKeepsError"'},
+    ),
+    # The statechart's config must still parse. It shows the stop before the handlers.
+    Run(
+        "finding: the chart config (chart.cfg) shows a kill before the handlers",
+        "finding",
+        ["ExitLineWritten"],
+        config_file=CHART,
     ),
     # Mutants for the rules that no past bug broke.
     Run(
@@ -195,7 +211,9 @@ def config(run: Run) -> str:
 def check(run: Run, index: int, work: Path, jar: str, java: str) -> tuple[bool, str]:
     folder = work / str(index)
     folder.mkdir()
-    (folder / "run.cfg").write_text(config(run))
+    (folder / "run.cfg").write_text(
+        run.config_file.read_text() if run.config_file else config(run)
+    )
     shutil.copy(SPEC, folder / SPEC.name)
     r = subprocess.run(
         [

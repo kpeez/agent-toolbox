@@ -69,10 +69,10 @@ def run_cell(
         (sandbox / "bin" / runtime.name).symlink_to(runtime)
         (sandbox / "bin" / "rex").write_text(FAKE_REX)
         (sandbox / "bin" / "rex").chmod(0o755)
+        # One row file of rex_mirror.ts remember: <session_id>.<uuid>.json.
         block = {"rex_session": REX_SESSION, "block": "block-1"}
-        (
-            sandbox / "home/.cache/rex-agents" / f"{payload['session_id']}.jsonl"
-        ).write_text(json.dumps(block) + "\n")
+        row = f"{payload['session_id']}.00000000-0000-4000-8000-000000000001.json"
+        (sandbox / "home/.cache/rex-agents" / row).write_text(json.dumps(block) + "\n")
         env = {
             "PATH": f"{sandbox / 'bin'}:/usr/bin:/bin",
             "HOME": str(sandbox / "home"),

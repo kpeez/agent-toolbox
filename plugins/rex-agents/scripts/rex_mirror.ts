@@ -14,7 +14,7 @@
  * staying `working`.
  */
 
-import { appendFileSync, closeSync, mkdirSync, openSync, unlinkSync, writeFileSync, writeSync, accessSync, constants, statSync } from "node:fs";
+import { closeSync, mkdirSync, openSync, unlinkSync, writeFileSync, writeSync, accessSync, constants, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { randomBytes, randomUUID } from "node:crypto";
@@ -69,12 +69,16 @@ export function startViewer(label: string, log: string, nonce: string): string |
   }
 }
 
-/** Record the block so the session-end hook can close it. */
+/**
+ * Record the block so the session-end hook can close it. Each block gets its own
+ * file, which only the hook deletes, so no writer can lose another's row.
+ */
 export function remember(sessionId: string, block: string, label: string): void {
   mkdirSync(CACHE, { recursive: true });
-  appendFileSync(
-    join(CACHE, `${sessionId}.jsonl`),
+  writeFileSync(
+    join(CACHE, `${sessionId}.${randomUUID()}.json`),
     JSON.stringify({ block, rex_session: process.env.REX_SESSION, label }) + "\n",
+    { flag: "wx" },
   );
 }
 

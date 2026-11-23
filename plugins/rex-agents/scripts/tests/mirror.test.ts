@@ -228,8 +228,12 @@ for (const rt of RUNTIMES) {
           rt === "node" ? ["--disable-warning=ExperimentalWarning"] : [VIEWER],
           "node runs the viewer with the warning suppressed; bun needs no flag",
         );
-        const cache = readFileSync(join(home, ".cache", "rex-agents", "s-sig.jsonl"), "utf8");
-        assert.equal(cache, JSON.stringify({ block: "b-fake", rex_session: "session:test", label: "[claude] sig" }) + "\n");
+        const cacheDir = join(home, ".cache", "rex-agents");
+        const rows = readdirSync(cacheDir);
+        assert.equal(rows.length, 1);
+        assert.match(rows[0], /^s-sig\.[0-9a-f-]{36}\.json$/);
+        const row = readFileSync(join(cacheDir, rows[0]), "utf8");
+        assert.equal(row, JSON.stringify({ block: "b-fake", rex_session: "session:test", label: "[claude] sig" }) + "\n");
       } finally {
         child.kill("SIGKILL");
         child.stdin.end();
