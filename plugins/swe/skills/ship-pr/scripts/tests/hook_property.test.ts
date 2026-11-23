@@ -39,7 +39,7 @@ function mulberry32(seed: number): () => number {
 }
 
 const singleQuote = (s: string): string => `'${s.replaceAll("'", `'\\''`)}'`;
-// Inside $( ), bash 5.2.21 (the bash on CI) rejects a compound command that holds a heredoc and is followed by `;`,
+// Inside $( ), bash 5.2.21 (Ubuntu 24.04) rejects a compound command that holds a heredoc and is followed by `;`,
 // such as `x=$( ( cat <<E\na\nE\n); true\n)`, with a syntax error. bash 3.2 and 5.3 run it.
 const bash52RejectsInsideComsub = (s: string): boolean => /<<['A-Z][^]*\n(?:\)|\}|fi|done) *;/.test(s);
 const oneLine = (s: string): boolean => !s.includes("\n");
@@ -272,6 +272,7 @@ test(
   // CI installs both shells, so there a missing shell fails the test instead of skipping it.
   { timeout: 120_000, skip: missingShells.length > 0 && !process.env.CI ? `not on PATH: ${missingShells.join(", ")}` : false },
   async () => {
+    assert.deepEqual(missingShells, [], `CI must install these shells: ${missingShells.join(", ")}`);
     const corpus = [...otherShellCorpus("nu"), ...otherShellCorpus("fish")];
     const { failures, blocking } = await agreement(corpus, ["nu", "fish"]);
     assert.ok(blocking > 0 && blocking < corpus.length, `unbalanced corpus: ${blocking}/${corpus.length} block`);
