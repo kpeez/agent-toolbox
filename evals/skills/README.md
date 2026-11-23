@@ -247,7 +247,9 @@ runner stops the batch after a run whose cost is unknown or over `per_run_stop_u
 launch it adds the known spend, the stop amount for each launch with unknown cost (including
 `interrupted/`), and the stop amount for each launch in flight and the next one. It launches only
 when that sum stays within `--max-total-usd`. A launch in flight counts once, at the stop amount.
-The sum covers one `--out` folder only, so pass the budget that is left across all folders. Three runs in a row that end with an error also
+The sum covers one `--out` folder only, so pass the budget that is left across all folders.
+`uv run .agents/skills/verify-eval-budget/scripts/check.py` model-checks this budget, with
+parallel workers and resumes, in every order of steps within its bounds. Three runs in a row that end with an error also
 stop the batch. Runs go repeat by repeat, then case, then arm, so a stop leaves the arms within
 one run of each other. A rerun skips each finished run. A run folder whose launch did not finish
 moves to `interrupted/` and runs again. A run whose stream ends with `terminal_reason: api_error`
@@ -509,8 +511,7 @@ scores each arm from the kept files and can run again; that a rerun launches not
 interrupted run moves aside and counts at the stop amount; that the total budget stops a launch
 before it starts; that a run over the per-run stop, a session with a wrong tool set, and a
 session with the wrong effort or CLI version each stop the batch and are not scored; that
-parallel workers count a run in flight once, and a resume counts each stale run folder while
-workers reserve; that the runner's own timeout scores as a timeout; and that a different
+parallel workers count a run in flight once; that the runner's own timeout scores as a timeout; and that a different
 configuration needs a new output folder. `test_facets.py` runs `facets.py`
 on a copied catalog. It checks that `check` fails on a stale map and that
 `write` rejects a step name that nothing owns.
