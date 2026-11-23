@@ -463,7 +463,8 @@ EndChecks(m, k) ==
                  fileExists, listed, waitVars>>
 
 \* settle for one row: JSON.parse of an empty row file throws, and settle returns. The
-\* hook never checks the block and keeps the row file. Only RowNotAtomic reaches it.
+\* hook never checks the block and keeps the row file. Only RowNotAtomic reaches it. The block
+\* is still working here (RowEmpty is part of Opening), so a full read would keep the row too.
 EndReadsEmptyRow(m, k) ==
   /\ spc = "checking"
   /\ <<m, k>> \in todo

@@ -71,7 +71,7 @@ WAITER_RULES = {"WaiterStartedOpenSeesOutcome", "LateWaiterSeesOutcome"}
 @dataclass
 class Run:
     name: str
-    kind: str  # "holds", "finding", "past bug", or "mutant"
+    kind: str  # "holds", "finding", "past bug", "past race", or "mutant"
     rules: list[str]
     overrides: dict[str, str] = field(default_factory=dict)
     config_file: Path | None = None  # a checked-in config, used as is
@@ -184,7 +184,7 @@ RUNS = [
     ),
     Run(
         "KP-678: remember creates its row file empty, and session_end skips a row it reads empty",
-        "past bug",
+        "past race",
         ["EndPassClosesSettledRows"],
         {"Variant": '"rowNotAtomic"'},
     ),

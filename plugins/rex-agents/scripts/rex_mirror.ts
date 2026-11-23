@@ -160,7 +160,7 @@ function markerAt(tail: Buffer): { rc: number; offset: number } | null {
 }
 
 // A stop during an open with no handler kills the mirror before it writes the exit line, and the block shows
-// working forever. Only this function returns the open, so no code can open a block before the handlers exist.
+// working forever. Only this function returns openViewer, so a call to openViewer before the handlers fails tsc.
 function withSignalHandlers(onSignal: (code: number) => void, open: () => void): () => void {
   process.on("SIGTERM", () => onSignal(143));
   process.on("SIGINT", () => onSignal(130));

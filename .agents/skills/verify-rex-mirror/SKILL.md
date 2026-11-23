@@ -46,12 +46,14 @@ uv run .agents/skills/verify-rex-mirror/scripts/check.py
 
 It needs uv and mise. It uses the statechart skill's pinned TLC and Java
 through `.github/scripts/statechart_tlc.py`, or `TLA2TOOLS` and `JAVA` when
-they are set. It runs the 19 runs in `RUNS` in parallel, in about 45 s.
+they are set. It runs the 20 runs in `RUNS` in parallel, in about 45 s.
 It exits 0 only when each run gives its expected result:
 
 - `holds`: each listed rule holds on the current code.
 - `finding`: a known finding in the current code still breaks its rule.
 - `past bug`: the code before a past fix breaks the rule that the fix restored.
+- `past race`: the code before a past fix breaks a rule in the model, but no
+  run showed a failure a user would see.
 - `mutant`: a broken variant breaks a rule that no past bug broke.
 
 For each rule that breaks, it prints TLC's shortest path as a list of
@@ -185,7 +187,10 @@ which deletes this session's `*.json.tmp.*` files, never deletes it.
 file empty and then wrote it. A reader that ran beside 50,000 such writes
 found an empty row 141 to 240 times per run. A pass that reads an empty row
 keeps the file and never checks its block, which breaks
-`EndPassClosesSettledRows`.
+`EndPassClosesSettledRows`. That is a `past race`, not a `past bug`: the
+block of an empty row is still working, because the open runs with no await,
+so a pass that read the full row would also keep the row and leave the block
+open. No harm from the rules table follows.
 
 ## Coverage
 
@@ -221,7 +226,7 @@ covered file, update the action first, then run the check.
    the rule.
 3. A `finding` run that fails: the change fixed the finding. Move the run to
    `holds`, and remove the finding from this file.
-4. A `past bug` or `mutant` run that fails: the model no longer reaches that
+4. A `past bug`, `past race`, or `mutant` run that fails: the model no longer reaches that
    bug. Check that the variant still matches the old code.
 5. An intended change to the lifecycle: change the action first, then rerun.
    Change a rule only when the promise changed, and say why in the same
