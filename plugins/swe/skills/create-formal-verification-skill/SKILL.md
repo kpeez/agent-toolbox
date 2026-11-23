@@ -50,7 +50,7 @@ If the check is a TLA+ model, tell the next agent to read every result with the 
 
 ## Prove it before you hand off
 
-Confirm that Git tracks every file of the skill folder and tracks the link, the folder link or a per-skill link, as a symlink (`git ls-files -s .claude/skills` shows it with mode 120000). Confirm that `.claude/skills/<skill-name>/SKILL.md` resolves through the link. Follow the generated skill once, as the next agent would, through the repo-level command, on a scratch change that breaks the property in the real code. It must catch the break. Then drop the scratch change and confirm that the check is back where it started: passing, or failing only on the findings you will report. A verify skill that never ran is a draft. If the skill misses the break or a step does not run, fix the skill or the verification, not the scratch change.
+Confirm that the link script of [project skill layout](../../references/project-skill-layout.md) exited 0 for the skill. Follow the generated skill once, as the next agent would, through the repo-level command, on a scratch change that breaks the property in the real code. It must catch the break. Then drop the scratch change and confirm that the check is back where it started: passing, or failing only on the findings you will report. A verify skill that never ran is a draft. If the skill misses the break or a step does not run, fix the skill or the verification, not the scratch change.
 
 ## Hand off
 
