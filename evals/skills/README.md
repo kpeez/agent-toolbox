@@ -166,7 +166,7 @@ files and event bindings. `rules/AGENTS.md` stays in both arms, and
 `manifest.json` records `hook_arm`, `removed_bindings`, and `known_deltas`.
 Source plugins stay unchanged. `score` and `aggregate` record `hook_arm` in the
 frozen configuration and group keys, so the two arms never pool. The hook
-delivery shape comes from local transcripts, and `6-native-pilot` must confirm
+delivery shape comes from local transcripts, and a native pilot must confirm
 it (see [EVIDENCE.md](EVIDENCE.md)).
 The full checked-out SWE/Lab catalog is not claimed to equal all installed skills
 on a real host. A native pilot must freeze and verify that complete effective set.
