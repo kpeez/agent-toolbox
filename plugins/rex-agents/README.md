@@ -47,8 +47,9 @@ agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/rex-
 ```
 
 The hooks need `bun`, or Node 22.18 or later, and `rex`, on PATH. Without a
-runtime, each hook shows a hook error that names the fix. Outside Rex
-(`REX_SESSION` unset), they do nothing, and the Bash hook starts no runtime.
+runtime, each hook that starts shows a hook error that names the fix. Outside
+Rex (`REX_SESSION` unset), the hooks make no change, and the Bash hook starts
+no runtime.
 
 ## Turn the mirror off
 

@@ -59,7 +59,8 @@ the filled `ship-pr` template, built with `pr_body.ts render`. It also blocks
 `gh api` calls that create a pull request or change its body or base. When the
 repository uses `gh-stack`, it also blocks a `gh pr create` or `gh pr edit`
 whose `--base` is not trunk. The hook needs `bun`, or Node 22.18 or later,
-on PATH. Without one, each Bash call shows a hook error that names the fix.
+on PATH. Without one, each Bash call that can run `gh` shows a hook error
+that names the fix.
 agy runs no hooks, but it loads the same rule from
 [`rules/AGENTS.md`](./rules/AGENTS.md). It skips the swe agents. Codex plugins
 have no hooks. [Set up swe](./docs/01-setup.md) gives the lines to put in
