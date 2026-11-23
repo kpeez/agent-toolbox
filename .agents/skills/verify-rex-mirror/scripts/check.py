@@ -36,6 +36,7 @@ BASE = {
     "KillFrom": '"start"',
     "ReplyCanTimeOut": "FALSE",
     "EndOn": "TRUE",
+    "EndFaults": "FALSE",
     "WaiterOn": "TRUE",
     "Watched": '"m1"',
     "Variant": '"fixed"',
@@ -99,6 +100,12 @@ RUNS = [
         "finding",
         ["NoLostRow"],
         TWO,
+    ),
+    Run(
+        "finding: session_end drops the row of a block whose close failed",
+        "finding",
+        ["NoLostRow"],
+        {"EndFaults": "TRUE"},
     ),
     Run(
         "finding: a waiter that starts after the close gets 'not found'",

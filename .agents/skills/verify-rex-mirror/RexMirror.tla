@@ -15,6 +15,7 @@ CONSTANTS
   KillFrom,         \* "start": a kill can reach the mirror at any step; "reading": only after it reads stdin
   ReplyCanTimeOut,  \* TRUE: the reply to `rex run` can come after the 15 s timeout
   EndOn,            \* TRUE: the SessionEnd hook runs once
+  EndFaults,        \* TRUE: its `rex block close` can fail, and Claude Code can kill it mid-pass
   WaiterOn,         \* TRUE: an agent runs wait-status.lua once on the block of Watched
   Watched,
   Variant           \* "fixed" for the current code, or a past or broken variant (SKILL.md)
@@ -29,14 +30,14 @@ VARIABLES
   mpc, killed, sigPending, blockKnown, listed, exitLine, logExists,  \* rex_mirror.ts
   block, vpc, status, shown, closeFailed,                    \* the Rex block and rex_mirror_view.ts
   rows, fileExists,                                          \* ~/.cache/rex-agents/<session_id>.jsonl
-  spc, snapshot, todo, keep, seen,                           \* session_end.ts
+  spc, snapshot, todo, keep, seen, endCloseFailed,           \* session_end.ts
   wpc, wresult, wOpen                                        \* wait-status.lua
 
 cmdVars == <<kind, cmd, cmdRc, marker>>
 mirrorVars == <<mpc, killed, sigPending, blockKnown, listed, exitLine, logExists>>
 viewVars == <<block, vpc, status, shown, closeFailed>>
 cacheVars == <<rows, fileExists>>
-endVars == <<spc, snapshot, todo, keep, seen>>
+endVars == <<spc, snapshot, todo, keep, seen, endCloseFailed>>
 waitVars == <<wpc, wresult, wOpen>>
 vars == <<cmdVars, mirrorVars, viewVars, cacheVars, endVars, waitVars>>
 
@@ -64,6 +65,7 @@ Init ==
   /\ todo = {}
   /\ keep = {}
   /\ seen = [m \in Mirrors |-> "unchecked"]
+  /\ endCloseFailed = [m \in Mirrors |-> FALSE]
   /\ wpc = "idle"
   /\ wresult = "none"
   /\ wOpen = FALSE
@@ -265,7 +267,7 @@ EndReads ==
             /\ todo' = rows
        ELSE /\ spc' = "finished"
             /\ UNCHANGED <<snapshot, todo>>
-  /\ UNCHANGED <<keep, seen, cmdVars, mirrorVars, viewVars, cacheVars, waitVars>>
+  /\ UNCHANGED <<keep, seen, endCloseFailed, cmdVars, mirrorVars, viewVars, cacheVars, waitVars>>
 
 \* What newestState returns: "gone" for a closed block; for an open one, the newest
 \* record's state ("null" when none), or "fail" for a rex timeout or non-JSON reply.
@@ -292,7 +294,28 @@ EndChecks(m) ==
                  /\ UNCHANGED <<spc, keep>>
             ELSE /\ keep' = IF a = "gone" THEN keep ELSE keep \cup {m}
                  /\ UNCHANGED <<spc, block, vpc>>
-  /\ UNCHANGED <<snapshot, cmdVars, mirrorVars, status, shown, closeFailed, cacheVars, waitVars>>
+  /\ UNCHANGED <<snapshot, endCloseFailed, cmdVars, mirrorVars, status, shown, closeFailed,
+                 cacheVars, waitVars>>
+
+\* One loop pass for one row: newestState answers done or error, and `rex block close` fails or
+\* times out. The hook ignores the result and drops the row.
+EndCloseFails(m) ==
+  /\ EndFaults
+  /\ spc = "checking"
+  /\ m \in todo
+  /\ \E a \in Answers(m) \cap Closes :
+       /\ seen' = [seen EXCEPT ![m] = a]
+       /\ todo' = todo \ {m}
+       /\ endCloseFailed' = [endCloseFailed EXCEPT ![m] = TRUE]
+  /\ UNCHANGED <<spc, snapshot, keep, cmdVars, mirrorVars, viewVars, cacheVars, waitVars>>
+
+\* Claude Code kills the hook mid-pass, at its 30 s timeout, before the write.
+EndKilled ==
+  /\ EndFaults
+  /\ spc = "checking"
+  /\ spc' = "killed"
+  /\ UNCHANGED <<snapshot, todo, keep, seen, endCloseFailed, cmdVars, mirrorVars, viewVars,
+                 cacheVars, waitVars>>
 
 \* writeFileSync(path, keep) or unlinkSync(path). Rows appended since EndReads are lost.
 EndWrites ==
@@ -301,7 +324,7 @@ EndWrites ==
   /\ spc' = "finished"
   /\ rows' = keep
   /\ fileExists' = (keep # {})
-  /\ UNCHANGED <<snapshot, todo, keep, seen, cmdVars, mirrorVars, viewVars, waitVars>>
+  /\ UNCHANGED <<snapshot, todo, keep, seen, endCloseFailed, cmdVars, mirrorVars, viewVars, waitVars>>
 
 -----------------------------------------------------------------------------
 (* wait-status.lua on the block of Watched, once. Events buffer from the   *)
@@ -358,8 +381,10 @@ Next ==
        \/ ViewerClosesBlock(m)
        \/ ViewerCloseFails(m)
        \/ EndChecks(m)
+       \/ EndCloseFails(m)
   \/ EndReads
   \/ EndWrites
+  \/ EndKilled
   \/ WaiterStarts
   \/ WaiterWakes
 
@@ -385,7 +410,8 @@ SettledBlockCloses ==
 
 EndPassClosesSettledRows ==
   spc \in {"finished", "aborted"} =>
-    \A m \in snapshot : seen[m] # "unchecked" /\ (seen[m] \in Settled => block[m] = "closed")
+    \A m \in snapshot :
+      seen[m] # "unchecked" /\ (seen[m] \in Settled => block[m] = "closed" \/ endCloseFailed[m])
 
 NeverCloseWorking ==
   \A m \in Mirrors : block[m] = "closed" => status[m] \in Settled
