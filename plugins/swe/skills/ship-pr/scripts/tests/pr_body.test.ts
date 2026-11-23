@@ -174,7 +174,6 @@ test("linked worktree reads common dir gh-stack", () => {
   });
 });
 
-/** Run the hook on a rendered body whose summary is replaced by `summary`. */
 function hookOnSummary(root: string, summary: string): { status: number | null; stderr: string } {
   const body = renderValidBody(root);
   writeFileSync(body, readFileSync(body, "utf-8").replace("Each save rewrites the whole cache.", summary), "utf-8");

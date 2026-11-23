@@ -1,13 +1,3 @@
-/**
- * Tests for the hooks, run as processes the way Claude Code runs them.
- *
- * The mirror cases feed the hook a PreToolUse event and run the command it
- * returns in sh, with a fake rex on PATH that logs its calls. The session-end
- * cases write rows with the real `remember` and run the hook against a fake
- * rex and a temporary HOME. Each case runs a hook with bun or node, or both,
- * which proves the erasable syntax and the node: APIs run without bun.
- */
-
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawnSync } from "node:child_process";
@@ -47,7 +37,6 @@ printf '\\n' >> "$HOME/rex-calls"
 exit 0
 `;
 
-/** A scratch HOME and TMPDIR, and a PATH with the fake rex and no bun or node. */
 type Sandbox = { home: string; tmp: string; path: string };
 
 function withSandbox(run: (sb: Sandbox) => void): void {
@@ -63,7 +52,6 @@ function withSandbox(run: (sb: Sandbox) => void): void {
   }
 }
 
-/** Run mirror_hook.ts on one event; return its updatedInput, or null when it leaves the call alone. */
 function runHook(
   sb: Sandbox,
   e: Record<string, unknown>,
@@ -85,7 +73,6 @@ function runHook(
   return spec.updatedInput;
 }
 
-/** Run the rewritten command as Claude Code would, and return its result and the labels of the blocks rex opened. */
 function runRewritten(sb: Sandbox, command: unknown) {
   rmSync(join(sb.home, "rex-calls"), { force: true });
   const r = spawnSync("/bin/sh", ["-c", String(command)], {
