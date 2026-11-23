@@ -28,12 +28,13 @@ committed link works on clone with no setup step. Do not commit a link for
 the whole `.claude/skills` folder: when a teammate keeps a local, ignored
 `.claude/skills/` directory, their next pull deletes it without a warning.
 
-After you write the skill folder, run
-[link_project_skill.py](../scripts/link_project_skill.py) from inside the
-repository:
+After you write the skill folder, run the link script. The script is
+[`../scripts/link_project_skill.py`](../scripts/link_project_skill.py),
+relative to this file. Build its absolute path from this file's folder, and
+run it from inside the repository:
 
 ```sh
-uv run <plugin-root>/scripts/link_project_skill.py <skill-name>
+uv run <absolute path of link_project_skill.py> <skill-name>
 ```
 
 The script stages the skill folder, makes the link, stages it with
