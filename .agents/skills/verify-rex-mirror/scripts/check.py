@@ -28,6 +28,7 @@ from pathlib import Path
 SKILL = Path(__file__).resolve().parent.parent
 ROOT = SKILL.parent.parent.parent
 SPEC = SKILL / "RexMirror.tla"
+CHART = SKILL / "chart.cfg"
 
 BASE = {
     "Mirrors": '{"m1"}',
@@ -62,6 +63,7 @@ class Run:
     kind: str  # "holds", "finding", "past bug", or "mutant"
     rules: list[str]
     overrides: dict[str, str] = field(default_factory=dict)
+    config_file: Path | None = None  # a checked-in config, used as is
 
     @property
     def breaks(self) -> bool:
@@ -155,6 +157,13 @@ RUNS = [
         ["EndPassClosesSettledRows"],
         {"Variant": '"endPassKeepsError"'},
     ),
+    # The statechart's config must still parse. It shows the stop before the handlers.
+    Run(
+        "finding: the chart config (chart.cfg) shows a kill before the handlers",
+        "finding",
+        ["ExitLineWritten"],
+        config_file=CHART,
+    ),
     # Mutants for the rules that no past bug broke.
     Run(
         "mutant: the viewer closes before it reports the status",
@@ -202,7 +211,9 @@ def config(run: Run) -> str:
 def check(run: Run, index: int, work: Path, jar: str, java: str) -> tuple[bool, str]:
     folder = work / str(index)
     folder.mkdir()
-    (folder / "run.cfg").write_text(config(run))
+    (folder / "run.cfg").write_text(
+        run.config_file.read_text() if run.config_file else config(run)
+    )
     shutil.copy(SPEC, folder / SPEC.name)
     r = subprocess.run(
         [

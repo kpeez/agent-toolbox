@@ -43,7 +43,7 @@ uv run .agents/skills/verify-rex-mirror/scripts/check.py
 
 It needs uv and mise. It uses the statechart skill's pinned TLC and Java
 through `.github/scripts/statechart_tlc.py`, or `TLA2TOOLS` and `JAVA` when
-they are set. It runs the 16 runs in `RUNS` in parallel, in about 10 s.
+they are set. It runs the 17 runs in `RUNS` in parallel, in about 10 s.
 It exits 0 only when each run gives its expected result:
 
 - `holds`: each listed rule holds on the current code.
@@ -57,7 +57,8 @@ actions. `--keep` keeps the TLC configs and output.
 Read every result, and draw the lifecycle, with the `statechart` skill. Give
 it `RexMirror.tla`, `chart.cfg`, and the view `chart-view.mjs`. The chart
 config has one mirror, no session-end hook, and no waiter, so it stays under
-the statechart budget.
+the statechart budget. The check also runs `chart.cfg` as a run, so a constant
+that the chart config leaves out fails the check.
 
 ## Findings in the current code
 
