@@ -1,0 +1,66 @@
+---
+title: "A pull request from local work to merged"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: local
+    lg1: draft
+    lg2: ready
+    lg3: merged
+  }
+  class lg0 blue
+  class lg1 teal
+  class lg2 orange
+  class lg3 purple
+  s0: Local work
+  s1: Local only, no authority to publish
+  s2: Draft, no PASS for this patch
+  s3: Ready for human review, issue In Progress
+  s4: Draft, PASS
+  s5: Ready for human review, issue In Review
+  s6: Draft, PASS, rechecked
+  s7: Ready, PASS, rechecked
+  s8: Draft, head moved after the recheck
+  s9: Merged, issue In Progress
+  s10: Ready, head moved after the recheck
+  s11: Merged, issue In Review
+  s12: Merged, issue Done
+  s13: Ready, no PASS for this patch
+  s14: Ready, PASS
+  [*] --> s0
+  [*] --> s1
+  s0 --> s2: the agent commits, pushes, and opens a draft
+  s2 --> s3: the agent marks the draft ready (Finalize)
+  s2 --> s4: an independent verifier says PASS
+  s3 --> s5: the agent moves the issue to In Review
+  s4 --> s6: the agent fetches and compares the patch-id
+  s4 --> s2: someone pushes a new patch
+  s6 --> s7: the agent marks the draft ready (Land)
+  s6 --> s8: someone pushes a new patch
+  s7 --> s9: the agent merges, pinned to the rechecked head
+  s7 --> s10: someone pushes a new patch
+  s8 --> s2: the agent fetches and compares the patch-id
+  s8 --> s4: an independent verifier says PASS
+  s8 --> s10: the agent marks the draft ready (Land)
+  s9 --> s12: the issue moves to Done
+  s7 --> s11: the agent merges, pinned to the rechecked head
+  s10 --> s13: GitHub refuses the pinned merge: the head moved or the agent fetches and compares the patch-id
+  s10 --> s14: an independent verifier says PASS
+  s11 --> s12: the issue moves to Done
+  s13 --> s14: an independent verifier says PASS
+  s14 --> s7: the agent fetches and compares the patch-id
+  class s0 blue
+  class s1 blue
+  class s2 teal
+  class s3 orange
+  class s4 teal
+  class s5 orange
+  class s6 teal
+  class s7 orange
+  class s8 teal
+  class s9 purple
+  class s10 orange
+  class s11 purple
+  class s12 purple
+  class s13 orange
+  class s14 orange
