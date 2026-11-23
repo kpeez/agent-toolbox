@@ -46,8 +46,9 @@ codex plugin add rex-agents@agent-toolbox
 agy plugin install https://github.com/kpeez/agent-toolbox/tree/main/plugins/rex-agents
 ```
 
-The hooks need `bun` or Node 22.18 or later, and `rex`, on PATH. Outside Rex (`REX_SESSION` unset), they
-do nothing.
+The hooks need `bun`, or Node 22.18 or later, and `rex`, on PATH. Without a
+runtime, each hook shows a hook error that names the fix. Outside Rex
+(`REX_SESSION` unset), they do nothing, and the Bash hook starts no runtime.
 
 ## Turn the mirror off
 
