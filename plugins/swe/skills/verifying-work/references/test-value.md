@@ -16,6 +16,8 @@ stronger keeper for that contract is verified.
 - tests that still pass when the behavior they check breaks, or that fail
   when only the internals change;
 - self-comparisons and identity copiers;
+- substring assertions that also match a longer word, such as
+  `includes("auto")`, which passes on "automatically";
 - expected values produced by the code under test, copied from its output, or
   held in broad snapshots accepted without independent review;
 - copied fixtures, constants, registries, inventories, manifests, or export
