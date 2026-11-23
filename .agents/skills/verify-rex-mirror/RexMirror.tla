@@ -82,12 +82,12 @@ Init ==
   /\ wOpen = FALSE
   /\ wBlock = <<Watched, "layer">>
 
-\* The code that the variants change. In the current code, main() opens the block at
-\* delay 0 before it sets its signal handlers; a layer request that dies before its reply
-\* falls back to `rex run`; and a `rex run` that dies before its reply counts as no block.
-OpenFirst == TRUE
-BlindFallback == TRUE
-UnknownIsNoBlock == TRUE
+\* Variant "floatAsWritten" is the floating open as first written: main() opened the block
+\* at delay 0 before it set its signal handlers; a layer request that died before its reply
+\* fell back to `rex run`; and a `rex run` that died before its reply counted as no block.
+OpenFirst == Variant = "floatAsWritten"
+BlindFallback == Variant = "floatAsWritten"
+UnknownIsNoBlock == Variant = "floatAsWritten"
 
 -----------------------------------------------------------------------------
 (* The command, in the shell form that mirror_hook.ts mirrored() builds:   *)
@@ -218,8 +218,9 @@ MirrorLayerRefused(m) ==
   /\ UNCHANGED <<cmdVars, mpc, known, killed, sigPending, exitLine, logExists,
                  viewVars, cacheVars, endVars, waitVars>>
 
-\* startViewer: the new_layer client dies before its reply, at the 15 s timeout or in a
-\* group stop. Rex may still open the layer. BlindFallback: the mirror falls back to `rex run`.
+\* startViewer: diedBeforeReply(layer), at the 15 s timeout or in a group stop. Rex may still
+\* open the layer, so startViewer returns "unknown" and opens no fallback. BlindFallback: the
+\* mirror falls back to `rex run`.
 MirrorLayerGivesUp(m) ==
   /\ Alive(m)
   /\ opc[m] = "layer"
@@ -262,8 +263,8 @@ MirrorRunRefused(m) ==
   /\ UNCHANGED <<cmdVars, mpc, known, killed, sigPending, exitLine, logExists,
                  req, callDead, viewVars, cacheVars, endVars, waitVars>>
 
-\* startViewer: the `rex run` client dies before its reply. Rex may still open the block.
-\* UnknownIsNoBlock: startViewer returns null, as if no block opened.
+\* startViewer: diedBeforeReply(r) for `rex run`. Rex may still open the block, so
+\* startViewer returns "unknown". UnknownIsNoBlock: it returns null, as if no block opened.
 MirrorRunGivesUp(m) ==
   /\ Alive(m)
   /\ opc[m] = "run"
@@ -296,10 +297,9 @@ Settle(m, code) ==
             /\ UNCHANGED exitLine
   /\ mpc' = [mpc EXCEPT ![m] = "ended"]
 
-\* The `for await` loop sees end of input. The rest of main() and process.exit run with no
-\* await between them, so no signal handler can run in between. A group kill posts the
-\* signal to the mirror before any member exits and closes the pipe, so a pending signal
-\* is handled first (SKILL.md, "Assumptions").
+\* The `for await` loop sees end of input, and main() yields once (setImmediate). The rest
+\* of main() and process.exit run with no await between them, so no signal handler can run
+\* in between. A pending signal is handled first (SKILL.md, "Assumptions").
 MirrorReadsEnd(m) ==
   /\ mpc[m] = "reading"
   /\ ~Opening(m)

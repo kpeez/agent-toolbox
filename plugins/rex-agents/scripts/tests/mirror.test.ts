@@ -207,10 +207,10 @@ async function waitFor(cond: () => boolean, ms: number): Promise<void> {
   }
 }
 
-function writeFakeRex(bin: string, opts: { failNewLayer?: boolean } = {}): void {
-  const newLayerBody = opts.failNewLayer
-    ? "exit 1"
-    : 'printf \'{"layer_id":"layer:fake","block_ids":["b-fake"]}\\n\'';
+/** A fake rex. `newLayer` and `run` replace the shell body of those calls. */
+function writeFakeRex(bin: string, opts: { failNewLayer?: boolean; newLayer?: string; run?: string } = {}): void {
+  const newLayerBody =
+    opts.newLayer ?? (opts.failNewLayer ? "exit 1" : 'printf \'{"layer_id":"layer:fake","block_ids":["b-fake"]}\\n\'');
   const script = `#!/bin/sh
 printf '%s\\t' "$@" >> "$HOME/rex-calls"
 printf '\\n' >> "$HOME/rex-calls"
@@ -221,7 +221,7 @@ elif [ "$1" = "api" ] && [ "$2" = "call" ] && [ "$5" = "session.new_layer" ]; th
 elif [ "$1" = "api" ] && [ "$2" = "call" ] && [ "$5" = "session.set_layer_state" ]; then
   printf '{}\\n'
 elif [ "$1" = "run" ]; then
-  printf '{"block_ids":["b-fallback"]}\\n'
+  ${opts.run ?? 'printf \'{"block_ids":["b-fallback"]}\\n\''}
 fi
 `;
   const fakeRex = join(bin, "rex");
@@ -451,6 +451,97 @@ for (const rt of RUNTIMES) {
       ]);
       assert.deepEqual(readRows(home, "s-fb"), [{ block: "b-fallback", rex_session: "session:test", label: "[claude] fb" }]);
     } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  /** Run the mirror at delay 0 on a short command, and return its exit code, rex calls, and logs. */
+  const runOpen = (home: string, fake: { failNewLayer?: boolean; newLayer?: string; run?: string }) => {
+    mkdirSync(join(home, "bin"));
+    mkdirSync(join(home, "tmp"));
+    writeFakeRex(join(home, "bin"), fake);
+    const r = spawnSync(rt, [...flagsFor(rt), MIRROR, "[claude] late", "s-late"], {
+      input: "late out\n\n__rex_rc=4\n",
+      env: {
+        ...NO_REX,
+        HOME: home,
+        TMPDIR: join(home, "tmp"),
+        PATH: `${join(home, "bin")}:${process.env.PATH}`,
+        REX_SESSION: "session:test",
+        REX_AGENTS_MIRROR_DELAY_MS: "0",
+      },
+      encoding: "utf8",
+      timeout: 30_000,
+    });
+    const logs = readdirSync(join(home, "tmp")).filter((f: string) => f.startsWith("rex-mirror-"));
+    const text = logs.map((f: string) => readFileSync(join(home, "tmp", f), "utf8"));
+    return { r, calls: readRexCalls(home), text };
+  };
+
+  // A rex client that exits 128 or more died by a signal or a timeout. Rex may still open its
+  // block, so the mirror must not open a second one, and must leave the exit line for it.
+  test(`a new_layer client that dies before its reply opens no fallback block (${rt})`, { skip: skipFor(rt) }, () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-late-layer-home-"));
+    try {
+      const { r, calls, text } = runOpen(home, { newLayer: "exit 143" });
+      assert.equal(r.status, 4);
+      assert.equal(r.stdout, "late out\n");
+      assert.deepEqual(calls.map((c) => c[0] === "api" ? c[4] : c[0]), ["session.new_layer"]);
+      assert.equal(text.length, 1, "the log stays for a viewer that may have opened");
+      assert.match(text[0], /\n__rex_mirror_exit_[0-9a-f]{16}=4\n$/);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  test(`a rex run client that dies before its reply still gets the exit line (${rt})`, { skip: skipFor(rt) }, () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-late-run-home-"));
+    try {
+      const { r, calls, text } = runOpen(home, { failNewLayer: true, run: "exit 143" });
+      assert.equal(r.status, 4);
+      assert.deepEqual(calls.map((c) => c[0] === "api" ? c[4] : c[0]), ["session.new_layer", "run"]);
+      assert.equal(text.length, 1);
+      assert.match(text[0], /\n__rex_mirror_exit_[0-9a-f]{16}=4\n$/);
+    } finally {
+      rmSync(home, { recursive: true, force: true });
+    }
+  });
+
+  for (const delay of ["0", "100"]) test(`at delay ${delay}, a stop during the open still writes the exit line 143 (${rt})`, { timeout: 30_000, skip: skipFor(rt) }, async () => {
+    const home = mkdtempSync(join(tmpdir(), "rex-stop-open-home-"));
+    mkdirSync(join(home, "bin"));
+    mkdirSync(join(home, "tmp"));
+    writeFakeRex(join(home, "bin"), { newLayer: "sleep 20" });
+    // Its own process group, so the stop reaches the mirror and its rex child, as Claude Code's does.
+    const child = spawn(rt, [...flagsFor(rt), MIRROR, "[claude] stop", "s-stop"], {
+      env: {
+        ...NO_REX,
+        HOME: home,
+        TMPDIR: join(home, "tmp"),
+        PATH: `${join(home, "bin")}:${process.env.PATH}`,
+        REX_SESSION: "session:test",
+        REX_AGENTS_MIRROR_DELAY_MS: delay,
+      },
+      stdio: ["pipe", "pipe", "pipe"],
+      detached: true,
+    });
+    try {
+      const exited = new Promise<number | null>((res) => child.on("exit", (c: number | null) => res(c)));
+      child.stdin.write("before stop\n");
+      await waitFor(() => readRexCalls(home).some((c) => c[4] === "session.new_layer"), 15_000);
+      process.kill(-(child.pid as number), "SIGTERM");
+      child.stdin.end();
+      const rc = await Promise.race([exited, new Promise<null>((r) => setTimeout(() => r(null), 15_000))]);
+      assert.equal(rc, 143);
+      const logs = readdirSync(join(home, "tmp")).filter((f: string) => f.startsWith("rex-mirror-"));
+      assert.equal(logs.length, 1);
+      assert.match(readFileSync(join(home, "tmp", logs[0]), "utf8"), /\n__rex_mirror_exit_[0-9a-f]{16}=143\n$/);
+    } finally {
+      try {
+        process.kill(-(child.pid as number), "SIGKILL");
+      } catch {
+        // already gone
+      }
       rmSync(home, { recursive: true, force: true });
     }
   });

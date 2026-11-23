@@ -85,69 +85,61 @@ def holds(name: str, overrides: dict[str, str], without: set[str]) -> Run:
     return Run(name, "holds", [r for r in ALL_RULES if r not in without], overrides)
 
 
-# The rules that the floating open's late or killed `rex` replies break (SKILL.md).
-LATE_REPLY_RULES = {
-    "ExitLineWritten",
-    "OneBlockPerMirror",
-    "SettledBlockCloses",
-    "WaiterStartedOpenSeesOutcome",
-}
-
 RUNS = [
     # The current code.
     holds(
-        "current code, delay 0, one mirror, kill after the handlers",
-        {"DelayZero": "TRUE", "KillFrom": '"reading"'},
+        "current code, delay 0, one mirror, a stop at any step, late replies",
+        {"DelayZero": "TRUE", "ReplyCanTimeOut": "TRUE"},
         {"LateWaiterSeesOutcome"},
     ),
     holds(
-        "current code, delay above 0, one mirror, kill at any step",
-        {},
-        LATE_REPLY_RULES | {"LateWaiterSeesOutcome"},
+        "current code, delay above 0, one mirror, a stop at any step, late replies",
+        {"ReplyCanTimeOut": "TRUE"},
+        {"LateWaiterSeesOutcome"},
     ),
     holds(
         "current code, two mirrors",
         TWO,
-        LATE_REPLY_RULES | WAITER_RULES,
+        WAITER_RULES,
     ),
     # Findings in the current code. Each is replayed against the real code (SKILL.md).
-    Run(
-        "finding: at delay 0, a kill during the open, before the handlers, leaves the block working",
-        "finding",
-        ["ExitLineWritten"],
-        {"DelayZero": "TRUE"},
-    ),
-    Run(
-        "finding: a new_layer reply after its client died opens a second block",
-        "finding",
-        ["OneBlockPerMirror"],
-        {"ReplyCanTimeOut": "TRUE"},
-    ),
-    Run(
-        "finding: of two blocks, one viewer crashes and leaves a settled block open",
-        "finding",
-        ["SettledBlockCloses"],
-        {"ReplyCanTimeOut": "TRUE"},
-    ),
-    Run(
-        "finding: a late reply leaves a block with no exit line, working forever",
-        "finding",
-        ["ExitLineWritten"],
-        {"ReplyCanTimeOut": "TRUE"},
-    ),
-    Run(
-        "finding: a late reply leaves a block whose viewer crashes before a waiter sees the status",
-        "finding",
-        ["WaiterStartedOpenSeesOutcome"],
-        {"ReplyCanTimeOut": "TRUE"},
-    ),
     Run(
         "finding: a waiter that starts after the close gets 'not found'",
         "finding",
         ["LateWaiterSeesOutcome"],
-        {"DelayZero": "TRUE", "KillFrom": '"reading"'},
     ),
-    # Past bugs: each variant is the code before its fix.
+    # Past bugs: the floating open as first written.
+    Run(
+        "the first floating open: at delay 0, a stop during the open leaves the block working",
+        "past bug",
+        ["ExitLineWritten"],
+        {"Variant": '"floatAsWritten"', "DelayZero": "TRUE"},
+    ),
+    Run(
+        "the first floating open: a new_layer reply after its client died opens a second block",
+        "past bug",
+        ["OneBlockPerMirror"],
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
+    ),
+    Run(
+        "the first floating open: of two blocks, one viewer crashes and leaves a settled block open",
+        "past bug",
+        ["SettledBlockCloses"],
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
+    ),
+    Run(
+        "the first floating open: a late reply leaves a block with no exit line, working forever",
+        "past bug",
+        ["ExitLineWritten"],
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
+    ),
+    Run(
+        "the first floating open: a late reply leaves a viewer that crashes before a waiter sees the status",
+        "past bug",
+        ["WaiterStartedOpenSeesOutcome"],
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
+    ),
+    # Other past bugs: each variant is the code before its fix.
     Run(
         "the rewriting session_end: it loses a row that remember writes during the pass",
         "past bug",
@@ -190,11 +182,11 @@ RUNS = [
         ["EndPassClosesSettledRows"],
         {"Variant": '"endPassKeepsError"'},
     ),
-    # The statechart's config must still parse. It shows a stop during the layer call.
+    # The statechart's config must still parse, and its rules hold.
     Run(
-        "finding: the chart config (chart.cfg) shows a stop during the layer call",
-        "finding",
-        ["ExitLineWritten"],
+        "the chart config (chart.cfg)",
+        "holds",
+        ["ExitLineWritten", "ReportsCommandStatus", "SettledBlockCloses", "NeverCloseWorking"],
         config_file=CHART,
     ),
     # Mutants for the rules that no past bug broke.
