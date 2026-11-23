@@ -132,6 +132,22 @@ jobs:
       - name: Every hook has the same effect under sh and fish, on bun and on Node 22.18 and 24.1
         run: uv run .github/scripts/hook_matrix.py --runtime "$(command -v bun)" --runtime "$NODE_22" --runtime "$(command -v node)"
 
+  rex-mirror-model-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+      - uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          enable-cache: false
+      - uses: jdx/mise-action@f5be966e4a917d54244728e6a5fdcd1d93a35e6c # v5.2.6
+        with:
+          install: false
+          cache: false
+      - name: Install the statechart skill's pinned TLC and Java
+        run: uv run .github/scripts/statechart_tlc.py >> "$GITHUB_ENV"
+      - name: Rex mirror rules hold, and each past bug breaks them
+        run: uv run .agents/skills/verify-rex-mirror/scripts/check.py
+
   statechart-tests:
     runs-on: ubuntu-latest
     strategy:
