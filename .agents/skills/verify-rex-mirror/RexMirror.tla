@@ -219,7 +219,7 @@ MirrorLayerRefused(m) ==
                  viewVars, cacheVars, endVars, waitVars>>
 
 \* startViewer: diedBeforeReply(layer), at the 15 s timeout or in a group stop. Rex may still
-\* open the layer, so startViewer returns "unknown" and opens no fallback. BlindFallback: the
+\* open the layer, so startViewer returns "maybeOpen" (the model's "unknown") and opens no fallback. BlindFallback: the
 \* mirror falls back to `rex run`.
 MirrorLayerGivesUp(m) ==
   /\ Alive(m)
@@ -264,7 +264,7 @@ MirrorRunRefused(m) ==
                  req, callDead, viewVars, cacheVars, endVars, waitVars>>
 
 \* startViewer: diedBeforeReply(r) for `rex run`. Rex may still open the block, so
-\* startViewer returns "unknown". UnknownIsNoBlock: it returns null, as if no block opened.
+\* startViewer returns "maybeOpen" (the model's "unknown"). UnknownIsNoBlock: it returns null, as if no block opened.
 MirrorRunGivesUp(m) ==
   /\ Alive(m)
   /\ opc[m] = "run"
@@ -285,7 +285,7 @@ MirrorRemembers(m) ==
   /\ UNCHANGED <<cmdVars, mpc, known, killed, sigPending, exitLine, logExists,
                  req, callDead, viewVars, endVars, waitVars>>
 
-\* settleLog(code). An open viewer, or one that may have opened ("unknown"): write the exit
+\* settleLog(code). An open viewer, or one that may have opened ("maybeOpen", the model's "unknown"): write the exit
 \* line and keep the log, which the viewer deletes. A pending timer: clear it. Otherwise:
 \* delete the log with no exit line.
 Settle(m, code) ==
@@ -379,13 +379,13 @@ ViewerReadsExitLine(m, k) ==
   /\ UNCHANGED <<cmdVars, mpc, opc, known, killed, sigPending, exitLine,
                  req, callDead, closeFailed, cacheVars, endVars, waitVars>>
 
-\* After CLOSE_DELAY_MS, closeBlock: `rex block close` succeeds.
+\* After STATUS_GRACE_MS, closeBlock: `rex block close` succeeds.
 ViewerClosesBlock(m, k) ==
   /\ vpc[m][k] = "closing"
   /\ Close(m, k)
   /\ UNCHANGED <<cmdVars, mirrorVars, req, callDead, status, shown, closeFailed, cacheVars, endVars, waitVars>>
 
-\* After CLOSE_DELAY_MS, closeBlock: `rex block close` fails or times out; main() returns.
+\* After STATUS_GRACE_MS, closeBlock: `rex block close` fails or times out; main() returns.
 ViewerCloseFails(m, k) ==
   /\ vpc[m][k] = "closing"
   /\ vpc' = [vpc EXCEPT ![m][k] = "ended"]

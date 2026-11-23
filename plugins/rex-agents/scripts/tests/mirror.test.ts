@@ -1,14 +1,3 @@
-/**
- * Tests for the mirror wrapper, the mirror script, and the viewer.
- *
- * The wrapper cases run the exact command the hook builds, in zsh and bash,
- * with the REX_* variables removed so no viewer block opens. The signal cases
- * put a fake rex on PATH so a block is "opened" and the log survives for
- * inspection. Every case runs the scripts with bun and with node, and skips a
- * runtime that is not on PATH. The wrapper cases use the runtime that runs the
- * tests.
- */
-
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawn, spawnSync } from "node:child_process";
@@ -35,7 +24,6 @@ const VIEWER = join(PLUGIN, "scripts", "rex_mirror_view.ts");
 const RUNTIMES = ["bun", "node"];
 const skipFor = (rt: string): string | false =>
   spawnSync(rt, ["--version"], { stdio: "ignore" }).status === 0 ? false : `${rt} is not on PATH`;
-// The tests launch node as run-ts does, so the launch itself adds no warning to stderr.
 const flagsFor = (rt: string): string[] => (rt === "node" ? ["--disable-warning=ExperimentalWarning"] : []);
 
 const NO_REX: Record<string, string> = {};
@@ -116,7 +104,7 @@ test("openDelayMs parses non-negative finite numbers and falls back to 1500", ()
 });
 
 for (const rt of RUNTIMES) {
-  test(`only the nonce exit line ends the view (${rt})`, { skip: skipFor(rt) }, () => {
+  test(`only the exit tag line ends the view (${rt})`, { skip: skipFor(rt) }, () => {
     const tmp = mkdtempSync(join(tmpdir(), "rex-view-test-"));
     try {
       const log = join(tmp, "mirror.log");
@@ -202,7 +190,6 @@ async function waitFor(cond: () => boolean, ms: number): Promise<void> {
   }
 }
 
-/** A fake rex. `newLayer` and `run` replace the shell body of those calls. */
 function writeFakeRex(bin: string, opts: { failNewLayer?: boolean; newLayer?: string; run?: string } = {}): void {
   const newLayerBody =
     opts.newLayer ?? (opts.failNewLayer ? "exit 1" : 'printf \'{"layer_id":"layer:fake","block_ids":["b-fake"]}\\n\'');
@@ -234,7 +221,6 @@ function readRexCalls(home: string): string[][] {
     .map((line) => line.replace(/\t$/, "").split("\t"));
 }
 
-/** The rows that remember wrote for a session: one `<session>.<uuid>.json` file each. */
 function readRows(home: string, session: string): unknown[] {
   const dir = join(home, ".cache", "rex-agents");
   return readdirSync(dir)
@@ -450,7 +436,6 @@ for (const rt of RUNTIMES) {
     }
   });
 
-  /** Run the mirror at delay 0 on a short command, and return its exit code, rex calls, and logs. */
   const runOpen = (home: string, fake: { failNewLayer?: boolean; newLayer?: string; run?: string }) => {
     mkdirSync(join(home, "bin"));
     mkdirSync(join(home, "tmp"));
@@ -473,8 +458,6 @@ for (const rt of RUNTIMES) {
     return { r, calls: readRexCalls(home), text };
   };
 
-  // A rex client that exits 128 or more died by a signal or a timeout. Rex may still open its
-  // block, so the mirror must not open a second one, and must leave the exit line for it.
   test(`a new_layer client that dies before its reply opens no fallback block (${rt})`, { skip: skipFor(rt) }, () => {
     const home = mkdtempSync(join(tmpdir(), "rex-late-layer-home-"));
     try {
@@ -507,7 +490,6 @@ for (const rt of RUNTIMES) {
     mkdirSync(join(home, "bin"));
     mkdirSync(join(home, "tmp"));
     writeFakeRex(join(home, "bin"), { newLayer: "sleep 20" });
-    // Its own process group, so the stop reaches the mirror and its rex child, as Claude Code's does.
     const child = spawn(rt, [...flagsFor(rt), MIRROR, "[claude] stop", "s-stop"], {
       env: {
         ...NO_REX,
@@ -534,9 +516,7 @@ for (const rt of RUNTIMES) {
     } finally {
       try {
         process.kill(-(child.pid as number), "SIGKILL");
-      } catch {
-        // already gone
-      }
+      } catch {}
       rmSync(home, { recursive: true, force: true });
     }
   });

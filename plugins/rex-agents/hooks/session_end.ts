@@ -1,21 +1,3 @@
-/**
- * SessionEnd hook: close this session's mirror blocks that ended `done` or `error`.
- *
- * rex_mirror.ts lists each block it opens in its own row file,
- * ~/.cache/rex-agents/<session_id>.<uuid>.json. The viewer closes its own block
- * when the command exits, so this hook retries a close that failed. A block
- * whose newest status record is `done` or `error` is closed; a block still
- * `working` stays open for the user. The hook deletes a row file only after
- * its block's close succeeded or the block is gone. A rex timeout, a failed
- * close, non-JSON stdout, or a missing key leaves the row file in place, and
- * the hook moves on to the next block. The hook never rewrites a file, so a
- * row that a mirror writes during the pass, or a pass that is killed, loses
- * no row.
- *
- * An older rex_mirror.ts listed every block in one <session_id>.jsonl. The hook
- * first turns each of its lines into a row file, then deletes it.
- */
-
 import { readFileSync, readdirSync, renameSync, unlinkSync, writeFileSync, accessSync, constants, statSync } from "node:fs";
 import { createHash } from "node:crypto";
 import { homedir } from "node:os";
@@ -32,9 +14,7 @@ function which(name: string): string | null {
     try {
       accessSync(p, constants.X_OK);
       if (statSync(p).isFile()) return p;
-    } catch {
-      // not executable or not there: keep searching
-    }
+    } catch {}
   }
   return null;
 }
@@ -43,30 +23,33 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-/** Return the state of the block's newest record, "gone" if the block is gone, or null. */
-export function newestState(rex: string, session: string, block: string): string | null {
+export type NewestState = { kind: "gone" } | { kind: "state"; state: string } | { kind: "unknown" };
+const GONE: NewestState = { kind: "gone" };
+const UNKNOWN_STATE: NewestState = { kind: "unknown" };
+
+export function newestState(rex: string, session: string, block: string): NewestState {
   const r = spawnSync(rex, ["block", "call", "-s", session, "-b", block, "program_status"], {
     encoding: "utf8",
     timeout: 10_000,
   });
   if (r.error || r.status !== 0) {
-    return (r.stderr ?? "").includes("not found") ? "gone" : null;
+    return (r.stderr ?? "").includes("not found") ? GONE : UNKNOWN_STATE;
   }
   let parsed: unknown;
   try {
     parsed = JSON.parse(r.stdout);
   } catch {
-    return null;
+    return UNKNOWN_STATE;
   }
-  if (!isRecord(parsed) || !Array.isArray(parsed.records) || parsed.records.length === 0) return null;
+  if (!isRecord(parsed) || !Array.isArray(parsed.records) || parsed.records.length === 0) return UNKNOWN_STATE;
   const records = parsed.records.filter(isRecord);
-  if (records.length === 0) return null;
+  if (records.length === 0) return UNKNOWN_STATE;
   const updatedAt = (rec: Record<string, unknown>) => String(rec.updated_at ?? "");
   const newest = records.reduce((best, rec) => (updatedAt(rec) > updatedAt(best) ? rec : best));
-  return typeof newest.state === "string" ? newest.state : null;
+  if (typeof newest.state !== "string") return UNKNOWN_STATE;
+  return newest.state === "gone" ? GONE : { kind: "state", state: newest.state };
 }
 
-/** The row files of one session: `<session_id>.<uuid>.json` in dir. */
 export function rowFiles(dir: string, sessionId: string): string[] {
   let names: string[];
   try {
@@ -81,75 +64,67 @@ export function rowFiles(dir: string, sessionId: string): string[] {
     .map((n) => join(dir, n));
 }
 
-/**
- * Turn each line of the old shared list into a row file, then delete the list.
- * A line's file name comes from its hash, so a pass killed before the delete
- * rewrites the same files and adds no duplicate. Each file is written to a
- * temp name and renamed, so it appears complete or not at all; the list is
- * deleted only after every line has a complete row file.
- */
+function legacyRowId(line: string): string {
+  const h = createHash("sha256").update(line).digest("hex");
+  return `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
+}
+
+function writeRowAtomically(path: string, data: string): void {
+  const temp = `${path}.tmp.${process.pid}`;
+  writeFileSync(temp, data);
+  renameSync(temp, path);
+}
+
 export function drainLegacyList(dir: string, sessionId: string): void {
   const path = join(dir, `${sessionId}.jsonl`);
   let text: string;
   try {
     text = readFileSync(path, "utf8");
   } catch {
-    return; // no old list
+    return;
   }
-  // A killed pass can leave temp files; rowFiles never reads them.
   for (const name of readdirSync(dir)) {
     if (name.startsWith(`${sessionId}.`) && name.includes(".json.tmp.")) {
       try {
         unlinkSync(join(dir, name));
-      } catch {
-        // another pass removed it
-      }
+      } catch {}
     }
   }
   for (const line of text.split("\n")) {
     if (line.length === 0) continue;
-    const h = createHash("sha256").update(line).digest("hex");
-    const id = `${h.slice(0, 8)}-${h.slice(8, 12)}-${h.slice(12, 16)}-${h.slice(16, 20)}-${h.slice(20, 32)}`;
-    const file = join(dir, `${sessionId}.${id}.json`);
-    const temp = `${file}.tmp.${process.pid}`;
+    const file = join(dir, `${sessionId}.${legacyRowId(line)}.json`);
     try {
-      writeFileSync(temp, line + "\n");
-      renameSync(temp, file);
+      writeRowAtomically(file, line + "\n");
     } catch {
-      return; // keep the list for a later pass
+      return;
     }
   }
   try {
     unlinkSync(path);
-  } catch {
-    // another pass deleted it
-  }
+  } catch {}
 }
 
-/** Close the row's block if it settled, and delete the row once the block is closed or gone. */
 function settle(rex: string, file: string): void {
   let entry: unknown;
   try {
     entry = JSON.parse(readFileSync(file, "utf8"));
   } catch {
-    return; // unreadable, or a mirror is still writing it: keep it
+    return;
   }
   if (!isRecord(entry) || typeof entry.rex_session !== "string" || typeof entry.block !== "string") return;
-  const state = newestState(rex, entry.rex_session, entry.block);
-  if (state === "done" || state === "error") {
+  const newest = newestState(rex, entry.rex_session, entry.block);
+  if (newest.kind === "state" && (newest.state === "done" || newest.state === "error")) {
     const r = spawnSync(rex, ["block", "close", "-s", entry.rex_session, entry.block], {
       encoding: "utf8",
       timeout: 10_000,
     });
-    if (r.error || r.status !== 0) return; // the block may still be open: keep its row
-  } else if (state !== "gone") {
+    if (r.error || r.status !== 0) return;
+  } else if (newest.kind !== "gone") {
     return;
   }
   try {
     unlinkSync(file);
-  } catch {
-    // another pass deleted it
-  }
+  } catch {}
 }
 
 function main(): number {

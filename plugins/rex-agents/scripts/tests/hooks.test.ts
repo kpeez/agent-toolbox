@@ -173,8 +173,6 @@ test("a model-written description runs no shell code and reaches rex unchanged",
   });
 });
 
-// Rows go through the real `remember`, and listedBlocks reads every row file, so
-// these cases do not depend on how rex_mirror.ts stores its rows.
 const FAKE_REX = `#!/bin/sh
 if [ "$2" = "call" ]; then
   case "$6" in
@@ -208,7 +206,6 @@ const row = (block: string): string => JSON.stringify({ block, rex_session: "ses
 
 type EndHome = { home: string; rt: string; remember: (block: string) => void; run: (closeFail?: string) => void };
 
-/** A scratch HOME with the fake rex, a remember helper, and a runner for session_end.ts. */
 function endHome(rt: string): EndHome {
   const home = mkdtempSync(join(tmpdir(), "rex-end-home-"));
   const bin = join(home, "bin");
@@ -247,7 +244,6 @@ function endHome(rt: string): EndHome {
   return { home, rt, remember, run };
 }
 
-/** The blocks that the session's rows still list, sorted. */
 function listedBlocks(home: string): string[] {
   const dir = join(home, ".cache", "rex-agents");
   const blocks: string[] = [];
@@ -298,7 +294,6 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
     }
   });
 
-  // A session that started under the old plugin listed its blocks in one shared <session>.jsonl.
   test(`session end settles the rows of an old shared list, and a rerun after a kill lists each row once (${rt})`, { timeout: 60_000, skip }, () => {
     const h = endHome(rt);
     try {
@@ -311,7 +306,6 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
       assert.equal(existsSync(legacy), false);
       assert.deepEqual(closedBlocks(h.home), ["b-done"]);
       assert.deepEqual(listedBlocks(h.home), ["b-working"]);
-      // A pass killed after it converted the rows but before it deleted the old file.
       writeFileSync(legacy, rows);
       h.run();
       assert.equal(existsSync(legacy), false);
@@ -321,7 +315,6 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
     }
   });
 
-  // A kill between the open and the write of a row file leaves it empty, with the old list still there.
   test(`session end rewrites an empty row file from the old shared list, and drops stale temp files (${rt})`, { timeout: 60_000, skip }, () => {
     const h = endHome(rt);
     try {
@@ -333,7 +326,7 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
       mkdirSync(cacheDir, { recursive: true });
       writeFileSync(legacy, line + "\n");
       writeFileSync(join(cacheDir, `s-end.${id}.json`), "");
-      writeFileSync(join(cacheDir, `s-end.${id}.json.tmp.99999`), line); // a killed pass's temp file
+      writeFileSync(join(cacheDir, `s-end.${id}.json.tmp.99999`), line);
       h.run();
       assert.equal(existsSync(legacy), false);
       assert.deepEqual(closedBlocks(h.home), ["b-done"]);
@@ -346,7 +339,7 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
   test(`session end keeps a row that a mirror writes during the pass (${rt})`, { timeout: 60_000, skip }, () => {
     const h = endHome(rt);
     try {
-      h.remember("b-trigger"); // its status call runs the real remember for b-late
+      h.remember("b-trigger");
       h.run();
       assert.deepEqual(closedBlocks(h.home), ["b-trigger"]);
       assert.deepEqual(listedBlocks(h.home), ["b-late"]);

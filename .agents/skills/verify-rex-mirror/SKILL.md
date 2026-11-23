@@ -73,7 +73,7 @@ action. The check keeps each one as a `finding` run, so a fix shows up as a
 failing run. When a fix lands, move its run to `holds`.
 
 - **A waiter that starts after the close gets "block not found".**
-  `LateWaiterSeesOutcome`. The viewer closes its block `CLOSE_DELAY_MS`
+  `LateWaiterSeesOutcome`. The viewer closes its block `STATUS_GRACE_MS`
   (1 s) after it reports the status. A real Rex run of `wait-status.lua`
   on a closed mirror block printed `block not found` and exited 1. A
   waiter that started before the close printed `error` and the message
@@ -122,7 +122,7 @@ handlers, so a stop during the open left the block `working`. When the
 When the `rex run` client died, it counted no block, and deleted the log
 with no exit line. The current code sets the handlers first. A client that
 dies (a signal, its timeout, or an exit status of 128 or more) makes the
-open "unknown": no fallback, the exit line is written, and the log stays
+open `maybeOpen`: no fallback, the exit line is written, and the log stays
 for a viewer that may open.
 
 `endPassRewrites` is the hook that kept every row in one shared
@@ -174,8 +174,8 @@ before the delete and an empty row file left by a kill; the model starts
 with no old file.
 
 A reply to `new_layer` or `rex run` that exits 0 but cannot be read counts
-as "unknown", like a dead client; the model does not have that reply. When
-the open is "unknown" and no block ever opens, the log stays in `TMPDIR`.
+as `maybeOpen`, like a dead client; the model does not have that reply. When
+the open is `maybeOpen` and no block ever opens, the log stays in `TMPDIR`.
 
 `remember` writes its row file in one `writeFileSync`. A pass that reads the
 file before the write ends finds invalid JSON and keeps the file, so the

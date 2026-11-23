@@ -1,23 +1,3 @@
-/**
- * Pass a command's output through unchanged, mirror it into a Rex block, and exit with its status.
- *
- * The mirror hook pipes a background command into this script in this form:
- *
- *     { ( :; CMD
- *      ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | RUNTIME rex_mirror.ts LABEL [SESSION_ID]
- *
- * The printf after the subshell appends a status marker. This script holds back
- * the last bytes of the stream so the marker never reaches stdout, then exits
- * with the status it names. A stream without the marker exits 125. A SIGTERM,
- * SIGINT, or SIGHUP flushes the held tail, writes the exit line with 128 plus
- * the signal number, and exits with that code, so the block settles instead of
- * staying `working`. The handlers are set before any block opens.
- *
- * A `rex` call that dies before its reply (its timeout, or a stop of the task's
- * process group) may still open its block. Then the mirror opens no second
- * block, writes the exit line, and leaves the log for the viewer to delete.
- */
-
 import { closeSync, mkdirSync, openSync, unlinkSync, writeFileSync, writeSync, accessSync, constants, statSync } from "node:fs";
 import { homedir, tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
@@ -28,9 +8,8 @@ import { fileURLToPath } from "node:url";
 import { isMain } from "./is_main.ts";
 import { runtimeFlags } from "./runtime_flags.ts";
 
-// Scan the tail as latin1 so regex offsets stay byte offsets, as in Python's bytes regex.
 const MARKER = /\n__rex_rc=(\d+)\n\n?$/;
-const HOLD = 32; // longer than any marker, so a marker split across reads is still held back
+const TAIL_LONGER_THAN_MARKER = 32;
 const NO_MARKER = 125;
 const OPEN_DELAY_MS = 1_500;
 const FLOAT_BOUNDS: readonly [number, number, number, number] = [0.15, 0.15, 0.7, 0.7];
@@ -39,22 +18,20 @@ const CACHE = join(homedir(), ".cache", "rex-agents");
 type ViewerState =
   | { kind: "pending"; timer: ReturnType<typeof setTimeout> }
   | { kind: "open" }
-  | { kind: "unknown" }
+  | { kind: "maybeOpen" }
   | { kind: "skipped" };
 
-/** What startViewer knows: the block it opened, that none opened, or that one may have opened. */
-export type Opened = { kind: "open"; block: string } | { kind: "none" } | { kind: "unknown" };
+export type Opened = { kind: "open"; block: string } | { kind: "none" } | { kind: "maybeOpen" };
 const NONE: Opened = { kind: "none" };
-const UNKNOWN: Opened = { kind: "unknown" };
+const MAYBE_OPEN: Opened = { kind: "maybeOpen" };
 
-/**
- * The `rex` client died before its reply: its timeout, or a stop of the task's
- * process group. A client that handles SIGTERM exits 143 instead of dying by
- * the signal, so any status of 128 or more counts too.
- */
+function exitedBySignal(status: number): boolean {
+  return status >= 128;
+}
+
 function diedBeforeReply(r: SpawnSyncReturns<string>): boolean {
   const code = (r.error as NodeJS.ErrnoException | undefined)?.code;
-  return r.signal !== null || code === "ETIMEDOUT" || (r.status !== null && r.status >= 128);
+  return r.signal !== null || code === "ETIMEDOUT" || (r.status !== null && exitedBySignal(r.status));
 }
 
 export function openDelayMs(env: NodeJS.ProcessEnv = process.env): number {
@@ -70,9 +47,7 @@ function which(name: string): string | null {
     try {
       accessSync(p, constants.X_OK);
       if (statSync(p).isFile()) return p;
-    } catch {
-      // not executable or not there: keep searching
-    }
+    } catch {}
   }
   return null;
 }
@@ -97,13 +72,12 @@ function windowForBlock(rex: string, session: string, blockId: string): string |
   }
 }
 
-/** Open a minimized floating Rex pane (or fallback block) that shows the log. */
-export function startViewer(label: string, log: string, nonce: string): Opened {
+export function startViewer(label: string, log: string, unforgeableExitTag: string): Opened {
   const rex = which("rex");
   const session = process.env.REX_SESSION;
   if (!rex || !session) return NONE;
   const viewer = resolve(dirname(fileURLToPath(import.meta.url)), "rex_mirror_view.ts");
-  const command = [process.execPath, ...runtimeFlags(), viewer, log, label, nonce];
+  const command = [process.execPath, ...runtimeFlags(), viewer, log, label, unforgeableExitTag];
   const windowId = process.env.REX_BLOCK ? windowForBlock(rex, session, process.env.REX_BLOCK) : null;
   const params: Record<string, unknown> = {
     bounds: FLOAT_BOUNDS,
@@ -127,8 +101,7 @@ export function startViewer(label: string, log: string, nonce: string): Opened {
     ["api", "call", "-s", session, "session.new_layer", JSON.stringify(params)],
     { encoding: "utf8", timeout: 15_000 },
   );
-  // A client killed before its reply may still have opened the layer: a fallback could open a second block.
-  if (diedBeforeReply(layer)) return UNKNOWN;
+  if (diedBeforeReply(layer)) return MAYBE_OPEN;
   if (!layer.error && layer.status === 0) {
     try {
       const parsed: unknown = JSON.parse(layer.stdout);
@@ -154,32 +127,24 @@ export function startViewer(label: string, log: string, nonce: string): Opened {
         );
         return { kind: "open", block: parsed.block_ids[0] };
       }
-    } catch {
-      // the reply is unreadable
-    }
-    return UNKNOWN; // new_layer succeeded, so a layer may exist
+    } catch {}
+    return MAYBE_OPEN;
   }
   const r = spawnSync(
     rex,
     ["run", "-s", session, "--focus=false", "--keep-open", "--shell=none", "--label", label, "--json", "--", ...command],
     { encoding: "utf8", timeout: 15_000 },
   );
-  if (diedBeforeReply(r)) return UNKNOWN;
+  if (diedBeforeReply(r)) return MAYBE_OPEN;
   if (r.error || r.status !== 0) return NONE;
   try {
     const parsed: unknown = JSON.parse(r.stdout);
     const ids = isRecord(parsed) ? parsed.block_ids : null;
     if (Array.isArray(ids) && typeof ids[0] === "string" && ids[0].length > 0) return { kind: "open", block: ids[0] };
-  } catch {
-    // the reply is unreadable
-  }
-  return UNKNOWN; // rex run succeeded, so a block may exist
+  } catch {}
+  return MAYBE_OPEN;
 }
 
-/**
- * Record the block so the session-end hook can close it. Each block gets its own
- * file, which only the hook deletes, so no writer can lose another's row.
- */
 export function remember(sessionId: string, block: string, label: string): void {
   mkdirSync(CACHE, { recursive: true });
   writeFileSync(
@@ -189,13 +154,19 @@ export function remember(sessionId: string, block: string, label: string): void 
   );
 }
 
+// latin1 maps each byte to one UTF-16 code unit, so the match index is a byte offset into tail.
+function markerAt(tail: Buffer): { rc: number; offset: number } | null {
+  const match = MARKER.exec(tail.toString("latin1"));
+  return match ? { rc: Number(match[1]), offset: match.index } : null;
+}
+
 async function main(): Promise<number> {
   const label = process.argv[2] ?? "[claude] job";
   const sessionId = process.argv[3] ?? "";
   const log = join(tmpdir(), `rex-mirror-${randomUUID()}.log`);
   writeFileSync(log, "", { flag: "wx", mode: 0o600 });
   const logf = openSync(log, "a");
-  const nonce = randomBytes(8).toString("hex"); // the exit line names it, so command output cannot fake one
+  const unforgeableExitTag = randomBytes(8).toString("hex");
   let viewer: ViewerState = { kind: "skipped" };
   let tail = Buffer.alloc(0);
   const emit = (buf: Buffer): void => {
@@ -205,14 +176,10 @@ async function main(): Promise<number> {
   const closeAndUnlinkLog = (): void => {
     try {
       closeSync(logf);
-    } catch {
-      // best-effort
-    }
+    } catch {}
     try {
       unlinkSync(log);
-    } catch {
-      // already gone
-    }
+    } catch {}
   };
   const settleLog = (code: number): void => {
     switch (viewer.kind) {
@@ -222,13 +189,11 @@ async function main(): Promise<number> {
         closeAndUnlinkLog();
         return;
       case "open":
-      case "unknown":
+      case "maybeOpen":
         try {
-          writeSync(logf, `\n__rex_mirror_exit_${nonce}=${code}\n`);
+          writeSync(logf, `\n__rex_mirror_exit_${unforgeableExitTag}=${code}\n`);
           closeSync(logf);
-        } catch {
-          // best-effort: the exit code still reaches the caller
-        }
+        } catch {}
         return;
       case "skipped":
         closeAndUnlinkLog();
@@ -242,18 +207,15 @@ async function main(): Promise<number> {
   const onSignal = (code: number): void => {
     try {
       emit(tail);
-    } catch {
-      // stdout may already be closed; the exit line still settles the block
-    }
+    } catch {}
     settleLog(code);
     process.exit(code);
   };
   process.on("SIGTERM", () => onSignal(143));
   process.on("SIGINT", () => onSignal(130));
   process.on("SIGHUP", () => onSignal(129));
-  // Open only after the handlers are set: a stop during the open then still writes the exit line.
   const openViewer = (): void => {
-    const opened = startViewer(label, log, nonce);
+    const opened = startViewer(label, log, unforgeableExitTag);
     if (opened.kind === "open" && sessionId) remember(sessionId, opened.block, label);
     viewer = opened.kind === "none" ? { kind: "skipped" } : { kind: opened.kind };
   };
@@ -267,19 +229,19 @@ async function main(): Promise<number> {
   }
   for await (const chunk of process.stdin) {
     tail = Buffer.concat([tail, chunk]);
-    if (tail.length > HOLD) {
-      emit(tail.subarray(0, tail.length - HOLD));
-      tail = tail.subarray(tail.length - HOLD);
+    if (tail.length > TAIL_LONGER_THAN_MARKER) {
+      emit(tail.subarray(0, tail.length - TAIL_LONGER_THAN_MARKER));
+      tail = tail.subarray(tail.length - TAIL_LONGER_THAN_MARKER);
     }
   }
   // A stop during a synchronous open leaves both the signal and the end of input pending.
   // Let a pending signal handler run first, so the block reports 143, not a missing marker.
   await new Promise<void>((resolve) => setImmediate(resolve));
-  const m = MARKER.exec(tail.toString("latin1"));
-  const rc = m ? Number(m[1]) : NO_MARKER;
-  emit(m ? tail.subarray(0, m.index) : tail);
+  const marker = markerAt(tail);
+  const rc = marker ? marker.rc : NO_MARKER;
+  emit(marker ? tail.subarray(0, marker.offset) : tail);
   settleLog(rc);
-  if (!m) console.error("rex_mirror: the command's exit status marker is missing");
+  if (!marker) console.error("rex_mirror: the command's exit status marker is missing");
   return rc;
 }
 
