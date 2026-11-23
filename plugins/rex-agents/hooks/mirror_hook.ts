@@ -30,7 +30,7 @@ const SAFE = /^[a-zA-Z0-9_@%+=:,./-]+$/;
 const WHITESPACE = /[\t-\r\x1c-\x1f\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/;
 
 /** Quote one shell word the way Python shlex.quote does. */
-export function shquote(s: string): string {
+function shquote(s: string): string {
   if (s.length > 0 && SAFE.test(s)) return s;
   return "'" + s.replaceAll("'", "'\\''") + "'";
 }
@@ -52,7 +52,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
   return typeof v === "object" && v !== null && !Array.isArray(v);
 }
 
-export function labelFor(toolInput: Record<string, unknown>, agentId: unknown): string {
+function labelFor(toolInput: Record<string, unknown>, agentId: unknown): string {
   const raw = toolInput.description || toolInput.command || "";
   const text = String(raw).split(WHITESPACE).filter((s) => s.length > 0).join(" ").slice(0, LABEL_MAX);
   return `${agentId ? "[claude:sub]" : "[claude]"} ${text}`;
@@ -63,8 +63,8 @@ export function labelFor(toolInput: Record<string, unknown>, agentId: unknown): 
  *
  * The subshell keeps the command's own EXIT trap, `exec`, and `exit` from
  * skipping the marker. The newline before `)` ends a trailing comment. The
- * `:;` prefix keeps an empty or comment-only command valid in bash and zsh,
- * which reject `( )` and `( # note )` with exit 2.
+ * `:;` prefix keeps an empty or comment-only command valid in bash and sh,
+ * which reject `( )` and `( # note )` with exit 2. zsh accepts both.
  */
 export function mirrored(command: string, label: string, sessionId: string, runtime: string): string {
   return (
@@ -73,7 +73,7 @@ export function mirrored(command: string, label: string, sessionId: string, runt
   );
 }
 
-export type MirrorDecision = {
+type MirrorDecision = {
   hookSpecificOutput: {
     hookEventName: "PreToolUse";
     updatedInput: Record<string, unknown>;
@@ -81,12 +81,7 @@ export type MirrorDecision = {
 };
 
 /** Return the hook output for one PreToolUse event, or null to leave the call alone. */
-export function decide(
-  data: unknown,
-  env: Record<string, string | undefined>,
-  whichFn: (name: string) => string | null = which,
-  runtime: string = process.execPath,
-): MirrorDecision | null {
+function decide(data: unknown, env: Record<string, string | undefined>): MirrorDecision | null {
   if (!isRecord(data)) return null;
   const toolInput = isRecord(data.tool_input) ? data.tool_input : {};
   const command = toolInput.command;
@@ -94,10 +89,10 @@ export function decide(
   if (toolInput.run_in_background !== true) return null;
   if (typeof data.permission_mode !== "string" || !MIRROR_MODES.has(data.permission_mode)) return null;
   if (!env.REX_SESSION || env.REX_AGENTS_MIRROR === "0") return null;
-  if (!whichFn("rex")) return null;
+  if (!which("rex")) return null;
   if (command.includes("rex_mirror.ts") || command.startsWith("rex ")) return null;
   const label = labelFor(toolInput, data.agent_id);
-  const updated = { ...toolInput, command: mirrored(command, label, String(data.session_id ?? ""), runtime) };
+  const updated = { ...toolInput, command: mirrored(command, label, String(data.session_id ?? ""), process.execPath) };
   return { hookSpecificOutput: { hookEventName: "PreToolUse", updatedInput: updated } };
 }
 

@@ -483,7 +483,7 @@ function repoHasOwnTemplate(cwd: string): boolean {
   return false;
 }
 
-export function slotErrors(name: string, text: string): string[] {
+function slotErrors(name: string, text: string): string[] {
   if (text.trim() === "") return [`${name}: empty.`];
   const errors: string[] = [];
   let inFence = false;

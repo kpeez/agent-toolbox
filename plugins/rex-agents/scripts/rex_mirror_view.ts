@@ -43,8 +43,7 @@ export function status(state: string, msg: string): void {
  * Close the block this program runs in. A close terminates this process, so
  * call it last. Best effort: a failure leaves the block for the session-end hook.
  */
-export function closeBlock(session: string | undefined, block: string | undefined): boolean {
-  if (!session || !block) return false;
+function closeBlock(session: string, block: string): boolean {
   const r = spawnSync("rex", ["block", "close", "-s", session, block], {
     stdio: "ignore",
     timeout: CLOSE_TIMEOUT_MS,

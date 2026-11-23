@@ -10,7 +10,7 @@ import { isMain } from "../scripts/is_main.ts";
 const SKILL = resolve(dirname(fileURLToPath(import.meta.url)), "..", "skills", "using-rex");
 
 /** Return the skill text without its YAML frontmatter. */
-export function body(text: string): string {
+function body(text: string): string {
   if (text.startsWith("---\n")) {
     const end = text.indexOf("\n---\n", 4);
     if (end !== -1) return text.slice(end + 5).replace(/^\n+/, "");

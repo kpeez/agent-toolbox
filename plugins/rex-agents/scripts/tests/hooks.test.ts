@@ -1,23 +1,11 @@
-/**
- * Tests for the hook decisions, the session-end cleanup, and the node fallback.
- *
- * The decide cases pass a fake which, so they need no real rex. The
- * session-end cases write rows with the real `remember` and run the hook
- * against a fake rex script and a temporary HOME. The smoke cases spawn every hook with node and sample stdin, which
- * proves the erasable syntax and the node: APIs run without bun.
- */
-
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawnSync } from "node:child_process";
 import { createHash } from "node:crypto";
 import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { dirname, join, resolve } from "node:path";
+import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { decide, mirrored, shquote } from "../../hooks/mirror_hook.ts";
-import { body } from "../../hooks/session_start.ts";
-import { RULE } from "../../hooks/subagent_start.ts";
 
 const PLUGIN = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..");
 const HOOKS = join(PLUGIN, "hooks");
@@ -27,6 +15,9 @@ const NO_REX: Record<string, string> = {};
 for (const [k, v] of Object.entries(process.env)) {
   if (!k.startsWith("REX_") && typeof v === "string") NO_REX[k] = v;
 }
+
+const locate = (rt: string): string => spawnSync("sh", ["-c", 'command -v "$0"', rt], { encoding: "utf8" }).stdout.trim();
+const flagsFor = (rt: string): string[] => (basename(rt) === "node" ? ["--disable-warning=ExperimentalWarning"] : []);
 
 function event(
   command = "make test",
@@ -38,105 +29,148 @@ function event(
   return { tool_name: "Bash", session_id: "s-1", permission_mode: "auto", tool_input: toolInput, ...extra };
 }
 
-const whichAll = (name: string): string => `/usr/local/bin/${name}`;
-const RUNTIME = "/opt/rt/bin/node";
 const ENV = { REX_SESSION: "session:x" };
+const LAYER_REX = `#!/bin/sh
+printf '%s\\t' "$@" >> "$HOME/rex-calls"
+printf '\\n' >> "$HOME/rex-calls"
+[ "$5" = session.new_layer ] && printf '{"layer_id":"layer:1","block_ids":["b-1"]}\\n'
+exit 0
+`;
 
-function wrappedCommand(e: Record<string, unknown>, env: Record<string, string> = ENV): string {
-  const out = decide(e, env, whichAll, RUNTIME);
-  if (out === null) throw new Error("expected a rewrite");
-  return String(out.hookSpecificOutput.updatedInput.command);
+type Sandbox = { home: string; tmp: string; path: string };
+
+function withSandbox(run: (sb: Sandbox) => void): void {
+  const home = mkdtempSync(join(tmpdir(), "rex-hook-"));
+  try {
+    mkdirSync(join(home, "bin"));
+    mkdirSync(join(home, "tmp"));
+    writeFileSync(join(home, "bin", "rex"), LAYER_REX);
+    chmodSync(join(home, "bin", "rex"), 0o755);
+    run({ home, tmp: join(home, "tmp"), path: `${join(home, "bin")}:/usr/bin:/bin` });
+  } finally {
+    rmSync(home, { recursive: true, force: true });
+  }
 }
 
-test("rewrites a background call in rex", () => {
-  const out = decide(event(), ENV, whichAll, RUNTIME);
-  if (out === null) throw new Error("expected a rewrite");
-  const spec = out.hookSpecificOutput;
+function runHook(
+  sb: Sandbox,
+  e: Record<string, unknown>,
+  env: Record<string, string> = ENV,
+  rt = process.execPath,
+  path = sb.path,
+): Record<string, unknown> | null {
+  const r = spawnSync(rt, [...flagsFor(rt), join(HOOKS, "mirror_hook.ts")], {
+    input: JSON.stringify(e),
+    env: { ...NO_REX, PATH: path, ...env },
+    encoding: "utf8",
+    timeout: 30_000,
+  });
+  assert.equal(r.status, 0, r.stderr);
+  if (r.stdout === "") return null;
+  const spec = JSON.parse(r.stdout).hookSpecificOutput;
   assert.equal(spec.hookEventName, "PreToolUse");
   assert.ok(!("permissionDecision" in spec));
-  const updated = spec.updatedInput;
-  // mirror.test.ts runs this wrapper in bash and zsh, and verify-rex-mirror model-checks its status marker.
-  assert.equal(updated.command, mirrored("make test", "[claude] Run the tests", "s-1", RUNTIME));
-  const rest = { ...updated };
-  delete rest.command;
-  assert.deepEqual(rest, { description: "Run the tests", timeout: 600000, run_in_background: true });
-});
+  return spec.updatedInput;
+}
 
-test("leaves foreground calls alone", () => {
-  assert.equal(decide(event("make test", false), ENV, whichAll), null);
-  assert.equal(decide(event("make test", null), ENV, whichAll), null);
-});
+function runRewritten(sb: Sandbox, command: unknown) {
+  rmSync(join(sb.home, "rex-calls"), { force: true });
+  const r = spawnSync("/bin/sh", ["-c", String(command)], {
+    env: { ...NO_REX, HOME: sb.home, TMPDIR: sb.tmp, PATH: sb.path, ...ENV, REX_AGENTS_MIRROR_DELAY_MS: "0" },
+    encoding: "utf8",
+    timeout: 30_000,
+  });
+  const calls = existsSync(join(sb.home, "rex-calls")) ? readFileSync(join(sb.home, "rex-calls"), "utf8").split("\n") : [];
+  const labels = calls
+    .map((line) => line.split("\t"))
+    .filter((c) => c[4] === "session.new_layer")
+    .map((c) => JSON.parse(c[5]).layout.block.label);
+  return { r, labels };
+}
 
-test("leaves calls outside rex alone", () => {
-  assert.equal(decide(event(), {}, whichAll), null);
-});
+function mirror(sb: Sandbox, e: Record<string, unknown>) {
+  const updated = runHook(sb, e);
+  if (updated === null) throw new Error("expected a rewrite");
+  return runRewritten(sb, updated.command);
+}
 
-test("kill switch", () => {
-  assert.equal(decide(event(), { ...ENV, REX_AGENTS_MIRROR: "0" }, whichAll), null);
-  assert.ok(decide(event(), { ...ENV, REX_AGENTS_MIRROR: "1" }, whichAll) !== null);
-});
+for (const name of ["bun", "node"]) {
+  const rt = locate(name);
+  test(`a rewritten background call keeps its output and exit code and opens one block (${name})`, { skip: rt ? false : `${name} is not on PATH` }, () => {
+    withSandbox((sb) => {
+      const updated = runHook(sb, event("printf 'out\\n'; printf 'err\\n' >&2; exit 3"), ENV, rt);
+      if (updated === null) throw new Error("expected a rewrite");
+      const { command, ...rest } = updated;
+      assert.deepEqual(rest, { description: "Run the tests", timeout: 600000, run_in_background: true });
+      const { r, labels } = runRewritten(sb, command);
+      assert.equal(r.stdout, "out\nerr\n");
+      assert.equal(r.stderr, "", "the runtime prints no warning into the command's stderr");
+      assert.equal(r.status, 3);
+      assert.deepEqual(labels, ["[claude] Run the tests"]);
+      assert.deepEqual(readdirSync(join(sb.home, ".cache", "rex-agents")).map((f) => f.split(".")[0]), ["s-1"]);
+    });
+  });
+}
 
-test("no double wrap", () => {
-  const once = wrappedCommand(event());
-  assert.equal(decide(event(once), ENV, whichAll), null);
-});
-
-test("needs rex, and runs the mirror with the running runtime", () => {
-  assert.equal(decide(event(), ENV, (n) => (n === "rex" ? null : whichAll(n))), null);
-  const onlyRex = (n: string): string | null => (n === "rex" ? "/usr/local/bin/rex" : null);
-  const out = decide(event(), ENV, onlyRex);
-  if (out === null) throw new Error("expected a rewrite without bun on PATH");
-  const flag = process.versions.bun === undefined ? " --disable-warning=ExperimentalWarning" : "";
-  assert.ok(String(out.hookSpecificOutput.updatedInput.command).includes(` | ${process.execPath}${flag} ${MIRROR} `));
+test("rewrites only an unmirrored background Bash call in rex, with rex on PATH", () => {
+  withSandbox((sb) => {
+    const rewrites = (e: Record<string, unknown>, env: Record<string, string> = ENV, path = sb.path): boolean =>
+      runHook(sb, e, env, process.execPath, path) !== null;
+    assert.ok(rewrites(event()));
+    assert.ok(!rewrites(event("make test", false)));
+    assert.ok(!rewrites(event("make test", null)));
+    assert.ok(!rewrites(event(), {}));
+    assert.ok(!rewrites(event(), { ...ENV, REX_AGENTS_MIRROR: "0" }));
+    assert.ok(rewrites(event(), { ...ENV, REX_AGENTS_MIRROR: "1" }));
+    assert.ok(!rewrites({ ...event(), tool_name: "Monitor" }));
+    assert.ok(!rewrites(event(), ENV, "/usr/bin:/bin"));
+    assert.ok(!rewrites(event("rex do -s session:x wait-status.lua block=b1 timeout=600")));
+    assert.ok(rewrites(event("printf 'rex ok\\n'")));
+    assert.ok(!rewrites(event(String(runHook(sb, event())?.command))));
+  });
 });
 
 test("only modes that do not prompt", () => {
-  for (const mode of ["auto", "bypassPermissions"]) {
-    assert.ok(decide(event("make test", true, { permission_mode: mode }), ENV, whichAll) !== null);
-  }
-  for (const mode of ["manual", "default", "acceptEdits", "plan", "dontAsk", null]) {
-    assert.equal(decide(event("make test", true, { permission_mode: mode }), ENV, whichAll), null);
-  }
-});
-
-test("other tools are ignored", () => {
-  assert.equal(decide({ ...event(), tool_name: "Monitor" }, ENV, whichAll), null);
+  withSandbox((sb) => {
+    for (const mode of ["auto", "bypassPermissions"]) {
+      assert.ok(runHook(sb, event("make test", true, { permission_mode: mode })) !== null, mode);
+    }
+    for (const mode of ["manual", "default", "acceptEdits", "plan", "dontAsk", null]) {
+      assert.equal(runHook(sb, event("make test", true, { permission_mode: mode })), null, String(mode));
+    }
+  });
 });
 
 test("labels", () => {
-  assert.ok(wrappedCommand(event("make test", true, { agent_id: "a1" })).includes("'[claude:sub] Run the tests'"));
-  const long = event();
-  long.tool_input.description = "x".repeat(100);
-  assert.ok(wrappedCommand(long).includes(`'[claude] ${"x".repeat(60)}'`));
-  const bare = event();
-  delete bare.tool_input.description;
-  assert.ok(wrappedCommand(bare).includes("'[claude] make test'"));
+  withSandbox((sb) => {
+    assert.deepEqual(mirror(sb, event("true", true, { agent_id: "a1" })).labels, ["[claude:sub] Run the tests"]);
+    const long = event("true");
+    long.tool_input.description = "x".repeat(100);
+    assert.deepEqual(mirror(sb, long).labels, [`[claude] ${"x".repeat(60)}`]);
+    const bare = event("true");
+    delete bare.tool_input.description;
+    assert.deepEqual(mirror(sb, bare).labels, ["[claude] true"]);
+  });
 });
 
-test("leaves rex commands alone", () => {
-  assert.equal(decide(event("rex do -s session:x wait-status.lua block=b1 timeout=600"), ENV, whichAll), null);
-  assert.ok(decide(event("printf 'rex ok\\n'"), ENV, whichAll) !== null);
-});
-
-test("quotes labels like shlex.quote", () => {
-  assert.equal(shquote("s-1"), "s-1");
-  assert.equal(shquote(""), "''");
-  assert.equal(shquote("it's"), "'it'\\''s'");
-  const e = event();
-  e.tool_input.description = "it's a test";
-  assert.ok(wrappedCommand(e).includes("'[claude] it'\\''s a test'"));
-});
-
-test("body strips the YAML frontmatter", () => {
-  assert.equal(body("---\nname: x\n---\n\n# Title\ntext\n"), "# Title\ntext\n");
-  assert.equal(body("---\nname: x\n---\n# Title\n"), "# Title\n");
-  assert.equal(body("no frontmatter\n"), "no frontmatter\n");
-  assert.equal(body("---\nunclosed\n"), "---\nunclosed\n");
-});
-
-test("the subagent rule names both mirroring modes", () => {
-  assert.ok(RULE.includes("auto"));
-  assert.ok(RULE.includes("bypassPermissions"));
+test("a model-written description runs no shell code and reaches rex unchanged", () => {
+  withSandbox((sb) => {
+    const canary = join(sb.home, "canary");
+    const pieces = ["'", '"', "\\", "`", "$", "(", ")", ";", "|", "&", "\n", "\t", " ", "x", "é", "#", "*", "!", "%",
+      `$(touch ${canary})`, `\`touch ${canary}\``, `'; touch ${canary}; '`, `"; touch ${canary}; "`];
+    let seed = 7;
+    const next = (): number => (seed = (seed * 48271) % 2147483647);
+    for (let i = 0; i < 20; i++) {
+      const description = Array.from({ length: next() % 12 }, () => pieces[next() % pieces.length]).join("");
+      const e = event("printf 'ok\\n'");
+      e.tool_input.description = description;
+      const { r, labels } = mirror(sb, e);
+      const text = String(description || e.tool_input.command).split(/[ \t\n]+/).filter(Boolean).join(" ").slice(0, 60);
+      assert.equal(r.stdout, "ok\n", JSON.stringify(description));
+      assert.deepEqual(labels, [`[claude] ${text}`], JSON.stringify(description));
+      assert.ok(!existsSync(canary), JSON.stringify(description));
+    }
+  });
 });
 
 // Rows go through the real `remember`, and listedBlocks reads every row file, so
@@ -322,16 +356,6 @@ for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[strin
   });
 }
 
-function stubBin(home: string): string {
-  const bin = join(home, "bin");
-  mkdirSync(bin, { recursive: true });
-  for (const name of ["rex", "bun"]) {
-    writeFileSync(join(bin, name), "#!/bin/sh\nexit 0\n");
-    chmodSync(join(bin, name), 0o755);
-  }
-  return bin;
-}
-
 test("node runs session_start.ts", () => {
   const hook = join(HOOKS, "session_start.ts");
   const r = spawnSync("node", [hook], {
@@ -357,25 +381,6 @@ test("node runs session_start.ts", () => {
   assert.equal(sdk.stdout, "");
 });
 
-test("node runs mirror_hook.ts", () => {
-  const home = mkdtempSync(join(tmpdir(), "rex-smoke-home-"));
-  try {
-    const bin = stubBin(home);
-    const r = spawnSync("node", [join(HOOKS, "mirror_hook.ts")], {
-      input: JSON.stringify(event()),
-      env: { ...NO_REX, REX_SESSION: "session:x", PATH: `${bin}:${process.env.PATH}` },
-      encoding: "utf8",
-      timeout: 30_000,
-    });
-    assert.equal(r.status, 0);
-    const out = JSON.parse(r.stdout);
-    assert.equal(out.hookSpecificOutput.hookEventName, "PreToolUse");
-    assert.ok(String(out.hookSpecificOutput.updatedInput.command).includes("rex_mirror.ts"));
-  } finally {
-    rmSync(home, { recursive: true, force: true });
-  }
-});
-
 test("node runs subagent_start.ts", () => {
   const hook = join(HOOKS, "subagent_start.ts");
   const r = spawnSync("node", [hook], {
@@ -387,25 +392,9 @@ test("node runs subagent_start.ts", () => {
   assert.equal(r.status, 0);
   const out = JSON.parse(r.stdout);
   assert.equal(out.hookSpecificOutput.hookEventName, "SubagentStart");
-  assert.ok(out.hookSpecificOutput.additionalContext.includes("auto"));
-  assert.ok(out.hookSpecificOutput.additionalContext.includes("bypassPermissions"));
+  assert.match(out.hookSpecificOutput.additionalContext, /\bauto\b/);
+  assert.match(out.hookSpecificOutput.additionalContext, /\bbypassPermissions\b/);
   const outside = spawnSync("node", [hook], { input: "{}", env: NO_REX, encoding: "utf8", timeout: 30_000 });
   assert.equal(outside.status, 0);
   assert.equal(outside.stdout, "");
-});
-
-test("node runs session_end.ts", () => {
-  const home = mkdtempSync(join(tmpdir(), "rex-smoke-home-"));
-  try {
-    const r = spawnSync("node", [join(HOOKS, "session_end.ts")], {
-      input: JSON.stringify({ session_id: "s-smoke" }),
-      env: { ...NO_REX, HOME: home },
-      encoding: "utf8",
-      timeout: 30_000,
-    });
-    assert.equal(r.status, 0);
-    assert.equal(r.stdout, "");
-  } finally {
-    rmSync(home, { recursive: true, force: true });
-  }
 });

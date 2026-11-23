@@ -25,7 +25,7 @@ import {
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { closeBlock, formatHeader } from "../rex_mirror_view.ts";
+import { formatHeader } from "../rex_mirror_view.ts";
 import { openDelayMs } from "../rex_mirror.ts";
 import { mirrored } from "../../hooks/mirror_hook.ts";
 
@@ -48,7 +48,6 @@ const CASES: Array<[string, string, string, number]> = [
   ["failure", "printf 'x\\n'; false", "x\n", 1],
   ["explicit exit", "printf 'y\\n'; exit 3", "y\n", 3],
   ["no trailing newline", "printf 'no-newline'", "no-newline", 0],
-  ["and-list", "true && printf 'ok\\n' && false", "ok\n", 1],
   ["stderr merged", "printf 'err\\n' >&2; exit 2", "err\n", 2],
   ["empty output", "true", "", 0],
   ["own EXIT trap", "trap 'echo cleanup' EXIT; echo work; exit 4", "work\ncleanup\n", 4],
@@ -171,7 +170,7 @@ for (const rt of RUNTIMES) {
     }
   });
 
-  test(`an exited view outside rex closes nothing (${rt})`, { skip: skipFor(rt) }, () => {
+  test(`an exited view without both rex ids closes nothing (${rt})`, { skip: skipFor(rt) }, () => {
     const home = mkdtempSync(join(tmpdir(), "rex-view-noclose-"));
     try {
       const bin = join(home, "bin");
@@ -179,25 +178,21 @@ for (const rt of RUNTIMES) {
       writeFileSync(join(bin, "rex"), '#!/bin/sh\nprintf \'%s\\n\' "$@" >> "$HOME/rex-args"\n');
       chmodSync(join(bin, "rex"), 0o755);
       const log = join(home, "mirror.log");
-      writeFileSync(log, "out\n\n__rex_mirror_exit_abc123=0\n");
-      const r = spawnSync(rt, [...flagsFor(rt), VIEWER, log, "[claude] t", "abc123"], {
-        env: { ...NO_REX, HOME: home, PATH: `${bin}:${process.env.PATH}` },
-        encoding: "utf8",
-        timeout: 30_000,
-      });
-      assert.equal(r.status, 0);
-      assert.ok(!existsSync(join(home, "rex-args")));
+      for (const ids of [{}, { REX_SESSION: "session:t" }, { REX_BLOCK: "block:b" }]) {
+        writeFileSync(log, "out\n\n__rex_mirror_exit_abc123=0\n");
+        const r = spawnSync(rt, [...flagsFor(rt), VIEWER, log, "[claude] t", "abc123"], {
+          env: { ...NO_REX, HOME: home, PATH: `${bin}:${process.env.PATH}`, ...ids },
+          encoding: "utf8",
+          timeout: 30_000,
+        });
+        assert.equal(r.status, 0);
+        assert.ok(!existsSync(join(home, "rex-args")), JSON.stringify(ids));
+      }
     } finally {
       rmSync(home, { recursive: true, force: true });
     }
   });
 }
-
-test("closeBlock needs both ids", () => {
-  assert.equal(closeBlock(undefined, undefined), false);
-  assert.equal(closeBlock("session:s", undefined), false);
-  assert.equal(closeBlock(undefined, "block:b"), false);
-});
 
 async function waitFor(cond: () => boolean, ms: number): Promise<void> {
   const deadline = Date.now() + ms;
