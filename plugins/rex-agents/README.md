@@ -71,11 +71,12 @@ keep the command unchanged.
 ## Test
 
 ```text
-bun test plugins/rex-agents/scripts/tests
 node --test plugins/rex-agents/scripts/tests/
 ```
 
-The tests run the wrapper on 12 command shapes in zsh and bash, check the exit
-status for a stream without the status marker, and check each hook decision.
-They also kill the mirror mid-stream, check that an exited viewer closes its
-block, and run every hook under node. Both runtimes run the same files.
+The tests run the wrapper on 11 command shapes in zsh and bash, and check the
+exit status for a stream without the status marker. They run the mirror hook
+as a process for each decision, then run the command it returns in sh with a
+fake `rex`, and check the output, the exit code, and the block label. They
+also kill the mirror mid-stream, check that an exited viewer closes its block,
+and run the hooks and the mirror under bun and node.
