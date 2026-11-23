@@ -17,6 +17,6 @@ When the cleanup reveals a missing feature or a real bug, split it out and ship 
 9-independent-review: Give the diff and evidence to an agent that did not write it. (reviewer agent, no-comments)
 10-order-commits: Order the commits as subtraction, then reshape, then follow-on cleanup, each green. (sequence-verifiable-units)
 11-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
-12-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
+12-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)
 
 Reply: old and new shape, the pin, the equivalence evidence, the reader-load delta, and what shipped and what was reverted. No new behavior.

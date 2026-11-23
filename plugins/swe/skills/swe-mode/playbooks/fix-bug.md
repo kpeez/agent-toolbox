@@ -19,6 +19,6 @@ Delegate the investigation and the fix to subagents and stay in the lead. Be sci
 11-check-blast-radius: When the change touches shared state, a wire format, or a public interface, find its safety fact. (blast-radius)
 12-clean-the-diff: Self-review the diff and keep a comment only for a non-obvious why. (no-comments, writing)
 13-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
-14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
+14-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)
 
 Reply: what broke, the root cause, the fix, how you verified it, the failing-then-passing repro output verbatim, and the new enforcer or why the bug has none.

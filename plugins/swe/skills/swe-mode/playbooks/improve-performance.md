@@ -16,6 +16,6 @@ Tie every fix to a measurement. Do not read source instead of measuring. The per
 8-explain-the-gain: Explain the gain and why it is not larger. (explain-the-number)
 9-verify-behavior-unchanged: Show behavior is unchanged on the real surface, with the project's verification skill when one exists. (prove-it-works)
 10-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
-11-publish-draft-pr: Cite the measurement in the PR, push the final commits, and update the draft PR when publication is authorized. (ship-pr)
+11-publish-draft-pr: When publication is authorized, cite the measurement in the PR, push the final commits, and update the draft PR. (ship-pr)
 
 Reply: baseline, post-fix number, delta, spread, limiter, and artifact path.

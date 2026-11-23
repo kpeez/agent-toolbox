@@ -2,7 +2,7 @@
 
 # Eval facet map
 
-67 of 341 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
+67 of 333 always-required behaviors have no scoring case. The count is approximate. A step load counts once per playbook and name. A condition in the middle of a step leaves its names `always`.
 
 ## Legend
 
@@ -197,7 +197,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 3-cut-to-decisions | writing | visible-skill | skill-call | always | - |
 | 3-cut-to-decisions | writing-for-agents | visible-skill | skill-call | always | - |
 | 6-plan-activation-check | evaluate-agent-change | playbook | full-read | conditional | - |
-| 7-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 7-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `autopilot-full` step loads
 
@@ -260,7 +260,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 11-independent-review | reviewer agent | reviewer-agent | agent-spawn | always | - |
 | 12-order-commits | sequence-verifiable-units | principle | full-read | always | - |
 | 13-update-obsolete-docs | implement | visible-skill | skill-call | always | - |
-| 14-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 14-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `build-prototype` step loads
 
@@ -336,7 +336,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 12-clean-the-diff | no-comments | hidden-skill | full-read | always | - |
 | 12-clean-the-diff | writing | visible-skill | skill-call | always | - |
 | 13-update-obsolete-docs | implement | visible-skill | skill-call | always | - |
-| 14-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 14-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `hillclimb-metric` step loads
 
@@ -353,7 +353,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 7-measure-and-decide | sequence-verifiable-units | principle | full-read | always | - |
 | 8-commit-and-log | log-decisions | visible-skill | skill-call | always | - |
 | 9-push-past-plateau | laziness-protocol | principle | full-read | always | - |
-| 11-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 11-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `improve-performance` step loads
 
@@ -371,7 +371,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 8-explain-the-gain | explain-the-number | principle | full-read | always | - |
 | 9-verify-behavior-unchanged | prove-it-works | principle | full-read | always | - |
 | 10-update-obsolete-docs | implement | visible-skill | skill-call | always | - |
-| 11-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 11-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `investigate-question` step loads
 
@@ -388,7 +388,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 3-migrate-one-component | separate-before-serializing-shared-state | principle | full-read | always | - |
 | 3-migrate-one-component | swarm | hidden-skill | full-read | always | - |
 | 4-diff-each-component | prove-it-works | principle | full-read | always | - |
-| 5-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 5-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `pause-safely` step loads
 
@@ -440,7 +440,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 9-independent-review | reviewer agent | reviewer-agent | agent-spawn | always | - |
 | 10-order-commits | sequence-verifiable-units | principle | full-read | always | - |
 | 11-update-obsolete-docs | implement | visible-skill | skill-call | always | - |
-| 12-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 12-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `run-autonomously` step loads
 
@@ -451,7 +451,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | 4-iterate-smallest-change | sequence-verifiable-units | principle | full-read | always | - |
 | 5-own-mid-run-discoveries | never-block-on-the-human | principle | full-read | always | - |
 | 6-log-each-iteration | log-decisions | visible-skill | skill-call | always | - |
-| 8-publish-draft-pr | ship-pr | visible-skill | skill-call | always | - |
+| 8-publish-draft-pr | ship-pr | visible-skill | skill-call | conditional | - |
 
 ### Playbook `ship-stack` step loads
 

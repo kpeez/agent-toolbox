@@ -19,6 +19,6 @@ Delegate implementation and stay in the lead. Delegation is mandatory and the la
 11-independent-review: Give the diff and evidence to an agent that did not write it. (reviewer agent, no-comments)
 12-order-commits: Shape the work into small ordered commits before you push them, and stack follow-ups. (sequence-verifiable-units)
 13-update-obsolete-docs: Update documentation this change makes obsolete. (implement)
-14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
+14-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)
 
 Reply: what you built, the data shape, what you chose and why, the throughput checkpoint, the entry-point evidence, and open decisions. Use a table for design alternatives, and show the design with the `writing` show-me visuals.

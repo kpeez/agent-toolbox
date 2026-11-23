@@ -7282,10 +7282,10 @@
         "locator": "7-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/author-skill.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "7-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "7-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "author-skill"
     },
     {
@@ -7948,10 +7948,10 @@
         "locator": "14-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/build-feature.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "14-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "build-feature"
     },
     {
@@ -9183,10 +9183,10 @@
         "locator": "14-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/fix-bug.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "14-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "fix-bug"
     },
     {
@@ -9657,10 +9657,10 @@
         "locator": "11-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/hillclimb-metric.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "11-publish-draft-pr: Push the kept commits in landing order and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "11-publish-draft-pr: When publication is authorized, push the kept commits in landing order and update the draft PR. (ship-pr)",
       "subject": "hillclimb-metric"
     },
     {
@@ -10068,10 +10068,10 @@
         "locator": "11-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/improve-performance.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "11-publish-draft-pr: Cite the measurement in the PR, push the final commits, and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "11-publish-draft-pr: When publication is authorized, cite the measurement in the PR, push the final commits, and update the draft PR. (ship-pr)",
       "subject": "improve-performance"
     },
     {
@@ -10443,10 +10443,10 @@
         "locator": "5-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/match-visual-parity.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "5-publish-draft-pr: Push per component or per safe batch, and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "5-publish-draft-pr: When publication is authorized, push per component or per safe batch, and update the draft PR. (ship-pr)",
       "subject": "match-visual-parity"
     },
     {
@@ -10877,10 +10877,10 @@
         "locator": "12-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/refactor-structure.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "12-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "12-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "refactor-structure"
     },
     {
@@ -11414,10 +11414,10 @@
         "locator": "8-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/run-autonomously.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "8-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "8-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "run-autonomously"
     },
     {
