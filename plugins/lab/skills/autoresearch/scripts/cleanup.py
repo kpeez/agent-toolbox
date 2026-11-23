@@ -42,13 +42,11 @@ SPACE_MARGIN = 10 * 1024 * 1024
 
 
 class CleanupError(RuntimeError):
-    """A non-destructive cleanup failure."""
+    pass
 
 
 @dataclass(frozen=True)
 class Entry:
-    """A no-follow snapshot entry relative to the run root."""
-
     rel: str
     kind: str
     size: int
@@ -78,8 +76,6 @@ def archive_name(run_dir: Path) -> str:
 
 
 def _digest_regular(path: Path, expected: os.stat_result) -> tuple[str, int]:
-    """Hash and verify a file using descriptors that are closed on every path."""
-
     flags = os.O_RDONLY | (os.O_NOFOLLOW if hasattr(os, "O_NOFOLLOW") else 0)
     try:
         fd = os.open(path, flags)
@@ -114,8 +110,6 @@ def _relative_name(path: Path, root: Path) -> str:
 
 
 def snapshot(run_dir: Path, excluded_root_names: Iterable[str] = ()) -> Snapshot:
-    """Collect a stable, no-follow snapshot of supported filesystem entries."""
-
     entries: dict[str, Entry] = {}
     excluded = set(excluded_root_names)
     pending = [run_dir]
@@ -179,8 +173,6 @@ def validate_run_dir(run_dir: Path, archive: Path) -> None:
 
 
 def validate_retained_layout(run_dir: Path, archive: Path) -> Snapshot:
-    """Validate the only resumable state: a completed lightweight run."""
-
     if not run_dir.exists() or not run_dir.is_dir() or run_dir.is_symlink():
         fail(f"run directory must be a real directory: {run_dir}")
     try:
@@ -238,8 +230,6 @@ def _hash_member(fileobj: BinaryIO) -> tuple[str, int]:
 
 
 def _archive_members(archive: Path) -> dict[str, tuple[str, str | None, int, str | None, int]]:
-    """Read all members and content hashes from a zstd-compressed tar."""
-
     zstd = shutil.which("zstd")
     if not zstd:
         fail("zstd executable is required")
@@ -381,11 +371,14 @@ def find_trash() -> str:
     fail("a recoverable trash command (trash or trash-put) is required for --apply")
 
 
-def stage_lightweight(run_dir: Path, archive: Path, source: Snapshot) -> Path:
-    """Create the final three-entry directory beside the original run."""
-
+def claim_staging(run_dir: Path) -> Path:
     staging = run_dir.parent / f".{run_dir.name}.cleanup-staging"
     staging.mkdir(mode=0o700)
+    return staging
+
+
+def stage_lightweight(run_dir: Path, archive: Path, source: Snapshot) -> Path:
+    staging = claim_staging(run_dir)
     print(f"cleanup staging: {staging}", file=sys.stderr, flush=True)
     staged_archive = staging / archive.name
     write_archive(run_dir, staged_archive, source)
@@ -406,16 +399,13 @@ def stage_lightweight(run_dir: Path, archive: Path, source: Snapshot) -> Path:
 
 
 def publish_lightweight(run_dir: Path, staging: Path, source: Snapshot, trash_command: str) -> None:
-    """Keep the original whole through verification and replacement installation."""
-
     recovery = run_dir.parent / f".{run_dir.name}.cleanup-original"
     if os.path.lexists(recovery):
         fail(f"recovery path already exists: {recovery}")
     if not snapshot_equal(source, snapshot(run_dir)):
         fail(f"run changed before retirement; originals and staging retained: {staging}")
     print(f"cleanup original recovery: {recovery}", file=sys.stderr, flush=True)
-    # Staging's exclusive mkdir serializes cooperating cleanup invocations.
-    # The caller must stop all writers; renaming cannot freeze open descriptors.
+    # A rename cannot freeze open file descriptors, so the caller must stop all writers first.
     os.rename(run_dir, recovery)
     try:
         if not snapshot_equal(source, snapshot(recovery)):
@@ -473,8 +463,6 @@ def cleanup_run(run_dir: Path, apply: bool, acknowledged: bool, markers: Iterabl
     if not apply:
         return {"status": "ready", "archive": str(archive), "entries": len(source.entries)}
     staging = stage_lightweight(run_dir, archive, source)
-    # Re-check the source after writing and before moving anything.  A changed
-    # source leaves a verified sibling staging directory plus all originals.
     after_archive = snapshot(run_dir, excluded_root_names=(archive.name,))
     if not snapshot_equal(source, after_archive):
         fail(f"run changed while archiving; verified staging retained at {staging}")

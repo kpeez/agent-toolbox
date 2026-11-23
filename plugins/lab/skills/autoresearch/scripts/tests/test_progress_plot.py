@@ -1,9 +1,3 @@
-"""Behavioral checks for the shared progress plot's public CLI.
-
-Run with: uv run --with matplotlib python -m unittest discover -s scripts/tests
-from the autoresearch skill directory.
-"""
-
 import json
 from pathlib import Path
 import subprocess
@@ -42,7 +36,6 @@ class ProgressPlotTests(unittest.TestCase):
                               capture_output=True, text=True)
 
     def test_reads_latest_ledger_without_export_and_preserves_inputs(self):
-        # An obsolete derived export must not hide the newly appended bad value.
         (self.run / "old-trial-runs.jsonl").write_text("obsolete export")
         subprocess.run([sys.executable, str(LEDGER), "append", str(self.run),
                         "--commit", "b" * 40, "--status", "keep",
