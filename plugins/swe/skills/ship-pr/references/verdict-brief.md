@@ -16,6 +16,9 @@ Criteria:
   point.
 - The patch does nothing outside its claims that a reviewer would need to know.
 - Required checks at <head-sha>: <state from gh pr checks>.
+- When the patch adds or changes tests, pick one or two that guard its
+  riskiest behavior. In a scratch copy, break that behavior in the production
+  code and run the test. A test that still passes is a finding.
 
 Run read-only commands that exercise the claimed behavior when they exist.
 Name each check you could not run.

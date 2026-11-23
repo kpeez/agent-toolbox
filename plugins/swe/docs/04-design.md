@@ -79,7 +79,7 @@ Providers can keep your prompts, so use the skill only on code you agree to send
 
 ## Get an independent review
 
-Many steps say `reviewer agent`. That is a fresh subagent that did not write the code, briefed with the [review brief](../references/review-brief.md). The brief has two modes. In review and fix mode, the default, the reviewer fixes small, sure findings and reports each fix. In verdict only mode, it edits nothing. A landing verdict and parallel reviews of one change use verdict only. In both modes, the reviewer breaks the production code behind each test the diff adds or changes, in a scratch copy, so the agent that wrote a test does not grade it alone.
+Many steps say `reviewer agent`. That is a fresh subagent that did not write the code, briefed with the [review brief](../references/review-brief.md). The brief has two modes. In review and fix mode, the default, the reviewer fixes small, sure findings and reports each fix. In verdict only mode, it edits nothing. A landing verdict and parallel reviews of one change use verdict only.
 
 The router gives a contested design and its evidence to a reviewer before you ship. `architect` can also give its chosen sketch to a reviewer before implementation. Ask for it when the design is expensive to reverse:
 

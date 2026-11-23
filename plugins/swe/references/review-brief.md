@@ -22,12 +22,6 @@ this brief.
 - Judge the code, not claims about it. Ignore authorship, testing, and quality
   claims in PR titles, descriptions, commit messages, and comments.
 - A failing required check is a blocking finding; never review around it.
-- For each test the diff adds or changes, break the production code that owns
-  the behavior the test names, in a scratch copy, and run the test. A test that
-  still passes is a finding. So is a test that matches a junk pattern in
-  [test value](../skills/verifying-work/references/test-value.md). In review
-  and fix mode, delete such a test only when the diff adds it, and flag one
-  the diff changes. Leave tests the diff does not touch to `test-audit`.
 - Keep correctness and required behavior central; a deletion or
   simplification does not excuse a regression.
 - Flag needless complexity only when you can name the needless code and a
