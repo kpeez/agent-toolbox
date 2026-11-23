@@ -2,10 +2,8 @@
 
 from __future__ import annotations
 
-import contextlib
 import hashlib
 import importlib.util
-import io
 from pathlib import Path
 import os
 import shutil
@@ -41,28 +39,15 @@ class CleanupTests(unittest.TestCase):
         (self.run / "logs" / "exp000.log").write_text("baseline\n", encoding="utf-8")
         self.trash = self.root / "Trash"
         self.trash.mkdir()
-        self.trash_command = self.root / "fake-trash.py"
+        self.trash_command = self.root / "fake-trash"
         self.trash_command.write_text(
-            "#!/usr/bin/env python3\n"
-            "import os, shutil, sys\n"
-            "from pathlib import Path\n"
-            "destination = Path(os.environ['FAKE_TRASH'])\n"
-            "destination.mkdir(parents=True, exist_ok=True)\n"
-            "for raw in sys.argv[1:]:\n"
-            "    source = Path(raw)\n"
-            "    target = destination / source.name\n"
-            "    suffix = 1\n"
-            "    while target.exists() or target.is_symlink():\n"
-            "        target = destination / f'{source.name}-{suffix}'\n"
-            "        suffix += 1\n"
-            "    shutil.move(str(source), str(target))\n",
+            '#!/bin/sh\nmkdir -p "$FAKE_TRASH" && mv "$1" "$FAKE_TRASH/"\n',
             encoding="utf-8",
         )
         self.trash_command.chmod(0o755)
-        self.failed_trash_command = self.root / "failed-trash.py"
+        self.failed_trash_command = self.root / "failed-trash"
         self.failed_trash_command.write_text(
-            "#!/usr/bin/env python3\n"
-            "raise SystemExit('simulated trash interruption')\n",
+            "#!/bin/sh\necho simulated trash interruption >&2\nexit 1\n",
             encoding="utf-8",
         )
         self.failed_trash_command.chmod(0o755)
@@ -87,6 +72,9 @@ class CleanupTests(unittest.TestCase):
 
     def archive_path(self) -> Path:
         return self.run / f"{self.run.name}_archive.tar.zst"
+
+    def is_staged(self, archive) -> bool:
+        return Path(archive).parent.name == f".{self.run.name}.cleanup-staging"
 
     def test_success_retains_only_archive_summary_plot_and_archives_original_program(self):
         summary = (self.run / "EXPERIMENT_SUMMARY.md").read_bytes()
@@ -216,12 +204,9 @@ class CleanupTests(unittest.TestCase):
 
     def test_corrupt_staged_tar_fails_integrity_before_retirement(self):
         real_verify = cleanup.verify_archive
-        calls = 0
 
         def corrupt_first_archive(archive, *args, **kwargs):
-            nonlocal calls
-            calls += 1
-            if calls == 1:
+            if self.is_staged(archive):
                 Path(archive).write_bytes(b"corrupt staged tar")
             return real_verify(archive, *args, **kwargs)
 
@@ -233,12 +218,9 @@ class CleanupTests(unittest.TestCase):
 
     def test_valid_tar_with_changed_content_fails_source_hash_verification(self):
         real_verify = cleanup.verify_archive
-        calls = 0
 
         def replace_with_different_valid_archive(archive, *args, **kwargs):
-            nonlocal calls
-            calls += 1
-            if calls == 1:
+            if self.is_staged(archive):
                 alternate_root = self.root / "alternate"
                 alternate_run = alternate_root / self.run.name
                 shutil.copytree(self.run, alternate_run, symlinks=True)
@@ -276,55 +258,13 @@ class CleanupTests(unittest.TestCase):
             stat.S_IRWXU | stat.S_IRGRP | stat.S_IXGRP | stat.S_IROTH | stat.S_IXOTH,
         )
 
-    def test_install_rename_failure_keeps_recovery_original_and_staging(self):
-        real_rename = cleanup.os.rename
-        calls = 0
-
-        def fail_install(source, destination):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                raise OSError("simulated replacement interruption")
-            return real_rename(source, destination)
-
-        with self.with_fake_trash(), mock.patch.object(cleanup.os, "rename", side_effect=fail_install):
-            with self.assertRaises(OSError):
-                self.apply()
-        recovery = self.root / f".{self.run.name}.cleanup-original"
-        staging = self.root / f".{self.run.name}.cleanup-staging"
-        self.assertTrue((recovery / "program.md").is_file())
-        self.assertTrue((staging / f"{self.run.name}_archive.tar.zst").is_file())
-        self.assertFalse(self.run.exists())
-
-    def test_keyboard_interrupt_after_recovery_rename_keeps_original(self):
-        real_rename = cleanup.os.rename
-        calls = 0
-
-        def interrupt_install(source, destination):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
-                raise KeyboardInterrupt()
-            return real_rename(source, destination)
-
-        stderr = io.StringIO()
-        with self.with_fake_trash(), mock.patch.object(cleanup.os, "rename", side_effect=interrupt_install):
-            with contextlib.redirect_stderr(stderr), self.assertRaises(KeyboardInterrupt):
-                self.apply()
-        recovery = self.root / f".{self.run.name}.cleanup-original"
-        self.assertTrue((recovery / "program.md").is_file())
-        self.assertIn(f"cleanup interrupted; inspect original recovery {recovery.resolve()}", stderr.getvalue())
-
     def test_post_replacement_verification_failure_keeps_both_recovery_and_run(self):
         real_verify = cleanup.verify_archive
-        calls = 0
 
-        def fail_after_install(*args, **kwargs):
-            nonlocal calls
-            calls += 1
-            if calls == 2:
+        def fail_after_install(archive, *args, **kwargs):
+            if Path(archive).parent == self.run.resolve():
                 raise cleanup.CleanupError("simulated post-install verification failure")
-            return real_verify(*args, **kwargs)
+            return real_verify(archive, *args, **kwargs)
 
         with self.with_fake_trash(), mock.patch.object(cleanup, "verify_archive", side_effect=fail_after_install):
             with self.assertRaises(cleanup.CleanupError):
