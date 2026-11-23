@@ -2,15 +2,15 @@
  * Tests for the hook decisions, the session-end cleanup, and the node fallback.
  *
  * The decide cases pass a fake which, so they need no real rex. The
- * session-end cases run the hook against a fake rex script and a temporary
- * HOME. The smoke cases spawn every hook with node and sample stdin, which
+ * session-end cases write rows with the real `remember` and run the hook
+ * against a fake rex script and a temporary HOME. The smoke cases spawn every hook with node and sample stdin, which
  * proves the erasable syntax and the node: APIs run without bun.
  */
 
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { spawnSync } from "node:child_process";
-import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "node:fs";
+import { chmodSync, existsSync, mkdirSync, mkdtempSync, readFileSync, readdirSync, rmSync, writeFileSync } from "node:fs";
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
@@ -138,6 +138,8 @@ test("the subagent rule names both mirroring modes", () => {
   assert.ok(RULE.includes("bypassPermissions"));
 });
 
+// Rows go through the real `remember`, and listedBlocks reads every row file, so
+// these cases do not depend on how rex_mirror.ts stores its rows.
 const FAKE_REX = `#!/bin/sh
 if [ "$2" = "call" ]; then
   case "$6" in
@@ -151,60 +153,123 @@ if [ "$2" = "call" ]; then
     b-nostate) printf '{"records":[{"updated_at":"t2"}]}\\n' ;;
     b-gone) printf 'block not found\\n' >&2; exit 1 ;;
     b-timeout) sleep 30 ;;
+    b-closefail) printf '{"records":[{"state":"done","updated_at":"t2"}]}\\n' ;;
+    b-trigger)
+      "$RT" $RT_FLAGS "$REMEMBER" b-late
+      printf '{"records":[{"state":"done","updated_at":"t2"}]}\\n' ;;
     *) exit 1 ;;
   esac
   exit 0
 fi
 if [ "$2" = "close" ]; then
+  [ "$5" = "$CLOSE_FAIL" ] && exit 1
   printf '%s\\n' "$5" >> "$CLOSE_LOG"
   exit 0
 fi
 exit 1
 `;
 
-const row = (block: string, i: number): string =>
-  JSON.stringify({ block, rex_session: "session:end", label: `l${i}` });
+type EndHome = { home: string; rt: string; remember: (block: string) => void; run: (closeFail?: string) => void };
+
+/** A scratch HOME with the fake rex, a remember helper, and a runner for session_end.ts. */
+function endHome(rt: string): EndHome {
+  const home = mkdtempSync(join(tmpdir(), "rex-end-home-"));
+  const bin = join(home, "bin");
+  mkdirSync(bin);
+  writeFileSync(join(bin, "rex"), FAKE_REX);
+  chmodSync(join(bin, "rex"), 0o755);
+  const helper = join(home, "remember.ts");
+  writeFileSync(helper, `import { remember } from ${JSON.stringify(MIRROR)};\nremember("s-end", process.argv[2], "l");\n`);
+  const flags = rt === "node" ? "--disable-warning=ExperimentalWarning" : "";
+  const env = {
+    ...NO_REX,
+    HOME: home,
+    PATH: `${bin}:${process.env.PATH}`,
+    REX_SESSION: "session:end",
+    CLOSE_LOG: join(home, "closed.txt"),
+    RT: rt,
+    RT_FLAGS: flags,
+    REMEMBER: helper,
+  };
+  const remember = (block: string): void => {
+    const r = spawnSync(rt, [...(flags ? [flags] : []), helper, block], { env, encoding: "utf8", timeout: 30_000 });
+    assert.equal(r.status, 0, r.stderr);
+  };
+  const run = (closeFail = ""): void => {
+    const hookEnv: Record<string, string> = { ...env, CLOSE_FAIL: closeFail };
+    delete hookEnv.REX_SESSION;
+    const r = spawnSync(rt, [join(HOOKS, "session_end.ts")], {
+      input: JSON.stringify({ session_id: "s-end" }),
+      env: hookEnv,
+      encoding: "utf8",
+      timeout: 60_000,
+    });
+    assert.equal(r.status, 0, r.stderr);
+    assert.equal(r.stdout, "");
+  };
+  return { home, rt, remember, run };
+}
+
+/** The blocks that the session's rows still list, sorted. */
+function listedBlocks(home: string): string[] {
+  const dir = join(home, ".cache", "rex-agents");
+  const blocks: string[] = [];
+  for (const name of existsSync(dir) ? readdirSync(dir) : []) {
+    if (!name.startsWith("s-end.")) continue;
+    for (const line of readFileSync(join(dir, name), "utf8").split("\n")) {
+      if (line.length > 0) blocks.push(JSON.parse(line).block);
+    }
+  }
+  return blocks.sort();
+}
+
+function closedBlocks(home: string): string[] {
+  const p = join(home, "closed.txt");
+  return existsSync(p) ? readFileSync(p, "utf8").split("\n").filter((l) => l.length > 0).sort() : [];
+}
 
 for (const [rt, withTimeout] of [["bun", true], ["node", false]] as Array<[string, boolean]>) {
   const skip = spawnSync(rt, ["--version"], { stdio: "ignore" }).status === 0 ? false : `${rt} is not on PATH`;
-  test(`session end is best-effort per block (${rt})`, { timeout: 60_000, skip }, () => {
-    const home = mkdtempSync(join(tmpdir(), "rex-end-home-"));
+  test(`session end is best-effort per block (${rt})`, { timeout: 90_000, skip }, () => {
+    const h = endHome(rt);
     try {
-      const bin = join(home, "bin");
-      mkdirSync(bin);
-      writeFileSync(join(bin, "rex"), FAKE_REX);
-      chmodSync(join(bin, "rex"), 0o755);
-      const cacheDir = join(home, ".cache", "rex-agents");
-      mkdirSync(cacheDir, { recursive: true });
-      const blocks = [
-        "b-nonjson",
-        "b-done",
-        "b-error",
-        "b-working",
-        "b-gone",
-        "b-missingkeys",
-        "b-nostate",
-        "b-multi",
-        "b-tie",
-      ];
+      const blocks = ["b-nonjson", "b-done", "b-error", "b-working", "b-gone", "b-missingkeys", "b-nostate", "b-multi", "b-tie"];
       if (withTimeout) blocks.push("b-timeout");
-      const lines = blocks.map(row);
-      writeFileSync(join(cacheDir, "s-end.jsonl"), lines.join("\n") + "\n");
-      const closed = join(home, "closed.txt");
-      const r = spawnSync(rt, [join(HOOKS, "session_end.ts")], {
-        input: JSON.stringify({ session_id: "s-end" }),
-        env: { ...NO_REX, HOME: home, PATH: `${bin}:${process.env.PATH}`, CLOSE_LOG: closed },
-        encoding: "utf8",
-        timeout: 60_000,
-      });
-      assert.equal(r.status, 0);
-      assert.equal(r.stdout, "");
-      const keepBlocks = blocks.filter((b) => !["b-done", "b-error", "b-gone", "b-multi", "b-tie"].includes(b));
-      const kept = readFileSync(join(cacheDir, "s-end.jsonl"), "utf8").split("\n").filter((l: string) => l.length > 0);
-      assert.deepEqual(kept, lines.filter((l) => keepBlocks.includes(JSON.parse(l).block)));
-      assert.equal(readFileSync(closed, "utf8"), "b-done\nb-error\nb-multi\nb-tie\n");
+      for (const b of blocks) h.remember(b);
+      h.run();
+      const closes = ["b-done", "b-error", "b-multi", "b-tie"];
+      assert.deepEqual(listedBlocks(h.home), blocks.filter((b) => !closes.includes(b) && b !== "b-gone").sort());
+      assert.deepEqual(closedBlocks(h.home), closes.sort());
     } finally {
-      rmSync(home, { recursive: true, force: true });
+      rmSync(h.home, { recursive: true, force: true });
+    }
+  });
+
+  test(`session end keeps the row of a block whose close failed, and a later pass closes it (${rt})`, { timeout: 60_000, skip }, () => {
+    const h = endHome(rt);
+    try {
+      h.remember("b-done");
+      h.remember("b-closefail");
+      h.run("b-closefail");
+      assert.deepEqual(listedBlocks(h.home), ["b-closefail"]);
+      assert.deepEqual(closedBlocks(h.home), ["b-done"]);
+      h.run();
+      assert.deepEqual(listedBlocks(h.home), []);
+      assert.deepEqual(closedBlocks(h.home), ["b-closefail", "b-done"]);
+    } finally {
+      rmSync(h.home, { recursive: true, force: true });
+    }
+  });
+
+  test(`session end keeps a row that a mirror writes during the pass (${rt})`, { timeout: 60_000, skip }, () => {
+    const h = endHome(rt);
+    try {
+      h.remember("b-trigger"); // its status call runs the real remember for b-late
+      h.run();
+      assert.deepEqual(closedBlocks(h.home), ["b-trigger"]);
+      assert.deepEqual(listedBlocks(h.home), ["b-late"]);
+    } finally {
+      rmSync(h.home, { recursive: true, force: true });
     }
   });
 }

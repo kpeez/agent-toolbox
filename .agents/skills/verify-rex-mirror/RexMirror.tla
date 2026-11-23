@@ -29,7 +29,7 @@ VARIABLES
   kind, cmd, cmdRc, marker,                                  \* the command and the wrapper of mirror_hook.mirrored
   mpc, killed, sigPending, blockKnown, listed, exitLine, logExists,  \* rex_mirror.ts
   block, vpc, status, shown, closeFailed,                    \* the Rex block and rex_mirror_view.ts
-  rows, fileExists,                                          \* ~/.cache/rex-agents/<session_id>.jsonl
+  rows, fileExists,                                          \* the row files ~/.cache/rex-agents/<session_id>.*.json
   spc, snapshot, todo, keep, seen, endCloseFailed,           \* session_end.ts
   wpc, wresult, wOpen                                        \* wait-status.lua
 
@@ -155,7 +155,7 @@ MirrorTimesOut(m) ==
   /\ UNCHANGED <<cmdVars, killed, sigPending, blockKnown, listed, exitLine, logExists,
                  viewVars, cacheVars, endVars, waitVars>>
 
-\* remember: one appendFileSync of one row, only when the block ID is known.
+\* remember: one writeFileSync of one row file, only when the block ID is known.
 MirrorRemembers(m) ==
   /\ mpc[m] = "replied"
   /\ mpc' = [mpc EXCEPT ![m] = "remembered"]
@@ -255,9 +255,15 @@ ViewerCloseFails(m) ==
   /\ UNCHANGED <<cmdVars, mirrorVars, block, status, shown, cacheVars, endVars, waitVars>>
 
 -----------------------------------------------------------------------------
-(* session_end.ts main(), once.                                            *)
+(* session_end.ts main(), once. The current hook reads one row file per   *)
+(* block and deletes a row file only after its block's close succeeded or  *)
+(* the block is gone. Rewrites is the hook before this fix, and before     *)
+(* d53f272 and 9338e63: it read one shared list, kept rows in `keep`, and  *)
+(* rewrote the list at the end.                                            *)
 
-\* existsSync(path), then readFileSync(path).
+Rewrites == Variant \in {"endPassRewrites", "endPassAborts", "endPassKeepsError"}
+
+\* rowFiles: readdirSync and a read of each row file. Rewrites: existsSync(path), readFileSync(path).
 EndReads ==
   /\ EndOn
   /\ spc = "idle"
@@ -277,7 +283,8 @@ Answers(m) ==
 
 Closes == IF Variant = "endPassKeepsError" THEN {"done"} ELSE Settled
 
-\* One loop pass for one row: newestState, then `rex block close` or keep.push.
+\* settle for one row: newestState, then `rex block close` and unlinkSync(file) for a settled
+\* block, unlinkSync(file) for a gone one, or nothing. Rewrites: close, or keep.push.
 \* Variant "endPassKeepsError" is the hook before 9338e63. Variant "endPassAborts" is the
 \* hook before d53f272: an unreadable reply throws, and the hook exits without a write.
 EndChecks(m) ==
@@ -288,17 +295,19 @@ EndChecks(m) ==
        /\ todo' = todo \ {m}
        /\ IF a = "fail" /\ Variant = "endPassAborts"
             THEN /\ spc' = "aborted"
-                 /\ UNCHANGED <<keep, block, vpc>>
+                 /\ UNCHANGED <<keep, block, vpc, rows>>
             ELSE IF a \in Closes
             THEN /\ Close(m)
+                 /\ rows' = IF Rewrites THEN rows ELSE rows \ {m}
                  /\ UNCHANGED <<spc, keep>>
             ELSE /\ keep' = IF a = "gone" THEN keep ELSE keep \cup {m}
+                 /\ rows' = IF ~Rewrites /\ a = "gone" THEN rows \ {m} ELSE rows
                  /\ UNCHANGED <<spc, block, vpc>>
   /\ UNCHANGED <<snapshot, endCloseFailed, cmdVars, mirrorVars, status, shown, closeFailed,
-                 cacheVars, waitVars>>
+                 fileExists, waitVars>>
 
-\* One loop pass for one row: newestState answers done or error, and `rex block close` fails or
-\* times out. The hook ignores the result and drops the row.
+\* settle for one row: newestState answers done or error, and `rex block close` fails or
+\* times out. The hook keeps the row file. Rewrites ignores the result and drops the row.
 EndCloseFails(m) ==
   /\ EndFaults
   /\ spc = "checking"
@@ -309,7 +318,7 @@ EndCloseFails(m) ==
        /\ endCloseFailed' = [endCloseFailed EXCEPT ![m] = TRUE]
   /\ UNCHANGED <<spc, snapshot, keep, cmdVars, mirrorVars, viewVars, cacheVars, waitVars>>
 
-\* Claude Code kills the hook mid-pass, at its 30 s timeout, before the write.
+\* Claude Code kills the hook mid-pass, at its 30 s timeout.
 EndKilled ==
   /\ EndFaults
   /\ spc = "checking"
@@ -317,13 +326,16 @@ EndKilled ==
   /\ UNCHANGED <<snapshot, todo, keep, seen, endCloseFailed, cmdVars, mirrorVars, viewVars,
                  cacheVars, waitVars>>
 
-\* writeFileSync(path, keep) or unlinkSync(path). Rows appended since EndReads are lost.
+\* The loop ends. Rewrites: writeFileSync(path, keep) or unlinkSync(path), which loses the
+\* rows appended since EndReads.
 EndWrites ==
   /\ spc = "checking"
   /\ todo = {}
   /\ spc' = "finished"
-  /\ rows' = keep
-  /\ fileExists' = (keep # {})
+  /\ IF Rewrites
+       THEN /\ rows' = keep
+            /\ fileExists' = (keep # {})
+       ELSE UNCHANGED cacheVars
   /\ UNCHANGED <<snapshot, todo, keep, seen, endCloseFailed, cmdVars, mirrorVars, viewVars, waitVars>>
 
 -----------------------------------------------------------------------------

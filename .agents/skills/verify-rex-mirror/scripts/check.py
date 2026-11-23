@@ -36,7 +36,7 @@ BASE = {
     "KillFrom": '"start"',
     "ReplyCanTimeOut": "FALSE",
     "EndOn": "TRUE",
-    "EndFaults": "FALSE",
+    "EndFaults": "TRUE",
     "WaiterOn": "TRUE",
     "Watched": '"m1"',
     "Variant": '"fixed"',
@@ -87,25 +87,13 @@ RUNS = [
     holds(
         "current code, two mirrors",
         TWO,
-        {"ExitLineWritten", "NoLostRow"} | WAITER_RULES,
+        {"ExitLineWritten"} | WAITER_RULES,
     ),
     # Findings in the current code. Each is replayed against the real code (SKILL.md).
     Run(
         "finding: a kill before the handlers leaves the block working",
         "finding",
         ["ExitLineWritten"],
-    ),
-    Run(
-        "finding: session_end loses a row that remember appends",
-        "finding",
-        ["NoLostRow"],
-        TWO,
-    ),
-    Run(
-        "finding: session_end drops the row of a block whose close failed",
-        "finding",
-        ["NoLostRow"],
-        {"EndFaults": "TRUE"},
     ),
     Run(
         "finding: a waiter that starts after the close gets 'not found'",
@@ -125,6 +113,18 @@ RUNS = [
         {"ReplyCanTimeOut": "TRUE"},
     ),
     # Past bugs: each variant is the code before its fix.
+    Run(
+        "the rewriting session_end: it loses a row that remember writes during the pass",
+        "past bug",
+        ["NoLostRow"],
+        TWO | {"Variant": '"endPassRewrites"', "EndFaults": "FALSE"},
+    ),
+    Run(
+        "the rewriting session_end: it drops the row of a block whose close failed",
+        "past bug",
+        ["NoLostRow"],
+        {"Variant": '"endPassRewrites"'},
+    ),
     Run(
         "2a8e0e6: the EXIT-trap wrapper loses the marker",
         "past bug",
