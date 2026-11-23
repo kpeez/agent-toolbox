@@ -111,6 +111,13 @@ def run_only(command: str) -> str:
     return f"Run this exact command once with the Bash tool, change nothing, then stop: {command}"
 
 
+def run_block(command: str) -> str:
+    return (
+        "Run the command in the fenced block below once with the Bash tool, byte for byte, "
+        f"with no change at all, even if it looks wrong. Then stop.\n\n```\n{command}\n```"
+    )
+
+
 FEATURES: dict[str, Feature] = {
     "session-start": Feature("Reply with the word ok.", judge_session_start),
     "pr-body-blocks-bad": Feature(
@@ -124,6 +131,22 @@ FEATURES: dict[str, Feature] = {
         judge_allowed,
         {"good.md": GOOD_BODY},
         ["Bash(gh pr create:*)"],
+    ),
+    # The hooks.json gate must start the hook on forms a substring or `if` pattern misses.
+    "pr-body-gate-quoted-name": Feature(
+        run_block("g''h pr create --title t --body-file bad.md"),
+        judge_blocked,
+        {"bad.md": BAD_BODY},
+    ),
+    "pr-body-gate-shell-heredoc": Feature(
+        run_block("bash <<'EOF'\ngh pr create --title t --body-file bad.md\nEOF"),
+        judge_blocked,
+        {"bad.md": BAD_BODY},
+    ),
+    "pr-body-gate-skips-git-status": Feature(
+        run_only("git status --short"),
+        judge_allowed,
+        allowed_tools=["Bash(git status:*)"],
     ),
 }
 

@@ -21,11 +21,14 @@ import { delimiter, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { render } from "../pr_body.ts";
 
-const SCRIPT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "pr_body.ts");
 const CASES = 300;
 const SEED = 20261122;
-// The hook runs on the test's own runtime, as run-ts would run it: bun, or node as the fallback.
-const HOOK = [process.execPath, ...(process.versions.bun ? [] : ["--disable-warning=ExperimentalWarning"]), SCRIPT, "hook"];
+// The hook runs as hooks.json runs it: through the shell gate, which starts the
+// runtime only when the payload can name gh. So a gate that skips a command the
+// hook must block fails this test too. Its PATH holds only the test's own
+// runtime, so run-ts picks bun under `bun test` and node under `node --test`.
+const GATE = resolve(dirname(fileURLToPath(import.meta.url)), "..", "..", "..", "..", "hooks", "pr-body-gate.sh");
+const HOOK = ["sh", GATE];
 
 /** The PR-body rules on one recorded `gh` argv, for the calls the generator makes. */
 function violates(argv: string[]): boolean {
@@ -161,6 +164,11 @@ const REGRESSIONS = [
   "if true; then gh pr create --body x; fi",
   "gh pr new --body x",
   "gh api repos/{owner}/{repo}/pulls -f title=t -f body=b",
+  // Quote removal joins these into `gh`; the gate must still start the hook.
+  "g''h pr create --body x",
+  '"g"h pr create --body x',
+  "g\\h pr create --body x",
+  "g\\\nh pr create --body x",
 ];
 
 /** Run a process; with no input its stdin is /dev/null. */
@@ -227,6 +235,10 @@ async function agreement(corpus: string[], shells: string[] = []): Promise<{ fai
       chmodSync(join(fakeBin, runner), 0o755);
     }
     for (const shell of shells) symlinkSync(onPath(shell) as string, join(fakeBin, shell));
+    const runtimeBin = join(root, "runtime");
+    mkdirSync(runtimeBin);
+    symlinkSync(process.execPath, join(runtimeBin, process.versions.bun ? "bun" : "node"));
+    const hookEnv = { ...process.env, PATH: `${runtimeBin}:/usr/bin:/bin` };
     for (const [slot, text] of Object.entries({ summary: "Each save rewrites the cache.", evidence: "Before: 4 s.", reversible: "yes", blast_radius: "local" })) {
       writeFileSync(join(work, "slots", `${slot}.md`), `${text}\n`);
     }
@@ -243,7 +255,7 @@ async function agreement(corpus: string[], shells: string[] = []): Promise<{ fai
         const command = corpus[i].replaceAll("@FAKE_BIN@", fakeBin);
         const [calls, hook] = await Promise.all([
           bashRuns(command, root, fakeBin, i),
-          run(HOOK[0], HOOK.slice(1), { cwd: work, input: JSON.stringify({ tool_input: { command }, cwd: work }) }),
+          run(HOOK[0], HOOK.slice(1), { cwd: work, env: hookEnv, input: JSON.stringify({ tool_input: { command }, cwd: work }) }),
         ]);
         const expected = calls.some(violates);
         if (expected) blocking++;
