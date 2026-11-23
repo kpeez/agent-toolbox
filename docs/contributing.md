@@ -63,6 +63,9 @@ installs both with mise and prints the `TLA2TOOLS` and `JAVA` values. Set
 them, then run `npm test` in `plugins/swe/skills/statechart/scripts`. Without
 `TLA2TOOLS`, the TLC tests skip.
 
+The mod tests import `claude-code/testing`, so `bun test` and `node --test`
+cannot run them. Run `claude plugin test claude-mods/<mod>` for each mod.
+
 A broad plugin release runs the [release checks](release-checks.md). A repeated
 agent mistake gets an enforcer from the `correct` skill, recorded in
 [agent rule enforcers](agent-rule-enforcers.md).
