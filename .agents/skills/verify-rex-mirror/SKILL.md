@@ -60,8 +60,11 @@ actions. `--keep` keeps the TLC configs and output.
 Read every result, and draw the lifecycle, with the `statechart` skill. Give
 it `RexMirror.tla`, `chart.cfg`, and the view `chart-view.mjs`. The chart
 config has one mirror, the default delay, no refused layer, no session-end
-hook, and no waiter, so it stays under the statechart budget (227 states). The check also runs `chart.cfg` as a run, so a constant
-that the chart config leaves out fails the check.
+hook, and no waiter, so it stays under the statechart budget (227 states). The check also runs
+`chart.cfg` as a run, so a constant that the chart config leaves out fails the
+check. `chart.mmd` and `report.md` are the skill's output for `chart.cfg`: 10
+states and 11 arrows. After a change to the model or the view, draw the chart
+again and replace both files.
 
 ## Findings in the current code
 

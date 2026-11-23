@@ -1,0 +1,42 @@
+---
+title: "A mirrored background command's Rex block"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: running
+    lg1: settled
+  }
+  class lg0 blue
+  class lg1 teal
+  s0: Starting
+  s1: No block
+  s2: Opening
+  s3: Working
+  s4: Shows error, closes in 1 s
+  s5: Closed after error
+  s6: Shows error, left open
+  s7: Shows done, closes in 1 s
+  s8: Closed after done
+  s9: Shows done, left open
+  [*] --> s0
+  s0 --> s1: Claude Code stops the task or MirrorReadsEnd or MirrorHandlesSignal
+  s0 --> s2: the open delay passes
+  s2 --> s3: Rex opens the pane
+  s2 --> s1: MirrorHandlesSignal
+  s1 --> s3: Rex opens the pane
+  s3 --> s4: the command fails, or is stopped
+  s4 --> s5: the viewer closes the block
+  s4 --> s6: the close fails (session end retries it)
+  s3 --> s7: the command exits 0
+  s7 --> s8: the viewer closes the block
+  s7 --> s9: the close fails (session end retries it)
+  class s0 blue
+  class s1 blue
+  class s2 blue
+  class s3 blue
+  class s4 teal
+  class s5 teal
+  class s6 teal
+  class s7 teal
+  class s8 teal
+  class s9 teal
