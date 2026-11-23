@@ -696,6 +696,7 @@ class OfflineCLIContract(unittest.TestCase):
         self.assertEqual(on_manifest["removed_bindings"], [
             "plugins/rex-agents/hooks",
             "plugins/swe/hooks/hooks.json:PreToolUse",
+            "plugins/swe/hooks/pr-body-gate.sh",
         ])
 
         swe_hook_text = Path(on_manifest["hooks"]["swe"]["path"]).read_text()
