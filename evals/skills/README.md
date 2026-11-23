@@ -526,14 +526,15 @@ version (2.1.296, headless), plus the 2.1.325 additions: five metadata record
 types (`session-owner`, `api-request`, `api-request-shape`, `api-request-blob`,
 `tools-used`) that carry no skill load, and parallel tool calls whose one API
 message spans several lines, plus the 2.1.327 `silent_turn_reminder` attachment, a fixed
-harness nudge to update the user. It supports `Skill`-tool loads, by full or bare name, proved
+harness nudge to update the user. A shape the audit did
+not see is a counted warning, unless it may hold a skill load; EVIDENCE.md states the rule. It supports `Skill`-tool loads, by full or bare name, proved
 by the linked delivered body, full `Read` reads of frozen `SKILL.md` and plugin resource files
 (playbooks and references named in `facets.json`), root versus subagent records (`child_loads` and
 `child_resource_reads`), `Bash` commands mentioning frozen paths in `unproved_reads`,
 labeled action timing, and end coverage from stream-json. A `Skill` call with
 arguments counts when Claude Code appended them to the body as
-`ARGUMENTS: <args>`, and when Claude Code filled each `$ARGUMENTS` placeholder in the body
-with them and the frozen body digest matches. It does not support typed slash-command loads, compaction, resumes,
+`ARGUMENTS: <args>`. A load also counts when Claude Code filled the body's `$NAME` or `${NAME}`
+placeholders, such as `$ARGUMENTS` or `${CLAUDE_SESSION_ID}`; EVIDENCE.md states the rule. It does not support typed slash-command loads, compaction, resumes,
 repeat-load notes, Codex traces, unlabeled actions, or step-list extraction.
 These leave the session partial or the load unproved; they never count as a
 miss. EVIDENCE.md holds the contract and the raw-event audit.
