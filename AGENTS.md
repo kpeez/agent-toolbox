@@ -7,14 +7,29 @@
   `uv run .github/scripts/plugin_catalogs.py` checks this, and that each
   catalog lists every plugin folder it should.
 - A hook that fires on every tool call (`PreToolUse`, `PostToolUse`,
-  `PostToolUseFailure`, `PermissionRequest`) runs TypeScript through
-  `scripts/run-ts`, or cats a `.md` file. Startup cost adds up on these
-  hooks. Bun starts in about 12 ms. `uv run --script` starts in about 33 ms
-  (measured on an M-series Mac).
+  `PostToolUseFailure`, `PermissionRequest`) must start no runtime on a call
+  it does not act on. Gate it in front of the runtime: a
+  `[ -n "$VAR" ] || exit 0; ` guard in `hooks.json`, or a POSIX sh gate
+  (`sh "$CLAUDE_PLUGIN_ROOT"/<path>.sh`) that reads stdin with builtins and
+  sources `scripts/run-ts` only on a match. A test must run the hook through
+  its gate, so a gate that skips a call the hook acts on fails. Do not gate
+  with the hook `if` field: `Bash(*gh*)` does not start the hook for
+  `bash <<'EOF'` with `gh pr create` inside.
+- Behind the gate, a per-call hook runs TypeScript through `scripts/run-ts`,
+  or cats a `.md` file. Medians from 100 shuffled samples on an M1 Pro: the
+  PR-body hook on a no-op Bash call takes 29 ms ungated on bun, 92 ms on
+  Node, and 15 ms gated. The Rex mirror hook outside Rex takes 28 ms ungated
+  and 9 ms behind its guard. `sh -c :` alone takes 9 ms. A bare bun start
+  takes 11 ms, `uv run --script` 32 ms.
+- No compiled or bundled hooks. Plugins install from a Git checkout with no
+  build step, and a bundle loads no faster than the source under bun.
 - `scripts/run-ts` runs the file with bun when bun is installed. Otherwise it
-  runs the file with Node 22.18 or later. Each plugin whose hooks use run-ts
-  ships its own copy. The copies stay byte-identical.
-- A hook on any other event may also run a `uv run --script` Python file.
+  runs the file with Node 22.18 or later. With neither, it exits 1, which
+  Claude Code shows as a non-blocking hook error that names the fix. Each
+  plugin whose hooks use run-ts ships its own copy. The copies stay
+  byte-identical.
+- A hook on any other event may also run a PEP 723 `uv run --script` Python
+  file.
   Agent scripts off the per-call path default to Python. Analysis, plotting,
   and experiment tools stay Python. TypeScript stays where the code is synced
   from upstream pstack (statechart, recall transcripts) or already exists.

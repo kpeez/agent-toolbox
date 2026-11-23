@@ -17,7 +17,7 @@
         "hooks": [
           {
             "type": "command",
-            "command": "sh \"$CLAUDE_PLUGIN_ROOT\"/scripts/run-ts \"$CLAUDE_PLUGIN_ROOT\"/hooks/mirror_hook.ts",
+            "command": "[ -n \"$REX_SESSION\" ] || exit 0; sh \"$CLAUDE_PLUGIN_ROOT\"/scripts/run-ts \"$CLAUDE_PLUGIN_ROOT\"/hooks/mirror_hook.ts",
             "timeout": 10
           }
         ]

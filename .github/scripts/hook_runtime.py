@@ -6,18 +6,24 @@
 """Fail when a plugin hook runs a runtime its event class does not allow.
 
 A hook that fires on every tool call pays its startup cost each time, so it
-runs TypeScript through scripts/run-ts (bun, else node 22.18+) or cats a text
-file. A hook on any other event may also run a uv Python script. A bare `bun`
-command is not allowed because it has no node fallback.
+runs TypeScript through scripts/run-ts (bun, else node 22.18+), runs a shell
+gate that sources run-ts, or cats a text file. A hook on any other event may
+also run a uv Python script. A bare `bun` command is not allowed because it
+has no node fallback.
 
 Per-call events (PreToolUse, PostToolUse, PostToolUseFailure,
 PermissionRequest) allow:
 
 - `sh $ROOT/scripts/run-ts $ROOT/<path>.ts [args]`
+- `sh $ROOT/<path>.sh`: a gate that reads stdin with shell builtins, exits 0
+  when the hook has nothing to do, and else sources scripts/run-ts
 - `cat $ROOT/<path>.md`
 
 Every other event allows the same, plus
 `uv run --script $ROOT/<path>.py [args]`.
+
+Any allowed command may follow the guard `[ -n "$NAME" ] || exit 0; `, which
+skips the hook with no process start when the variable is unset.
 
 $ROOT is the double-quoted token "$CLAUDE_PLUGIN_ROOT" followed by `/`. The
 quotes stop word splitting on a root path with spaces. The braced form
@@ -43,6 +49,7 @@ PER_CALL_EVENTS = {"PreToolUse", "PostToolUse", "PostToolUseFailure", "Permissio
 QUOTED_ROOT = '"$CLAUDE_PLUGIN_ROOT"'
 ROOT = re.compile(r"\$CLAUDE_PLUGIN_ROOT/")
 RUN_TS = "scripts/run-ts"
+GUARD = re.compile(r'\[ -n "\$[A-Z_][A-Z0-9_]*" \] \|\| exit 0; ')
 
 
 def _under_root(token: str, suffix: str) -> bool:
@@ -56,14 +63,30 @@ def _under_root(token: str, suffix: str) -> bool:
     )
 
 
+def _unguarded(command: str) -> str:
+    match = GUARD.match(command)
+    return command[match.end():] if match else command
+
+
 def _runs_run_ts(command: str) -> bool:
     """True when the command runs the plugin's scripts/run-ts launcher."""
     try:
-        tokens = shlex.split(command)
+        tokens = shlex.split(_unguarded(command))
     except ValueError:
         return False
     match = ROOT.match(tokens[1]) if len(tokens) > 1 else None
     return tokens[:1] == ["sh"] and match is not None and tokens[1][match.end():] == RUN_TS
+
+
+def _gate(command: str) -> str | None:
+    """The plugin-relative path of the shell gate the command runs, or None."""
+    try:
+        tokens = shlex.split(_unguarded(command))
+    except ValueError:
+        return None
+    if len(tokens) == 2 and tokens[0] == "sh" and _under_root(tokens[1], ".sh"):
+        return tokens[1][ROOT.match(tokens[1]).end():]
+    return None
 
 
 def check_command(command: str, event: str) -> str | None:
@@ -73,9 +96,10 @@ def check_command(command: str, event: str) -> str | None:
     # allowed first word, so allow plain words and the quoted plugin root
     # alone. This raw-text check also rejects the braced and unquoted root,
     # because shlex.split drops the quotes and hides them from the tokens.
+    command = _unguarded(command)
     bare = command.replace(QUOTED_ROOT, "")
     if not PLAIN.fullmatch(bare):
-        return 'must be one plain command: letters, digits, _ . / - " and the double-quoted "$CLAUDE_PLUGIN_ROOT" only'
+        return 'must be one plain command: letters, digits, _ . / - " and the double-quoted "$CLAUDE_PLUGIN_ROOT" only, after an optional `[ -n "$NAME" ] || exit 0; ` guard'
     try:
         tokens = shlex.split(command)
     except ValueError as error:
@@ -84,6 +108,8 @@ def check_command(command: str, event: str) -> str | None:
         return "empty command"
     head, *args = tokens
     if head == "cat" and len(args) == 1 and _under_root(args[0], ".md"):
+        return None
+    if _gate(command) is not None:
         return None
     if (
         head == "sh"
@@ -103,8 +129,8 @@ def check_command(command: str, event: str) -> str | None:
     ):
         return None
     if event in PER_CALL_EVENTS:
-        return f'{event} fires on every tool call: run `sh "$CLAUDE_PLUGIN_ROOT"/scripts/run-ts "$CLAUDE_PLUGIN_ROOT"/<path>.ts` or cat `"$CLAUDE_PLUGIN_ROOT"/<path>.md`, with no `..` segment'
-    return 'must run `sh "$CLAUDE_PLUGIN_ROOT"/scripts/run-ts "$CLAUDE_PLUGIN_ROOT"/<path>.ts`, `uv run --script "$CLAUDE_PLUGIN_ROOT"/<path>.py`, or cat `"$CLAUDE_PLUGIN_ROOT"/<path>.md`, with no `..` segment'
+        return f'{event} fires on every tool call: run `sh "$CLAUDE_PLUGIN_ROOT"/scripts/run-ts "$CLAUDE_PLUGIN_ROOT"/<path>.ts`, a gate `sh "$CLAUDE_PLUGIN_ROOT"/<path>.sh`, or cat `"$CLAUDE_PLUGIN_ROOT"/<path>.md`, with no `..` segment'
+    return 'must run `sh "$CLAUDE_PLUGIN_ROOT"/scripts/run-ts "$CLAUDE_PLUGIN_ROOT"/<path>.ts`, a gate `sh "$CLAUDE_PLUGIN_ROOT"/<path>.sh`, `uv run --script "$CLAUDE_PLUGIN_ROOT"/<path>.py`, or cat `"$CLAUDE_PLUGIN_ROOT"/<path>.md`, with no `..` segment'
 
 
 def _has_flag(args: list[str]) -> bool:
@@ -130,7 +156,14 @@ def main() -> int:
                     command = hook.get("command", "")
                     commands += 1
                     reason = check_command(command, event)
-                    if reason is None and _runs_run_ts(command):
+                    gate = _gate(command)
+                    if reason is None and gate is not None:
+                        gate_path = path.parents[1] / gate
+                        if not gate_path.is_file():
+                            reason = f"runs {gate_path.relative_to(root)}, which is missing"
+                        elif RUN_TS not in gate_path.read_text(encoding="utf-8"):
+                            reason = f"runs the gate {gate_path.relative_to(root)}, which must source scripts/run-ts to start TypeScript"
+                    if reason is None and (_runs_run_ts(command) or gate is not None):
                         if not launcher.is_file():
                             reason = f"needs {launcher.relative_to(root)}, which is missing"
                         else:
@@ -150,7 +183,7 @@ def main() -> int:
         )
         return 1
     print(
-        f"ok: {commands} hook commands in {len(files)} plugins run run-ts TS, uv Python off the per-call path, or cat text"
+        f"ok: {commands} hook commands in {len(files)} plugins run run-ts TS, a run-ts gate, uv Python off the per-call path, or cat text"
     )
     return 0
 

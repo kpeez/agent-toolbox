@@ -83,6 +83,9 @@ it, the failure line is the evidence.
 | `session-start` | `SessionStart` | a one-word reply | the hook exits 0 and its stdout equals `hooks/session-start.md` |
 | `pr-body-blocks-bad` | `PreToolUse` on `Bash` | `gh pr create` with a body that names a requester | the hook exits 2 with `PR body blocked by ship-pr`, and a `tool_result` carries that text |
 | `pr-body-allows-good` | `PreToolUse` on `Bash` | `gh pr create` with a body that fills the template | the hook fires, exits 0, and no `tool_result` carries a block message |
+| `pr-body-gate-quoted-name` | `PreToolUse` on `Bash` | `g''h pr create` with the bad body | the gate starts the hook, and it blocks as in `pr-body-blocks-bad` |
+| `pr-body-gate-shell-heredoc` | `PreToolUse` on `Bash` | `bash <<'EOF'` with `gh pr create` and the bad body inside | the gate starts the hook, and it blocks. An `if` of `Bash(*gh*)` misses this form |
+| `pr-body-gate-skips-git-status` | `PreToolUse` on `Bash` | `git status --short` | the hook exits 0, and no `tool_result` carries a block message |
 
 `gh pr create` itself may fail in the repo, which has no remote. That is
 fine. The feature checks only the hook.

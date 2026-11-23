@@ -16,7 +16,8 @@ offline checks:
   `uv run -m unittest discover -s evals/skills/tests`.
 - Run `uv run .github/scripts/hook_runtime.py` to check that every plugin
   hook follows the runtime table for its event: `scripts/run-ts` TypeScript,
-  `cat` text, or uv Python off the per-call path.
+  a sh gate that sources run-ts, `cat` text, or uv Python off the per-call
+  path.
 - Load each changed plugin under `plugins/` in Codex with a new temporary
   `HOME` and `CODEX_HOME` set to `$HOME/.codex`:
   `codex plugin marketplace add <checkout>`, then
