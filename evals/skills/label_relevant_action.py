@@ -148,7 +148,7 @@ def build_view(
         (row.get("sessionId") for _, row in root_rows if isinstance(row.get("sessionId"), str)),
         None,
     )
-    session = se.claude_session(root_rows, str(transcript_path), sid, None, issues, hook_arm="hook-on")
+    session = se.claude_session(root_rows, str(transcript_path), sid, None, issues, [], hook_arm="hook-on")
     cwd = next((row["cwd"] for _, row in root_rows if isinstance(row.get("cwd"), str) and row["cwd"]), None)
     roots, bash_patterns = _plugin_matchers(plugin_dirs)
     tool_calls = []

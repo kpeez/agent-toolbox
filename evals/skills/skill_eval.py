@@ -36,14 +36,15 @@ RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md), plus five
 # metadata record types from 2.1.325 (session-owner, api-request, api-request-shape,
 # api-request-blob, tools-used), and one attachment type from 2.1.327 (silent_turn_reminder, a fixed
-# harness nudge to update the user; it carries no skill load).
-# Anything else is coverage loss until a raw audit adds it here.
+# harness nudge to update the user; it carries no skill load), and one from 2.1.330 (budget_usd, the
+# spend so far under --max-budget-usd).
+# Anything else is unaudited: see unaudited_shape.
 CLAUDE_LINE_TYPES = {"user", "assistant", "attachment", "system", "queue-operation",
                      "atis-latch", "last-prompt", "cost-state", "session-owner", "api-request-shape",
                      "api-request-blob", "api-request", "tools-used"}
 CLAUDE_SYSTEM_SUBTYPES = {"stop_hook_summary"}
 CLAUDE_ATTACHMENT_TYPES = {
-    "advisor_tool", "agent_listing_delta", "command_permissions", "credential_org", "date",
+    "advisor_tool", "agent_listing_delta", "budget_usd", "command_permissions", "credential_org", "date",
     "deferred_tools_delta", "deferred_tools_record", "environment", "instructions",
     "mcp_instructions_delta", "model", "prompt_snapshot", "remote_session_change",
     "session_context", "silent_turn_reminder", "skill_listing", "total_tokens_reminder"}
@@ -68,6 +69,10 @@ STATE_WORD = re.compile(r"[\w-]+")
 STATE_SEPARATORS = ":\u2014-*` \t"
 REASON_SEPARATORS = ":(-\u2014 \t"
 CLAUDE_BASE_PREFIX = "Base directory for this skill: "
+# Text that marks a skill body or a skill file in a transcript row.
+SKILL_MARKERS = (CLAUDE_BASE_PREFIX, "SKILL.md")
+# A $NAME or ${NAME} placeholder that Claude Code may fill in a delivered skill body.
+PLACEHOLDER = re.compile(r"\$(?:\{[A-Z_][A-Z0-9_]*\}|[A-Z_][A-Z0-9_]*)")
 # A delivered body that names another skill, or comes from outside the frozen catalog, breaks isolation.
 CLAUDE_IDENTITY_LOSS = {"base directory outside the declared snapshot",
                         "requested skill differs from the delivered base directory"}
@@ -516,7 +521,17 @@ def claude_start_covered(chain, hook_arm):
     return chain[idx].get("type") == "user" and chain[idx].get("parentUuid") == expected_parent
 
 
-def claude_session(rows, label, sid, agent, issues, hook_arm="hook-off"):
+def unaudited_shape(where, what, row, in_chain, issues, warnings):
+    """A shape the audit did not see is a warning, unless it may hold a skill load the scorer cannot read.
+
+    It may hold one when it sits in the message chain (in_chain) or its text has a SKILL_MARKERS entry.
+    """
+    text = json.dumps(row, ensure_ascii=False)
+    risky = in_chain or any(marker in text for marker in SKILL_MARKERS)
+    (issues if risky else warnings).append(f"{where}: unknown {what}")
+
+
+def claude_session(rows, label, sid, agent, issues, warnings, hook_arm="hook-off"):
     """Index one transcript file: tool calls, their results, linked skill bodies, and lineage."""
     uses, results, bodies, starts, said = {}, {}, {}, {}, []
     seen, children, message_of = set(), Counter(), {}
@@ -526,12 +541,12 @@ def claude_session(rows, label, sid, agent, issues, hook_arm="hook-off"):
         where = f"{label} line {line}"
         typ = row.get("type")
         if typ not in CLAUDE_LINE_TYPES:
-            issues.append(f"{where}: unknown record type {typ!r}")
+            unaudited_shape(where, f"record type {typ!r}", row, "uuid" in row, issues, warnings)
             continue
         if row.get("sessionId") != sid:
             issues.append(f"{where}: sessionId differs from the root session")
         if typ == "system" and row.get("subtype") not in CLAUDE_SYSTEM_SUBTYPES:
-            issues.append(f"{where}: unknown system subtype {row.get('subtype')!r}")
+            unaudited_shape(where, f"system subtype {row.get('subtype')!r}", row, False, issues, warnings)
         if typ == "attachment":
             att = row.get("attachment") or {}
             att_type = att.get("type")
@@ -547,7 +562,7 @@ def claude_session(rows, label, sid, agent, issues, hook_arm="hook-off"):
                 elif saw_non_hook:
                     issues.append(f"{where}: SessionStart hook_success outside leading start run")
             elif att_type not in CLAUDE_ATTACHMENT_TYPES:
-                issues.append(f"{where}: unknown attachment type {att_type!r}")
+                unaudited_shape(where, f"attachment type {att_type!r}", row, False, issues, warnings)
         if typ not in {"user", "assistant", "attachment", "system"}:
             continue
         uuid = row.get("uuid")
@@ -636,7 +651,7 @@ def claude_load(tool_use_id, session, frozen, manifest, sid, agent, issues):
     else:
         load.update(skill_path=use["input"].get("file_path"), proof="full_body_read", transform=None)
         load["skill"] = frozen[posixpath.normpath(load["skill_path"])]
-    load = claude_proof(load, use, result, body, frozen, manifest, sid)
+    load = claude_proof(load, use, result, body, frozen, manifest)
     unresolved = load["status"] in {"partial", "unavailable"} and load["skill"] not in manifest["skills"]
     if agent is None and (unresolved or load["detail"] in CLAUDE_IDENTITY_LOSS):
         issues.append(f"{use['ref']['file']} line {use['line']}: skill identity unresolved ({load['detail']})")
@@ -675,7 +690,36 @@ def claude_resource_read(tool_use_id, session, frozen_resources, manifest, sid, 
     return record
 
 
-def claude_proof(load, use, result, body, frozen, manifest, sid=None):
+def frozen_skill_body(skill_path, entry):
+    """The frozen delivered body of a skill, or None when it does not match its frozen digests."""
+    skill_file = Path(skill_path)
+    if not skill_file.is_file() or digest(skill_file.read_bytes()) != entry["sha256"]:
+        skill_file = Path(entry["path"])
+    body = delivered_body(skill_file.read_text(encoding="utf-8"))
+    return body if body is not None and digest(body.encode()) == entry["body_sha256"] else None
+
+
+def filled_body_pattern(body, args):
+    """A pattern for `body` with each PLACEHOLDER filled, or None when `body` holds none.
+
+    Each placeholder takes one value at all its occurrences: `args` exactly, or any text with no
+    newline. So a match differs from `body` only inside lines that hold a placeholder, unless the
+    value is the Skill call's own args.
+    """
+    parts, groups, end = [], {}, 0
+    for found in PLACEHOLDER.finditer(body or ""):
+        parts.append(re.escape(body[end:found.start()]))
+        token = found.group()
+        if token in groups:
+            parts.append(f"(?P={groups[token]})")
+        else:
+            groups[token] = f"fill{len(groups)}"
+            parts.append(f"(?P<{groups[token]}>{re.escape(args)}|[^\n]*)")
+        end = found.end()
+    return re.compile("".join(parts) + re.escape(body[end:])) if groups else None
+
+
+def claude_proof(load, use, result, body, frozen, manifest):
     if use["name"] != "Skill":
         load.update(claude_full_read(load["skill_path"], result, manifest["skills"][load["skill"]]["sha256"]))
         return load
@@ -703,33 +747,21 @@ def claude_proof(load, use, result, body, frozen, manifest, sid=None):
         load["detail"] = "requested skill differs from the delivered base directory"
         return load
     load["skill"] = skill
-    expected = manifest["skills"][skill]["body_sha256"]
-    args_value = use["input"].get("args")
-    # Claude Code appends Skill call arguments to a body that has no $ARGUMENTS placeholder,
-    # replaces every $ARGUMENTS placeholder when the body contains one, and replaces every
-    # ${CLAUDE_SESSION_ID} with the session id.
-    suffix = "\n\nARGUMENTS: " + str(args_value or "")
-    substituted = False
-    if args_value and text.endswith(suffix) and digest(text[:-len(suffix)].encode()) == expected:
-        text = text[:-len(suffix)]
-        load["transform"] += "_arguments_suffix_removed"
-    elif separator and digest(text.encode()) != expected:
-        skill_file = Path(load["skill_path"])
-        if not skill_file.is_file() or digest(skill_file.read_bytes()) != manifest["skills"][skill]["sha256"]:
-            skill_file = Path(manifest["skills"][skill]["path"])
-        frozen_body = delivered_body(skill_file.read_text(encoding="utf-8"))
-        if frozen_body is not None and digest(frozen_body.encode()) == expected:
-            filled, tags = frozen_body, ""
-            if "$ARGUMENTS" in frozen_body:
-                filled, tags = filled.replace("$ARGUMENTS", str(args_value or "")), "_arguments_substituted"
-            elif args_value:
-                filled, tags = filled + suffix, "_arguments_suffix_removed"
-            if sid and "${CLAUDE_SESSION_ID}" in frozen_body:
-                filled, tags = filled.replace("${CLAUDE_SESSION_ID}", sid), tags + "_session_id_substituted"
-            if tags and text == filled:
-                substituted = True
-                load["transform"] += tags
-    mismatch = None if separator and (substituted or digest(text.encode()) == expected) else "body digest mismatch"
+    entry = manifest["skills"][skill]
+    args = str(use["input"].get("args") or "")
+    # Claude Code appends Skill call args to a body as this suffix, or fills placeholders in it.
+    suffix = "\n\nARGUMENTS: " + args
+    candidates = [(text[:-len(suffix)], "_arguments_suffix_removed")] if args and text.endswith(suffix) else []
+    candidates.append((text, ""))
+    matched = next((c for c in candidates if digest(c[0].encode()) == entry["body_sha256"]), None)
+    if separator and matched is None:
+        pattern = filled_body_pattern(frozen_skill_body(load["skill_path"], entry), args)
+        matched = next(((c, tag + "_placeholders_filled") for c, tag in candidates
+                        if pattern and pattern.fullmatch(c)), None)
+    if separator and matched:
+        text = matched[0]
+        load["transform"] += matched[1]
+    mismatch = None if separator and matched else "body digest mismatch"
     load.update(status="partial" if mismatch else "success", detail=mismatch, body_sha256=digest(text.encode()),
                 completed_seq=max(result["line"], body["line"]), ordering="source_sequence")
     return load
@@ -776,7 +808,7 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
         issues.append("root transcript does not carry one sessionId")
         return base
     sid = base["session_id"] = session_ids.pop()
-    root = claude_session(rows, capture_info["path"], sid, None, issues, hook_arm)
+    root = claude_session(rows, capture_info["path"], sid, None, issues, base["warnings"], hook_arm)
     base["texts"] = root["texts"]
     base["final_reply"] = final_reply(root["texts"], [use["line"] for use in root["uses"].values()])
     base["coverage"]["start"] = claude_start_covered(root["chain"], hook_arm)
@@ -811,7 +843,7 @@ def normalize_claude(run, manifest, capture_info, base, relevant_kind):
             file_label = "raw-subagents/" + name
             agent = name[len("agent-"):-len(".jsonl")]
             rows = claude_lines(retained(run, file_label, sha256), file_label, issues)
-            sessions.append((agent, claude_session(rows, file_label, sid, agent, issues, hook_arm)))
+            sessions.append((agent, claude_session(rows, file_label, sid, agent, issues, base["warnings"], hook_arm)))
     for tool_use_id, use in root["uses"].items():
         detail = (root["results"].get(tool_use_id) or {}).get("detail")
         if use["name"] in {"Agent", "Task"} and isinstance(detail, dict) and detail.get("agentId"):
@@ -910,7 +942,7 @@ def normalize(run, relevant_kind=None):
             "coverage": {key: False for key in ("start", "end", "skill_delivery", "relevant_actions")},
             "raw_trace": {"path": raw.name, "sha256": capture_info["sha256"]},
             "loads": [], "child_loads": [], "resource_reads": [], "child_resource_reads": [],
-            "unproved_reads": [], "hook_deliveries": [], "actions": [], "issues": [],
+            "unproved_reads": [], "hook_deliveries": [], "actions": [], "issues": [], "warnings": [],
             "texts": [], "final_reply": None}
     if capture_info["format"] == "claude-transcript" and capture_info["evidence_kind"] == "native":
         return normalize_claude(run, manifest, capture_info, base, relevant_kind)
@@ -1237,7 +1269,7 @@ def score(args):
               "observed_resources": sorted({r["resource"] for r in evidence["resource_reads"] if r["status"] == "success"}),
               "child_observed_skills": sorted({l["skill"] for l in evidence["child_loads"] if l["status"] == "success"}),
               "child_observed_resources": sorted({r["resource"] for r in evidence["child_resource_reads"] if r["status"] == "success"}),
-              "unproved_read_count": len(evidence["unproved_reads"]),
+              "unproved_read_count": len(evidence["unproved_reads"]), "warnings": evidence["warnings"],
               "load_status_counts": dict(Counter(l["status"] for l in evidence["loads"])),
               "raw_trace": evidence["raw_trace"], "manifest_sha256": digest((run / "manifest.json").read_bytes()),
               "route": route, "route_allowed_skills": sorted(route_allowed_skills),
@@ -1265,6 +1297,7 @@ def aggregate(args):
         group["coverage_" + row["evidence_coverage"]] += 1
         complete = row["evidence_coverage"] == "complete" and row["session_state"] == "completed"
         group["complete_sessions"] += int(complete)
+        group["warnings"] += len(row.get("warnings", []))
         strata_rows[key].append((row, complete))
         if row.get("route"):
             route = row["route"]
