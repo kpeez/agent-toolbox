@@ -84,7 +84,9 @@
   `verify-tech-tree` skill says what it covers.
 - After you change a path that a skill in `.agents/skills/verify-*` lists in its
   `paths`, run that skill. For `plugins/swe` hooks, run
-  `uv run .agents/skills/verify-swe-hooks/scripts/check.py`.
+  `uv run .agents/skills/verify-swe-hooks/scripts/check.py`. For the
+  rex-agents mirror, its hooks, and `wait-status.lua`, run
+  `uv run .agents/skills/verify-rex-mirror/scripts/check.py`.
 - After a change to the eval-batch budget in `evals/skills/run_eval.py`
   (`Batch`, `spend`, `finished`, `prepare`, `launch`, or `execute`), run
   `uv run .agents/skills/verify-eval-budget/scripts/check.py`. It
