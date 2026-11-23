@@ -361,7 +361,9 @@ requests `TC-08`, `DG-07`, and `AR-07` were rewritten for that reason (`fix-bug`
 `verifying-work`, step 1 names `diagnose`, and `build-feature` step 4 names
 `codebase-design`). Their requests now route to no playbook that loads the forbidden skill: two are read-only lookups, and
 `AR-07` is a one-function change with no interface, so step 4 does not apply. `validate` refuses a case that lists a skill
-as expected or auxiliary and also forbids it.
+as expected or auxiliary and also forbids it. It also refuses a case that forbids a skill which its `expected_route`
+always loads: an `always` step or reply load, the routed skill, or a `transitive` load that is not `conditional`. It
+cannot judge a conditional load, such as `AR-07`'s, because only the request decides whether the condition holds.
 
 A case that sets `expected_route` credits what a router-first run on that route loads, so it adds no `unexpected_skills`:
 
