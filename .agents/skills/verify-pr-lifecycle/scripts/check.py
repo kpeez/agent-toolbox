@@ -85,7 +85,7 @@ RUNS = [
         STACK_OF_TWO | {"StackMergeOn": "TRUE"},
     ),
     Run(
-        "finding: ship-stack step 3 keeps a verdict across a tests-or-docs push",
+        "finding: ship-stack step 3 and autopilot-full keep a verdict across a tests-or-docs push",
         "finding",
         ["MergedPatchVerified"],
         {"Variant": '"noiseCarry"'},

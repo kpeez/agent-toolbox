@@ -81,8 +81,11 @@ and remove the finding from this file.
   or docs.** `MergedPatchVerified`. Path: `Publish -> GetVerdict -> Push ->
   Recheck -> MarkReady -> Merge`. `ship-stack.md:11` lets "a lane's result
   stand" when only tests, docs, or lint config differ, and step 4 merges once
-  "its verdict survives step 3". Land step 3 (`ship-pr/SKILL.md:243-245`)
-  says that a changed patch-id needs a new verdict. The two rules disagree.
+  "its verdict survives step 3". `autopilot-full.md:7` lets that rule "carry
+  a lane's result", and its step 6 (`autopilot-full.md:14`) gives a
+  wording-only change no new verifier. Land step 3
+  (`ship-pr/SKILL.md:243-245`) says that a changed patch-id needs a new
+  verdict. The playbooks disagree with Land.
 
 ## How the model maps to the protocol
 
@@ -119,7 +122,7 @@ bug was replayed against the protocol text at the commit before its fix:
 - `readyOnRequest`, fixed by `c57bc85` (2026-10-29). At `c57bc85^`, lines
   78-80 let a request change the draft state in any mode. Path:
   `Publish -> ReadyOnRequest`.
-- `noiseCarry` is the ship-stack finding above.
+- `noiseCarry` is the ship-stack and autopilot-full finding above.
 
 The mutants: `unpinnedMerge` (Land merges without `--match-head-commit`),
 `anyVerifiedMerges` (a verified PR above the frontier merges), and
@@ -142,8 +145,9 @@ the release or deploy approval in Land 5. A clean restack keeps the
 patch-id, so the model leaves it out; a restack that resolves a conflict is
 a `Push`. A ready PR that gets a FAIL verdict stays ready, because the
 protocol says nothing else. The tracker's GitHub integration is modeled only
-for the `Closes` link on the top PR. Independent PRs for one issue
-(`autopilot-full`) are not modeled.
+for the `Closes` link on the top PR. The model runs each independent PR of
+`autopilot-full` as a single PR. It does not model several independent PRs
+for one issue, or the swarm and its verifier rounds.
 
 ## Coverage
 
@@ -151,7 +155,7 @@ for the `Closes` link on the top PR. Independent PRs for one issue
 drafts and merges, Publish 5-6, Land, Finalize),
 `plugins/swe/skills/ship-pr/references/stacked.md`, `verdict-brief.md`, and
 the playbooks `babysit-pr.md` (step 2), `ship-stack.md` (steps 2-4),
-`autopilot-full.md` (steps 2, 8), and `autopilot-stack.md` (steps 2-3).
+`autopilot-full.md` (line 7 and steps 2, 6, and 8, for one PR), and `autopilot-stack.md` (steps 2-3).
 
 Sync commit: `70183a0`. At that commit the model describes the protocol.
 Move it forward only after you confirm that the model describes the protocol
