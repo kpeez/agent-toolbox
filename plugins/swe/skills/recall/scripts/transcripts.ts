@@ -142,8 +142,6 @@ type Args = { days: number; host: string; subagents: boolean; exclude: string[];
 
 function longOption(token: string, names: string[]): string {
   if (names.includes(token)) return token;
-  const matches = names.filter((n) => n.startsWith(token));
-  if (matches.length === 1) return matches[0];
   usageError(`unrecognized arguments: ${token}`);
 }
 

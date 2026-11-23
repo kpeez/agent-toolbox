@@ -15,7 +15,6 @@ const MIRROR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "scripts",
 const LABEL_MAX = 60;
 const MODES_WITHOUT_PROMPTS = new Set(["auto", "bypassPermissions"]);
 const SAFE = /^[a-zA-Z0-9_@%+=:,./-]+$/;
-const WHITESPACE = /[\t-\r\x1c-\x1f\x20\x85\xa0\u1680\u2000-\u200a\u2028\u2029\u202f\u205f\u3000]+/;
 
 function shquote(s: string): string {
   if (s.length > 0 && SAFE.test(s)) return s;
@@ -39,7 +38,7 @@ function isRecord(v: unknown): v is Record<string, unknown> {
 
 function labelFor(toolInput: Record<string, unknown>, agentId: unknown): string {
   const raw = toolInput.description || toolInput.command || "";
-  const text = String(raw).split(WHITESPACE).filter((s) => s.length > 0).join(" ").slice(0, LABEL_MAX);
+  const text = String(raw).trim().replace(/\s+/g, " ").slice(0, LABEL_MAX);
   return `${agentId ? "[claude:sub]" : "[claude]"} ${text}`;
 }
 

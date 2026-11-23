@@ -45,13 +45,6 @@ function isDirectory(path: string): boolean {
   }
 }
 
-function splitOnPythonLineBoundaries(text: string): string[] {
-  if (text === "") return [];
-  const parts = text.split(/\r\n|[\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029]/);
-  if (parts[parts.length - 1] === "") parts.pop();
-  return parts;
-}
-
 interface Word {
   text: string;
   hasExpansion: boolean;
@@ -468,7 +461,7 @@ function slotErrors(name: string, text: string): string[] {
   if (text.trim() === `{${name}}`) return [`${name}: still holds the template placeholder {${name}}.`];
   const errors: string[] = [];
   let inFence = false;
-  const lines = splitOnPythonLineBoundaries(text);
+  const lines = text.split(/\r\n|\r|\n/);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const number = i + 1;
@@ -508,7 +501,7 @@ export function render(folder: string, link: string | null): { body: string | nu
     slots[name] = readFileSync(path, "utf-8").trim();
     errors.push(...slotErrors(name, slots[name]));
   }
-  if (link && !linkValid(link)) {
+  if (link && !LINK.test(link)) {
     errors.push(`link '${link}' must be 'Closes <key>', 'Fixes <key>', or 'Part of <key>'.`);
   }
   if (errors.length > 0) return { body: null, errors };
@@ -518,10 +511,6 @@ export function render(folder: string, link: string | null): { body: string | nu
 
 function escapeRegex(text: string): string {
   return text.replace(/[.*+?^${}()|[\]\\]/g, "\\$&");
-}
-
-function linkValid(link: string): boolean {
-  return LINK.test(link) || (link.endsWith("\n") && LINK.test(link.slice(0, -1)));
 }
 
 export function check(body: string): string[] {
@@ -542,17 +531,6 @@ export function check(body: string): string[] {
   return errors;
 }
 
-function pyRepr(text: string): string {
-  const quote = text.includes("'") && !text.includes('"') ? '"' : "'";
-  const escaped = text
-    .replace(/\\/g, "\\\\")
-    .replace(/\n/g, "\\n")
-    .replace(/\r/g, "\\r")
-    .replace(/\t/g, "\\t")
-    .replaceAll(quote, `\\${quote}`);
-  return quote + escaped + quote;
-}
-
 function expanduser(path: string): string {
   if (path === "~") return homedir();
   if (path.startsWith("~/")) return join(homedir(), path.slice(2));
@@ -567,7 +545,7 @@ function checkPrSegment(action: string, args: string[], cwd: string): string | n
   const base = extractBase(args);
   if (base !== null && repoUsesGhStack(cwd) && !repoTrunks(cwd).has(base)) {
     return (
-      `PR base blocked by ship-pr: this repo uses gh-stack, so --base ${pyRepr(base)} is not allowed. ` +
+      `PR base blocked by ship-pr: this repo uses gh-stack, so --base ${JSON.stringify(base)} is not allowed. ` +
       "Publish stacked branches with `gh stack link` or `gh stack submit` instead, " +
       "then update each PR body with `gh pr edit <n> --body-file <rendered>`.\n"
     );
@@ -654,8 +632,6 @@ type Cli =
 
 function longOption(token: string, names: string[]): string {
   if (names.includes(token)) return token;
-  const matches = names.filter((n) => n.startsWith(token));
-  if (matches.length === 1) return matches[0];
   usageError(`unrecognized arguments: ${token}`);
 }
 
