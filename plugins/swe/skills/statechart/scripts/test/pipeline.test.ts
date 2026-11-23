@@ -236,17 +236,6 @@ test("an invariant and a property with one name stay two rules", () => {
   assert.match(reportWithSmallProperty([]), /^## Rules that hold\nSmall$/m);
 });
 
-test("a PROPERTY that breaks with no path writes TLC's counterexample", () => {
-  const result = twoStates([]);
-  result.properties[0].outcome = "broken";
-  const { report, files } = compile(result, noView);
-  assert.match(
-    report,
-    /^## Settles breaks\nTLC found a counterexample\. It is in tlc-Settles\.out\.$/m,
-  );
-  assert.equal(body(files, "tlc-Settles.out"), "State 1: <Initial predicate>\nx = 0\n");
-});
-
 test("a rule named NoDeadlock leaves the deadlock rule a name of its own", () => {
   const holds = (result: CheckResult) => {
     result.spec.deadlock = true;

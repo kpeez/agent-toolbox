@@ -934,10 +934,11 @@
     },
     {
       "upstream": "skills/statechart/scripts/test/chart.test.ts",
-      "class": "copied",
+      "class": "modified",
       "local": [
         "plugins/swe/skills/statechart/scripts/test/chart.test.ts"
-      ]
+      ],
+      "note": "the replay() test of the shortest corpus bug paths is gone; corpus.test.ts checks each corpus spec's step counts against plain TLC with agrees()"
     },
     {
       "upstream": "skills/statechart/scripts/test/charts/Braces.mmd",
@@ -966,7 +967,7 @@
       "local": [
         "plugins/swe/skills/statechart/scripts/test/cli.test.ts"
       ],
-      "note": "linkedLauncher builds the relative link from fs.realpathSync(second), so the test passes on macOS; two signal tests await signalWhile, so the type check passes"
+      "note": "linkedLauncher builds the relative link from fs.realpathSync(second), so the test passes on macOS; two signal tests await signalWhile, so the type check passes; the recorded-TLC replays of the corpus, tlc-NAME.out, VIEW and SYMMETRY, the chart budget, and config edits are gone, and real TLC runs in corpus.test.ts and plain-tlc.test.ts replace them; the write-phase signal test ignores ENOENT while the worker renames its draft folder"
     },
     {
       "upstream": "skills/statechart/scripts/test/config-fuzz.test.ts",
@@ -977,10 +978,11 @@
     },
     {
       "upstream": "skills/statechart/scripts/test/corpus.test.ts",
-      "class": "copied",
+      "class": "modified",
       "local": [
         "plugins/swe/skills/statechart/scripts/test/corpus.test.ts"
-      ]
+      ],
+      "note": "each corpus spec runs through the launcher, and agrees() checks every rule against plain TLC before the golden comparison"
     },
     {
       "upstream": "skills/statechart/scripts/test/corpus/Counter/ChartRun.out",
@@ -3532,17 +3534,19 @@
     },
     {
       "upstream": "skills/statechart/scripts/test/pipeline.test.ts",
-      "class": "copied",
+      "class": "modified",
       "local": [
         "plugins/swe/skills/statechart/scripts/test/pipeline.test.ts"
-      ]
+      ],
+      "note": "the PROPERTY-with-no-path test is gone; the first pipeline test asserts the same report line and tlc-Settles.out"
     },
     {
       "upstream": "skills/statechart/scripts/test/plain-tlc.test.ts",
-      "class": "copied",
+      "class": "modified",
       "local": [
         "plugins/swe/skills/statechart/scripts/test/plain-tlc.test.ts"
-      ]
+      ],
+      "note": "agrees() is async; adds real TLC runs for VIEW and SYMMETRY, config comments, string constants, and TYPE keywords"
     },
     {
       "upstream": "skills/statechart/scripts/test/render.test.ts",
@@ -3560,10 +3564,11 @@
     },
     {
       "upstream": "skills/statechart/scripts/test/tlc.ts",
-      "class": "copied",
+      "class": "modified",
       "local": [
         "plugins/swe/skills/statechart/scripts/test/tlc.ts"
-      ]
+      ],
+      "note": "agrees() is async and runs TLC in parallel; it takes a view, a command, and env, names the deadlock rule CHECK_DEADLOCK when a rule is named NoDeadlock, accepts TLC naming a []P property by P, checks out files for raw tool output, and returns TLC's distinct state count"
     },
     {
       "upstream": "skills/statechart/scripts/tsconfig.json",

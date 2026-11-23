@@ -7,8 +7,6 @@ import path from "node:path";
 import { test } from "node:test";
 import { setTimeout as sleep } from "node:timers/promises";
 import { fileURLToPath, pathToFileURL } from "node:url";
-import { plainText } from "../backends/plain-text.ts";
-import { readMessages } from "../frontends/messages.ts";
 import { drawn } from "./drawn.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
@@ -76,30 +74,6 @@ function copyCase(name: string, edit: (dir: string) => void = () => {}) {
   fs.cpSync(path.join(corpus, name), dir, { recursive: true });
   edit(dir);
   return dir;
-}
-
-const named = (report: string) => {
-  const files: string[] = [];
-  for (const [file] of report.matchAll(/\btlc-\w+\.out\b/g))
-    if (!files.includes(file)) files.push(file);
-  return files;
-};
-
-for (const name of fs.readdirSync(corpus)) {
-  test(`${name} writes the committed chart and report from TLC's output`, () => {
-    const dir = path.join(corpus, name);
-    const r = run(dir);
-    assert.equal(r.stderr, "");
-    const first = path.join(dir, "verdict-1.exit");
-    const plain = fs.existsSync(first) ? Number(read(first)) : 0;
-    assert.equal(r.status, plain === 0 ? 0 : [11, 12, 13].includes(plain) ? 1 : 2);
-    assert.equal(r.report, read(path.join(dir, "report.md")));
-    assert.equal(read(path.join(r.out, "chart.mmd")), read(path.join(dir, "chart.mmd")));
-    assert.deepEqual(r.files, ["chart.mmd", "report.md", "tlc.out", ...named(r.report)].sort());
-    for (const f of r.files) assert.doesNotMatch(read(path.join(r.out, f)), /@!@!@/, f);
-    assert.match(r.configs.ChartRun, /^INVARIANT ChartMark$/m);
-    assert.match(r.configs.ChartRun, /^CONSTRAINT ChartBudget$/m);
-  });
 }
 
 const launcher = path.join(here, "../statechart");
@@ -456,7 +430,14 @@ for (const signal of ["SIGINT", "SIGTERM"] satisfies NodeJS.Signals[]) {
       await signalWhile(signal, () => ({
         dir: gridCase(150),
         reached: (parent) => {
-          for (const f of fs.readdirSync(parent, { recursive: true, encoding: "utf8" }))
+          let files: string[];
+          try {
+            files = fs.readdirSync(parent, { recursive: true, encoding: "utf8" });
+          } catch (error) {
+            if ((error as NodeJS.ErrnoException).code === "ENOENT") return false;
+            throw error;
+          }
+          for (const f of files)
             if (
               path.basename(f) === "chart.mmd" &&
               fs.statSync(path.join(parent, f), { throwIfNoEntry: false })?.size
@@ -503,78 +484,8 @@ spawn(process.execPath, ["-e", ${JSON.stringify(sendWhileRead)}, dot, command, $
   });
 }
 
-test("a broken property is named in the report, and its TLC trace is in tlc-NAME.out", () => {
-  const dir = path.join(corpus, "MediaPlayerProps");
-  const r = run(dir);
-  assert.equal(r.status, 1);
-  for (const p of ["EventuallyPlays", "QuietWhenStopped"]) {
-    assert.match(r.report, new RegExp(`^## ${p} breaks\n.*tlc-${p}\\.out`, "m"));
-    const out = read(path.join(r.out, `tlc-${p}.out`));
-    const from: string[] = [];
-    for (const name of Object.keys(r.configs)) {
-      const tool = name.startsWith("verdict-") && read(path.join(dir, `${name}.out`));
-      if (tool && out === `${[...plainText(readMessages(tool))].join("")}\n`) from.push(name);
-    }
-    assert.equal(from.length, 1, p);
-    assert.match(r.configs[from[0]], new RegExp(`^PROPERTY ${p}$`, "m"));
-    assert.match(out, /^TLC2 Version /);
-    assert.doesNotMatch(out, /@!@!@/);
-  }
-  assert.match(read(path.join(r.out, "tlc-QuietWhenStopped.out")), /^State 2: <YouTurnItUp /m);
-  assert.match(r.report, /^## Rules that hold\n.*\bEventuallyStops\b.*\bStaysTyped\b/m);
-});
-
-test("TLC checks the rules and draws the chart with VIEW and SYMMETRY, and the report says an arrow can lead to a representative", () => {
-  const dir = copyCase("MediaPlayer", (d) =>
-    fs.appendFileSync(path.join(d, "MediaPlayer.cfg"), "\nVIEW vars\nSYMMETRY Perms\n"),
-  );
-  const r = run(dir);
-  assert.equal(r.status, 1);
-  const verdict = r.configs["verdict-1"];
-  assert.match(verdict, /^PROPERTY EventuallyStops$/m);
-  for (const config of [verdict, r.configs.ChartRun]) {
-    assert.match(config, /^VIEW vars$/m);
-    assert.match(config, /^SYMMETRY Perms$/m);
-  }
-  assert.match(
-    r.report,
-    /^With VIEW and SYMMETRY, TLC keeps one representative for each group of states that it counts as the same\. An arrow can lead to the representative rather than to the state that the step reaches\.$/m,
-  );
-  assert.doesNotMatch(run(path.join(corpus, "MediaPlayer")).report, /representative/);
-});
-
 const overBudget = (file: string) =>
   fs.writeFileSync(file, read(file).replace(/\b\d+( distinct states found)/g, "1234$1"));
-
-test("a check above the chart budget skips the drawing run and draws only the bug paths", () => {
-  const dir = copyCase("FirstRule", (d) => {
-    for (const f of fs.readdirSync(d))
-      if (/^verdict-\d+\.out$/.test(f)) overBudget(path.join(d, f));
-  });
-  const r = run(dir);
-  assert.equal(r.status, 1);
-  assert.equal(r.configs.ChartRun, undefined);
-  assert.ok(r.files.includes("chart.mmd"));
-  assert.match(
-    r.report,
-    /^TLC reached more states than the chart budget of 500, so the chart draws only the bug paths: 4 states and 3 arrows\.$/m,
-  );
-  for (const rule of ["NotOne", "NotOneOrThree", "AlsoNotOne", "NoDeadlock"])
-    assert.match(r.report, new RegExp(`^## ${rule} breaks$`, "m"));
-});
-
-test("a passing check above the chart budget writes no chart.mmd and gives the state count", () => {
-  const dir = copyCase("Login", (d) => overBudget(path.join(d, "verdict-1.out")));
-  const r = run(dir);
-  assert.equal(r.status, 0);
-  assert.equal(r.configs.ChartRun, undefined);
-  assert.deepEqual(r.files, ["report.md", "tlc.out"]);
-  assert.match(
-    r.report,
-    /^TLC reached 1,234 states, more than the chart budget of 500, so the command wrote no chart\.mmd\.$/m,
-  );
-  assert.match(r.report, /^## Rules that hold\nTypeOK, NoDeadlock$/m);
-});
 
 test("a property that INSTANCE actions break above the chart budget draws their qualified names and the loop", () => {
   const dir = copyCase("CounterInstance", (d) => overBudget(path.join(d, "verdict-1.out")));
@@ -586,17 +497,6 @@ test("a property that INSTANCE actions break above the chart budget draws their 
     /^1\. C!Up: 1\n2\. C!Up: 2\n3\. C!Back: 1\nThe run loops through "1" and "2" forever\.$/m,
   );
   assert.match(read(path.join(r.out, "chart.mmd")), /^  s\d+ --> s\d+: C!Back$/m);
-});
-
-test("a drawing run that counts more states than the chart budget gives only the bug paths", () => {
-  const dir = copyCase("FirstRule", (d) => overBudget(path.join(d, "ChartRun.out")));
-  const r = run(dir);
-  assert.equal(r.status, 1);
-  assert.match(r.configs.ChartRun, /^CONSTRAINT ChartBudget$/m);
-  assert.match(
-    r.report,
-    /^TLC reached more states than the chart budget of 500, so the chart draws only the bug paths: 4 states and 3 arrows\.$/m,
-  );
 });
 
 test("a property with no temporal operator says TLC checked it only in the initial states", () => {
@@ -1277,41 +1177,3 @@ for (const [what, config, words] of [
     assert.deepEqual(r.files, []);
   });
 }
-
-test("a nested comment hides all of its text, as in TLC", () => {
-  const dir = copyCase("Login", (d) => {
-    const file = path.join(d, "Login.cfg");
-    fs.writeFileSync(file, `(* Off: (* old *) CHECK_DEADLOCK FALSE *)\n${read(file)}`);
-  });
-  const r = run(dir);
-  assert.equal(r.status, 0);
-  assert.equal(r.report, read(path.join(corpus, "Login", "report.md")));
-});
-
-test("a string constant keeps the keywords and comment markers in it", () => {
-  const dir = copyCase("TwoPhase", (d) =>
-    fs.writeFileSync(
-      path.join(d, "TwoPhase.cfg"),
-      'CONSTANT RM = {"INVARIANT (*", "\\\\* r2"}\nSPECIFICATION TPSpec\nINVARIANT TPTypeOK TCConsistent\n',
-    ),
-  );
-  const r = run(dir);
-  assert.equal(r.status, 1);
-  assert.equal(r.report, read(path.join(corpus, "TwoPhase", "report.md")));
-  assert.match(r.configs.ChartRun, /^CONSTANT RM = .*"INVARIANT \(\*".*"\\\\\* r2"/m);
-  assert.deepEqual(r.configs.ChartRun.match(/^INVARIANT.*$/gm), ["INVARIANT ChartMark"]);
-});
-
-test("TYPE and TYPE_CONSTRAINT are config keywords, as in TLC", () => {
-  const dir = copyCase("Login", (d) =>
-    fs.writeFileSync(
-      path.join(d, "Login.cfg"),
-      "SPECIFICATION Spec\nINVARIANT TypeOK\nTYPE TypeOK\nTYPE_CONSTRAINT TypeOK\nVIEW vars\n",
-    ),
-  );
-  const r = run(dir);
-  assert.equal(r.status, 0);
-  assert.equal(r.report, read(path.join(corpus, "Login", "report.md")));
-  assert.match(r.configs.ChartRun, /^TYPE TypeOK$/m);
-  assert.match(r.configs.ChartRun, /^TYPE_CONSTRAINT TypeOK$/m);
-});

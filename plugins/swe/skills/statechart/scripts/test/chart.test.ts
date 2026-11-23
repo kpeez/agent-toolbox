@@ -15,23 +15,19 @@ import {
   type Bug,
   EC,
   type Graph,
-  hasSection,
   key,
-  type Lasso,
   LEVEL,
   type PathStep,
   type Rule,
-  ruleKey,
   show,
   type Spec,
-  type State,
   stateRules,
   type Step,
   type Value,
   type Vars,
   type View,
 } from "../ir.ts";
-import { addPast, deadEnds, finder, lasso, mark } from "../passes/annotate.ts";
+import { lasso, mark } from "../passes/annotate.ts";
 import { pathGraph } from "../passes/paths.ts";
 import { bugs, walk } from "../passes/reach.ts";
 import { parseDot } from "../frontends/dot.ts";
@@ -69,12 +65,6 @@ const graphOf = (states: StateRow[], steps: StepRow[]) => {
   }
   for (const [from, to, action] of steps) graph.steps.push({ from, to, action });
   return graph;
-};
-
-const lookup = <K, V>(map: ReadonlyMap<K, V>, k: K) => {
-  const v = map.get(k);
-  assert.ok(v !== undefined, `${inspect(k)} is missing`);
-  return v;
 };
 
 const field = (value: Value, name: string) => {
@@ -213,67 +203,6 @@ test("equal TLA+ values share one key and unequal ones do not, as TLC compares t
   ];
   for (const [a, b] of apart)
     assert.notEqual(key(parseValue(a)), key(parseValue(b)), `${a} # ${b}`);
-});
-
-function replay(name: string, graph: Graph) {
-  const spec = corpusSpec(name);
-  const names = spec.variables;
-  const rules = stateRules(spec);
-  const find = finder(graph, names);
-  const marks = readMarks(readMessages(fileLines(corpus(name, "ChartRun.out"))), "chart");
-  const past = mark(graph, marks, names, rules, find);
-  const drawn = !fs.existsSync(corpus(name, "ChartRun.exit"));
-  for (const f of fs.readdirSync(path.join(here, "corpus", name)).sort()) {
-    if (!/^verdict-\d+\.out$/.test(f)) continue;
-    const messages = [...readMessages(fileLines(corpus(name, f)))];
-    const { broke } = readVerdict(messages);
-    if (!broke) continue;
-    let rule: Rule | undefined;
-    for (const r of rules)
-      if (r.kind === broke.kind && (broke.kind === "deadlock" || r.name === broke.name)) rule = r;
-    if (!rule) continue;
-    if (rule.kind === "deadlock" && drawn && !hasSection(spec, "CONSTRAINT", "ACTION_CONSTRAINT"))
-      deadEnds(graph, rule);
-    const counterexample = readCounterexample(messages);
-    if (drawn || lasso(graph, { seq: counterexample, loop: undefined }, names, find))
-      addPast(
-        graph,
-        counterexample,
-        names,
-        rule,
-        past,
-        hasSection(spec, "ACTION_CONSTRAINT"),
-        find,
-      );
-  }
-}
-
-test("each corpus bug path is the shortest way to its rule", () => {
-  const paths: { [rule: string]: string[] } = {};
-  for (const name of ["DieHard", "MediaPlayer", "LoginParallel", "TwoPhase", "FirstRule"]) {
-    const graph = parseDot(fileLines(corpus(name, "graph.dot")));
-    replay(name, graph);
-    for (const bug of bugs(graph)) {
-      paths[bug.rule.name] = [];
-      for (const p of bug.path) paths[bug.rule.name].push(p.action);
-    }
-  }
-  assert.deepEqual(paths.NotSolved, [
-    "FillBig",
-    "BigToSmall",
-    "EmptySmall",
-    "BigToSmall",
-    "FillBig",
-    "BigToSmall",
-  ]);
-  assert.deepEqual(paths.LoudWhenStopped, ["YouTurnItUp"]);
-  assert.equal(paths.SignedInWhileLocked.length, 5);
-  assert.equal(paths.TCConsistent.length, 5);
-  assert.equal(paths.TCConsistent.at(-1), "RMRcvCommitMsg");
-  assert.deepEqual(paths.NotOne, ["Next"]);
-  assert.deepEqual(paths.NotOneOrThree, ["Next"]);
-  assert.deepEqual(paths.AlsoNotOne, ["Next"]);
-  assert.deepEqual(paths.NoDeadlock, ["Next", "Next", "Next"]);
 });
 
 test("a chart of only the bug paths words each one with the view, asked once for each state and step", () => {

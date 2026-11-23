@@ -24,9 +24,9 @@ const lateCfg = (mode: string, rules: string) =>
 test(
   "a rule that breaks before another rule fails to evaluate breaks in either order",
   { skip },
-  () => {
-    const first = agrees("Late", { Late: late }, lateCfg("none", "Below InDomain"));
-    const last = agrees("Late", { Late: late }, lateCfg("none", "InDomain Below"));
+  async () => {
+    const first = await agrees("Late", { Late: late }, lateCfg("none", "Below InDomain"));
+    const last = await agrees("Late", { Late: late }, lateCfg("none", "InDomain Below"));
     assert.equal(first.status, 1);
     assert.deepEqual(first.breaks, new Map([["Below", 2]]));
     assert.deepEqual(first.holds, []);
@@ -35,9 +35,9 @@ test(
   },
 );
 
-test("a rule that breaks before a step fails to evaluate breaks", { skip }, () => {
+test("a rule that breaks before a step fails to evaluate breaks", { skip }, async () => {
   for (const mode of ["div", "assert"]) {
-    const v = agrees("Late", { Late: late }, lateCfg(mode, "Small"));
+    const v = await agrees("Late", { Late: late }, lateCfg(mode, "Small"));
     assert.equal(v.status, 1);
     assert.deepEqual(v.breaks, new Map([["Small", 1]]));
     assert.deepEqual(v.unchecked, ["NoDeadlock"]);
@@ -57,8 +57,8 @@ const warnPath = (next: string) => [
   "====",
 ];
 
-test("a rule that breaks before it fails to evaluate breaks", { skip }, () => {
-  const v = agrees(
+test("a rule that breaks before it fails to evaluate breaks", { skip }, async () => {
+  const v = await agrees(
     "WarnPath",
     { WarnPath: warnPath("One \\/ Two") },
     "INIT Init\nNEXT Next\nINVARIANT Zero\n",
@@ -67,9 +67,9 @@ test("a rule that breaks before it fails to evaluate breaks", { skip }, () => {
   assert.equal(v.breaks.get("Zero"), 1);
 });
 
-test("a rule that fails to evaluate before TLC reaches a break exits 2", { skip }, () => {
+test("a rule that fails to evaluate before TLC reaches a break exits 2", { skip }, async () => {
   for (const deadlock of ["", "CHECK_DEADLOCK FALSE\n"]) {
-    const v = agrees(
+    const v = await agrees(
       "WarnPath",
       { WarnPath: warnPath("Two \\/ One") },
       `INIT Init\nNEXT Next\nINVARIANT Zero\n${deadlock}`,
@@ -79,8 +79,8 @@ test("a rule that fails to evaluate before TLC reaches a break exits 2", { skip 
   }
 });
 
-test("a rule that no verdict run checks stays not checked under a SYMMETRY", { skip }, () => {
-  const v = agrees(
+test("a rule that no verdict run checks stays not checked under a SYMMETRY", { skip }, async () => {
+  const v = await agrees(
     "Hide",
     {
       Hide: [
@@ -105,8 +105,8 @@ test("a rule that no verdict run checks stays not checked under a SYMMETRY", { s
   assert.deepEqual(v.unchecked, ["Bad", "Boom", "NoDeadlock"]);
 });
 
-test("a deadlock breaks whatever shape the SPECIFICATION has", { skip }, () => {
-  const live = agrees(
+test("a deadlock breaks whatever shape the SPECIFICATION has", { skip }, async () => {
+  const live = await agrees(
     "Live",
     {
       Live: [
@@ -126,7 +126,7 @@ test("a deadlock breaks whatever shape the SPECIFICATION has", { skip }, () => {
   assert.deepEqual(live.breaks, new Map([["NoDeadlock", 2]]));
   assert.deepEqual(live.holds, ["TypeOK"]);
   for (const next of ["[][Next \\/ Tick]_vars", "[][\\E i \\in 1..2 : Step(i)]_vars"]) {
-    const v = agrees(
+    const v = await agrees(
       "Shape",
       {
         Shape: [
@@ -149,8 +149,8 @@ test("a deadlock breaks whatever shape the SPECIFICATION has", { skip }, () => {
   }
 });
 
-test("a SPECIFICATION from an INSTANCE checks deadlock and finds none", { skip }, () => {
-  const v = agrees(
+test("a SPECIFICATION from an INSTANCE checks deadlock and finds none", { skip }, async () => {
+  const v = await agrees(
     "Outer",
     {
       Inner: [
@@ -174,8 +174,8 @@ test("a SPECIFICATION from an INSTANCE checks deadlock and finds none", { skip }
   assert.deepEqual(v.holds, ["NoDeadlock"]);
 });
 
-test("a state at a CONSTRAINT bound is no deadlock", { skip }, () => {
-  const v = agrees(
+test("a state at a CONSTRAINT bound is no deadlock", { skip }, async () => {
+  const v = await agrees(
     "Bound",
     {
       Bound: [
@@ -198,8 +198,8 @@ test("a state at a CONSTRAINT bound is no deadlock", { skip }, () => {
 test(
   "a model with no initial state passes as it does in TLC, and the report says why",
   { skip },
-  () => {
-    const v = agrees(
+  async () => {
+    const v = await agrees(
       "NoInit",
       {
         NoInit: [
@@ -226,8 +226,8 @@ test(
 test(
   "a run after a break stops at the state bound and leaves its rules not checked",
   { skip },
-  () => {
-    const v = agrees(
+  async () => {
+    const v = await agrees(
       "Cycle",
       {
         Cycle: [
@@ -253,3 +253,90 @@ test(
     );
   },
 );
+
+test(
+  "TLC checks the rules and draws the chart with VIEW and SYMMETRY, and the report says an arrow can lead to a representative",
+  { skip },
+  async () => {
+    const pair = [
+      "---- MODULE Pair ----",
+      "EXTENDS Naturals, TLC",
+      "CONSTANTS a, b, S",
+      "VARIABLES x, n",
+      "vars == <<x, n>>",
+      "Perms == Permutations(S)",
+      "Init == x \\in S /\\ n = 0",
+      "Next == n < 2 /\\ n' = n + 1 /\\ x' \\in S",
+      "Typed == x \\in S",
+      "====",
+    ];
+    const cfg =
+      "CONSTANTS a = a b = b S = {a, b}\nINIT Init\nNEXT Next\nINVARIANT Typed\nCHECK_DEADLOCK FALSE\n";
+    const merged = await agrees("Pair", { Pair: pair }, `${cfg}VIEW vars\nSYMMETRY Perms\n`);
+    assert.equal(merged.status, 0);
+    assert.equal(merged.distinct, 3);
+    assert.match(
+      merged.report,
+      /^TLC reached 3 states and \d+ steps\. The chart draws 3 states and \d+ arrows\.\nWith VIEW and SYMMETRY, TLC keeps one representative for each group of states that it counts as the same\. An arrow can lead to the representative rather than to the state that the step reaches\.$/m,
+    );
+    const plain = await agrees("Pair", { Pair: pair }, cfg);
+    assert.equal(plain.distinct, 6);
+    assert.doesNotMatch(plain.report, /representative/);
+  },
+);
+
+const deadEnd = [
+  "---- MODULE DeadEnd ----",
+  "EXTENDS Naturals",
+  "VARIABLE x",
+  "Init == x = 0",
+  "Next == x < 2 /\\ x' = x + 1",
+  "Typed == x \\in 0..2",
+  "====",
+];
+
+test("a nested comment in the config hides all of its text, as in TLC", { skip }, async () => {
+  const v = await agrees(
+    "DeadEnd",
+    { DeadEnd: deadEnd },
+    "(* Off: (* old *) CHECK_DEADLOCK FALSE *)\nINIT Init\nNEXT Next\nINVARIANT Typed\n",
+  );
+  assert.equal(v.status, 1);
+  assert.deepEqual(v.breaks, new Map([["NoDeadlock", 2]]));
+  assert.deepEqual(v.holds, ["Typed"]);
+});
+
+test(
+  "a string constant in the config keeps the keywords and comment markers in it",
+  { skip },
+  async () => {
+    const v = await agrees(
+      "Names",
+      {
+        Names: [
+          "---- MODULE Names ----",
+          "CONSTANT RM",
+          "VARIABLE x",
+          "Init == x \\in RM",
+          "Next == x' \\in RM",
+          'Plain == x # "INVARIANT (*"',
+          "====",
+        ],
+      },
+      'CONSTANT RM = {"INVARIANT (*", "\\\\* r2"}\nINIT Init\nNEXT Next\nINVARIANT Plain\n',
+    );
+    assert.equal(v.status, 1);
+    assert.deepEqual(v.breaks, new Map([["Plain", 0]]));
+    assert.deepEqual(v.holds, ["NoDeadlock"]);
+  },
+);
+
+test("TYPE and TYPE_CONSTRAINT are config keywords, as in TLC", { skip }, async () => {
+  const v = await agrees(
+    "DeadEnd",
+    { DeadEnd: deadEnd },
+    "INIT Init\nNEXT Next\nINVARIANT Typed\nTYPE Typed\nTYPE_CONSTRAINT Typed\nCHECK_DEADLOCK FALSE\n",
+  );
+  assert.equal(v.status, 0);
+  assert.deepEqual(v.holds, ["Typed"]);
+});

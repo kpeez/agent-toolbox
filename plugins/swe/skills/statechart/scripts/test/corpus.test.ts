@@ -6,6 +6,7 @@ import path from "node:path";
 import { test } from "node:test";
 import { fileURLToPath } from "node:url";
 import { check, PINNED_FLAGS } from "../run.ts";
+import { agrees } from "./tlc.ts";
 
 const here = path.dirname(fileURLToPath(import.meta.url));
 const corpus = path.join(here, "corpus");
@@ -13,47 +14,38 @@ const skip = !process.env.TLA2TOOLS && "set TLA2TOOLS to the path of tla2tools.j
 const read = (file: string) => fs.readFileSync(file, "utf8");
 
 for (const name of fs.readdirSync(corpus)) {
-  test(`${name} gives the committed chart and report when TLC runs`, { skip }, () => {
-    const dir = path.join(corpus, name);
-    const tmp = fs.mkdtempSync(path.join(os.tmpdir(), "statechart-corpus-"));
-    const tlc = path.join(tmp, "tlc");
-    const out = path.join(tmp, "out");
-    fs.mkdirSync(tlc);
-    const view = path.join(dir, "view.mjs");
-    const r = spawnSync(
-      process.execPath,
-      [
-        path.join(here, "../statechart.ts"),
-        path.join(dir, `${name}.tla`),
-        ...(fs.existsSync(view) ? ["--view", view] : []),
-        "--out",
-        out,
-      ],
-      {
-        encoding: "utf8",
-        env: {
-          ...process.env,
-          JAVA: path.join(here, "java.ts"),
-          STATECHART_JAVA: process.env.JAVA ?? "java",
-          STATECHART_RECORD: tlc,
-        },
-      },
-    );
-    assert.equal(r.stderr, "");
-    if (process.env.STATECHART_UPDATE) {
+  test(
+    `${name} through the launcher agrees with plain TLC on each rule and gives the committed chart and report`,
+    { skip },
+    async () => {
+      const dir = path.join(corpus, name);
+      const files: { [name: string]: string[] } = {};
       for (const f of fs.readdirSync(dir))
-        if (/\.(out|exit|dot|mmd|md)$/.test(f)) fs.rmSync(path.join(dir, f));
-      for (const f of fs.readdirSync(tlc)) fs.copyFileSync(path.join(tlc, f), path.join(dir, f));
-      for (const f of ["chart.mmd", "report.md"])
-        fs.copyFileSync(path.join(out, f), path.join(dir, f));
-    }
-    const report = read(path.join(out, "report.md"));
-    const first = path.join(dir, "verdict-1.exit");
-    const plain = fs.existsSync(first) ? Number(read(first)) : 0;
-    assert.equal(r.status, plain === 0 ? 0 : [11, 12, 13].includes(plain) ? 1 : 2);
-    assert.equal(report, read(path.join(dir, "report.md")));
-    assert.equal(read(path.join(out, "chart.mmd")), read(path.join(dir, "chart.mmd")));
-  });
+        if (f.endsWith(".tla"))
+          files[path.basename(f, ".tla")] = read(path.join(dir, f)).split("\n");
+      const view = path.join(dir, "view.mjs");
+      const tlc = fs.mkdtempSync(path.join(os.tmpdir(), "statechart-corpus-"));
+      const record = {
+        JAVA: path.join(here, "java.ts"),
+        STATECHART_JAVA: process.env.JAVA ?? "java",
+        STATECHART_RECORD: tlc,
+      };
+      const v = await agrees(name, files, read(path.join(dir, `${name}.cfg`)), {
+        view: fs.existsSync(view) ? view : undefined,
+        command: [path.join(here, "../statechart")],
+        env: process.env.STATECHART_UPDATE ? record : {},
+      });
+      if (process.env.STATECHART_UPDATE) {
+        for (const f of fs.readdirSync(dir))
+          if (/\.(out|exit|dot|mmd|md)$/.test(f)) fs.rmSync(path.join(dir, f));
+        for (const f of fs.readdirSync(tlc)) fs.copyFileSync(path.join(tlc, f), path.join(dir, f));
+        fs.writeFileSync(path.join(dir, "chart.mmd"), v.chart);
+        fs.writeFileSync(path.join(dir, "report.md"), v.report);
+      }
+      assert.equal(v.report, read(path.join(dir, "report.md")));
+      assert.equal(v.chart, read(path.join(dir, "chart.mmd")));
+    },
+  );
 }
 
 test("a spec in a folder whose name is not ASCII checks under the POSIX locale", { skip }, () => {
