@@ -2,7 +2,6 @@
   "$schema": "https://agent-plugins.org/schemas/1.0.0/plugin.schema.json",
   "name": "lab",
   "description": "Research router and project skills, source-backed research, reproducible experiment loops, and data visualization guidance",
-  "version": "1.5.23",
   "author": {
     "name": "kpeez",
     "email": "25070796+kpeez@users.noreply.github.com"

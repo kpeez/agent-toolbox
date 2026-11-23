@@ -328,7 +328,6 @@ def materialize(args):
     if inventory(inputs / "plugins") != expected:
         raise ValueError("plugins/ changed while it was copied")
     removed = []
-    versions = {}
     hooks = {}
     for plugin in sorted((inputs / "plugins").iterdir()):
         for name in (".claude-plugin", ".codex-plugin", ".antigravity-plugin"):
@@ -336,8 +335,6 @@ def materialize(args):
             if not manifest.exists():
                 continue
             original = read_json(manifest)
-            if name in (".claude-plugin", ".codex-plugin"):
-                versions[f"{plugin.name}/{name}"] = original["version"]
             changed = False
             for key in ("hooks", "mcpServers"):
                 if key in original:
@@ -377,7 +374,7 @@ def materialize(args):
     manifest_data = {
         "schema_version": 1, "case_id": case["id"], "corpus_sha256": digest(Path(args.corpus).read_bytes()),
         "facets_sha256": digest((HERE / "facets.json").read_bytes()),
-        "hook_arm": hook_arm, "runtime": runtime, "plugin_versions": versions, "skills": skills,
+        "hook_arm": hook_arm, "runtime": runtime, "skills": skills,
         "resources": resources, "input_files": inventory(inputs), "fixture_files": inventory(workspace),
         "fixture_catalog_files": inventory(fixtures_root(args.corpus)), "source_catalog_files": source_catalog_files,
         "removed_bindings": removed,
@@ -1189,7 +1186,7 @@ def score(args):
     evidence = normalize(run, case["relevant_action"])
     scorer_sha256 = digest(Path(__file__).read_bytes())
     hook_arm = manifest.get("hook_arm", "hook-off")
-    configuration = {field: manifest[field] for field in ("runtime", "plugin_versions", "source_catalog_files",
+    configuration = {field: manifest[field] for field in ("runtime", "source_catalog_files",
                                                          "removed_bindings", "corpus_sha256", "fixture_catalog_files",
                                                          "harness_sha256")}
     configuration.update(hook_arm=hook_arm, facets_sha256=facets_sha256, adapter_version=evidence["adapter_version"], scorer_sha256=scorer_sha256)

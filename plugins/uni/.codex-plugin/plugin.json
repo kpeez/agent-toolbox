@@ -1,7 +1,6 @@
 {
   "name": "uni",
   "description": "Interactive lessons, quizzes, reviews, and prerequisite-gated courses",
-  "version": "0.1.17",
   "author": { "name": "kpeez", "url": "https://github.com/kpeez" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",

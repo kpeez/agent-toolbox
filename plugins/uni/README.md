@@ -173,7 +173,7 @@ Exposure, helped performance, independent performance, delayed recall, and
 transfer remain separate evidence. The two-stalled-attempt escalation default
 is an engineering choice.
 
-Release checks verify paired manifests, catalogs, and bundled references. The
+Release checks verify manifests, catalogs, and bundled references. The
 [held-out evaluation guide](evaluations/README.md) distinguishes next-turn
 behavior checks, simulated examples, actual host activation, and educational
 efficacy. Check the retained evaluation

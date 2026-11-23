@@ -4,8 +4,9 @@ A broad plugin release runs the packaging checks in `AGENTS.md` and these
 offline checks:
 
 - Check that every relative link in changed Markdown resolves.
-- Run `claude plugin validate --strict` on the repository root and on each
-  changed plugin.
+- Run `claude plugin validate` on the repository root and on each changed
+  plugin. Do not add `--strict`: the manifests have no `version` on purpose,
+  and strict mode fails on that warning.
 - Run `hermes plugins validate plugins/<plugin>` on each changed plugin when
   Hermes Agent is installed.
 - Load each `agents/*.toml` with Python's `tomllib.load` and each

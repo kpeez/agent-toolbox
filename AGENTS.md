@@ -1,13 +1,8 @@
 # Repository rules
 
 - Preserve unrelated working-tree changes.
-- When a plugin has more than one of `.claude-plugin/plugin.json`,
-  `.codex-plugin/plugin.json`, `.antigravity-plugin/plugin.json`, and the
-  root `plugin.json` (Agent Plugins v1, for Hermes Agent), keep their
-  versions identical.
-- Bump plugin versions by patch by default, including when adding a skill.
-  A minor or major bump requires explicit permission in the request;
-  precedent in the git history is not permission.
+- No plugin manifest or catalog entry sets `version`;
+  `uv run .github/scripts/manifest_versions.py` says why.
 - Keep every marketplace catalog entry pointed at a plugin folder that exists.
   `uv run .github/scripts/plugin_catalogs.py` checks this, and that each
   catalog lists every plugin folder it should.
@@ -62,7 +57,7 @@
 ## Verification
 
 - For plugin packaging changes, parse the affected manifests, catalogs, and hooks
-  as direct JSON and verify version, catalog, and resource-reference invariants.
+  as direct JSON and verify catalog and resource-reference invariants.
 - For changed shell or runtime scripts, run `bash -n`, Python help/usage checks,
   and `uv run -m py_compile` as applicable. Do not run every repository check
   for a docs-only change.

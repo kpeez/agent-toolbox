@@ -22,8 +22,8 @@ are separate claims. The `tech-tree` scenarios check gating behavior in the next
 graph, not by these rubrics.
 
 Version `0.1.2` uses native plugin installation and retires the custom
-skill-copy installer and its tests. Release checks still verify provider
-versions, catalog and hook JSON, and bundled resource references. The earlier
+skill-copy installer and its tests. Release checks still verify
+catalog and hook JSON, and bundled resource references. The earlier
 installer tests and their deliberate failures remain historical evidence in
 the original review; they are not a current plugin capability.
 
