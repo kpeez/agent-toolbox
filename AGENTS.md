@@ -73,3 +73,8 @@
 - After you change a path that a skill in `.agents/skills/verify-*` lists in its
   `paths`, run that skill. For `plugins/swe` hooks, run
   `uv run .agents/skills/verify-swe-hooks/scripts/check.py`.
+- After a change to the eval-batch budget in `evals/skills/run_eval.py`
+  (`Batch`, `spend`, `finished`, `prepare`, `launch`, or `execute`), run
+  `uv run .agents/skills/verify-eval-budget/scripts/check.py`. It
+  model-checks the budget cap and resume with TLC and replays each model
+  step on the real code.
