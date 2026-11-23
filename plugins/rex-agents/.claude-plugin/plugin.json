@@ -1,6 +1,6 @@
 {
   "name": "rex-agents",
-  "description": "Rex terminal plugin for agents: mirrors each background command into its own Rex tab with live status, waits on Rex events, drives other agent sessions in Rex blocks, and loads the using-rex rules in Rex panes",
+  "description": "Rex terminal plugin for agents: mirrors background commands into minimized floating panes with live status, waits on Rex events, drives other agent sessions in Rex blocks, and loads the using-rex rules in Rex panes",
   "author": { "name": "kpeez", "email": "25070796+kpeez@users.noreply.github.com" },
   "homepage": "https://github.com/kpeez/agent-toolbox",
   "repository": "https://github.com/kpeez/agent-toolbox",

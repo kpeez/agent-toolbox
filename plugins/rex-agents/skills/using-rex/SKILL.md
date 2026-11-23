@@ -30,11 +30,13 @@ Run everything else in your shell tool: reads, searches, git, quick builds and
 tests, and a tool's help, version, or status.
 
 In auto or bypassPermissions mode, a background command (Claude Code
-`run_in_background`) is mirrored into its own block by the `rex-agents` hook,
-with a working spinner, then `done` or `error` and the exit code. The block
-closes when the command exits. Start it in the background as usual; open no
-block for it. Set `REX_AGENTS_MIRROR=0` in the agent's environment to turn the
-mirror off.
+`run_in_background`) opens as a minimized floating pane in your tab after 1.5
+seconds. Commands that finish sooner open no pane. At startup, the pane prints
+a dim one-line header with the label and start time, shows a working spinner,
+ends `done` or `error` with the exit code, and closes when the command exits.
+Start it in the background as usual; open no block for it. Set
+`REX_AGENTS_MIRROR_DELAY_MS` to adjust the open delay in milliseconds, or set
+`REX_AGENTS_MIRROR=0` to turn the mirror off.
 
 A long training or eval run is the exception: give it a standalone block even
 in auto mode. A mirrored background command ends with the agent session, and a

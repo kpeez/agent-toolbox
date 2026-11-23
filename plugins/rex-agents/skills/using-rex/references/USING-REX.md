@@ -160,13 +160,17 @@ PreToolUse hook rewrites a background Bash call into this form, so its output an
  ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | <abs runtime> <plugin>/scripts/rex_mirror.ts '<label>' <session id>
 ```
 
-`rex_mirror.ts` opens a block labelled `[claude] <description>`
-(`[claude:sub]` for a subagent) that shows the output, reports `working`,
-then `done` or `error` with `<label>: exit <n>`, and closes the block.
-Permission rules still see `<cmd>`. Commands that start with `rex ` stay
-unchanged, so a driven agent's wait gets no tab of its own. The SessionEnd
-hook closes a mirror block whose close failed. `REX_AGENTS_MIRROR=0` turns the
-mirror off.
+`rex_mirror.ts` waits 1.5 seconds (`REX_AGENTS_MIRROR_DELAY_MS` overrides the
+delay in milliseconds; `0` opens at once), then opens a minimized floating pane
+in the agent's tab labelled `[claude] <description>` (`[claude:sub]` for a
+subagent). Commands that exit before the delay open no pane. If creating the
+floating layer fails, `rex_mirror.ts` falls back to `rex run`. At startup, the
+viewer prints a dim one-line header with the label and local start time, shows
+the output live from byte 0, reports `working`, then `done` or `error` with
+`<label>: exit <n>`, and closes the block. Permission rules still see `<cmd>`.
+Commands that start with `rex ` stay unchanged, so a driven agent's wait gets
+no pane of its own. The SessionEnd hook closes a mirror block whose close
+failed. `REX_AGENTS_MIRROR=0` turns the mirror off.
 
 ## Facts
 
