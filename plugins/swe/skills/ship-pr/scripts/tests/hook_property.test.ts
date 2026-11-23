@@ -150,14 +150,17 @@ const REGRESSIONS = [
   "gh api repos/{owner}/{repo}/pulls -f title=t -f body=b",
 ];
 
-function run(cmd: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; input: string }) {
+/** Run a process; with no input its stdin is /dev/null. */
+function run(cmd: string, args: string[], options: { cwd: string; env?: NodeJS.ProcessEnv; input?: string }) {
   return new Promise<{ status: number | null; stderr: string }>((done) => {
-    const child = spawn(cmd, args, { cwd: options.cwd, env: options.env });
+    const child = spawn(cmd, args, { cwd: options.cwd, env: options.env, stdio: [options.input === undefined ? "ignore" : "pipe", "pipe", "pipe"] });
     let stderr = "";
-    child.stderr.on("data", (d) => (stderr += d));
-    child.stdout.resume();
+    child.stderr?.on("data", (d) => (stderr += d));
+    child.stdout?.resume();
     child.on("close", (status) => done({ status, stderr }));
-    child.stdin.end(options.input);
+    // A process that exits before it reads its input fails on its exit status, not on EPIPE.
+    child.stdin?.on("error", () => {});
+    child.stdin?.end(options.input);
   });
 }
 
@@ -167,7 +170,6 @@ async function bashRuns(command: string, root: string, fakeBin: string, index: n
   await run("/bin/bash", ["-c", `${command}\nwait`], {
     cwd: join(root, "work"),
     env: { PATH: `${fakeBin}:/usr/bin:/bin`, GH_LOG: log, HOME: root },
-    input: "",
   });
   return readFileSync(log, "utf-8")
     .split("\x1e")
