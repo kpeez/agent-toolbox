@@ -109,6 +109,10 @@ The output is one JSON object: `event` (`status`, `child_exited`, or
 `child_exited`. A block whose program already exited returns
 `child_exited` at once.
 
+A closed block cannot be waited on: the script prints `block not found` and
+exits 1. A mirror block closes 1 s after its command ends, so its status can
+be waited on only until then. Start the wait while the command runs.
+
 A block whose program exits when done:
 
 ```sh
@@ -163,8 +167,10 @@ PreToolUse hook rewrites a background Bash call into this form, so its output an
 `rex_mirror.ts` waits 1.5 seconds (`REX_AGENTS_MIRROR_DELAY_MS` overrides the
 delay in milliseconds; `0` opens at once), then opens a minimized floating pane
 in the agent's tab labelled `[claude] <description>` (`[claude:sub]` for a
-subagent). Commands that exit before the delay open no pane. If creating the
-floating layer fails, `rex_mirror.ts` falls back to `rex run`. At startup, the
+subagent). Commands that exit before the delay open no pane. If Rex refuses
+the floating layer, `rex_mirror.ts` falls back to `rex run`. If a `rex` call
+times out or is stopped before its reply, it opens no second pane, and a
+pane that Rex opens late still settles. At startup, the
 viewer prints a dim one-line header with the label and local start time, shows
 the output live from byte 0, reports `working`, then `done` or `error` with
 `<label>: exit <n>`, and closes the block. Permission rules still see `<cmd>`.

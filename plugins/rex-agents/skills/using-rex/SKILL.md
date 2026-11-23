@@ -103,7 +103,8 @@ Wait on Rex events, never on a sleep loop or a capture on a timer.
 - A block whose program reports its status (Claude Code, a mirror block):
   `rex do -s <session> ../../scripts/wait-status.lua block=<block>`. It reads
   the current status first, so a status reported before the wait began is not
-  missed. It prints one JSON object with the state, kind, message, and
+  missed while the block exists. A mirror block closes 1 s after its command
+  ends; a wait that starts later prints `block not found` and exits 1. It prints one JSON object with the state, kind, message, and
   `updated_at`, and exits 2 on timeout. Pass `after=<updated_at>` of the last
   record you acted on to wait for a newer one.
 - A block whose program exits when done: `rex wait --for <duration> <block>`.
