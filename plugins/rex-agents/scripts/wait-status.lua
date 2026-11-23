@@ -69,6 +69,7 @@ if process and process.last_exit and not process.child then
   report("child_exited", nil, { exit_code = process.last_exit.exit_code })
 end
 
+-- A rex do script receives every event from its start, so a change between the reads above and this wait is not lost.
 local ev = rex.wait("block_event", function(e, ctx)
   if ctx.block_id ~= block then return false end
   if e.name == "child_exited" then return true end
