@@ -1,7 +1,3 @@
-/**
- * SubagentStart hook: tell a subagent in a Rex pane to leave panes and sessions alone.
- */
-
 import { isMain } from "../scripts/is_main.ts";
 
 const RULE =

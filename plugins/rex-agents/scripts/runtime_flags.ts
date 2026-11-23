@@ -1,9 +1,4 @@
-/**
- * Flags to put before a `.ts` path when this process launches another one with `process.execPath`.
- *
- * Node 23.6 to 24.x prints an ExperimentalWarning to stderr for each `.ts` file it runs.
- * `scripts/run-ts` suppresses it with the same flag. Bun needs no flag.
- */
+/** Node 23.6 to 24.2 prints an ExperimentalWarning to stderr for each `.ts` file it runs. */
 export function runtimeFlags(): string[] {
   return process.versions.bun === undefined ? ["--disable-warning=ExperimentalWarning"] : [];
 }

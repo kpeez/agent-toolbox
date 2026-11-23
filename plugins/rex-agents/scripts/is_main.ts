@@ -1,8 +1,6 @@
 /**
- * True when the file at `moduleUrl` is the process entry file.
- *
  * `import.meta.main` is missing on Node 23.6 to 24.1 and wrong on 24.2, so compare
- * real paths instead. A missing or unresolvable entry path means "not main".
+ * real paths instead.
  */
 
 import { realpathSync } from "node:fs";

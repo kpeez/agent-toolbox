@@ -1,12 +1,3 @@
--- agent-inbox.lua: list every block that needs a look, on this server and on each host.
---
---   rex do agent-inbox.lua
---
--- Prints a JSON list with one entry for each status record in state blocked,
--- done, or error: server, session, session label, block, block label, state,
--- kind, msg, app, and updated_at. A host that cannot be reached gives one entry
--- with its error.
-
 local TERMINAL = "com.superlogical.terminal"
 local SHOW = { blocked = true, done = true, error = true }
 local inbox = {}

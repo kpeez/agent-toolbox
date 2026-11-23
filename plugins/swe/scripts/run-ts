@@ -1,5 +1,4 @@
 #!/bin/sh
-# Run a TypeScript hook with bun when present, else node (22.18+ strips types).
 if command -v bun >/dev/null 2>&1; then exec bun "$@"; fi
 if command -v node >/dev/null 2>&1; then exec node --disable-warning=ExperimentalWarning "$@"; fi
 echo "agent-toolbox: install bun, or Node 22.18 or later, to run $1" >&2
