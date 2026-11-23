@@ -1,0 +1,48 @@
+---
+title: "A plugin change from PR to every config folder"
+---
+stateDiagram-v2
+  state "Legend" as legend {
+    lg0: pr
+    lg1: rollout
+    lg2: current
+    lg3: stale
+    lg4: Breaks DocStepsReachEveryFolder
+    lg5: Path to the DocStepsReachEveryFolder bug
+  }
+  class lg0 blue
+  class lg1 yellow
+  class lg2 teal
+  class lg3 orange
+  class lg4 breaks
+  class lg5 bugPath
+  s0: No PR open
+  s1: PR open
+  s2: Checks pass
+  s3: Merged, no folder updated
+  s4: Merged, some folders updated
+  s5: README steps done, another Claude Code folder stale
+  s6: Every folder on the merged commit
+  [*] --> s0
+  s0 --> s1: a PR edits a plugin
+  s1 --> s2: the checks pass
+  s2 --> s3: the PR merges
+  s3 --> s4: you install the merged SHA in the Hermes profile or you run them again under another CLAUDE_CONFIG_DIR or you run the README update steps
+  s4 --> s5: you run the README update steps or you install the merged SHA in the Hermes profile
+  s4 --> s6: you run the README update steps or you install the merged SHA in the Hermes profile
+  s5 --> s6: you run them again under another CLAUDE_CONFIG_DIR
+  classDef breaks fill:#ffecee,stroke:#e72e3b,stroke-width:2.5px,color:#cd2834
+  class s0 teal
+  class s0 bugPath
+  class s1 blue
+  class s1 bugPath
+  class s2 blue
+  class s2 bugPath
+  class s3 yellow
+  class s3 bugPath
+  class s4 yellow
+  class s4 bugPath
+  class s5 orange
+  class s5 breaks
+  class s5 bugPath
+  class s6 teal
