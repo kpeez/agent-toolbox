@@ -134,6 +134,11 @@ and SIGHUP (the same handler as SIGTERM), the held tail and the nonce check
 (unit tests in `plugins/rex-agents/scripts/tests/` cover them), more than one
 session, and a Rex server restart.
 
+A failed close in the session-end pass is also left out. `EndChecks` always
+closes a settled block, but `session_end.ts` ignores the result of
+`rex block close` and drops the row anyway. A replay with a fake `rex` whose
+close exits 1 deleted the row and left the block open.
+
 ## Coverage
 
 | Code | Actions |
@@ -149,6 +154,10 @@ All paths are under `plugins/rex-agents/`.
 Sync commit: `325ba0e`. At that commit the model describes the code. The
 covered files last changed in `9338e63`. Move the sync commit forward only
 after you confirm that the model describes the code at the new commit.
+
+The check does not run the real code. A change to a covered file passes the
+check until someone changes the model to match. So after a change to a
+covered file, update the action first, then run the check.
 
 ## When the check fails
 

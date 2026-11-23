@@ -146,6 +146,7 @@ jobs:
       - name: Install the statechart skill's pinned TLC and Java
         run: uv run .github/scripts/statechart_tlc.py >> "$GITHUB_ENV"
       - name: Rex mirror rules hold, and each past bug breaks them
+        timeout-minutes: 5
         run: uv run .agents/skills/verify-rex-mirror/scripts/check.py
 
   statechart-tests:
