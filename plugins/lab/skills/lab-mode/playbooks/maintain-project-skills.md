@@ -1,6 +1,6 @@
 # maintain-project-skills
 
-Applies when: a request to check, review, or update the project's procedure skills, also when the project has one skill, such as after the pipeline, the data, or the conventions changed. Edits that the user states when nothing upstream changed go to research-skill.
+Applies when: a request to check, review, or update the project's procedure skills, also when the project has one skill, such as after the pipeline, the data, or the conventions changed. Edits that the user states when nothing upstream changed go to `research-skill`.
 
 You own the truth of every project skill. A skill that no longer runs is worse than none.
 

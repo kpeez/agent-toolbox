@@ -1,6 +1,6 @@
 # plan-multi-phase
 
-Applies when: work that spans phases or stacked PRs needs a plan an owner runs box by box.
+Applies when: work that spans phases or stacked PRs needs a plan an owner runs box by box. The plan is the deliverable.
 
 You own the plan, not the code. The plan is a checklist an owner runs box by box and the user audits from the evidence. The plan is the deliverable. Do not implement.
 

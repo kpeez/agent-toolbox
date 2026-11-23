@@ -134,8 +134,8 @@ Project:
   does not select it by itself; route the task on its own terms.
 - `codify-procedure`: a request to turn a procedure that the user does not
   state in full into a new project skill: one done or corrected in this
-  session, one the user only names, or one the user gives in part. A
-  procedure that the user states in full goes to `research-skill`.
+  session, one the user only names, or one the user gives in part. A procedure
+  that the user states in full goes to `research-skill`.
 - `maintain-project-skills`: a request to check, review, or update the
   project's procedure skills, also when the project has one skill, such as
   after the pipeline, the data, or the conventions changed. Edits that the
@@ -143,10 +143,10 @@ Project:
 
 Research:
 
-- `appraise-source`: one paper, preprint, blog post, or result to judge. For
-  your own results, use `analyze-results`.
-- `review-literature`: what a body of work shows on a question, from a
-  bounded question to a multi-lane survey.
+- `appraise-source`: one paper, preprint, blog post, model card, or result to
+  judge. For your own results, use `analyze-results`.
+- `review-literature`: what a body of work shows on a question, from a bounded
+  question to a multi-lane survey.
 - `analyze-results`: results or logs that exist and need a conclusion.
 - `run-experiment`: one designed comparison, ablation, or eval run.
 

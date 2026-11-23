@@ -61,6 +61,21 @@ class FacetMapContract(unittest.TestCase):
             ids,
         )
 
+    def test_check_fails_when_a_router_entry_differs_from_its_playbook(self):
+        playbook = self.root / "plugins/lab/skills/lab-mode/playbooks/run-experiment.md"
+        text = playbook.read_text(encoding="utf-8")
+        playbook.write_text(
+            text.replace("Applies when: one designed", "Applies when: one preregistered"),
+            encoding="utf-8",
+        )
+        stale = self.cli("check")
+        self.assertEqual(stale.returncode, 1, stale.stderr)
+        self.assertIn("plugins/lab/skills/lab-mode/SKILL.md (from sources)", stale.stdout)
+        self.assertEqual(self.cli("write").returncode, 0)
+        router = (self.root / "plugins/lab/skills/lab-mode/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn("- `run-experiment`: one preregistered comparison", router)
+        self.assertEqual(self.cli("check").returncode, 0)
+
     def test_write_rejects_a_step_name_nothing_owns(self):
         playbook = "plugins/swe/skills/swe-mode/playbooks/build-feature.md"
         self.append_step(playbook, "15-extra-step: Do the extra step. (no-such-skill)")

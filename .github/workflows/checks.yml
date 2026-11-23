@@ -83,7 +83,7 @@ jobs:
             printf '%s\n' "$hits"
             exit 1
           fi
-      - name: Eval facet map matches the skill sources
+      - name: Eval facet map and router Playbooks entries match the skill sources
         run: uv run evals/skills/facets.py check
       - name: Eval cases are valid
         run: uv run evals/skills/skill_eval.py validate

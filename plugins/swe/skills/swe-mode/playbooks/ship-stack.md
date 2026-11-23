@@ -1,6 +1,6 @@
 # ship-stack
 
-Applies when: the user asks to land, ship, or merge a green PR or stack.
+Applies when: the user asks to land, ship, or merge a green PR or stack: verify it independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.
 
 You own what lands. Verify each PR independently, land only the verified run from the root, then keep your hands off the stack.
 

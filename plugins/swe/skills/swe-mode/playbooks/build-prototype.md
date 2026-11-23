@@ -1,6 +1,6 @@
 # build-prototype
 
-Applies when: a throwaway sketch settles a design or behavioral decision, or an empirical fork you would otherwise ask the user about.
+Applies when: a throwaway sketch to settle a design or behavioral decision, or an empirical fork you would otherwise ask the user about, by observation.
 
 You own the design decision, not the code. The prototype is a throwaway instrument. The real build follows build-feature.
 

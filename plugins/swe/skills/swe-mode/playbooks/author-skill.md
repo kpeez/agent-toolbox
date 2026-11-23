@@ -12,6 +12,6 @@ When in doubt, delete. Keep only prose that changes a decision. Tell the agent t
 4-validate-skill: Check that frontmatter has `name` and `description`, referenced files exist, and cross-skill links resolve.
 5-check-packaging: Apply the packaging rules and run the checks that the repository's AGENTS.md names for the changed files.
 6-plan-activation-check: When the change is structural or a model-invoked description changes, add or update a test case. Skip for a subjective change. (evaluate-agent-change)
-7-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
+7-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)
 
 Reply: a summary of the skill, the key design decisions, its always-on character cost, and the validation and checks run.

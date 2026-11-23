@@ -208,6 +208,12 @@ def corpus(path=DATASET):
         modes = facets[route].get("modes", {}) if route else {}
         if case.get("expected_mode") not in (modes or {None}):
             raise ValueError("expected_mode must name a mode of the expected route, and only a route with modes takes one")
+        always = {canonical_skill(load_target(f)[1]) for f in (route_facets(facets, facets[route]) if route else [])
+                  if f["kind"] in {"route-load", "step-load", "reply-load"} and (load_target(f) or ())[:1] == ("skill",)
+                  and (f["requirement"] == "always" or f["requirement"] == "transitive" and not f["conditional"])}
+        if clash := sorted(always & {canonical_skill(s) for s in case["forbidden_skills"]}):
+            raise ValueError(f"{case['id']}: forbidden_skills names {clash}, which {route} always loads, "
+                             "so a correct run would score a false activation")
         listed = case.get("facets", [])
         if not isinstance(listed, list) or len(set(listed)) != len(listed) or any(
                 facets.get(f, {}).get("evidence") not in {"skill-call", "full-read"}

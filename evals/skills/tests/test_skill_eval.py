@@ -1448,10 +1448,12 @@ class OfflineCLIContract(unittest.TestCase):
                 ("open-family-negative", "IM-07", {"family": "swe-route-choice"}, "unknown family"),
                 ("forbidden-auxiliary", "IM-04", {"forbidden_skills": ["swe:verifying-work"]}, "contradictory"),
                 ("router-forbidden-route", "lab-mode-define-metric", {"expected_route": "route/lab/analyze-results"},
-                 "forbids the router")):
+                 "forbids the router"),
+                ("route-loads-forbidden", "TC-08", {"expected_route": "route/swe/build-feature"},
+                 "TC-08: forbidden_skills names ['swe:verifying-work'], which route/swe/build-feature always loads")):
             self.validate_with(name, case_id, **update)
             self.assertIn(message, self.cli("validate", ok=False).stderr, name)
-        self.validate_with("negative-route", "TC-08", expected_route="route/swe/build-feature")
+        self.validate_with("negative-route", "TC-08", expected_route="route/swe/investigate-question")
         self.cli("validate")
 
     def test_readme_counts_match_the_corpus(self):

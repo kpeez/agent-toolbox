@@ -243,18 +243,22 @@ Code and investigation:
 
 - `fix-bug`: a reported defect to reproduce, root-cause, and fix.
 - `improve-performance`: a measured slowness to improve against a baseline.
-- `hillclimb-metric`: sustained improvement of one metric against a target,
-  with one keep-or-revert decision per attempt.
-- `diagnose-runtime`: diagnose a live runtime symptom (leak, spin, glitch)
-  from instrumentation. No fix.
-- `diagnose-trace`: diagnose a captured profile, trace, or heap snapshot. No
-  fix.
+- `hillclimb-metric`: sustained improvement of one measurable metric against a
+  target, through a loop of measured attempts with one keep-or-revert decision
+  per attempt.
+- `diagnose-runtime`: diagnose a live runtime symptom, such as a leak, an idle
+  CPU spin, or a glitch, from instrumentation of the running process. No fix.
+- `diagnose-trace`: diagnose a captured profiling artifact, such as a
+  cpuprofile, trace, spindump, or heap snapshot, handed over after the fact.
+  No fix.
 - `evaluate-agent-change`: measure how a skill or prompt change affects agent
   behavior.
 - `author-skill`: write or edit a skill, `AGENTS.md`, or `CLAUDE.md`.
-- `build-prototype`: a throwaway sketch to settle a design or an empirical
-  fork by observation.
-- `match-visual-parity`: pixel-exact UI equivalence against a baseline.
+- `build-prototype`: a throwaway sketch to settle a design or behavioral
+  decision, or an empirical fork you would otherwise ask the user about, by
+  observation.
+- `match-visual-parity`: make UI pixel-exact equivalent to a baseline, such as
+  matching two implementations or migrating a styling system.
 - `refactor-structure`: change structure, keep behavior.
 - `build-feature`: new or changed behavior.
 - `investigate-question`: a read-only question with a cited answer, including
@@ -262,27 +266,38 @@ Code and investigation:
 
 PRs:
 
-- `babysit-pr`: drive a PR or stack to merge-ready: conflicts, review
-  threads, CI.
-- `ship-stack`: verify a green stack independently, then land the full stack
-  with `gh stack merge` or the contiguous verified run bottom-up.
+- `babysit-pr`: the user asks to babysit, get green, or check on an open PR or
+  stack, to drive it to merge-ready: its conflicts, review threads, and CI
+  ("anything outstanding on X").
+- `ship-stack`: the user asks to land, ship, or merge a green PR or stack:
+  verify it independently, then land the full stack with `gh stack merge` or
+  the contiguous verified run bottom-up.
 
 Long runs and sessions:
 
 - `run-autonomously`: one long task, not a queue of PRs, to drive to a
-  checkable exit condition without stopping.
-- `plan-multi-phase`: work that spans phases or stacked PRs. The plan is the
-  deliverable.
-- `autopilot-full`: a queue of independent PRs run to merged, one owner per
-  PR.
-- `autopilot-stack`: autopilot-full without the merge. Verified PRs the user
-  lands, linked as a stack only where one builds on another. PRs that depend
-  on each other come here also when the user asks for the merge. Then the
-  playbook lands them with `ship-stack` after its handoff.
-- `pick-up-session`: resume a prior agent's in-flight work from its tracker
-  issue, decision log, transcript, or branch.
-- `pause-safely`: stop in-flight work cleanly so a new session can resume it.
-- `clean-worktrees`: reclaim disk from merged or abandoned git worktrees.
+  checkable exit condition without stopping ("run until done", "/loop until
+  X", "going to bed, keep going"). A queue of PRs goes to `autopilot-full` or
+  `autopilot-stack`, also when the user is away.
+- `plan-multi-phase`: work that spans phases or stacked PRs needs a plan an
+  owner runs box by box. The plan is the deliverable.
+- `autopilot-full`: a queue of independent PRs to run to merged with full
+  autonomy, one owner per PR ("autopilot this queue", "full autopilot").
+- `autopilot-stack`: a queue of PRs to build and verify with full autonomy,
+  handed to the operator to land, and linked as a stack only where one builds
+  on another ("autopilot, don't merge", "stack them, don't ship", "build the
+  stack, I'll land it"). PRs that depend on each other come here also when the
+  user asks for the merge. Then the playbook lands them with `ship-stack`
+  after its handoff.
+- `pick-up-session`: resuming or taking over a prior agent's in-flight work
+  from a tracker issue, a decision log, a session transcript, a cloud session,
+  or a pushed branch.
+- `pause-safely`: the user explicitly asks to pause in-flight work, is going
+  offline, the host is about to restart, or context compaction is imminent:
+  stop the work cleanly so a new session can resume it.
+- `clean-worktrees`: reclaiming local disk by pruning merged or abandoned git
+  worktrees ("clean up worktrees", "prune safe worktrees", "what's using my
+  disk", "free up space").
 
 ## Single-skill routes
 

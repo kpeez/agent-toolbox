@@ -1098,7 +1098,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge. For your own results, use `analyze-results`.",
+      "source_text": "`appraise-source`: one paper, preprint, blog post, model card, or result to judge. For your own results, use `analyze-results`.",
       "subject": "appraise-source"
     },
     {
@@ -1253,7 +1253,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`autopilot-full`: a queue of independent PRs run to merged, one owner per PR.",
+      "source_text": "`autopilot-full`: a queue of independent PRs to run to merged with full autonomy, one owner per PR (\"autopilot this queue\", \"full autopilot\").",
       "subject": "autopilot-full"
     },
     {
@@ -1275,7 +1275,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
+      "source_text": "`autopilot-stack`: a queue of PRs to build and verify with full autonomy, handed to the operator to land, and linked as a stack only where one builds on another (\"autopilot, don't merge\", \"stack them, don't ship\", \"build the stack, I'll land it\"). PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -1297,7 +1297,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`babysit-pr`: drive a PR or stack to merge-ready: conflicts, review threads, CI.",
+      "source_text": "`babysit-pr`: the user asks to babysit, get green, or check on an open PR or stack, to drive it to merge-ready: its conflicts, review threads, and CI (\"anything outstanding on X\").",
       "subject": "babysit-pr"
     },
     {
@@ -1347,7 +1347,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`build-prototype`: a throwaway sketch to settle a design or an empirical fork by observation.",
+      "source_text": "`build-prototype`: a throwaway sketch to settle a design or behavioral decision, or an empirical fork you would otherwise ask the user about, by observation.",
       "subject": "build-prototype"
     },
     {
@@ -1369,7 +1369,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
+      "source_text": "`clean-worktrees`: reclaiming local disk by pruning merged or abandoned git worktrees (\"clean up worktrees\", \"prune safe worktrees\", \"what's using my disk\", \"free up space\").",
       "subject": "clean-worktrees"
     },
     {
@@ -1391,7 +1391,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`diagnose-runtime`: diagnose a live runtime symptom (leak, spin, glitch) from instrumentation. No fix.",
+      "source_text": "`diagnose-runtime`: diagnose a live runtime symptom, such as a leak, an idle CPU spin, or a glitch, from instrumentation of the running process. No fix.",
       "subject": "diagnose-runtime"
     },
     {
@@ -1414,7 +1414,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`diagnose-trace`: diagnose a captured profile, trace, or heap snapshot. No fix.",
+      "source_text": "`diagnose-trace`: diagnose a captured profiling artifact, such as a cpuprofile, trace, spindump, or heap snapshot, handed over after the fact. No fix.",
       "subject": "diagnose-trace"
     },
     {
@@ -1484,7 +1484,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`hillclimb-metric`: sustained improvement of one metric against a target, with one keep-or-revert decision per attempt.",
+      "source_text": "`hillclimb-metric`: sustained improvement of one measurable metric against a target, through a loop of measured attempts with one keep-or-revert decision per attempt.",
       "subject": "hillclimb-metric"
     },
     {
@@ -1550,7 +1550,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`match-visual-parity`: pixel-exact UI equivalence against a baseline.",
+      "source_text": "`match-visual-parity`: make UI pixel-exact equivalent to a baseline, such as matching two implementations or migrating a styling system.",
       "subject": "match-visual-parity"
     },
     {
@@ -1572,7 +1572,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`pause-safely`: stop in-flight work cleanly so a new session can resume it.",
+      "source_text": "`pause-safely`: the user explicitly asks to pause in-flight work, is going offline, the host is about to restart, or context compaction is imminent: stop the work cleanly so a new session can resume it.",
       "subject": "pause-safely"
     },
     {
@@ -1594,7 +1594,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`pick-up-session`: resume a prior agent's in-flight work from its tracker issue, decision log, transcript, or branch.",
+      "source_text": "`pick-up-session`: resuming or taking over a prior agent's in-flight work from a tracker issue, a decision log, a session transcript, a cloud session, or a pushed branch.",
       "subject": "pick-up-session"
     },
     {
@@ -1617,7 +1617,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`plan-multi-phase`: work that spans phases or stacked PRs. The plan is the deliverable.",
+      "source_text": "`plan-multi-phase`: work that spans phases or stacked PRs needs a plan an owner runs box by box. The plan is the deliverable.",
       "subject": "plan-multi-phase"
     },
     {
@@ -1662,7 +1662,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping (\"run until done\", \"/loop until X\", \"going to bed, keep going\"). A queue of PRs goes to `autopilot-full` or `autopilot-stack`, also when the user is away.",
       "subject": "run-autonomously"
     },
     {
@@ -1684,7 +1684,7 @@
       "requirement": "always",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
+      "source_text": "`ship-stack`: the user asks to land, ship, or merge a green PR or stack: verify it independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
     {
@@ -3099,7 +3099,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`appraise-source`: one paper, preprint, blog post, or result to judge. For your own results, use `analyze-results`.",
+      "source_text": "`appraise-source`: one paper, preprint, blog post, model card, or result to judge. For your own results, use `analyze-results`.",
       "subject": "appraise-source"
     },
     {
@@ -3504,7 +3504,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`autopilot-full`: a queue of independent PRs run to merged, one owner per PR.",
+      "source_text": "`autopilot-full`: a queue of independent PRs to run to merged with full autonomy, one owner per PR (\"autopilot this queue\", \"full autopilot\").",
       "subject": "autopilot-full"
     },
     {
@@ -3532,7 +3532,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`autopilot-stack`: autopilot-full without the merge. Verified PRs the user lands, linked as a stack only where one builds on another. PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
+      "source_text": "`autopilot-stack`: a queue of PRs to build and verify with full autonomy, handed to the operator to land, and linked as a stack only where one builds on another (\"autopilot, don't merge\", \"stack them, don't ship\", \"build the stack, I'll land it\"). PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.",
       "subject": "autopilot-stack"
     },
     {
@@ -3563,7 +3563,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`babysit-pr`: drive a PR or stack to merge-ready: conflicts, review threads, CI.",
+      "source_text": "`babysit-pr`: the user asks to babysit, get green, or check on an open PR or stack, to drive it to merge-ready: its conflicts, review threads, and CI (\"anything outstanding on X\").",
       "subject": "babysit-pr"
     },
     {
@@ -3671,7 +3671,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`build-prototype`: a throwaway sketch to settle a design or an empirical fork by observation.",
+      "source_text": "`build-prototype`: a throwaway sketch to settle a design or behavioral decision, or an empirical fork you would otherwise ask the user about, by observation.",
       "subject": "build-prototype"
     },
     {
@@ -3703,7 +3703,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`clean-worktrees`: reclaim disk from merged or abandoned git worktrees.",
+      "source_text": "`clean-worktrees`: reclaiming local disk by pruning merged or abandoned git worktrees (\"clean up worktrees\", \"prune safe worktrees\", \"what's using my disk\", \"free up space\").",
       "subject": "clean-worktrees"
     },
     {
@@ -3839,7 +3839,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`diagnose-runtime`: diagnose a live runtime symptom (leak, spin, glitch) from instrumentation. No fix.",
+      "source_text": "`diagnose-runtime`: diagnose a live runtime symptom, such as a leak, an idle CPU spin, or a glitch, from instrumentation of the running process. No fix.",
       "subject": "diagnose-runtime"
     },
     {
@@ -3871,7 +3871,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`diagnose-trace`: diagnose a captured profile, trace, or heap snapshot. No fix.",
+      "source_text": "`diagnose-trace`: diagnose a captured profiling artifact, such as a cpuprofile, trace, spindump, or heap snapshot, handed over after the fact. No fix.",
       "subject": "diagnose-trace"
     },
     {
@@ -4092,7 +4092,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`hillclimb-metric`: sustained improvement of one metric against a target, with one keep-or-revert decision per attempt.",
+      "source_text": "`hillclimb-metric`: sustained improvement of one measurable metric against a target, through a loop of measured attempts with one keep-or-revert decision per attempt.",
       "subject": "hillclimb-metric"
     },
     {
@@ -4247,7 +4247,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`match-visual-parity`: pixel-exact UI equivalence against a baseline.",
+      "source_text": "`match-visual-parity`: make UI pixel-exact equivalent to a baseline, such as matching two implementations or migrating a styling system.",
       "subject": "match-visual-parity"
     },
     {
@@ -4276,7 +4276,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`pause-safely`: stop in-flight work cleanly so a new session can resume it.",
+      "source_text": "`pause-safely`: the user explicitly asks to pause in-flight work, is going offline, the host is about to restart, or context compaction is imminent: stop the work cleanly so a new session can resume it.",
       "subject": "pause-safely"
     },
     {
@@ -4306,7 +4306,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`pick-up-session`: resume a prior agent's in-flight work from its tracker issue, decision log, transcript, or branch.",
+      "source_text": "`pick-up-session`: resuming or taking over a prior agent's in-flight work from a tracker issue, a decision log, a session transcript, a cloud session, or a pushed branch.",
       "subject": "pick-up-session"
     },
     {
@@ -4337,7 +4337,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`plan-multi-phase`: work that spans phases or stacked PRs. The plan is the deliverable.",
+      "source_text": "`plan-multi-phase`: work that spans phases or stacked PRs needs a plan an owner runs box by box. The plan is the deliverable.",
       "subject": "plan-multi-phase"
     },
     {
@@ -4437,7 +4437,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping.",
+      "source_text": "`run-autonomously`: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping (\"run until done\", \"/loop until X\", \"going to bed, keep going\"). A queue of PRs goes to `autopilot-full` or `autopilot-stack`, also when the user is away.",
       "subject": "run-autonomously"
     },
     {
@@ -4526,7 +4526,7 @@
       "route_type": "playbook",
       "scope": "root",
       "scorer": "scored",
-      "source_text": "`ship-stack`: verify a green stack independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
+      "source_text": "`ship-stack`: the user asks to land, ship, or merge a green PR or stack: verify it independently, then land the full stack with `gh stack merge` or the contiguous verified run bottom-up.",
       "subject": "ship-stack"
     },
     {
@@ -7282,10 +7282,10 @@
         "locator": "7-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/author-skill.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "7-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "7-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "author-skill"
     },
     {
@@ -7948,10 +7948,10 @@
         "locator": "14-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/build-feature.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "14-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "build-feature"
     },
     {
@@ -9183,10 +9183,10 @@
         "locator": "14-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/fix-bug.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "14-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "14-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "fix-bug"
     },
     {
@@ -9657,10 +9657,10 @@
         "locator": "11-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/hillclimb-metric.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "11-publish-draft-pr: Push the kept commits in landing order and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "11-publish-draft-pr: When publication is authorized, push the kept commits in landing order and update the draft PR. (ship-pr)",
       "subject": "hillclimb-metric"
     },
     {
@@ -10068,10 +10068,10 @@
         "locator": "11-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/improve-performance.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "11-publish-draft-pr: Cite the measurement in the PR, push the final commits, and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "11-publish-draft-pr: When publication is authorized, cite the measurement in the PR, push the final commits, and update the draft PR. (ship-pr)",
       "subject": "improve-performance"
     },
     {
@@ -10443,10 +10443,10 @@
         "locator": "5-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/match-visual-parity.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "5-publish-draft-pr: Push per component or per safe batch, and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "5-publish-draft-pr: When publication is authorized, push per component or per safe batch, and update the draft PR. (ship-pr)",
       "subject": "match-visual-parity"
     },
     {
@@ -10877,10 +10877,10 @@
         "locator": "12-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/refactor-structure.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "12-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "12-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "refactor-structure"
     },
     {
@@ -11414,10 +11414,10 @@
         "locator": "8-publish-draft-pr",
         "path": "plugins/swe/skills/swe-mode/playbooks/run-autonomously.md"
       },
-      "requirement": "always",
+      "requirement": "conditional",
       "scope": "delegate-allowed",
       "scorer": "scored",
-      "source_text": "8-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)",
+      "source_text": "8-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)",
       "subject": "run-autonomously"
     },
     {

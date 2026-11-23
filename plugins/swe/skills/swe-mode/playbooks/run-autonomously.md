@@ -1,6 +1,6 @@
 # run-autonomously
 
-Applies when: one long task to drive to completion without stopping ("run until done", "/loop until X", "going to bed, keep going"). A queue of PRs goes to autopilot-full or autopilot-stack, also when the user is away.
+Applies when: one long task, not a queue of PRs, to drive to a checkable exit condition without stopping ("run until done", "/loop until X", "going to bed, keep going"). A queue of PRs goes to `autopilot-full` or `autopilot-stack`, also when the user is away.
 
 You own the exit condition. Define done, then drive to it without stopping.
 
@@ -11,6 +11,6 @@ You own the exit condition. Define done, then drive to it without stopping.
 5-own-mid-run-discoveries: Fix broken skills, related bugs, flaky verifiers, review noise, tooling failures, and fixable drift yourself, each out-of-band fix in its own PR. Do not park reversible work for the human. Surface only irreversible actions, product calls no experiment can settle, or a real dead end. Return to the predicate after each side fix. (never-block-on-the-human)
 6-log-each-iteration: Write a row per iteration with what changed and whether the predicate moved. (log-decisions)
 7-stop-on-predicate: Stop when the predicate holds. A plateau is not a stop, so pivot the approach and push past it. Surface a genuine dead end instead of spinning. Never relax the predicate to declare victory.
-8-publish-draft-pr: Push the final commits and update the draft PR when publication is authorized. (ship-pr)
+8-publish-draft-pr: When publication is authorized, push the final commits and update the draft PR. (ship-pr)
 
 Reply: the exit condition, iterations run, what landed, what was discarded, the final predicate state, and the decision log path.

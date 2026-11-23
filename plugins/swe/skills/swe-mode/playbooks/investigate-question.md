@@ -1,6 +1,6 @@
 # investigate-question
 
-Applies when: a read-only question with a cited answer, including "why was this built this way".
+Applies when: a read-only question with a cited answer, including "how does X work" and "why was this built this way".
 
 You own the answer. Plan, route, write.
 

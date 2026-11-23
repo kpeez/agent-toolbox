@@ -361,7 +361,9 @@ requests `TC-08`, `DG-07`, and `AR-07` were rewritten for that reason (`fix-bug`
 `verifying-work`, step 1 names `diagnose`, and `build-feature` step 4 names
 `codebase-design`). Their requests now route to no playbook that loads the forbidden skill: two are read-only lookups, and
 `AR-07` is a one-function change with no interface, so step 4 does not apply. `validate` refuses a case that lists a skill
-as expected or auxiliary and also forbids it.
+as expected or auxiliary and also forbids it. It also refuses a case that forbids a skill which its `expected_route`
+always loads: an `always` step or reply load, the routed skill, or a `transitive` load that is not `conditional`. It
+cannot judge a conditional load, such as `AR-07`'s, because only the request decides whether the condition holds.
 
 A case that sets `expected_route` credits what a router-first run on that route loads, so it adds no `unexpected_skills`:
 
@@ -442,15 +444,19 @@ keyed by the heading in lowercase with hyphens and without a trailing "mode" (`#
 green` is `drive-to-green`, `## Maintain mode` is `maintain`), and its `handles` is empty. Handles
 count from 1 in order. `write` fails when a routed skill has no steps or breaks these rules.
 
-Regenerate both files after you change a skill, a router, a playbook, a hook,
-or an eval case:
+Each entry in a router's `## Playbooks` section copies its playbook's
+`Applies when:` line, so the two cannot disagree. `write` rewrites the entries
+and keeps the group lines and the order. Edit the playbook line, not the router.
+
+Regenerate the map and the router entries after you change a skill, a router,
+a playbook, a hook, or an eval case:
 
 ```sh
 uv run evals/skills/facets.py write
 ```
 
 CI runs `uv run evals/skills/facets.py check`. The check fails when a skill
-change leaves the map stale. `write` also fails when a playbook step names a
+change leaves the map or a router's Playbooks entries stale. `write` also fails when a playbook step names a
 skill, principle, playbook, or reference that does not exist.
 
 Each facet has a scorer status:

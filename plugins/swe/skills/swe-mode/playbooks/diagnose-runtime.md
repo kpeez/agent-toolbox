@@ -1,6 +1,6 @@
 # diagnose-runtime
 
-Applies when: diagnose a live runtime symptom, such as a leak, an idle CPU spin, or a glitch, from instrumentation of the running process.
+Applies when: diagnose a live runtime symptom, such as a leak, an idle CPU spin, or a glitch, from instrumentation of the running process. No fix.
 
 You own the diagnosis. Instrument the live process. Do not theorize from source.
 

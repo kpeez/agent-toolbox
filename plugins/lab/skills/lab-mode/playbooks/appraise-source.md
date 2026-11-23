@@ -1,6 +1,6 @@
 # appraise-source
 
-Applies when: one paper, preprint, blog post, model card, or result to judge.
+Applies when: one paper, preprint, blog post, model card, or result to judge. For your own results, use `analyze-results`.
 
 You own the verdict on each claim. Read, check, and grade. Do not defend or attack the source.
 

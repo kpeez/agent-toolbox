@@ -1,6 +1,6 @@
 # autopilot-stack
 
-Applies when: a queue of PRs to build and verify with full autonomy, handed to the operator to land ("autopilot, don't merge", "stack them, don't ship", "build the stack, I'll land it"). PRs that depend on each other come here also when the user asks for the merge. Then step 3 lands them with ship-stack after the handoff.
+Applies when: a queue of PRs to build and verify with full autonomy, handed to the operator to land, and linked as a stack only where one builds on another ("autopilot, don't merge", "stack them, don't ship", "build the stack, I'll land it"). PRs that depend on each other come here also when the user asks for the merge. Then the playbook lands them with `ship-stack` after its handoff.
 
 Run autopilot-full, but do not merge before the handoff. After it, only step 3 merges. Every loop tick re-reads this file, so each tick sees the no-merge rule.
 
