@@ -19,10 +19,10 @@ stateDiagram-v2
   s8: Closed after done
   s9: Shows done, left open
   [*] --> s0
-  s0 --> s1: Claude Code stops the task or MirrorReadsEnd or MirrorHandlesSignal
+  s0 --> s1: Claude Code stops the task or the mirror reads the end of the output or the mirror handles the stop signal
   s0 --> s2: the open delay passes
   s2 --> s3: Rex opens the pane
-  s2 --> s1: MirrorHandlesSignal
+  s2 --> s1: the mirror handles the stop signal
   s1 --> s3: Rex opens the pane
   s3 --> s4: the command fails, or is stopped
   s4 --> s5: the viewer closes the block
