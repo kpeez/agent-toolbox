@@ -65,7 +65,8 @@ names the skills `<plugin>:<skill>`. It loads the skills only, and it cannot
 edit them. Do not list a checkout's `plugins/<plugin>/skills` in Hermes
 `skills.external_dirs`: Hermes then edits the checkout in place. Each
 profile has its own plugins, so run `hermes -p <profile> plugins install …`
-for each profile.
+for each profile. A `--ref` install never updates by itself. To upgrade,
+run the same install command with a newer SHA and `--force`.
 
 Skills only, with [`npx skills`](https://github.com/vercel-labs/skills), one
 plugin per command:

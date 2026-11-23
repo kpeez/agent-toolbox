@@ -1,7 +1,6 @@
 {
   "name": "lab",
   "description": "Research router and project skills, source-backed research, reproducible experiment loops, and data visualization guidance",
-  "version": "1.5.23",
   "author": {
     "name": "kpeez",
     "url": "https://github.com/kpeez"

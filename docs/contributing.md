@@ -18,8 +18,18 @@ This page is for people who change this repository. Agent rules live in
 
 ## Versions
 
-Set each plugin's version by hand in all four manifests, and keep them the
-same:
+No manifest and no catalog entry has a `version` field. Each host then
+updates on a new commit:
+
+- Claude Code uses the 12-character SHA of the newest marketplace commit as
+  the version. Every commit to `main` is an update, also a docs-only commit.
+- Codex reinstalls every plugin when the marketplace commit changes. It names
+  the cache folder `1.0.0`.
+- agy has no update command. `agy plugin install` again copies the new files.
+- Hermes Agent keys on the commit SHA. A `--ref` install is pinned, so
+  upgrade it with `hermes plugins install … --ref <new-sha> --force`.
+
+A plugin has up to four manifests:
 
 - `plugins/<plugin>/.claude-plugin/plugin.json`
 - `plugins/<plugin>/.codex-plugin/plugin.json`
@@ -29,7 +39,7 @@ same:
   `https://agent-plugins.org/schemas/1.0.0/plugin.schema.json`; check it with
   `hermes plugins validate plugins/<plugin>`.
 
-A mod has the Claude manifest only. Bump the patch number by default.
+A mod has the Claude manifest only.
 
 Antigravity CLI (agy) reads plugin hooks only from `hooks.json` at the plugin
 root, so it skips `hooks/hooks.json`. agy loads `rules/AGENTS.md` as a plugin

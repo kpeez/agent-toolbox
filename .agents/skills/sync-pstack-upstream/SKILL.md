@@ -62,10 +62,10 @@ path). Run it from the repository root. When `.agents/scratch` is missing, make 
    `upstream.json`, to the README Credits link, and to
    `plugins/swe/THIRD_PARTY_NOTICES`. Then run `check` again. `check` fails
    when that file lacks a copied or modified local file.
-7. `7-ship`: Bump the swe patch version in both plugin manifests. Run the
-   checks that `AGENTS.md` names for the changed files. Open a draft PR with
-   the `ship-pr` skill. Put the upstream commit range and the step 4 lines
-   in the body's Summary section. The template allows no extra headings.
+7. `7-ship`: Run the checks that `AGENTS.md` names for the changed files.
+   Open a draft PR with the `ship-pr` skill. Put the upstream commit range
+   and the step 4 lines in the body's Summary section. The template allows no
+   extra headings.
 
 ## Rules
 

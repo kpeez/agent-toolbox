@@ -30,8 +30,8 @@ design. The engine, storage contract, and engine-only tests are removed.
 Previous engine verification is historical evidence, not a current capability.
 
 On 2026-10-04, `teach` moved from its standalone repository folder into Uni.
-The optional skill-copy installer and its tests were retired. Version, catalog,
-and resource integrity remain release requirements.
+The optional skill-copy installer and its tests were retired. Catalog and
+resource integrity remain release requirements.
 
 See [the build report](BUILD-REPORT.md) for current checks and limits. Generated
 run output stays in ignored `artifacts/uni-build/`; research notes contain
