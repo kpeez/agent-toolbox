@@ -14,7 +14,7 @@ import { chmodSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync 
 import { tmpdir } from "node:os";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { decide, shquote } from "../../hooks/mirror_hook.ts";
+import { decide, mirrored, shquote } from "../../hooks/mirror_hook.ts";
 import { body } from "../../hooks/session_start.ts";
 import { RULE } from "../../hooks/subagent_start.ts";
 
@@ -54,10 +54,8 @@ test("rewrites a background call in rex", () => {
   assert.equal(spec.hookEventName, "PreToolUse");
   assert.ok(!("permissionDecision" in spec));
   const updated = spec.updatedInput;
-  const cmd = String(updated.command);
-  assert.ok(cmd.includes(`{ ( :; make test\n ); printf '\\n__rex_rc=%d\\n' "$?"; } 2>&1 | ${RUNTIME} `));
-  assert.ok(cmd.includes(MIRROR));
-  assert.ok(cmd.includes("'[claude] Run the tests' s-1"));
+  // mirror.test.ts runs this wrapper in bash and zsh, and verify-rex-mirror model-checks its status marker.
+  assert.equal(updated.command, mirrored("make test", "[claude] Run the tests", "s-1", RUNTIME));
   const rest = { ...updated };
   delete rest.command;
   assert.deepEqual(rest, { description: "Run the tests", timeout: 600000, run_in_background: true });
