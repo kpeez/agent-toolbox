@@ -26,8 +26,14 @@ gh pr create --draft --title "<title>" --body-file body.md
 with Node 22.18 or later when bun is missing. `render` refuses a slot that is
 missing or empty, holds a heading, or names the requester or the chat. A
 swe `PreToolUse` hook runs the same check before every `gh pr create` and
-`gh pr edit`. It blocks an inline `--body`, `--fill`, and any body file that
-is not the filled template. In a repo with its own
+`gh pr edit` that the shell will run, also inside `bash -c`, `nu -c`,
+`fish -c`, `eval`, `sudo`, `xargs`, `timeout`, and `$( )`. Text in quotes,
+comments, and quoted heredocs is not a command, so the hook ignores it. The
+hook blocks an inline `--body`, `--fill`, any body file that is not the filled
+template, and `gh api` calls that create a pull request or set its `body` or
+`base`. A command that exists only at run time, such as
+`eval "$X"`, passes; the `pr-body` CI workflow checks the published body. In a
+repo with its own
 `pull_request_template.md`, follow that template; the hook then checks
 only for requester attribution. Fix the content; never work around the hook.
 
