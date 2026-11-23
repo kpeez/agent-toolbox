@@ -526,7 +526,7 @@ version (2.1.296, headless), plus the 2.1.325 additions: five metadata record
 types (`session-owner`, `api-request`, `api-request-shape`, `api-request-blob`,
 `tools-used`) that carry no skill load, and parallel tool calls whose one API
 message spans several lines, plus the 2.1.327 `silent_turn_reminder` attachment, a fixed
-harness nudge to update the user. A shape the audit did
+harness nudge to update the user, and the 2.1.330 `budget_usd` attachment. A shape the audit did
 not see is a counted warning, unless it may hold a skill load; EVIDENCE.md states the rule. It supports `Skill`-tool loads, by full or bare name, proved
 by the linked delivered body, full `Read` reads of frozen `SKILL.md` and plugin resource files
 (playbooks and references named in `facets.json`), root versus subagent records (`child_loads` and

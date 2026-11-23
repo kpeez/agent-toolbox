@@ -264,6 +264,13 @@ message chain. Such a shape is an issue. A malformed line stays an issue.
 not stated there. No probe exercised compaction or resume, so only the chain
 checks above detect them.
 
+`tests/test_claude_transcript_fixtures.py` scores one real transcript per
+Claude Code version in `tests/fixtures/claude-transcripts/`: 2.1.325, 2.1.327,
+and 2.1.330. Each must score complete, with no issue, no warning, and every
+`Skill` load proved. To add a version, run `reduce.py` in that folder on an
+eval run. It keeps every row and its chain links, drops the fields the adapter
+does not read, and replaces private paths and the session id.
+
 ## Assistant text and the final reply
 
 `evidence.json` carries two fields beyond the load and read lists.

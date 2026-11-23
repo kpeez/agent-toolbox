@@ -36,14 +36,15 @@ RUNTIME_FIELDS = {"model", "effort", "cli", "cli_version", "permissions", "tools
 # Claude Code transcript shapes seen in the audited 2.1.296 probe traces (EVIDENCE.md), plus five
 # metadata record types from 2.1.325 (session-owner, api-request, api-request-shape,
 # api-request-blob, tools-used), and one attachment type from 2.1.327 (silent_turn_reminder, a fixed
-# harness nudge to update the user; it carries no skill load).
+# harness nudge to update the user; it carries no skill load), and one from 2.1.330 (budget_usd, the
+# spend so far under --max-budget-usd).
 # Anything else is unaudited: see unaudited_shape.
 CLAUDE_LINE_TYPES = {"user", "assistant", "attachment", "system", "queue-operation",
                      "atis-latch", "last-prompt", "cost-state", "session-owner", "api-request-shape",
                      "api-request-blob", "api-request", "tools-used"}
 CLAUDE_SYSTEM_SUBTYPES = {"stop_hook_summary"}
 CLAUDE_ATTACHMENT_TYPES = {
-    "advisor_tool", "agent_listing_delta", "command_permissions", "credential_org", "date",
+    "advisor_tool", "agent_listing_delta", "budget_usd", "command_permissions", "credential_org", "date",
     "deferred_tools_delta", "deferred_tools_record", "environment", "instructions",
     "mcp_instructions_delta", "model", "prompt_snapshot", "remote_session_change",
     "session_context", "silent_turn_reminder", "skill_listing", "total_tokens_reminder"}
