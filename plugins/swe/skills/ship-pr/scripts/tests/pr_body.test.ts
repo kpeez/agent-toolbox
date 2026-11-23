@@ -13,7 +13,7 @@ import { mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from "nod
 import { tmpdir } from "node:os";
 import { basename, dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { render, slotErrors } from "../pr_body.ts";
+import { render } from "../pr_body.ts";
 
 const SCRIPT = resolve(dirname(fileURLToPath(import.meta.url)), "..", "pr_body.ts");
 const TEMPLATE = resolve(dirname(SCRIPT), "..", "templates", "pr-body.md");
@@ -174,22 +174,30 @@ test("linked worktree reads common dir gh-stack", () => {
   });
 });
 
+/** Run the hook on a rendered body whose summary is replaced by `summary`. */
+function hookOnSummary(root: string, summary: string): { status: number | null; stderr: string } {
+  const body = renderValidBody(root);
+  writeFileSync(body, readFileSync(body, "utf-8").replace("Each save rewrites the whole cache.", summary), "utf-8");
+  return runHook(`gh pr create --body-file ${basename(body)}`, root);
+}
+
 test("allows non-requester capitalized verbs", () => {
-  for (const text of [
-    "Pyright says the return type is wrong.",
-    "Ruff prefers the shorter form.",
-    "Upstream decided to drop Python 3.12.",
-    "Each save rewrites the whole cache.",
-  ]) {
-    assert.deepEqual(slotErrors("summary", text), [], text);
-  }
+  withTemp((root) => {
+    for (const text of ["Pyright says the return type is wrong.", "Ruff prefers the shorter form.", "Upstream decided to drop Python 3.12."]) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, 0, `${text}: ${res.stderr}`);
+    }
+  });
 });
 
 test("flags requester attribution", () => {
-  for (const text of ["the user asked for this", "Dana asked for this.", "As requested, the flag is gone.", "you decided to drop it"]) {
-    const errors = slotErrors("summary", text);
-    assert.ok(errors.length > 0, `expected attribution error for ${JSON.stringify(text)}`);
-  }
+  withTemp((root) => {
+    for (const text of ["the user asked for this", "Dana asked for this.", "As requested, the flag is gone.", "you decided to drop it"]) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, 2, text);
+      assert.ok(res.stderr.includes("requester attribution"), res.stderr);
+    }
+  });
 });
 
 test("hook blocks an unrendered body with an unfilled slot", () => {
@@ -201,14 +209,6 @@ test("hook blocks an unrendered body with an unfilled slot", () => {
     const res = runHook("gh pr create --body-file unrendered.md", root);
     assert.equal(res.status, 2, res.stderr);
     assert.ok(res.stderr.includes("PR body blocked by ship-pr"), res.stderr);
-  });
-});
-
-test("hook passes a rendered body", () => {
-  withTemp((root) => {
-    const body = renderValidBody(root);
-    const res = runHook(`gh pr create --body-file ${basename(body)}`, root);
-    assert.equal(res.status, 0, res.stderr);
   });
 });
 
