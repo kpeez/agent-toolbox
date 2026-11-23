@@ -35,6 +35,8 @@ BASE = {
     "Codes": "{0, 1}",
     "Kinds": '{"plain", "exec"}',
     "KillFrom": '"start"',
+    "DelayZero": "FALSE",
+    "LayerCanFail": "TRUE",
     "ReplyCanTimeOut": "FALSE",
     "EndOn": "TRUE",
     "EndFaults": "TRUE",
@@ -42,11 +44,20 @@ BASE = {
     "Watched": '"m1"',
     "Variant": '"fixed"',
 }
-TWO = {"Mirrors": '{"m1", "m2"}', "Kinds": '{"plain"}', "WaiterOn": "FALSE"}
+# Two mirrors at delay 0, with no refused layer: a timer and a fallback for each would
+# put the run above 10 million states.
+TWO = {
+    "Mirrors": '{"m1", "m2"}',
+    "Kinds": '{"plain"}',
+    "WaiterOn": "FALSE",
+    "DelayZero": "TRUE",
+    "LayerCanFail": "FALSE",
+}
 
 ALL_RULES = [
     "ExitLineWritten",
     "ReportsCommandStatus",
+    "OneBlockPerMirror",
     "NoLostRow",
     "SettledBlockCloses",
     "EndPassClosesSettledRows",
@@ -77,44 +88,58 @@ def holds(name: str, overrides: dict[str, str], without: set[str]) -> Run:
 RUNS = [
     # The current code.
     holds(
-        "current code, one mirror, kill after the handlers",
-        {"KillFrom": '"reading"'},
+        "current code, delay 0, one mirror, a stop at any step, late replies",
+        {"DelayZero": "TRUE", "ReplyCanTimeOut": "TRUE"},
         {"LateWaiterSeesOutcome"},
     ),
     holds(
-        "current code, one mirror, kill at any step",
-        {},
-        {"ExitLineWritten", "LateWaiterSeesOutcome"},
+        "current code, delay above 0, one mirror, a stop at any step, late replies",
+        {"ReplyCanTimeOut": "TRUE"},
+        {"LateWaiterSeesOutcome"},
     ),
     holds(
         "current code, two mirrors",
         TWO,
-        {"ExitLineWritten"} | WAITER_RULES,
+        WAITER_RULES,
     ),
     # Findings in the current code. Each is replayed against the real code (SKILL.md).
-    Run(
-        "finding: a kill before the handlers leaves the block working",
-        "finding",
-        ["ExitLineWritten"],
-    ),
     Run(
         "finding: a waiter that starts after the close gets 'not found'",
         "finding",
         ["LateWaiterSeesOutcome"],
     ),
+    # Past bugs: the floating open as first written.
     Run(
-        "finding: a late `rex run` reply leaves a settled block open",
-        "finding",
+        "the first floating open: at delay 0, a stop during the open leaves the block working",
+        "past bug",
+        ["ExitLineWritten"],
+        {"Variant": '"floatAsWritten"', "DelayZero": "TRUE"},
+    ),
+    Run(
+        "the first floating open: a new_layer reply after its client died opens a second block",
+        "past bug",
+        ["OneBlockPerMirror"],
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
+    ),
+    Run(
+        "the first floating open: of two blocks, one viewer crashes and leaves a settled block open",
+        "past bug",
         ["SettledBlockCloses"],
-        {"ReplyCanTimeOut": "TRUE"},
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
     ),
     Run(
-        "finding: a late `rex run` reply crashes the viewer before a waiter sees the status",
-        "finding",
-        ["WaiterStartedOpenSeesOutcome"],
-        {"ReplyCanTimeOut": "TRUE"},
+        "the first floating open: a late reply leaves a block with no exit line, working forever",
+        "past bug",
+        ["ExitLineWritten"],
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
     ),
-    # Past bugs: each variant is the code before its fix.
+    Run(
+        "the first floating open: a late reply leaves a viewer that crashes before a waiter sees the status",
+        "past bug",
+        ["WaiterStartedOpenSeesOutcome"],
+        {"Variant": '"floatAsWritten"', "ReplyCanTimeOut": "TRUE"},
+    ),
+    # Other past bugs: each variant is the code before its fix.
     Run(
         "the rewriting session_end: it loses a row that remember writes during the pass",
         "past bug",
@@ -157,11 +182,11 @@ RUNS = [
         ["EndPassClosesSettledRows"],
         {"Variant": '"endPassKeepsError"'},
     ),
-    # The statechart's config must still parse. It shows the stop before the handlers.
+    # The statechart's config must still parse, and its rules hold.
     Run(
-        "finding: the chart config (chart.cfg) shows a kill before the handlers",
-        "finding",
-        ["ExitLineWritten"],
+        "the chart config (chart.cfg)",
+        "holds",
+        ["ExitLineWritten", "ReportsCommandStatus", "SettledBlockCloses", "NeverCloseWorking"],
         config_file=CHART,
     ),
     # Mutants for the rules that no past bug broke.

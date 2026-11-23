@@ -5,11 +5,15 @@ where agent work runs and where you watch it, on the Mac and in Rex for iOS.
 Hooks do the work, so it does not depend on what the agent remembers:
 
 - Each background command that Claude Code starts in auto or
-  bypassPermissions mode gets its own Rex tab. The tab shows the output live,
-  with a working spinner, ends `done` or `error` with the exit code, and
-  closes when the command exits. The agent gets the same output and exit
-  status as before, and permission rules still see the original command.
-- A tab whose close fails stays; the SessionEnd hook retries the close when
+  bypassPermissions mode opens as a minimized floating Rex pane after 1.5
+  seconds: in the agent's tab when `REX_BLOCK` is set and `rex block inspect`
+  finds its window, otherwise where Rex chooses. Commands that finish sooner
+  open no pane. At startup,
+  the pane prints a dim one-line header with the label and start time, shows
+  the output live with a working spinner, ends `done` or `error` with the exit
+  code, and closes when the command exits. The agent gets the same output and
+  exit status as before, and permission rules still see the original command.
+- A pane whose close fails stays; the SessionEnd hook retries the close when
   the session ends.
 - A session in a Rex pane starts with the `using-rex` skill in context.
 - A subagent is told to leave panes and sessions alone.
@@ -51,10 +55,13 @@ runtime, each hook that starts shows a hook error that names the fix. Outside
 Rex (`REX_SESSION` unset), the hooks make no change, and the Bash hook starts
 no runtime.
 
-## Turn the mirror off
+## Mirror settings
 
-Set `REX_AGENTS_MIRROR=0` in the environment before you start Claude Code.
-Background commands then run unchanged.
+Set `REX_AGENTS_MIRROR=0` in the environment before you start Claude Code to
+turn the mirror off. Background commands then run unchanged.
+
+Set `REX_AGENTS_MIRROR_DELAY_MS` to change how long a command runs before the
+pane opens. The default is `1500` milliseconds. Set `0` to open at once.
 
 The mirror applies only in the `auto` and `bypassPermissions` permission
 modes. In a mode that prompts, the wrapped command would not match your allow

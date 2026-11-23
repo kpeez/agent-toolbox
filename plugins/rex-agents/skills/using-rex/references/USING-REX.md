@@ -109,6 +109,10 @@ The output is one JSON object: `event` (`status`, `child_exited`, or
 `child_exited`. A block whose program already exited returns
 `child_exited` at once.
 
+A closed block cannot be waited on: the script prints `block not found` and
+exits 1. A mirror block closes 1 s after its command ends, so its status can
+be waited on only until then. Start the wait while the command runs.
+
 A block whose program exits when done:
 
 ```sh
@@ -160,13 +164,22 @@ PreToolUse hook rewrites a background Bash call into this form, so its output an
  ); printf '\n__rex_rc=%d\n' "$?"; } 2>&1 | <abs runtime> <plugin>/scripts/rex_mirror.ts '<label>' <session id>
 ```
 
-`rex_mirror.ts` opens a block labelled `[claude] <description>`
-(`[claude:sub]` for a subagent) that shows the output, reports `working`,
-then `done` or `error` with `<label>: exit <n>`, and closes the block.
-Permission rules still see `<cmd>`. Commands that start with `rex ` stay
-unchanged, so a driven agent's wait gets no tab of its own. The SessionEnd
-hook closes a mirror block whose close failed. `REX_AGENTS_MIRROR=0` turns the
-mirror off.
+`rex_mirror.ts` waits 1.5 seconds (`REX_AGENTS_MIRROR_DELAY_MS` overrides the
+delay in milliseconds; `0` opens at once), then opens a minimized floating pane
+labelled `[claude] <description>` (`[claude:sub]` for a subagent). The pane
+opens in the agent's tab when `REX_BLOCK` is set and `rex block inspect` returns
+that block's window; otherwise Rex chooses where it opens. Commands that exit
+before the delay open no pane. If Rex refuses the floating layer,
+`rex_mirror.ts` falls back to `rex run`. If a `rex` call times out or is
+stopped before its reply, the outcome is unknown: `rex_mirror.ts` opens no
+second pane, and writes the exit line for a pane that Rex may still open late.
+If no pane opens, the command's log stays in `TMPDIR` with mode 0600. At
+startup, the viewer prints a dim one-line header with the label and local start time, shows
+the output live from byte 0, reports `working`, then `done` or `error` with
+`<label>: exit <n>`, and closes the block. Permission rules still see `<cmd>`.
+Commands that start with `rex ` stay unchanged, so a driven agent's wait gets
+no pane of its own. The SessionEnd hook closes a mirror block whose close
+failed. `REX_AGENTS_MIRROR=0` turns the mirror off.
 
 ## Facts
 
