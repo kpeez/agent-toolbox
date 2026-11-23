@@ -168,7 +168,7 @@ and uni in the 2.1.323 transcript, and swe and lab in the 2.1.326 transcript.
 Hooks that return JSON context write `attachment.type: "hook_additional_context"`,
 which no frozen plugin hook uses and both arms reject as an issue. This
 `hook_success` shape was seen in local transcripts, not in an audited eval probe;
-`6-native-pilot` must confirm it on an audited pilot trace.
+a native pilot must confirm it on an audited pilot trace.
 
 `body_sha256` is the digest of `SKILL.md` with its frontmatter removed and its
 leading newlines stripped. The load record names this transform.
