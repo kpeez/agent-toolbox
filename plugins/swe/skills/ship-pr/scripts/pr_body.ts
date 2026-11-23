@@ -1,12 +1,3 @@
-/**
- * Build a pull-request body from templates/pr-body.md, or check a published one.
- *
- * render: fill each {slot} of the template from <slot>.md in a folder. The agent
- * writes slot content only; the headings come from the template.
- * check: confirm a body is the template with its slots filled, as CI does.
- * Both reject a heading inside a slot and any requester attribution.
- */
-
 import { existsSync, readFileSync, readdirSync, realpathSync, statSync, writeFileSync } from "node:fs";
 import { homedir } from "node:os";
 import { basename, dirname, isAbsolute, join, resolve } from "node:path";
@@ -16,7 +7,6 @@ import { fileURLToPath } from "node:url";
 const SCRIPT = realpathSync(fileURLToPath(import.meta.url));
 const TEMPLATE = resolve(dirname(SCRIPT), "..", "templates", "pr-body.md");
 const SLOT = /\{(\w+)\}/g;
-// Python's $ also matches just before one trailing newline; linkValid below keeps that.
 const LINK = /^(?:Closes|Fixes|Part of) [\p{L}\p{N}_#/.-]+$/u;
 const FENCE = /^\s*(```|~~~)/;
 
@@ -55,24 +45,16 @@ function isDirectory(path: string): boolean {
   }
 }
 
-/** Split like Python str.splitlines(): no trailing empty line, exotic boundaries included. */
-function splitLines(text: string): string[] {
+function splitOnPythonLineBoundaries(text: string): string[] {
   if (text === "") return [];
   const parts = text.split(/\r\n|[\n\r\v\f\x1c\x1d\x1e\x85\u2028\u2029]/);
   if (parts[parts.length - 1] === "") parts.pop();
   return parts;
 }
 
-// A command the shell will run is a simple command: its words after quote
-// removal, plus any heredoc bodies on its stdin. The parser below finds every
-// simple command bash would run from a command line: in lists, pipelines,
-// groups, subshells, $( ), backticks, <( ), and unquoted heredoc bodies. It
-// skips data: quoted text, comments, and quoted heredoc bodies. A word with an
-// expansion keeps its source text and is marked dynamic, because its value is
-// known only at run time.
 interface Word {
   text: string;
-  dynamic: boolean;
+  hasExpansion: boolean;
 }
 interface Heredoc {
   body: string;
@@ -97,7 +79,6 @@ class ShellParser {
     this.out = out;
   }
 
-  /** Parse commands until the end, or until an unmatched `)` when `inSubstitution`. */
   list(inSubstitution: boolean): void {
     let command: SimpleCommand = { words: [], heredocs: [] };
     let depth = 0;
@@ -171,7 +152,7 @@ class ShellParser {
         lines.push(line);
       }
       heredoc.body = lines.join("\n");
-      if (!heredoc.quoted) new ShellParser(heredoc.body, this.out).doubleQuoted(false);
+      if (!heredoc.quoted) new ShellParser(heredoc.body, this.out).heredocBody();
     }
     this.pending = [];
   }
@@ -179,12 +160,12 @@ class ShellParser {
   private word(): Word {
     const src = this.src;
     let text = "";
-    let dynamic = false;
+    let hasExpansion = false;
     if (src[this.pos] === "<" || src[this.pos] === ">") {
       const start = this.pos;
       this.pos += 2;
       this.list(true);
-      return { text: src.slice(start, this.pos), dynamic: true };
+      return { text: src.slice(start, this.pos), hasExpansion: true };
     }
     while (this.pos < src.length && !WORD_END.has(src[this.pos])) {
       const ch = src[this.pos];
@@ -197,28 +178,35 @@ class ShellParser {
         this.pos = end < 0 ? src.length : end + 1;
       } else if (ch === '"') {
         this.pos++;
-        const part = this.doubleQuoted(true);
+        const part = this.quotedString();
         text += part.text;
-        dynamic ||= part.dynamic;
+        hasExpansion ||= part.hasExpansion;
       } else {
-        const expansion = this.expansion();
+        const expansion = this.consumeExpansionCollectingCommands();
         if (expansion === null) {
           text += ch;
           this.pos++;
         } else {
           text += expansion;
-          dynamic = true;
+          hasExpansion = true;
         }
       }
     }
-    return { text, dynamic };
+    return { text, hasExpansion };
   }
 
-  /** Read double-quoted text up to the closing quote, or heredoc text up to the end. */
-  doubleQuoted(closes: boolean): Word {
+  quotedString(): Word {
+    return this.doubleQuotedText(true);
+  }
+
+  heredocBody(): Word {
+    return this.doubleQuotedText(false);
+  }
+
+  private doubleQuotedText(closes: boolean): Word {
     const src = this.src;
     let text = "";
-    let dynamic = false;
+    let hasExpansion = false;
     while (this.pos < src.length) {
       const ch = src[this.pos];
       if (closes && ch === '"') {
@@ -230,16 +218,16 @@ class ShellParser {
         this.pos += 2;
         continue;
       }
-      const expansion = this.expansion();
+      const expansion = this.consumeExpansionCollectingCommands();
       if (expansion === null) {
         text += ch;
         this.pos++;
       } else {
         text += expansion;
-        dynamic = true;
+        hasExpansion = true;
       }
     }
-    return { text, dynamic };
+    return { text, hasExpansion };
   }
 
   /** The end of `$(( ... ))` when its parentheses close with `))`, else 0: `$((cmd) )` is a command. */
@@ -252,8 +240,7 @@ class ShellParser {
     return 0;
   }
 
-  /** Consume a $ or backtick expansion and return its source text; parse the commands it runs. */
-  private expansion(): string | null {
+  private consumeExpansionCollectingCommands(): string | null {
     const src = this.src;
     const start = this.pos;
     const next = src[start + 1] ?? "";
@@ -278,8 +265,8 @@ class ShellParser {
       while (this.pos < src.length && src[this.pos] !== "}") {
         if (src[this.pos] === '"') {
           this.pos++;
-          this.doubleQuoted(true);
-        } else if (this.expansion() === null) {
+          this.quotedString();
+        } else if (this.consumeExpansionCollectingCommands() === null) {
           this.pos++;
         }
       }
@@ -301,8 +288,7 @@ class ShellParser {
 const RESERVED = new Set(["!", "{", "}", "if", "then", "elif", "else", "fi", "while", "until", "do", "done", "time", "-p", "and", "or", "not"]);
 const ASSIGNMENT = /^[A-Za-z_]\w*(?:\[[^\]]*\])?\+?=/;
 const SHELLS = new Set(["bash", "sh", "zsh", "dash", "ksh", "fish", "nu"]);
-// Options that take a separate argument, for each wrapper that runs its arguments as a command.
-const WRAPPER_OPTIONS: Record<string, Set<string>> = {
+const WRAPPER_OPTIONS_WITH_VALUE: Record<string, Set<string>> = {
   env: new Set(["-u", "-C", "-P", "-S", "--unset", "--chdir"]),
   command: new Set(),
   exec: new Set(["-a"]),
@@ -312,8 +298,7 @@ const WRAPPER_OPTIONS: Record<string, Set<string>> = {
   nice: new Set(["-n", "--adjustment"]),
   timeout: new Set(["-s", "-k", "--signal", "--kill-after"]),
 };
-// Positional arguments before the wrapped command: `timeout 60 cmd`.
-const WRAPPER_POSITIONALS: Record<string, number> = { timeout: 1 };
+const WRAPPER_POSITIONAL_ARGS_BEFORE_COMMAND: Record<string, number> = { timeout: 1 };
 const DEPTH_LIMIT = 8;
 
 function parseCommands(src: string): SimpleCommand[] {
@@ -322,30 +307,28 @@ function parseCommands(src: string): SimpleCommand[] {
   return out;
 }
 
-/**
- * Find the gh call a simple command runs, through wrappers and nested shells,
- * and return its block message, or null. A command name with an expansion,
- * such as `$GH` or the output of `eval "$(tool)"`, passes: its value is known
- * only at run time. The pr-body CI workflow still checks the published body.
- */
-function inspect(words: Word[], heredocs: Heredoc[], cwd: string, depth: number): string | null {
+function commandNameIsUnresolved(words: Word[], index: number): boolean {
+  return index >= words.length || words[index].hasExpansion;
+}
+
+function blockReason(words: Word[], heredocs: Heredoc[], cwd: string, depth: number): string | null {
   let i = 0;
   while (i < words.length && (RESERVED.has(words[i].text) || ASSIGNMENT.test(words[i].text))) i++;
-  if (i >= words.length || words[i].dynamic || depth > DEPTH_LIMIT) return null;
+  if (commandNameIsUnresolved(words, i) || depth > DEPTH_LIMIT) return null;
   // nu runs an external command written `^gh`.
   const name = (words[i].text.split("/").pop() as string).replace(/^\^/, "");
   const args = words.slice(i + 1);
   const nested = (src: string): string | null => {
     for (const command of parseCommands(src)) {
-      const reason = inspect(command.words, command.heredocs, cwd, depth + 1);
+      const reason = blockReason(command.words, command.heredocs, cwd, depth + 1);
       if (reason !== null) return reason;
     }
     return null;
   };
   if (name === "for" || name === "select" || name === "case") return null;
   if (name === "command" && /^-[vV]/.test(args[0]?.text ?? "")) return null;
-  if (name in WRAPPER_OPTIONS) {
-    const takesValue = WRAPPER_OPTIONS[name];
+  if (name in WRAPPER_OPTIONS_WITH_VALUE) {
+    const takesValue = WRAPPER_OPTIONS_WITH_VALUE[name];
     let j = 0;
     while (j < args.length && args[j].text.startsWith("-")) {
       const text = args[j].text;
@@ -360,7 +343,7 @@ function inspect(words: Word[], heredocs: Heredoc[], cwd: string, depth: number)
       }
       j += takesValue.has(text) ? 2 : 1;
     }
-    return inspect(args.slice(j + (WRAPPER_POSITIONALS[name] ?? 0)), heredocs, cwd, depth + 1);
+    return blockReason(args.slice(j + (WRAPPER_POSITIONAL_ARGS_BEFORE_COMMAND[name] ?? 0)), heredocs, cwd, depth + 1);
   }
   if (name === "eval") return nested(args.map((w) => w.text).join(" "));
   if (SHELLS.has(name)) {
@@ -385,7 +368,6 @@ function inspect(words: Word[], heredocs: Heredoc[], cwd: string, depth: number)
 const API_VALUE_FLAGS = new Set(["-X", "--method", "-f", "--raw-field", "-F", "--field", "-H", "--header", "--input", "-q", "--jq", "-t", "--template", "--hostname", "-p", "--preview", "--cache"]);
 const PULLS_ENDPOINT = /^\/?repos\/[^/]+\/[^/]+\/pulls(?:\/[^/?]+)?\/?(?:\?.*)?$/;
 
-/** Block `gh api` calls that create or edit a pull request, which skip the body checks. */
 function checkApi(args: string[]): string | null {
   let endpoint: string | null = null;
   let method: string | null = null;
@@ -404,7 +386,6 @@ function checkApi(args: string[]): string | null {
     else if (!arg.startsWith("-") && endpoint === null) endpoint = arg;
   }
   method ??= sendsFields ? "POST" : "GET";
-  // POST creates a PR. PATCH passes unless it sets the body or the base; `-f state=closed` passes.
   if (endpoint === null || !PULLS_ENDPOINT.test(endpoint)) return null;
   if (method !== "POST" && !(method === "PATCH" && setsBodyOrBase)) return null;
   return blockMessage(
@@ -413,10 +394,9 @@ function checkApi(args: string[]): string | null {
   );
 }
 
-/** The block message for the first gh call in `command` that breaks the PR-body rules, or null. */
 function checkCommand(command: string, cwd: string): string | null {
   for (const simple of parseCommands(command)) {
-    const reason = inspect(simple.words, simple.heredocs, cwd, 0);
+    const reason = blockReason(simple.words, simple.heredocs, cwd, 0);
     if (reason !== null) return reason;
   }
   return null;
@@ -487,7 +467,7 @@ function slotErrors(name: string, text: string): string[] {
   if (text.trim() === "") return [`${name}: empty.`];
   const errors: string[] = [];
   let inFence = false;
-  const lines = splitLines(text);
+  const lines = splitOnPythonLineBoundaries(text);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const number = i + 1;
@@ -561,7 +541,6 @@ export function check(body: string): string[] {
   return errors;
 }
 
-/** Python repr() for the branch names that reach the block message. */
 function pyRepr(text: string): string {
   const quote = text.includes("'") && !text.includes('"') ? '"' : "'";
   const escaped = text
@@ -630,7 +609,6 @@ function checkPrSegment(action: string, args: string[], cwd: string): string | n
   return errors.length > 0 ? blockMessage(errors.join("\n")) : null;
 }
 
-/** PreToolUse hook: enforce PR body checks and gh-stack publishing on every gh call that creates or edits a PR. */
 function hook(): number {
   const event: unknown = JSON.parse(readFileSync(0, "utf-8"));
   if (!isRecord(event)) throw new TypeError("hook event must be an object");
@@ -673,7 +651,6 @@ type Cli =
   | { kind: "render"; folder: string; link: string | null; output: string }
   | { kind: "check"; bodyFile: string };
 
-/** Resolve a long option by exact name or unique prefix, as argparse does. */
 function longOption(token: string, names: string[]): string {
   if (names.includes(token)) return token;
   const matches = names.filter((n) => n.startsWith(token));

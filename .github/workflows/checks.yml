@@ -94,6 +94,7 @@ jobs:
             uv run -m unittest discover -s "$suite" || status=1
           done
           node --test plugins/swe/skills/ship-pr/scripts/tests/ || status=1
+          node --test plugins/swe/skills/recall/scripts/tests/ || status=1
           node --test plugins/rex-agents/scripts/tests/ || status=1
           exit $status
 

@@ -1,22 +1,3 @@
-/**
- * List this project's agent transcripts, newest first.
- *
- * Claude Code keeps one JSONL file per session in
- * ~/.claude/projects/<slug>/<session-id>.jsonl. The slug is the session's
- * working directory with every character that is not a letter or a digit
- * changed to "-". Subagent transcripts sit in
- * <slug>/<session-id>/subagents/*.jsonl.
- *
- * Codex keeps one rollout file per session in
- * ~/.codex/sessions/YYYY/MM/DD/rollout-*.jsonl. Its first line is a
- * session_meta record that names the working directory.
- *
- * The script matches only the working directories of this repository: the main
- * checkout and each linked worktree. It prints paths and modification times. It
- * never prints transcript content, and it never lists a transcript of another
- * project.
- */
-
 import { closeSync, openSync, readdirSync, readSync, realpathSync, statSync } from "node:fs";
 import { homedir } from "node:os";
 import { join, resolve, sep } from "node:path";
@@ -37,8 +18,7 @@ function isDirectory(path: string): boolean {
   }
 }
 
-/** Return the main checkout and every worktree of the repository at cwd. */
-function projectDirs(cwd: string): string[] {
+function worktreeDirs(cwd: string): string[] {
   const result = spawnSync("git", ["-C", cwd, "worktree", "list", "--porcelain"], { encoding: "utf-8" });
   if (result.error || result.status !== 0) return [resolve(cwd)];
   const dirs = result.stdout
@@ -74,7 +54,6 @@ function claudeTranscripts(dirs: string[], subagents: boolean): string[] {
   return found;
 }
 
-/** Read only the first line, as the Python version does; rollout files grow large. */
 function firstLine(path: string): string {
   const fd = openSync(path, "r");
   try {
@@ -217,7 +196,7 @@ function main(argv: string[]): number {
     return 0;
   }
   const since = args.days <= 0 ? 0 : Date.now() / 1000 - args.days * 86400;
-  const dirs = projectDirs(args.cwd);
+  const dirs = worktreeDirs(args.cwd);
   const paths: string[] = [];
   if (args.host === "claude" || args.host === "all") paths.push(...claudeTranscripts(dirs, args.subagents));
   if (args.host === "codex" || args.host === "all") paths.push(...codexTranscripts(dirs, since));
