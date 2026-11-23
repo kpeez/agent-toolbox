@@ -41,6 +41,8 @@ jobs:
           exit $status
       - name: No plugin names another plugin's skills
         run: uv run .github/scripts/plugin_isolation.py
+      - name: No home-folder paths in tracked files
+        run: uv run .github/scripts/private_paths.py
       - name: Hook runtimes follow the per-event table
         run: uv run .github/scripts/hook_runtime.py
       - name: Antigravity rules match the session-start hook

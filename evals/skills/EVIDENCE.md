@@ -129,7 +129,7 @@ provider isolation. No live model matrix is authorized in this slice.
 `--format claude-transcript` selects adapter `claude-transcript-v1`. It reads
 the Claude Code session transcript, not stream-json. The audited producer is
 Claude Code 2.1.296 in headless `-p` mode. The probe evidence is in
-`/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/probes/claude-trace-format/`
+`~/artifacts/agent-toolbox/swe-router-rewrite/probes/claude-trace-format/`
 (`commands.sh`, `analyze.out`, `read-check.out`, and the copied transcripts).
 
 Capture inputs:
@@ -269,7 +269,7 @@ Real transcripts put backticks around the slug. The route scorer strips them.
 This audit checks the adapter's mechanics against raw lines. It is not
 activation evidence: the probe prompts are not corpus cases, and case `IM-01`
 only supplies a frozen catalog and a label slot. The command was
-`/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/audit/run_audit.sh`.
+`~/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/audit/run_audit.sh`.
 It materialized one `IM-01` run per probe trace, then ran `capture --format
 claude-transcript --plugin-dir <probe>/plugin/swe --stream <probe stream>` and
 `score`. The probe snapshot's `SKILL.md` files equal the frozen catalog
@@ -284,7 +284,7 @@ raw lines.
 | `subagent` (label: `none`) | No root loads; activation `miss`; one child load, `unavailable`, detail `tool_result lacks toolUseResult.success`; two sidechain files captured | Root line 19 Agent call, line 20 result with `agentId` `ac805767b100cd127`; sidechain lines 12 (`Skill`) and 17 (`Read`) share `message.id` `msg_011CfyodWD7K3xLkeuH3ypVH`, with the result on line 13 and the body on line 14; line 13 has no `toolUseResult` |
 
 Other probe transcripts, parsed directly with the adapter's functions by
-`/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/review/direct_parse.py`
+`~/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/review/direct_parse.py`
 (declared catalog: the scratch leaf skill only):
 
 - `claude-skill-surface/transcripts/{bare,noargs,ns,snapshot}-swe` and
@@ -314,14 +314,14 @@ adapter exists. The lead accepted a Claude-only audit as a recorded deviation
 Codex score stays unpublished until a Codex adapter passes its own audit.
 
 Seen red: the test module docstring names the regressions. The output is in
-`/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/seen-red.out`.
+`~/artifacts/agent-toolbox/swe-router-rewrite/2-native-adapter/seen-red.out`.
 
 ## Pre-registered corpus deviation: TC-10
 
 Case `TC-10` (testing-code explicit control) asked for `/swe:testing-code`.
 testing-code is `user-invocable: false`, and Claude Code 2.1.296 rejects a typed
 `user-invocable: false` plugin skill with zero model turns
-(`/home/kylep/artifacts/agent-toolbox/swe-router-rewrite/probes/claude-skill-surface/typed-modelonly.jsonl`).
+(`~/artifacts/agent-toolbox/swe-router-rewrite/probes/claude-skill-surface/typed-modelonly.jsonl`).
 The case now reads "Use the swe:testing-code skill to …", the form that loaded
 `swe:implement` through the `Skill` tool in the `rename-explicit` probe. Its
 category, fixture, split, answer key, and action boundary are unchanged, so the
