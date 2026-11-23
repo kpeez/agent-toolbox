@@ -50,7 +50,7 @@ def shift(day, n):
 
 
 def events(g):
-    for tid in g.order():
+    for tid in g.topological_order():
         yield ("record", tid, "pass", False)
         yield ("record", tid, "pass", True)
         yield ("record", tid, "fail", False)
@@ -168,7 +168,7 @@ def mutant_gate(tt):
 
 def mutant_frontier(tt):
     original = tt.frontier
-    tt.frontier = lambda g, state: [t for t in g.order() if not tt.met(state, t)] or original(g, state)
+    tt.frontier = lambda g, state: [t for t in g.topological_order() if not tt.met(state, t)] or original(g, state)
 
 
 def mutant_place_due(tt):

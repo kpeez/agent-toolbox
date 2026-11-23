@@ -25,8 +25,6 @@ import sys
 from pathlib import Path
 from typing import Any
 
-# Keep the standard plot's visual language here. Run-specific figures may add
-# their own views, but should not need to fork this renderer.
 GREEN = "#4fbd7a"
 GREEN_DARK = "#31885a"
 DISCARD = "#cfd3d1"
@@ -94,7 +92,6 @@ def load_config(run_dir: Path) -> dict[str, Any]:
 
 
 def is_calibration_record(record: dict[str, Any]) -> bool:
-    """Calibration belongs to its own ledger and must not make a best line."""
     phase = record.get("phase")
     if isinstance(phase, str) and phase.strip().lower() == "calibration":
         return True
@@ -182,7 +179,6 @@ def metric_value(record: dict[str, Any], metric: str) -> float | None:
 
 
 def experiment_name(record: dict[str, Any]) -> str:
-    """Return an explicit experiment name or preserve a legacy description."""
     identifier = record["id"]
     description = record["description"].strip()
     match = re.search(r"(?<![a-z0-9])exp(\d{3,})-[a-z0-9][a-z0-9-]*[a-z0-9]?(?![a-z0-9-])", description)
@@ -194,8 +190,6 @@ def experiment_name(record: dict[str, Any]) -> str:
 def apply_style() -> None:
     import matplotlib
 
-    # The requested Karpathy-style progress view uses keyed green labels and
-    # a faint lookup grid; its wider canvas needs slightly larger typography.
     matplotlib.rcParams.update(
         {
             "font.family": "sans-serif",
@@ -236,7 +230,6 @@ def running_best(keeps: list[tuple[dict[str, Any], float]], direction: str) -> l
 
 
 def figure_size(width: float, kept_names: list[str]) -> tuple[float, float]:
-    """Give long runs room for labels while respecting --width as a floor."""
     total_chars = sum(len(name) for name in kept_names)
     automatic = max(8.0 + len(kept_names) * 0.12, 8.0 + total_chars / 48.0)
     width = max(width, min(automatic, 32.0))
@@ -260,8 +253,7 @@ def label_polygon(annotation, renderer):
                          (box.x1, box.y1), (box.x0, box.y1))]
 
 
-def labels_overlap(first, second):
-    """Separating-axis test for the two rotated text rectangles."""
+def rotated_rectangles_overlap(first, second):
     for polygon in (first, second):
         for a, b in zip(polygon, polygon[1:] + polygon[:1]):
             normal = (a[1] - b[1], b[0] - a[0])
@@ -273,7 +265,6 @@ def labels_overlap(first, second):
 
 
 def add_keep_labels(ax, keeps: list[tuple[dict[str, Any], float]], names: list[str]) -> None:
-    """Keep every name legible; leaders retain its association when displaced."""
     canvas = ax.figure.canvas
     canvas.draw()
     renderer = canvas.get_renderer()
@@ -298,11 +289,9 @@ def add_keep_labels(ax, keeps: list[tuple[dict[str, Any], float]], names: list[s
             polygon = label_polygon(annotation, renderer)
             if (all(boundary.x0 <= x <= boundary.x1 and boundary.y0 <= y <= boundary.y1
                     for x, y in polygon)
-                    and not any(labels_overlap(polygon, previous) for previous in placed)):
+                    and not any(rotated_rectangles_overlap(polygon, previous) for previous in placed)):
                 break
         else:
-            # Keep the label rather than silently omitting it. The caller can
-            # widen an unusually crowded figure and must inspect the PNG.
             print("warning: crowded kept labels; increase --width", file=sys.stderr)
         placed.append(polygon)
         if annotation.get_position() == (4, 9):
@@ -371,7 +360,6 @@ def render(run_dir: Path, config: dict[str, Any], records: list[dict[str, Any]],
         ax.text(0.5, 0.5, "No measured objective values", transform=ax.transAxes, ha="center", va="center", color=TEXT_SECONDARY, fontsize=12)
 
     for record in unmeasured_crashes:
-        # Axes-fraction rug: it marks a failed attempt without inventing y data.
         ax.plot([record["id"], record["id"]], [0.0, 0.035], transform=ax.get_xaxis_transform(), color=CRASH, linewidth=2.0, solid_capstyle="butt", zorder=5)
 
     handles = []
@@ -394,8 +382,6 @@ def render(run_dir: Path, config: dict[str, Any], records: list[dict[str, Any]],
     fig.text(0.09, 0.91, f"{len(records)} {noun}, {len(keeps)} kept", color=TEXT_SECONDARY, fontsize=10, ha="left")
     if config.get("scope"):
         fig.text(0.09, 0.02, config["scope"], color=TEXT_SECONDARY, fontsize=8.5, ha="left")
-    # Add labels after all figure furniture exists. Collision bounds otherwise
-    # change when the legend or title is laid out.
     if keeps:
         add_keep_labels(ax, keeps, names)
     result = save_figure(fig, output)

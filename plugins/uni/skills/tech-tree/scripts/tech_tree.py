@@ -34,8 +34,8 @@ from pathlib import Path
 
 ID_RE = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 WEIGHTS = (0.5, 1.0)
-INTERVALS = (1, 3, 7, 14, 30, 60)  # days after the 1st, 2nd, ... repetition
-LESSON_EVERY = 3  # at most this many reviews between two lessons
+REVIEW_INTERVAL_DAYS = (1, 3, 7, 14, 30, 60)
+MAX_REVIEWS_BETWEEN_LESSONS = 3
 MET = ("mastered", "conditional")
 
 
@@ -73,8 +73,7 @@ class Graph:
         keys = [k for kp in self.by_id[tid].get("kps", []) for k in kp.get("key", [])]
         return list(dict.fromkeys(keys + self.requires(tid)))
 
-    def order(self, partial=False):
-        """Topological order, or None when the requires graph has a cycle."""
+    def partial_order(self):
         indeg = {t["id"]: len(t.get("requires", {})) for t in self.topics}
         queue = [tid for tid, d in indeg.items() if d == 0]
         out = []
@@ -85,7 +84,11 @@ class Graph:
                 indeg[c] -= 1
                 if indeg[c] == 0:
                     queue.append(c)
-        return out if partial or len(out) == len(self.topics) else None
+        return out
+
+    def topological_order(self):
+        order = self.partial_order()
+        return order if len(order) == len(self.topics) else None
 
 
 def is_text(v):
@@ -93,7 +96,6 @@ def is_text(v):
 
 
 def shape_errors(data):
-    """Type errors that would crash the other checks."""
     if not isinstance(data, dict) or not isinstance(data.get("topics"), list):
         return ["the file must be an object with a topics list"]
     errors = []
@@ -145,8 +147,8 @@ def validate(data):
                 errors.append(f"{t['id']}: requires unknown topic {p}")
     if errors:
         return errors, warnings
-    if g.order() is None:
-        stuck = sorted(set(ids) - set(g.order(partial=True)))
+    if g.topological_order() is None:
+        stuck = sorted(set(ids) - set(g.partial_order()))
         return [f"requires has a cycle among or above: {', '.join(stuck)}"], warnings
     for t in g.topics:
         tid, anc = t["id"], g.ancestors(t["id"])
@@ -204,38 +206,42 @@ def met(state, tid):
 
 
 def unmet_ancestors(g, state, tid):
-    """A topic stays locked while any ancestor is unmet, so a retaught key
-    prerequisite several edges back locks it too."""
-    return [a for a in g.order() if a in g.ancestors(tid) and not met(state, a)]
+    return [a for a in g.topological_order() if a in g.ancestors(tid) and not met(state, a)]
 
 
 def frontier(g, state):
-    return [tid for tid in g.order() if not met(state, tid) and not unmet_ancestors(g, state, tid)]
+    return [tid for tid in g.topological_order() if not met(state, tid) and not unmet_ancestors(g, state, tid)]
 
 
 def due_reviews(g, state, today):
-    due = [tid for tid in g.order() if met(state, tid) and state[tid]["due"] and state[tid]["due"] <= today]
+    due = [tid for tid in g.topological_order() if met(state, tid) and state[tid]["due"] and state[tid]["due"] <= today]
     return sorted(due, key=lambda tid: state[tid]["due"])
 
 
 def interval(reps):
-    return INTERVALS[min(max(int(reps), 1), len(INTERVALS)) - 1]
+    return REVIEW_INTERVAL_DAYS[min(max(int(reps), 1), len(REVIEW_INTERVAL_DAYS)) - 1]
 
 
 def add_days(day, n):
     return (dt.date.fromisoformat(day) + dt.timedelta(days=n)).isoformat()
 
 
+def takes_credit(s):
+    return s["status"] == "mastered"
+
+
+def credit_arrives_near_due(s, today):
+    days_left = (dt.date.fromisoformat(s["due"]) - dt.date.fromisoformat(today)).days
+    return days_left <= interval(s["reps"]) / 2
+
+
 def credit(g, state, tid, today, weight=1.0):
-    """Pass credit down encompassing edges; it only pushes due dates later."""
     for e, w in g.by_id[tid].get("encompasses", {}).items():
         share = weight * w
         s = state[e]
-        if share < 0.5 or s["status"] != "mastered" or not s["due"]:
+        if share < 0.5 or not takes_credit(s) or not s["due"]:
             continue
-        # Credit that arrives long before the review is due counts for nothing.
-        days_left = (dt.date.fromisoformat(s["due"]) - dt.date.fromisoformat(today)).days
-        if days_left <= interval(s["reps"]) / 2:
+        if credit_arrives_near_due(s, today):
             s["reps"] += share
             s["due"] = max(s["due"], add_days(today, interval(s["reps"])))
         credit(g, state, e, today, share)
@@ -251,14 +257,13 @@ def cmd_next(g, progress, today):
         covers = sum(w for e, w in g.by_id[tid].get("encompasses", {}).items() if e in due)
         return (covers, len(g.descendants(tid)) - state[tid]["fails"])
 
-    # A failed lesson waits a day: rest, then retry with new questions.
     front = [t for t in front if t not in failed_today]
     lesson = max(front, key=score) if front else None
-    covering = lesson and any(  # credit reaches only mastered topics
-        g.by_id[lesson].get("encompasses", {}).get(e) == 1.0 and state[e]["status"] == "mastered"
+    covering = lesson and any(
+        g.by_id[lesson].get("encompasses", {}).get(e) == 1.0 and takes_credit(state[e])
         for e in due
     )
-    if due and not covering and (progress["reviews_since_lesson"] < LESSON_EVERY or not lesson):
+    if due and not covering and (progress["reviews_since_lesson"] < MAX_REVIEWS_BETWEEN_LESSONS or not lesson):
         return f"review {due[0]}  (due {state[due[0]]['due']}; {len(due)} due)"
     if lesson:
         kind = "retry" if state[lesson]["fails"] else "lesson"
@@ -270,6 +275,12 @@ def cmd_next(g, progress, today):
     if all(met(state, t) for t in g.by_id):
         return "every topic is placed or mastered; verify placed topics at their reviews" + after
     return f"nothing due today{after}"
+
+
+def restart_dependents_ladder(g, state, tid):
+    for d in g.descendants(tid):
+        if not met(state, d):
+            state[d]["fails"] = 0
 
 
 def cmd_record(g, progress, tid, passed, helped, today):
@@ -292,10 +303,8 @@ def cmd_record(g, progress, tid, passed, helped, today):
         s["status"], s["fails"] = "mastered", 0
         s["reps"] = s["reps"] + 1 if is_review else 1
         s["due"] = add_days(today, interval(s["reps"]))
-        if not is_review:  # a retaught prerequisite restarts its dependents' ladder
-            for d in g.descendants(tid):
-                if not met(state, d):
-                    state[d]["fails"] = 0
+        if not is_review:
+            restart_dependents_ladder(g, state, tid)
         credit(g, state, tid, today)
         return f"{tid}: mastered; next review {s['due']}"
     s["fails"] += 1
@@ -350,19 +359,18 @@ def cmd_mermaid(g, state):
     front = set(frontier(g, state)) if state else set()
     marks = {"mastered": "✓ ", "conditional": "~ "}
     lines = ["flowchart TD"]
-    for tid in g.order():
+    for tid in g.topological_order():
         mark = marks.get(state[tid]["status"], "▶ " if tid in front else "") if state else ""
         title = g.by_id[tid]["title"].replace('"', "'")
         lines.append(f'  {tid}["{mark}{title}"]')
-    for tid in g.order():
+    for tid in g.topological_order():
         for p in g.requires(tid):
             lines.append(f"  {p} --> {tid}")
     return "\n".join(lines)
 
 
 def main():
-    def options(parser, defaults):
-        # Accept the options before or after the command.
+    def add_options_before_or_after_command(parser, defaults):
         parser.add_argument("--graph", default="tech-tree.json" if defaults else argparse.SUPPRESS)
         parser.add_argument("--progress", default=None if defaults else argparse.SUPPRESS,
                             help="default: progress.json beside the graph")
@@ -370,8 +378,8 @@ def main():
                             help="today, as YYYY-MM-DD")
         return parser
 
-    common = options(argparse.ArgumentParser(add_help=False), defaults=False)
-    ap = options(argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter), defaults=True)
+    common = add_options_before_or_after_command(argparse.ArgumentParser(add_help=False), defaults=False)
+    ap = add_options_before_or_after_command(argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter), defaults=True)
     sub = ap.add_subparsers(dest="cmd", required=True)
     for name in ("validate", "mermaid", "frontier", "next", "status"):
         sub.add_parser(name, parents=[common])
@@ -401,7 +409,7 @@ def main():
     elif args.cmd == "next":
         print(cmd_next(g, progress, args.date))
     elif args.cmd == "status":
-        for tid in g.order():
+        for tid in g.topological_order():
             s = state[tid]
             print(f"{tid:32} {s['status']:12} reps={s['reps']:<4g} fails={s['fails']} due={s['due'] or '-'}")
     elif args.cmd in ("record", "place"):
