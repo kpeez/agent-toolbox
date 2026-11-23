@@ -1,10 +1,8 @@
 # Repository rules
 
 - Preserve unrelated working-tree changes.
-- Never add `version` to a plugin manifest or a catalog entry. Without it,
-  Claude Code keys each update on the commit SHA, so every commit to `main`
-  ships. A hand-set version lets new content ship under an old version, and
-  Claude Code then keeps the old files.
+- No plugin manifest or catalog entry sets `version`;
+  `uv run .github/scripts/manifest_versions.py` says why.
 - Keep every marketplace catalog entry pointed at a plugin folder that exists.
 - A hook that fires on every tool call (`PreToolUse`, `PostToolUse`,
   `PostToolUseFailure`, `PermissionRequest`) runs TypeScript through

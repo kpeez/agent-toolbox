@@ -18,7 +18,8 @@ This page is for people who change this repository. Agent rules live in
 
 ## Versions
 
-No manifest and no catalog entry has a `version` field. Each host then
+No manifest and no catalog entry has a `version` field, and
+`.github/scripts/manifest_versions.py` fails CI when one does. Each host then
 updates on a new commit:
 
 - Claude Code uses the 12-character SHA of the newest marketplace commit as
