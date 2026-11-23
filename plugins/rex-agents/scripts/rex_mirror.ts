@@ -154,6 +154,7 @@ export function remember(sessionId: string, block: string, label: string): void 
   );
 }
 
+// latin1 maps each byte to one UTF-16 code unit, so the match index is a byte offset into tail.
 function markerAt(tail: Buffer): { rc: number; offset: number } | null {
   const match = MARKER.exec(tail.toString("latin1"));
   return match ? { rc: Number(match[1]), offset: match.index } : null;
