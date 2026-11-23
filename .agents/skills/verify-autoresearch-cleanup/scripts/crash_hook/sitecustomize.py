@@ -1,10 +1,4 @@
-"""Crash-point hook that check.py loads into the real cleanup.py through PYTHONPATH.
-
-Each audit event that can change the filesystem is one crash point. The hook
-prints each one to stderr before the change happens. When the index equals
-CLEANUP_CRASH_AT, it sends the process CLEANUP_CRASH_SIGNAL (KILL or INT)
-instead, so the change never happens.
-"""
+"""Crash-point hook that check.py loads into the real cleanup.py through PYTHONPATH."""
 
 import os
 import signal

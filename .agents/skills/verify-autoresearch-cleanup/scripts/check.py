@@ -105,7 +105,6 @@ def make_case(root):
 
 
 def tree(top):
-    """Every entry under ``top`` without following links: kind, mode, and bytes or link target."""
     out = {}
     for path in sorted(top.rglob("*")):
         info = path.lstat()
@@ -124,7 +123,6 @@ def tree(top):
 
 
 def archive_tree(archive):
-    """The run as an independent zstd and tarfile read of ``archive`` sees it; None when unreadable."""
     data = subprocess.run(
         ["zstd", "-q", "-d", "-c", str(archive)], capture_output=True, check=False
     )
@@ -204,7 +202,6 @@ def crash_points(script):
 
 
 def crash(script, index, how, points):
-    """Stop a new run before crash point ``index`` (no stop when it is past the last) and check each rule."""
     with tempfile.TemporaryDirectory() as tmp:
         root = Path(tmp).resolve()
         make_case(root)
