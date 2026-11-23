@@ -97,3 +97,8 @@
   `uv run .agents/skills/verify-eval-budget/scripts/check.py`. It
   model-checks the budget cap and resume with TLC and replays each model
   step on the real code.
+- After a change to `plugins/lab/skills/autoresearch/scripts/cleanup.py`
+  or the archive steps in its `references/cleanup.md`, run
+  `uv run .agents/skills/verify-autoresearch-cleanup/scripts/check.py`. It
+  kills the real cleanup before each filesystem change and checks that the
+  original run stays recoverable.
