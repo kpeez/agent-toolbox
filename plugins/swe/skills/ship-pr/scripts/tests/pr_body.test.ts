@@ -200,6 +200,91 @@ test("a heading counts only after a CommonMark line ending", () => {
   });
 });
 
+test("a code fence opens and closes by the CommonMark rules", () => {
+  withTemp((root) => {
+    const cases = [
+      ["```a```\n## Heading", true],
+      ["```\ncode\n~~~\n```\n## Heading", true],
+      ["````\n```\n````\n## Heading", true],
+      ["```\n## Heading\n```", false],
+      ["~~~\n## Heading\n~~~", false],
+      ["```\ncode\n```\nthe user asked for this", true],
+      ["Steps:\n\n- Run the probe:\n  ```bash\n  node probe.mjs\n    ```\n## Extra heading", true],
+      ["`x`\n   ```\n```\nthe user asked for this", true],
+      ["Run the probe:\n  ```bash\nnode probe.mjs\n```\n## Results", true],
+      ["Run the probe:\n  ```bash\nnode probe.mjs\n```\n\nThe user asked for a faster cache.", true],
+    ] as const;
+    for (const [text, blocked] of cases) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
+test("a line the old fence toggle checked stays checked", () => {
+  withTemp((root) => {
+    const res = hookOnSummary(root, "```js\ncode\n``` js\n## Heading");
+    assert.equal(res.status, 2, res.stderr);
+  });
+});
+
+test("fenced code nested in a list or quote is skipped", () => {
+  withTemp((root) => {
+    for (const text of [
+      "Config:\n\n> ```bash\n> # install deps\n> ```",
+      "- ```bash\n  # install deps\n  ```",
+      "1. Step\n   - Run:\n\n     ```python\n     # skip if the user wants verbose output\n     ```",
+    ]) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
+test("a repo template drops heading errors but keeps attribution that quotes the word heading", () => {
+  withTemp((root) => {
+    mkdirSync(join(root, ".git"));
+    mkdirSync(join(root, ".github"));
+    writeFileSync(join(root, ".github", "pull_request_template.md"), "## Notes\n", "utf-8");
+    writeFileSync(join(root, "body.md"), "## Notes\n\n`Xheading asked`` Bob asked\n", "utf-8");
+    const res = runHook("gh pr create --body-file body.md", root);
+    assert.equal(res.status, 2, res.stderr);
+    assert.ok(res.stderr.includes("requester attribution"), res.stderr);
+    assert.ok(!res.stderr.includes("heading '## Notes'"), res.stderr);
+  });
+});
+
+test("a markdown example inside a fence stays code", () => {
+  withTemp((root) => {
+    for (const text of [
+      "Example input:\n\n```md\n> ```\n# install deps\n```",
+      "```md\n- ```\n# comment\n```",
+      "```diff\n+ ```bash\n+ npm test\n+ ```\n+ ## Usage\n```",
+    ]) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
+test("a code span pairs backtick runs of equal length", () => {
+  withTemp((root) => {
+    for (const [text, blocked] of [["`````   the user asked````", true], ["the user asked````a```b````js", true], ["Use \\`` for a literal. the user asked for it ``", true], ["Windows paths such as C:\\\\`Users` the user asked about `x`.", true], ["```a```## H", false]] as const) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
+test("a heading may be indented up to three spaces", () => {
+  withTemp((root) => {
+    for (const [text, blocked] of [["Fine.\n   ## Heading", true], ["- ## Heading", true], ["1. #\tHeading", true], ["> ## Heading", true], ["Fine.\n#\tHeading", true], ["Fine.\n    ## Not a heading", false], ["Fine.\n#hashtag", false]] as const) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
 test("hook blocks a body with an empty slot", () => {
   withTemp((root) => {
     const unrendered = readFileSync(TEMPLATE, "utf-8").replace("{summary}", "");
