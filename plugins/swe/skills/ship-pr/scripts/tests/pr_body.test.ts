@@ -210,6 +210,9 @@ test("a code fence opens and closes by the CommonMark rules", () => {
       ["~~~\n## Heading\n~~~", false],
       ["```js\ncode\n``` js\n## Heading", false],
       ["```\ncode\n```\nthe user asked for this", true],
+      ["Steps:\n\n- Run the probe:\n  ```bash\n  node probe.mjs\n    ```\n## Extra heading", true],
+      ["- a\n  ```\n  code\nthe user asked for this", true],
+      ["`x`\n   ```\n```\nthe user asked for this", true],
     ] as const;
     for (const [text, blocked] of cases) {
       const res = hookOnSummary(root, text);
@@ -220,7 +223,7 @@ test("a code fence opens and closes by the CommonMark rules", () => {
 
 test("a code span pairs backtick runs of equal length", () => {
   withTemp((root) => {
-    for (const [text, blocked] of [["`````   the user asked````", true], ["the user asked````a```b````js", true], ["```a```## H", false]] as const) {
+    for (const [text, blocked] of [["`````   the user asked````", true], ["the user asked````a```b````js", true], ["Use \\`` for a literal. the user asked for it ``", true], ["```a```## H", false]] as const) {
       const res = hookOnSummary(root, text);
       assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
     }
@@ -229,7 +232,7 @@ test("a code span pairs backtick runs of equal length", () => {
 
 test("a heading may be indented up to three spaces", () => {
   withTemp((root) => {
-    for (const [text, blocked] of [["Fine.\n   ## Heading", true], ["Fine.\n#\tHeading", true], ["Fine.\n    ## Not a heading", false], ["Fine.\n#hashtag", false]] as const) {
+    for (const [text, blocked] of [["Fine.\n   ## Heading", true], ["- ## Heading", true], ["1. #\tHeading", true], ["> ## Heading", true], ["Fine.\n#\tHeading", true], ["Fine.\n    ## Not a heading", false], ["Fine.\n#hashtag", false]] as const) {
       const res = hookOnSummary(root, text);
       assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
     }

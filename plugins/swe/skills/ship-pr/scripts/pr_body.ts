@@ -8,16 +8,21 @@ const SCRIPT = realpathSync(fileURLToPath(import.meta.url));
 const TEMPLATE = resolve(dirname(SCRIPT), "..", "templates", "pr-body.md");
 const SLOT = /\{(\w+)\}/g;
 const LINK = /^(?:Closes|Fixes|Part of) [\p{L}\p{N}_#/.-]+$/u;
-const FENCE_OPENER = /^ {0,3}(`{3,}|~{3,})(.*)$/;
-const FENCE_CLOSER = /^ {0,3}(`{3,}|~{3,})[ \t]*$/;
+const FENCE_OPENER = /^( {0,3})(`{3,}|~{3,})(.*)$/;
+const FENCE_CLOSER = /^\s*(`{3,}|~{3,})[ \t]*$/;
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/;
+const CONTAINER_MARKERS = /^(?:\s*>\s?|\s*(?:[-*+]|\d{1,9}[.)])[ \t]+)*/;
 
-type Fence = { char: string; length: number };
+type Fence = { char: string; length: number; indent: number };
 
 function fenceOpener(line: string): Fence | null {
   const m = FENCE_OPENER.exec(line);
-  if (!m || (m[1][0] === "`" && m[2].includes("`"))) return null;
-  return { char: m[1][0], length: m[1].length };
+  if (!m || (m[2][0] === "`" && m[3].includes("`"))) return null;
+  return { char: m[2][0], length: m[2].length, indent: m[1].length };
+}
+
+function endsContainer(line: string, fence: Fence): boolean {
+  return line.trim() !== "" && /^ */.exec(line)![0].length < fence.indent;
 }
 
 function closesFence(line: string, fence: Fence): boolean {
@@ -29,6 +34,11 @@ function stripCodeSpans(line: string): string {
   let out = "";
   let i = 0;
   while (i < line.length) {
+    if (line[i] === "\\" && line[i + 1] === "`") {
+      out += "`";
+      i += 2;
+      continue;
+    }
     if (line[i] !== "`") {
       out += line[i++];
       continue;
@@ -507,14 +517,16 @@ function slotErrors(name: string, text: string): string[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const number = i + 1;
-    if (fence) {
-      if (closesFence(line, fence)) fence = null;
+    if (fence && closesFence(line, fence)) {
+      fence = null;
       continue;
     }
+    if (fence && endsContainer(line, fence)) fence = null;
+    if (fence) continue;
     fence = fenceOpener(line);
     if (fence) continue;
     const prose = stripCodeSpans(line);
-    if (HEADING.test(line)) {
+    if (HEADING.test(line.replace(CONTAINER_MARKERS, ""))) {
       errors.push(`${name} line ${number}: heading '${line.trim()}'. The template owns all headings.`);
     }
     for (const pattern of ATTRIBUTION) {
