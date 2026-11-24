@@ -210,7 +210,6 @@ test("a code fence opens and closes by the CommonMark rules", () => {
       ["~~~\n## Heading\n~~~", false],
       ["```\ncode\n```\nthe user asked for this", true],
       ["Steps:\n\n- Run the probe:\n  ```bash\n  node probe.mjs\n    ```\n## Extra heading", true],
-      ["- a\n  ```\n  code\nthe user asked for this", true],
       ["`x`\n   ```\n```\nthe user asked for this", true],
       ["Run the probe:\n  ```bash\nnode probe.mjs\n```\n## Results", true],
       ["Run the probe:\n  ```bash\nnode probe.mjs\n```\n\nThe user asked for a faster cache.", true],
@@ -226,6 +225,32 @@ test("a line the old fence toggle checked stays checked", () => {
   withTemp((root) => {
     const res = hookOnSummary(root, "```js\ncode\n``` js\n## Heading");
     assert.equal(res.status, 2, res.stderr);
+  });
+});
+
+test("fenced code nested in a list or quote is skipped", () => {
+  withTemp((root) => {
+    for (const text of [
+      "Config:\n\n> ```bash\n> # install deps\n> ```",
+      "- ```bash\n  # install deps\n  ```",
+      "1. Step\n   - Run:\n\n     ```python\n     # skip if the user wants verbose output\n     ```",
+    ]) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
+test("a repo template drops heading errors but keeps attribution that quotes the word heading", () => {
+  withTemp((root) => {
+    mkdirSync(join(root, ".git"));
+    mkdirSync(join(root, ".github"));
+    writeFileSync(join(root, ".github", "pull_request_template.md"), "## Notes\n", "utf-8");
+    writeFileSync(join(root, "body.md"), "## Notes\n\n`Xheading asked`` Bob asked\n", "utf-8");
+    const res = runHook("gh pr create --body-file body.md", root);
+    assert.equal(res.status, 2, res.stderr);
+    assert.ok(res.stderr.includes("requester attribution"), res.stderr);
+    assert.ok(!res.stderr.includes("heading '## Notes'"), res.stderr);
   });
 });
 

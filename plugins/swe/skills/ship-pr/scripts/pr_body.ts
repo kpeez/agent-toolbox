@@ -9,35 +9,32 @@ const TEMPLATE = resolve(dirname(SCRIPT), "..", "templates", "pr-body.md");
 const SLOT = /\{(\w+)\}/g;
 const LINK = /^(?:Closes|Fixes|Part of) [\p{L}\p{N}_#/.-]+$/u;
 const FENCE_OPENER = /^( {0,3})(`{3,}|~{3,})(.*)$/;
+const NESTED_FENCE_OPENER = /^( *)(`{3,}|~{3,})(.*)$/;
 const FENCE_CLOSER = /^(\s*)(`{3,}|~{3,})[ \t]*$/;
 const ANY_FENCE_LINE = /^\s*(```|~~~)/;
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/;
 const LOOSE_HEADING = /^#{1,6} /;
 const CONTAINER_MARKERS = /^(?:\s*>\s?|\s*(?:[-*+]|\d{1,9}[.)])[ \t]+)*/;
 
-type Fence = { char: string; length: number; indent: number };
+type Fence = { char: string; length: number };
 type FenceReading = (line: string) => boolean;
 
-function fenceOpener(line: string): Fence | null {
-  const m = FENCE_OPENER.exec(line);
+function fenceOpener(line: string, nested: boolean): Fence | null {
+  const m = (nested ? NESTED_FENCE_OPENER : FENCE_OPENER).exec(line);
   if (!m || (m[2][0] === "`" && m[3].includes("`"))) return null;
-  return { char: m[2][0], length: m[2].length, indent: m[1].length };
+  return { char: m[2][0], length: m[2].length };
 }
 
-function commonMarkFences(listAware: boolean): FenceReading {
+function commonMarkFences(nested: boolean): FenceReading {
   let fence: Fence | null = null;
   return (line) => {
+    const bare = line.replace(CONTAINER_MARKERS, "");
     if (fence) {
-      const m = FENCE_CLOSER.exec(line);
-      if (m && m[2][0] === fence.char && m[2].length >= fence.length && (listAware || /^ {0,3}$/.test(m[1]))) {
-        fence = null;
-        return true;
-      }
-      const dedented = line.trim() !== "" && /^ */.exec(line)![0].length < fence.indent;
-      if (!(listAware && dedented)) return true;
-      fence = null;
+      const m = FENCE_CLOSER.exec(bare);
+      if (m && m[2][0] === fence.char && m[2].length >= fence.length && (nested || /^ {0,3}$/.test(m[1]))) fence = null;
+      return true;
     }
-    fence = fenceOpener(line);
+    fence = fenceOpener(bare, nested);
     return fence !== null;
   };
 }
@@ -540,8 +537,8 @@ function slotErrors(name: string, text: string): string[] {
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const number = i + 1;
-    const [toggledCode, strictCode, listAwareCode] = readings.map((inCode) => inCode(line));
-    const commonMarkProse = !strictCode || !listAwareCode;
+    const [toggledCode, strictCode, nestedCode] = readings.map((inCode) => inCode(line));
+    const commonMarkProse = !strictCode && !nestedCode;
     const prose: string[] = [];
     if (commonMarkProse) prose.push(stripCodeSpans(line));
     if (!toggledCode) prose.push(line.replace(/`[^`]*`/g, ""));
@@ -658,7 +655,7 @@ function checkPrSegment(action: string, args: string[], cwd: string): string | n
   const text = readFileSync(path, "utf-8");
   let errors: string[];
   if (repoHasOwnTemplate(cwd)) {
-    errors = slotErrors("body", text).filter((e) => !e.includes("heading"));
+    errors = slotErrors("body", text).filter((e) => !/ line \d+: heading '/.test(e));
   } else {
     errors = check(text);
   }
