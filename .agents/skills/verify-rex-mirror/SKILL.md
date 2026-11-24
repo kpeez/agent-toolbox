@@ -208,8 +208,9 @@ All paths are under `plugins/rex-agents/`.
 
 Sync commit: the commit that makes `remember` write its row atomically
 (`git log -S rowNotAtomic`). At that commit the model describes the code.
-`scripts/rex_mirror.ts` and `hooks/session_end.ts` last changed there; the
-other covered files changed in earlier commits. Move the sync commit forward only
+`scripts/rex_mirror.ts`, `hooks/session_end.ts`, and `hooks/mirror_hook.ts`
+(a comment only) last changed there; the other covered files changed in
+earlier commits. Move the sync commit forward only
 after you confirm that the model describes the code at the new commit.
 
 The check does not run the real code. A change to a covered file passes the
