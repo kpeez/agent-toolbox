@@ -112,8 +112,9 @@ function generator(seed: number, binDir: string): () => string {
       // `<<` in arithmetic is a shift, not a heredoc.
       () => `x=$(( 1 << 3 ))\n${a}`,
       () => `cat > note.md <<'NOTE${depth}'\nThen run \`${a}\` by hand.\nNOTE${depth}`,
-      () => `cat > note.md <<NOTE${depth}\nThen run ${a} by hand.\nNOTE${depth}`,
     ];
+    // An unquoted heredoc runs $( ), so a single quote inside it can make that substitution unparsable, and bash runs none of it.
+    if (!(a.includes("'") && a.includes("$("))) forms.push(() => `cat > note.md <<NOTE${depth}\nThen run ${a} by hand.\nNOTE${depth}`);
     if (!bash52RejectsInsideComsub(a)) forms.push(() => `out=$( ${a}\n)`, () => `echo "$( ${a}\n)"`);
     if (!a.includes("'")) forms.push(() => `echo '${a}'`);
     if (!/["$`\\]/.test(a)) forms.push(() => `echo "note:\n${a}"`, () => `true # ${a}`.replaceAll("\n", " "));
