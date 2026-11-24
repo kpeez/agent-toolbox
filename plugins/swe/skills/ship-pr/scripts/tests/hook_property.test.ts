@@ -113,7 +113,7 @@ function generator(seed: number, binDir: string): () => string {
       () => `x=$(( 1 << 3 ))\n${a}`,
       () => `cat > note.md <<'NOTE${depth}'\nThen run \`${a}\` by hand.\nNOTE${depth}`,
     ];
-    // An unquoted heredoc runs $( ), so a single quote inside it can leave the heredoc unparsable, and bash then runs nothing.
+    // An unquoted heredoc runs $( ), so a single quote inside it can make that substitution unparsable, and bash runs none of it.
     if (!(a.includes("'") && a.includes("$("))) forms.push(() => `cat > note.md <<NOTE${depth}\nThen run ${a} by hand.\nNOTE${depth}`);
     if (!bash52RejectsInsideComsub(a)) forms.push(() => `out=$( ${a}\n)`, () => `echo "$( ${a}\n)"`);
     if (!a.includes("'")) forms.push(() => `echo '${a}'`);
