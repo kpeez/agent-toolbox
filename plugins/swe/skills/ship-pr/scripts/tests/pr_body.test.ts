@@ -208,11 +208,12 @@ test("a code fence opens and closes by the CommonMark rules", () => {
       ["````\n```\n````\n## Heading", true],
       ["```\n## Heading\n```", false],
       ["~~~\n## Heading\n~~~", false],
-      ["```js\ncode\n``` js\n## Heading", false],
       ["```\ncode\n```\nthe user asked for this", true],
       ["Steps:\n\n- Run the probe:\n  ```bash\n  node probe.mjs\n    ```\n## Extra heading", true],
       ["- a\n  ```\n  code\nthe user asked for this", true],
       ["`x`\n   ```\n```\nthe user asked for this", true],
+      ["Run the probe:\n  ```bash\nnode probe.mjs\n```\n## Results", true],
+      ["Run the probe:\n  ```bash\nnode probe.mjs\n```\n\nThe user asked for a faster cache.", true],
     ] as const;
     for (const [text, blocked] of cases) {
       const res = hookOnSummary(root, text);
@@ -221,9 +222,16 @@ test("a code fence opens and closes by the CommonMark rules", () => {
   });
 });
 
+test("a line the old fence toggle checked stays checked", () => {
+  withTemp((root) => {
+    const res = hookOnSummary(root, "```js\ncode\n``` js\n## Heading");
+    assert.equal(res.status, 2, res.stderr);
+  });
+});
+
 test("a code span pairs backtick runs of equal length", () => {
   withTemp((root) => {
-    for (const [text, blocked] of [["`````   the user asked````", true], ["the user asked````a```b````js", true], ["Use \\`` for a literal. the user asked for it ``", true], ["```a```## H", false]] as const) {
+    for (const [text, blocked] of [["`````   the user asked````", true], ["the user asked````a```b````js", true], ["Use \\`` for a literal. the user asked for it ``", true], ["Windows paths such as C:\\\\`Users` the user asked about `x`.", true], ["```a```## H", false]] as const) {
       const res = hookOnSummary(root, text);
       assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
     }

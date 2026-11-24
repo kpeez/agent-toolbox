@@ -9,11 +9,14 @@ const TEMPLATE = resolve(dirname(SCRIPT), "..", "templates", "pr-body.md");
 const SLOT = /\{(\w+)\}/g;
 const LINK = /^(?:Closes|Fixes|Part of) [\p{L}\p{N}_#/.-]+$/u;
 const FENCE_OPENER = /^( {0,3})(`{3,}|~{3,})(.*)$/;
-const FENCE_CLOSER = /^\s*(`{3,}|~{3,})[ \t]*$/;
+const FENCE_CLOSER = /^(\s*)(`{3,}|~{3,})[ \t]*$/;
+const ANY_FENCE_LINE = /^\s*(```|~~~)/;
 const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/;
+const LOOSE_HEADING = /^#{1,6} /;
 const CONTAINER_MARKERS = /^(?:\s*>\s?|\s*(?:[-*+]|\d{1,9}[.)])[ \t]+)*/;
 
 type Fence = { char: string; length: number; indent: number };
+type FenceReading = (line: string) => boolean;
 
 function fenceOpener(line: string): Fence | null {
   const m = FENCE_OPENER.exec(line);
@@ -21,21 +24,41 @@ function fenceOpener(line: string): Fence | null {
   return { char: m[2][0], length: m[2].length, indent: m[1].length };
 }
 
-function endsContainer(line: string, fence: Fence): boolean {
-  return line.trim() !== "" && /^ */.exec(line)![0].length < fence.indent;
+function commonMarkFences(listAware: boolean): FenceReading {
+  let fence: Fence | null = null;
+  return (line) => {
+    if (fence) {
+      const m = FENCE_CLOSER.exec(line);
+      if (m && m[2][0] === fence.char && m[2].length >= fence.length && (listAware || /^ {0,3}$/.test(m[1]))) {
+        fence = null;
+        return true;
+      }
+      const dedented = line.trim() !== "" && /^ */.exec(line)![0].length < fence.indent;
+      if (!(listAware && dedented)) return true;
+      fence = null;
+    }
+    fence = fenceOpener(line);
+    return fence !== null;
+  };
 }
 
-function closesFence(line: string, fence: Fence): boolean {
-  const m = FENCE_CLOSER.exec(line);
-  return m !== null && m[1][0] === fence.char && m[1].length >= fence.length;
+function toggledFences(): FenceReading {
+  let open = false;
+  return (line) => {
+    if (ANY_FENCE_LINE.test(line)) {
+      open = !open;
+      return true;
+    }
+    return open;
+  };
 }
 
 function stripCodeSpans(line: string): string {
   let out = "";
   let i = 0;
   while (i < line.length) {
-    if (line[i] === "\\" && line[i + 1] === "`") {
-      out += "`";
+    if (line[i] === "\\" && i + 1 < line.length) {
+      out += line.slice(i, i + 2);
       i += 2;
       continue;
     }
@@ -512,25 +535,24 @@ function slotErrors(name: string, text: string): string[] {
   if (text.trim() === "") return [`${name}: empty.`];
   if (text.trim() === `{${name}}`) return [`${name}: still holds the template placeholder {${name}}.`];
   const errors: string[] = [];
-  let fence: Fence | null = null;
+  const readings = [toggledFences(), commonMarkFences(false), commonMarkFences(true)];
   const lines = text.split(/\r\n|\r|\n/);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const number = i + 1;
-    if (fence && closesFence(line, fence)) {
-      fence = null;
-      continue;
-    }
-    if (fence && endsContainer(line, fence)) fence = null;
-    if (fence) continue;
-    fence = fenceOpener(line);
-    if (fence) continue;
-    const prose = stripCodeSpans(line);
-    if (HEADING.test(line.replace(CONTAINER_MARKERS, ""))) {
+    const [toggledCode, strictCode, listAwareCode] = readings.map((inCode) => inCode(line));
+    const commonMarkProse = !strictCode || !listAwareCode;
+    const prose: string[] = [];
+    if (commonMarkProse) prose.push(stripCodeSpans(line));
+    if (!toggledCode) prose.push(line.replace(/`[^`]*`/g, ""));
+    const heading =
+      (commonMarkProse && HEADING.test(line.replace(CONTAINER_MARKERS, ""))) ||
+      (!toggledCode && LOOSE_HEADING.test(line.replace(/`[^`]*`/g, "")));
+    if (heading) {
       errors.push(`${name} line ${number}: heading '${line.trim()}'. The template owns all headings.`);
     }
     for (const pattern of ATTRIBUTION) {
-      const match = pattern.exec(prose);
+      const match = prose.map((text) => pattern.exec(text)).find((m) => m !== null);
       if (match) {
         errors.push(
           `${name} line ${number}: requester attribution '${match[0]}'. ` +
