@@ -46,8 +46,7 @@ export function newestState(rex: string, session: string, block: string): Newest
   if (records.length === 0) return UNKNOWN_STATE;
   const updatedAt = (rec: Record<string, unknown>) => String(rec.updated_at ?? "");
   const newest = records.reduce((best, rec) => (updatedAt(rec) > updatedAt(best) ? rec : best));
-  if (typeof newest.state !== "string") return UNKNOWN_STATE;
-  return newest.state === "gone" ? GONE : { kind: "state", state: newest.state };
+  return typeof newest.state === "string" ? { kind: "state", state: newest.state } : UNKNOWN_STATE;
 }
 
 export function rowFiles(dir: string, sessionId: string): string[] {

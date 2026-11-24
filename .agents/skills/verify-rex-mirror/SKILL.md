@@ -46,12 +46,14 @@ uv run .agents/skills/verify-rex-mirror/scripts/check.py
 
 It needs uv and mise. It uses the statechart skill's pinned TLC and Java
 through `.github/scripts/statechart_tlc.py`, or `TLA2TOOLS` and `JAVA` when
-they are set. It runs the 19 runs in `RUNS` in parallel, in about 45 s.
+they are set. It runs the 20 runs in `RUNS` in parallel, in about 45 s.
 It exits 0 only when each run gives its expected result:
 
 - `holds`: each listed rule holds on the current code.
 - `finding`: a known finding in the current code still breaks its rule.
 - `past bug`: the code before a past fix breaks the rule that the fix restored.
+- `past race`: the code before a past fix breaks a rule in the model, but no
+  run showed a failure a user would see.
 - `mutant`: a broken variant breaks a rule that no past bug broke.
 
 For each rule that breaks, it prints TLC's shortest path as a list of
@@ -87,8 +89,8 @@ comment above each action names the file and the function.
 
 - The command and its wrapper: `mirrored` in `hooks/mirror_hook.ts`. The
   subshell ends, `printf` writes the marker, and the pipe closes in one step.
-- The mirror: `main`, `openViewer`, `startViewer`, `remember`, `settleLog`,
-  and `onSignal` in `scripts/rex_mirror.ts`. `mpc` follows `main`: the log,
+- The mirror: `main`, `withSignalHandlers`, `openViewer`, `startViewer`,
+  `remember`, `settleLog`, and `onSignal` in `scripts/rex_mirror.ts`. `mpc` follows `main`: the log,
   the handlers, and the read loop. `opc` follows the open: the delay timer
   (or none at delay 0), `rex block inspect`, `session.new_layer`,
   `session.set_layer_state`, and the fallback `rex run`, each one step.
@@ -112,15 +114,16 @@ comment above each action names the file and the function.
 `trapWrapper` (before `2a8e0e6`), `noSignalHandlers` and `endPassAborts`
 (before `d53f272`), `noViewerClose` and `endPassKeepsError` (before
 `9338e63`), `endPassRewrites` (before the per-row session-end list),
-`floatAsWritten` (the floating open as first written), and the mutant
-`closeBeforeStatus`.
+`floatAsWritten` (the floating open as first written), `rowNotAtomic`
+(`remember` before KP-678), and the mutant `closeBeforeStatus`.
 
 `floatAsWritten` opened the block at delay 0 before it set the signal
 handlers, so a stop during the open left the block `working`. When the
 `session.new_layer` client died before its reply, it fell back to
 `rex run`, and a late layer then opened a second block on the same log.
 When the `rex run` client died, it counted no block, and deleted the log
-with no exit line. The current code sets the handlers first. A client that
+with no exit line. The current code sets the handlers first: only `withSignalHandlers`
+returns the open, so a call before the handlers fails the type check. A client that
 dies (a signal, its timeout, or an exit status of 128 or more) makes the
 open `maybeOpen`: no fallback, the exit line is written, and the log stays
 for a viewer that may open.
@@ -177,16 +180,25 @@ A reply to `new_layer` or `rex run` that exits 0 but cannot be read counts
 as `maybeOpen`, like a dead client; the model does not have that reply. When
 the open is `maybeOpen` and no block ever opens, the log stays in `TMPDIR`.
 
-`remember` writes its row file in one `writeFileSync`. A pass that reads the
-file before the write ends finds invalid JSON and keeps the file, so the
-model treats the write as one step. No unit test covers that order.
+`remember` writes its row to a temp file and renames it, so the row file is
+complete or absent. The temp name starts with `.`, so `drainLegacyList`,
+which deletes this session's `*.json.tmp.*` files, never deletes it.
+`rowNotAtomic` is the code before: `writeFileSync` with `wx` created the row
+file empty and then wrote it. A reader that ran beside 50,000 such writes
+found empty rows in every run, a count that varies by run and machine
+(141 to 1,300 across runs); after the fix it found none. A pass that reads an empty row
+keeps the file and never checks its block, which breaks
+`EndPassClosesSettledRows`. That is a `past race`, not a `past bug`: the
+block of an empty row is still working, because the open runs with no await,
+so a pass that read the full row would also keep the row and leave the block
+open. No harm from the rules table follows.
 
 ## Coverage
 
 | Code | Actions |
 | --- | --- |
 | `hooks/mirror_hook.ts` `mirrored` | `CommandEnds` |
-| `scripts/rex_mirror.ts` `main`, `openViewer`, `startViewer`, `diedBeforeReply`, `remember`, `settleLog`, `onSignal` | `MirrorCreatesLog` to `MirrorHandlesSignal`, `Kill` |
+| `scripts/rex_mirror.ts` `main`, `withSignalHandlers`, `openViewer`, `startViewer`, `diedBeforeReply`, `remember`, `settleLog`, `onSignal` | `MirrorCreatesLog` to `MirrorHandlesSignal`, `Kill` |
 | The Rex server's side of `new_layer` and `rex run` | `ServerOpens`, `ServerRefuses` |
 | `scripts/rex_mirror_view.ts` `main`, `closeBlock` | `ViewerReportsWorking` to `ViewerCloseFails` |
 | `hooks/session_end.ts` `main`, `rowFiles`, `settle`, `newestState` (`drainLegacyList` is left out) | `EndReads`, `EndChecks`, `EndCloseFails`, `EndKilled`, `EndWrites` |
@@ -194,10 +206,10 @@ model treats the write as one step. No unit test covers that order.
 
 All paths are under `plugins/rex-agents/`.
 
-Sync commit: the commit that makes a `rex` client that dies before its reply
-open no second block (`git log -S diedBeforeReply`). At that commit the model
-describes the code. `scripts/rex_mirror.ts` last changed there; the other
-covered files changed in earlier commits. Move the sync commit forward only
+Sync commit: the commit that makes `remember` write its row atomically
+(`git log -S rowNotAtomic`). At that commit the model describes the code.
+`scripts/rex_mirror.ts` and `hooks/session_end.ts` last changed there; the
+other covered files changed in earlier commits. Move the sync commit forward only
 after you confirm that the model describes the code at the new commit.
 
 The check does not run the real code. A change to a covered file passes the
@@ -215,7 +227,7 @@ covered file, update the action first, then run the check.
    the rule.
 3. A `finding` run that fails: the change fixed the finding. Move the run to
    `holds`, and remove the finding from this file.
-4. A `past bug` or `mutant` run that fails: the model no longer reaches that
+4. A `past bug`, `past race`, or `mutant` run that fails: the model no longer reaches that
    bug. Check that the variant still matches the old code.
 5. An intended change to the lifecycle: change the action first, then rerun.
    Change a rule only when the promise changed, and say why in the same

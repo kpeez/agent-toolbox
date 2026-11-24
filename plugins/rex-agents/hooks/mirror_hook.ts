@@ -13,6 +13,8 @@ import { runtimeFlags } from "../scripts/runtime_flags.ts";
 
 const MIRROR = resolve(dirname(fileURLToPath(import.meta.url)), "..", "scripts", "rex_mirror.ts");
 const LABEL_MAX = 60;
+// Claude Code 2.1.331 flags the wrapped command: "Contains brace with quote character (expansion obfuscation)".
+// In default and acceptEdits mode it does not run it without a prompt (headless, it refuses); in auto mode it runs it.
 const MODES_WITHOUT_PROMPTS = new Set(["auto", "bypassPermissions"]);
 const SAFE = /^[a-zA-Z0-9_@%+=:,./-]+$/;
 

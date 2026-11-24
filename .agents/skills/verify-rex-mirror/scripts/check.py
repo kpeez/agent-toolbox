@@ -6,8 +6,8 @@
 """Model-check the rex-agents mirror block lifecycle (RexMirror.tla) with TLC.
 
 Exits 0 only when every run in RUNS gives its expected result: each rule holds
-on the current code, each known finding still breaks, and each past bug and
-mutant breaks the rule it targets. For a rule that breaks, prints TLC's
+on the current code, each known finding still breaks, and each past bug, past
+race, and mutant breaks the rule it targets. For a rule that breaks, prints TLC's
 shortest path as a list of actions.
 
 TLC and Java: TLA2TOOLS and JAVA from the environment, or the statechart
@@ -71,7 +71,7 @@ WAITER_RULES = {"WaiterStartedOpenSeesOutcome", "LateWaiterSeesOutcome"}
 @dataclass
 class Run:
     name: str
-    kind: str  # "holds", "finding", "past bug", or "mutant"
+    kind: str  # "holds", "finding", "past bug", "past race", or "mutant"
     rules: list[str]
     overrides: dict[str, str] = field(default_factory=dict)
     config_file: Path | None = None  # a checked-in config, used as is
@@ -181,6 +181,12 @@ RUNS = [
         "past bug",
         ["EndPassClosesSettledRows"],
         {"Variant": '"endPassKeepsError"'},
+    ),
+    Run(
+        "KP-678: remember creates its row file empty, and session_end skips a row it reads empty",
+        "past race",
+        ["EndPassClosesSettledRows"],
+        {"Variant": '"rowNotAtomic"'},
     ),
     # The statechart's config must still parse, and its rules hold.
     Run(
