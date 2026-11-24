@@ -254,6 +254,19 @@ test("a repo template drops heading errors but keeps attribution that quotes the
   });
 });
 
+test("a markdown example inside a fence stays code", () => {
+  withTemp((root) => {
+    for (const text of [
+      "Example input:\n\n```md\n> ```\n# install deps\n```",
+      "```md\n- ```\n# comment\n```",
+      "```diff\n+ ```bash\n+ npm test\n+ ```\n+ ## Usage\n```",
+    ]) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
 test("a code span pairs backtick runs of equal length", () => {
   withTemp((root) => {
     for (const [text, blocked] of [["`````   the user asked````", true], ["the user asked````a```b````js", true], ["Use \\`` for a literal. the user asked for it ``", true], ["Windows paths such as C:\\\\`Users` the user asked about `x`.", true], ["```a```## H", false]] as const) {

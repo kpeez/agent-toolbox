@@ -16,25 +16,25 @@ const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/;
 const LOOSE_HEADING = /^#{1,6} /;
 const CONTAINER_MARKERS = /^(?:\s*>\s?|\s*(?:[-*+]|\d{1,9}[.)])[ \t]+)*/;
 
-type Fence = { char: string; length: number };
+type Fence = { char: string; length: number; inContainer: boolean };
 type FenceReading = (line: string) => boolean;
 
 function fenceOpener(line: string, nested: boolean): Fence | null {
-  const m = (nested ? NESTED_FENCE_OPENER : FENCE_OPENER).exec(line);
+  const bare = line.replace(CONTAINER_MARKERS, "");
+  const m = (nested ? NESTED_FENCE_OPENER : FENCE_OPENER).exec(bare);
   if (!m || (m[2][0] === "`" && m[3].includes("`"))) return null;
-  return { char: m[2][0], length: m[2].length };
+  return { char: m[2][0], length: m[2].length, inContainer: bare !== line };
 }
 
 function commonMarkFences(nested: boolean): FenceReading {
   let fence: Fence | null = null;
   return (line) => {
-    const bare = line.replace(CONTAINER_MARKERS, "");
     if (fence) {
-      const m = FENCE_CLOSER.exec(bare);
+      const m = FENCE_CLOSER.exec(fence.inContainer ? line.replace(CONTAINER_MARKERS, "") : line);
       if (m && m[2][0] === fence.char && m[2].length >= fence.length && (nested || /^ {0,3}$/.test(m[1]))) fence = null;
       return true;
     }
-    fence = fenceOpener(bare, nested);
+    fence = fenceOpener(line, nested);
     return fence !== null;
   };
 }
