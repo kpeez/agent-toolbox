@@ -8,7 +8,49 @@ const SCRIPT = realpathSync(fileURLToPath(import.meta.url));
 const TEMPLATE = resolve(dirname(SCRIPT), "..", "templates", "pr-body.md");
 const SLOT = /\{(\w+)\}/g;
 const LINK = /^(?:Closes|Fixes|Part of) [\p{L}\p{N}_#/.-]+$/u;
-const FENCE = /^\s*(```|~~~)/;
+const FENCE_OPENER = /^ {0,3}(`{3,}|~{3,})(.*)$/;
+const FENCE_CLOSER = /^ {0,3}(`{3,}|~{3,})[ \t]*$/;
+const HEADING = /^ {0,3}#{1,6}(?:[ \t]|$)/;
+
+type Fence = { char: string; length: number };
+
+function fenceOpener(line: string): Fence | null {
+  const m = FENCE_OPENER.exec(line);
+  if (!m || (m[1][0] === "`" && m[2].includes("`"))) return null;
+  return { char: m[1][0], length: m[1].length };
+}
+
+function closesFence(line: string, fence: Fence): boolean {
+  const m = FENCE_CLOSER.exec(line);
+  return m !== null && m[1][0] === fence.char && m[1].length >= fence.length;
+}
+
+function stripCodeSpans(line: string): string {
+  let out = "";
+  let i = 0;
+  while (i < line.length) {
+    if (line[i] !== "`") {
+      out += line[i++];
+      continue;
+    }
+    const open = /^`+/.exec(line.slice(i))![0];
+    let close = -1;
+    for (const m of line.slice(i + open.length).matchAll(/`+/g)) {
+      if (m[0].length === open.length) {
+        close = i + open.length + m.index + m[0].length;
+        break;
+      }
+    }
+    if (close === -1) {
+      out += open;
+      i += open.length;
+    } else {
+      out += " ";
+      i = close;
+    }
+  }
+  return out;
+}
 
 const VERBS =
   "(?:wants?|wanted|asked|asks|requested|requests|said|says|prefers?|preferred" +
@@ -460,18 +502,19 @@ function slotErrors(name: string, text: string): string[] {
   if (text.trim() === "") return [`${name}: empty.`];
   if (text.trim() === `{${name}}`) return [`${name}: still holds the template placeholder {${name}}.`];
   const errors: string[] = [];
-  let inFence = false;
+  let fence: Fence | null = null;
   const lines = text.split(/\r\n|\r|\n/);
   for (let i = 0; i < lines.length; i++) {
     const line = lines[i];
     const number = i + 1;
-    if (FENCE.test(line)) {
-      inFence = !inFence;
+    if (fence) {
+      if (closesFence(line, fence)) fence = null;
       continue;
     }
-    if (inFence) continue;
-    const prose = line.replace(/`[^`]*`/g, "");
-    if (/^#{1,6} /.test(prose)) {
+    fence = fenceOpener(line);
+    if (fence) continue;
+    const prose = stripCodeSpans(line);
+    if (HEADING.test(line)) {
       errors.push(`${name} line ${number}: heading '${line.trim()}'. The template owns all headings.`);
     }
     for (const pattern of ATTRIBUTION) {

@@ -200,6 +200,42 @@ test("a heading counts only after a CommonMark line ending", () => {
   });
 });
 
+test("a code fence opens and closes by the CommonMark rules", () => {
+  withTemp((root) => {
+    const cases = [
+      ["```a```\n## Heading", true],
+      ["```\ncode\n~~~\n```\n## Heading", true],
+      ["````\n```\n````\n## Heading", true],
+      ["```\n## Heading\n```", false],
+      ["~~~\n## Heading\n~~~", false],
+      ["```js\ncode\n``` js\n## Heading", false],
+      ["```\ncode\n```\nthe user asked for this", true],
+    ] as const;
+    for (const [text, blocked] of cases) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
+test("a code span pairs backtick runs of equal length", () => {
+  withTemp((root) => {
+    for (const [text, blocked] of [["`````   the user asked````", true], ["the user asked````a```b````js", true], ["```a```## H", false]] as const) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
+test("a heading may be indented up to three spaces", () => {
+  withTemp((root) => {
+    for (const [text, blocked] of [["Fine.\n   ## Heading", true], ["Fine.\n#\tHeading", true], ["Fine.\n    ## Not a heading", false], ["Fine.\n#hashtag", false]] as const) {
+      const res = hookOnSummary(root, text);
+      assert.equal(res.status, blocked ? 2 : 0, `${JSON.stringify(text)}: ${res.stderr}`);
+    }
+  });
+});
+
 test("hook blocks a body with an empty slot", () => {
   withTemp((root) => {
     const unrendered = readFileSync(TEMPLATE, "utf-8").replace("{summary}", "");
