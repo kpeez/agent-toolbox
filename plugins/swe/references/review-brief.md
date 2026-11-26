@@ -28,3 +28,8 @@ this brief.
   simpler alternative that keeps the required behavior. Finding none is a
   valid result.
 - Do not commit, push, or change git or external state.
+- Make each checkout, copy, or log of a review in
+  `.agents/scratch/<branch-slug>/review-<agent>/`, where `<branch-slug>` is
+  the reviewed PR's head branch with `/` replaced by `-`
+  ([agent scratch](agent-scratch.md)). Never name a folder directly under
+  `~/agent-scratch/<repo>/`.
