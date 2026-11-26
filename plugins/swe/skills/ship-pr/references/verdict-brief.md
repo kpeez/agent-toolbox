@@ -23,6 +23,10 @@ Criteria:
 Run read-only commands that exercise the claimed behavior when they exist.
 Name each check you could not run.
 
+Make every checkout, copy, or log in
+`.agents/scratch/<branch-slug>/review-<agent>/`, where `<branch-slug>` is the
+PR's head branch with `/` replaced by `-` and `<agent>` names you.
+
 Reply in this shape and nothing else:
 VERDICT: PASS | PASS+NOTES | FAIL
 HEAD: <the head SHA you judged>
