@@ -3688,7 +3688,7 @@
         "3-verify-usage",
         "4-pause-on-loss",
         "5-prune-confirmed-set",
-        "6-prune-merged-scratch",
+        "6-prune-scratch",
         "7-other-reclaimers"
       ],
       "id": "route/swe/clean-worktrees",
