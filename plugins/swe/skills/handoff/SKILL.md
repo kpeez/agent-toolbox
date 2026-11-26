@@ -17,7 +17,7 @@ the issue and its comments first. Then find the work's decision log at
 `.agents/scratch/<branch-slug>/decisions.jsonl`, where `<branch-slug>` is the
 branch name with `/` changed to `-`.
 [Agent scratch](../../references/agent-scratch.md) defines the folder and how
-to create its link.
+to make it.
 
 ## 2-update-the-issue
 

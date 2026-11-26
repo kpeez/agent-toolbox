@@ -97,7 +97,7 @@ The [`autopilot-stack`](../skills/swe-mode/playbooks/autopilot-stack.md) playboo
 /swe:swe-mode clean up merged worktrees.
 ```
 
-The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playbook runs [`worktree_audit.sh`](../scripts/worktree_audit.sh), asks you which sessions are in use, and pauses on uncommitted work. It removes only confirmed worktrees, runs `agent-scratch sweep` on the agent scratch folders after you confirm its report, and reports `df -h /` before and after.
+The [`clean-worktrees`](../skills/swe-mode/playbooks/clean-worktrees.md) playbook runs [`worktree_audit.sh`](../scripts/worktree_audit.sh), asks you which sessions are in use, and pauses on uncommitted work. It removes only confirmed worktrees, which also removes their scratch, and reports `df -h /` before and after.
 
 ## Delegate work
 

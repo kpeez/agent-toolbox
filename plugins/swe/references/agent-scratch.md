@@ -1,58 +1,53 @@
 # Agent scratch
 
-Choose the lifetime of a file when you write it. Each lifetime has one
-place and one end.
+Scratch is for debris: a probe, a test log, a screenshot, a PR-body draft, a
+plan, a cloned upstream. It lives inside the git worktree and dies with it.
 
-| Lifetime | Where | Dies when |
-| --- | --- | --- |
-| session | `~/agent-scratch/_session/<YYYY-MM-DD>-<slug>/` | 14 days after its newest file (swept) |
-| branch | `.agents/scratch/<branch-slug>/` (the same folder as `~/agent-scratch/<repo>/<branch-slug>/`) | its PR is merged and the folder is idle 3 days (swept) |
-| keep | `~/artifacts/<repo>/<YYYY-MM-DD-slug>/`, or a curated promotion (below) | never |
+## Where scratch goes
 
-`<branch-slug>` is the current branch name with `/` replaced by `-`. On a
-detached HEAD it is `detached-<short-sha>`.
+- **In a worktree**: `.agents/scratch/` at the worktree top level. It is a real
+  folder, never a link, and Git ignores it. Group files in
+  `.agents/scratch/<branch-slug>/`, where `<branch-slug>` is the branch name
+  with `/` replaced by `-` (`detached-<short-sha>` on a detached HEAD).
+  `wt remove` deletes the worktree and the scratch with it.
+- **Outside a worktree** (the main checkout, or no repo): use the harness
+  scratchpad folder. With none, make a folder with `mktemp -d`. Write no
+  `.agents/scratch/` in the main checkout.
+- **A reviewer or verifier** makes its own worktree
+  (`wt switch --create <branch>`) or uses the scratchpad. It never clones the
+  repo by hand into `~/agent-scratch/`.
 
-## Pick the lifetime
+Use `wt` for worktrees, never `git worktree`.
 
-- **Branch**: debris of work on a feature branch. Debris is a probe, a test
-  log, a screenshot, a PR-body draft, a plan, or a cloned upstream.
-- **Session**: debris of work on the default branch (`main` or `master`) or
-  outside a repo. Never write `~/agent-scratch/<repo>/main/`: a default
-  branch never merges, so a sweep never removes that folder.
-- **Keep**: output a human would re-open, compare, or cite after this task,
-  when you can record the command, the config, and the git SHA that made it.
-  Write it to `~/artifacts/<repo>/<YYYY-MM-DD-slug>/`, one folder per run.
-  Curated human material (a page, research, a prompt) goes to its home with
-  `agent-scratch keep <path> --to pages|research|prompts --why "<reason>"`.
+## Record
 
-Nothing enters the keep tier silently. Promote only when the user asks, or
-says yes to an end-of-task offer: "worth keeping: X. Keep it?"
+When a human would re-open, compare, or cite the output after the task, write
+it to `~/artifacts/<repo>/<YYYY-MM-DD-slug>/`, one folder per run. Outside a
+repo, use `~/artifacts/_misc/<YYYY-MM-DD-slug>/`. Put one line in the folder
+that says what made it: the command, the git SHA, or the session.
 
-Never write loose files directly in `~/agent-scratch/` or in
-`~/agent-scratch/<repo>/`. A reviewer or verifier workspace belongs in the
-branch folder of the PR's head branch, as `review-<agent>/`. Do not use
-`/tmp` or `mktemp -d` for any of this.
+## Library
 
-## Sweep
+`~/Documents/_ai/pages/`, `~/Documents/_ai/research/`, and
+`~/Documents/_ai/prompts/` hold what the user chooses to promote. Write there
+only when the user asks.
 
-`agent-scratch report` shows what a sweep would remove and lists each
-violation of these rules. `agent-scratch sweep` deletes per the config. The
-`clean-worktrees` playbook runs the sweep for scratch folders.
+## Make the folder
 
-## The link
-
-`.agents/scratch` is a link to `~/agent-scratch/<repo>/`, where `<repo>` is
-the folder name of the main checkout. The llmos plugin makes the link only at
-session start, only in the session's own folder, and only for a repo with a
-vault project. A worktree made later in the session usually has no link. Run this from the worktree top level. It is
-safe to run again:
+A new worktree has no `.agents/scratch/`. Run this from the worktree top
+level. It is safe to run again. It makes a real folder and replaces a link
+that an old setup left (old setups linked `.agents/scratch` to
+`~/agent-scratch/<repo>`):
 
 ```sh
-sh -c 'repo=$(basename "$(dirname "$(git rev-parse --path-format=absolute --git-common-dir)")")
-mkdir -p ~/agent-scratch/"$repo" .agents
-[ -e .agents/scratch ] || ln -s ~/agent-scratch/"$repo" .agents/scratch
+sh -c '[ -L .agents/scratch ] && rm .agents/scratch
+mkdir -p .agents/scratch
 exclude="$(git rev-parse --git-common-dir)/info/exclude"
 grep -qxF /.agents/scratch "$exclude" 2>/dev/null || echo /.agents/scratch >> "$exclude"'
 ```
 
-Git ignores `.agents/scratch`. The sweep keeps a branch folder until its PR merges, so its evidence outlives the worktree.
+`rm` on a link removes the link only, not the folder it pointed to.
+
+Old `~/agent-scratch/<repo>/` folders hold scratch from before this rule.
+Nothing sweeps them. Review each by hand, move what is worth keeping to
+`~/artifacts/`, and delete the rest.

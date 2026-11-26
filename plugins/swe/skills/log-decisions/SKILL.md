@@ -11,7 +11,7 @@ the run proceeds. The log lives at
 `.agents/scratch/<branch-slug>/decisions.jsonl`, where `<branch-slug>` is the
 branch name with `/` changed to `-`.
 [Agent scratch](../../references/agent-scratch.md) defines the folder and how
-to create its link. Keep one log per piece of work. No script writes the log.
+to make it. Keep one log per piece of work. No script writes the log.
 
 Keep a log for an unattended or autonomous run, a multi-phase run, work a
 person reviews after stepping away, or when the user asks. Skip it for short,

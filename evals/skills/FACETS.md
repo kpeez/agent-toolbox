@@ -157,7 +157,7 @@ Every read can also happen through Bash (`cat`, `sed`). The scorer records a Bas
 | skill `blast-radius` | 1-read-the-change, 2-find-safety-fact, 3-look-past-grep, 4-rate-each-risk, 5-prove-the-fact, 6-optional-independent-review | 1 | 0 |
 | playbook `build-feature` | 1-map-subsystem, 2-interview-on-open-decisions, 3-name-data-shape, 4-explore-designs, 5-write-throughput-checkpoint, 6-build-one-unit, 7-decide-tests, 8-verify-on-surface, 9-check-blast-radius, 10-review-if-contested, 11-independent-review, 12-order-commits, 13-update-obsolete-docs, 14-publish-draft-pr | 6 | 0 |
 | playbook `build-prototype` | 1-scope-the-decision, 2-gather-references, 3-build-throwaway, 4-switch-between-variants, 5-observe-on-surface, 6-recommend-direction | 2 | 0 |
-| playbook `clean-worktrees` | 1-snapshot-and-audit, 2-cross-check-in-use, 3-verify-usage, 4-pause-on-loss, 5-prune-confirmed-set, 6-prune-scratch, 7-other-reclaimers | 1 | 0 |
+| playbook `clean-worktrees` | 1-snapshot-and-audit, 2-cross-check-in-use, 3-verify-usage, 4-pause-on-loss, 5-prune-confirmed-set, 6-other-reclaimers | 1 | 0 |
 | skill `codebase-design` | design: 1-map-the-callers, 2-weigh-the-trade-offs, 3-specify-the-interface, 4-compare-interfaces; review: 1-explore-friction, 2-apply-deletion-test, 3-report-candidates, 4-interview-on-chosen-design | 1 | 0 |
 | skill `correct` | 1-find-the-mistake-classes, 2-fix-each-class, 3-fix-and-prove, 4-keep-the-rule-table | 1 | 0 |
 | skill `diagnose` | 1-state-exact-failure, 2-build-feedback-loop, 3-seed-from-history, 4-rank-hypotheses, 5-label-confidence, 6-remove-instrumentation | 7 | 0 |

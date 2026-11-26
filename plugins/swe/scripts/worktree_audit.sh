@@ -17,17 +17,6 @@
 # (merged into the base, or its PR is closed or merged), review (none of
 # these).
 #
-# After the table it lists the folders under .agents/scratch (the link is
-# resolved), one row each, in three groups. The folder name is the branch
-# name with "/" replaced by "-". A folder is merged (safe to delete) only when
-# all are true: a merged PR has that head name; no open or draft PR has it;
-# every local branch with that name has its tip at a merged PR's head commit;
-# and the name is not the base branch or a branch checked out in any
-# worktree. Without gh data no folder is merged. orphan: no local branch and
-# no merged PR has the name. stale: any other folder with mtime older than 30
-# days. It removes nothing; step 6 of clean-worktrees deletes the merged
-# folders.
-#
 # The session scan reads only this repository's Claude Code project folders
 # under ~/.claude/projects/: the main checkout's and each worktree's.
 set -u
@@ -98,21 +87,6 @@ sessions_naming_worktree() {
 	search "$sessions_dir" "${worktree}/" "${worktree}\""
 }
 
-scratch_folder_merged() {
-	local name="$1" merged_oids="$2" tips="$3" live_names="$4" tip
-	[ -n "$merged_oids" ] || return 1
-	if awk -F'\t' -v n="$name" '{h = $1; gsub("/", "-", h)} h == n && $2 ~ /\/(open|draft)$/ {f=1} END {exit !f}' "$prs"; then
-		return 1
-	fi
-	if printf '%s\n' "$live_names" | grep -qxF -- "$name"; then
-		return 1
-	fi
-	for tip in $tips; do
-		printf '%s\n' "$merged_oids" | grep -qxF -- "$tip" || return 1
-	done
-	return 0
-}
-
 now=$(date +%s)
 
 echo "# base: $base"
@@ -176,30 +150,3 @@ git worktree list --porcelain | awk '/^worktree /{sub(/^worktree /, ""); print}'
 	printf "%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\t%s\n" \
 		"$size" "$age" "$is_ancestor_of_base" "$dirty" "$remote" "$pr" "$last" "$bucket" "$wt"
 done | sort -t$'\t' -k1,1 -rh
-
-scratch=$(cd -P "$main_wt/.agents/scratch" 2>/dev/null && pwd -P)
-if [ -n "$scratch" ]; then
-	echo
-	echo "# scratch: $scratch"
-	printf "GROUP\tSIZE\tAGE\tPATH\n"
-	live=$( { printf '%s\n' "$base" "${base#*/}"
-		git worktree list --porcelain | awk '/^branch refs\/heads\//{sub(/^branch refs\/heads\//, ""); print}'
-	} | tr / -)
-	for dir in "$scratch"/*/; do
-		[ -d "$dir" ] || continue
-		dir="${dir%/}"
-		name="${dir##*/}"
-		mt=$(mtime "$dir"); age=$(( (now - ${mt:-$now}) / 86400 ))
-		merged_oids=$(awk -F'\t' -v n="$name" '{h = $1; gsub("/", "-", h)} h == n && $2 ~ /\/merged$/ {print $3}' "$prs")
-		tips=$(git for-each-ref --format='%(refname:lstrip=2) %(objectname)' refs/heads \
-			| awk -v n="$name" '{h = $1; gsub("/", "-", h)} h == n {print $2}')
-		group=""
-		scratch_folder_merged "$name" "$merged_oids" "$tips" "$live" && group=merged
-		if [ -z "$group" ]; then
-			if [ -z "$tips" ] && [ -z "$merged_oids" ]; then group=orphan
-			elif [ "$age" -gt 30 ]; then group=stale
-			else continue; fi
-		fi
-		printf "%s\t%s\t%sd\t%s\n" "$group" "$(du -sh "$dir" 2>/dev/null | awk '{print $1}')" "$age" "$dir"
-	done | sort -t$'\t' -k1,1
-fi
