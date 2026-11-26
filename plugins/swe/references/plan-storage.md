@@ -8,7 +8,7 @@ network call.
 
 The plan lives at `.agents/scratch/<branch-slug>/<slug>.plan.html`, always.
 `<slug>` names the work. `<branch-slug>` is the branch name with `/` changed
-to `-`. [Agent scratch](agent-scratch.md) defines the folder and its link.
+to `-`. [Agent scratch](agent-scratch.md) defines the folder; it goes away with the worktree.
 Plans do not go to the vault.
 
 Show the page to the user the way the user's own instructions say to show an

@@ -227,9 +227,8 @@ The [`clean-worktrees`](./skills/swe-mode/playbooks/clean-worktrees.md)
 playbook runs [worktree_audit.sh](./scripts/worktree_audit.sh) to sort each
 worktree by merge state and uncommitted work. It asks you which sessions still
 use a worktree, and that answer wins over the audit. It pauses before it
-removes any worktree with uncommitted edits. It also shows what `agent-scratch
-report` would remove from the agent scratch folders, and runs `agent-scratch
-sweep` after you confirm that list.
+removes any worktree with uncommitted edits. Agent scratch lives inside each
+worktree, so removing the worktree removes its scratch.
 
 ### Leave it running
 
